@@ -1,8 +1,10 @@
 /*
  * Point.cpp
  *
- *  Created on: Jan 9, 2012
- *      Author: wbinventor
+ *  Created on: Jan 18, 2012
+ *      Author: William Boyd
+ *				MIT, Course 22
+ *              wboyd@mit.edu
  */
 
 #include "Point.h"
@@ -21,52 +23,61 @@ Point::~Point() { }
 
 
 /**
- * Initialize a point
+ * Initializes a point
+ * @param x x-coordinate
+ * @param y y-coordinate
  */
-void Point::setCoords(float x, float y) {
-	this->x = x;
-	this->y = y;
+void Point::setCoords(double x, double y) {
+	_x = x;
+	_y = y;
 }
 
 
 /**
- * Get the x-coordinate
+ * Returns this point's x-coordinate
+ * @return the x-coordinate
  */
-float Point::getX() {
-	return this->x;
+double Point::getX() {
+	return _x;
 }
 
 
 /**
- * Get the y-coordinate
+ * Returns this point's y-coordinate
+ * @return the y-coordinate
  */
-float Point::getY() {
-	return this->y;
+double Point::getY() {
+	return _y;
 }
 
 
 /**
- * Set the x-coordinate
+ * Set the point's x-coordinate
+ * @param x the new x-coordinate
  */
-void Point::setX(float x) {
-	this->x = x;
+void Point::setX(double x) {
+	_x = x;
 }
 
 
 /**
- * Set the y-coordinate
+ * Set the point's y-coordinate
+ * @param y the new y-coordinate
  */
-void Point::setY(float y) {
-	this->y = y;
+void Point::setY(double y) {
+	_y = y;
 }
 
 
 /**
  * Compute the distance from this point to a point of interest
+ * @param x the x-coordinate of the point of interest
+ * @param y the y-coordinate of the point of interest
+ * @return distance to the point of interest
  */
-float Point::distance(float x, float y) {
-	float deltax = this->x - x;
-	float deltay = this->y - y;
+double Point::distance(double x, double y) {
+	double deltax = _x - x;
+	double deltay = _y - y;
 	return sqrt(deltax*deltax + deltay*deltay);
 }
 
@@ -74,9 +85,11 @@ float Point::distance(float x, float y) {
 
 /**
  * Compute the distance from this point to a point of interest
+ * @param point the point of interest
+ * @return distance to the point of interest
  */
-float Point::distance(Point* point) {
-	float deltax = this->x - point->x;
-	float deltay = this->y - point->y;
+double Point::distance(Point* point) {
+	double deltax = _x - point->_x;
+	double deltay = _y - point->_y;
 	return sqrt(deltax*deltax + deltay*deltay);
 }

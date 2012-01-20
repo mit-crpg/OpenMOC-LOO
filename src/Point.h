@@ -1,8 +1,10 @@
 /*
  * Point.h
  *
- *  Created on: Jan 9, 2012
- *      Author: wbinventor
+ *  Created on: Jan 18, 2012
+ *      Author: William Boyd
+ *				MIT, Course 22
+ *              wboyd@mit.edu
  */
 
 #ifndef POINT_H_
@@ -12,20 +14,23 @@
 #include <iostream>
 
 
+/**
+ * Class to represent a point in 2D
+ */
 class Point {
-protected:
-	float x, y;
+private:
+	double _x, _y;
 public:
 	Point();
 	Point(const Point& point);
 	virtual ~Point();
-	void setCoords(float x, float y);
-	float getX();
-	float getY();
-	void setX(float x);
-	void setY(float y);
-	float distance(float x, float y);
-	float distance(Point* point);
+	void setCoords(double x, double y);
+	double getX();
+	double getY();
+	void setX(double x);
+	void setY(double y);
+	double distance(double x, double y);
+	double distance(Point* point);
 };
 
 #endif /* POINT_H_ */

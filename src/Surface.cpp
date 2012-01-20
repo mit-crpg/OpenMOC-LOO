@@ -9,101 +9,145 @@
 
 
 /**
- * Constructor sets each coefficient
- * to 0 by default and the sense to true.
+ * Default surface constructor
+ * @param id the surface id
+ * @param type the surface type
  */
-Surface::Surface(int uid, surf_type type, int num_coeffs, float* coeffs){
-
-	if (type == CIRCLE) {
-		if (num_coeffs != 6) {
-			std::cout << "Circle surface needs 3 coefficients but " << num_coeffs << " given. Exiting program." << std::endl;
-			exit(1);
-		}
-		else {
-			this->A = 1;
-			this->B = 1;
-			this->C = 0;
-			this->D = -2*coeffs[0];
-			this->E = -2*coeffs[1];
-			this->F = (coeffs[0]*coeffs[0] + coeffs[1]*coeffs[1] - coeffs[2]*coeffs[2]);
-		}
-
-	}
-
-	else if (type == PLANE) {
-		if (num_coeffs != 6) {
-			std::cout << "Plane type surface needs 6 coefficients but " << num_coeffs << " given. Exiting program." << std::endl;
-			exit(1);
-		}
-		else {
-			this->A = coeffs[0];
-			this->B = coeffs[1];
-			this->C = coeffs[2];
-			this->D = coeffs[3];
-			this->E = coeffs[4];
-			this->F = coeffs[5];
-		}
-	}
-
-	else if (type == XPLANE) {
-		if (num_coeffs != 6) {
-			std::cout << "XPlane type surface needs 1 coefficient but " << num_coeffs << " given. Exiting program." << std::endl;
-			exit(1);
-		}
-		this->A = 0;
-		this->B = 0;
-		this->C = 0;
-		this->D = 0;
-		this->E = 1;
-		this->F = -coeffs[0];
-
-	}
-
-	else if (type == YPLANE) {
-		if (num_coeffs != 6) {
-			std::cout << "YPlane type surface needs 1 coefficient but " << num_coeffs << " given. Exiting program." << std::endl;
-			exit(1);
-		}
-		else {
-			this->A = 0;
-			this->B = 0;
-			this->C = 0;
-			this->D = 1;
-			this->E = 0;
-			this->F = -coeffs[0];
-		}
-	}
-
-	else if (type == QUADRATIC) {
-		if (num_coeffs != 6) {
-			std::cout << "Quadratic type surface needs 6 coefficients but " << num_coeffs << " given. Exiting program." << std::endl;
-			exit(1);
-		}
-		else {
-			this->A = coeffs[0];
-			this->B = coeffs[1];
-			this->C = coeffs[2];
-			this->D = coeffs[3];
-			this->E = coeffs[4];
-			this->F = coeffs[5];
-		}
-	}
-
-	else {
-		std::cout << "Surface type " << type << " not recognized. Exiting program" << std::endl;
-		exit(1);
-	}
-
-	this->uid = uid;
-	this->type = type;
+Surface::Surface(int id, surfaceType type){
+	_id = id;
+	_type = type;
 }
 
 
+/**
+ * Return the surface's id
+ * @return the surface's id
+ */
+int Surface::getId() const {
+    return _id;
+}
+
+
+/**
+ * Return the surface's type
+ * @return the surface type
+ */
+surfaceType Surface::getType() const
+{
+    return _type;
+}
+
+/**
+ * Destructor
+ */
 Surface::~Surface() { }
 
 
-float Surface::evaluate(Point* point) {
-	float x = point->getX();
-	float y = point->getY();
-	return (this->A*x*x + this->B*y*y + this->C*x*y + this->D*x + this->E*y + this->F);
+/**
+ * Plane constructor
+ * @param id the surface id
+ * @param A the first coefficient
+ * @param B the second coefficient
+ * @param C the third coefficient
+ */
+Plane::Plane(int id, double A, double B, double C): Surface(id, PLANE) {
+	_A = A;
+	_B = B;
+	_C = C;
 }
+
+////TODO
+//std::vector<Surface*> Plane::getNeighborPos() {
+//	return NULL;
+//}
+//
+//
+////TODO
+//std::vector<Surface*> Plane::getNeighborNeg() {
+//	return NULL;
+//}
+
+
+/**
+ * Evaluate a point using the plane's quadratic surface equation
+ * @param point a pointer to the point of interest
+ * @return the value of point in the equation
+ */
+double Plane::evaluate(Point* point) {
+	double x = point->getX();
+	double y = point->getY();
+	return (_A * x + _B * y + _C);
+}
+
+
+////TODO
+//bool Plane::positiveSense(Point* point) {
+//	return NULL;
+//}
+
+
+/**
+ * XPlane constructor for a plane parallel to the x-axis
+ * @param id the surface id
+ * @param the location of the plane along the y-axis
+ */
+XPlane::XPlane(int id, double C): Plane(id, 1, 0, -C) {
+	_type = XPLANE;
+}
+
+
+/**
+ * XPlane constructor for a plane parallel to the y-axis
+ * @param id the surface id
+ * @param the location of the plane along the x-axis
+ */
+YPlane::YPlane(int id, double C): Plane(id, 1, 0, -C) {
+	_type = YPLANE;
+}
+
+
+/**
+ * Circle constructor
+ * @param id the surface id
+ * @param x the x-coordinte of the circle center
+ * @param y the y-coordinate of the circle center
+ * @param radius the radius of the circle
+ */
+Circle::Circle(int id, double x, double y, double radius): Surface(id, CIRCLE) {
+	_A = 1;
+	_B = 1;
+	_C = -2*x;
+	_D = -2*y;
+	_E = x*x + y*y - radius*radius;
+	_radius = radius;
+	center.setX(x);
+	center.setY(y);
+}
+
+////TODO
+//std::vector<Surface*> Circle::getNeighborPos() {
+//	return NULL;
+//}
+//
+//
+////TODO
+//std::vector<Surface*> Circle::getNeighborNeg() {
+//	return NULL;
+//}
+
+/**
+ * Evaluate a point using the circle's quadratic surface equation
+ * @param point a pointer to the point of interest
+ * @return the value of point in the equation
+ */
+double Circle::evaluate(Point* point) {
+	double x = point->getX();
+	double y = point->getY();
+	return (_A * x * x + _B * y * y + _C * x + _D * y + _E);
+}
+
+
+////TODO
+//bool Circle::positiveSense(Point* point) {
+//	return NULL;
+//}
