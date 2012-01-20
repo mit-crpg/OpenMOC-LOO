@@ -11,6 +11,8 @@
  */
 
 #include <stdlib.h>
+#include <iostream>
+#include "Geometry.h"
 
 // TODO: This is just stubbed out for now
 int main(int argc, char *argv[]) {

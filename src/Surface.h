@@ -44,6 +44,7 @@ public:
 class Plane: public Surface {
 private:
 	double _A, _B, _C;
+	friend class Surface;
 public:
 	Plane(int id, double A, double B, double C);
 	std::vector<Surface*> getNeighborPos();
@@ -90,6 +91,7 @@ private:
 	Point center;
 	double _radius;
 	double _A, _B, _C, _D, _E;
+	friend class Surface;
 public:
 	Circle(int id, double x, double y, double radius);
 	std::vector<Surface*> getNeighborPos();
