@@ -57,8 +57,13 @@ void Timer::restart() {
 }
 
 double Timer::getTime() {
-	if (!this->running)
-		return this->elapsed_time * 1.0E-9;
+	if (!this->running) {
+		#ifdef __MACH__
+			return this->elapsed_time * 1.0E-6;
+		#else
+			return this->elapsed_time * 1.0E-9;
+		#endif
+	}
 	else {
 		#ifdef __MACH__ // OS X does not have clock_gettime, use clock_get_time
 			timeval temp;
@@ -71,7 +76,11 @@ double Timer::getTime() {
 //		timespec temp;
 //		clock_gettime(CLOCK_MONOTONIC, &temp);
 		this->elapsed_time += this->diff(this->start_time, temp);
-		return this->elapsed_time * 1.0E-9;
+		#ifdef __MACH__
+			return this->elapsed_time * 1.0E-6;
+		#else
+			return this->elapsed_time * 1.0E-9;
+		#endif
 	}
 }
 
