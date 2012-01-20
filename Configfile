@@ -1,0 +1,4 @@
+LANGUAGES += c++
+
+BINARIES += openmoc
+SOURCES += openmoc.cpp
