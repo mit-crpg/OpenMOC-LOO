@@ -10,7 +10,6 @@
  *
  */
 
-#include <stdlib.h>
 #include <iostream>
 #include "Geometry.h"
 
@@ -23,10 +22,10 @@ int main(int argc, char *argv[]) {
 				<< " were given. " << std::endl;
 
 	Geometry* geometry = new Geometry();
+#if 0
 	Parser* parser = new Parser(argv[0], argv[1]);
 
 	parser->parseMaterials();
 	parser->parseGeometry();
-
+#endif
 }
-

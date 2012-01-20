@@ -91,9 +91,11 @@ int Lattice::getNumY() const {
  * Return the origin of the lattice
  * @return the origin of the lattice
  */
+#if 0
 Point Lattice::getOrigin() const {
     return _origin;
 }
+#endif
 
 
 /**

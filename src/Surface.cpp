@@ -56,17 +56,16 @@ Plane::Plane(int id, double A, double B, double C): Surface(id, PLANE) {
 	_C = C;
 }
 
-////TODO
-//std::vector<Surface*> Plane::getNeighborPos() {
-//	return NULL;
-//}
-//
-//
-////TODO
-//std::vector<Surface*> Plane::getNeighborNeg() {
-//	return NULL;
-//}
+//TODO
+std::vector<Surface*> Plane::getNeighborPos() {
+    return std::vector<Surface*>();
+}
 
+
+//TODO
+std::vector<Surface*> Plane::getNeighborNeg() {
+    return std::vector<Surface*>();
+}
 
 /**
  * Evaluate a point using the plane's quadratic surface equation
@@ -79,12 +78,10 @@ double Plane::evaluate(Point* point) {
 	return (_A * x + _B * y + _C);
 }
 
-
-////TODO
-//bool Plane::positiveSense(Point* point) {
-//	return NULL;
-//}
-
+//TODO
+bool Plane::positiveSense(Point* point) {
+    return false;
+}
 
 /**
  * XPlane constructor for a plane parallel to the x-axis
@@ -95,9 +92,25 @@ XPlane::XPlane(int id, double C): Plane(id, 1, 0, -C) {
 	_type = XPLANE;
 }
 
+//TODO
+std::vector<Surface*> XPlane::getNeighborPos() {
+    return std::vector<Surface*>();
+}
+
+
+//TODO
+std::vector<Surface*> XPlane::getNeighborNeg() {
+    return std::vector<Surface*>();
+}
+
+//TODO
+bool XPlane::positiveSense(Point* point) {
+    return false;
+}
+
 
 /**
- * XPlane constructor for a plane parallel to the y-axis
+ * YPlane constructor for a plane parallel to the y-axis
  * @param id the surface id
  * @param the location of the plane along the x-axis
  */
@@ -105,6 +118,20 @@ YPlane::YPlane(int id, double C): Plane(id, 1, 0, -C) {
 	_type = YPLANE;
 }
 
+//TODO
+std::vector<Surface*> YPlane::getNeighborPos() {
+    return std::vector<Surface*>();
+}
+
+//TODO
+std::vector<Surface*> YPlane::getNeighborNeg() {
+    return std::vector<Surface*>();
+}
+
+//TODO
+bool YPlane::positiveSense(Point* point) {
+    return false;
+}
 
 /**
  * Circle constructor
@@ -124,16 +151,16 @@ Circle::Circle(int id, double x, double y, double radius): Surface(id, CIRCLE) {
 	center.setY(y);
 }
 
-////TODO
-//std::vector<Surface*> Circle::getNeighborPos() {
-//	return NULL;
-//}
-//
-//
-////TODO
-//std::vector<Surface*> Circle::getNeighborNeg() {
-//	return NULL;
-//}
+//TODO
+std::vector<Surface*> Circle::getNeighborPos() {
+    return std::vector<Surface*>();
+}
+
+
+//TODO
+std::vector<Surface*> Circle::getNeighborNeg() {
+    return std::vector<Surface*>();
+}
 
 /**
  * Evaluate a point using the circle's quadratic surface equation
@@ -147,7 +174,7 @@ double Circle::evaluate(Point* point) {
 }
 
 
-////TODO
-//bool Circle::positiveSense(Point* point) {
-//	return NULL;
-//}
+//TODO
+bool Circle::positiveSense(Point* point) {
+    return false;
+}
