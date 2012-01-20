@@ -12,13 +12,24 @@
 #include <time.h>
 #include <stdio.h>
 #include <iostream>
-
+#include <stdlib.h>
+#include <sys/time.h>
 using namespace std;
 
+/*#ifdef __MACH__
+struct timeval {
+	time_t tv_sec;
+	suseconds_t tv_usec;
+};*/
 
 class Timer {
 protected:
-	timespec start_time, end_time;
+	#ifdef __MACH__ // OS X does not have clock_gettime, use clock_get_time
+	 	 timeval start_time, end_time;
+	#else
+		timespec start_time, end_time;
+	#endif
+
 	double elapsed_time;
 	bool running;
 public:
@@ -29,7 +40,11 @@ public:
 	void restart();
 	void reset();
 	double getTime();
-	double diff(timespec start, timespec end);
+	#ifdef __MACH__
+		double diff(timeval start, timeval end);
+	#else
+		double diff(timespec start, timespec end);
+	#endif
 };
 
 #endif /* TIMER_H_ */
