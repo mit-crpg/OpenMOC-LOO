@@ -21,7 +21,11 @@ int main(int argc, char *argv[]) {
 		std::cout << "OpenMOC takes 2 input arguments, but only " << argc - 1
 				<< " were given. " << std::endl;
 
+// Variable is unused, causes warning with -Wall
+#if 0
 	Geometry* geometry = new Geometry();
+#endif
+
 #if 0
 	Parser* parser = new Parser(argv[0], argv[1]);
 

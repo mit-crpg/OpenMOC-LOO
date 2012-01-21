@@ -1,4 +1,6 @@
 LANGUAGES += c++
+COMPILEOPTS += -Wall
+COMPILEOPTS += -Werror
 
 BINARIES += openmoc
 SOURCES += openmoc.cpp
