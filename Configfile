@@ -3,4 +3,5 @@ COMPILEOPTS += -Wall
 COMPILEOPTS += -Werror
 
 BINARIES    += openmoc
+LINKOPTS    += -lexpat
 SOURCES     += openmoc.cpp

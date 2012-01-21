@@ -12,6 +12,7 @@
 
 #include <iostream>
 #include "Geometry.h"
+#include "Parser.h"
 
 // TODO: This is just stubbed out for now
 int main(int argc, char *argv[]) {
@@ -26,10 +27,8 @@ int main(int argc, char *argv[]) {
 	Geometry* geometry = new Geometry();
 #endif
 
-#if 0
-	Parser* parser = new Parser(argv[0], argv[1]);
+	Parser* parser = new Parser("input.xml");
 
 	parser->parseMaterials();
 	parser->parseGeometry();
-#endif
 }
