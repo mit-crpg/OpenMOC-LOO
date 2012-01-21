@@ -1,25 +1,28 @@
 /*
  * Parser.h
  *
- *  Created on: Jan 18, 2012
- *      Author: William Boyd
+ *  Created on: Jan 21, 2012
+ *      Author: Lulu Li
  *				MIT, Course 22
- *              wboyd@mit.edu
+ *              lululi@mit.edu
  */
 
 #ifndef PARSER_H_
 #define PARSER_H_
 
 #include <expat.h>
+#include <iostream>
+#include <string>
+#include <stdio.h>
 
 /**
  * Parses XML Files
  */
 class Parser {
 private:
-
+    std::string geoxml;
 public:
-	Parser(const char *filename);
+    Parser(std::string geoxml);
 	virtual ~Parser();
 	void parseMaterials(void);
 	void parseGeometry(void);
