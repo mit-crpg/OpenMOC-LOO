@@ -11,6 +11,7 @@ CPP_SRCS += \
 ../src/Point.cpp \
 ../src/Surface.cpp \
 ../src/Timer.cpp \
+../src/Track.cpp \
 ../src/Universe.cpp \
 ../src/openmoc.cpp 
 
@@ -22,6 +23,7 @@ OBJS += \
 ./src/Point.o \
 ./src/Surface.o \
 ./src/Timer.o \
+./src/Track.o \
 ./src/Universe.o \
 ./src/openmoc.o 
 
@@ -33,6 +35,7 @@ CPP_DEPS += \
 ./src/Point.d \
 ./src/Surface.d \
 ./src/Timer.d \
+./src/Track.d \
 ./src/Universe.d \
 ./src/openmoc.d 
 
@@ -41,7 +44,7 @@ CPP_DEPS += \
 src/%.o: ../src/%.cpp
 	@echo 'Building file: $<'
 	@echo 'Invoking: GCC C++ Compiler'
-	g++ -O3 -Wall -c -fmessage-length=0 -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -o "$@" "$<"
+	g++ -Irt -O2 -g -Wall -c -fmessage-length=0 -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -o "$@" "$<"
 	@echo 'Finished building: $<'
 	@echo ' '
 

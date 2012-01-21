@@ -15,7 +15,11 @@
  * Surface types
  */
 enum surfaceType {
-	CIRCLE, XPLANE, YPLANE, PLANE, QUADRATIC
+	PLANE,
+	CIRCLE,
+	XPLANE,
+	YPLANE,
+	QUADRATIC
 };
 
 /**

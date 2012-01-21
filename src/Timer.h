@@ -16,11 +16,6 @@
 #include <sys/time.h>
 using namespace std;
 
-/*#ifdef __MACH__
-struct timeval {
-	time_t tv_sec;
-	suseconds_t tv_usec;
-};*/
 
 class Timer {
 protected:

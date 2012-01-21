@@ -23,7 +23,6 @@ void Timer::start() {
 		#else
 			clock_gettime(CLOCK_MONOTONIC, &this->start_time);
 		#endif
-//		clock_gettime(CLOCK_MONOTONIC, &this->start_time);
 		this->running = true;
 	}
 	return;
@@ -36,7 +35,6 @@ void Timer::stop() {
 		#else
 		  clock_gettime(CLOCK_MONOTONIC, &this->end_time);
 		#endif
-//		clock_gettime(CLOCK_MONOTONIC, &this->end_time);
 		this->running = false;
 		this->elapsed_time += this->diff(this->start_time, this->end_time);
 	}
@@ -73,9 +71,8 @@ double Timer::getTime() {
 		  clock_gettime(CLOCK_MONOTONIC, &this->start_time);
 		#endif
 
-//		timespec temp;
-//		clock_gettime(CLOCK_MONOTONIC, &temp);
 		this->elapsed_time += this->diff(this->start_time, temp);
+
 		#ifdef __MACH__
 			return this->elapsed_time * 1.0E-6;
 		#else

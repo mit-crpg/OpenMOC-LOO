@@ -11,7 +11,14 @@
 #define TRACK_H_
 
 #include <vector>
+#include <stdlib.h>
 #include "Point.h"
+
+struct segment {
+	double length;
+	int region;
+};
+
 
 class Track {
 private:
@@ -19,22 +26,23 @@ private:
 	Point _end;
 	double _phi;
 	double _weight;
-	std::vector<segment> _segments;
+	std::vector<segment*> _segments;
 public:
 	Track(double start_x, double start_y, double end_x,
 			double end_y, double phi);
 	virtual ~Track();
-    Point getEnd() const;
+    void setWeight(double weight);
+    Point* getEnd();
+    Point* getStart();
     double getPhi() const;
-    Point getStart() const;
     double getWeight() const;
+	segment* getSegment(int s);
+	int getNumSegments();
+	bool contains(Point* point);
+	void addSegment(segment* segment);
+	void clearSegments();
 };
 
 
-
-struct segment {
-	double length;
-	int region;
-};
 
 #endif /* TRACK_H_ */
