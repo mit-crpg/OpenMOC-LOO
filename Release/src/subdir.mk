@@ -9,6 +9,7 @@ CPP_SRCS += \
 ../src/Lattice.cpp \
 ../src/Material.cpp \
 ../src/Point.cpp \
+../src/Quadrature.cpp \
 ../src/Surface.cpp \
 ../src/Timer.cpp \
 ../src/Track.cpp \
@@ -21,6 +22,7 @@ OBJS += \
 ./src/Lattice.o \
 ./src/Material.o \
 ./src/Point.o \
+./src/Quadrature.o \
 ./src/Surface.o \
 ./src/Timer.o \
 ./src/Track.o \
@@ -33,6 +35,7 @@ CPP_DEPS += \
 ./src/Lattice.d \
 ./src/Material.d \
 ./src/Point.d \
+./src/Quadrature.d \
 ./src/Surface.d \
 ./src/Timer.d \
 ./src/Track.d \

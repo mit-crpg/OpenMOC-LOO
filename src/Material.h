@@ -12,6 +12,7 @@
 
 #include "configurations.h"
 
+
 class Material {
 private:
 	int _id;
