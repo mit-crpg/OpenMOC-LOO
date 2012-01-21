@@ -29,7 +29,7 @@ int main(int argc, char *argv[]) {
 	Geometry* geometry = new Geometry();
 #endif
 
-	Parser* parser = new Parser("geometry.xml");
+	Parser* parser = new Parser("xml-sample/1/geometry.xml");
 	parser->parseMaterials();
 	parser->parseGeometry();
 }

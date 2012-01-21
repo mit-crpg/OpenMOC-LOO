@@ -66,48 +66,53 @@ endElementCallback( void *context, const XML_Char *name __attribute__((__unused_
 /**
  * Default constructor
  */
-Parser::Parser (std::string geoxml) {
-XML_Parser parser;
-PContext ctxt;
-char c;
+Parser::Parser (const char* geoxml) {
+    XML_Parser parser;
+    PContext ctxt;
+    char c;
+    FILE* geofile;
+    
+    geofile = fopen(geoxml, "r");
 
 /* Create parser.
-* The only argument for XML_ParserCreate is encoding, and if it's NULL,
-* then encoding declared in the document is used.
-*/
-parser = XML_ParserCreate(NULL);
-if (!parser) {
-    fprintf(stderr, "Couldn't allocate memory for parser\n");
-    exit(-1);
-}
+ * The only argument for XML_ParserCreate is encoding, and if it's NULL,
+ * then encoding declared in the document is used.
+ */
+    parser = XML_ParserCreate(NULL);
+    if (!parser) {
+	fprintf(stderr, "Couldn't allocate memory for parser\n");
+	exit(-1);
+    }
 
 /* Set context that will be passed by the parsers to all handlers */
-ctxt.out = stdout;
-ctxt.depth = 0;
-ctxt.tagInd = 4;
-ctxt.attrInd = 2;
+    ctxt.out = stdout;
+    ctxt.depth = 1;
+    ctxt.tagInd = 4;
+    ctxt.attrInd = 3;
 
-XML_SetUserData(parser, &ctxt);
+    XML_SetUserData(parser, &ctxt);
  
 /* set callback for start element */
-XML_SetStartElementHandler(parser, &startElementCallback);
+    XML_SetStartElementHandler(parser, &startElementCallback);
  
 /* set callback for start element */
-XML_SetEndElementHandler(parser, &endElementCallback);
+    XML_SetEndElementHandler(parser, &endElementCallback);
  
 /* If you'd like to read input by large blocks, you can have a look at
  * XML_GetBuffer and XML_ParseBuffer functions.
  */
-while( EOF != (c = fgetc(stdin)) )
-{
-    parse(parser, c, 0);
-}
+    while( EOF != (c = fgetc(geofile)) )
+    {
+	parse(parser, c, 0);
+    }
  
 /* Finish parsing, note the last argument or XML_Parse */
-parse(parser, c, 1);
+    parse(parser, c, 1);
 
 /* Free resource used by expat */
-XML_ParserFree(parser);
+    XML_ParserFree(parser);
+    
+    fclose(geofile);
 }
 
 

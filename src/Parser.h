@@ -20,9 +20,9 @@
  */
 class Parser {
 private:
-    std::string geoxml;
+//    std::string geoxml;
 public:
-    Parser(std::string geoxml);
+    Parser(const char* geoxml);
 	virtual ~Parser();
 	void parseMaterials(void);
 	void parseGeometry(void);
