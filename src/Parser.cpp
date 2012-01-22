@@ -8,6 +8,9 @@
  */
 
 #include "Parser.h"
+#include <vector>
+#include <cstring>
+#include <string>
 
 static void parse(XML_Parser parser, char c, int isFinal)
 {
@@ -26,6 +29,7 @@ typedef struct {
     int depth;
     int tagInd;
     int attrInd;
+    std::vector<std::string *> *level;
 } PContext;
  
 /* callback for start element, e.g. <tag> */
@@ -33,9 +37,17 @@ static void XMLCALL startElementCallback( void *context, const XML_Char *name, c
 {
     int is_key = 1;
     PContext *ctxt;
- 
+    
     ctxt = (PContext*)context;
     fprintf(ctxt->out, "%*s%c%s\n", ctxt->depth, "", '>', name);
+    ctxt->level->push_back(new std::string(name)); /* copy name into level[key], need to free later */
+
+    for (std::vector<std::string *>::size_type i = 0; i < ctxt->level->size(); i++)
+    {
+	fprintf(ctxt->out, " %s", ctxt->level->at(i)->c_str());
+    }
+    fprintf(ctxt->out, "\n");
+
     while (*atts)
     {
 	if (is_key)
@@ -61,6 +73,7 @@ endElementCallback( void *context, const XML_Char *name __attribute__((__unused_
 {
     PContext *ctxt = (PContext*)context;
     ctxt->depth -= ctxt->tagInd;
+    ctxt->level->pop_back();
 }
 
 /**
@@ -87,8 +100,9 @@ Parser::Parser (const char* geoxml) {
 /* Set context that will be passed by the parsers to all handlers */
     ctxt.out = stdout;
     ctxt.depth = 1;
-    ctxt.tagInd = 4;
-    ctxt.attrInd = 3;
+    ctxt.tagInd = 1;
+    ctxt.attrInd = 1;
+    ctxt.level = new std::vector<std::string *>();
 
     XML_SetUserData(parser, &ctxt);
  
