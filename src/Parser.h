@@ -14,6 +14,8 @@
 #include <iostream>
 #include <string>
 #include <stdio.h>
+#include <stdlib.h>
+#include "Surface.h"
 
 /**
  * Parses XML Files

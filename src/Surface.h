@@ -36,8 +36,8 @@ public:
 	virtual std::vector<Surface*> getNeighborNeg() =0;
 	virtual double evaluate(Point* point) =0;
 	virtual bool positiveSense(Point* point) =0;
-    int getId() const;
-    surfaceType getType() const;
+	int getId() const;
+	surfaceType getType() const;
 //	virtual intersection(Track* track) =0;
 //	virtual intersection(Plane* plane) =0;
 };
