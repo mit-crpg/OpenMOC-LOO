@@ -15,33 +15,22 @@
 #include <stdlib.h>
 #include <iostream>
 
-/**
- * Level-based logging
- * Rough idea of levels:
- * 0 - NORMAL
- * 1 - INFO
- * 2 - WARNING
- * 3 - CRITICAL
- * 4 - ERROR
- * 5 - FATAL
- */
-
-#ifndef LOG_C
-	extern int log_level;
-#endif
-
-
 typedef enum logLevels {
 	NORMAL,
 	INFO,
 	WARNING,
 	CRITICAL,
-	ERROR
+	ERROR,
+	DEBUG,
+	RESULT
 } logLevel;
 
-void log_setlevel(int newlevel);
-void log_printf(logLevels level, const char *format, ...);
+void log_setlevel(logLevel newlevel);
+void log_printf(logLevel level, const char *format, ...);
 
-#define LOG(LOG_LEVEL, ...) log_print(LOG_LEVEL, __VA_ARGS__)
+#ifndef LOG_C
+	extern logLevel log_level;
+#endif
+
 
 #endif /* LOG_H_ */

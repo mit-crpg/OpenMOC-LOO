@@ -19,7 +19,6 @@ int main(int argc, char *argv[]) {
 
 	log_printf(NORMAL, "Starting OpenMOC...\n");
 
-
 #if 0
 	// The two command line arguments: materials.xml and geometry.xml
 	if (argc != 3)

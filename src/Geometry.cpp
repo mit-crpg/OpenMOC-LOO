@@ -33,6 +33,7 @@ Geometry::~Geometry() {
 void Geometry::addMaterial(Material* material) {
 	if (mapContainsKey(_materials, material->getId())) {
 		log_printf(ERROR, "Cannot add a second material with id = %d", material->getId());
+
 	}
 	else {
 		_materials.insert(std::pair<int, Material*>(material->getId(), material));

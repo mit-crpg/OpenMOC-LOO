@@ -13,13 +13,13 @@
 
 /* Level-based logging */
 
-int log_level = 0;
+logLevel log_level = NORMAL;
 
-void log_setlevel(int newlevel) {
+void log_setlevel(logLevel newlevel) {
     log_level = newlevel;
 }
 
-void log_printf(logLevels level, const char *format, ...) {
+void log_printf(logLevel level, const char *format, ...) {
     if (level >= log_level) {
     	va_list args;
 		va_start(args, format);
