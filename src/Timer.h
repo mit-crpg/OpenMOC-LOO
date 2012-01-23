@@ -13,15 +13,14 @@
 #include <time.h>
 #include <sys/time.h>
 
+#ifdef __MACH__		/* For OSX */
+#define timespec timeval
+#endif
+
 
 class Timer {
 protected:
-	#ifdef __MACH__ // OS X does not have clock_gettime, use clock_get_time
-	 	 timeval start_time, end_time;
-	#else
-		timespec start_time, end_time;
-	#endif
-
+	timespec start_time, end_time;
 	double elapsed_time;
 	bool running;
 public:
@@ -32,11 +31,7 @@ public:
 	void restart();
 	void reset();
 	double getTime();
-	#ifdef __MACH__
-		double diff(timeval start, timeval end);
-	#else
-		double diff(timespec start, timespec end);
-	#endif
+	double diff(timespec start, timespec end);
 };
 
 #endif /* TIMER_H_ */

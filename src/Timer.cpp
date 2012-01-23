@@ -101,12 +101,11 @@ double Timer::getTime() {
 
 	/* If the timer is currently running */
 	else {
+		timespec temp;
 		#ifdef __MACH__ 	/* For OSX */
-			timeval temp;
-			gettimeofday(&this->start_time, NULL);
+			gettimeofday(&temp, NULL);
 		#else				/* For Linux */
-		  timespec temp;
-		  clock_gettime(CLOCK_MONOTONIC, &this->start_time);
+		  clock_gettime(CLOCK_MONOTONIC, &temp);
 		#endif
 
 		this->elapsed_time += this->diff(this->start_time, temp);
@@ -119,28 +118,28 @@ double Timer::getTime() {
 	}
 }
 
-#ifdef __MACH__		/* For OSX */
-/**
- * Helper function which computes the time between the values of
- * two timeval structs.
- * @param start timeval representing the start time
- * @param end timeval representing the end time
- */
-double Timer::diff(timeval start, timeval end) {
-	timeval temp;
-
-	if ((end.tv_usec - start.tv_usec) < 0) {
-		temp.tv_sec = end.tv_sec - start.tv_sec - 1;
-		temp.tv_usec = 1.0E6 + end.tv_usec - start.tv_usec;
-	} else {
-		temp.tv_sec = end.tv_sec - start.tv_sec;
-		temp.tv_usec = end.tv_usec - start.tv_usec;
-	}
-
-	return (temp.tv_sec * 1.0E6 + temp.tv_usec);
-}
-
-#else			/* For Linux */
+//#ifdef __MACH__		/* For OSX */
+///**
+// * Helper function which computes the time between the values of
+// * two timeval structs.
+// * @param start timeval representing the start time
+// * @param end timeval representing the end time
+// */
+//double Timer::diff(timeval start, timeval end) {
+//	timeval temp;
+//
+//	if ((end.tv_usec - start.tv_usec) < 0) {
+//		temp.tv_sec = end.tv_sec - start.tv_sec - 1;
+//		temp.tv_usec = 1.0E6 + end.tv_usec - start.tv_usec;
+//	} else {
+//		temp.tv_sec = end.tv_sec - start.tv_sec;
+//		temp.tv_usec = end.tv_usec - start.tv_usec;
+//	}
+//
+//	return (temp.tv_sec * 1.0E6 + temp.tv_usec);
+//}
+//
+//#else			/* For Linux */
 
 /**
  * Helper function which computes the time between the values of
@@ -149,16 +148,35 @@ double Timer::diff(timeval start, timeval end) {
  * @param end timespec representing the end time
  */
 double Timer::diff(timespec start, timespec end) {
-	timespec temp;
+	double sec, delta;
+	#ifdef __MACH__
+		double usec;
+		delta = end.tv_usec - start.tv_usec;
+	#else
+		double nsec;
+		delta = end.tv_nsec - start.tv_nsec;
+	#endif
 
-	if ((end.tv_nsec - start.tv_nsec) < 0) {
-		temp.tv_sec = end.tv_sec - start.tv_sec - 1;
-		temp.tv_nsec = 1.0E9 + end.tv_nsec - start.tv_nsec;
+	if (delta < 0) {
+		sec = end.tv_sec - start.tv_sec;
+		#ifdef __MACH__
+			usec = 1.0E6 + delta;
+		#else
+			nsec = 1.0E9 + delta;
+		#endif
+
 	} else {
-		temp.tv_sec = end.tv_sec - start.tv_sec;
-		temp.tv_nsec = end.tv_nsec - start.tv_nsec;
+		sec = end.tv_sec - start.tv_sec;
+		#ifdef __MACH__
+			usec = delta;
+		#else
+			nsec = delta;
+		#endif
 	}
 
-	return (temp.tv_sec * 1.0E9 + temp.tv_nsec);
+	#ifdef __MACH__
+		return (sec * 1.0E6 + usec);
+	#else
+		return(sec*1.0E9 + nsec);
+	#endif
 }
-#endif
