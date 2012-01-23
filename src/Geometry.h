@@ -13,7 +13,6 @@
 #include <map>
 #include <utility>
 #include <exception>
-#include <stdlib.h>
 #include "Material.h"
 #include "Surface.h"
 #include "Cell.h"

@@ -49,7 +49,7 @@ Lattice::~Lattice() {
  */
 void Lattice::addUniverse(int x, int y, int universe) {
 	_universes.at(x).at(y) = universe;
-	LOG(1, "Added universe with id = %d to lattice with id = %d", universe, _id);
+	log_printf(INFO, "Added universe with id = %d to lattice with id = %d", universe, _id);
 }
 
 

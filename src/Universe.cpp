@@ -32,7 +32,7 @@ Universe::~Universe() {
 void Universe::addCell(int cell) {
 	_cells.push_back(cell);
 	_num_cells++;
-	LOG(log_level, "Added cell with id = %d to universe with id = %d", cell, _id);
+	log_printf(INFO, "Added cell with id = %d to universe with id = %d", cell, _id);
 }
 
 

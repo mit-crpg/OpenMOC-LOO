@@ -12,6 +12,8 @@
 
 #include <stdio.h>
 #include <stdarg.h>
+#include <stdlib.h>
+#include <iostream>
 
 /**
  * Level-based logging
@@ -23,10 +25,22 @@
  * 4 - ERROR
  * 5 - FATAL
  */
-static int log_level = 0;
+
+#ifndef LOG_C
+	extern int log_level;
+#endif
+
+
+typedef enum logLevels {
+	NORMAL,
+	INFO,
+	WARNING,
+	CRITICAL,
+	ERROR
+} logLevel;
 
 void log_setlevel(int newlevel);
-void log_print(int level, const char *format, ...);
+void log_printf(logLevels level, const char *format, ...);
 
 #define LOG(LOG_LEVEL, ...) log_print(LOG_LEVEL, __VA_ARGS__)
 

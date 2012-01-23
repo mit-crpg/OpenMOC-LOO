@@ -101,11 +101,10 @@ segment* Track::getSegment(int segment) {
 		return _segments.at(segment);
 
 	/* If track doesn't contain this segment, exits program */
-	else {
-		LOG(log_level, "Attempted to retrieve segment s = %d but track only"
-				"has %d segments\nExiting program\n", segment, _segments.size());
-		exit(1);
-	}
+	else
+		log_printf(ERROR, "Attempted to retrieve segment s = %d but track only"
+				"has %d segments", segment, _segments.size());
+	exit(0);
 }
 
 /**

@@ -43,11 +43,9 @@ Quadrature::Quadrature(quadratureType type) {
 			_multiples[1] = _sinthetas[1] * _weights[1];
 			_multiples[2] = _sinthetas[2] * _weights[2];
 		}
-		else {
-			LOG(log_level, "Tabuchi type quadrature supports 1, 2, or 3 polar"
-					" angles but %d are defined\nExiting program\n", NUM_POLAR_ANGLES);
-			exit(1);
-		}
+		else
+			log_printf(ERROR, "Tabuchi type quadrature supports 1, 2, or 3 polar"
+					" angles but %d are defined", NUM_POLAR_ANGLES);
 	}
 
 	/* If Leonard */
@@ -73,17 +71,15 @@ Quadrature::Quadrature(quadratureType type) {
 			_multiples[2] = _sinthetas[2] * _weights[2];
 		}
 		else {
-			LOG(log_level, "Leonard type quadrature supports 2, or 3 polar"
+			log_printf(ERROR, "Leonard type quadrature supports 2, or 3 polar"
 					" angles but %d are defined\nExiting program\n", NUM_POLAR_ANGLES);
 			exit(1);
 		}
 
 	}
-	else {
-		LOG(log_level, "Leonard and Tabuchi quadrature types supported, but unknown"
-				" type given\nExiting Program\n");
-		exit(1);
-	}
+	else
+		log_printf(ERROR, "Leonard and Tabuchi quadrature types supported, but unknown"
+				" type given");
 }
 
 
@@ -112,11 +108,10 @@ double Quadrature::getSinTheta(int n) {
 	if (n > -1 && n < NUM_POLAR_ANGLES)
 		return _sinthetas[n];
 	else {
-		LOG(log_level, "Attempted to retrieve sintheta for polar angle = %d"
-				" but only %d polar angles are defined\nExiting program\n",
-				NUM_POLAR_ANGLES);
-		exit(1);
+		log_printf(ERROR, "Attempted to retrieve sintheta for polar angle = %d"
+				" but only %d polar angles are defined", NUM_POLAR_ANGLES);
 	}
+	exit(0);
 }
 
 
@@ -128,13 +123,10 @@ double Quadrature::getSinTheta(int n) {
 double Quadrature::getWeight(int n) {
 	if (n > -1 && n < NUM_POLAR_ANGLES)
 		return _weights[n];
-	else {
-		LOG(log_level, "Attempted to retrieve the weight for polar angle = %d"
-				" but only %d polar angles are defined\nExiting program\n",
-				NUM_POLAR_ANGLES);
-		exit(1);
-	}
-
+	else
+		log_printf(ERROR, "Attempted to retrieve the weight for polar angle = %d"
+				" but only %d polar angles are defined", NUM_POLAR_ANGLES);
+	exit(0);
 }
 
 
@@ -146,12 +138,10 @@ double Quadrature::getWeight(int n) {
 double Quadrature::getMultiple(int n) {
 	if (n > -1 && n < NUM_POLAR_ANGLES)
 		return _multiples[n];
-	else {
-		LOG(log_level, "Attempted to retrieve the multiple for polar angle = %d"
-				" but only %d polar angles are defined\nExiting program\n",
-				NUM_POLAR_ANGLES);
-		exit(1);
-	}
+	else
+		log_printf(ERROR, "Attempted to retrieve the multiple for polar angle = %d"
+				" but only %d polar angles are defined", NUM_POLAR_ANGLES);
+	exit(0);
 }
 
 

@@ -32,13 +32,11 @@ Geometry::~Geometry() {
  */
 void Geometry::addMaterial(Material* material) {
 	if (mapContainsKey(_materials, material->getId())) {
-		LOG(log_level, "Cannot add a second material with id = %d\n"
-				"Exiting program\n", material->getId());
-		exit(1);
+		log_printf(ERROR, "Cannot add a second material with id = %d", material->getId());
 	}
 	else {
 		_materials.insert(std::pair<int, Material*>(material->getId(), material));
-		LOG(1, "Added material with id = %d to geometry\n", material->getId());
+		log_printf(INFO, "Added material with id = %d to geometry\n", material->getId());
 	}
 }
 
@@ -49,13 +47,13 @@ void Geometry::addMaterial(Material* material) {
  * @return a pointer to the material object
  */
 Material* Geometry::getMaterial(int id) {
-	if (mapContainsKey(_materials, id))
+	try {
 		return _materials.at(id);
-	else {
-		LOG(log_level, "Attempted to retrieve material with id = %d which does "
-				"not exist\nExiting program\n", id);
-		exit(1);
 	}
+	catch (std::exception & e) {
+		log_printf(ERROR, "Attempted to retrieve material with id = %d which does not exist", id);
+	}
+	exit(0);
 }
 
 
@@ -65,13 +63,11 @@ Material* Geometry::getMaterial(int id) {
  */
 void Geometry::addSurface(Surface* surface) {
 	if (mapContainsKey(_surfaces, surface->getId())) {
-		LOG(log_level, "Cannot add a second surface with id = %d\n"
-				"Exiting program\n", surface->getId());
-		exit(1);
+		log_printf(ERROR, "Cannot add a second surface with id = %d", surface->getId());
 	}
 	else {
 		_surfaces.insert(std::pair<int, Surface*>(surface->getId(), surface));
-		LOG(1, "Added surface with id = %d to geometry\n", surface->getId());
+		log_printf(INFO, "Added surface with id = %d to geometry\n", surface->getId());
 	}
 }
 
@@ -82,13 +78,14 @@ void Geometry::addSurface(Surface* surface) {
  * @return a pointer to the surface object
  */
 Surface* Geometry::getSurface(int id) {
-	if (mapContainsKey(_surfaces, id))
+	try {
 		return _surfaces.at(id);
-	else {
-		LOG(log_level, "Attempted to retrieve surface with id = %d which has"
-				" not been declared\nExiting program\n", id);
-		exit(1);
 	}
+	catch (std::exception & e) {
+		log_printf(ERROR, "Attempted to retrieve surface with id = %d which has"
+				" not been declared", id);
+	}
+	exit(0);
 }
 
 
@@ -99,31 +96,23 @@ Surface* Geometry::getSurface(int id) {
  */
 void Geometry::addCell(Cell* cell) {
 	/* If a cell with the same id already exists */
-	if (mapContainsKey(_cells, cell->getId())) {
-		LOG(log_level, "Cannot add a second cell with id = %d\n"
-				"Exiting program\n", cell->getId());
-		exit(1);
-	}
+	if (mapContainsKey(_cells, cell->getId()))
+		log_printf(ERROR, "Cannot add a second cell with id = %d\n", cell->getId());
 
 	/* If the cell's material does not exist */
-	else if (cell->getMaterial() != -1E5 && !mapContainsKey(_materials, cell->getMaterial())) {
-		LOG(log_level, "Attempted to create cell with material with id = %d, but"
-				"material does not exist\nExiting program\n", cell->getMaterial());
-		exit(1);
-	}
+	else if (cell->getMaterial() != -1E5 && !mapContainsKey(_materials, cell->getMaterial()))
+		log_printf(ERROR, "Attempted to create cell with material with id = %d, but "
+				"material does not exist", cell->getMaterial());
 
 	/* Checks whether the cell's surfaces exist */
 	for (int i=0; i < cell->getNumSurfaces(); i++) {
-		if (mapContainsKey(_surfaces, abs(cell->getSurfaces().at(i)))) {
-			LOG(log_level, "Attempted to create cell with surface id = %d, but "
-					"surface does not exist\nExiting Program\n",
-					cell->getSurfaces().at(i));
-			exit(1);
-		}
+		if (mapContainsKey(_surfaces, abs(cell->getSurfaces().at(i))))
+			log_printf(ERROR, "Attempted to create cell with surface id = %d, but "
+					"surface does not exist", cell->getSurfaces().at(i));
 	}
 
 	_cells.insert(std::pair<int, Cell*>(cell->getId(), cell));
-	LOG(1, "Added cell with id = %d to geometry\n", cell->getId());
+	log_printf(INFO, "Added cell with id = %d to geometry\n", cell->getId());
 
 	/* Checks if the universe the cell in exists and if not, creates a new universe */
 	if (!mapContainsKey(_universes, cell->getUniverse())) {
@@ -139,13 +128,14 @@ void Geometry::addCell(Cell* cell) {
  * @return a pointer to the cell object
  */
 Cell* Geometry::getCell(int id) {
-	if (mapContainsKey(_cells, id))
-		return _cells.at(id);
-	else {
-		LOG(log_level, "Attempted to retrieve cell with id = %d which has not been "
-				"declared\n Exiting program\n", id);
-		exit(1);
+	try {
+		log_printf(ERROR, "Attempted to retrieve surface with id = %d which has"
+				" not been declared", id);
 	}
+	catch (std::exception & e) {
+		log_printf(ERROR, "Attempted to retrieve cell with id = %d which has not been declared", id);
+	}
+	exit(0);
 }
 
 
@@ -154,14 +144,11 @@ Cell* Geometry::getCell(int id) {
  * @param universe a pointer to the universe object
  */
 void Geometry::addUniverse(Universe* universe) {
-	if (mapContainsKey(_universes, universe->getId())) {
-		LOG(log_level, "Cannot add a second universe with id = %d\n"
-				"Exiting program\n", universe->getId());
-		exit(1);
-	}
+	if (mapContainsKey(_universes, universe->getId()))
+		log_printf(ERROR, "Cannot add a second universe with id = %d", universe->getId());
 	else {
 		_universes.insert(std::pair<int, Universe*>(universe->getId(), universe));
-		LOG(1, "Added universe with id = %d to geometry\n", universe->getId());
+		log_printf(INFO, "Added universe with id = %d to geometry\n", universe->getId());
 	}
 }
 
@@ -172,13 +159,13 @@ void Geometry::addUniverse(Universe* universe) {
  * @return a pointer to the universe object
  */
 Universe* Geometry::getUniverse(int id) {
-	if (mapContainsKey(_universes, id))
+	try {
 		return _universes.at(id);
-	else {
-		LOG(log_level, "Attempted to retrieve universe with id = %d which has"
-				"not been declared\nExiting program\n", id);
-		exit(1);
 	}
+	catch (std::exception & e) {
+		log_printf(ERROR, "Attempted to retrieve universe with id = %d which has not been declared", id);
+	}
+	exit(0);
 }
 
 
@@ -189,31 +176,25 @@ Universe* Geometry::getUniverse(int id) {
  */
 void Geometry::addLattice(Lattice* lattice) {
 	/* If the lattices container already has a lattice with the same id */
-	if (mapContainsKey(_lattices, lattice->getId())) {
-		LOG(log_level, "Cannot add a second lattice with id = %d\n"
-				"Exiting program\n", lattice->getId());
-		exit(1);
-	}
+	if (mapContainsKey(_lattices, lattice->getId()))
+		log_printf(ERROR, "Cannot add a second lattice with id = %d", lattice->getId());
+
 	/* If the universes container already has a universe with the same id */
-	else if(mapContainsKey(_universes, lattice->getId())) {
-		LOG(log_level, "Cannot add a second universe (lattice) with id = %d\n"
-				"Exiting program\n", lattice->getId());
-		exit(1);
-	}
+	else if(mapContainsKey(_universes, lattice->getId()))
+		log_printf(ERROR, "Cannot add a second universe (lattice) with id = %d", lattice->getId());
 	/* If the lattice contains a universe which does not exist */
 	for (int i = 0; i < lattice->getNumX(); i++) {
 		for (int j = 0; j < lattice->getNumY(); j++) {
 			if (!mapContainsKey(_universes, lattice->getUniverses().at(i).at(j)))
-				LOG(log_level, "Attempted to create lattice containing universe"
-						"with id = %d, but universe does not exist\nExiting program\n",
+				log_printf(ERROR, "Attempted to create lattice containing universe"
+						"with id = %d, but universe does not exist",
 						lattice->getUniverses().at(i).at(j));
-				exit(1);
 		}
 	}
 
 	_lattices.insert(std::pair<int, Lattice*>(lattice->getId(), lattice));
 	_universes.insert(std::pair<int, Lattice*>(lattice->getId(), lattice));
-	LOG(1, "Added lattice with id = %d to geometry\n", lattice->getId());
+	log_printf(INFO, "Added lattice with id = %d to geometry\n", lattice->getId());
 }
 
 
@@ -223,13 +204,14 @@ void Geometry::addLattice(Lattice* lattice) {
  * @return a pointer to the lattice object
  */
 Lattice* Geometry::getLattice(int id) {
-	if (mapContainsKey(_lattices, id))
+	try {
 		return _lattices.at(id);
-	else {
-		LOG(log_level, "Attempted to retrieve lattice with id = %d which has"
-				"not been declared\nExiting program\n", id);
-		exit(1);
 	}
+	catch (std::exception & e) {
+		log_printf(ERROR, "Attempted to retrieve lattice with id = %d which has"
+				"not been declared", id);
+	}
+	exit(0);
 }
 
 
