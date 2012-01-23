@@ -13,6 +13,7 @@
 #include <vector>
 #include <stdlib.h>
 #include "Point.h"
+#include "log.h"
 
 struct segment {
 	double length;

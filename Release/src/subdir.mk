@@ -8,12 +8,14 @@ CPP_SRCS += \
 ../src/Geometry.cpp \
 ../src/Lattice.cpp \
 ../src/Material.cpp \
+../src/Parser.cpp \
 ../src/Point.cpp \
 ../src/Quadrature.cpp \
 ../src/Surface.cpp \
 ../src/Timer.cpp \
 ../src/Track.cpp \
 ../src/Universe.cpp \
+../src/log.cpp \
 ../src/openmoc.cpp 
 
 OBJS += \
@@ -21,12 +23,14 @@ OBJS += \
 ./src/Geometry.o \
 ./src/Lattice.o \
 ./src/Material.o \
+./src/Parser.o \
 ./src/Point.o \
 ./src/Quadrature.o \
 ./src/Surface.o \
 ./src/Timer.o \
 ./src/Track.o \
 ./src/Universe.o \
+./src/log.o \
 ./src/openmoc.o 
 
 CPP_DEPS += \
@@ -34,12 +38,14 @@ CPP_DEPS += \
 ./src/Geometry.d \
 ./src/Lattice.d \
 ./src/Material.d \
+./src/Parser.d \
 ./src/Point.d \
 ./src/Quadrature.d \
 ./src/Surface.d \
 ./src/Timer.d \
 ./src/Track.d \
 ./src/Universe.d \
+./src/log.d \
 ./src/openmoc.d 
 
 

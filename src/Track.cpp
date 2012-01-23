@@ -96,18 +96,17 @@ double Track::getWeight() const {
  * @return a pointer to the requested segment
  */
 segment* Track::getSegment(int segment) {
-	// Checks to see if segments container contains this segment index
+	/* Checks to see if segments container contains this segment index */
 	if ((int)_segments.size() <= segment)
 		return _segments.at(segment);
 
-	//If track doesn't contain this segment, exits program
+	/* If track doesn't contain this segment, exits program */
 	else {
-		std::cout << "Tried to access segment s = " << segment << " when track only has";
-		std::cout << _segments.size() << " segments. Exiting program. " << std::endl;
+		LOG(log_level, "Attempted to retrieve segment s = %d but track only"
+				"has %d segments\nExiting program\n", segment, _segments.size());
 		exit(1);
 	}
 }
-
 
 /**
  * Return the number of segments along this track

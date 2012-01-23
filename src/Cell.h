@@ -11,6 +11,7 @@
 #define CELL_H_
 
 #include <vector>
+#include "log.h"
 
 enum cellType {
 	MATERIAL,
@@ -29,10 +30,9 @@ private:
 	int _num_surfaces;
 	std::vector<int> _surfaces;     // positive or negative ids depending on side of surface
 public:
-	Cell(int id, cellType type, int num_surfaces, int universe, int universe_fill,
-			int material);
-	virtual ~Cell();
-	void addSurface(int surface);
+	Cell(int id, cellType type, int num_surfaces);
+    virtual ~Cell();
+    void addSurface(int surface);
     int getId() const;
     int getMaterial() const;
     int getNumSurfaces() const;
@@ -42,6 +42,9 @@ public:
     int getUniverse() const;
     int getUniverseFill() const;
     void setParentCell(int parentCell);
+    void setMaterial(int material);
+    void setUniverse(int universe);
+    void setUniverseFill(int universeFill);
 };
 
 #endif /* CELL_H_ */

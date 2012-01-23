@@ -11,6 +11,7 @@
 #define MATERIAL_H_
 
 #include "configurations.h"
+#include "log.h"
 
 
 class Material {

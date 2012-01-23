@@ -19,6 +19,8 @@
 #include "Cell.h"
 #include "Universe.h"
 #include "Lattice.h"
+#include "log.h"
+
 
 class Geometry {
 private:

@@ -49,6 +49,7 @@ Lattice::~Lattice() {
  */
 void Lattice::addUniverse(int x, int y, int universe) {
 	_universes.at(x).at(y) = universe;
+	LOG(1, "Added universe with id = %d to lattice with id = %d", universe, _id);
 }
 
 
@@ -91,11 +92,9 @@ int Lattice::getNumY() const {
  * Return the origin of the lattice
  * @return the origin of the lattice
  */
-#if 0
-Point Lattice::getOrigin() const {
-    return _origin;
+Point* Lattice::getOrigin() {
+    return &_origin;
 }
-#endif
 
 
 /**

@@ -13,6 +13,7 @@
 #include <stdlib.h>
 #include <iostream>
 #include "configurations.h"
+#include "log.h"
 
 enum quadratureType {
 	LEONARD,

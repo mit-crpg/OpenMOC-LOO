@@ -18,14 +18,17 @@
  * @param material the material filling this cell (0 if filled by universe)
  * @param num_surfaces the number of surfaces in this cell
  */
-Cell::Cell(int id, cellType type, int num_surfaces, int universe, int universe_fill,
-		int material) {
+Cell::Cell(int id, cellType type, int num_surfaces) {
 	_id = id;
 	_type = type;
 	_num_surfaces = num_surfaces;
-	_universe_fill = universe_fill;
-	_universe = universe;
-	_material = material;
+
+	/* The following are default values. These values are dependent on
+	 * whether the cell is of MATERIAL or FILL type
+	 */
+	_universe_fill = -1E5;
+	_universe = -1E5;
+	_material = -10E5;
 }
 
 
@@ -117,6 +120,33 @@ int Cell::getUniverse() const {
  */
 int Cell::getUniverseFill() const {
     return _universe_fill;
+}
+
+
+/**
+ * Sets the material inside the cell
+ * @param material the material's id
+ */
+void Cell::setMaterial(int material) {
+    _material = material;
+}
+
+
+/**
+ * Set the universe that this cell is inside of
+ * @param the universe's id
+ */
+void Cell::setUniverse(int universe) {
+    _universe = universe;
+}
+
+
+/**
+ * Sets the universe which fills this cell (if cell is of FILL type only)
+ * @param the universe's id
+ */
+void Cell::setUniverseFill(int universeFill) {
+    _universe_fill = universeFill;
 }
 
 

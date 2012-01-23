@@ -10,6 +10,7 @@
 
 #include <vector>
 #include "Point.h"
+#include "log.h"
 
 class Universe {
 private:

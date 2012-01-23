@@ -13,14 +13,15 @@
 #include <vector>
 #include "Point.h"
 #include "Universe.h"
+#include "log.h"
 
 class Lattice: public Universe {
 private:
-	int _id;                       // The universe id
-	int _level;                    // The universe level
-	int _num_x;						// Number of lattice cells in x direction
-	int _num_y;						// Number of lattice cells in y direction
-	Point _origin;					// translation origin (global coordinates within core)
+	int _id;
+	int _level;
+	int _num_x;
+	int _num_y;
+	Point _origin;
 	double _width_x;
 	double _width_y;
 	std::vector< std::vector<int> > _universes;
@@ -32,7 +33,7 @@ public:
     int getLevel() const;
     int getNumX() const;
     int getNumY() const;
-    Point getOrigin() const;
+    Point* getOrigin();
     std::vector<std::vector<int> > getUniverses() const;
     double getWidthX() const;
     double getWidthY() const;

@@ -2,19 +2,16 @@
  * Timer.h
  *
  *  Created on: Jan 2, 2012
- *      Author: wbinventor
+ *      Author: William Boyd
+ *				MIT, Course 22
+ *              wboyd@mit.edu
  */
 
 #ifndef TIMER_H_
 #define TIMER_H_
 
-#include <math.h>
 #include <time.h>
-#include <stdio.h>
-#include <iostream>
-#include <stdlib.h>
 #include <sys/time.h>
-using namespace std;
 
 
 class Timer {

@@ -16,7 +16,7 @@
  */
 Quadrature::Quadrature(quadratureType type) {
 
-	// If TabuchiYamomoto
+	/* If TabuchiYamomoto */
 	if (type == TABUCHI) {
 		_type = TABUCHI;
 		if (NUM_POLAR_ANGLES == 1) {
@@ -44,12 +44,13 @@ Quadrature::Quadrature(quadratureType type) {
 			_multiples[2] = _sinthetas[2] * _weights[2];
 		}
 		else {
-			std::cout << "Tabuchi type quadrature supports 1, 2, or 3 polar angles but " << NUM_POLAR_ANGLES << " are defined. Exiting program" << std::endl;
+			LOG(log_level, "Tabuchi type quadrature supports 1, 2, or 3 polar"
+					" angles but %d are defined\nExiting program\n", NUM_POLAR_ANGLES);
 			exit(1);
 		}
 	}
 
-	// If Leonard
+	/* If Leonard */
 	else if (type == LEONARD) {
 		_type = LEONARD;
 		if (NUM_POLAR_ANGLES == 2) {
@@ -72,13 +73,15 @@ Quadrature::Quadrature(quadratureType type) {
 			_multiples[2] = _sinthetas[2] * _weights[2];
 		}
 		else {
-			std::cout << "Leonard type quadrature supports 2 or 3 polar angles but " << NUM_POLAR_ANGLES << " are defined. Exiting program" << std::endl;
+			LOG(log_level, "Leonard type quadrature supports 2, or 3 polar"
+					" angles but %d are defined\nExiting program\n", NUM_POLAR_ANGLES);
 			exit(1);
 		}
 
 	}
 	else {
-		std::cout << "Leonard and Tabuchi quadrature types supported, but " << type << " was given. Exiting program" << std::endl;
+		LOG(log_level, "Leonard and Tabuchi quadrature types supported, but unknown"
+				" type given\nExiting Program\n");
 		exit(1);
 	}
 }
@@ -109,7 +112,9 @@ double Quadrature::getSinTheta(int n) {
 	if (n > -1 && n < NUM_POLAR_ANGLES)
 		return _sinthetas[n];
 	else {
-		std::cout << NUM_POLAR_ANGLES << " are defined but you requested the sintheta for polar angle " << n << ". Exiting program." << std::endl;
+		LOG(log_level, "Attempted to retrieve sintheta for polar angle = %d"
+				" but only %d polar angles are defined\nExiting program\n",
+				NUM_POLAR_ANGLES);
 		exit(1);
 	}
 }
@@ -124,7 +129,9 @@ double Quadrature::getWeight(int n) {
 	if (n > -1 && n < NUM_POLAR_ANGLES)
 		return _weights[n];
 	else {
-		std::cout << NUM_POLAR_ANGLES << " are defined but you requested the weight for polar angle " << n << ". Exiting program." << std::endl;
+		LOG(log_level, "Attempted to retrieve the weight for polar angle = %d"
+				" but only %d polar angles are defined\nExiting program\n",
+				NUM_POLAR_ANGLES);
 		exit(1);
 	}
 
@@ -140,7 +147,9 @@ double Quadrature::getMultiple(int n) {
 	if (n > -1 && n < NUM_POLAR_ANGLES)
 		return _multiples[n];
 	else {
-		std::cout << NUM_POLAR_ANGLES << " are defined but you requested the multiple for polar angle " << n << ". Exiting program." << std::endl;
+		LOG(log_level, "Attempted to retrieve the multiple for polar angle = %d"
+				" but only %d polar angles are defined\nExiting program\n",
+				NUM_POLAR_ANGLES);
 		exit(1);
 	}
 }
