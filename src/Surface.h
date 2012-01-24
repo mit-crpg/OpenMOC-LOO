@@ -10,7 +10,12 @@
 
 #include <vector>
 #include "Point.h"
+#include "Track.h"
+
 #include "log.h"
+
+/* Define for compiler */
+class Plane;
 
 /**
  * Surface types
@@ -33,14 +38,13 @@ protected:
 public:
 	Surface(int id, surfaceType type);
 	virtual ~Surface();
+	int getId() const;
+	surfaceType getType() const;
 	virtual std::vector<Surface*> getNeighborPos() =0;
 	virtual std::vector<Surface*> getNeighborNeg() =0;
 	virtual double evaluate(Point* point) =0;
-	virtual bool positiveSense(Point* point) =0;
-	int getId() const;
-	surfaceType getType() const;
-//	virtual intersection(Track* track) =0;
-//	virtual intersection(Plane* plane) =0;
+	virtual int intersection(Track* track, Point* points) =0;
+	virtual int intersection(Plane* plane, Point* points) =0;
 };
 
 /**
@@ -50,12 +54,14 @@ class Plane: public Surface {
 private:
 	double _A, _B, _C;
 	friend class Surface;
+	friend class Circle;
 public:
 	Plane(int id, double A, double B, double C);
 	std::vector<Surface*> getNeighborPos();
 	std::vector<Surface*> getNeighborNeg();
 	double evaluate(Point* point);
-	bool positiveSense(Point* point);
+	int intersection(Track* track, Point* points);
+	int intersection(Plane* plane, Point* points);
 };
 
 /**
@@ -64,13 +70,10 @@ public:
 class XPlane: public Plane {
 private:
 	double _A, _B, _C;
-//	friend class Plane;
-//	friend class Surface;
 public:
 	XPlane(int id, double C);
 	std::vector<Surface*> getNeighborPos();
 	std::vector<Surface*> getNeighborNeg();
-	bool positiveSense(Point* point);
 };
 
 /**
@@ -83,9 +86,6 @@ public:
 	YPlane(int id, double C);
 	std::vector<Surface*> getNeighborPos();
 	std::vector<Surface*> getNeighborNeg();
-	bool positiveSense(Point* point);
-//	friend class Plane;
-//	friend class Surface;
 };
 
 /**
@@ -97,12 +97,14 @@ private:
 	double _radius;
 	double _A, _B, _C, _D, _E;
 	friend class Surface;
+	friend class Plane;
 public:
 	Circle(int id, double x, double y, double radius);
 	std::vector<Surface*> getNeighborPos();
 	std::vector<Surface*> getNeighborNeg();
 	double evaluate(Point* point);
-	bool positiveSense(Point* point);
+	int intersection(Track* track, Point* points);
+	int intersection(Plane* plane, Point* points);
 };
 
 #endif /* SURFACE_H_ */
