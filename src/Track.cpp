@@ -10,19 +10,11 @@
 #include "Track.h"
 
 
-/**
- * Track constructor
- * @param start_x the x-coordinate at the starting point
- * @param start_y the y-coordinate at the starting point
- * @param end_x the x-coordinate at the ending point
- * @param end_y the y-coordinate at the ending point
+/*
+ * Default track constructor
  */
-Track::Track(double start_x, double start_y, double end_x,
-		double end_y, double phi) {
-	_start.setCoords(start_x, start_y);
-	_end.setCoords(end_x, end_y);
-	_phi = phi;
-}
+Track::Track() { }
+
 
 
 /**
@@ -30,6 +22,21 @@ Track::Track(double start_x, double start_y, double end_x,
  */
 Track::~Track() {
 	clearSegments();
+}
+
+
+/**
+ * Set the values for the track' start and end point and angle
+ * @param start_x the x-coordinate at the starting point
+ * @param start_y the y-coordinate at the starting point
+ * @param end_x the x-coordinate at the ending point
+ * @param end_y the y-coordinate at the ending point
+ */
+void Track::setValues(double start_x, double start_y, double end_x,
+		double end_y, double phi) {
+	_start.setCoords(start_x, start_y);
+	_end.setCoords(end_x, end_y);
+	_phi = phi;
 }
 
 
@@ -50,6 +57,44 @@ void Track::setWeight(double weight) {
  */
 void Track::addSegment(segment* segment) {
 	_segments.push_back(segment);
+}
+
+
+/**
+ * Sets whether the incoming flux is at the beginning (false) or
+ * end (true) of this Track
+ * @param relf_in - beginning (false)/end (true)
+ */
+void Track::setReflIn(bool refl_in) {
+    _refl_in = refl_in;
+}
+
+
+/**
+ * Sets whether the outgoing flux is at the beginning (false) or
+ * end (true) of the outgoing Track
+ * @param relf_out - beginning (false)/end (true)
+ */
+void Track::setReflOut(bool refl_out) {
+    _refl_out = refl_out;
+}
+
+
+/**
+ * Sets the incoming track for boundary conditions
+ * @param track_in pointer to the incoming track
+ */
+void Track::setTrackIn(Track *track_in) {
+    _track_in = track_in;
+}
+
+
+/**
+ * Sets the outgoing track for boundary conditions
+ * @param track_out pointer to the outgoing track
+ */
+void Track::setTrackOut(Track *track_out) {
+    _track_out = track_out;
 }
 
 
@@ -86,6 +131,45 @@ double Track::getPhi() const {
  */
 double Track::getWeight() const {
     return _weight;
+}
+
+
+
+/**
+ * Returns the incoming track
+ * @return a pointer to the incoming track
+ */
+Track *Track::getTrackIn() const {
+    return _track_in;
+}
+
+
+/**
+ * Returns the outgoing track
+ * @return a pointer to the outgoing track
+ */
+Track *Track::getTrackOut() const {
+    return _track_out;
+}
+
+
+/**
+ * Returns whether the incoming flux is at the start (false) or end
+ *  (true) of this Track
+ *  @return start (false) or end (true)
+ */
+bool Track::isReflIn() const {
+    return _refl_in;
+}
+
+
+/**
+ * Returns whether the outgoing flux is at the start (false) or end
+ * (true) of the outgoing Track
+ * @return start (false) or end (true)
+ */
+bool Track::isReflOut() const {
+    return _refl_out;
 }
 
 

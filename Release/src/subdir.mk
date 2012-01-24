@@ -14,6 +14,7 @@ CPP_SRCS += \
 ../src/Surface.cpp \
 ../src/Timer.cpp \
 ../src/Track.cpp \
+../src/TrackGenerator.cpp \
 ../src/Universe.cpp \
 ../src/log.cpp \
 ../src/openmoc.cpp 
@@ -29,6 +30,7 @@ OBJS += \
 ./src/Surface.o \
 ./src/Timer.o \
 ./src/Track.o \
+./src/TrackGenerator.o \
 ./src/Universe.o \
 ./src/log.o \
 ./src/openmoc.o 
@@ -44,6 +46,7 @@ CPP_DEPS += \
 ./src/Surface.d \
 ./src/Timer.d \
 ./src/Track.d \
+./src/TrackGenerator.d \
 ./src/Universe.d \
 ./src/log.d \
 ./src/openmoc.d 

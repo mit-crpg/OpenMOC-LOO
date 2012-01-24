@@ -23,6 +23,7 @@
 
 class Geometry {
 private:
+	double _width, _height;
 	int _base_universe;
 	std::map<int, Material*> _materials;
 	std::map<int, Surface*> _surfaces;
@@ -32,6 +33,10 @@ private:
 public:
 	Geometry();
 	virtual ~Geometry();
+    void setWidth(double width);
+    void setHeight(double height);
+    double getWidth() const;
+    double getHeight() const;
 	void addMaterial(Material* material);
 	Material* getMaterial(int id);
 	void addSurface(Surface* surface);

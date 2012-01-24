@@ -28,20 +28,32 @@ private:
 	double _phi;
 	double _weight;
 	std::vector<segment*> _segments;
+	Track *_track_in, *_track_out;
+	bool _refl_in, _refl_out;
 public:
-	Track(double start_x, double start_y, double end_x,
-			double end_y, double phi);
+	Track();
 	virtual ~Track();
+	void setValues(double start_x, double start_y, double end_x,
+			double end_y, double phi);
     void setWeight(double weight);
+    void setReflIn(bool refl_in);
+    void setReflOut(bool refl_out);
+    void setTrackIn(Track *track_in);
+    void setTrackOut(Track *track_out);
     Point* getEnd();
     Point* getStart();
     double getPhi() const;
     double getWeight() const;
 	segment* getSegment(int s);
 	int getNumSegments();
+    Track *getTrackIn() const;
+    Track *getTrackOut() const;
+    bool isReflIn() const;
+    bool isReflOut() const;
 	bool contains(Point* point);
 	void addSegment(segment* segment);
 	void clearSegments();
+
 };
 
 

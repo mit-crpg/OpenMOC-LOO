@@ -26,6 +26,44 @@ Geometry::~Geometry() {
 	_lattices.clear();
 }
 
+
+/**
+ * Sets the total height of the geometry
+ * @param height the total height
+ */
+void Geometry::setHeight(double height) {
+	_height = height;
+}
+
+
+/**
+ * Sets the total width of the geometry
+ * @param width the total width
+ */
+void Geometry::setWidth(double width) {
+    _width = width;
+}
+
+
+/**
+ * Returns the total height of the geometry
+ * @param the toal height of the geometry
+ */
+double Geometry::getHeight() const {
+	return _height;
+}
+
+
+/**
+ * Returns the total width of the geometry
+ * @param the total width of the geometry
+ */
+double Geometry::getWidth() const {
+    return _width;
+}
+
+
+
 /**
  * Add a material to the geometry
  * @param material a pointer to a material object
