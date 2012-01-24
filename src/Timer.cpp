@@ -118,28 +118,6 @@ double Timer::getTime() {
 	}
 }
 
-//#ifdef __MACH__		/* For OSX */
-///**
-// * Helper function which computes the time between the values of
-// * two timeval structs.
-// * @param start timeval representing the start time
-// * @param end timeval representing the end time
-// */
-//double Timer::diff(timeval start, timeval end) {
-//	timeval temp;
-//
-//	if ((end.tv_usec - start.tv_usec) < 0) {
-//		temp.tv_sec = end.tv_sec - start.tv_sec - 1;
-//		temp.tv_usec = 1.0E6 + end.tv_usec - start.tv_usec;
-//	} else {
-//		temp.tv_sec = end.tv_sec - start.tv_sec;
-//		temp.tv_usec = end.tv_usec - start.tv_usec;
-//	}
-//
-//	return (temp.tv_sec * 1.0E6 + temp.tv_usec);
-//}
-//
-//#else			/* For Linux */
 
 /**
  * Helper function which computes the time between the values of

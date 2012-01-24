@@ -9,11 +9,12 @@
 
 #include "Geometry.h"
 
+
 /**
  * Geometry constructor
  */
-Geometry::Geometry() {
-}
+Geometry::Geometry() { }
+
 
 /**
  * Destructor
@@ -74,8 +75,14 @@ void Geometry::addMaterial(Material* material) {
 
 	}
 	else {
-		_materials.insert(std::pair<int, Material*>(material->getId(), material));
-		log_printf(INFO, "Added material with id = %d to geometry\n", material->getId());
+		try {
+			_materials.insert(std::pair<int, Material*>(material->getId(), material));
+			log_printf(INFO, "Added material with id = %d to geometry\n", material->getId());
+		}
+		catch (std::exception &e) {
+			log_printf(ERROR, "Unable to add material with id = %d. Backtrace:\n%s",
+					material->getId(), e.what());
+		}
 	}
 }
 
@@ -90,7 +97,8 @@ Material* Geometry::getMaterial(int id) {
 		return _materials.at(id);
 	}
 	catch (std::exception & e) {
-		log_printf(ERROR, "Attempted to retrieve material with id = %d which does not exist", id);
+		log_printf(ERROR, "Attempted to retrieve material with id = %d which does "
+				"not exist. Backtrace:%s\n", id, e.what());
 	}
 	exit(0);
 }
@@ -105,8 +113,14 @@ void Geometry::addSurface(Surface* surface) {
 		log_printf(ERROR, "Cannot add a second surface with id = %d", surface->getId());
 	}
 	else {
-		_surfaces.insert(std::pair<int, Surface*>(surface->getId(), surface));
-		log_printf(INFO, "Added surface with id = %d to geometry\n", surface->getId());
+		try {
+			_surfaces.insert(std::pair<int, Surface*>(surface->getId(), surface));
+			log_printf(INFO, "Added surface with id = %d to geometry\n", surface->getId());
+		}
+		catch (std::exception &e) {
+			log_printf(ERROR, "Unable to add surface with id = %d. Backtrace:\n%s",
+					surface->getId(), e.what());
+		}
 	}
 }
 
@@ -122,7 +136,7 @@ Surface* Geometry::getSurface(int id) {
 	}
 	catch (std::exception & e) {
 		log_printf(ERROR, "Attempted to retrieve surface with id = %d which has"
-				" not been declared", id);
+				" not been declared. Backtrace:\n%s", id, e.what());
 	}
 	exit(0);
 }
@@ -150,13 +164,25 @@ void Geometry::addCell(Cell* cell) {
 					"surface does not exist", cell->getSurfaces().at(i));
 	}
 
-	_cells.insert(std::pair<int, Cell*>(cell->getId(), cell));
-	log_printf(INFO, "Added cell with id = %d to geometry\n", cell->getId());
+	try {
+		_cells.insert(std::pair<int, Cell*>(cell->getId(), cell));
+		log_printf(INFO, "Added cell with id = %d to geometry\n", cell->getId());
+	}
+	catch (std::exception &e) {
+			log_printf(ERROR, "Unable to add cell with id = %d. Backtrace:\n%s",
+					cell->getId(), e.what());
+	}
 
 	/* Checks if the universe the cell in exists and if not, creates a new universe */
 	if (!mapContainsKey(_universes, cell->getUniverse())) {
-		Universe* univ = new Universe(cell->getUniverse());
-		addUniverse(univ);
+		try {
+			Universe* univ = new Universe(cell->getUniverse());
+			addUniverse(univ);
+		}
+		catch (std::exception &e) {
+			log_printf(ERROR, "Unable to create a new universe with id = %d and add "
+					"it to the geometry. Backtrace:\n%s", cell->getUniverse(), e.what());
+		}
 	}
 }
 
@@ -168,11 +194,11 @@ void Geometry::addCell(Cell* cell) {
  */
 Cell* Geometry::getCell(int id) {
 	try {
-		log_printf(ERROR, "Attempted to retrieve surface with id = %d which has"
-				" not been declared", id);
+		return _cells.at(id);
 	}
 	catch (std::exception & e) {
-		log_printf(ERROR, "Attempted to retrieve cell with id = %d which has not been declared", id);
+		log_printf(ERROR, "Attempted to retrieve cell with id = %d which has not been "
+				"declared. Backtrace:\n%s", id, e.what());
 	}
 	exit(0);
 }
@@ -186,8 +212,14 @@ void Geometry::addUniverse(Universe* universe) {
 	if (mapContainsKey(_universes, universe->getId()))
 		log_printf(ERROR, "Cannot add a second universe with id = %d", universe->getId());
 	else {
-		_universes.insert(std::pair<int, Universe*>(universe->getId(), universe));
-		log_printf(INFO, "Added universe with id = %d to geometry\n", universe->getId());
+		try {
+			_universes.insert(std::pair<int, Universe*>(universe->getId(), universe));
+			log_printf(INFO, "Added universe with id = %d to geometry\n", universe->getId());
+		}
+		catch (std::exception &e) {
+				log_printf(ERROR, "Unable to add universe with id = %d. Backtrace:\n%s",
+						universe->getId(), e.what());
+		}
 	}
 }
 
@@ -202,7 +234,8 @@ Universe* Geometry::getUniverse(int id) {
 		return _universes.at(id);
 	}
 	catch (std::exception & e) {
-		log_printf(ERROR, "Attempted to retrieve universe with id = %d which has not been declared", id);
+		log_printf(ERROR, "Attempted to retrieve universe with id = %d which has not been "
+				"declared. Backtrace:\n%s", id, e.what());
 	}
 	exit(0);
 }
@@ -221,6 +254,7 @@ void Geometry::addLattice(Lattice* lattice) {
 	/* If the universes container already has a universe with the same id */
 	else if(mapContainsKey(_universes, lattice->getId()))
 		log_printf(ERROR, "Cannot add a second universe (lattice) with id = %d", lattice->getId());
+
 	/* If the lattice contains a universe which does not exist */
 	for (int i = 0; i < lattice->getNumX(); i++) {
 		for (int j = 0; j < lattice->getNumY(); j++) {
@@ -231,9 +265,17 @@ void Geometry::addLattice(Lattice* lattice) {
 		}
 	}
 
-	_lattices.insert(std::pair<int, Lattice*>(lattice->getId(), lattice));
-	_universes.insert(std::pair<int, Lattice*>(lattice->getId(), lattice));
-	log_printf(INFO, "Added lattice with id = %d to geometry\n", lattice->getId());
+	try {
+		_lattices.insert(std::pair<int, Lattice*>(lattice->getId(), lattice));
+		log_printf(INFO, "Added lattice with id = %d to geometry\n", lattice->getId());
+	}
+	catch (std::exception &e) {
+		log_printf(ERROR, "Unable to add lattice with id = %d. Backtrace:\n%s",
+				lattice->getId(), e.what());
+	}
+
+	/* Add the lattice to the universes container as well */
+	addUniverse(lattice);
 }
 
 
@@ -248,7 +290,7 @@ Lattice* Geometry::getLattice(int id) {
 	}
 	catch (std::exception & e) {
 		log_printf(ERROR, "Attempted to retrieve lattice with id = %d which has"
-				"not been declared", id);
+				"not been declared. Backtrace:\n%s", id, e.what());
 	}
 	exit(0);
 }

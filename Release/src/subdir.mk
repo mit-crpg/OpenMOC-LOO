@@ -8,6 +8,7 @@ CPP_SRCS += \
 ../src/Geometry.cpp \
 ../src/Lattice.cpp \
 ../src/Material.cpp \
+../src/Options.cpp \
 ../src/Parser.cpp \
 ../src/Point.cpp \
 ../src/Quadrature.cpp \
@@ -24,6 +25,7 @@ OBJS += \
 ./src/Geometry.o \
 ./src/Lattice.o \
 ./src/Material.o \
+./src/Options.o \
 ./src/Parser.o \
 ./src/Point.o \
 ./src/Quadrature.o \
@@ -40,6 +42,7 @@ CPP_DEPS += \
 ./src/Geometry.d \
 ./src/Lattice.d \
 ./src/Material.d \
+./src/Options.d \
 ./src/Parser.d \
 ./src/Point.d \
 ./src/Quadrature.d \

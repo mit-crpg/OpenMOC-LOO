@@ -56,7 +56,12 @@ void Track::setWeight(double weight) {
  * @param segment a pointer to the segment
  */
 void Track::addSegment(segment* segment) {
-	_segments.push_back(segment);
+	try {
+		_segments.push_back(segment);
+	}
+	catch (std::exception &e) {
+		log_printf(ERROR, "Unable to add a segment to track. Backtrace:\n%s", e.what());
+	}
 }
 
 
@@ -181,7 +186,7 @@ bool Track::isReflOut() const {
  */
 segment* Track::getSegment(int segment) {
 	/* Checks to see if segments container contains this segment index */
-	if ((int)_segments.size() <= segment)
+	if (segment <= (int)_segments.size())
 		return _segments.at(segment);
 
 	/* If track doesn't contain this segment, exits program */

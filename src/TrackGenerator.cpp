@@ -20,11 +20,17 @@ TrackGenerator::TrackGenerator(Geometry* geom, int num_azim, double spacing) {
 	_geom = geom;
 	_num_azim = num_azim/2.0;
 	_spacing = spacing;
-	_num_tracks = new int[_num_azim];
-	_num_x = new int[_num_azim];
-	_num_y = new int[_num_azim];
-	_azim_weights = new double[_num_azim];
-	_tracks = new Track*[_num_azim];
+
+	try {
+		_num_tracks = new int[_num_azim];
+		_num_x = new int[_num_azim];
+		_num_y = new int[_num_azim];
+		_azim_weights = new double[_num_azim];
+		_tracks = new Track*[_num_azim];
+	}
+	catch (std::exception &e) {
+		log_printf(ERROR, "Unable to allocate memory for TrackGenerator. Backtrace:\n%s", e.what());
+	}
 }
 
 
@@ -95,95 +101,102 @@ void TrackGenerator::generateTracks() {
 
 	/* Each element in following lists corresponds to a track angle in phi_eff */
 
-	/* Track spacing along x-axis, y-axis, and perpendicular to each track */
-	double* dx_eff = new double[_num_azim];
-	double* dy_eff = new double[_num_azim];
-	double* d_eff = new double[_num_azim];
+	try {
+		/* Track spacing along x-axis, y-axis, and perpendicular to each track */
+		double* dx_eff = new double[_num_azim];
+		double* dy_eff = new double[_num_azim];
+		double* d_eff = new double[_num_azim];
 
-	/* Effective azimuthal angles with respect to positive x-axis */
-	double* phi_eff = new double[_num_azim];
+		/* Effective azimuthal angles with respect to positive x-axis */
+		double* phi_eff = new double[_num_azim];
 
-	double x1, x2;
-	double iazim = _num_azim*2.0;
-	double width = _geom->getWidth();
-	double height = _geom->getHeight();
+		double x1, x2;
+		double iazim = _num_azim*2.0;
+		double width = _geom->getWidth();
+		double height = _geom->getHeight();
 
-	log_printf(NORMAL, "Computing azimuthal angles and track spacings...\n");
+		log_printf(NORMAL, "Computing azimuthal angles and track spacings...\n");
 
-	/* Determine azimuthal angles and track spacing */
-	for (int i = 0; i < _num_azim; i++) {
+		/* Determine azimuthal angles and track spacing */
+		for (int i = 0; i < _num_azim; i++) {
 
-		double phi = 2.0 * M_PI / iazim * (0.5 + i); 				/* desired angle */
-		_num_x[i] = (int) (fabs(width / _spacing * sin(phi))) + 1; 		/* num intersections with y-axis */
-		_num_y[i] = (int) (fabs(height / _spacing * cos(phi))) + 1; 	/* num intersections with x-axis */
-		_num_tracks[i] = _num_x[i] + _num_y[i]; 							/* total num of tracks */
-		phi_eff[i] = atan((height * _num_x[i]) / (width * _num_y[i])); 		/* effective angle */
+			double phi = 2.0 * M_PI / iazim * (0.5 + i); 				/* desired angle */
+			_num_x[i] = (int) (fabs(width / _spacing * sin(phi))) + 1; 		/* num intersections with y-axis */
+			_num_y[i] = (int) (fabs(height / _spacing * cos(phi))) + 1; 	/* num intersections with x-axis */
+			_num_tracks[i] = _num_x[i] + _num_y[i]; 							/* total num of tracks */
+			phi_eff[i] = atan((height * _num_x[i]) / (width * _num_y[i])); 		/* effective angle */
 
-		/* fix angles in range(pi/2, pi) due to atan function return values */
-		if (phi > M_PI / 2)
-			phi_eff[i] = M_PI - phi_eff[i];
+			/* fix angles in range(pi/2, pi) due to atan function return values */
+			if (phi > M_PI / 2)
+				phi_eff[i] = M_PI - phi_eff[i];
 
-		/* Effective track spacing */
-		dx_eff[i] = (width / _num_x[i]);
-		dy_eff[i] = (height / _num_y[i]);
-		d_eff[i] = (dx_eff[i] * sin(phi_eff[i]));
-	}
-
-	/* Compute azimuthal weights */
-	for (int i = 0; i < _num_azim; i++) {
-
-		if (i < _num_azim - 1)
-			x1 = 0.5 * (phi_eff[i+1] - phi_eff[i]);
-		else
-			x1 = 2 * M_PI / 2.0 - phi_eff[i];
-
-		if (i >= 1)
-			x2 = 0.5 * (phi_eff[i] - phi_eff[i-1]);
-		else
-			x2 = phi_eff[i];
-
-		/* Multiply weight by 2 because angles are in [0, Pi] */
-		_azim_weights[i] = (x1 + x2) / (2 * M_PI) * d_eff[i] * 2;
-	}
-
-	log_printf(NORMAL, "Generating track start and end points...\n");
-
-	/* Compute track starting and end points */
-	for (int i = 0; i < _num_azim; i++) {
-
-		/* Tracks for azimuthal angle i */
-		_tracks[i] = new Track[_num_tracks[i]];
-
-		/* Compute start points for tracks starting on x-axis */
-		for (int j = 0; j < _num_x[i]; j++)
-			_tracks[i][j].getStart()->setCoords(dx_eff[i] * (0.5 + j), 0);
-
-		/* Compute start points for tracks starting on y-axis */
-		for (int j = 0; j < _num_y[i]; j++) {
-
-			/* If track points to the upper right */
-			if (sin(phi_eff[i]) > 0 && cos(phi_eff[i]) > 0)
-				_tracks[i][_num_x[i]+j].getStart()->setCoords(0, dy_eff[i] * (0.5 + j));
-
-			/* If track points to the upper left */
-			else if (sin(phi_eff[i]) > 0 && cos(phi_eff[i]) < 0)
-				_tracks[i][_num_x[i]+j].getStart()->setCoords(width, dy_eff[i] * (0.5 + j));
+			/* Effective track spacing */
+			dx_eff[i] = (width / _num_x[i]);
+			dy_eff[i] = (height / _num_y[i]);
+			d_eff[i] = (dx_eff[i] * sin(phi_eff[i]));
 		}
 
-		/* Compute the exit points for each track */
-		for (int j = 0; j < _num_tracks[i]; j++) {
+		/* Compute azimuthal weights */
+		for (int i = 0; i < _num_azim; i++) {
 
-			/* Set the track's end point */
-			Point* start = _tracks[i][j].getStart();
-			Point* end = _tracks[i][j].getEnd();
-			computeEndPoint(start, end, phi_eff[i], width, height);
+			if (i < _num_azim - 1)
+				x1 = 0.5 * (phi_eff[i+1] - phi_eff[i]);
+			else
+				x1 = 2 * M_PI / 2.0 - phi_eff[i];
 
-			/* Set the track's azimuthal weight */
-			_tracks[i][j].setWeight(_azim_weights[i]);
+			if (i >= 1)
+				x2 = 0.5 * (phi_eff[i] - phi_eff[i-1]);
+			else
+				x2 = phi_eff[i];
+
+			/* Multiply weight by 2 because angles are in [0, Pi] */
+			_azim_weights[i] = (x1 + x2) / (2 * M_PI) * d_eff[i] * 2;
 		}
+
+		log_printf(NORMAL, "Generating track start and end points...\n");
+
+		/* Compute track starting and end points */
+		for (int i = 0; i < _num_azim; i++) {
+
+			/* Tracks for azimuthal angle i */
+			_tracks[i] = new Track[_num_tracks[i]];
+
+			/* Compute start points for tracks starting on x-axis */
+			for (int j = 0; j < _num_x[i]; j++)
+				_tracks[i][j].getStart()->setCoords(dx_eff[i] * (0.5 + j), 0);
+
+			/* Compute start points for tracks starting on y-axis */
+			for (int j = 0; j < _num_y[i]; j++) {
+
+				/* If track points to the upper right */
+				if (sin(phi_eff[i]) > 0 && cos(phi_eff[i]) > 0)
+					_tracks[i][_num_x[i]+j].getStart()->setCoords(0, dy_eff[i] * (0.5 + j));
+
+				/* If track points to the upper left */
+				else if (sin(phi_eff[i]) > 0 && cos(phi_eff[i]) < 0)
+					_tracks[i][_num_x[i]+j].getStart()->setCoords(width, dy_eff[i] * (0.5 + j));
+			}
+
+			/* Compute the exit points for each track */
+			for (int j = 0; j < _num_tracks[i]; j++) {
+
+				/* Set the track's end point */
+				Point* start = _tracks[i][j].getStart();
+				Point* end = _tracks[i][j].getEnd();
+				computeEndPoint(start, end, phi_eff[i], width, height);
+
+				/* Set the track's azimuthal weight */
+				_tracks[i][j].setWeight(_azim_weights[i]);
+			}
+		}
+		return;
 	}
 
-	return;
+	catch (std::exception &e) {
+		log_printf(ERROR, "Unable to allocate memory needed to generate track. "
+				"Backtrace:\n%s", e.what());
+	}
+
 }
 
 
@@ -203,28 +216,36 @@ void TrackGenerator::computeEndPoint(Point* start, Point* end,  double phi, doub
 	double yin = start->getY(); 			/* y-coord */
 	double xin = start->getX(); 			/* x-coord */
 
-	Point *points = new Point[4];
+	try {
+		Point *points = new Point[4];
 
-	/* Determine all possible points */
-	points[0].setCoords(0, yin - m * xin);
-	points[1].setCoords(width, yin + m * (width - xin));
-	points[2].setCoords(xin - yin / m, 0);
-	points[3].setCoords(xin - (yin - height) / m, height);
+		/* Determine all possible points */
+		points[0].setCoords(0, yin - m * xin);
+		points[1].setCoords(width, yin + m * (width - xin));
+		points[2].setCoords(xin - yin / m, 0);
+		points[3].setCoords(xin - (yin - height) / m, height);
 
-	// For each of the possible intersection points
-	for (int i = 0; i < 4; i++) {
-		/* neglect the trivial point (xin, yin) */
-		if (points[i].getX() == xin && points[i].getY() == yin) { }
+		// For each of the possible intersection points
+		for (int i = 0; i < 4; i++) {
+			/* neglect the trivial point (xin, yin) */
+			if (points[i].getX() == xin && points[i].getY() == yin) { }
 
-		/* The point to return will be within the bounds of the cell */
-		else if (points[i].getX() >= 0 && points[i].getX() <= width
-				&& points[i].getY() >= 0 && points[i].getY() <= height) {
-			end->setCoords(points[i].getX(), points[i].getY());
+			/* The point to return will be within the bounds of the cell */
+			else if (points[i].getX() >= 0 && points[i].getX() <= width
+					&& points[i].getY() >= 0 && points[i].getY() <= height) {
+				end->setCoords(points[i].getX(), points[i].getY());
+			}
 		}
+
+		delete[] points;
+		return;
 	}
 
-	delete[] points;
-	return;
+	catch (std::exception &e) {
+		log_printf(ERROR, "Unable to allocate memory for intersection points in "
+				"computeEndPoint method of TrackGenerator. Backtrace:\n%s", e.what());
+	}
+
 }
 
 

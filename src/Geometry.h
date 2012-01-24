@@ -12,7 +12,6 @@
 
 #include <map>
 #include <utility>
-#include <exception>
 #include "Material.h"
 #include "Surface.h"
 #include "Cell.h"

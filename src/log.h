@@ -5,6 +5,7 @@
  *      Author: William Boyd
  *				MIT, Course 22
  *              wboyd@mit.edu
+ *  Level-based logging module
  */
 
 #ifndef LOG_H_

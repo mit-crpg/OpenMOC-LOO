@@ -30,7 +30,6 @@ public:
 	TrackGenerator(Geometry* geom, int num_azim, double spacing);
 	virtual ~TrackGenerator();
     double *getAzimWeights() const;
-    Geometry *getGeom() const;
     int getNumAzim() const;
     int *getNumTracks() const;
     double getSpacing() const;

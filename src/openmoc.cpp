@@ -11,6 +11,7 @@
  */
 
 #include "Geometry.h"
+#include "TrackGenerator.h"
 #include "Parser.h"
 #include "log.h"
 #include "Options.h"
@@ -23,6 +24,7 @@ int main(int argc, const char **argv) {
 // Variable is unused, causes warning with -Wall
 #if 0
 	Geometry* geometry = new Geometry();
+	TrackGenerator* trackGenerator = new TrackGenerator();
 #endif
 
 	Parser* parser = new Parser(&opts);

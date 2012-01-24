@@ -73,7 +73,6 @@ Quadrature::Quadrature(quadratureType type) {
 		else {
 			log_printf(ERROR, "Leonard type quadrature supports 2, or 3 polar"
 					" angles but %d are defined\nExiting program\n", NUM_POLAR_ANGLES);
-			exit(1);
 		}
 
 	}

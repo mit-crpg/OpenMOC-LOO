@@ -16,21 +16,16 @@
 
 #define LAST(str) (strcmp(argv[i-1], (str)) == 0)
 
-Options::Options(int argc, const char **argv)
-{
-        int i;
+Options::Options(int argc, const char **argv) {
 
-        this->geometry_file = NULL;
+	int i;
+	this->geometry_file = NULL;
 
-        for (i = 0; i < argc; i++)
-        {
-	        if (i > 0)
-		{
-		        if (LAST("--geometryfile") || LAST("-g"))
-			{
-			        if (this->geometry_file != NULL)
-				    free(this->geometry_file);
-				
+	for (i = 0; i < argc; i++) {
+		if (i > 0) {
+			if (LAST("--geometryfile") || LAST("-g")) {
+				if (this->geometry_file != NULL)
+				free(this->geometry_file);
 				geometry_file = strdup(argv[i]);
 			}
 		}

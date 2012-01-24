@@ -13,12 +13,10 @@
 #ifndef OPTIONS_H
 #define OPTIONS_H
 
-class Options
-{
+class Options {
 public:
-        char *geometry_file;
-
-        Options(int argc, const char **argv);
+	char *geometry_file;	/* TODO: make class attributes private with getter and setter methods */
+    Options(int argc, const char **argv);
 };
 
 #endif

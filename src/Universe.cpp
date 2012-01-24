@@ -30,9 +30,15 @@ Universe::~Universe() {
  * @param cell the cell id
  */
 void Universe::addCell(int cell) {
-	_cells.push_back(cell);
-	_num_cells++;
-	log_printf(INFO, "Added cell with id = %d to universe with id = %d", cell, _id);
+	try {
+		_cells.push_back(cell);
+		_num_cells++;
+		log_printf(INFO, "Added cell with id = %d to universe with id = %d", cell, _id);
+	}
+	catch (std::exception &e) {
+		log_printf(ERROR, "Unable to add cell with id = %d to universe with id = %d. "
+				"Backtrace:\n%s", cell, _id, e.what());
+	}
 }
 
 

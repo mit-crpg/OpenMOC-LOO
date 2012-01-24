@@ -45,7 +45,13 @@ Cell::~Cell() {
  * @param surface the surface id
  */
 void Cell::addSurface(int surface) {
-	_surfaces.push_back(surface);
+	try{
+		_surfaces.push_back(surface);
+	}
+	catch (std::exception &e) {
+		log_printf(ERROR, "Unable to add surface with id = %e to cell with id = %d. Backtrace:"
+				"\n%s\n", surface, _id, e.what());
+	}
 }
 
 
@@ -53,8 +59,7 @@ void Cell::addSurface(int surface) {
  * Return the cell's id
  * @return the cell's id
  */
-int Cell::getId() const
-{
+int Cell::getId() const {
     return _id;
 }
 
@@ -63,8 +68,7 @@ int Cell::getId() const
  * Return the material in the cell
  * @return the material's id
  */
-int Cell::getMaterial() const
-{
+int Cell::getMaterial() const {
     return _material;
 }
 
@@ -73,8 +77,7 @@ int Cell::getMaterial() const
  * Return the number of surfaces in the cell
  * @return the number of surfaces
  */
-int Cell::getNumSurfaces() const
-{
+int Cell::getNumSurfaces() const {
     return _num_surfaces;
 }
 
@@ -98,7 +101,7 @@ std::vector<int> Cell::getSurfaces() const {
 
 
 /**
- * Return the cell type
+ * Return the cell type (FILL or MATERIAL)
  * @return the cell type
  */
 cellType Cell::getType() const {
@@ -154,7 +157,6 @@ void Cell::setUniverseFill(int universeFill) {
  * Set the parent cell for this cell
  * @param parentCell the parent cell id
  */
-void Cell::setParentCell(int parentCell)
-{
+void Cell::setParentCell(int parentCell) {
     _parent_cell = parentCell;
 }
