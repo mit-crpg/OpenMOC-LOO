@@ -25,7 +25,7 @@ class Parser {
 private:
 //    std::string geoxml;
 public:
-        Parser(const Options *opts);
+	Parser(const Options *opts);
 	virtual ~Parser();
 	void parseMaterials(void);
 	void parseGeometry(void);
