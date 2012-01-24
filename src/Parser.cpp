@@ -11,6 +11,7 @@
 #include <vector>
 #include <cstring>
 #include <string>
+#include <stdexcept>
 
 static void parse(XML_Parser parser, char c, int isFinal)
 {
@@ -157,13 +158,20 @@ endElementCallback( void *context, const XML_Char *name __attribute__((__unused_
 /**
  * Default constructor
  */
-Parser::Parser (const char* geoxml) {
+Parser::Parser (const Options *opts) {
+    const char *geoxml;
     XML_Parser parser;
     PContext ctxt;
     char c;
     FILE* geofile;
-    
+
+    if (opts->geometry_file == NULL)
+	throw std::runtime_error("No geometry file given");
+
+    geoxml = opts->geometry_file;
     geofile = fopen(geoxml, "r");
+    if (geofile == NULL)
+	throw std::runtime_error("Given geometry file does not exist");
 
 /* Create parser.
  * The only argument for XML_ParserCreate is encoding, and if it's NULL,

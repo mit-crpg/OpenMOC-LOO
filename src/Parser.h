@@ -16,6 +16,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "Surface.h"
+#include "Options.h"
 
 /**
  * Parses XML Files
@@ -24,7 +25,7 @@ class Parser {
 private:
 //    std::string geoxml;
 public:
-    Parser(const char* geoxml);
+        Parser(const Options *opts);
 	virtual ~Parser();
 	void parseMaterials(void);
 	void parseGeometry(void);
