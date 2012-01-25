@@ -11,6 +11,7 @@
 #define LATTICE_H_
 
 #include <vector>
+#include <map>
 #include "Point.h"
 #include "Universe.h"
 #include "log.h"
@@ -34,6 +35,7 @@ public:
     std::vector<std::vector<int> > getUniverses() const;
     double getWidthX() const;
     double getWidthY() const;
+    void adjustKeys(std::map<int, Universe*> universes);
     const char* toString();
 };
 

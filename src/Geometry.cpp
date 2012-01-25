@@ -351,6 +351,145 @@ const char* Geometry::toString() {
 	return string.str().c_str();
 }
 
+
+// Adjusts the keys for surfaces, cells, universes, and lattices to uids
+void Geometry::adjustKeys() {
+
+	std::map<int, Material*>::iterator iter1;
+	std::map<int, Surface*>::iterator iter2;
+	std::map<int, Cell*>::iterator iter3;
+	std::map<int, Universe*>::iterator iter4;
+	std::map<int, Lattice*>::iterator iter5;
+
+	std::map<int, Material*> adjusted_materials;
+	std::map<int, Surface*> adjusted_surfaces;
+	std::map<int, Cell*> adjusted_cells;
+	std::map<int, Universe*> adjusted_universes;
+	std::map<int, Lattice*> adjusted_lattices;
+
+	int uid;
+
+
+	/**************************************************************************
+	 * Ajust the indices for attributes of all cell, universe and lattice
+	 * objects in the geometry
+	 *************************************************************************/
+
+	/* Adjust the container of surface ids inside each cell to hold the surfaces' uids */
+	for (iter3 = _cells.begin(); iter3 != _cells.end(); ++iter3) {
+
+		Cell* cell = iter3->second;
+		int universe = _universes.at(cell->getUniverse())->getUid();
+
+		/* MATERIAL type cells */
+		if (cell->getType() == MATERIAL) {
+			CellBasic* cell_basic = static_cast<CellBasic*>(cell);
+			int material = _materials.at(cell_basic->getMaterial())->getUid();
+			cell_basic->adjustKeys(universe, material, _surfaces);
+		}
+
+		/* FILL type cells */
+		else {
+			CellFill* cell_fill = static_cast<CellFill*>(cell);
+			int universe_fill = _universes.at(cell_fill->getUniverseFill())->getUid();
+			cell_fill->adjustKeys(universe, universe_fill, _surfaces);
+		}
+	}
+
+	/* Adjust the container of cell ids inside each cell to hold the cells' uids */
+	for (iter4 = _universes.begin(); iter4 != _universes.end(); ++iter4) {
+		Universe* universe = iter4->second;
+		universe->adjustKeys(_cells);
+	}
+
+	/* Adjust the container of universe ids inside each lattice to hold the universes' uids */
+	for (iter5 = _lattices.begin(); iter5 != _lattices.end(); ++iter5) {
+		Lattice* lattice = iter5->second;
+		lattice->adjustKeys(_universes);
+	}
+
+
+	/**************************************************************************
+	 * Ajust the indices of the containers of geometry objects which are
+	 * attributes of this geometry class
+	 *************************************************************************/
+
+	/* Adjust material indices to be uids */
+	try {
+		for (iter1 = _materials.begin(); iter1 != _materials.end(); ++iter1) {
+			uid = iter1->second->getUid();
+			Material* material = iter1->second;
+			adjusted_materials.insert(std::pair<int, Material*>(uid, material));
+		}
+		_materials.clear();
+		_materials = adjusted_materials;
+	}
+	catch (std::exception &e) {
+		log_printf(ERROR, "Unable to adjust material' keys. Backtrace:\n%s", e.what());
+	}
+
+
+	/* Adjust surfaces indices to be uids */
+	try {
+		for (iter2 = _surfaces.begin(); iter2 != _surfaces.end(); ++iter2) {
+			uid = iter2->second->getUid();
+			Surface* surface = iter2->second;
+			adjusted_surfaces.insert(std::pair<int, Surface*>(uid, surface));
+		}
+		_surfaces.clear();
+		_surfaces = adjusted_surfaces;
+	}
+	catch (std::exception &e) {
+		log_printf(ERROR, "Unable to adjust surface' keys. Backtrace:\n%s", e.what());
+	}
+
+	/* Adjust cells indices to be uids */
+	try {
+		for (iter3 = _cells.begin(); iter3 != _cells.end(); ++iter3) {
+			uid = iter3->second->getUid();
+			Cell* cell = iter3->second;
+			adjusted_cells.insert(std::pair<int, Cell*>(uid, cell));
+		}
+		_cells.clear();
+		_cells = adjusted_cells;
+	}
+	catch (std::exception &e) {
+		log_printf(ERROR, "Unable to adjust cell' keys Backtrace:\n%s", e.what());
+	}
+
+	/* Adjust universes indices to be uids */
+	try {
+		for (iter4 = _universes.begin(); iter4 != _universes.end(); ++iter4) {
+			uid = iter4->second->getUid();
+			Universe* universe = iter4->second;
+			adjusted_universes.insert(std::pair<int, Universe*>(uid, universe));
+		}
+		_universes.clear();
+		_universes = adjusted_universes;
+	}
+	catch (std::exception &e) {
+		log_printf(ERROR, "Unable to adjust universes' keys Backtrace:\n%s", e.what());
+	}
+
+	/* Adjust lattices indices to be uids */
+	try {
+		for (iter5 = _lattices.begin(); iter5 != _lattices.end(); ++iter5) {
+			uid = iter5->second->getUid();
+			Lattice* lattice = iter5->second;
+			adjusted_universes.insert(std::pair<int, Lattice*>(uid, lattice));
+		}
+		_lattices.clear();
+		_lattices = adjusted_lattices;
+	}
+	catch (std::exception &e) {
+		log_printf(ERROR, "Unable to adjust lattices' keys Backtrace:\n%s", e.what());
+	}
+
+	return;
+}
+
+
+
 /**
  * Function to determine whether a key already exists in a templated map container
  * @param map the map container

@@ -7,6 +7,9 @@
 
 #include "Surface.h"
 
+/* _n keeps track of the number of surfaces instantiated */
+int Surface::_n = 0;
+
 
 /**
  * Default Surface constructor
@@ -14,8 +17,10 @@
  * @param type the surface type
  */
 Surface::Surface(const int id, const surfaceType type){
+	_uid = _n;
 	_id = id;
 	_type = type;
+	_n++;
 }
 
 
@@ -24,6 +29,14 @@ Surface::Surface(const int id, const surfaceType type){
  */
 Surface::~Surface() { }
 
+
+/**
+ * Return the surface's uid
+ * @return the surface's uid
+ */
+int Surface::getUid() const {
+	return _uid;
+}
 
 /**
  * Return the surface's id

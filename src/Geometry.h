@@ -49,6 +49,8 @@ public:
 	Lattice* getLattice(int id);
 	const char* toString();
 
+	// Adjusts the keys for surfaces, cells, universes, and lattices to uids
+	void adjustKeys();
 	// Recursively sets Universe levels
 	void buildUniverseLevels(Universe* univ, int parent_cell, int level);
 	// Build list of neighboring cells in positive/negative direction from each surface

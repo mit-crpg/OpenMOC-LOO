@@ -17,6 +17,8 @@
 
 class Material {
 private:
+	static int _n;				/* Counts the number of materials */
+	int _uid;					/* monotonically increasing id based on n */
 	int _id;
 	double _sigma_t[NUM_ENERGY_GROUPS];
 	double _nu_sigma_f[NUM_ENERGY_GROUPS];
@@ -25,11 +27,12 @@ private:
 public:
 	Material(const int id);
 	virtual ~Material();
-    double* getChi();
+	int getUid() const;
     int getId() const;
     double* getNuSigmaF();
     double* getSigmaS();
     double* getSigmaT();
+    double* getChi();
     void setChi(double chi[NUM_ENERGY_GROUPS]);
     void setNuSigmaF(double nu_sigma_f[NUM_ENERGY_GROUPS]);
     void setSigmaS(double sigma_s[NUM_ENERGY_GROUPS][NUM_ENERGY_GROUPS]);

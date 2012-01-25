@@ -47,6 +47,10 @@ int main(int argc, const char **argv) {
 				  return;
 			  });
 	
+	/* Adjust the keys and indices for each geometry class (surfaces, cells, etc)
+	 * stored inside the geometry to use uids
+	 */
+	geometry->adjustKeys();
 
 	/* Print out geometry to console */
 	log_printf(INFO, geometry->toString());

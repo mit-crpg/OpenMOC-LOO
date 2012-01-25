@@ -9,6 +9,8 @@
 
 #include "Cell.h"
 
+/* _n keeps track of the number cells of instantiated */
+int Cell::_n = 0;
 
 /**
  * Default Cell constructor
@@ -20,11 +22,13 @@
  * @param surfaces the surface id
  */
 Cell::Cell(int id, cellType type, int universe, int num_surfaces, std::vector<int> surfaces) {
+	_uid = _n;
 	_id = id;
 	_type = type;
 	_universe = universe;
 	_num_surfaces = num_surfaces;
 	_surfaces = surfaces;
+	_n++;
 }
 
 
@@ -51,6 +55,16 @@ void Cell::addSurface(int surface) {
 			   surface, _id, e.what());
 	}
 }
+
+
+/**
+ * Return the cell's uid
+ * @return the cell's uid
+ */
+int Cell::getUid() const {
+	return _uid;
+}
+
 
 
 /**
@@ -126,6 +140,34 @@ int CellBasic::getMaterial() const {
 
 
 /**
+ * Adjusts the cell's id of the universe this cell is in, the id of the
+ * universe that is filling this cell, and the id of the surfaces inside
+ * this cell to be the uids of each rather than the ids defined by the
+ * input file
+ */
+void CellBasic::adjustKeys(int universe, int material,
+		std::map<int, Surface*> surfaces) {
+	_universe = universe;
+	_material = material;
+
+	std::vector<int> adjusted_surfaces;
+
+	try {
+		/* Adjust surface ids to be the surface uids */
+		for (int s = 0; s < (int)_surfaces.size(); s++)
+			adjusted_surfaces.push_back(surfaces.at(s)->getUid());
+
+		_surfaces.clear();
+		_surfaces = adjusted_surfaces;
+	}
+	catch (std::exception &e) {
+		log_printf(ERROR, "Unable to adjust the surface ids to uids for cell "
+				"id = %d. Backtrace:\n%s", _id, e.what());
+	}
+}
+
+
+/**
  * Convert this cell's attributes to a string format
  * @return a character array of this cell's attributes
  */
@@ -169,6 +211,35 @@ int CellFill::getUniverseFill() const {
  */
 void CellFill::setUniverseFill(int universe_fill) {
 	_universe_fill = universe_fill;
+}
+
+
+/**
+ * Adjusts the cell's id of the universe this cell is in, the id of the
+ * universe that is filling this cell, and the id of the surfaces inside
+ * this cell to be the uids of each rather than the ids defined by the
+ * input file
+ */
+void CellFill::adjustKeys(int universe, int universe_fill,
+		std::map<int, Surface*> surfaces) {
+	_universe = universe;
+	_universe_fill = universe_fill;
+
+	std::vector<int> adjusted_surfaces;
+
+	try {
+		/* Adjust surface ids to be the surface uids */
+		for (int s = 0; s < (int)_surfaces.size(); s++)
+			adjusted_surfaces.push_back(surfaces.at(s)->getUid());
+
+		_surfaces.clear();
+		_surfaces = adjusted_surfaces;
+	}
+	catch (std::exception &e) {
+		log_printf(ERROR, "Unable to adjust the surface ids to uids for cell "
+				"id = %d. Backtrace:\n%s", _id, e.what());
+	}
+
 }
 
 

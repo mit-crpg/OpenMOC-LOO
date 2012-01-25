@@ -115,6 +115,27 @@ double Lattice::getWidthY() const {
 
 
 /**
+ * Adjusts the ids of the universes inside this lattice to be the uids of each
+ * rather than the ids defined by the input file
+ */
+void Lattice::adjustKeys(std::map<int, Universe*> universes) {
+
+	std::vector< std::vector<int> > adjusted_universes;
+
+	/* Adjust the indices for each universe to be the universe's uid */
+	for (int U = 0; U < _universes.size(); U++) {
+		for (int u = 0; u < _universes.at(U).size(); u++) {
+			int universe = _universes.at(U).at(u);
+			adjusted_universes[U][u] = universes.at(universe)->getUid();
+		}
+	}
+
+	_universes.clear();
+	_universes = adjusted_universes;
+}
+
+
+/**
  * Converts a lattice's attributes to a character array representation
  * @return character array of this lattice's attributes
  */

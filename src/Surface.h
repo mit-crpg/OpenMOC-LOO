@@ -34,11 +34,14 @@ enum surfaceType {
  */
 class Surface {
 protected:
+	static int _n;				/* Counts the number of surfaces */
+	int _uid;					/* monotonically increasing id based on n */
 	int _id;
 	surfaceType _type;
 public:
 	Surface(const int id, const surfaceType type);
 	virtual ~Surface();
+	int getUid() const;
 	int getId() const;
 	surfaceType getType() const;
 	virtual std::vector<Surface*> getNeighborPos() =0;

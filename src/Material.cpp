@@ -9,13 +9,17 @@
 
 #include "Material.h"
 
+/* _n keeps track of the number of materials instantiated */
+int Material::_n = 0;
 
 /**
  * Material constructor
  * @param id the material's id
  */
 Material::Material(int id) {
+	_uid = _n;
 	_id = id;
+	_n++;
 }
 
 
@@ -34,6 +38,15 @@ double* Material::getChi() {
     return _chi;
 }
 
+
+
+/**
+ * Return the material's uid
+ * @return the material's uid
+ */
+int Material::getUid() const {
+	return _uid;
+}
 
 /**
  * Return the material's id

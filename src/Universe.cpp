@@ -8,12 +8,17 @@
 #include "Universe.h"
 
 
+/* _n keeps track of the number universes of instantiated */
+int Universe::_n = 0;
+
 /**
  * Universe constructor
  * @param id the universe id
  */
 Universe::Universe(const int id) {
+	_uid = _n;
 	_id = id;
+	_n++;
 }
 
 
@@ -52,6 +57,15 @@ std::vector<int> Universe::getCells() const {
 
 
 /**
+ * Returns the universe's uid
+ * @return the universe's uid
+ */
+int Universe::getUid() const {
+	return _uid;
+}
+
+
+/**
  * Return the id for this universe
  * @return the universe id
  */
@@ -85,6 +99,24 @@ Point* Universe::getOrigin() {
 void Universe::setOrigin(Point* origin) {
     _origin.setX(origin->getX());
     _origin.setY(origin->getY());
+}
+
+
+/**
+ * Adjusts the universe's ids of the cells inside this universe to be the
+ * uids of each rather than the ids defined by the input file
+ */
+void Universe::adjustKeys(std::map<int, Cell*> cells) {
+
+	std::vector<int> adjusted_cells;
+
+	for (int c = 0; c < (int)_cells.size(); c++) {
+		Cell* cell = cells.at(_cells.at(c));
+		adjusted_cells.push_back(cell->getUid());
+	}
+
+	_cells.clear();
+	_cells = adjusted_cells;
 }
 
 
