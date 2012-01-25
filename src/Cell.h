@@ -31,7 +31,7 @@ private:
 	std::vector<int> _surfaces;     // positive or negative ids depending on side of surface
 public:
 	Cell(int id, cellType type, int num_surfaces);
-    virtual ~Cell();
+	virtual ~Cell();
     void addSurface(int surface);
     int getId() const;
     int getMaterial() const;

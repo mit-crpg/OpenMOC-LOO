@@ -16,7 +16,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "Surface.h"
+#include "Cell.h"
 #include "Options.h"
+#include "log.h"
 
 /**
  * Parses XML Files

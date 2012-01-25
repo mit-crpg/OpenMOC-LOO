@@ -2,9 +2,9 @@
  * Parser.cpp
  *
  *  Created on: Jan 18, 2012
- *      Author: William Boyd
+ *      Author: Lulu Li
  *				MIT, Course 22
- *              wboyd@mit.edu
+ *              lululi@mit.edu
  */
 
 #include "Parser.h"
@@ -12,6 +12,7 @@
 #include <cstring>
 #include <string>
 #include <stdexcept>
+
 
 static void parse(XML_Parser parser, char c, int isFinal) {
 	if (XML_STATUS_OK == XML_Parse(parser, &c, isFinal ^ 1, isFinal))
@@ -38,17 +39,25 @@ static void XMLCALL startElementCallback( void *context,
 					  const XML_Char **atts ) {
 //    int is_key = 1;
 	PContext *ctxt;
+	/* surface related */
+	Surface* surface;
 	int surface_id;
 	surfaceType surface_type;
-	Surface* surface;
-	double coeff1, coeff2, coeff3;
-	
+	std::vector<double> coeffs;
+	/* cell related */
+	Cell* cell;
+	int cell_id;
+	cellType cell_type;
+	int num_surfaces;
+	int material_id;
+	int universe_id;
+	std::vector<int> bound_surf;
+
 	ctxt = (PContext*)context;
 	
 #if 0
 	fprintf(ctxt->out, "%*s%c%s\n", ctxt->depth, "", '>', name);
-	ctxt->level->push_back(new std::string(name));
-	
+	ctxt->level->push_back(new std::string(name));	
 	/* print level information to the screen  */
 	for (std::vector<std::string *>::size_type i = 0;
 	     i < ctxt->level->size(); i++) {
@@ -57,6 +66,7 @@ static void XMLCALL startElementCallback( void *context,
 	fprintf(ctxt->out, "\n");
 #endif
 	
+	/* Parse surface types */
 	if (strcmp(name, "surface") == 0) {
 		while (*atts) {
 			if (strcmp(*atts, "id") == 0) {
@@ -84,39 +94,92 @@ static void XMLCALL startElementCallback( void *context,
 				++atts;
 				char *long_str;
 				char *tmp;
+				char *result;
 				
 				long_str = strdup(*atts);
-				coeff1 = atof(strtok_r(long_str, " ,.", &tmp));
-				coeff2 = atof(strtok_r(NULL, " ,.", &tmp));
-				coeff3 = atof(strtok_r(NULL, " ,.", &tmp));
-			}
-			
+				result = strtok_r(long_str, " ,.", &tmp);
+				coeffs.push_back(atof(result));
+				while ((result = strtok_r(NULL, " ,.", &tmp))
+				       != NULL) {
+					coeffs.push_back(atof(result));
+				}
+			}		
 			++atts;
 		}
 		
+		/* TODO: check for number of coeffs */
 		switch (surface_type) {
 		case PLANE:
-			surface = new Plane(surface_id, coeff1, coeff2, coeff3);
+			surface = new Plane(surface_id, coeffs.at(0),
+					    coeffs.at(1), coeffs.at(2));
 			break;
 		case XPLANE:
-			surface = new XPlane(surface_id, coeff1);
+			surface = new XPlane(surface_id, coeffs.at(0));
 			break;
 		case YPLANE:
-			surface = new YPlane(surface_id, coeff1);
+			surface = new YPlane(surface_id, coeffs.at(0));
 			break;
 		case CIRCLE:
-			fprintf(ctxt->out, "%d %f %f %f\n",
-				surface_id, coeff1, coeff2, coeff3);
-			surface = new Circle(surface_id, coeff1, coeff2, coeff3);
+		        log_printf(NORMAL, "Parsed Surfs: id = %d,"
+				   " coeffs = %f %f %f\n",
+				   surface_id, coeffs.at(0), coeffs.at(1), 
+				   coeffs.at(2));
+			surface = new Circle(surface_id, coeffs.at(0), 
+					     coeffs.at(1), coeffs.at(2));
 			break;
 		case QUADRATIC:
-			fprintf(ctxt->out,
-				"quadratic is called; should not"
-				" be used in geometry.xml.\n");
+			log_printf(ERROR, "quadratic is called; should not"
+				   " be used in geometry.xml.\n");
 			break;
 		}
 		
 	}
+
+	/* Parse Cell Types */
+	if (strcmp(name, "cell") == 0) {
+		while (*atts) {
+			if (strcmp(*atts, "id") == 0) {
+				++atts;
+				cell_id = atoi(*atts);
+			}
+			
+			if (strcmp(*atts, "material") == 0) {
+				cell_type = MATERIAL;
+				++atts;
+				material_id = atoi(*atts);
+			}
+
+			if (strcmp(*atts, "fill") == 0) {
+				cell_type = FILL;
+				++atts;
+				universe_id = atoi(*atts);
+			}
+
+
+	 		if (strcmp(*atts, "surfaces") == 0) {
+				++atts;
+				char *long_str;
+				char *tmp;
+				char *result;
+				
+				long_str = strdup(*atts);
+				result = strtok_r(long_str, " ,.", &tmp);
+				bound_surf.push_back(atof(result));
+				while ((result = strtok_r(NULL, " ,.", &tmp))
+				       != NULL) {
+					bound_surf.push_back(atof(result));
+				}
+				num_surfaces = bound_surf.size();
+			}
+			++atts;
+		}
+		
+		log_printf(NORMAL, "Parsed Cells: id = %d, num of surfs = %d\n", 			  cell_id, num_surfaces);
+		cell = new Cell(cell_id, cell_type, num_surfaces);
+	
+	}
+
+
 	
 #if 0
 	while (*atts) {
@@ -133,6 +196,7 @@ static void XMLCALL startElementCallback( void *context,
 	ctxt->depth += ctxt->tagInd;
 #endif
 }
+
 
 /* callback for end elements, e.g. </tag>,
  * it is called for empty elements, too
