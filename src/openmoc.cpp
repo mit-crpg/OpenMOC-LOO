@@ -16,6 +16,10 @@
 #include "log.h"
 #include "Options.h"
 
+// FIXME: These should be removed when main() is properly implemented
+#pragma GCC diagnostic ignored "-Wunused"
+#pragma GCC diagnostic ignored "-Wunused-variable"
+
 // TODO: This is just stubbed out for now
 int main(int argc, const char **argv) {
 
