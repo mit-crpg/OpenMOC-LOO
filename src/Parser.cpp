@@ -48,10 +48,11 @@ static void XMLCALL startElementCallback( void *context,
 	Cell* cell;
 	int cell_id;
 	cellType cell_type;
+	int universe = 0;
 	int num_surfaces;
-	int material_id;
-	int universe_id;
-	std::vector<int> bound_surf;
+	std::vector<int> surfaces;
+	int material;
+	int universe_fill = 0;
 
 	ctxt = (PContext*)context;
 	
@@ -79,10 +80,10 @@ static void XMLCALL startElementCallback( void *context,
 				if (strcmp(*atts, "plane") == 0) {
 					surface_type = PLANE;
 				}
-				if (strcmp(*atts, "xplane") == 0) {
+				if (strcmp(*atts, "x-plane") == 0) {
 					surface_type = XPLANE;
 				}
-				if (strcmp(*atts, "yplane") == 0) {
+				if (strcmp(*atts, "y-plane") == 0) {
 					surface_type = YPLANE;
 				}
 				if (strcmp(*atts, "circle") == 0) {
@@ -110,18 +111,28 @@ static void XMLCALL startElementCallback( void *context,
 		/* TODO: check for number of coeffs */
 		switch (surface_type) {
 		case PLANE:
+		        log_printf(NORMAL, "Parsed Surfs: plane, id = %d,"
+				   " coeffs = %.1f, %.1f, %.1f.\n",
+				   surface_id, coeffs.at(0), coeffs.at(1), 
+				   coeffs.at(2));
 			surface = new Plane(surface_id, coeffs.at(0),
 					    coeffs.at(1), coeffs.at(2));
 			break;
 		case XPLANE:
+		        log_printf(NORMAL, "Parsed Surfs: x-plane, id = %d,"
+				   " coeffs = %.1f.\n",
+				   surface_id, coeffs.at(0));
 			surface = new XPlane(surface_id, coeffs.at(0));
 			break;
 		case YPLANE:
+		        log_printf(NORMAL, "Parsed Surfs: y-plane, id = %d,"
+				   " coeffs = %.1f.\n",
+				   surface_id, coeffs.at(0));
 			surface = new YPlane(surface_id, coeffs.at(0));
 			break;
 		case CIRCLE:
-		        log_printf(NORMAL, "Parsed Surfs: id = %d,"
-				   " coeffs = %f %f %f\n",
+		        log_printf(NORMAL, "Parsed Surfs: circle, id = %d,"
+				   " coeffs = %.1f, %.1f, %.1f\n",
 				   surface_id, coeffs.at(0), coeffs.at(1), 
 				   coeffs.at(2));
 			surface = new Circle(surface_id, coeffs.at(0), 
@@ -143,18 +154,22 @@ static void XMLCALL startElementCallback( void *context,
 				cell_id = atoi(*atts);
 			}
 			
+			if (strcmp(*atts, "universe") == 0) {
+				++atts;
+				universe = atoi(*atts);
+			}
+
 			if (strcmp(*atts, "material") == 0) {
 				cell_type = MATERIAL;
 				++atts;
-				material_id = atoi(*atts);
+				material = atoi(*atts);
 			}
 
 			if (strcmp(*atts, "fill") == 0) {
 				cell_type = FILL;
 				++atts;
-				universe_id = atoi(*atts);
+				universe_fill = atoi(*atts);
 			}
-
 
 	 		if (strcmp(*atts, "surfaces") == 0) {
 				++atts;
@@ -164,23 +179,41 @@ static void XMLCALL startElementCallback( void *context,
 				
 				long_str = strdup(*atts);
 				result = strtok_r(long_str, " ,.", &tmp);
-				bound_surf.push_back(atof(result));
+				surfaces.push_back(atof(result));
 				while ((result = strtok_r(NULL, " ,.", &tmp))
 				       != NULL) {
-					bound_surf.push_back(atof(result));
+					surfaces.push_back(atof(result));
 				}
-				num_surfaces = bound_surf.size();
+				num_surfaces = surfaces.size();
 			}
 			++atts;
 		}
 		
-		log_printf(NORMAL, "Parsed Cells: id = %d, num of surfs = %d\n", 			  cell_id, num_surfaces);
-		cell = new Cell(cell_id, cell_type, num_surfaces);
+		/* TODO: check for number of coeffs */
+		switch (cell_type) {;
+		case MATERIAL:
+		        log_printf(NORMAL, "Parsed Cells: id = %d,"
+				   " universe = %d, 1st surface = %d,"
+				   " # of surfaces = %d, material = %d.\n",
+				   cell_id, universe, surfaces.at(0),
+				   num_surfaces, material);
+			cell = new CellBasic(surface_id, universe, num_surfaces,
+					     surfaces, material);
+			break;
+		case FILL:
+		        log_printf(NORMAL, "Parsed Cells: id = %d,"
+				   " universe = %d, 1st surface = %d,"
+				   " # of surfaces = %d, u_fill = %d.\n",
+				   cell_id, universe, surfaces.at(0),
+				   num_surfaces, universe_fill);
+			cell = new CellFill(surface_id, universe, num_surfaces,
+					     surfaces, universe_fill);			
+			break;
+		}
 	
 	}
 
-
-	
+/* Enable the following for printing directly from the xml file */	
 #if 0
 	while (*atts) {
 		if (is_key) {

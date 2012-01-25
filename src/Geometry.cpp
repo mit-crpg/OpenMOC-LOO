@@ -147,6 +147,18 @@ Surface* Geometry::getSurface(int id) {
  * if not, it creates one and adds it to the geometry.
  * @param cell a pointer to the cell object
  */
+void Geometry::addCell(CellBasic *cell)
+{
+	log_printf(NORMAL, "CellBasic, id=%d\n", cell->getId());
+}
+
+void Geometry::addCell(CellFill *cell)
+{
+	log_printf(NORMAL, "CellFill, id=%d\n", cell->getId());
+}
+
+// FIXME: This should be split into the two cases above instead of using magic constants
+#if 0
 void Geometry::addCell(Cell* cell) {
 	/* If a cell with the same id already exists */
 	if (mapContainsKey(_cells, cell->getId()))
@@ -185,7 +197,7 @@ void Geometry::addCell(Cell* cell) {
 		}
 	}
 }
-
+#endif
 
 /**
  * Return a cell from the geometry

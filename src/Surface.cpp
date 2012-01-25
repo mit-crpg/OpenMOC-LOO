@@ -9,7 +9,7 @@
 
 
 /**
- * Default surface constructor
+ * Default Surface constructor
  * @param id the surface id
  * @param type the surface type
  */

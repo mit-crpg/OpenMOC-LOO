@@ -32,15 +32,16 @@ private:
 public:
 	Geometry();
 	virtual ~Geometry();
-    void setWidth(const double width);
-    void setHeight(const double height);
-    double getWidth() const;
-    double getHeight() const;
+	void setWidth(const double width);
+	void setHeight(const double height);
+	double getWidth() const;
+	double getHeight() const;
 	void addMaterial(Material* material);
 	Material* getMaterial(int id);
 	void addSurface(Surface* surface);
 	Surface* getSurface(int id);
-	void addCell(Cell* cell);
+	void addCell(CellBasic *cell);
+	void addCell(CellFill *cell);
 	Cell* getCell(int id);
 	void addUniverse(Universe* universe);
 	Universe* getUniverse(int id);
