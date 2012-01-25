@@ -41,17 +41,17 @@ public:
 	void addSurface(Surface* surface);
 	Surface* getSurface(int id);
 	void addCell(Cell *cell);
-	void addCell(CellBasic *cell);
-	void addCell(CellFill *cell);
 	Cell* getCell(int id);
 	void addUniverse(Universe* universe);
 	Universe* getUniverse(int id);
 	void addLattice(Lattice* lattice);
 	Lattice* getLattice(int id);
+
 	// Recursively sets Universe levels
 	void buildUniverseLevels(Universe* univ, int parent_cell, int level);
 	// Build list of neighboring cells in positive/negative direction from each surface
 	void buildNeighborsList();
+
 	template <class K, class V>
 	bool mapContainsKey(std::map<K, V> map, K key);
 };

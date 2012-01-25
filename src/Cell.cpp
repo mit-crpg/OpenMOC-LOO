@@ -52,6 +52,7 @@ void Cell::addSurface(int surface) {
 	}
 }
 
+
 /**
  * Return the cell's id
  * @return the cell's id
@@ -59,6 +60,7 @@ void Cell::addSurface(int surface) {
 int Cell::getId() const {
 	return _id;
 }
+
 
 /**
  * Return the cell type (FILL or MATERIAL)
@@ -68,6 +70,7 @@ cellType Cell::getType() const {
 	return _type;
 }
 
+
 /**
  * Return the universe that this cell is in
  * @return the universe id
@@ -76,13 +79,6 @@ int Cell::getUniverse() const {
     return _universe;
 }
 
-/**
- * Return the cell' parent
- * @return the parent cell id
- */
-// int Cell::getParentCell() const {
-//     return _parent_cell;
-// }
 
 /**
  * Return the number of surfaces in the cell
@@ -100,13 +96,6 @@ std::vector<int> Cell::getSurfaces() const {
 	return _surfaces;
 }
 
-/**
- * Set the parent cell for this cell
- * @param parentCell the parent cell id
- */
-//void Cell::setParentCell(int parentCell) {
-//    _parent_cell = parentCell;
-//}
 
 /**
  * Set the universe that this cell is inside of
@@ -135,13 +124,6 @@ int CellBasic::getMaterial() const {
 	return _material;
 }
 
-/**
- * Set the material inside the cell
- * @param material the material's id
- */
-void CellBasic::setMaterial(int material) {
-	_material = material;
-}
 
 /**
  *  CellFill constructor

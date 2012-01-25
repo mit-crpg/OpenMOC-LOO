@@ -148,37 +148,35 @@ Surface* Geometry::getSurface(int id) {
  * @param cell a pointer to the cell object
  */
 void Geometry::addCell(Cell* cell) {
-	if ((dynamic_cast<CellBasic *>(cell)) != NULL)
-		return addCell(dynamic_cast<CellBasic *>(cell));
-	if ((dynamic_cast<CellFill *>(cell)) != NULL)
-		return addCell(dynamic_cast<CellFill *>(cell));
 
-	throw std::runtime_error("Unknown Cell Type");
-
-	// FIXME: This code should be split into 3 parts:
-	//  1. Shared code for all cells (goes above the dynamic_cast stuff)
-	//  2. CellBasic-specific code (goes below in the CellBasic method)
-	//  3. CellFill-specific code (goes below in the CellFill method)
-	// Unfortunately it seems that C++ doesn't automatically do runtime
-	//  type inference for overloaded functions so it's a bit uglier than
-	//  I had originally hoped.  Sorry!
-#if 0
 	/* If a cell with the same id already exists */
 	if (mapContainsKey(_cells, cell->getId()))
 		log_printf(ERROR, "Cannot add a second cell with id = %d\n", cell->getId());
 
-	/* If the cell's material does not exist */
-	else if (cell->getMaterial() != -1E5 && !mapContainsKey(_materials, cell->getMaterial()))
+	/* If the cell is filled with a material which does not exist */
+	else if (cell->getType() == MATERIAL &&
+			!mapContainsKey(_materials, static_cast<CellBasic*>(cell)->getMaterial())) {
 		log_printf(ERROR, "Attempted to create cell with material with id = %d, but "
-				"material does not exist", cell->getMaterial());
+			"material does not exist", static_cast<CellBasic*>(cell)->getMaterial());
+	}
+
+	/* If the cell is filled with a universe which doesn't exist yet, create it */
+	else if (cell->getType() == FILL && !mapContainsKey(_universes,
+			static_cast<CellFill*>(cell)->getUniverse())) {
+
+		Universe* univ = new Universe(cell->getUniverse());
+		addUniverse(univ);
+	}
+
 
 	/* Checks whether the cell's surfaces exist */
 	for (int i=0; i < cell->getNumSurfaces(); i++) {
-		if (mapContainsKey(_surfaces, abs(cell->getSurfaces().at(i))))
+		if (!mapContainsKey(_surfaces, abs(cell->getSurfaces().at(i))))
 			log_printf(ERROR, "Attempted to create cell with surface id = %d, but "
 					"surface does not exist", cell->getSurfaces().at(i));
 	}
 
+	/* Insert the cell into the geometry's cell container */
 	try {
 		_cells.insert(std::pair<int, Cell*>(cell->getId(), cell));
 		log_printf(INFO, "Added cell with id = %d to geometry\n", cell->getId());
@@ -199,17 +197,7 @@ void Geometry::addCell(Cell* cell) {
 					"it to the geometry. Backtrace:\n%s", cell->getUniverse(), e.what());
 		}
 	}
-#endif
-}
 
-void Geometry::addCell(CellBasic *cell)
-{
-	log_printf(NORMAL, "Adding CellBasic to Geometry\n");
-}
-
-void Geometry::addCell(CellFill *cell)
-{
-	log_printf(NORMAL, "Adding CellFill to Geometry\n");
 }
 
 

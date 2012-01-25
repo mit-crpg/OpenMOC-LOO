@@ -207,7 +207,7 @@ void XMLCALL Parser_XMLCallback_Start( void *context,
 				   " # of surfaces = %d, material = %d.\n",
 				   cell_id, universe, surfaces.at(0),
 				   num_surfaces, material);
-			cell = new CellBasic(surface_id, universe, num_surfaces,
+			cell = new CellBasic(cell_id, universe, num_surfaces,
 					     surfaces, material);
 			break;
 		case FILL:
@@ -216,7 +216,7 @@ void XMLCALL Parser_XMLCallback_Start( void *context,
 				   " # of surfaces = %d, u_fill = %d.\n",
 				   cell_id, universe, surfaces.at(0),
 				   num_surfaces, universe_fill);
-			cell = new CellFill(surface_id, universe, num_surfaces,
+			cell = new CellFill(cell_id, universe, num_surfaces,
 					     surfaces, universe_fill);			
 			break;
 		}
