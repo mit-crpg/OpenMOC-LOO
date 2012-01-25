@@ -13,10 +13,20 @@
 #ifndef OPTIONS_H
 #define OPTIONS_H
 
+#include "log.h"
+
 class Options {
+private:
+	char* _geometry_file;
+	double _track_spacing;
+	int _num_azim;
+	char* _verbosity;
 public:
-	char *geometry_file;	/* TODO: make class attributes private with getter and setter methods */
     Options(int argc, const char **argv);
+    char *getGeometryFile() const;
+    double getNumAzim() const;
+    double getTrackSpacing() const;
+    char* getVerbosity() const;
 };
 
 #endif

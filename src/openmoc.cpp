@@ -18,16 +18,27 @@
 
 // TODO: This is just stubbed out for now
 int main(int argc, const char **argv) {
+
+	/* Create an options class to parse command line options */
 	Options opts = Options(argc, argv);
+
+	/* Set the verbosity */
+	log_setlevel(opts.getVerbosity());
 	log_printf(NORMAL, "Starting OpenMOC...\n");
 
-// Variable is unused, causes warning with -Wall
-#if 0
+	/* Create an empty geometry */
 	Geometry* geometry = new Geometry();
-	TrackGenerator* trackGenerator = new TrackGenerator();
-#endif
 
+	/* Initialize the parser */
 	Parser* parser = new Parser(&opts);
+
+	/* Initialize the trackgenerator */
+	TrackGenerator* trackGenerator = new TrackGenerator(geometry,
+			opts.getTrackSpacing(), opts.getTrackSpacing());
+
+	/* Parse the input geometry and materials files and register input
+	 * with the geometry object
+	 */
 	parser->parseMaterials();
 	parser->parseGeometry();
 }

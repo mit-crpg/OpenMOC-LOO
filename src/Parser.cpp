@@ -155,10 +155,10 @@ Parser::Parser (const Options *opts) {
 	char c;
 	FILE* geofile;
 	
-	if (opts->geometry_file == NULL)
+	if (opts->getGeometryFile() == NULL)
 		throw std::runtime_error("No geometry file given");
 	
-	geoxml = opts->geometry_file;
+	geoxml = opts->getGeometryFile();
 	geofile = fopen(geoxml, "r");
 	if (geofile == NULL)
 		throw std::runtime_error("Given geometry file does not exist");

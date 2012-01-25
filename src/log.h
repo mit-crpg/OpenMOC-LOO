@@ -15,6 +15,7 @@
 #include <stdarg.h>
 #include <stdlib.h>
 #include <iostream>
+#include <string.h>
 
 typedef enum logLevels {
 	NORMAL,
@@ -27,6 +28,7 @@ typedef enum logLevels {
 } logLevel;
 
 void log_setlevel(logLevel newlevel);
+void log_setlevel(char* newlevel);
 void log_printf(logLevel level, const char *format, ...);
 
 #ifndef LOG_C
