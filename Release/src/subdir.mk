@@ -7,6 +7,7 @@ CPP_SRCS += \
 ../src/Cell.cpp \
 ../src/Geometry.cpp \
 ../src/Lattice.cpp \
+../src/LocalCoords.cpp \
 ../src/Material.cpp \
 ../src/Options.cpp \
 ../src/Parser.cpp \
@@ -24,6 +25,7 @@ OBJS += \
 ./src/Cell.o \
 ./src/Geometry.o \
 ./src/Lattice.o \
+./src/LocalCoords.o \
 ./src/Material.o \
 ./src/Options.o \
 ./src/Parser.o \
@@ -41,6 +43,7 @@ CPP_DEPS += \
 ./src/Cell.d \
 ./src/Geometry.d \
 ./src/Lattice.d \
+./src/LocalCoords.d \
 ./src/Material.d \
 ./src/Options.d \
 ./src/Parser.d \
