@@ -11,6 +11,7 @@
 #define CELL_H_
 
 #include <vector>
+#include <sstream>
 #include "log.h"
 
 enum cellType {
@@ -39,6 +40,7 @@ public:
 	int getNumSurfaces() const;
 	std::vector<int> getSurfaces() const;
 	void setUniverse(int universe);
+	virtual const char* toString() =0;
 };
 
 
@@ -53,6 +55,7 @@ public:
 		  std::vector<int> surfaces, int material);
 	int getMaterial() const;
 	void setMaterial(int material);
+	const char* toString();
 };
 
 
@@ -67,6 +70,7 @@ public:
 		 std::vector<int> surfaces, int universe_fill);
 	int getUniverseFill() const;
 	void setUniverseFill(int universe_Fill);
+	const char* toString();
 };
 
 #endif /* CELL_H_ */

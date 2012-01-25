@@ -311,6 +311,47 @@ Lattice* Geometry::getLattice(int id) {
 
 
 /**
+ * Converts this geometry's attributes to a character array
+ * @param a character array of this geometry's attributes
+ */
+const char* Geometry::toString() {
+	std::stringstream string;
+	std::map<int, Material*>::iterator iter1;
+	std::map<int, Surface*>::iterator iter2;
+	std::map<int, Cell*>::iterator iter3;
+	std::map<int, Universe*>::iterator iter4;
+	std::map<int, Lattice*>::iterator iter5;
+
+
+	string << "Geometry: width = " << _width << ", height = " << _height <<
+			", base universe id = " << _base_universe;
+
+	string << "\n\tMaterial ids = ";
+	for (iter1 = _materials.begin(); iter1 != _materials.end(); ++iter1)
+		string << iter1->second << ", ";
+
+	string << "\n\tSurface ids = ";
+	for (iter2 = _surfaces.begin(); iter2 != _surfaces.end(); ++iter2)
+		string << iter2->second << ", ";
+
+	string << "\n\tCell ids = ";
+	for (iter3 = _cells.begin(); iter3 != _cells.end(); ++iter3)
+		string << iter3->second << ", ";
+
+	string << "\n\tUniverse ids = ";
+	for (iter4 = _universes.begin(); iter4 != _universes.end(); ++iter4)
+		string << iter4->second << ", ";
+
+	string << "\n\tLattice ids = ";
+	for (iter5 = _lattices.begin(); iter5 != _lattices.end(); ++iter5)
+		string << iter5->second << ", ";
+
+	string << std::endl;
+
+	return string.str().c_str();
+}
+
+/**
  * Function to determine whether a key already exists in a templated map container
  * @param map the map container
  * @param key the key to check

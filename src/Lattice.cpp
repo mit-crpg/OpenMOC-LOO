@@ -62,15 +62,6 @@ int Lattice::getId() const {
 
 
 /**
- * Return the lattice (universe) level
- * @return the universe level
- */
-int Lattice::getLevel() const {
-    return _level;
-}
-
-
-/**
  * Return the number of lattice cells along the x-axis
  * @return the number of lattice cells
  */
@@ -120,4 +111,28 @@ double Lattice::getWidthX() const {
  */
 double Lattice::getWidthY() const {
     return _width_y;
+}
+
+
+/**
+ * Converts a lattice's attributes to a character array representation
+ * @return character array of this lattice's attributes
+ */
+const char* Lattice::toString() {
+	std::stringstream string;
+
+	string << "Material id = " << _id << " num cells along x = "
+			<< _num_x << " num cells along y = " << _num_y << " x width = "
+			<< _width_x << " y width = " << _width_y;
+
+	string << "\n\tUniverse ids within this lattice:\n\t";
+	for (int U = 0; U < (int)_universes.size();  U++) {
+		for (int u = 0; u < (int)_universes.at(U).size(); u++)
+			string << _universes.at(U).at(u) << "  ";
+		string << "\n\t\t";
+	}
+
+	string << std::endl;
+
+	return string.str().c_str();
 }

@@ -81,6 +81,20 @@ double Plane::evaluate(const Point* point) const {
 
 
 /**
+ * Converts this Plane's attributes to a character array
+ * @param a character array of this plane's attributes
+ */
+const char* Plane::toString() {
+	std::stringstream string;
+
+	string << "Surface id = " << _id << ", type = PLANE " << ", A = "
+			<< _A << ", B = " << _B << ", C = " << _C << std::endl;
+
+	return string.str().c_str();
+}
+
+
+/**
  * Finds the intersection points (0 or 1) of a track with a plane.
  * @param track the track of interest
  * @param points an array of two points where the intersection points are stored
@@ -209,6 +223,20 @@ std::vector<Surface*> XPlane::getNeighborNeg() {
 
 
 /**
+ * Converts this XPlane's attributes to a character array
+ * @param a character array of this plane's attributes
+ */
+const char* XPlane::toString() {
+	std::stringstream string;
+
+	string << "Surface id = " << _id << ", type = XPLANE " << ", A = "
+			<< _A << ", B = " << _B << ", C = " << _C << std::endl;
+
+	return string.str().c_str();
+}
+
+
+/**
  * YPlane constructor for a plane parallel to the y-axis
  * @param id the surface id
  * @param the location of the plane along the x-axis
@@ -227,6 +255,19 @@ std::vector<Surface*> YPlane::getNeighborNeg() {
     return std::vector<Surface*>();
 }
 
+
+/**
+ * Converts this YPlane's attributes to a character array
+ * @param a character array of this plane's attributes
+ */
+const char* YPlane::toString() {
+	std::stringstream string;
+
+	string << "Surface id = " << _id << ", type = YPLANE " << ", A = "
+			<< _A << ", B = " << _B << ", C = " << _C << std::endl;
+
+	return string.str().c_str();
+}
 
 /**
  * Circle constructor
@@ -484,4 +525,19 @@ int Circle::intersection(Plane* plane, Point* points) const {
 			return num;
 		}
 	}
+}
+
+
+/**
+ * Converts this Plane's attributes to a character array
+ * @param a character array of this plane's attributes
+ */
+const char* Circle::toString() {
+	std::stringstream string;
+
+	string << "Surface id = " << _id << ", type = CIRCLE " << ", A = "
+			<< _A << ", B = " << _B << ", C = " << _C << ", D = " << _D
+			<< ", E = " << _E << std::endl;
+
+	return string.str().c_str();
 }

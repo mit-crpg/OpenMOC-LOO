@@ -61,15 +61,6 @@ int Universe::getId() const {
 
 
 /**
- * Return the level for this universe (base level = 0)
- * @return the universe level
- */
-int Universe::getLevel() const {
-    return _level;
-}
-
-
-/**
  * Return the number of cells in this universe
  * @return the number of cells
  */
@@ -88,20 +79,29 @@ Point* Universe::getOrigin() {
 
 
 /**
- * Set the level of this universe
- * @param level the universe level (base = 0)
+ * Set the origin for this universe
+ * @param origin the origin point
  */
-void Universe::setLevel(const int level) {
-    _level = level;
+void Universe::setOrigin(Point* origin) {
+    _origin.setX(origin->getX());
+    _origin.setY(origin->getY());
 }
 
 
 /**
- * Set the origin for this universe
- * @param origin the origin point
+ * Convert the member attributes of this universe to a character array
+ * @param a character array reprsenting the universe
  */
-void Universe::setOrigin(Point* origin)
-{
-    _origin.setX(origin->getX());
-    _origin.setY(origin->getY());
+const char* Universe::toString() {
+	std::stringstream string;
+
+	string << "Universe id = " << _id << ", num cells = " << _num_cells <<
+			", cell ids = ";
+
+	for (int c = 0; c < _num_cells; c++)
+		string << _cells.at(c) << ", ";
+
+	string << std::endl;
+
+	return string.str().c_str();
 }

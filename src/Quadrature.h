@@ -12,6 +12,7 @@
 
 #include <stdlib.h>
 #include <iostream>
+#include <sstream>
 #include "configurations.h"
 #include "log.h"
 
@@ -36,6 +37,7 @@ public:
 	double* getSinThetas();
     double* getWeights();
     double* getMultiples();
+    const char* toString();
 };
 
 #endif /* QUADRATURE_H_ */

@@ -34,6 +34,7 @@ public:
     std::vector<std::vector<int> > getUniverses() const;
     double getWidthX() const;
     double getWidthY() const;
+    const char* toString();
 };
 
 #endif /* LATTICE_H_ */

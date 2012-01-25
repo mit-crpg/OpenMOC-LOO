@@ -53,7 +53,7 @@ public:
 	bool contains(Point* point);
 	void addSegment(segment* segment);
 	void clearSegments();
-
+	const char* toString();
 };
 
 

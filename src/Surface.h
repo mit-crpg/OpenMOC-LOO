@@ -9,6 +9,7 @@
 #define SURFACE_H_
 
 #include <vector>
+#include <sstream>
 #include "Point.h"
 #include "Track.h"
 
@@ -45,6 +46,7 @@ public:
 	virtual double evaluate(const Point* point) const =0;
 	virtual int intersection(Track* track, Point* points) const =0;
 	virtual int intersection(Plane* plane, Point* points) const =0;
+	virtual const char* toString() =0;
 };
 
 /**
@@ -62,6 +64,7 @@ public:
 	double evaluate(const Point* point) const;
 	int intersection(Track* track, Point* points) const;
 	int intersection(Plane* plane, Point* points) const;
+	const char* toString();
 };
 
 /**
@@ -74,6 +77,7 @@ public:
 	XPlane(const int id, const double C);
 	std::vector<Surface*> getNeighborPos();
 	std::vector<Surface*> getNeighborNeg();
+	const char* toString();
 };
 
 /**
@@ -86,6 +90,7 @@ public:
 	YPlane(const int id, const double C);
 	std::vector<Surface*> getNeighborPos();
 	std::vector<Surface*> getNeighborNeg();
+	const char* toString();
 };
 
 /**
@@ -105,6 +110,7 @@ public:
 	double evaluate(const Point* point) const;
 	int intersection(Track* track, Point* points) const;
 	int intersection(Plane* plane, Point* points) const;
+	const char* toString();
 };
 
 #endif /* SURFACE_H_ */

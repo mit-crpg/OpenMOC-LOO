@@ -33,6 +33,7 @@ int main(int argc, const char **argv) {
 	/* Create an empty geometry */
 	Geometry* geometry = new Geometry();
 
+	// FIXME: Put this inside the parser to hide it from the main program
 	/* Initialize the parser */
 	Parser* parser = new Parser(&opts);
 	parser->each_surface([geometry](Surface *s) -> void
@@ -46,6 +47,9 @@ int main(int argc, const char **argv) {
 				  return;
 			  });
 	
+
+	/* Print out geometry to console */
+	log_printf(INFO, geometry->toString());
 
 	/* Initialize the trackgenerator */
 	TrackGenerator* trackGenerator = new TrackGenerator(geometry,

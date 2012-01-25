@@ -126,6 +126,25 @@ int CellBasic::getMaterial() const {
 
 
 /**
+ * Convert this cell's attributes to a string format
+ * @return a character array of this cell's attributes
+ */
+const char* CellBasic::toString() {
+	std::stringstream string;
+	string << "Cell id = " << _id << ", type = MATERIAL, material id = " <<
+			_material << ", universe = " << _universe << ", num_surfaces = "
+			<< _num_surfaces << " surface ids = ";
+
+	for (int s = 0; s < _num_surfaces; s++)
+		string << _surfaces.at(s) << ", ";
+
+	string << std::endl;
+
+	return string.str().c_str();
+}
+
+
+/**
  *  CellFill constructor
  *  @param universe_fill the universe used to fill this cell
  */
@@ -153,5 +172,22 @@ void CellFill::setUniverseFill(int universe_fill) {
 }
 
 
+/**
+ * Convert this cell's attributes to a string format
+ * @return a character array of this cell's attributes
+ */
+const char* CellFill::toString() {
+	std::stringstream string;
+	string << "Cell id = " << _id << ", type = FILL, universe_fill = " <<
+			_universe_fill << ", universe = " << _universe << ", num_surfaces = "
+			<< _num_surfaces;
+
+	for (int s = 0; s < _num_surfaces; s++)
+		string << _surfaces.at(s) << ", ";
+
+	string << std::endl;
+
+	return string.str().c_str();
+}
 
 

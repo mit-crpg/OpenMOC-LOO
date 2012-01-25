@@ -170,3 +170,35 @@ double* Quadrature::getWeights() {
 double* Quadrature::getMultiples() {
 	return _multiples;
 }
+
+
+/**
+ * Converts this quadrature to a character array of its attributes
+ * @param a character array of this quadrature's attributes
+ */
+const char* Quadrature::toString() {
+	std::stringstream string;
+
+	string << "Quadrature type = ";
+
+	if (_type == LEONARD)
+		string << " LEONARD";
+	else if (_type == TABUCHI)
+		string << " TABUCHI";
+
+	string << "\nsinthetas = ";
+	for (int p = 0; p < NUM_POLAR_ANGLES; p++)
+		string << _sinthetas[p] << ", ";
+
+	string << "\nweights = ";
+	for (int p = 0; p < NUM_POLAR_ANGLES; p++)
+		string << _weights[p] << ", ";
+
+	string << "\nmultiples= ";
+	for (int p = 0; p < NUM_POLAR_ANGLES; p++)
+		string << _multiples[p] << ", ";
+
+	string << std::endl;
+
+	return string.str().c_str();
+}

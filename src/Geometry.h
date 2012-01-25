@@ -12,6 +12,7 @@
 
 #include <map>
 #include <utility>
+#include <sstream>
 #include "Material.h"
 #include "Surface.h"
 #include "Cell.h"
@@ -46,6 +47,7 @@ public:
 	Universe* getUniverse(int id);
 	void addLattice(Lattice* lattice);
 	Lattice* getLattice(int id);
+	const char* toString();
 
 	// Recursively sets Universe levels
 	void buildUniverseLevels(Universe* univ, int parent_cell, int level);

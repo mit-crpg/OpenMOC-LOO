@@ -250,3 +250,19 @@ bool Track::contains(Point* point) {
 void Track::clearSegments() {
 	_segments.clear();
 }
+
+
+/**
+ * Convert this track's attributes to a character array
+ * @return a character array of this track's attributes
+ */
+const char* Track::toString() {
+	std::stringstream string;
+	string << "Track: start, x = " << _start.getX() << ", y = " << _start.getY()
+			<< " end, x = " << _end.getX() << ", y = " << _end.getY() << ", phi = "
+			<< _phi << " weight = " << _weight;
+
+	string << std::endl;
+
+	return string.str().c_str();
+}
