@@ -20,17 +20,28 @@
 #include "Options.h"
 #include "log.h"
 
+#include <vector>
+#include "Surface.h"
+#include <functional>
+
 /**
  * Parses XML Files
  */
 class Parser {
 private:
-//    std::string geoxml;
+	std::vector<Surface *> surfaces;
+	std::vector<Cell *> cells;
+
 public:
 	Parser(const Options *opts);
 	virtual ~Parser();
-	void parseMaterials(void);
-	void parseGeometry(void);
+
+	void each_surface(std::function<void(Surface *)> callback);
+	void each_cell(std::function<void(Cell *)> callback);
+
+	friend void XMLCALL Parser_XMLCallback_Start(void *context,
+						     const XML_Char *name,
+						     const XML_Char **atts);
 };
 
 #endif /* POINT_H_ */

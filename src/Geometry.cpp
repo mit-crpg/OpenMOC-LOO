@@ -8,6 +8,7 @@
  */
 
 #include "Geometry.h"
+#include <stdexcept>
 
 
 /**
@@ -141,25 +142,27 @@ Surface* Geometry::getSurface(int id) {
 	exit(0);
 }
 
-
 /**
  * Add a cell to the geometry. Checks if the universe the cell is in already exists;
  * if not, it creates one and adds it to the geometry.
  * @param cell a pointer to the cell object
  */
-void Geometry::addCell(CellBasic *cell)
-{
-	log_printf(NORMAL, "CellBasic, id=%d\n", cell->getId());
-}
-
-void Geometry::addCell(CellFill *cell)
-{
-	log_printf(NORMAL, "CellFill, id=%d\n", cell->getId());
-}
-
-// FIXME: This should be split into the two cases above instead of using magic constants
-#if 0
 void Geometry::addCell(Cell* cell) {
+	if ((dynamic_cast<CellBasic *>(cell)) != NULL)
+		return addCell(dynamic_cast<CellBasic *>(cell));
+	if ((dynamic_cast<CellFill *>(cell)) != NULL)
+		return addCell(dynamic_cast<CellFill *>(cell));
+
+	throw std::runtime_error("Unknown Cell Type");
+
+	// FIXME: This code should be split into 3 parts:
+	//  1. Shared code for all cells (goes above the dynamic_cast stuff)
+	//  2. CellBasic-specific code (goes below in the CellBasic method)
+	//  3. CellFill-specific code (goes below in the CellFill method)
+	// Unfortunately it seems that C++ doesn't automatically do runtime
+	//  type inference for overloaded functions so it's a bit uglier than
+	//  I had originally hoped.  Sorry!
+#if 0
 	/* If a cell with the same id already exists */
 	if (mapContainsKey(_cells, cell->getId()))
 		log_printf(ERROR, "Cannot add a second cell with id = %d\n", cell->getId());
@@ -196,8 +199,19 @@ void Geometry::addCell(Cell* cell) {
 					"it to the geometry. Backtrace:\n%s", cell->getUniverse(), e.what());
 		}
 	}
-}
 #endif
+}
+
+void Geometry::addCell(CellBasic *cell)
+{
+	log_printf(NORMAL, "Adding CellBasic to Geometry\n");
+}
+
+void Geometry::addCell(CellFill *cell)
+{
+	log_printf(NORMAL, "Adding CellFill to Geometry\n");
+}
+
 
 /**
  * Return a cell from the geometry

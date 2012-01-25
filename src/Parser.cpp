@@ -31,12 +31,13 @@ typedef struct {
 	int tagInd;
 	int attrInd;
 	std::vector<std::string *> *level;
+	Parser *p;
 } PContext;
 
 /* callback for start element, e.g. <tag> */
-static void XMLCALL startElementCallback( void *context,
-					  const XML_Char *name,
-					  const XML_Char **atts ) {
+void XMLCALL Parser_XMLCallback_Start( void *context,
+				       const XML_Char *name,
+				       const XML_Char **atts ) {
 //    int is_key = 1;
 	PContext *ctxt;
 	/* surface related */
@@ -109,6 +110,8 @@ static void XMLCALL startElementCallback( void *context,
 		}
 		
 		/* TODO: check for number of coeffs */
+		surface = NULL;
+
 		switch (surface_type) {
 		case PLANE:
 		        log_printf(NORMAL, "Parsed Surfs: plane, id = %d,"
@@ -143,6 +146,11 @@ static void XMLCALL startElementCallback( void *context,
 				   " be used in geometry.xml.\n");
 			break;
 		}
+
+		if (surface != NULL)
+			ctxt->p->surfaces.push_back(surface);
+		else
+			log_printf(ERROR, "No surface created\n");
 		
 	}
 
@@ -190,7 +198,9 @@ static void XMLCALL startElementCallback( void *context,
 		}
 		
 		/* TODO: check for number of coeffs */
-		switch (cell_type) {;
+		cell = NULL;
+		
+		switch (cell_type) {
 		case MATERIAL:
 		        log_printf(NORMAL, "Parsed Cells: id = %d,"
 				   " universe = %d, 1st surface = %d,"
@@ -211,6 +221,12 @@ static void XMLCALL startElementCallback( void *context,
 			break;
 		}
 	
+		if (cell != NULL)
+			ctxt->p->cells.push_back(cell);
+		else
+			log_printf(ERROR, "No cell created\n");
+			
+
 	}
 
 /* Enable the following for printing directly from the xml file */	
@@ -234,8 +250,7 @@ static void XMLCALL startElementCallback( void *context,
 /* callback for end elements, e.g. </tag>,
  * it is called for empty elements, too
  */
-static void XMLCALL
-endElementCallback( void *context,
+static void XMLCALL Parser_XMLCallback_End( void *context,
 		    const XML_Char *name __attribute__((__unused__)) ) {
 	PContext *ctxt = (PContext*)context;
 	// ctxt->depth -= ctxt->tagInd;
@@ -276,14 +291,15 @@ Parser::Parser (const Options *opts) {
 	ctxt.tagInd = 4;
 	ctxt.attrInd = 6;
 	ctxt.level = new std::vector<std::string *>();
+	ctxt.p = this;
 	
 	XML_SetUserData(parser, &ctxt);
 	
 /* set callback for start element */
-	XML_SetStartElementHandler(parser, &startElementCallback);
+	XML_SetStartElementHandler(parser, &Parser_XMLCallback_Start);
 	
 /* set callback for start element */
-	XML_SetEndElementHandler(parser, &endElementCallback);
+	XML_SetEndElementHandler(parser, &Parser_XMLCallback_End);
 	
 /* If you'd like to read input by large blocks, you can have a look at
  * XML_GetBuffer and XML_ParseBuffer functions.
@@ -307,8 +323,20 @@ Parser::Parser (const Options *opts) {
  */
 Parser::~Parser() { }
 
-void Parser::parseMaterials(void) {
+/* Iterators */
+void Parser::each_surface(std::function<void(Surface *)> callback)
+{
+	std::vector<Surface *>::size_type i;
+
+	for (i = 0; i < this->surfaces.size(); i++)
+		callback(this->surfaces.at(i));
 }
 
-void Parser::parseGeometry(void) {
+void Parser::each_cell(std::function<void(Cell *)> callback)
+{
+	std::vector<Cell *>::size_type i;
+
+	for (i = 0; i < this->cells.size(); i++)
+		callback(this->cells.at(i));
 }
+

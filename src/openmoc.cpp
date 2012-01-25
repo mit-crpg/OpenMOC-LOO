@@ -35,14 +35,19 @@ int main(int argc, const char **argv) {
 
 	/* Initialize the parser */
 	Parser* parser = new Parser(&opts);
+	parser->each_surface([geometry](Surface *s) -> void
+			     {
+				     geometry->addSurface(s);
+				     return;
+			     });
+	parser->each_cell([geometry](Cell *c) -> void
+			  {
+				  geometry->addCell(c);
+				  return;
+			  });
+	
 
 	/* Initialize the trackgenerator */
 	TrackGenerator* trackGenerator = new TrackGenerator(geometry,
 			opts.getTrackSpacing(), opts.getTrackSpacing());
-
-	/* Parse the input geometry and materials files and register input
-	 * with the geometry object
-	 */
-	parser->parseMaterials();
-	parser->parseGeometry();
 }

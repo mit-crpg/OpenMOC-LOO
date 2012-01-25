@@ -40,6 +40,7 @@ public:
 	Material* getMaterial(int id);
 	void addSurface(Surface* surface);
 	Surface* getSurface(int id);
+	void addCell(Cell *cell);
 	void addCell(CellBasic *cell);
 	void addCell(CellFill *cell);
 	Cell* getCell(int id);
