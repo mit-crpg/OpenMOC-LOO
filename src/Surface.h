@@ -36,15 +36,15 @@ protected:
 	int _id;
 	surfaceType _type;
 public:
-	Surface(int id, surfaceType type);
+	Surface(const int id, const surfaceType type);
 	virtual ~Surface();
 	int getId() const;
 	surfaceType getType() const;
 	virtual std::vector<Surface*> getNeighborPos() =0;
 	virtual std::vector<Surface*> getNeighborNeg() =0;
-	virtual double evaluate(Point* point) =0;
-	virtual int intersection(Track* track, Point* points) =0;
-	virtual int intersection(Plane* plane, Point* points) =0;
+	virtual double evaluate(const Point* point) const =0;
+	virtual int intersection(Track* track, Point* points) const =0;
+	virtual int intersection(Plane* plane, Point* points) const =0;
 };
 
 /**
@@ -56,12 +56,12 @@ private:
 	friend class Surface;
 	friend class Circle;
 public:
-	Plane(int id, double A, double B, double C);
+	Plane(const int id, const double A, const double B, const double C);
 	std::vector<Surface*> getNeighborPos();
 	std::vector<Surface*> getNeighborNeg();
-	double evaluate(Point* point);
-	int intersection(Track* track, Point* points);
-	int intersection(Plane* plane, Point* points);
+	double evaluate(const Point* point) const;
+	int intersection(Track* track, Point* points) const;
+	int intersection(Plane* plane, Point* points) const;
 };
 
 /**
@@ -71,7 +71,7 @@ class XPlane: public Plane {
 private:
 	double _A, _B, _C;
 public:
-	XPlane(int id, double C);
+	XPlane(const int id, const double C);
 	std::vector<Surface*> getNeighborPos();
 	std::vector<Surface*> getNeighborNeg();
 };
@@ -83,7 +83,7 @@ class YPlane: public Plane {
 private:
 	double _A, _B, _C;
 public:
-	YPlane(int id, double C);
+	YPlane(const int id, const double C);
 	std::vector<Surface*> getNeighborPos();
 	std::vector<Surface*> getNeighborNeg();
 };
@@ -99,12 +99,12 @@ private:
 	friend class Surface;
 	friend class Plane;
 public:
-	Circle(int id, double x, double y, double radius);
+	Circle(const int id, const double x, const double y, const double radius);
 	std::vector<Surface*> getNeighborPos();
 	std::vector<Surface*> getNeighborNeg();
-	double evaluate(Point* point);
-	int intersection(Track* track, Point* points);
-	int intersection(Plane* plane, Point* points);
+	double evaluate(const Point* point) const;
+	int intersection(Track* track, Point* points) const;
+	int intersection(Plane* plane, Point* points) const;
 };
 
 #endif /* SURFACE_H_ */

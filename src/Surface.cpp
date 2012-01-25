@@ -13,7 +13,7 @@
  * @param id the surface id
  * @param type the surface type
  */
-Surface::Surface(int id, surfaceType type){
+Surface::Surface(const int id, const surfaceType type){
 	_id = id;
 	_type = type;
 }
@@ -50,7 +50,8 @@ surfaceType Surface::getType() const {
  * @param B the second coefficient
  * @param C the third coefficient
  */
-Plane::Plane(int id, double A, double B, double C): Surface(id, PLANE) {
+Plane::Plane(const int id, const double A, const double B,
+		const double C): Surface(id, PLANE) {
 	_A = A;
 	_B = B;
 	_C = C;
@@ -72,7 +73,7 @@ std::vector<Surface*> Plane::getNeighborNeg() {
  * @param point a pointer to the point of interest
  * @return the value of point in the equation
  */
-double Plane::evaluate(Point* point) {
+double Plane::evaluate(const Point* point) const {
 	double x = point->getX();
 	double y = point->getY();
 	return (_A * x + _B * y + _C);
@@ -85,7 +86,7 @@ double Plane::evaluate(Point* point) {
  * @param points an array of two points where the intersection points are stored
  * @return the number of intersection points (0 or 1 for a plane)
  */
-int Plane::intersection(Track* track, Point* points) {
+int Plane::intersection(Track* track, Point* points) const {
 
 	double x0 = track->getStart()->getX();
 	double y0 = track->getStart()->getY();
@@ -138,7 +139,7 @@ int Plane::intersection(Track* track, Point* points) {
  * @param points an array of two points where the intersection points are stored
  * @return the number of intersection points (0 or 1 for a plane)
  */
-int Plane::intersection(Plane* plane, Point* points) {
+int Plane::intersection(Plane* plane, Point* points) const {
 
 	double xcurr, ycurr;
 	int num = 0;			/* Number of intersection points */
@@ -191,7 +192,7 @@ int Plane::intersection(Plane* plane, Point* points) {
  * @param id the surface id
  * @param the location of the plane along the y-axis
  */
-XPlane::XPlane(int id, double C): Plane(id, 1, 0, -C) {
+XPlane::XPlane(const int id, const double C): Plane(id, 1, 0, -C) {
 	_type = XPLANE;
 }
 
@@ -212,7 +213,7 @@ std::vector<Surface*> XPlane::getNeighborNeg() {
  * @param id the surface id
  * @param the location of the plane along the x-axis
  */
-YPlane::YPlane(int id, double C): Plane(id, 1, 0, -C) {
+YPlane::YPlane(const int id, const double C): Plane(id, 1, 0, -C) {
 	_type = YPLANE;
 }
 
@@ -234,7 +235,8 @@ std::vector<Surface*> YPlane::getNeighborNeg() {
  * @param y the y-coordinate of the circle center
  * @param radius the radius of the circle
  */
-Circle::Circle(int id, double x, double y, double radius): Surface(id, CIRCLE) {
+Circle::Circle(const int id, const double x, const double y,
+		const double radius): Surface(id, CIRCLE) {
 	_A = 1;
 	_B = 1;
 	_C = -2*x;
@@ -261,7 +263,7 @@ std::vector<Surface*> Circle::getNeighborNeg() {
  * @param point a pointer to the point of interest
  * @return the value of point in the equation
  */
-double Circle::evaluate(Point* point) {
+double Circle::evaluate(const Point* point) const {
 	double x = point->getX();
 	double y = point->getY();
 	return (_A * x * x + _B * y * y + _C * x + _D * y + _E);
@@ -274,7 +276,7 @@ double Circle::evaluate(Point* point) {
  * @param points an array of two points where the intersection points are stored
  * @return the number of intersection points (0, 1 or 2 for a circle)
  */
-int Circle::intersection(Track* track, Point* points) {
+int Circle::intersection(Track* track, Point* points) const {
 	double x0 = track->getStart()->getX();
 	double y0 = track->getStart()->getY();
 	double xcurr, ycurr;
@@ -381,7 +383,7 @@ int Circle::intersection(Track* track, Point* points) {
  * @param points an array of two points where the intersection points are stored
  * @return the number of intersection points (0, 1 or 2 for a circle)
  */
-int Circle::intersection(Plane* plane, Point* points) {
+int Circle::intersection(Plane* plane, Point* points) const {
 
 	float xcurr, ycurr;
 	int num = 0;

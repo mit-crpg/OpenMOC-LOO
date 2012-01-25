@@ -17,18 +17,15 @@
 
 class Lattice: public Universe {
 private:
-	int _id;
-	int _level;
-	int _num_x;
-	int _num_y;
-	Point _origin;
-	double _width_x;
-	double _width_y;
+	int _num_x, _num_y;
+	double _width_x, _width_y;
 	std::vector< std::vector<int> > _universes;
+	friend class Universe;
 public:
-	Lattice(int id, int num_x, int num_y, double origin_x, double origin_y, double width_x, double width_y);
+	Lattice(const int id, const int num_x, const int num_y, const double origin_x, const double origin_y,
+			const double width_x, const double width_y);
 	virtual ~Lattice();
-	void addUniverse(int x, int y, int universe);
+	void addUniverse(const int x, const int y, const int universe);
     int getId() const;
     int getLevel() const;
     int getNumX() const;

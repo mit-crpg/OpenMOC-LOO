@@ -32,8 +32,8 @@ Track::~Track() {
  * @param end_x the x-coordinate at the ending point
  * @param end_y the y-coordinate at the ending point
  */
-void Track::setValues(double start_x, double start_y, double end_x,
-		double end_y, double phi) {
+void Track::setValues(const double start_x, const double start_y, const double end_x,
+		const double end_y, const double phi) {
 	_start.setCoords(start_x, start_y);
 	_end.setCoords(end_x, end_y);
 	_phi = phi;
@@ -44,7 +44,7 @@ void Track::setValues(double start_x, double start_y, double end_x,
  * Set the track azimuthal weight
  * @param weight the azimuthal weight
  */
-void Track::setWeight(double weight) {
+void Track::setWeight(const double weight) {
     _weight = weight;
 }
 
@@ -70,7 +70,7 @@ void Track::addSegment(segment* segment) {
  * end (true) of this Track
  * @param relf_in - beginning (false)/end (true)
  */
-void Track::setReflIn(bool refl_in) {
+void Track::setReflIn(const bool refl_in) {
     _refl_in = refl_in;
 }
 
@@ -80,7 +80,7 @@ void Track::setReflIn(bool refl_in) {
  * end (true) of the outgoing Track
  * @param relf_out - beginning (false)/end (true)
  */
-void Track::setReflOut(bool refl_out) {
+void Track::setReflOut(const bool refl_out) {
     _refl_out = refl_out;
 }
 

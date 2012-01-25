@@ -14,7 +14,7 @@
  * Quadrature constructor
  * @param type the quadrature type (Leonard or Tabuchi)
  */
-Quadrature::Quadrature(quadratureType type) {
+Quadrature::Quadrature(const quadratureType type) {
 
 	/* If TabuchiYamomoto */
 	if (type == TABUCHI) {
@@ -93,7 +93,7 @@ Quadrature::~Quadrature() { }
  * Returns the quadrature type (Leonard or Tabuchi)
  * @return the quadrature type
  */
-quadratureType Quadrature::getType() {
+quadratureType Quadrature::getType() const {
 	return _type;
 }
 
@@ -103,7 +103,7 @@ quadratureType Quadrature::getType() {
  * @param n the polar angle of interest
  * @return the sintheta value
  */
-double Quadrature::getSinTheta(int n) {
+double Quadrature::getSinTheta(const int n) const {
 	if (n > -1 && n < NUM_POLAR_ANGLES)
 		return _sinthetas[n];
 	else {
@@ -119,7 +119,7 @@ double Quadrature::getSinTheta(int n) {
  * @param n the polar angle of interest
  * @return the polar weight value
  */
-double Quadrature::getWeight(int n) {
+double Quadrature::getWeight(const int n) const {
 	if (n > -1 && n < NUM_POLAR_ANGLES)
 		return _weights[n];
 	else
@@ -134,7 +134,7 @@ double Quadrature::getWeight(int n) {
  * @param n the polar angle of interest
  * @return the multiple value
  */
-double Quadrature::getMultiple(int n) {
+double Quadrature::getMultiple(const int n) const {
 	if (n > -1 && n < NUM_POLAR_ANGLES)
 		return _multiples[n];
 	else

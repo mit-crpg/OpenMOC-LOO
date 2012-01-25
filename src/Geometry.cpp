@@ -32,7 +32,7 @@ Geometry::~Geometry() {
  * Sets the total height of the geometry
  * @param height the total height
  */
-void Geometry::setHeight(double height) {
+void Geometry::setHeight(const double height) {
 	_height = height;
 }
 
@@ -41,7 +41,7 @@ void Geometry::setHeight(double height) {
  * Sets the total width of the geometry
  * @param width the total width
  */
-void Geometry::setWidth(double width) {
+void Geometry::setWidth(const double width) {
     _width = width;
 }
 

@@ -20,9 +20,8 @@
  * @param width_x the width of the lattice along x
  * @param width_y the width of the lattice along y
  */
-Lattice::Lattice(int id, int num_x, int num_y, double origin_x, double origin_y,
+Lattice::Lattice(const int id, const int num_x, int num_y, double origin_x, double origin_y,
 		double width_x, double width_y): Universe(id) {
-	_id = id;
 	_num_y = num_y;
 	_num_x = num_x;
 	_origin.setX(origin_x);
@@ -47,7 +46,7 @@ Lattice::~Lattice() {
  * Add a universe to this lattice
  * @param universe the universe id
  */
-void Lattice::addUniverse(int x, int y, int universe) {
+void Lattice::addUniverse(const int x, const int y, const int universe) {
 	_universes.at(x).at(y) = universe;
 	log_printf(INFO, "Added universe with id = %d to lattice with id = %d", universe, _id);
 }

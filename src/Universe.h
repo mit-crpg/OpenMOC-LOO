@@ -13,25 +13,25 @@
 #include "log.h"
 
 class Universe {
-private:
+protected:
 	int _id;
 	int _level;
 	int _num_cells;
 	std::vector<int> _cells;
 	Point _origin;
 public:
-	Universe(int id);
+	Universe(const int id);
 	virtual ~Universe();
-	void addCell(int cell);
+	void addCell(const int cell);
     std::vector<int> getCells() const;
     int getId() const;
     int getLevel() const;
     int getNumCells() const;
     Point* getOrigin();
     void setCells(std::vector<int> cells);
-    void setId(int id);
-    void setLevel(int level);
-    void setNumCells(int numCells);
+    void setId(const int id);
+    void setLevel(const int level);
+    void setNumCells(const int numCells);
     void setOrigin(Point* origin);
 };
 

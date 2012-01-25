@@ -27,7 +27,7 @@ private:
 	Track** _tracks;
 	Geometry* _geom;
 public:
-	TrackGenerator(Geometry* geom, int num_azim, double spacing);
+	TrackGenerator(Geometry* geom, const int num_azim, const double spacing);
 	virtual ~TrackGenerator();
     double *getAzimWeights() const;
     int getNumAzim() const;
@@ -35,7 +35,8 @@ public:
     double getSpacing() const;
     Track **getTracks() const;
     void generateTracks();
-	void computeEndPoint(Point* start, Point* end,  double phi, double width, double height);
+	void computeEndPoint(Point* start, Point* end,  const double phi,
+			const double width, const double height);
 	void makeReflective();
 };
 

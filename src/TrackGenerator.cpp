@@ -16,7 +16,7 @@
  * @param num_azim number of azimuthal angles
  * @param spacing track spacing
  */
-TrackGenerator::TrackGenerator(Geometry* geom, int num_azim, double spacing) {
+TrackGenerator::TrackGenerator(Geometry* geom, const int num_azim, const double spacing) {
 	_geom = geom;
 	_num_azim = num_azim/2.0;
 	_spacing = spacing;
@@ -210,7 +210,7 @@ void TrackGenerator::generateTracks() {
  * @param width the width of the geometry
  * @param height the height of the geometry
  */
-void TrackGenerator::computeEndPoint(Point* start, Point* end,  double phi, double width, double height) {
+void TrackGenerator::computeEndPoint(Point* start, Point* end,  const double phi, const double width, const double height) {
 
 	double m = sin(phi) / cos(phi); 		/* slope */
 	double yin = start->getY(); 			/* y-coord */

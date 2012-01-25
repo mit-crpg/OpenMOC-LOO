@@ -27,12 +27,12 @@ private:
 	double _weights[NUM_POLAR_ANGLES];
 	double _multiples[NUM_POLAR_ANGLES];
 public:
-	Quadrature(quadratureType type);
+	Quadrature(const quadratureType type);
 	virtual ~Quadrature();
-	quadratureType getType();
-	double getSinTheta(int n);
-	double getWeight(int n);
-	double getMultiple(int n);
+	quadratureType getType() const;
+	double getSinTheta(const int n) const;
+	double getWeight(const int n) const;
+	double getMultiple(const int n) const;
 	double* getSinThetas();
     double* getWeights();
     double* getMultiples();

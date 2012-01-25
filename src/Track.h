@@ -33,11 +33,11 @@ private:
 public:
 	Track();
 	virtual ~Track();
-	void setValues(double start_x, double start_y, double end_x,
-			double end_y, double phi);
-    void setWeight(double weight);
-    void setReflIn(bool refl_in);
-    void setReflOut(bool refl_out);
+	void setValues(const double start_x, const double start_y, const double end_x,
+			const double end_y, const double phi);
+    void setWeight(const double weight);
+    void setReflIn(const bool refl_in);
+    void setReflOut(const bool refl_out);
     void setTrackIn(Track *track_in);
     void setTrackOut(Track *track_out);
     Point* getEnd();

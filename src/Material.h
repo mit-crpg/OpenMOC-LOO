@@ -22,7 +22,7 @@ private:
 	double _sigma_s[NUM_ENERGY_GROUPS][NUM_ENERGY_GROUPS];
 	double _chi[NUM_ENERGY_GROUPS];
 public:
-	Material(int id);
+	Material(const int id);
 	virtual ~Material();
     double* getChi();
     int getId() const;
@@ -30,7 +30,6 @@ public:
     double* getSigmaS();
     double* getSigmaT();
     void setChi(double chi[NUM_ENERGY_GROUPS]);
-    void setId(int id);
     void setNuSigmaF(double nu_sigma_f[NUM_ENERGY_GROUPS]);
     void setSigmaS(double sigma_s[NUM_ENERGY_GROUPS][NUM_ENERGY_GROUPS]);
     void setSigmaT(double sigma_t[NUM_ENERGY_GROUPS]);

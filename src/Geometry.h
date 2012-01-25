@@ -32,8 +32,8 @@ private:
 public:
 	Geometry();
 	virtual ~Geometry();
-    void setWidth(double width);
-    void setHeight(double height);
+    void setWidth(const double width);
+    void setHeight(const double height);
     double getWidth() const;
     double getHeight() const;
 	void addMaterial(Material* material);

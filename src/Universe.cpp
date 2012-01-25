@@ -12,7 +12,7 @@
  * Universe constructor
  * @param id the universe id
  */
-Universe::Universe(int id) {
+Universe::Universe(const int id) {
 	_id = id;
 }
 
@@ -29,7 +29,7 @@ Universe::~Universe() {
  * Adds a cell to this universe
  * @param cell the cell id
  */
-void Universe::addCell(int cell) {
+void Universe::addCell(const int cell) {
 	try {
 		_cells.push_back(cell);
 		_num_cells++;
@@ -91,7 +91,7 @@ Point* Universe::getOrigin() {
  * Set the level of this universe
  * @param level the universe level (base = 0)
  */
-void Universe::setLevel(int level) {
+void Universe::setLevel(const int level) {
     _level = level;
 }
 

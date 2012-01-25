@@ -26,13 +26,13 @@ public:
 	Point();
 	Point(const Point& point);
 	virtual ~Point();
-	void setCoords(double x, double y);
-	double getX();
-	double getY();
-	void setX(double x);
-	void setY(double y);
-	double distance(double x, double y);
-	double distance(Point* point);
+	void setCoords(const double x, const double y);
+	double getX() const;
+	double getY() const;
+	void setX(const double x);
+	void setY(const double y);
+	double distance(const double x, const double y) const;
+	double distance(const Point* point);
 };
 
 #endif /* POINT_H_ */
