@@ -56,6 +56,13 @@ int main(int argc, const char **argv) {
 				  return;
 			  });
 	
+
+	parser->each_lattice([geometry](Lattice *l) -> void
+			  {
+				  geometry->addLattice(l);
+				  return;
+			  });
+	
 	/* Adjust the indices for each geometry class to use uids */
 	geometry->adjustKeys();
 

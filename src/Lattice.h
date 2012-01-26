@@ -23,8 +23,10 @@ private:
 	std::vector< std::vector<int> > _universes;
 	friend class Universe;
 public:
-	Lattice(const int id, const int num_x, const int num_y, const double origin_x, const double origin_y,
-			const double width_x, const double width_y);
+	Lattice(const int id, const int num_x, const int num_y, 
+		const double origin_x, const double origin_y,
+		const double width_x, const double width_y,
+		std::vector < std::vector <int> > universes);
 	virtual ~Lattice();
 	void addUniverse(const int x, const int y, const int universe);
     int getId() const;
@@ -32,7 +34,7 @@ public:
     int getNumX() const;
     int getNumY() const;
     Point* getOrigin();
-    std::vector<std::vector<int> > getUniverses() const;
+    std::vector < std::vector <int> > getUniverses() const;
     double getWidthX() const;
     double getWidthY() const;
     void adjustKeys(std::map<int, Universe*> universes);

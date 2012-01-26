@@ -12,7 +12,9 @@
 #include <cstring>
 #include <string>
 #include <stdexcept>
+#include <ctype.h>
 
+//#define PARSER__VERBOSE_PARSE
 
 static void parse(XML_Parser parser, char c, int isFinal) {
 	if (XML_STATUS_OK == XML_Parse(parser, &c, isFinal ^ 1, isFinal))
@@ -37,15 +39,17 @@ typedef struct {
 void XMLCALL Parser_XMLCallback_Start( void *context,
 				       const XML_Char *name,
 				       const XML_Char **atts ) {
-//    int is_key = 1;
+#ifdef PARSER__VERBOSE_PARSE 
+	int is_key = 1;
+#endif
 	PContext *ctxt;
-	/* surface related */
-	Surface* surface;
+
+	Surface *surface;
 	int surface_id;
 	surfaceType surface_type;
 	std::vector<double> coeffs;
-	/* cell related */
-	Cell* cell;
+
+	Cell *cell;
 	int cell_id;
 	cellType cell_type;
 	int universe = 0;
@@ -54,9 +58,15 @@ void XMLCALL Parser_XMLCallback_Start( void *context,
 	int material;
 	int universe_fill = 0;
 
+	Lattice *lattice;
+	int lattice_id;
+	int num_x, num_y;
+	double origin_x, origin_y, width_x, width_y;
+	std::vector<int> tmp_universes;
+	std::vector < std::vector <int> > universes;
 	ctxt = (PContext*)context;
 	
-#if 0
+#ifdef PARSER__VERBOSE_PARSE
 	fprintf(ctxt->out, "%*s%c%s\n", ctxt->depth, "", '>', name);
 	ctxt->level->push_back(new std::string(name));	
 	/* print level information to the screen  */
@@ -194,9 +204,7 @@ void XMLCALL Parser_XMLCallback_Start( void *context,
 				num_surfaces = surfaces.size();
 			}
 			++atts;
-		}
-		
-		/* TODO: check for number of coeffs */
+		}		
 		cell = NULL;
 		
 		switch (cell_type) {
@@ -228,8 +236,78 @@ void XMLCALL Parser_XMLCallback_Start( void *context,
 
 	}
 
-/* Enable the following for printing directly from the xml file */	
-#if 0
+	/* Parse Lattice Types; notice type info is not taken in because
+	 we only have rectangular type for now */
+	if (strcmp(name, "lattice") == 0) {
+		while (*atts) {
+			if (strcmp(*atts, "id") == 0) {
+				++atts;
+				lattice_id = atoi(*atts);
+				log_printf(NORMAL, "Lattice id = %d\n", 
+					   lattice_id);
+			}
+
+			if (strcmp(*atts, "dimension") == 0) {
+				++atts;
+				num_x = atoi(*atts);
+				++atts;
+				num_y = atoi(*atts);
+			}
+
+			if (strcmp(*atts, "origin") == 0) {
+				++atts;
+				origin_x = atof(*atts);
+				++atts;
+				origin_y = atof(*atts);
+			}			
+			
+			if (strcmp(*atts, "width") == 0) {
+				++atts;
+				width_x = atof(*atts);
+				++atts;
+				width_y = atof(*atts);
+			}
+
+		
+	 		if (strcmp(*atts, "universe") == 0) {
+				++atts;
+				char *long_str;
+				char *tmp;
+				char *result;
+				
+				long_str = strdup(*atts);
+				result = strtok_r(long_str, " ,.", &tmp);
+				tmp_universes.push_back(atof(result));
+				while ((result = strtok_r(NULL, " ,.", &tmp))
+				       != NULL) {
+					tmp_universes.push_back(atof(result));
+				}
+				
+				for (int i = 0; i < num_x; i++){
+					for (int j=0; j<num_y; j++){
+						universes[i][j] 							= tmp_universes.at(i + num_x * j);
+					}
+				}
+			}
+			++atts;
+		}
+		
+		lattice = NULL;
+		
+		lattice = new Lattice(lattice_id, num_x, num_y, 
+				      origin_x, origin_y, width_x, width_y,
+				      universes);
+		// toString generates: cannot call member function w/o objects
+		// Lattice::toString();
+		if (lattice != NULL)
+			ctxt->p->lattices.push_back(lattice);
+		else
+			log_printf(ERROR, "No lattice created\n");
+			
+
+	}
+
+#ifdef PARSER__VERBOSE_PARSE
 	while (*atts) {
 		if (is_key) {
 			fprintf(ctxt->out, "%*c%s: ",
@@ -245,14 +323,16 @@ void XMLCALL Parser_XMLCallback_Start( void *context,
 #endif
 }
 
-
-/* callback for end elements, e.g. </tag>,
+/**
+ * Callback for end elements, e.g. </tag>,
  * it is called for empty elements, too
  */
 static void XMLCALL Parser_XMLCallback_End( void *context,
 		    const XML_Char *name __attribute__((__unused__)) ) {
 	PContext *ctxt = (PContext*)context;
-	// ctxt->depth -= ctxt->tagInd;
+#ifdef PARSER__VERBOSE_PARSE	
+	ctxt->depth -= ctxt->tagInd;
+#endif
 	ctxt->level->pop_back();
 }
 
@@ -279,7 +359,7 @@ Parser::Parser (const Options *opts) {
 	if (!parser)
 		log_printf(ERROR, "Couldn't allocate memory for parser");
 	
-/* Set context that will be passed by the parsers to all handlers */
+        /* Set context that will be passed by the parsers to all handlers */
 	ctxt.out = stdout;
 	ctxt.depth = 1;
 	ctxt.tagInd = 4;
@@ -287,13 +367,13 @@ Parser::Parser (const Options *opts) {
 	ctxt.level = new std::vector<std::string *>();
 	ctxt.p = this;
 	
-	XML_SetUserData(parser, &ctxt);
-	
-/* set callback for start element */
+	XML_SetUserData(parser, &ctxt);	
+        /* set callback for start element */
 	XML_SetStartElementHandler(parser, &Parser_XMLCallback_Start);
-	
-/* set callback for start element */
+	/* set callback for end element */
 	XML_SetEndElementHandler(parser, &Parser_XMLCallback_End);
+
+
 	
 /* If you'd like to read input by large blocks, you can have a look at
  * XML_GetBuffer and XML_ParseBuffer functions.
@@ -334,3 +414,10 @@ void Parser::each_cell(std::function<void(Cell *)> callback)
 		callback(this->cells.at(i));
 }
 
+void Parser::each_lattice(std::function<void(Lattice *)> callback)
+{
+	std::vector<Lattice *>::size_type i;
+
+	for (i = 0; i < this->lattices.size(); i++)
+		callback(this->lattices.at(i));
+}

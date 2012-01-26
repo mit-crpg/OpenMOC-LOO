@@ -19,15 +19,19 @@
  * @param origin_y the y-coordinate of the origin
  * @param width_x the width of the lattice along x
  * @param width_y the width of the lattice along y
+ * @param universes 
  */
-Lattice::Lattice(const int id, const int num_x, int num_y, double origin_x, double origin_y,
-		double width_x, double width_y): Universe(id) {
+Lattice::Lattice(const int id, const int num_x, int num_y, 
+		 double origin_x, double origin_y,
+		 double width_x, double width_y, 
+		 std::vector < std::vector <int> > universes): Universe(id) {
 	_num_y = num_y;
 	_num_x = num_x;
 	_origin.setX(origin_x);
 	_origin.setY(origin_y);
 	_width_x = width_x;
 	_width_y = width_y;
+	_universes = universes;
 }
 
 
@@ -48,7 +52,8 @@ Lattice::~Lattice() {
  */
 void Lattice::addUniverse(const int x, const int y, const int universe) {
 	_universes.at(x).at(y) = universe;
-	log_printf(INFO, "Added universe with id = %d to lattice with id = %d", universe, _id);
+	log_printf(INFO, "Added universe with id = %d to lattice with id = %d",
+		   universe, _id);
 }
 
 
@@ -148,7 +153,7 @@ void Lattice::adjustKeys(std::map<int, Universe*> universes) {
 const char* Lattice::toString() {
 	std::stringstream string;
 
-	string << "Material id = " << _id << " num cells along x = "
+	string << "Lattice id = " << _id << " num cells along x = "
 			<< _num_x << " num cells along y = " << _num_y << " x width = "
 			<< _width_x << " y width = " << _width_y;
 

@@ -17,6 +17,7 @@
 #include <stdlib.h>
 #include "Surface.h"
 #include "Cell.h"
+#include "Lattice.h"
 #include "Options.h"
 #include "log.h"
 
@@ -31,6 +32,7 @@ class Parser {
 private:
 	std::vector<Surface *> surfaces;
 	std::vector<Cell *> cells;
+	std::vector<Lattice *> lattices;
 
 public:
 	Parser(const Options *opts);
@@ -38,6 +40,7 @@ public:
 
 	void each_surface(std::function<void(Surface *)> callback);
 	void each_cell(std::function<void(Cell *)> callback);
+	void each_lattice(std::function<void(Lattice *)> callback);
 
 	friend void XMLCALL Parser_XMLCallback_Start(void *context,
 						     const XML_Char *name,
