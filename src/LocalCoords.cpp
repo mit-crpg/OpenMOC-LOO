@@ -15,8 +15,7 @@
  * @param y the y-coordinate
  */
 LocalCoords::LocalCoords(double x, double y) {
-	_x = x;
-	_y = y;
+	_coords.setCoords(x, y);
 }
 
 
@@ -75,7 +74,7 @@ int LocalCoords::getLatticeY() const {
  * @return the x-coordinate
  */
 double LocalCoords::getX() const {
-    return _x;
+    return _coords.getX();
 }
 
 
@@ -84,9 +83,13 @@ double LocalCoords::getX() const {
  * @return the y-coordinate
  */
 double LocalCoords::getY() const {
-    return _y;
+    return _coords.getY();
 }
 
+
+Point* LocalCoords::getPoint() {
+	return &_coords;
+}
 
 /**
  * Return a pointer to the localcoord at the next level if
@@ -157,7 +160,7 @@ void LocalCoords::setNext(LocalCoords* next) {
  * @param x the x-coordinate
  */
 void LocalCoords::setX(double x) {
-    _x = x;
+	_coords.setX(x);
 }
 
 
@@ -166,15 +169,15 @@ void LocalCoords::setX(double x) {
  * @param y the y-coordinate
  */
 void LocalCoords::setY(double y) {
-    _y = y;
+	_coords.setY(y);
 }
 
 
 const char* LocalCoords::toString() {
 	std::stringstream string;
 
-	string << "LocalCoords: x = " << _x
-		<< ", y = " << _y << ", cell = "
+	string << "LocalCoords: x = " << _coords.getX()
+		<< ", y = " << _coords.getY() << ", cell = "
 		<< _cell << ", universe = " << _universe <<
 		", lattice = " << _lattice << ", lattice x = "
 		<< _lattice_x << ", lattice y = " << _lattice_y

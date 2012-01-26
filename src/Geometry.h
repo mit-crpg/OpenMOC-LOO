@@ -18,8 +18,9 @@
 #include "Cell.h"
 #include "Universe.h"
 #include "Lattice.h"
+#include "LocalCoords.h"
 #include "log.h"
-
+#include "configurations.h"
 
 class Geometry {
 private:
@@ -61,8 +62,10 @@ public:
 
 	void adjustKeys();
 	// Recursively sets Universe levels
-	void buildUniverseLevels(Universe* univ, int parent_cell, int level);
+//	void buildUniverseLevels(Universe* univ, int parent_cell, int level);
 	void buildNeighborsLists();
+	bool cellContains(Cell* cell, Point* point);
+	bool cellContains(Cell* cell, LocalCoords* coords);
 
 	template <class K, class V>
 	bool mapContainsKey(std::map<K, V> map, K key);

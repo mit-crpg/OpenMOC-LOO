@@ -11,6 +11,7 @@
 #define LOCALCOORDS_H_
 
 #include <sstream>
+#include "Point.h"
 
 class LocalCoords {
 private:
@@ -19,8 +20,7 @@ private:
 	int _lattice;
 	int _lattice_x;
 	int _lattice_y;
-	double _x;
-	double _y;
+	Point _coords;
 	LocalCoords* next;
 public:
 	LocalCoords(double x, double y);
@@ -32,6 +32,7 @@ public:
     int getLatticeY() const;
     double getX() const;
     double getY() const;
+    Point* getPoint();
     LocalCoords *getNext() const;
     void setCell(int cell);
     void setUniverse(int universe);

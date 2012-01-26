@@ -622,6 +622,37 @@ void Geometry::buildNeighborsLists() {
 	return;
 }
 
+/*
+ * Determines whether a point is contained inside a cell. Queries each surface
+ * inside the cell to determine if the particle is on the same side of the
+ * surface. This particle is only inside the cell if it is on the same side of
+ * every surface in the cell.
+ * @param point a pointer to a point
+ */
+bool Geometry::cellContains(Cell* cell, Point* point) {
+
+	std::vector<int> cell_surfaces = cell->getSurfaces();
+
+	for (int s = 0; s < (int)cell_surfaces.size(); s++) {
+		int surf_index = cell_surfaces.at(s);
+		Surface* surface = _surfaces.at(surf_index);
+		if (surface->evaluate(point) * surf_index < ON_SURFACE_NEG)
+			return false;
+	}
+	return true;
+}
+
+
+/*
+ * Determines whether a point is contained inside a cell. Queries each surface
+ * inside the cell to determine if the particle is on the same side of the
+ * surface. This particle is only inside the cell if it is on the same side of
+ * every surface in the cell.
+ * @param point a pointer to a localcoord
+ */
+bool Geometry::cellContains(Cell* cell, LocalCoords* coords) {
+	return this->cellContains(cell, coords->getPoint());
+}
 
 
 /**

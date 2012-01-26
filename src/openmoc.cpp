@@ -23,12 +23,13 @@
 // TODO: This is just stubbed out for now
 int main(int argc, const char **argv) {
 
+	log_printf(NORMAL, "Starting OpenMOC...\n");
+
 	/* Create an options class to parse command line options */
 	Options opts = Options(argc, argv);
 
 	/* Set the verbosity */
 	log_setlevel(opts.getVerbosity());
-	log_printf(NORMAL, "Starting OpenMOC...\n");
 
 	/* Create an empty geometry */
 	Geometry* geometry = new Geometry();

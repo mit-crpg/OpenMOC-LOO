@@ -119,6 +119,7 @@ void Cell::setUniverse(int universe) {
 	_universe = universe;
 }
 
+
 /**
  *  CellBasic constructor
  *  @param material the material used to fill this cell

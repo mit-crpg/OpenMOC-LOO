@@ -15,6 +15,8 @@
 #include <sstream>
 #include "Surface.h"
 #include "log.h"
+#include "Point.h"
+#include "LocalCoords.h"
 
 enum cellType {
 	MATERIAL,
