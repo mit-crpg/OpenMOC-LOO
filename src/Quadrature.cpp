@@ -182,9 +182,9 @@ const char* Quadrature::toString() {
 	string << "Quadrature type = ";
 
 	if (_type == LEONARD)
-		string << " LEONARD";
+		string << "LEONARD";
 	else if (_type == TABUCHI)
-		string << " TABUCHI";
+		string << "TABUCHI";
 
 	string << "\nsinthetas = ";
 	for (int p = 0; p < NUM_POLAR_ANGLES; p++)

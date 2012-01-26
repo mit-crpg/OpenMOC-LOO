@@ -131,7 +131,7 @@ void log_printf(logLevel level, const char *format, ...) {
 		va_end(args);
     }
     if (level == ERROR) {
-    	printf("\nExiting program...\n");
+    	printf("\n[  EXIT   ]  Exiting program...\n");
     	exit(1);
     }
 }

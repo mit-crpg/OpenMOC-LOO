@@ -38,9 +38,9 @@ public:
 	virtual ~Geometry();
 	void setWidth(const double width);
 	void setHeight(const double height);
-    void setNumRings(int numRings);
-    void setNumSectors(int numSectors);
-    void setSectorOffset(double sectorOffset);
+    void setNumRings(int num_rings);
+    void setNumSectors(int num_sectors);
+    void setSectorOffset(double sector_offset);
 	double getWidth() const;
 	double getHeight() const;
     int getNumRings() const;
@@ -59,7 +59,6 @@ public:
 	Lattice* getLattice(int id);
 	const char* toString();
 
-	// Adjusts the keys for surfaces, cells, universes, and lattices to uids
 	void adjustKeys();
 	// Recursively sets Universe levels
 	void buildUniverseLevels(Universe* univ, int parent_cell, int level);

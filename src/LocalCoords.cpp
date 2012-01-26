@@ -15,11 +15,6 @@
  * @param y the y-coordinate
  */
 LocalCoords::LocalCoords(double x, double y) {
-//	_cell = cell;
-//	_universe = universe;
-//	_lattice = lattice;
-//	_lattice_x = lattice_x;
-//	_lattice_y = lattice_y;
 	_x = x;
 	_y = y;
 }
@@ -172,4 +167,18 @@ void LocalCoords::setX(double x) {
  */
 void LocalCoords::setY(double y) {
     _y = y;
+}
+
+
+const char* LocalCoords::toString() {
+	std::stringstream string;
+
+	string << "LocalCoords: x = " << _x
+		<< ", y = " << _y << ", cell = "
+		<< _cell << ", universe = " << _universe <<
+		", lattice = " << _lattice << ", lattice x = "
+		<< _lattice_x << ", lattice y = " << _lattice_y
+		<< "\n";
+
+	return string.str().c_str();
 }

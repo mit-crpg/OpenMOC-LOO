@@ -34,7 +34,7 @@ public:
     Point* getOrigin();
     void setCells(std::vector<int> cells);
     void setId(const int id);
-    void setNumCells(const int numCells);
+    void setNumCells(const int num_cells);
     void setOrigin(Point* origin);
     void adjustKeys(std::map<int, Cell*> cells);
     const char* toString();

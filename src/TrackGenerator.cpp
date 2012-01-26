@@ -16,7 +16,9 @@
  * @param num_azim number of azimuthal angles
  * @param spacing track spacing
  */
-TrackGenerator::TrackGenerator(Geometry* geom, const int num_azim, const double spacing) {
+TrackGenerator::TrackGenerator(Geometry* geom, const int num_azim,
+		const double spacing) {
+
 	_geom = geom;
 	_num_azim = num_azim/2.0;
 	_spacing = spacing;
@@ -29,7 +31,8 @@ TrackGenerator::TrackGenerator(Geometry* geom, const int num_azim, const double 
 		_tracks = new Track*[_num_azim];
 	}
 	catch (std::exception &e) {
-		log_printf(ERROR, "Unable to allocate memory for TrackGenerator. Backtrace:\n%s", e.what());
+		log_printf(ERROR, "Unable to allocate memory for TrackGenerator. Backtrace:"
+				"\n%s", e.what());
 	}
 }
 
@@ -102,6 +105,8 @@ void TrackGenerator::generateTracks() {
 	/* Each element in following lists corresponds to a track angle in phi_eff */
 
 	try {
+		log_printf(NORMAL, "Computing azimuthal angles and track spacings...\n");
+
 		/* Track spacing along x-axis, y-axis, and perpendicular to each track */
 		double* dx_eff = new double[_num_azim];
 		double* dy_eff = new double[_num_azim];
@@ -115,7 +120,6 @@ void TrackGenerator::generateTracks() {
 		double width = _geom->getWidth();
 		double height = _geom->getHeight();
 
-		log_printf(NORMAL, "Computing azimuthal angles and track spacings...\n");
 
 		/* Determine azimuthal angles and track spacing */
 		for (int i = 0; i < _num_azim; i++) {
@@ -193,7 +197,7 @@ void TrackGenerator::generateTracks() {
 	}
 
 	catch (std::exception &e) {
-		log_printf(ERROR, "Unable to allocate memory needed to generate track. "
+		log_printf(ERROR, "Unable to allocate memory needed to generate tracks. "
 				"Backtrace:\n%s", e.what());
 	}
 
@@ -201,16 +205,18 @@ void TrackGenerator::generateTracks() {
 
 
 /**
- * This helper method for generateTracks finds the end point of a given track with a defined
- * start point and an angle from x-axis. This function does not return a value but instead saves
- * the x/y coordinates of the end point directly within the track's end point
+ * This helper method for generateTracks finds the end point of a given track
+ * with a defined start point and an angle from x-axis. This function does not
+ * return a value but instead saves the x/y coordinates of the end point
+ * directly within the track's end point
  * @param start pointer to the track start point
  * @param end pointer to where the end point should be stored
  * @param phi the azimuthal angle
  * @param width the width of the geometry
  * @param height the height of the geometry
  */
-void TrackGenerator::computeEndPoint(Point* start, Point* end,  const double phi, const double width, const double height) {
+void TrackGenerator::computeEndPoint(Point* start, Point* end,  const double phi,
+		const double width, const double height) {
 
 	double m = sin(phi) / cos(phi); 		/* slope */
 	double yin = start->getY(); 			/* y-coord */

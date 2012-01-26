@@ -142,18 +142,18 @@ const char* Material::toString() {
 	for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
 		string << _nu_sigma_f[e] << ", ";
 
-	string << "\n\tSigma_S = \n\t\t";
+	string << "\n\tSigma_S = \n\t";
 	for (int G = 0; G < NUM_ENERGY_GROUPS; G++) {
 		for (int g = 0; g < NUM_ENERGY_GROUPS; g++)
 			string << _sigma_s[G][g] << ", ";
 	}
-	string << "\n\t\t";
+	string << "\n\t";
 
 	string << "\n\tChi = ";
 	for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
 		string << _chi[e] << ", ";
 
-	string << std::endl;
+	string << "\n";
 
 	return string.str().c_str();
 }

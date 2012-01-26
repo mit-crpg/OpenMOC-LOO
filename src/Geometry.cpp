@@ -381,27 +381,25 @@ const char* Geometry::toString() {
 	string << "Geometry: width = " << _width << ", height = " << _height <<
 			", base universe id = " << _base_universe;
 
-	string << "\n\tMaterial ids = ";
+	string << "\nCells:\n\t";
 	for (iter1 = _materials.begin(); iter1 != _materials.end(); ++iter1)
-		string << iter1->second << ", ";
+		string << "\t" << iter1->second->toString();
 
-	string << "\n\tSurface ids = ";
+	string << "\n\tSurfaces:\n";
 	for (iter2 = _surfaces.begin(); iter2 != _surfaces.end(); ++iter2)
-		string << iter2->second << ", ";
+		string << "\t" << iter2->second->toString();
 
-	string << "\n\tCell ids = ";
+	string << "\n\tCells:\n";
 	for (iter3 = _cells.begin(); iter3 != _cells.end(); ++iter3)
-		string << iter3->second << ", ";
+		string << "\t" << iter3->second->toString();
 
-	string << "\n\tUniverse ids = ";
+	string << "\n\tUniverse ids:\n";
 	for (iter4 = _universes.begin(); iter4 != _universes.end(); ++iter4)
-		string << iter4->second << ", ";
+		string << "\t" << iter4->second;
 
-	string << "\n\tLattice ids = ";
+	string << "\n\tLattice ids:\t";
 	for (iter5 = _lattices.begin(); iter5 != _lattices.end(); ++iter5)
-		string << iter5->second << ", ";
-
-	string << std::endl;
+		string << "\t" << iter5->second;
 
 	return string.str().c_str();
 }
@@ -409,6 +407,8 @@ const char* Geometry::toString() {
 
 // Adjusts the keys for surfaces, cells, universes, and lattices to uids
 void Geometry::adjustKeys() {
+
+	log_printf(NORMAL, "Adjusting the keys for the geometry...\n");
 
 	std::map<int, Material*>::iterator iter1;
 	std::map<int, Surface*>::iterator iter2;
@@ -550,6 +550,9 @@ void Geometry::adjustKeys() {
  * is crossed while segmenting tracks across the geometry
  */
 void Geometry::buildNeighborsLists() {
+
+
+	log_printf(NORMAL, "Building neighbor cell lists for each surface...\n");
 
 	int count_positive[_surfaces.size()];
 	int count_negative[_surfaces.size()];

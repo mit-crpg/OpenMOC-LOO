@@ -60,7 +60,8 @@ void Track::addSegment(segment* segment) {
 		_segments.push_back(segment);
 	}
 	catch (std::exception &e) {
-		log_printf(ERROR, "Unable to add a segment to track. Backtrace:\n%s", e.what());
+		log_printf(ERROR, "Unable to add a segment to track. Backtrace:"
+				"\n%s", e.what());
 	}
 }
 
@@ -262,7 +263,7 @@ const char* Track::toString() {
 			<< " end, x = " << _end.getX() << ", y = " << _end.getY() << ", phi = "
 			<< _phi << " weight = " << _weight;
 
-	string << std::endl;
+	string << "\n";
 
 	return string.str().c_str();
 }

@@ -122,12 +122,18 @@ void Lattice::adjustKeys(std::map<int, Universe*> universes) {
 
 	std::vector< std::vector<int> > adjusted_universes;
 
-	/* Adjust the indices for each universe to be the universe's uid */
-	for (int U = 0; U < (int)_universes.size(); U++) {
-		for (int u = 0; u < (int)_universes.at(U).size(); u++) {
-			int universe = _universes.at(U).at(u);
-			adjusted_universes[U][u] = universes.at(universe)->getUid();
+	try {
+		/* Adjust the indices for each universe to be the universe's uid */
+		for (int U = 0; U < (int)_universes.size(); U++) {
+			for (int u = 0; u < (int)_universes.at(U).size(); u++) {
+				int universe = _universes.at(U).at(u);
+				adjusted_universes[U][u] = universes.at(universe)->getUid();
+			}
 		}
+	}
+	catch (std::exception &e) {
+		log_printf(ERROR, "Unable to adjust the keys for lattice id = %s. "
+				"Backtrace:\n%s", _id, e.what());
 	}
 
 	_universes.clear();
@@ -146,11 +152,11 @@ const char* Lattice::toString() {
 			<< _num_x << " num cells along y = " << _num_y << " x width = "
 			<< _width_x << " y width = " << _width_y;
 
-	string << "\n\tUniverse ids within this lattice:\n\t";
+	string << "\nUniverse ids within this lattice:\n\t";
 	for (int U = 0; U < (int)_universes.size();  U++) {
 		for (int u = 0; u < (int)_universes.at(U).size(); u++)
 			string << _universes.at(U).at(u) << "  ";
-		string << "\n\t\t";
+		string << "\n\t";
 	}
 
 	string << std::endl;

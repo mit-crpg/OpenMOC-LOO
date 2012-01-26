@@ -38,11 +38,12 @@ void Universe::addCell(const int cell) {
 	try {
 		_cells.push_back(cell);
 		_num_cells++;
-		log_printf(INFO, "Added cell with id = %d to universe with id = %d", cell, _id);
+		log_printf(INFO, "Added cell with id = %d to universe with id = %d",
+				cell, _id);
 	}
 	catch (std::exception &e) {
-		log_printf(ERROR, "Unable to add cell with id = %d to universe with id = %d. "
-				"Backtrace:\n%s", cell, _id, e.what());
+		log_printf(ERROR, "Unable to add cell with id = %d to universe with"
+				" id = %d. Backtrace:\n%s", cell, _id, e.what());
 	}
 }
 
@@ -133,7 +134,7 @@ const char* Universe::toString() {
 	for (int c = 0; c < _num_cells; c++)
 		string << _cells.at(c) << ", ";
 
-	string << std::endl;
+	string << "\n";
 
 	return string.str().c_str();
 }

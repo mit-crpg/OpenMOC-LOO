@@ -82,7 +82,14 @@ std::vector<int> Surface::getNeighborNeg() {
  * @param size the number of cells
  */
 void Surface::setNeighborPosSize(int size) {
-	_neighbor_pos.resize(size);
+	try {
+		_neighbor_pos.resize(size);
+	}
+	catch (std::exception &e) {
+		log_printf(ERROR, "Could not resize a vector for the positive"
+				" neighbor cells for surface id = %d. Backtrace:\n%s",
+				_id, e.what());
+	}
 }
 
 
@@ -92,7 +99,14 @@ void Surface::setNeighborPosSize(int size) {
  * @param size the number of cells
  */
 void Surface::setNeighborNegSize(int size) {
-	_neighbor_neg.resize(size);
+	try {
+		_neighbor_neg.resize(size);
+	}
+	catch (std::exception &e) {
+		log_printf(ERROR, "Could not resize a vector for the positive"
+				" neighbor cells for surface id = %d. Backtrace:\n%s",
+				_id, e.what());
+	}
 }
 
 
@@ -153,7 +167,7 @@ const char* Plane::toString() {
 	std::stringstream string;
 
 	string << "Surface id = " << _id << ", type = PLANE " << ", A = "
-			<< _A << ", B = " << _B << ", C = " << _C << std::endl;
+			<< _A << ", B = " << _B << ", C = " << _C << "\n";
 
 	return string.str().c_str();
 }
@@ -284,7 +298,7 @@ const char* XPlane::toString() {
 	std::stringstream string;
 
 	string << "Surface id = " << _id << ", type = XPLANE " << ", A = "
-			<< _A << ", B = " << _B << ", C = " << _C << std::endl;
+			<< _A << ", B = " << _B << ", C = " << _C << "\n";
 
 	return string.str().c_str();
 }
@@ -309,7 +323,7 @@ const char* YPlane::toString() {
 	std::stringstream string;
 
 	string << "Surface id = " << _id << ", type = YPLANE " << ", A = "
-			<< _A << ", B = " << _B << ", C = " << _C << std::endl;
+			<< _A << ", B = " << _B << ", C = " << _C << "\n";
 
 	return string.str().c_str();
 }
@@ -572,7 +586,7 @@ const char* Circle::toString() {
 
 	string << "Surface id = " << _id << ", type = CIRCLE " << ", A = "
 			<< _A << ", B = " << _B << ", C = " << _C << ", D = " << _D
-			<< ", E = " << _E << std::endl;
+			<< ", E = " << _E << "\n";
 
 	return string.str().c_str();
 }

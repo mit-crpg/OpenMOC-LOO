@@ -10,6 +10,8 @@
 #ifndef LOCALCOORDS_H_
 #define LOCALCOORDS_H_
 
+#include <sstream>
+
 class LocalCoords {
 private:
 	int _cell;
@@ -34,11 +36,12 @@ public:
     void setCell(int cell);
     void setUniverse(int universe);
     void setLattice(int lattice);
-    void setLatticeX(int latticeX);
-    void setLatticeY(int latticeY);
+    void setLatticeX(int lattice_x);
+    void setLatticeY(int lattice_y);
     void setX(double x);
     void setY(double y);
     void setNext(LocalCoords *next);
+    const char* toString();
 };
 
 #endif /* LOCALCOORDS_H_ */

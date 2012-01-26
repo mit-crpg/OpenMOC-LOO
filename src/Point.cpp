@@ -102,7 +102,7 @@ double Point::distance(const Point* point) {
 const char* Point::toString() {
 	std::stringstream string;
 
-	string << "Point: x = " << _x << ", y = " << _y << std::endl;
+	string << "Point: x = " << _x << ", y = " << _y << "\n";
 
 	return string.str().c_str();
 }

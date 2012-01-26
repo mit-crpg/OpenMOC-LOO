@@ -253,10 +253,11 @@ const char* CellFill::toString() {
 			_universe_fill << ", universe = " << _universe << ", num_surfaces = "
 			<< _num_surfaces;
 
+	string << ", surface ids: ";
 	for (int s = 0; s < _num_surfaces; s++)
 		string << _surfaces.at(s) << ", ";
 
-	string << std::endl;
+	string << "\n";
 
 	return string.str().c_str();
 }
