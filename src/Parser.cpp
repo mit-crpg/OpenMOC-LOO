@@ -18,11 +18,10 @@ static void parse(XML_Parser parser, char c, int isFinal) {
 	if (XML_STATUS_OK == XML_Parse(parser, &c, isFinal ^ 1, isFinal))
 		return;
 	
-	fprintf( stderr, "ERROR: parsing XML failed at line %lu, pos %lu: %s\n",
+	log_printf(ERROR, "Parsing XML failed at line %lu, pos %lu: %s\n",
 		 (unsigned long)XML_GetCurrentLineNumber(parser),
 		 (unsigned long)XML_GetCurrentColumnNumber(parser),
 		 XML_ErrorString(XML_GetErrorCode(parser)) );
-	exit(1);
 }
 
 typedef struct {
@@ -266,24 +265,19 @@ Parser::Parser (const Options *opts) {
 	PContext ctxt;
 	char c;
 	FILE* geofile;
-	
-	if (opts->getGeometryFile() == NULL)
-		throw std::runtime_error("No geometry file given");
-	
+
 	geoxml = opts->getGeometryFile();
 	geofile = fopen(geoxml, "r");
 	if (geofile == NULL)
-		throw std::runtime_error("Given geometry file does not exist");
+		log_printf(ERROR, "Given geometry file %s does not exist", geoxml);
 	
 /* Create parser.
  * The only argument for XML_ParserCreate is encoding, and if it's NULL,
  * then encoding declared in the document is used.
  */
 	parser = XML_ParserCreate(NULL);
-	if (!parser) {
-		fprintf(stderr, "Couldn't allocate memory for parser\n");
-		exit(-1);
-	}
+	if (!parser)
+		log_printf(ERROR, "Couldn't allocate memory for parser");
 	
 /* Set context that will be passed by the parsers to all handlers */
 	ctxt.out = stdout;
