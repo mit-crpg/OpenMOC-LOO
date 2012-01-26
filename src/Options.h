@@ -20,6 +20,9 @@ private:
 	char* _geometry_file;
 	double _track_spacing;
 	int _num_azim;
+	int _num_sectors;
+	int _num_rings;
+	double _sector_offset;
 	char* _verbosity;
 public:
     Options(int argc, const char **argv);
@@ -27,6 +30,9 @@ public:
     double getNumAzim() const;
     double getTrackSpacing() const;
     char* getVerbosity() const;
+    int getNumRings() const;
+    int getNumSectors() const;
+    double getSectorOffset() const;
 };
 
 #endif

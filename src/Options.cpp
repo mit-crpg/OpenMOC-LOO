@@ -24,10 +24,13 @@
  */
 Options::Options(int argc, const char **argv) {
 
-	_geometry_file = strdup("xml-sample/1/geometry.xml"); /* Default geometry input file */
-	_track_spacing = 0.05;						 /* Default track spacing */
-	_num_azim = 128;								 /* Default number of azimuthal angles */
-	_verbosity = strdup("NORMAL");						 /* Default logging level */
+	_geometry_file = strdup("xml-sample/1/geometry.xml"); 	 /* Default geometry input file */
+	_track_spacing = 0.05;									 /* Default track spacing */
+	_num_azim = 128;										 /* Default number of azimuthal angles */
+	_num_sectors = 0;										 /* Default number of sectors */
+	_num_rings = 0;											 /* Default number of rings */
+	_sector_offset = 0;										 /* Default sector offset */
+	_verbosity = strdup("NORMAL");						 	 /* Default logging level */
 
 	for (int i = 0; i < argc; i++) {
 		if (i > 0) {
@@ -40,6 +43,12 @@ Options::Options(int argc, const char **argv) {
 				_track_spacing = atof(argv[i]);
 			else if (LAST("--numazimuthal") || LAST("-na"))
 				_num_azim = atoi(argv[i]);
+			else if (LAST("--numrings") || LAST("-nr"))
+				_num_rings = atoi(argv[i]);
+			else if (LAST("--numsectors") || LAST("-ns"))
+				_num_sectors = atoi(argv[i]);
+			else if (LAST("--sectoroffset") || LAST("--so"))
+				_sector_offset = atof(argv[i]);
 			else if (LAST("--verbosity") || LAST("-v"))
 				_verbosity = strdup(argv[i]);
 		}
@@ -77,6 +86,33 @@ double Options::getTrackSpacing() const {
     return _track_spacing;
 }
 
+
+/**
+ * Returns the numbe of rings used in subdividing flat source regions
+ * @return the number of rings
+ */
+int Options::getNumRings() const {
+    return _num_rings;
+}
+
+
+/**
+ * Returns the number of sectors used in subdividing flat source regions
+ * @return the number of sectors
+ */
+int Options::getNumSectors() const {
+    return _num_sectors;
+}
+
+
+/**
+ * Returns the angular offset of the sectors used in subdividing the flat
+ * source regions
+ * @return the angular offset in degrees
+ */
+double Options::getSectorOffset() const {
+    return _sector_offset;
+}
 
 /**
  * Returns the verbosity logging level. By default this will return NORMAL if not set

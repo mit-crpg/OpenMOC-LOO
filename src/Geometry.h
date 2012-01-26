@@ -24,6 +24,9 @@
 class Geometry {
 private:
 	double _width, _height;
+	int _num_sectors;
+	int _num_rings;
+	double _sector_offset;
 	int _base_universe;
 	std::map<int, Material*> _materials;
 	std::map<int, Surface*> _surfaces;
@@ -35,8 +38,15 @@ public:
 	virtual ~Geometry();
 	void setWidth(const double width);
 	void setHeight(const double height);
+    void setNumRings(int numRings);
+    void setNumSectors(int numSectors);
+    void setSectorOffset(double sectorOffset);
 	double getWidth() const;
 	double getHeight() const;
+    int getNumRings() const;
+    int getNumSectors() const;
+    double getSectorOffset() const;
+
 	void addMaterial(Material* material);
 	Material* getMaterial(int id);
 	void addSurface(Surface* surface);

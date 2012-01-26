@@ -33,7 +33,16 @@ int main(int argc, const char **argv) {
 	/* Create an empty geometry */
 	Geometry* geometry = new Geometry();
 
-	// FIXME: Put this inside the parser to hide it from the main program
+	/* Set the geomery's number of rings, sectors, and sector offset */
+	geometry->setNumRings(opts.getNumRings());
+	geometry->setNumSectors(opts.getNumSectors());
+	geometry->setSectorOffset(opts.getSectorOffset());
+
+
+	// FIXME: PUT THIS INSIDE THE PARSER TO HIDE IT FROM THE MAIN PROGRAM
+	/* We only want general functional calls inside the main program
+	 * The logic going on here is too specific and should be hidden from main
+	 */
 	/* Initialize the parser */
 	Parser* parser = new Parser(&opts);
 	parser->each_surface([geometry](Surface *s) -> void
@@ -47,12 +56,10 @@ int main(int argc, const char **argv) {
 				  return;
 			  });
 	
-	/* Adjust the keys and indices for each geometry class (surfaces, cells, etc)
-	 * stored inside the geometry to use uids
-	 */
+	/* Adjust the indices for each geometry class to use uids */
 	geometry->adjustKeys();
 
-	/* */
+	/* Generate the neighbor cells for each surface in geometry */
 	geometry->buildNeighborsLists();
 
 	/* Print out geometry to console */

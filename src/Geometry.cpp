@@ -47,6 +47,34 @@ void Geometry::setWidth(const double width) {
 }
 
 
+/* Set the number of ring divisions used for making flat source regions
+ * @param num_rings the number of rings
+ */
+void Geometry::setNumRings(int num_rings) {
+    _num_rings = num_rings;
+}
+
+
+/**
+ * Set the number of angular sectors used for making flat source regions
+ * @param num_sectors the number of sectors
+ */
+void Geometry::setNumSectors(int num_sectors) {
+    _num_sectors = num_sectors;
+}
+
+
+/**
+ * Sets the angular offset (from the positive x-axis) by which angular
+ * divisions are computed. Takes the modulo of the input argument with
+ * 360 degrees
+ * @param angular_offset angular offset of sectors in degrees
+ */
+void Geometry::setSectorOffset(double sector_offset) {
+    _sector_offset = fmod(sector_offset, 360);
+}
+
+
 /**
  * Returns the total height of the geometry
  * @param the toal height of the geometry
@@ -64,6 +92,33 @@ double Geometry::getWidth() const {
     return _width;
 }
 
+
+/**
+ * Returns the number of rings used in subdividing flat source regions
+ * @return the number of rings
+ */
+int Geometry::getNumRings() const{
+    return _num_rings;
+}
+
+
+/**
+ * Returns the number of angular sectors used in subdividing flat source regions
+ * @param the number of angular sectors
+ */
+int Geometry::getNumSectors() const {
+    return _num_sectors;
+}
+
+
+/**
+ * Returns the angular offset for the angular divisions used in subdividing
+ * flat source regions
+ * @return the angular offset in degrees
+ */
+double Geometry::getSectorOffset() const {
+    return _sector_offset;
+}
 
 
 /**
@@ -487,7 +542,6 @@ void Geometry::adjustKeys() {
 
 	return;
 }
-
 
 
 /**
