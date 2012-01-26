@@ -57,6 +57,68 @@ surfaceType Surface::getType() const {
 
 
 /**
+ * Returns the vector of the surface ids on the positive side
+ * of this surface
+ * @return vector of surface ids
+ */
+std::vector<int> Surface::getNeighborPos() {
+	return _neighbor_pos;
+}
+
+
+/**
+ * Returns the vector of the surface ids on the negative side
+ * of this surface
+ * @return vector of surface ids
+ */
+std::vector<int> Surface::getNeighborNeg() {
+	return _neighbor_neg;
+}
+
+
+/**
+ * Allocates memory for a certain number of neighbor cells on
+ * the positive side of this surface
+ * @param size the number of cells
+ */
+void Surface::setNeighborPosSize(int size) {
+	_neighbor_pos.resize(size);
+}
+
+
+/**
+ * Allocates memory for a certain number of neighbor cells on
+ * the negative side of this surface
+ * @param size the number of cells
+ */
+void Surface::setNeighborNegSize(int size) {
+	_neighbor_neg.resize(size);
+}
+
+
+/**
+ * Sets the id for a neighboring cell on the positive side
+ * of this surface
+ * @param index the index of the neighbor cell
+ * @param cell the cell id
+ */
+void Surface::setNeighborPos(int index, int cell) {
+	_neighbor_pos[index] = cell;
+}
+
+
+/**
+ * Sets the id for a neighboring cell on the negative side
+ * of this surface
+ * @param index the index of the neighbor cell
+ * @param cell the cell id
+ */
+void Surface::setNeighborNeg(int index, int cell) {
+	_neighbor_neg[index] = cell;
+}
+
+
+/**
  * Plane constructor
  * @param id the surface id
  * @param A the first coefficient
@@ -70,16 +132,6 @@ Plane::Plane(const int id, const double A, const double B,
 	_C = C;
 }
 
-//TODO
-std::vector<Surface*> Plane::getNeighborPos() {
-    return std::vector<Surface*>();
-}
-
-
-//TODO
-std::vector<Surface*> Plane::getNeighborNeg() {
-    return std::vector<Surface*>();
-}
 
 /**
  * Evaluate a point using the plane's quadratic surface equation
@@ -223,17 +275,6 @@ XPlane::XPlane(const int id, const double C): Plane(id, 1, 0, -C) {
 	_type = XPLANE;
 }
 
-//TODO
-std::vector<Surface*> XPlane::getNeighborPos() {
-    return std::vector<Surface*>();
-}
-
-
-//TODO
-std::vector<Surface*> XPlane::getNeighborNeg() {
-    return std::vector<Surface*>();
-}
-
 
 /**
  * Converts this XPlane's attributes to a character array
@@ -258,15 +299,6 @@ YPlane::YPlane(const int id, const double C): Plane(id, 1, 0, -C) {
 	_type = YPLANE;
 }
 
-//TODO
-std::vector<Surface*> YPlane::getNeighborPos() {
-    return std::vector<Surface*>();
-}
-
-//TODO
-std::vector<Surface*> YPlane::getNeighborNeg() {
-    return std::vector<Surface*>();
-}
 
 
 /**
@@ -301,16 +333,6 @@ Circle::Circle(const int id, const double x, const double y,
 	center.setY(y);
 }
 
-//TODO
-std::vector<Surface*> Circle::getNeighborPos() {
-    return std::vector<Surface*>();
-}
-
-
-//TODO
-std::vector<Surface*> Circle::getNeighborNeg() {
-    return std::vector<Surface*>();
-}
 
 /**
  * Evaluate a point using the circle's quadratic surface equation

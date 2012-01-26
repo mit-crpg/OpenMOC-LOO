@@ -123,8 +123,8 @@ void Lattice::adjustKeys(std::map<int, Universe*> universes) {
 	std::vector< std::vector<int> > adjusted_universes;
 
 	/* Adjust the indices for each universe to be the universe's uid */
-	for (int U = 0; U < _universes.size(); U++) {
-		for (int u = 0; u < _universes.at(U).size(); u++) {
+	for (int U = 0; U < (int)_universes.size(); U++) {
+		for (int u = 0; u < (int)_universes.at(U).size(); u++) {
 			int universe = _universes.at(U).at(u);
 			adjusted_universes[U][u] = universes.at(universe)->getUid();
 		}

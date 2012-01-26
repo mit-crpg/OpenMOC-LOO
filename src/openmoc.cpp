@@ -52,6 +52,9 @@ int main(int argc, const char **argv) {
 	 */
 	geometry->adjustKeys();
 
+	/* */
+	geometry->buildNeighborsLists();
+
 	/* Print out geometry to console */
 	log_printf(INFO, geometry->toString());
 

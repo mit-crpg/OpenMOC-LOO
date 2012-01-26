@@ -38,14 +38,20 @@ protected:
 	int _uid;					/* monotonically increasing id based on n */
 	int _id;
 	surfaceType _type;
+	std::vector<int> _neighbor_pos;
+	std::vector<int> _neighbor_neg;
 public:
 	Surface(const int id, const surfaceType type);
 	virtual ~Surface();
 	int getUid() const;
 	int getId() const;
 	surfaceType getType() const;
-	virtual std::vector<Surface*> getNeighborPos() =0;
-	virtual std::vector<Surface*> getNeighborNeg() =0;
+	std::vector<int> getNeighborPos();
+	std::vector<int> getNeighborNeg();
+	void setNeighborPosSize(int size);
+	void setNeighborNegSize(int size);
+	void setNeighborPos(int index, int cell);
+	void setNeighborNeg(int index, int cell);
 	virtual double evaluate(const Point* point) const =0;
 	virtual int intersection(Track* track, Point* points) const =0;
 	virtual int intersection(Plane* plane, Point* points) const =0;
@@ -62,8 +68,6 @@ private:
 	friend class Circle;
 public:
 	Plane(const int id, const double A, const double B, const double C);
-	std::vector<Surface*> getNeighborPos();
-	std::vector<Surface*> getNeighborNeg();
 	double evaluate(const Point* point) const;
 	int intersection(Track* track, Point* points) const;
 	int intersection(Plane* plane, Point* points) const;
@@ -78,8 +82,6 @@ private:
 	double _A, _B, _C;
 public:
 	XPlane(const int id, const double C);
-	std::vector<Surface*> getNeighborPos();
-	std::vector<Surface*> getNeighborNeg();
 	const char* toString();
 };
 
@@ -91,8 +93,6 @@ private:
 	double _A, _B, _C;
 public:
 	YPlane(const int id, const double C);
-	std::vector<Surface*> getNeighborPos();
-	std::vector<Surface*> getNeighborNeg();
 	const char* toString();
 };
 
@@ -108,8 +108,6 @@ private:
 	friend class Plane;
 public:
 	Circle(const int id, const double x, const double y, const double radius);
-	std::vector<Surface*> getNeighborPos();
-	std::vector<Surface*> getNeighborNeg();
 	double evaluate(const Point* point) const;
 	int intersection(Track* track, Point* points) const;
 	int intersection(Plane* plane, Point* points) const;

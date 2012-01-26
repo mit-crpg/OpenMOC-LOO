@@ -491,6 +491,83 @@ void Geometry::adjustKeys() {
 
 
 /**
+ * Builds each surfaces list of neighboring cells on the positive and negative side of the
+ * surface. This function helps speed up searches for the next cell when for a surface is
+ * is crossed while segmenting tracks across the geometry
+ */
+void Geometry::buildNeighborsLists() {
+
+	int count_positive[_surfaces.size()];
+	int count_negative[_surfaces.size()];
+	std::map<int, Surface*>::iterator iter2;
+
+	/* Initialize counts to zero */
+	for (int i = 0; i < (int)_surfaces.size(); i++) {
+		count_positive[i] = 0;
+		count_negative[i] = 0;
+	}
+
+	/* Build counts */
+	/* Loop over all cells */
+	for (int c = 0; c < (int)_cells.size(); c++) {
+		std::vector<int> surfaces = _cells.at(c)->getSurfaces();
+
+		/* Loop over all of this cell's surfaces */
+		for (int s = 0; s < (int)surfaces.size(); s++) {
+			int surface = surfaces.at(s);
+			bool sense = (surface > 0);
+			surface = abs(surface);
+			if (sense)
+				count_positive[surface]++;
+			else
+				count_negative[surface]++;
+		}
+	}
+
+	/* Allocate memory for neighbor lists for each surface */
+	for (iter2 = _surfaces.begin(); iter2 != _surfaces.end(); ++iter2) {
+		int surface = iter2->first;
+		if (count_positive[surface] > 0)
+			iter2->second->setNeighborPosSize(count_positive[surface]);
+		if (count_negative[surface] > 0)
+			iter2->second->setNeighborNegSize(count_negative[surface]);
+	}
+
+	/* Reinitialize counts to zero */
+	for (int i = 0; i < (int)_surfaces.size(); i++) {
+		count_positive[i] = 0;
+		count_negative[i] = 0;
+	}
+
+
+	/* Loop over all cells */
+	for (int c = 0; c < (int)_cells.size(); c++) {
+		std::vector<int> surfaces = _cells.at(c)->getSurfaces();
+
+		/* Loop over all of this cell's surfaces */
+		for (int s = 0; s < (int)surfaces.size(); s++) {
+			int surface = surfaces.at(s);
+			bool sense = (surface > 0);
+			surface = abs(surface);
+
+			Surface* surf = _surfaces.at(surface);
+
+			if (sense) {
+				count_positive[surface]++;
+				surf->setNeighborPos(count_positive[surface], c);
+			}
+			else {
+				count_negative[s]++;
+				surf->setNeighborNeg(count_negative[surface], c);
+			}
+		}
+	}
+	return;
+}
+
+
+
+/**
  * Function to determine whether a key already exists in a templated map container
  * @param map the map container
  * @param key the key to check

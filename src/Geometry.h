@@ -53,8 +53,7 @@ public:
 	void adjustKeys();
 	// Recursively sets Universe levels
 	void buildUniverseLevels(Universe* univ, int parent_cell, int level);
-	// Build list of neighboring cells in positive/negative direction from each surface
-	void buildNeighborsList();
+	void buildNeighborsLists();
 
 	template <class K, class V>
 	bool mapContainsKey(std::map<K, V> map, K key);
