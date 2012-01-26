@@ -100,12 +100,38 @@ void log_setlevel(char* newlevel) {
 void log_printf(logLevel level, const char *format, ...) {
     if (level >= log_level) {
     	va_list args;
+
+    	/* Append the log level to the message */
+    	switch (level) {
+    		case (NORMAL):
+    			printf("[  NORMAL ]  ");
+    			break;
+    		case (INFO):
+    			printf("[  INFO   ]  ");
+    			break;
+    		case (WARNING):
+    			printf("[ WARNING ]  ");
+    			break;
+    		case (CRITICAL):
+    			printf("[CRITICAL]   ");
+    			break;
+    		case (ERROR):
+    			printf("[  ERROR  ]  ");
+    			break;
+    		case (DEBUG):
+    			printf("[  DEBUG  ]  ");
+    			break;
+    		case (RESULT):
+    			printf("[  RESULT ]  ");
+    			break;
+    	}
+
 		va_start(args, format);
 		vprintf(format, args);
 		va_end(args);
     }
     if (level == ERROR) {
-    	printf("\nExiting program\n");
+    	printf("\nExiting program...\n");
     	exit(1);
     }
 }
