@@ -18,6 +18,7 @@
 class Options {
 private:
 	char* _geometry_file;
+	char* _material_file;
 	double _track_spacing;
 	int _num_azim;
 	int _num_sectors;
@@ -28,6 +29,7 @@ public:
     Options(int argc, const char **argv);
     ~Options(void);
     char *getGeometryFile() const;
+    char *getMaterialFile() const;
     double getNumAzim() const;
     double getTrackSpacing() const;
     char* getVerbosity() const;

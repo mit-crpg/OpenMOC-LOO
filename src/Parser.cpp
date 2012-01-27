@@ -41,10 +41,15 @@ enum frame_type {
 	NODE_TYPE_WIDTH,
 	NODE_TYPE_UNIVERSES,
 	NODE_TYPE_SURFACE,
-	NODE_TYPE_MAX = NODE_TYPE_SURFACE /* Keep this in sync */
+	NODE_TYPE_MATERIALS,
+	NODE_TYPE_MATERIAL,
+	NODE_TYPE_MAX = NODE_TYPE_MATERIAL /* Keep this in sync */
 };
 
 struct frame_geometry {
+};
+
+struct frame_materials {
 };
 
 struct frame_cell {
@@ -115,6 +120,12 @@ struct frame_surface {
 	boundaryType boundary;
 };
 
+struct frame_material {
+	bool has_id;
+	int id;
+};
+
+
 struct frame {
 	struct frame *parent;
 	enum frame_type type;
@@ -122,6 +133,7 @@ struct frame {
 
 	union {
 		struct frame_geometry geometry;
+		struct frame_materials materials;
 		struct frame_cell cell;
 		struct frame_lattice lattice;
 		struct frame_ttype ttype;
@@ -130,8 +142,10 @@ struct frame {
 		struct frame_width width;
 		struct frame_universes universes;
 		struct frame_surface surface;
+		struct frame_material material;
 	};
 };
+
 
 struct stack {
 	struct frame *top;
@@ -152,16 +166,10 @@ static inline char *astrncat(char *orig, char *next, int len);
 
 Parser::Parser (const Options *opts) {
 	FILE* geofile;
+	FILE* matfile;
 	XML_Parser parser;
 	struct stack stack;
 	char c;
-
-	/* Assures that the geometry file exists and is readable */
-	geofile = fopen(opts->getGeometryFile(), "r");
-	if (geofile == NULL) {
-		log_printf(ERROR, "Given geometry file %s does not exist",
-			   opts->getGeometryFile());
-	}
 
 	/* Sets up the parser */
 	stack.top = NULL;
@@ -172,17 +180,59 @@ Parser::Parser (const Options *opts) {
 	XML_SetEndElementHandler(parser, &Parser_XMLCallback_End);
 	XML_SetCharacterDataHandler(parser, &Parser_XMLCallback_CData);
 
+	/* Assures that the input file(s) exists and is readable */
+	geofile = fopen(opts->getGeometryFile(), "r");
+	if (geofile == NULL) {
+		log_printf(ERROR, "Given geometry file %s does not exist",
+			   opts->getGeometryFile());
+	}
+
 	/* Passes single characters to the parser, which is quite slow but
 	 * is the easiest for now. */
 	while( EOF != (c = fgetc(geofile)) ) {
 		if (XML_Parse(parser, &c, 1, false) != XML_STATUS_OK)
-			log_printf(ERROR, "Expat error\n");
+			log_printf(ERROR, "Expat error for geometry.xml\n");
         }
+
+	fclose(geofile);
 
 	/* Tells the parse we've reached the end */
 	XML_Parse(parser, NULL, 0, true);
 	XML_ParserFree(parser);
-	fclose(geofile);
+
+
+
+	/* Sets up the parser */
+	stack.top = NULL;
+	stack.parser = this;
+	parser = XML_ParserCreate(NULL); /* NULL -> system encoding */
+	XML_SetUserData(parser, &stack);
+	XML_SetStartElementHandler(parser, &Parser_XMLCallback_Start);
+	XML_SetEndElementHandler(parser, &Parser_XMLCallback_End);
+	XML_SetCharacterDataHandler(parser, &Parser_XMLCallback_CData);
+
+
+	/* Assures that the input file(s) exists and is readable */
+	matfile = fopen(opts->getMaterialFile(), "r");
+	if (matfile == NULL) {
+		log_printf(ERROR, "Given material file %s does not exist",
+			   opts->getMaterialFile());
+	}
+
+	/* Passes single characters to the parser, which is quite slow but
+	 * is the easiest for now. */
+	while( EOF != (c = fgetc(matfile)) ) {
+		if (XML_Parse(parser, &c, 1, false) != XML_STATUS_OK)
+			log_printf(ERROR, "Expat error for material.xml\n");
+        }
+
+	fclose(matfile);
+
+
+	/* Tells the parse we've reached the end */
+	XML_Parse(parser, NULL, 0, true);
+	XML_ParserFree(parser); 
+
 }
 
 Parser::~Parser() {
@@ -194,6 +244,8 @@ Parser::~Parser() {
 		delete this->cells.at(i);
 	for (i = 0; i < this->lattices.size(); i++)
 		delete this->lattices.at(i);
+	for (i = 0; i < this->materials.size(); i++)
+		delete this->materials.at(i);
 }
 
 void Parser::each_surface(std::function<void(Surface *)> callback) {
@@ -215,6 +267,13 @@ void Parser::each_lattice(std::function<void(Lattice *)> callback) {
 
 	for (i = 0; i < this->lattices.size(); i++)
 		callback(this->lattices.at(i));
+}
+
+void Parser::each_material(std::function<void(Material *)> callback) {
+	std::vector<Material *>::size_type i;
+
+	for (i = 0; i < this->materials.size(); i++)
+		callback(this->materials.at(i));
 }
 
 void XMLCALL Parser_XMLCallback_Start(void *context,
@@ -265,10 +324,12 @@ void XMLCALL Parser_XMLCallback_Start(void *context,
 			break;
 		case NODE_TYPE_GEOMETRY:
 			break;
+		case NODE_TYPE_MATERIALS:
+			break;
 		case NODE_TYPE_CELL:
 			if (strcmp(key, "id") == 0) {
 				if (f->cell.has_id == true)
-					log_printf(ERROR, "Has 2 ids\n");
+					log_printf(ERROR, "Cell has 2 ids\n");
 
 				f->cell.has_id = true;
 				f->cell.id = atoi(value);
@@ -315,7 +376,7 @@ void XMLCALL Parser_XMLCallback_Start(void *context,
 		case NODE_TYPE_LATTICE:
 			if (strcmp(key, "id") == 0) {
 				if (f->lattice.has_id == true)
-					log_printf(ERROR, "Has 2 ids\n");
+					log_printf(ERROR, "Lattice has 2 ids\n");
 
 				f->lattice.has_id = true;
 				f->lattice.id = atoi(value);
@@ -335,10 +396,19 @@ void XMLCALL Parser_XMLCallback_Start(void *context,
 			break;
 		case NODE_TYPE_UNIVERSES:
 			break;
+		case NODE_TYPE_MATERIAL:
+			if (strcmp(key, "id") == 0) {
+				if (f->material.has_id == true)
+					log_printf(ERROR, "Has 2 material ids\n");
+				
+				f->material.has_id = true;
+				f->material.id = atoi(value);
+			}
+			break;
 		case NODE_TYPE_SURFACE:
 			if (strcmp(key, "id") == 0) {
 				if (f->surface.has_id == true)
-					log_printf(ERROR, "Has 2 ids\n");
+					log_printf(ERROR, "Surface has 2 ids\n");
 
 				f->surface.has_id = true;
 				f->surface.id = atoi(value);
@@ -389,6 +459,8 @@ void XMLCALL Parser_XMLCallback_End(void *context,
 	case NODE_TYPE_NONE:
 		break;
 	case NODE_TYPE_GEOMETRY:
+		break;
+	case NODE_TYPE_MATERIALS:
 		break;
 	case NODE_TYPE_CELL:
 	{
@@ -472,6 +544,8 @@ void XMLCALL Parser_XMLCallback_End(void *context,
 		case NODE_TYPE_WIDTH:
 		case NODE_TYPE_UNIVERSES:
 		case NODE_TYPE_SURFACE:
+		case NODE_TYPE_MATERIAL:
+		case NODE_TYPE_MATERIALS:
 			log_printf(ERROR, "Unexpected type subfield\n");
 		}
 		break;
@@ -496,6 +570,8 @@ void XMLCALL Parser_XMLCallback_End(void *context,
 		case NODE_TYPE_WIDTH:
 		case NODE_TYPE_UNIVERSES:
 		case NODE_TYPE_SURFACE:
+		case NODE_TYPE_MATERIALS:
+		case NODE_TYPE_MATERIAL:
 			log_printf(ERROR, "Unexpected dimmension subfield\n");
 		}
 		break;
@@ -520,6 +596,8 @@ void XMLCALL Parser_XMLCallback_End(void *context,
 		case NODE_TYPE_WIDTH:
 		case NODE_TYPE_UNIVERSES:
 		case NODE_TYPE_SURFACE:
+		case NODE_TYPE_MATERIAL:
+		case NODE_TYPE_MATERIALS:
 			log_printf(ERROR, "Unexpected dimmension subfield\n");
 		}
 		break;
@@ -544,6 +622,8 @@ void XMLCALL Parser_XMLCallback_End(void *context,
 		case NODE_TYPE_WIDTH:
 		case NODE_TYPE_UNIVERSES:
 		case NODE_TYPE_SURFACE:
+		case NODE_TYPE_MATERIAL:
+		case NODE_TYPE_MATERIALS:
 			log_printf(ERROR, "Unexpected dimmension subfield\n");
 		}
 		break;
@@ -568,6 +648,8 @@ void XMLCALL Parser_XMLCallback_End(void *context,
 		case NODE_TYPE_WIDTH:
 		case NODE_TYPE_UNIVERSES:
 		case NODE_TYPE_SURFACE:
+		case NODE_TYPE_MATERIAL:
+		case NODE_TYPE_MATERIALS:
 			log_printf(ERROR, "Unexpected universes subfield\n");
 		}
 		break;
@@ -623,6 +705,19 @@ void XMLCALL Parser_XMLCallback_End(void *context,
 			free(f->surface.coeffs);
 		break;
 	}
+	case NODE_TYPE_MATERIAL:
+	{
+		Material *material;
+
+		material = NULL;
+		material = new Material(f->material.id);
+
+		if (material != NULL)
+			s->parser->materials.push_back(material);
+		else {
+			log_printf(ERROR, "Material unsuccessfully built\n");
+		}		
+	}
 	}
 
 	free(f);
@@ -644,6 +739,8 @@ void XMLCALL Parser_XMLCallback_CData(void *context,
 		break;
 	case NODE_TYPE_GEOMETRY:
 		break;
+	case NODE_TYPE_MATERIALS:
+		break;
 	case NODE_TYPE_CELL:
 		break;
 	case NODE_TYPE_LATTICE:
@@ -664,6 +761,8 @@ void XMLCALL Parser_XMLCallback_CData(void *context,
 		break;
 	case NODE_TYPE_SURFACE:
 		break;
+	case NODE_TYPE_MATERIAL:
+		break;
 	}
 }
 
@@ -673,6 +772,8 @@ const char *frame_type_string(enum frame_type type) {
 		return "none";
 	case NODE_TYPE_GEOMETRY:
 		return "geometry";
+	case NODE_TYPE_MATERIALS:
+		return "materials";
 	case NODE_TYPE_CELL:
 		return "cell";
 	case NODE_TYPE_LATTICE:
@@ -689,6 +790,8 @@ const char *frame_type_string(enum frame_type type) {
 		return "universes";
 	case NODE_TYPE_SURFACE:
 		return "surface";
+	case NODE_TYPE_MATERIAL:
+		return "material";
 	}
 	
 	abort();
@@ -711,6 +814,8 @@ struct frame *stack_push(struct stack *s, enum frame_type type) {
 		log_printf(ERROR, "Tried to push an unknown node type\n");
 		break;
 	case NODE_TYPE_GEOMETRY:
+		break;
+	case NODE_TYPE_MATERIALS:
 		break;
 	case NODE_TYPE_CELL:
 		f->cell.has_id = false;
@@ -748,6 +853,9 @@ struct frame *stack_push(struct stack *s, enum frame_type type) {
 		f->surface.type = NULL;
 		f->surface.coeffs = NULL;
 		f->surface.boundary = BOUNDARY_NONE;
+		break;
+	case NODE_TYPE_MATERIAL:
+		f->material.has_id = false;
 		break;
 	}
 
@@ -794,6 +902,8 @@ void stack_print_help(struct frame *f) {
 	case NODE_TYPE_NONE:
 		break;
 	case NODE_TYPE_GEOMETRY:
+		break;
+	case NODE_TYPE_MATERIALS:
 		break;
 	case NODE_TYPE_CELL:
 		if (f->cell.has_id)
@@ -885,7 +995,11 @@ void stack_print_help(struct frame *f) {
 			}
 			fprintf(stderr, "\"");
 		}
+	case NODE_TYPE_MATERIAL:
+		if (f->material.has_id)
+			fprintf(stderr, " id=\"%d\"", f->material.id);
 		break;
+
 	}
 
 	fprintf(stderr, "\n");

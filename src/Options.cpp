@@ -25,12 +25,13 @@
 Options::Options(int argc, const char **argv) {
 
 	_geometry_file = strdup("xml-sample/5/geometry.xml"); 	 /* Default geometry input file */
-	_track_spacing = 0.05;									 /* Default track spacing */
-	_num_azim = 128;										 /* Default number of azimuthal angles */
-	_num_sectors = 0;										 /* Default number of sectors */
-	_num_rings = 0;											 /* Default number of rings */
-	_sector_offset = 0;										 /* Default sector offset */
-	_verbosity = strdup("NORMAL");						 	 /* Default logging level */
+	_material_file = strdup("xml-sample/5/material.xml");    /* Default material input file */
+	_track_spacing = 0.05;					 /* Default track spacing */
+	_num_azim = 128;					 /* Default number of azimuthal angles */
+	_num_sectors = 0;					 /* Default number of sectors */
+	_num_rings = 0;						 /* Default number of rings */
+	_sector_offset = 0;					 /* Default sector offset */
+	_verbosity = strdup("NORMAL");				 /* Default logging level */
 
 	for (int i = 0; i < argc; i++) {
 		if (i > 0) {
@@ -38,6 +39,11 @@ Options::Options(int argc, const char **argv) {
 				if (_geometry_file != NULL)
 					free(_geometry_file);
 				_geometry_file = strdup(argv[i]);
+			}
+			else if (LAST("--materialfile") || LAST("-m")) {
+				if (_material_file != NULL)
+					free(_material_file);
+				_material_file = strdup(argv[i]);
 			}
 			else if (LAST("--trackspacing") || LAST("-ts"))
 				_track_spacing = atof(argv[i]);
@@ -58,6 +64,8 @@ Options::Options(int argc, const char **argv) {
 Options::~Options(void) {
 	if (this->_geometry_file != NULL)
 		free(this->_geometry_file);
+	if (this->_material_file != NULL)
+		free(this->_material_file);
 	if (this->_verbosity != NULL)
 		free(this->_verbosity);
 }
@@ -72,6 +80,15 @@ char *Options::getGeometryFile() const {
     return _geometry_file;
 }
 
+/**
+ * Returns a character array with the path to the material input file. By default this
+ * will return the path to /xml-sample/1/material.xml if not set at runtime from the
+ * console
+ * @return path to the geometry input file
+ */
+char *Options::getMaterialFile() const {
+    return _material_file;
+}
 
 /**
  * Returns the number of azimuthal angles. By default this will return 128 angles if

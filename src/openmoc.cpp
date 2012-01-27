@@ -45,6 +45,11 @@ int main(int argc, const char **argv) {
 	 * main */
 	/* Initialize the parser */
 	Parser parser(&opts);
+	parser.each_material([&geometry](Material *m) -> void
+			  {
+				  geometry.addMaterial(m);
+				  return;
+			  });
 	parser.each_surface([&geometry](Surface *s) -> void
 			    {
 				    geometry.addSurface(s);

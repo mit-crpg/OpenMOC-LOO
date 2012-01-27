@@ -21,9 +21,9 @@
 #include "Options.h"
 #include "log.h"
 #include "Lattice.h"
+#include "Material.h"
 
 #include <vector>
-#include "Surface.h"
 #include <functional>
 
 /**
@@ -34,7 +34,7 @@ private:
 	std::vector<Surface *> surfaces;
 	std::vector<Cell *> cells;
 	std::vector<Lattice *> lattices;
-
+	std::vector<Material *> materials;
 public:
 	Parser(const Options *opts);
 	virtual ~Parser();
@@ -42,7 +42,7 @@ public:
 	void each_surface(std::function<void(Surface *)> callback);
 	void each_cell(std::function<void(Cell *)> callback);
 	void each_lattice(std::function<void(Lattice *)> callback);
-
+	void each_material(std::function<void(Material *)> callback);
 private:
 	/* Internal functions for the XML parser, but these need to be able to
 	 * access private data (and they're C functions so they can't be static
