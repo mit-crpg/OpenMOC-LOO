@@ -426,6 +426,8 @@ void XMLCALL Parser_XMLCallback_End(void *context,
 				      f->lattice.universes_count,
 				      f->lattice.universes);
 
+		s->parser->lattices.push_back(lattice);
+
 		if (f->lattice.type != NULL)
 			free(f->lattice.type);
 		if (f->lattice.dimmensions != NULL)
