@@ -8,9 +8,9 @@
 
 <!-- Defition of Surfaces -->
   <surface id="1" type="circle" coeffs="0 0 7" />
-  <surface id="2" type="x-plane" coeffs="-2.0" />
-  <surface id="3" type="x-plane" coeffs="2.0" />
-  <surface id="4" type="y-plane" coeffs="-2.0" />
-  <surface id="5" type="y-plane" coeffs="2.0" />
+  <surface id="2" type="x-plane" coeffs="-2.0" boundary="reflective" />
+  <surface id="3" type="x-plane" coeffs="2.0" boundary="reflective" />
+  <surface id="4" type="y-plane" coeffs="-2.0" boundary="reflective" />
+  <surface id="5" type="y-plane" coeffs="2.0" boundary="reflective" />
     
 </geometry>
