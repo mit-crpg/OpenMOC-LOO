@@ -36,30 +36,10 @@ Geometry::Geometry(int num_sectors, int num_rings, double sector_offset) {
  * Destructor
  */
 Geometry::~Geometry() {
-	std::map<int, Material*>::iterator iter1;
-	std::map<int, Surface*>::iterator iter2;
-	std::map<int, Cell*>::iterator iter3;
-	std::map<int, Universe*>::iterator iter4;
-	std::map<int, Lattice*>::iterator iter5;
-
-//	for (iter1 = _materials.begin(); iter1 != _materials.end(); ++iter1)
-//		delete iter1->second;
 	_materials.clear();
-
-//	for (iter2 = _surfaces.begin(); iter2 != _surfaces.end(); ++iter2)
-//		delete iter2->second;
 	_surfaces.clear();
-
-//	for (iter3 = _cells.begin(); iter3 != _cells.end(); ++iter3)
-//		delete iter3->second;
 	_cells.clear();
-
-//	for (iter4 = _universes.begin(); iter4 != _universes.end(); ++iter4)
-//		delete iter4->second;
 	_universes.clear();
-
-//	for (iter5 = _lattices.begin(); iter5 != _lattices.end(); ++iter5)
-//		delete iter5->second;
 	_lattices.clear();
 }
 
@@ -710,54 +690,53 @@ void Geometry::buildNeighborsLists() {
 }
 
 
-//bool Geometry::findCell(LocalCoords* coords) {
-//
-//	int universe_id = coords->getUniverse();
-//	std::vector<int> cell_ids = _universes.at(universe_id)->getCells();
-//	int num_cells = cell_ids.size();
-//
-//	/* Loop over all cells in this universe */
-//	for (int c = 0; c < num_cells; c++) {
-//		Cell* cell = _cells.at(cell_ids.at(c));
-//
-//		if (cellContains(cell, coords)) {
-//			/* Set the cell on this level */
-//			coords->setCell(cell->getUid());
-//
-//			/* MATERIAL type cell - lowest level, terminate search for cell */
-//			if (cell->getType() == MATERIAL) { }
-//
-//			/* FILL type cell - cell contains a universe at a lower level
-//			 * Update coords to next level and continue search
-//			 */
-//			else if (cell->getType() == FILL) {
-//				LocalCoords* new_coords = new LocalCoords(coords->getX(),coords->getY());
-//				coords->setNext(new_coords);
-//				coords->setUniverse(cell->getUniverse());
-//
-//				if (!findCell(coords))
-//					return false;
-//			}
-//
-//
-//
-//			/* UNIVERSE FILL type cell */
-//
-//
-//			/* Lattice ? */
-//
-//			/* If none of the nested cells contained this coord
-//			 * This should not be invoked unless there is a problem with
-//			 * the way the geometry is setup
-//			 */
-//			if (!findCell(coords))
-//				return false;
-//		}
-//	}
-//
-//	return false;
-//
-//}
+bool Geometry::findCell(LocalCoords* coords) {
+
+	int universe_id = coords->getUniverse();
+	std::vector<Cell*> cells = _universes.at(universe_id)->getCells();
+
+	/* Loop over all cells in this universe */
+	for (int c = 0; c < (int)cells.size(); c++) {
+		Cell* cell = cells.at(c);
+
+		if (cell->cellContains(coords)) {
+			/* Set the cell on this level */
+			coords->setCell(cell->getUid());
+
+			/* MATERIAL type cell - lowest level, terminate search for cell */
+			if (cell->getType() == MATERIAL) { }
+
+			/* FILL type cell - cell contains a universe at a lower level
+			 * Update coords to next level and continue search
+			 */
+			else if (cell->getType() == FILL) {
+				LocalCoords* new_coords = new LocalCoords(coords->getX(),coords->getY());
+				coords->setNext(new_coords);
+				coords->setUniverse(cell->getUniverse());
+
+				if (!findCell(coords))
+					return false;
+			}
+
+
+
+			/* UNIVERSE FILL type cell */
+
+
+			/* Lattice ? */
+
+			/* If none of the nested cells contained this coord
+			 * This should not be invoked unless there is a problem with
+			 * the way the geometry is setup
+			 */
+			if (!findCell(coords))
+				return false;
+		}
+	}
+
+	return false;
+
+}
 
 
 /**

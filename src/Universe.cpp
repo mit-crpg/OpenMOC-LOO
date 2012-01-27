@@ -19,6 +19,7 @@ Universe::Universe(const int id) {
 	_uid = _n;
 	_id = id;
 	_n++;
+	_type = SIMPLE;
 }
 
 
@@ -110,8 +111,13 @@ void Universe::setOrigin(Point* origin) {
 std::string Universe::toString() {
 	std::stringstream string;
 
-	string << "Universe id = " << _id << ", num cells = " << _cells.size() <<
-			", cell ids = ";
+	string << "Universe id = " << _id << ", type = ";
+	if (_type == SIMPLE)
+		string << "SIMPLE";
+	else
+		string << "LATTICE";
+
+	string << ", num cells = " << _cells.size() << ", cell ids = ";
 
 	for (int c = 0; c < (int)_cells.size(); c++)
 		string << _cells.at(c)->getId() << ", ";

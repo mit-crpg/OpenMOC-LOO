@@ -31,6 +31,7 @@ Lattice::Lattice(const int id, const int num_x, int num_y,
 	_origin.setY(origin_y);
 	_width_x = width_x;
 	_width_y = width_y;
+	_type = LATTICE;
 
 	Universe* empty_universe_pointer;
 	for (int i = 0; i < num_y; i++) {
