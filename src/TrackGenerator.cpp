@@ -17,7 +17,7 @@
  * @param spacing track spacing
  */
 TrackGenerator::TrackGenerator(Geometry* geom, const int num_azim,
-		const double spacing) {
+								const double spacing) {
 
 	_geom = geom;
 	_num_azim = num_azim/2.0;

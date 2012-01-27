@@ -11,6 +11,7 @@
 #define LOCALCOORDS_H_
 
 #include <sstream>
+#include <string>
 #include "Point.h"
 
 class LocalCoords {
@@ -42,7 +43,7 @@ public:
     void setX(double x);
     void setY(double y);
     void setNext(LocalCoords *next);
-    const char* toString();
+    std::string toString();
 };
 
 #endif /* LOCALCOORDS_H_ */

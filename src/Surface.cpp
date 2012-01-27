@@ -16,7 +16,8 @@ int Surface::_n = 0;
  * @param id the surface id
  * @param type the surface type
  */
-Surface::Surface(const int id, const surfaceType type, const boundaryType boundary){
+Surface::Surface(const int id, const surfaceType type,
+					const boundaryType boundary){
 	_uid = _n;
 	_id = id;
 	_type = type;
@@ -62,7 +63,7 @@ surfaceType Surface::getType() const {
  * of this surface
  * @return vector of surface ids
  */
-std::vector<int> Surface::getNeighborPos() {
+std::vector<Cell*> Surface::getNeighborPos() {
 	return _neighbor_pos;
 }
 
@@ -72,7 +73,7 @@ std::vector<int> Surface::getNeighborPos() {
  * of this surface
  * @return vector of surface ids
  */
-std::vector<int> Surface::getNeighborNeg() {
+std::vector<Cell*> Surface::getNeighborNeg() {
 	return _neighbor_neg;
 }
 
@@ -117,7 +118,7 @@ void Surface::setNeighborNegSize(int size) {
  * @param index the index of the neighbor cell
  * @param cell the cell id
  */
-void Surface::setNeighborPos(int index, int cell) {
+void Surface::setNeighborPos(int index, Cell* cell) {
 	_neighbor_pos[index] = cell;
 }
 
@@ -128,7 +129,7 @@ void Surface::setNeighborPos(int index, int cell) {
  * @param index the index of the neighbor cell
  * @param cell the cell id
  */
-void Surface::setNeighborNeg(int index, int cell) {
+void Surface::setNeighborNeg(int index, Cell* cell) {
 	_neighbor_neg[index] = cell;
 }
 
@@ -170,13 +171,13 @@ double Plane::evaluate(const Point* point) const {
  * Converts this Plane's attributes to a character array
  * @param a character array of this plane's attributes
  */
-const char* Plane::toString() {
+std::string Plane::toString() {
 	std::stringstream string;
 
 	string << "Surface id = " << _id << ", type = PLANE " << ", A = "
 			<< _A << ", B = " << _B << ", C = " << _C << "\n";
 
-	return string.str().c_str();
+	return string.str();
 }
 
 
@@ -320,13 +321,13 @@ XPlane::XPlane(const int id, const boundaryType boundary, const double C): Plane
  * Converts this XPlane's attributes to a character array
  * @param a character array of this plane's attributes
  */
-const char* XPlane::toString() {
+std::string XPlane::toString() {
 	std::stringstream string;
 
 	string << "Surface id = " << _id << ", type = XPLANE " << ", A = "
 			<< _A << ", B = " << _B << ", C = " << _C << "\n";
 
-	return string.str().c_str();
+	return string.str();
 }
 
 double XPlane::getXMin(){
@@ -360,13 +361,13 @@ YPlane::YPlane(const int id, const boundaryType boundary, const double C): Plane
  * Converts this YPlane's attributes to a character array
  * @param a character array of this plane's attributes
  */
-const char* YPlane::toString() {
+std::string YPlane::toString() {
 	std::stringstream string;
 
 	string << "Surface id = " << _id << ", type = YPLANE " << ", A = "
 			<< _A << ", B = " << _B << ", C = " << _C << "\n";
 
-	return string.str().c_str();
+	return string.str();
 }
 
 double YPlane::getXMin(){
@@ -643,14 +644,14 @@ int Circle::intersection(Plane* plane, Point* points) const {
  * Converts this Plane's attributes to a character array
  * @param a character array of this plane's attributes
  */
-const char* Circle::toString() {
+std::string Circle::toString() {
 	std::stringstream string;
 
 	string << "Surface id = " << _id << ", type = CIRCLE " << ", A = "
 			<< _A << ", B = " << _B << ", C = " << _C << ", D = " << _D
 			<< ", E = " << _E << "\n";
 
-	return string.str().c_str();
+	return string.str();
 }
 
 double Circle::getXMin(){

@@ -113,7 +113,7 @@ void log_printf(logLevel level, const char *format, ...) {
     			printf("[ WARNING ]  ");
     			break;
     		case (CRITICAL):
-    			printf("[CRITICAL]   ");
+    			printf("[ CRITICAL]  ");
     			break;
     		case (ERROR):
     			printf("[  ERROR  ]  ");

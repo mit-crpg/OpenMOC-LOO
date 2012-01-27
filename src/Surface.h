@@ -10,13 +10,16 @@
 
 #include <vector>
 #include <sstream>
+#include <string>
 #include "Point.h"
 #include "Track.h"
+#include "Cell.h"
 
 #include "log.h"
 
 /* Define for compiler */
 class Plane;
+class Cell;
 
 /**
  * Surface types
@@ -46,26 +49,29 @@ protected:
 	int _id;
 	surfaceType _type;
 	boundaryType _boundary;
-	std::vector<int> _neighbor_pos;
-	std::vector<int> _neighbor_neg;
-	
+	std::vector<Cell*> _neighbor_pos;
+	std::vector<Cell*> _neighbor_neg;
+
 public:
 	Surface(const int id, const surfaceType type, const boundaryType boundary);
 	virtual ~Surface();
 	int getUid() const;
 	int getId() const;
 	surfaceType getType() const;
-	std::vector<int> getNeighborPos();
-	std::vector<int> getNeighborNeg();
+//	std::vector<int> getNeighborPos();
+//	std::vector<int> getNeighborNeg();
+	std::vector<Cell*> getNeighborPos();
+	std::vector<Cell*> getNeighborNeg();
+
 	void setNeighborPosSize(int size);
 	void setNeighborNegSize(int size);
-	void setNeighborPos(int index, int cell);
-	void setNeighborNeg(int index, int cell);
+	void setNeighborPos(int index, Cell* cell);
+	void setNeighborNeg(int index, Cell* cell);
 	boundaryType getBoundary();
 	virtual double evaluate(const Point* point) const =0;
 	virtual int intersection(Track* track, Point* points) const =0;
 	virtual int intersection(Plane* plane, Point* points) const =0;
-	virtual const char* toString() =0;
+	virtual std::string toString() =0;
 	virtual double getXMin() =0;
 	virtual double getXMax() =0;
 	virtual double getYMin() =0;
@@ -85,7 +91,7 @@ public:
 	double evaluate(const Point* point) const;
 	int intersection(Track* track, Point* points) const;
 	int intersection(Plane* plane, Point* points) const;
-	const char* toString();
+	std::string toString();
 	virtual double getXMin();
 	virtual double getXMax();
 	virtual double getYMin();
@@ -99,7 +105,7 @@ class XPlane: public Plane {
 private:
 public:
 	XPlane(const int id, const boundaryType boundary, const double C);
-	const char* toString();
+	std::string toString();
 	virtual double getXMin();
 	virtual double getXMax();
 	virtual double getYMin();
@@ -113,7 +119,7 @@ class YPlane: public Plane {
 private:
 public:
 	YPlane(const int id, const boundaryType boundary, const double C);
-	const char* toString();
+	std::string toString();
 	virtual double getXMin();
 	virtual double getXMax();
 	virtual double getYMin();
@@ -131,11 +137,12 @@ private:
 	friend class Surface;
 	friend class Plane;
 public:
-	Circle(const int id, const boundaryType boundary, const double x, const double y, const double radius);
+	Circle(const int id, const boundaryType boundary, const double x,
+				const double y, const double radius);
 	double evaluate(const Point* point) const;
 	int intersection(Track* track, Point* points) const;
 	int intersection(Plane* plane, Point* points) const;
-	const char* toString();
+	std::string toString();
 	virtual double getXMin();
 	virtual double getXMax();
 	virtual double getYMin();

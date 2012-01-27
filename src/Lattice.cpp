@@ -31,10 +31,13 @@ Lattice::Lattice(const int id, const int num_x, int num_y,
 	_origin.setY(origin_y);
 	_width_x = width_x;
 	_width_y = width_y;
+
+	Universe* empty_universe_pointer;
 	for (int i = 0; i < num_y; i++) {
-		_universes.push_back(std::vector<int>());
+		_universes.push_back(std::vector< std::pair<int, Universe*> >());
 		for (int j = 0; j< num_x; j++){
-			_universes.at(i).push_back(universes[i*num_x+j]);
+			_universes.at(i).push_back(std::pair<int, Universe*>
+			(universes[i*num_x+j], empty_universe_pointer));
 		}
 	}
 }
@@ -55,10 +58,31 @@ Lattice::~Lattice() {
  * Add a universe to this lattice
  * @param universe the universe id
  */
-void Lattice::addUniverse(const int x, const int y, const int universe) {
-	_universes.at(x).at(y) = universe;
-	log_printf(INFO, "Added universe with id = %d to lattice with id = %d",
-		   universe, _id);
+void Lattice::setUniversePointer(Universe* universe) {
+	/* Check that _surfaces contains this surface id and delete the id
+	 *  otherwise
+	 * throw an error
+	 */
+	bool universe_not_found = true;
+	int universe_id = universe->getId();
+
+	for (int i = 0; i < _num_y; i++) {
+		for (int j = 0; j< _num_x; j++) {
+			if (_universes.at(i).at(j).first == universe_id)
+				_universes[i][j].second = universe;
+			universe_not_found = false;
+		}
+	}
+
+	if (universe_not_found)
+		log_printf(WARNING, "Tried to set the universe pointer for lattice "
+				"id = %d for universe id = %d but the lattice does not contain"
+				"the universe\n", _id, universe_id);
+	else
+		log_printf(INFO, "Set the universe pointer for lattice "
+				"id = %d for universe id = %d\n", _id, universe_id);
+
+	return;
 }
 
 
@@ -101,7 +125,7 @@ Point* Lattice::getOrigin() {
  * Return a 2D vector array of the universes in the lattice
  * @return 2D vector of universes
  */
-std::vector<std::vector<int> > Lattice::getUniverses() const {
+std::vector< std::vector< std::pair<int, Universe*> > > Lattice::getUniverses() const {
     return _universes;
 }
 
@@ -128,17 +152,21 @@ double Lattice::getWidthY() const {
  * Adjusts the ids of the universes inside this lattice to be the uids of each
  * rather than the ids defined by the input file
  */
-void Lattice::adjustKeys(std::map<int, Universe*> universes) {
+void Lattice::adjustKeys() {
 
-	std::vector< std::vector<int> > adjusted_universes;
+	std::vector< std::vector< std::pair<int, Universe*> > > adjusted_universes;
 
 	try {
 		/* Adjust the indices for each universe to be the universe's uid */
-		for (int U = 0; U < (int)_universes.size(); U++) {
-			for (int u = 0; u < (int)_universes.at(U).size(); u++) {
-				int universe = _universes.at(U).at(u);
-				adjusted_universes[U][u] = universes.at(universe)->getUid();
+		for (int i = 0; i < _num_y; i++) {
+			adjusted_universes.push_back(std::vector< std::pair<int, Universe*> >());
+
+			for (int j = 0; j < _num_x; j++) {
+				Universe* universe = _universes.at(i).at(j).second;
+				adjusted_universes.at(i).push_back(std::pair<int, Universe*>
+												(universe->getUid(), universe));
 			}
+			_universes.at(i).clear();
 		}
 	}
 	catch (std::exception &e) {
@@ -155,21 +183,21 @@ void Lattice::adjustKeys(std::map<int, Universe*> universes) {
  * Converts a lattice's attributes to a character array representation
  * @return character array of this lattice's attributes
  */
-const char* Lattice::toString() {
+std::string Lattice::toString() {
 	std::stringstream string;
 
-	string << "Lattice id = " << _id << " num cells along x = "
-			<< _num_x << " num cells along y = " << _num_y << " x width = "
-			<< _width_x << " y width = " << _width_y;
+	string << "Lattice id = " << _id << ", num cells along x = "
+			<< _num_x << ", num cells along y = " << _num_y << ", x width = "
+			<< _width_x << ", y width = " << _width_y;
 
-	string << "\nUniverse ids within this lattice:\n\t";
-	for (int U = 0; U < (int)_universes.size();  U++) {
-		for (int u = 0; u < (int)_universes.at(U).size(); u++)
-			string << _universes.at(U).at(u) << "  ";
-		string << "\n\t";
+	string << "\n\t\tUniverse ids within this lattice:\n\t\t";
+	for (int i = 0; i < _num_y;  i++) {
+		for (int j = 0; j < _num_x; j++)
+			string << _universes.at(i).at(j).first << "  ";
+		string << "\n\t\t";
 	}
 
-	string << std::endl;
+	string << "\n";
 
 	return string.str().c_str();
 }

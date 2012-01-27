@@ -173,7 +173,11 @@ void LocalCoords::setY(double y) {
 }
 
 
-const char* LocalCoords::toString() {
+/**
+ * Converts this localcoords's attributes to a character array representation
+ * @param a character array of its member's attributes
+ */
+std::string LocalCoords::toString() {
 	std::stringstream string;
 
 	string << "LocalCoords: x = " << _coords.getX()
@@ -183,5 +187,5 @@ const char* LocalCoords::toString() {
 		<< _lattice_x << ", lattice y = " << _lattice_y
 		<< "\n";
 
-	return string.str().c_str();
+	return string.str();
 }

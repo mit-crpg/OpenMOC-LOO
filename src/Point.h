@@ -13,6 +13,7 @@
 #include <math.h>
 #include <iostream>
 #include <sstream>
+#include <string>
 #include "configurations.h"
 #include "log.h"
 
@@ -34,7 +35,7 @@ public:
 	void setY(const double y);
 	double distance(const double x, const double y) const;
 	double distance(const Point* point);
-	const char* toString();
+	std::string toString();
 };
 
 #endif /* POINT_H_ */

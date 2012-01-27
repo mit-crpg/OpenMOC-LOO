@@ -10,13 +10,16 @@
 #ifndef CELL_H_
 #define CELL_H_
 
-#include <vector>
 #include <map>
+#include <utility>
 #include <sstream>
+#include <string>
 #include "Surface.h"
 #include "log.h"
 #include "Point.h"
 #include "LocalCoords.h"
+
+class Surface;
 
 enum cellType {
 	MATERIAL,
@@ -33,20 +36,24 @@ protected:
 	int _id;
 	cellType _type;
 	int _universe;             	/* universe id this cell is in */
-	std::vector<int> _surfaces;	/* + or - depending on side of surface */
+//	std::vector<int> _surfaces;	/* + or - depending on side of surface */
+	std::map<int, Surface*> _surfaces;
 public:
 	Cell(int id, cellType type, int universe, int num_surfaces, 
 	     int *surfaces);
 	virtual ~Cell();
-	void addSurface(int surface);
+//	void addSurface(int surface);
+	void setSurfacePointer(Surface* surface);
 	int getUid() const;
 	int getId() const;
 	cellType getType() const;
 	int getUniverse() const;
 	int getNumSurfaces() const;
-	std::vector<int> getSurfaces() const;
+	std::map<int, Surface*> getSurfaces() const;
 	void setUniverse(int universe);
-	virtual const char* toString() =0;
+	bool cellContains(Point* point);
+	bool cellContains(LocalCoords* coords);
+	virtual std::string toString() =0;
 };
 
 
@@ -61,8 +68,8 @@ public:
 		  int *, int material);
 	int getMaterial() const;
 	void setMaterial(int material);
-	void adjustKeys(int universe, int material, std::map<int, Surface*> surfaces);
-	const char* toString();
+	void adjustKeys(int universe, int material);
+	std::string toString();
 };
 
 
@@ -77,8 +84,8 @@ public:
 		 int *surfaces, int universe_fill);
 	int getUniverseFill() const;
 	void setUniverseFill(int universe_Fill);
-	void adjustKeys(int universe, int universe_fill, std::map<int, Surface*> surfaces);
-	const char* toString();
+	void adjustKeys(int universe, int universe_fill);
+	std::string toString();
 };
 
 #endif /* CELL_H_ */

@@ -9,8 +9,8 @@
 #define UNIVERSE_H_
 
 #include <vector>
-#include <map>
 #include <sstream>
+#include <string>
 #include "Point.h"
 #include "Cell.h"
 #include "log.h"
@@ -20,24 +20,21 @@ protected:
 	static int _n;				/* Counts the number of universes */
 	int _uid;					/* monotonically increasing id based on n */
 	int _id;
-	int _num_cells;
-	std::vector<int> _cells;
+	std::vector<Cell*> _cells;
 	Point _origin;
 public:
 	Universe(const int id);
 	virtual ~Universe();
-	void addCell(const int cell);
-    std::vector<int> getCells() const;
+	void addCell(Cell* cell);
+    std::vector<Cell*> getCells() const;
     int getUid() const;
     int getId() const;
     int getNumCells() const;
     Point* getOrigin();
-    void setCells(std::vector<int> cells);
     void setId(const int id);
     void setNumCells(const int num_cells);
     void setOrigin(Point* origin);
-    void adjustKeys(std::map<int, Cell*> cells);
-    const char* toString();
+    std::string toString();
 };
 
 #endif /* UNIVERSE_H_ */

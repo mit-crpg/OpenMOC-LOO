@@ -11,6 +11,7 @@
 #define MATERIAL_H_
 
 #include <sstream>
+#include <string>
 #include "configurations.h"
 #include "log.h"
 
@@ -37,7 +38,7 @@ public:
     void setNuSigmaF(double nu_sigma_f[NUM_ENERGY_GROUPS]);
     void setSigmaS(double sigma_s[NUM_ENERGY_GROUPS][NUM_ENERGY_GROUPS]);
     void setSigmaT(double sigma_t[NUM_ENERGY_GROUPS]);
-    const char* toString();
+    std::string toString();
 };
 
 #endif /* MATERIAL_H_ */

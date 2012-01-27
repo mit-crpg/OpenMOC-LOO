@@ -176,7 +176,7 @@ double* Quadrature::getMultiples() {
  * Converts this quadrature to a character array of its attributes
  * @param a character array of this quadrature's attributes
  */
-const char* Quadrature::toString() {
+std::string Quadrature::toString() {
 	std::stringstream string;
 
 	string << "Quadrature type = ";
@@ -200,5 +200,5 @@ const char* Quadrature::toString() {
 
 	string << std::endl;
 
-	return string.str().c_str();
+	return string.str();
 }

@@ -34,12 +34,11 @@ Universe::~Universe() {
  * Adds a cell to this universe
  * @param cell the cell id
  */
-void Universe::addCell(const int cell) {
+void Universe::addCell(Cell* cell) {
 	try {
 		_cells.push_back(cell);
-		_num_cells++;
-		log_printf(INFO, "Added cell with id = %d to universe with id = %d",
-				cell, _id);
+		log_printf(INFO, "Added cell with id = %d to universe with id = %d\n",
+				cell->getId(), _id);
 	}
 	catch (std::exception &e) {
 		log_printf(ERROR, "Unable to add cell with id = %d to universe with"
@@ -52,7 +51,7 @@ void Universe::addCell(const int cell) {
  * Return the vector of cells in this universe
  * @return vector of cell ids
  */
-std::vector<int> Universe::getCells() const {
+std::vector<Cell*> Universe::getCells() const {
     return _cells;
 }
 
@@ -80,7 +79,7 @@ int Universe::getId() const {
  * @return the number of cells
  */
 int Universe::getNumCells() const {
-    return _num_cells;
+    return _cells.size();
 }
 
 
@@ -103,38 +102,21 @@ void Universe::setOrigin(Point* origin) {
 }
 
 
-/**
- * Adjusts the universe's ids of the cells inside this universe to be the
- * uids of each rather than the ids defined by the input file
- */
-void Universe::adjustKeys(std::map<int, Cell*> cells) {
-
-	std::vector<int> adjusted_cells;
-
-	for (int c = 0; c < (int)_cells.size(); c++) {
-		Cell* cell = cells.at(_cells.at(c));
-		adjusted_cells.push_back(cell->getUid());
-	}
-
-	_cells.clear();
-	_cells = adjusted_cells;
-}
-
 
 /**
  * Convert the member attributes of this universe to a character array
  * @param a character array reprsenting the universe
  */
-const char* Universe::toString() {
+std::string Universe::toString() {
 	std::stringstream string;
 
-	string << "Universe id = " << _id << ", num cells = " << _num_cells <<
+	string << "Universe id = " << _id << ", num cells = " << _cells.size() <<
 			", cell ids = ";
 
-	for (int c = 0; c < _num_cells; c++)
-		string << _cells.at(c) << ", ";
+	for (int c = 0; c < (int)_cells.size(); c++)
+		string << _cells.at(c)->getId() << ", ";
 
 	string << "\n";
 
-	return string.str().c_str();
+	return string.str();
 }

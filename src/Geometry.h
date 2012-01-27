@@ -13,6 +13,7 @@
 #include <map>
 #include <utility>
 #include <sstream>
+#include <string>
 #include "Material.h"
 #include "Surface.h"
 #include "Cell.h"
@@ -24,18 +25,17 @@
 
 class Geometry {
 private:
-	double x_min, y_min, x_max, y_max; /* the corners   */
-	int _num_sectors;
-	int _num_rings;
+	double _x_min, _y_min, _x_max, _y_max; 		/* the corners   */
+	int _num_sectors, _num_rings;
 	double _sector_offset;
 	int _base_universe;
 	std::map<int, Material*> _materials;
 	std::map<int, Surface*> _surfaces;
 	std::map<int, Cell*> _cells;
 	std::map<int, Universe*> _universes;
-	std::map<int, Lattice*> _lattices;               // Needed? Or do we put lattices inside of universes?
+	std::map<int, Lattice*> _lattices;
 public:
-	Geometry();
+	Geometry(int num_sectors, int num_rings, double sector_offset);
 	virtual ~Geometry();
 //	void setWidth(const double width);
 //	void setHeight(const double height);
@@ -58,14 +58,11 @@ public:
 	Universe* getUniverse(int id);
 	void addLattice(Lattice* lattice);
 	Lattice* getLattice(int id);
-	const char* toString();
+	std::string toString();
 
 	void adjustKeys();
-	// Recursively sets Universe levels
-//	void buildUniverseLevels(Universe* univ, int parent_cell, int level);
 	void buildNeighborsLists();
-	bool cellContains(Cell* cell, Point* point);
-	bool cellContains(Cell* cell, LocalCoords* coords);
+	bool findCell(LocalCoords* coords);
 
 	template <class K, class V>
 	bool mapContainsKey(std::map<K, V> map, K key);

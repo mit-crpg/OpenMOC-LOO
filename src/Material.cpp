@@ -130,30 +130,31 @@ void Material::setSigmaT(double sigma_t[NUM_ENERGY_GROUPS]) {
  * Converts this material's attributes to a character array representation
  * @param a character array of this member's attributes
  */
-const char* Material::toString() {
+std::string Material::toString() {
 	std::stringstream string;
 
 	string << "Material id = " << _id;
 
-	string << "\n\tSigma_t = ";
+	string << "\n\t\tSigma_t = ";
 	for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
 		string << _sigma_t[e] << ", ";
-	string << "\n\tnU_Sigma_F = ";
+
+	string << "\n\t\tnU_Sigma_F = ";
 	for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
 		string << _nu_sigma_f[e] << ", ";
 
-	string << "\n\tSigma_S = \n\t";
+	string << "\n\t\tSigma_S = \n\t\t";
 	for (int G = 0; G < NUM_ENERGY_GROUPS; G++) {
 		for (int g = 0; g < NUM_ENERGY_GROUPS; g++)
-			string << _sigma_s[G][g] << ", ";
+			string << _sigma_s[G][g] << "\t\t ";
+		string << "\n\t\t";
 	}
-	string << "\n\t";
 
-	string << "\n\tChi = ";
+	string << "\n\t\tChi = ";
 	for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
 		string << _chi[e] << ", ";
 
 	string << "\n";
 
-	return string.str().c_str();
+	return string.str();
 }

@@ -31,13 +31,8 @@ int main(int argc, const char **argv) {
 	log_setlevel(opts.getVerbosity());
 
 	/* Create an empty geometry */
-	Geometry geometry;
-
-	/* FIXME: These should be part of the constructor */
-	/* Set the geomery's number of rings, sectors, and sector offset */
-	geometry.setNumRings(opts.getNumRings());
-	geometry.setNumSectors(opts.getNumSectors());
-	geometry.setSectorOffset(opts.getSectorOffset());
+	Geometry geometry(opts.getNumSectors(), opts.getNumRings(),
+						opts.getSectorOffset());
 
 	// FIXME: PUT THIS INSIDE THE PARSER TO HIDE IT FROM THE MAIN PROGRAM
 	/* We only want general functional calls inside the main program
@@ -67,7 +62,7 @@ int main(int argc, const char **argv) {
 				  geometry.addLattice(l);
 				  return;
 			  });
-	
+
 	/* Adjust the indices for each geometry class to use uids */
 	geometry.adjustKeys();
 
@@ -75,9 +70,11 @@ int main(int argc, const char **argv) {
 	geometry.buildNeighborsLists();
 
 	/* Print out geometry to console */
-	log_printf(INFO, geometry.toString());
+	log_printf(INFO, "Printing the geometry to the console:\n\t%s",geometry.toString().c_str());
 
 	/* Initialize the trackgenerator */
 	TrackGenerator* trackGenerator = new TrackGenerator(&geometry,
 			opts.getTrackSpacing(), opts.getTrackSpacing());
+
+	log_printf(INFO, "OpenMOC completed\n");
 }

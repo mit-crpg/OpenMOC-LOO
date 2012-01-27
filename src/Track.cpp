@@ -32,8 +32,8 @@ Track::~Track() {
  * @param end_x the x-coordinate at the ending point
  * @param end_y the y-coordinate at the ending point
  */
-void Track::setValues(const double start_x, const double start_y, const double end_x,
-		const double end_y, const double phi) {
+void Track::setValues(const double start_x, const double start_y,
+		const double end_x, const double end_y, const double phi) {
 	_start.setCoords(start_x, start_y);
 	_end.setCoords(end_x, end_y);
 	_phi = phi;
@@ -186,6 +186,7 @@ bool Track::isReflOut() const {
  * @return a pointer to the requested segment
  */
 segment* Track::getSegment(int segment) {
+
 	/* Checks to see if segments container contains this segment index */
 	if (segment <= (int)_segments.size())
 		return _segments.at(segment);
@@ -194,7 +195,7 @@ segment* Track::getSegment(int segment) {
 	else
 		log_printf(ERROR, "Attempted to retrieve segment s = %d but track only"
 				"has %d segments", segment, _segments.size());
-	exit(0);
+	exit(1);
 }
 
 /**
@@ -257,13 +258,13 @@ void Track::clearSegments() {
  * Convert this track's attributes to a character array
  * @return a character array of this track's attributes
  */
-const char* Track::toString() {
+std::string Track::toString() {
 	std::stringstream string;
 	string << "Track: start, x = " << _start.getX() << ", y = " << _start.getY()
-			<< " end, x = " << _end.getX() << ", y = " << _end.getY() << ", phi = "
-			<< _phi << " weight = " << _weight;
+			<< " end, x = " << _end.getX() << ", y = " << _end.getY() <<
+			", phi = " << _phi << " weight = " << _weight;
 
 	string << "\n";
 
-	return string.str().c_str();
+	return string.str();
 }

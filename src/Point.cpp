@@ -99,10 +99,10 @@ double Point::distance(const Point* point) {
  * Converts this point to a character representation of its attributes
  * @param a character array of this point's attributes
  */
-const char* Point::toString() {
+std::string Point::toString() {
 	std::stringstream string;
 
 	string << "Point: x = " << _x << ", y = " << _y << "\n";
 
-	return string.str().c_str();
+	return string.str();
 }

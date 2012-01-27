@@ -12,6 +12,7 @@
 
 #include <vector>
 #include <stdlib.h>
+#include <string>
 #include "Point.h"
 #include "log.h"
 
@@ -33,8 +34,8 @@ private:
 public:
 	Track();
 	virtual ~Track();
-	void setValues(const double start_x, const double start_y, const double end_x,
-			const double end_y, const double phi);
+	void setValues(const double start_x, const double start_y,
+			const double end_x, const double end_y, const double phi);
     void setWeight(const double weight);
     void setReflIn(const bool refl_in);
     void setReflOut(const bool refl_out);
@@ -53,7 +54,7 @@ public:
 	bool contains(Point* point);
 	void addSegment(segment* segment);
 	void clearSegments();
-	const char* toString();
+	std::string toString();
 };
 
 

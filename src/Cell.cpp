@@ -21,9 +21,8 @@ int Cell::_n = 0;
  * @param num_surfaces the number of surfaces in this cell
  * @param surfaces the surface id
  */
-Cell::Cell(int id, cellType type, int universe,
-	   int num_surfaces, int *surfaces) {
-	int i;
+Cell::Cell(int id, cellType type, int universe, int num_surfaces,
+		int *surfaces) {
 
 	_uid = _n;
 	_id = id;
@@ -31,8 +30,14 @@ Cell::Cell(int id, cellType type, int universe,
 	_universe = universe;
 	_n++;
 	
-	for (i = 0; i < num_surfaces; i++)
-		this->_surfaces.push_back(surfaces[i]);
+	/* This empty surface pointer is just a null value for the _surfaces
+	 * map. The Geometry will register the actual surface pointer when
+	 * the cell is added to the geometry
+	 */
+	Surface* empty_surface_pointer;
+	for (int i = 0; i < num_surfaces; i++)
+		_surfaces.insert(std::pair<int, Surface*>(surfaces[i],
+							empty_surface_pointer));
 }
 
 
@@ -48,15 +53,31 @@ Cell::~Cell() {
  * Add a surface to the cell
  * @param surface the surface id
  */
-void Cell::addSurface(int surface) {
+void Cell::setSurfacePointer(Surface* surface) {
+	/* iF _surfaces does not contain this surface id throw an error */
+	if (_surfaces.find(surface->getId()) == _surfaces.end() &&
+			_surfaces.find(-surface->getId()) == _surfaces.end())
+
+		log_printf(WARNING, "Unable to set surface pointer for cell id = %d "
+				"for surface id = %d since cell does not contain this surface\n",
+				_id, surface->getId());
+
 	try{
-		_surfaces.push_back(surface);
+		/* If the cell contains the negative side of the surface */
+		if (_surfaces.find(surface->getId()) != _surfaces.end())
+			_surfaces[surface->getId()] = surface;
+
+		/* If the cell contains the negative side of the surface */
+		else
+			_surfaces[-surface->getId()] = surface;
+
+		log_printf(INFO, "Set the surface pointer for cell id = %d for "
+				"surface id = %d\n", _id, surface->getId());
 	}
 	catch (std::exception &e) {
 		log_printf(ERROR, 
-			   "Unable to add surface with id = %e to cell"
-			   "with id = %d. Backtrace:\n%s\n", 
-			   surface, _id, e.what());
+			   "Unable to add surface with id = %d to cell with id = %d. "
+			   "Backtrace:\n%s", surface, _id, e.what());
 	}
 }
 
@@ -106,11 +127,12 @@ int Cell::getNumSurfaces() const {
 	return this->_surfaces.size();
 }
 
+
 /**
  * Return the vector of surfaces in the cell
  * @return vector of surface ids
  */
-std::vector<int> Cell::getSurfaces() const {
+std::map<int,Surface*> Cell::getSurfaces() const {
 	return _surfaces;
 }
 
@@ -124,13 +146,45 @@ void Cell::setUniverse(int universe) {
 }
 
 
+/*
+ * Determines whether a point is contained inside a cell. Queries each surface
+ * inside the cell to determine if the particle is on the same side of the
+ * surface. This particle is only inside the cell if it is on the same side of
+ * every surface in the cell.
+ * @param point a pointer to a point
+ */
+bool Cell::cellContains(Point* point) {
+
+//	std::vector<int> cell_surfaces = cell->getSurfaces();
+	std::map<int, Surface*>::iterator iter;
+
+	for (iter = _surfaces.begin(); iter != _surfaces.end(); ++iter) {
+		if (iter->second->evaluate(point) * iter->first < ON_SURFACE_NEG)
+			return false;
+	}
+
+	return false;
+}
+
+
+/*
+ * Determines whether a point is contained inside a cell. Queries each surface
+ * inside the cell to determine if the particle is on the same side of the
+ * surface. This particle is only inside the cell if it is on the same side of
+ * every surface in the cell.
+ * @param point a pointer to a localcoord
+ */
+bool Cell::cellContains(LocalCoords* coords) {
+	return this->cellContains(coords->getPoint());
+}
+
+
 /**
  *  CellBasic constructor
  *  @param material the material used to fill this cell
  */
 CellBasic::CellBasic(int id, int universe, int num_surfaces, 
-		   int *surfaces, 
-		   int material): 
+		   int *surfaces, int material):
 	Cell(id, MATERIAL, universe, num_surfaces, surfaces) {
 	_material = material;
 }
@@ -150,17 +204,18 @@ int CellBasic::getMaterial() const {
  * this cell to be the uids of each rather than the ids defined by the
  * input file
  */
-void CellBasic::adjustKeys(int universe, int material,
-		std::map<int, Surface*> surfaces) {
+void CellBasic::adjustKeys(int universe, int material) {
+
 	_universe = universe;
 	_material = material;
-
-	std::vector<int> adjusted_surfaces;
+	std::map<int, Surface*> adjusted_surfaces;
 
 	try {
 		/* Adjust surface ids to be the surface uids */
-		for (int s = 0; s < (int)_surfaces.size(); s++)
-			adjusted_surfaces.push_back(surfaces.at(s)->getUid());
+		std::map<int, Surface*>::iterator iter;
+		for (iter = _surfaces.begin(); iter != _surfaces.end(); ++iter)
+			adjusted_surfaces.insert(std::pair<int, Surface*>
+									(iter->second->getUid(), iter->second));
 
 		_surfaces.clear();
 		_surfaces = adjusted_surfaces;
@@ -176,18 +231,21 @@ void CellBasic::adjustKeys(int universe, int material,
  * Convert this cell's attributes to a string format
  * @return a character array of this cell's attributes
  */
-const char* CellBasic::toString() {
+std::string CellBasic::toString() {
+
 	std::stringstream string;
+
 	string << "Cell id = " << _id << ", type = MATERIAL, material id = " <<
 			_material << ", universe = " << _universe << ", num_surfaces = "
-	       << this->getNumSurfaces() << " surface ids = ";
+	       << getNumSurfaces() << ", surface ids = ";
 
-	for (int s = 0; s < this->getNumSurfaces(); s++)
-		string << _surfaces.at(s) << ", ";
+	std::map<int, Surface*>::iterator iter;
+	for (iter = _surfaces.begin(); iter != _surfaces.end(); ++iter)
+		string << iter->second->getId() << ", ";
 
-	string << std::endl;
+	string << "\n";
 
-	return string.str().c_str();
+	return string.str();
 }
 
 
@@ -196,9 +254,9 @@ const char* CellBasic::toString() {
  *  @param universe_fill the universe used to fill this cell
  */
 CellFill::CellFill(int id, int universe, int num_surfaces, 
-		   int *surfaces, 
-		   int universe_fill): 
+		   int *surfaces, int universe_fill):
 	Cell(id, FILL, universe, num_surfaces, surfaces) {
+
 	_universe_fill = universe_fill;
 }
 
@@ -225,17 +283,19 @@ void CellFill::setUniverseFill(int universe_fill) {
  * this cell to be the uids of each rather than the ids defined by the
  * input file
  */
-void CellFill::adjustKeys(int universe, int universe_fill,
-		std::map<int, Surface*> surfaces) {
+void CellFill::adjustKeys(int universe, int universe_fill) {
+
 	_universe = universe;
 	_universe_fill = universe_fill;
 
-	std::vector<int> adjusted_surfaces;
+	std::map<int, Surface*> adjusted_surfaces;
 
 	try {
 		/* Adjust surface ids to be the surface uids */
-		for (int s = 0; s < (int)_surfaces.size(); s++)
-			adjusted_surfaces.push_back(surfaces.at(s)->getUid());
+		std::map<int, Surface*>::iterator iter;
+		for (iter = _surfaces.begin(); iter != _surfaces.end(); ++iter)
+			adjusted_surfaces.insert(std::pair<int, Surface*>
+									(iter->second->getUid(), iter->second));
 
 		_surfaces.clear();
 		_surfaces = adjusted_surfaces;
@@ -252,19 +312,22 @@ void CellFill::adjustKeys(int universe, int universe_fill,
  * Convert this cell's attributes to a string format
  * @return a character array of this cell's attributes
  */
-const char* CellFill::toString() {
+std::string CellFill::toString() {
+
 	std::stringstream string;
+
 	string << "Cell id = " << _id << ", type = FILL, universe_fill = " <<
 			_universe_fill << ", universe = " << _universe << ", num_surfaces = "
-	       << this->getNumSurfaces();
+	       << getNumSurfaces();
 
-	string << ", surface ids: ";
-	for (int s = 0; s < this->getNumSurfaces(); s++)
-		string << _surfaces.at(s) << ", ";
+	std::map<int, Surface*>::iterator iter;
+	string << ", surface ids = ";
+	for (iter = _surfaces.begin(); iter != _surfaces.end(); ++iter)
+		string << iter->second->getId() << ", ";
 
 	string << "\n";
 
-	return string.str().c_str();
+	return string.str();
 }
 
 
