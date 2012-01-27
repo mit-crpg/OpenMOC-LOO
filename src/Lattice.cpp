@@ -24,14 +24,19 @@
 Lattice::Lattice(const int id, const int num_x, int num_y, 
 		 double origin_x, double origin_y,
 		 double width_x, double width_y, 
-		 std::vector < std::vector <int> > universes): Universe(id) {
+		 int universes_count, int *universes): Universe(id) {
 	_num_y = num_y;
 	_num_x = num_x;
 	_origin.setX(origin_x);
 	_origin.setY(origin_y);
 	_width_x = width_x;
 	_width_y = width_y;
-	_universes = universes;
+	for (int i = 0; i < num_y; i++) {
+		_universes.push_back(std::vector<int>());
+		for (int j = 0; j< num_x; j++){
+			_universes.at(i).push_back(universes[i*num_x+j]);
+		}
+	}
 }
 
 

@@ -21,14 +21,18 @@ int Cell::_n = 0;
  * @param num_surfaces the number of surfaces in this cell
  * @param surfaces the surface id
  */
-Cell::Cell(int id, cellType type, int universe, int num_surfaces, std::vector<int> surfaces) {
+Cell::Cell(int id, cellType type, int universe,
+	   int num_surfaces, int *surfaces) {
+	int i;
+
 	_uid = _n;
 	_id = id;
 	_type = type;
 	_universe = universe;
-	_num_surfaces = num_surfaces;
-	_surfaces = surfaces;
 	_n++;
+	
+	for (i = 0; i < num_surfaces; i++)
+		this->_surfaces.push_back(surfaces[i]);
 }
 
 
@@ -99,7 +103,7 @@ int Cell::getUniverse() const {
  * @return the number of surfaces
  */
 int Cell::getNumSurfaces() const {
-	return _num_surfaces;
+	return this->_surfaces.size();
 }
 
 /**
@@ -125,7 +129,7 @@ void Cell::setUniverse(int universe) {
  *  @param material the material used to fill this cell
  */
 CellBasic::CellBasic(int id, int universe, int num_surfaces, 
-		   std::vector<int> surfaces, 
+		   int *surfaces, 
 		   int material): 
 	Cell(id, MATERIAL, universe, num_surfaces, surfaces) {
 	_material = material;
@@ -176,9 +180,9 @@ const char* CellBasic::toString() {
 	std::stringstream string;
 	string << "Cell id = " << _id << ", type = MATERIAL, material id = " <<
 			_material << ", universe = " << _universe << ", num_surfaces = "
-			<< _num_surfaces << " surface ids = ";
+	       << this->getNumSurfaces() << " surface ids = ";
 
-	for (int s = 0; s < _num_surfaces; s++)
+	for (int s = 0; s < this->getNumSurfaces(); s++)
 		string << _surfaces.at(s) << ", ";
 
 	string << std::endl;
@@ -192,7 +196,7 @@ const char* CellBasic::toString() {
  *  @param universe_fill the universe used to fill this cell
  */
 CellFill::CellFill(int id, int universe, int num_surfaces, 
-		   std::vector<int> surfaces, 
+		   int *surfaces, 
 		   int universe_fill): 
 	Cell(id, FILL, universe, num_surfaces, surfaces) {
 	_universe_fill = universe_fill;
@@ -252,10 +256,10 @@ const char* CellFill::toString() {
 	std::stringstream string;
 	string << "Cell id = " << _id << ", type = FILL, universe_fill = " <<
 			_universe_fill << ", universe = " << _universe << ", num_surfaces = "
-			<< _num_surfaces;
+	       << this->getNumSurfaces();
 
 	string << ", surface ids: ";
-	for (int s = 0; s < _num_surfaces; s++)
+	for (int s = 0; s < this->getNumSurfaces(); s++)
 		string << _surfaces.at(s) << ", ";
 
 	string << "\n";

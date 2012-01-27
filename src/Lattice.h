@@ -26,7 +26,7 @@ public:
 	Lattice(const int id, const int num_x, const int num_y, 
 		const double origin_x, const double origin_y,
 		const double width_x, const double width_y,
-		std::vector < std::vector <int> > universes);
+		int universes_count, int *universes);
 	virtual ~Lattice();
 	void addUniverse(const int x, const int y, const int universe);
     int getId() const;

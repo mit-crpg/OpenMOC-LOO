@@ -33,11 +33,10 @@ protected:
 	int _id;
 	cellType _type;
 	int _universe;             	/* universe id this cell is in */
-	int _num_surfaces;
 	std::vector<int> _surfaces;	/* + or - depending on side of surface */
 public:
 	Cell(int id, cellType type, int universe, int num_surfaces, 
-	     std::vector<int> surfaces);
+	     int *surfaces);
 	virtual ~Cell();
 	void addSurface(int surface);
 	int getUid() const;
@@ -59,7 +58,7 @@ private:
 	int _material;             // material filling this cell 	
 public:
 	CellBasic(int id, int universe, int num_surfaces, 
-		  std::vector<int> surfaces, int material);
+		  int *, int material);
 	int getMaterial() const;
 	void setMaterial(int material);
 	void adjustKeys(int universe, int material, std::map<int, Surface*> surfaces);
@@ -75,7 +74,7 @@ private:
 	int _universe_fill;        // universe filling this cell
 public:
 	CellFill(int id, int universe, int num_surfaces,
-		 std::vector<int> surfaces, int universe_fill);
+		 int *surfaces, int universe_fill);
 	int getUniverseFill() const;
 	void setUniverseFill(int universe_Fill);
 	void adjustKeys(int universe, int universe_fill, std::map<int, Surface*> surfaces);
