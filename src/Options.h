@@ -26,6 +26,7 @@ private:
 	char* _verbosity;
 public:
     Options(int argc, const char **argv);
+    ~Options(void);
     char *getGeometryFile() const;
     double getNumAzim() const;
     double getTrackSpacing() const;

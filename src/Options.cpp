@@ -55,6 +55,12 @@ Options::Options(int argc, const char **argv) {
 	}
 }
 
+Options::~Options(void) {
+	if (this->_geometry_file != NULL)
+		free(this->_geometry_file);
+	if (this->_verbosity != NULL)
+		free(this->_verbosity);
+}
 
 /**
  * Returns a character array with the path to the geometry input file. By default this
