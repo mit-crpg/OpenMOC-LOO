@@ -20,6 +20,7 @@
 #include "Lattice.h"
 #include "Options.h"
 #include "log.h"
+#include "Lattice.h"
 
 #include <vector>
 #include "Surface.h"
@@ -42,9 +43,20 @@ public:
 	void each_cell(std::function<void(Cell *)> callback);
 	void each_lattice(std::function<void(Lattice *)> callback);
 
+private:
+	/* Internal functions for the XML parser, but these need to be able to
+	 * access private data (and they're C functions so they can't be static
+	 * class methods as they need to be passed to the C API provided by
+	 * Expat) so they need to be friend'd.
+	 */
 	friend void XMLCALL Parser_XMLCallback_Start(void *context,
 						     const XML_Char *name,
 						     const XML_Char **atts);
+	friend void XMLCALL Parser_XMLCallback_End(void *context,
+						   const XML_Char *name);
+	friend void XMLCALL Parser_XMLCallback_CData(void *context,
+						     const XML_Char *s,
+						     int len);
 };
 
 #endif /* POINT_H_ */

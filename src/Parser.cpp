@@ -12,412 +12,941 @@
 #include <cstring>
 #include <string>
 #include <stdexcept>
-#include <ctype.h>
+#include <assert.h>
 
-//#define PARSER__VERBOSE_PARSE
+/* Verbose debugging of the parser, but doesn't follow log* format */
+//#define DEBUG
 
-static void parse(XML_Parser parser, char c, int isFinal) {
-	if (XML_STATUS_OK == XML_Parse(parser, &c, isFinal ^ 1, isFinal))
-		return;
-	
-	log_printf(ERROR, "Parsing XML failed at line %lu, pos %lu: %s\n",
-		 (unsigned long)XML_GetCurrentLineNumber(parser),
-		 (unsigned long)XML_GetCurrentColumnNumber(parser),
-		 XML_ErrorString(XML_GetErrorCode(parser)) );
-}
+/* These should really be static, but thanks to C++ that's impossible.  I've
+ * still declared them up here though, as at least they can be made private!
+ */
+void XMLCALL Parser_XMLCallback_Start(void *context,
+				      const XML_Char *name,
+				      const XML_Char **atts);
+void XMLCALL Parser_XMLCallback_End(void *context,
+				    const XML_Char *name);
+void XMLCALL Parser_XMLCallback_CData(void *context,
+				      const XML_Char *s,
+				      int len);
 
-typedef struct {
-	FILE* out;
-	int depth;
-	int tagInd;
-	int attrInd;
-	std::vector<std::string *> *level;
-	Parser *p;
-} PContext;
+enum frame_type {
+	NODE_TYPE_NONE,
+	NODE_TYPE_GEOMETRY,
+	NODE_TYPE_MIN = NODE_TYPE_GEOMETRY,
+	NODE_TYPE_CELL,
+	NODE_TYPE_LATTICE,
+	NODE_TYPE_TYPE,
+	NODE_TYPE_DIMENSION,
+	NODE_TYPE_ORIGIN,
+	NODE_TYPE_WIDTH,
+	NODE_TYPE_UNIVERSES,
+	NODE_TYPE_SURFACE,
+	NODE_TYPE_MAX = NODE_TYPE_SURFACE /* Keep this in sync */
+};
 
-/* callback for start element, e.g. <tag> */
-void XMLCALL Parser_XMLCallback_Start( void *context,
-				       const XML_Char *name,
-				       const XML_Char **atts ) {
-#ifdef PARSER__VERBOSE_PARSE 
-	int is_key = 1;
-#endif
-	PContext *ctxt;
+struct frame_geometry {
+};
 
-	Surface *surface;
-	int surface_id;
-	surfaceType surface_type;
-	std::vector<double> coeffs;
+struct frame_cell {
+	bool has_id;
+	int id;
 
-	Cell *cell;
-	int cell_id;
-	cellType cell_type;
-	int universe = 0;
-	int num_surfaces;
-	std::vector<int> surfaces;
+	bool has_fill;
+	int fill;
+
+	bool has_material;
 	int material;
-	int universe_fill = 0;
 
-	Lattice *lattice;
-	int lattice_id;
-	int num_x, num_y;
-	double origin_x, origin_y, width_x, width_y;
-	std::vector<int> tmp_universes;
-	std::vector < std::vector <int> > universes;
-	ctxt = (PContext*)context;
-	
-#ifdef PARSER__VERBOSE_PARSE
-	fprintf(ctxt->out, "%*s%c%s\n", ctxt->depth, "", '>', name);
-	ctxt->level->push_back(new std::string(name));	
-	/* print level information to the screen  */
-	for (std::vector<std::string *>::size_type i = 0;
-	     i < ctxt->level->size(); i++) {
-		fprintf(ctxt->out, " %s", ctxt->level->at(i)->c_str());
-	}
-	fprintf(ctxt->out, "\n");
-#endif
-	
-	/* Parse surface types */
-	if (strcmp(name, "surface") == 0) {
-		while (*atts) {
-			if (strcmp(*atts, "id") == 0) {
-				++atts;
-				surface_id = atoi(*atts);
-			}
-			
-			if (strcmp(*atts, "type") == 0) {
-				++atts;
-				if (strcmp(*atts, "plane") == 0) {
-					surface_type = PLANE;
-				}
-				if (strcmp(*atts, "x-plane") == 0) {
-					surface_type = XPLANE;
-				}
-				if (strcmp(*atts, "y-plane") == 0) {
-					surface_type = YPLANE;
-				}
-				if (strcmp(*atts, "circle") == 0) {
-					surface_type = CIRCLE;
-				}
-			}
-			
-			if (strcmp(*atts, "coeffs") == 0) {
-				++atts;
-				char *long_str;
-				char *tmp;
-				char *result;
-				
-				long_str = strdup(*atts);
-				result = strtok_r(long_str, " ,.", &tmp);
-				coeffs.push_back(atof(result));
-				while ((result = strtok_r(NULL, " ,.", &tmp))
-				       != NULL) {
-					coeffs.push_back(atof(result));
-				}
-			}		
-			++atts;
-		}
-		
-		/* TODO: check for number of coeffs */
-		surface = NULL;
+	bool has_universe;
+	int universe;
 
-		switch (surface_type) {
-		case PLANE:
-		        log_printf(NORMAL, "Parsed Surfs: plane, id = %d,"
-				   " coeffs = %.1f, %.1f, %.1f.\n",
-				   surface_id, coeffs.at(0), coeffs.at(1), 
-				   coeffs.at(2));
-			surface = new Plane(surface_id, coeffs.at(0),
-					    coeffs.at(1), coeffs.at(2));
-			break;
-		case XPLANE:
-		        log_printf(NORMAL, "Parsed Surfs: x-plane, id = %d,"
-				   " coeffs = %.1f.\n",
-				   surface_id, coeffs.at(0));
-			surface = new XPlane(surface_id, coeffs.at(0));
-			break;
-		case YPLANE:
-		        log_printf(NORMAL, "Parsed Surfs: y-plane, id = %d,"
-				   " coeffs = %.1f.\n",
-				   surface_id, coeffs.at(0));
-			surface = new YPlane(surface_id, coeffs.at(0));
-			break;
-		case CIRCLE:
-		        log_printf(NORMAL, "Parsed Surfs: circle, id = %d,"
-				   " coeffs = %.1f, %.1f, %.1f\n",
-				   surface_id, coeffs.at(0), coeffs.at(1), 
-				   coeffs.at(2));
-			surface = new Circle(surface_id, coeffs.at(0), 
-					     coeffs.at(1), coeffs.at(2));
-			break;
-		case QUADRATIC:
-			log_printf(ERROR, "quadratic is called; should not"
-				   " be used in geometry.xml.\n");
-			break;
-		}
+	int surfaces_count;
+	int *surfaces;
+};
 
-		if (surface != NULL)
-			ctxt->p->surfaces.push_back(surface);
-		else
-			log_printf(ERROR, "No surface created\n");
-		
-	}
+struct frame_ttype {
+	char *data;
+};
 
-	/* Parse Cell Types */
-	if (strcmp(name, "cell") == 0) {
-		while (*atts) {
-			if (strcmp(*atts, "id") == 0) {
-				++atts;
-				cell_id = atoi(*atts);
-			}
-			
-			if (strcmp(*atts, "universe") == 0) {
-				++atts;
-				universe = atoi(*atts);
-			}
+struct frame_dimension {
+	char *data;
+};
 
-			if (strcmp(*atts, "material") == 0) {
-				cell_type = MATERIAL;
-				++atts;
-				material = atoi(*atts);
-			}
+struct frame_origin {
+	char *data;
+};
 
-			if (strcmp(*atts, "fill") == 0) {
-				cell_type = FILL;
-				++atts;
-				universe_fill = atoi(*atts);
-			}
+struct frame_width {
+	char *data;
+};
 
-	 		if (strcmp(*atts, "surfaces") == 0) {
-				++atts;
-				char *long_str;
-				char *tmp;
-				char *result;
-				
-				long_str = strdup(*atts);
-				result = strtok_r(long_str, " ,.", &tmp);
-				surfaces.push_back(atof(result));
-				while ((result = strtok_r(NULL, " ,.", &tmp))
-				       != NULL) {
-					surfaces.push_back(atof(result));
-				}
-				num_surfaces = surfaces.size();
-			}
-			++atts;
-		}		
-		cell = NULL;
-		
-		switch (cell_type) {
-		case MATERIAL:
-		        log_printf(NORMAL, "Parsed Cells: id = %d,"
-				   " universe = %d, 1st surface = %d,"
-				   " # of surfaces = %d, material = %d.\n",
-				   cell_id, universe, surfaces.at(0),
-				   num_surfaces, material);
-			cell = new CellBasic(cell_id, universe, num_surfaces,
-					     surfaces, material);
-			break;
-		case FILL:
-		        log_printf(NORMAL, "Parsed Cells: id = %d,"
-				   " universe = %d, 1st surface = %d,"
-				   " # of surfaces = %d, u_fill = %d.\n",
-				   cell_id, universe, surfaces.at(0),
-				   num_surfaces, universe_fill);
-			cell = new CellFill(cell_id, universe, num_surfaces,
-					     surfaces, universe_fill);			
-			break;
-		}
-	
-		if (cell != NULL)
-			ctxt->p->cells.push_back(cell);
-		else
-			log_printf(ERROR, "No cell created\n");
-			
+struct frame_universes {
+	char *data;
+};
 
-	}
+struct frame_lattice {
+	bool has_id;
+	int id;
 
-	/* Parse Lattice Types; notice type info is not taken in because
-	 we only have rectangular type for now */
-	if (strcmp(name, "lattice") == 0) {
-		while (*atts) {
-			if (strcmp(*atts, "id") == 0) {
-				++atts;
-				lattice_id = atoi(*atts);
-				log_printf(NORMAL, "Lattice id = %d\n", 
-					   lattice_id);
-			}
+	char *type;
 
-			if (strcmp(*atts, "dimension") == 0) {
-				++atts;
-				num_x = atoi(*atts);
-				++atts;
-				num_y = atoi(*atts);
-			}
+	int *dimmensions;
+	int dimmensions_count;
 
-			if (strcmp(*atts, "origin") == 0) {
-				++atts;
-				origin_x = atof(*atts);
-				++atts;
-				origin_y = atof(*atts);
-			}			
-			
-			if (strcmp(*atts, "width") == 0) {
-				++atts;
-				width_x = atof(*atts);
-				++atts;
-				width_y = atof(*atts);
-			}
+	int *universes;
+	int universes_count;
 
-		
-	 		if (strcmp(*atts, "universe") == 0) {
-				++atts;
-				char *long_str;
-				char *tmp;
-				char *result;
-				
-				long_str = strdup(*atts);
-				result = strtok_r(long_str, " ,.", &tmp);
-				tmp_universes.push_back(atof(result));
-				while ((result = strtok_r(NULL, " ,.", &tmp))
-				       != NULL) {
-					tmp_universes.push_back(atof(result));
-				}
-				
-				for (int i = 0; i < num_x; i++){
-					for (int j=0; j<num_y; j++){
-						universes[i][j] 							= tmp_universes.at(i + num_x * j);
-					}
-				}
-			}
-			++atts;
-		}
-		
-		lattice = NULL;
-		
-		lattice = new Lattice(lattice_id, num_x, num_y, 
-				      origin_x, origin_y, width_x, width_y,
-				      universes);
-		// toString generates: cannot call member function w/o objects
-		// Lattice::toString();
-		if (lattice != NULL)
-			ctxt->p->lattices.push_back(lattice);
-		else
-			log_printf(ERROR, "No lattice created\n");
-			
+	double *origin;
+	int origin_count;
 
-	}
+	double *width;
+	int width_count;
+};
 
-#ifdef PARSER__VERBOSE_PARSE
-	while (*atts) {
-		if (is_key) {
-			fprintf(ctxt->out, "%*c%s: ",
-				ctxt->depth + ctxt->attrInd, ' ', *atts);
-		}
-		else {
-			fprintf(ctxt->out, "%s\n", *atts);
-		}
-		is_key = !is_key;
-		++atts;
-	}
-	ctxt->depth += ctxt->tagInd;
-#endif
-}
+struct frame_surface {
+	bool has_id;
+	int id;
 
-/**
- * Callback for end elements, e.g. </tag>,
- * it is called for empty elements, too
- */
-static void XMLCALL Parser_XMLCallback_End( void *context,
-		    const XML_Char *name __attribute__((__unused__)) ) {
-	PContext *ctxt = (PContext*)context;
-#ifdef PARSER__VERBOSE_PARSE	
-	ctxt->depth -= ctxt->tagInd;
-#endif
-	ctxt->level->pop_back();
-}
+	char *type;
 
-/**
- * Default constructor
- */
+	double *coeffs;
+	int coeffs_count;
+};
+
+struct frame {
+	struct frame *parent;
+	enum frame_type type;
+	unsigned int depth;
+
+	union {
+		struct frame_geometry geometry;
+		struct frame_cell cell;
+		struct frame_lattice lattice;
+		struct frame_ttype ttype;
+		struct frame_dimension dimmension;
+		struct frame_origin origin;
+		struct frame_width width;
+		struct frame_universes universes;
+		struct frame_surface surface;
+	};
+};
+
+struct stack {
+	struct frame *top;
+	Parser *parser;
+};
+
+static inline const char *frame_type_string(enum frame_type type);
+
+static inline struct frame *stack_push(struct stack *s, enum frame_type type);
+static inline struct frame *stack_pop(struct stack *s);
+static inline void stack_print(struct frame *f);
+static inline void stack_print_help(struct frame *f);
+
+static inline int *strtok_int(const char *str, int *count);
+static inline double *strtok_double(const char *str, int *count);
+
+static inline char *astrncat(char *orig, char *next, int len);
+
 Parser::Parser (const Options *opts) {
-	const char *geoxml;
-	XML_Parser parser;
-	PContext ctxt;
-	char c;
 	FILE* geofile;
+	XML_Parser parser;
+	struct stack stack;
+	char c;
 
-	geoxml = opts->getGeometryFile();
-	geofile = fopen(geoxml, "r");
-	if (geofile == NULL)
-		log_printf(ERROR, "Given geometry file %s does not exist", geoxml);
-	
-/* Create parser.
- * The only argument for XML_ParserCreate is encoding, and if it's NULL,
- * then encoding declared in the document is used.
- */
-	parser = XML_ParserCreate(NULL);
-	if (!parser)
-		log_printf(ERROR, "Couldn't allocate memory for parser");
-	
-        /* Set context that will be passed by the parsers to all handlers */
-	ctxt.out = stdout;
-	ctxt.depth = 1;
-	ctxt.tagInd = 4;
-	ctxt.attrInd = 6;
-	ctxt.level = new std::vector<std::string *>();
-	ctxt.p = this;
-	
-	XML_SetUserData(parser, &ctxt);	
-        /* set callback for start element */
-	XML_SetStartElementHandler(parser, &Parser_XMLCallback_Start);
-	/* set callback for end element */
-	XML_SetEndElementHandler(parser, &Parser_XMLCallback_End);
-
-
-	
-/* If you'd like to read input by large blocks, you can have a look at
- * XML_GetBuffer and XML_ParseBuffer functions.
- */
-	while( EOF != (c = fgetc(geofile)) ) {
-		parse(parser, c, 0);
+	/* Assures that the geometry file exists and is readable */
+	geofile = fopen(opts->getGeometryFile(), "r");
+	if (geofile == NULL) {
+		log_printf(ERROR, "Given geometry file %s does not exist",
+			   opts->getGeometryFile());
 	}
-	
-/* Finish parsing, note the last argument or XML_Parse */
-	parse(parser, c, 1);
-	
-/* Free resource used by expat */
+
+	/* Sets up the parser */
+	stack.top = NULL;
+	stack.parser = this;
+	parser = XML_ParserCreate(NULL); /* NULL -> system encoding */
+	XML_SetUserData(parser, &stack);
+	XML_SetStartElementHandler(parser, &Parser_XMLCallback_Start);
+	XML_SetEndElementHandler(parser, &Parser_XMLCallback_End);
+	XML_SetCharacterDataHandler(parser, &Parser_XMLCallback_CData);
+
+	/* Passes single characters to the parser, which is quite slow but
+	 * is the easiest for now. */
+	while( EOF != (c = fgetc(geofile)) ) {
+		if (XML_Parse(parser, &c, 1, false) != XML_STATUS_OK)
+			log_printf(ERROR, "Expat error\n");
+        }
+
+	/* Tells the parse we've reached the end */
+	XML_Parse(parser, NULL, 0, true);
 	XML_ParserFree(parser);
-	
 	fclose(geofile);
 }
 
-
-/**
- * Destructor
- */
 Parser::~Parser() { }
 
-/* Iterators */
-void Parser::each_surface(std::function<void(Surface *)> callback)
-{
+void Parser::each_surface(std::function<void(Surface *)> callback) {
 	std::vector<Surface *>::size_type i;
 
 	for (i = 0; i < this->surfaces.size(); i++)
 		callback(this->surfaces.at(i));
 }
 
-void Parser::each_cell(std::function<void(Cell *)> callback)
-{
+void Parser::each_cell(std::function<void(Cell *)> callback) {
 	std::vector<Cell *>::size_type i;
 
 	for (i = 0; i < this->cells.size(); i++)
 		callback(this->cells.at(i));
 }
 
-void Parser::each_lattice(std::function<void(Lattice *)> callback)
-{
+void Parser::each_lattice(std::function<void(Lattice *)> callback) {
 	std::vector<Lattice *>::size_type i;
 
 	for (i = 0; i < this->lattices.size(); i++)
 		callback(this->lattices.at(i));
+}
+
+void XMLCALL Parser_XMLCallback_Start(void *context,
+				      const XML_Char *name,
+				      const XML_Char **attrs) {
+	struct stack *s;
+	struct frame *f;
+	enum frame_type type;
+	int i;
+
+	s = (struct stack *)context;
+
+	/* Checks what type of node this is */
+	type = NODE_TYPE_NONE;
+	for (i = (int)NODE_TYPE_MIN; i <= (int)NODE_TYPE_MAX; i++)
+		if (strcmp(name, frame_type_string((enum frame_type)i)) == 0)
+			type = (enum frame_type)i;
+
+	/* Ensures that we know what type the node is */
+	if (type == NODE_TYPE_NONE)
+		log_printf(ERROR, "Unknown node type '%s'\n", name);
+
+	/* Adds our item to the stack */
+	f = stack_push(s, type);
+
+	/* Parses every attribute */
+	while (*attrs != NULL) {
+		char *key, *value;
+		
+		/* Attributes are stored as a key-value pair, there are always
+		 * two of them (one for the key, one for the value) so we can
+		 * safely double-increment here.
+		 */
+		/* FIXME: Verify that a bad input file can't cause an odd
+		 *        number of attributes.
+		 */
+		assert(sizeof(char) == sizeof(XML_Char));
+		key = (char *)*attrs;
+		attrs++;
+		value = (char *)*attrs;
+		attrs++;
+		assert(key != NULL);
+		assert(value != NULL);
+
+		/* Does some type-specific parsing for some attributes */
+		switch (f->type) {
+		case NODE_TYPE_NONE:
+			break;
+		case NODE_TYPE_GEOMETRY:
+			break;
+		case NODE_TYPE_CELL:
+			if (strcmp(key, "id") == 0) {
+				if (f->cell.has_id == true)
+					log_printf(ERROR, "Has 2 ids\n");
+
+				f->cell.has_id = true;
+				f->cell.id = atoi(value);
+			}
+
+			if (strcmp(key, "fill") == 0) {
+				if (f->cell.has_fill == true)
+					log_printf(ERROR, "Has 2 fills\n");
+
+				if (f->cell.has_material == true) {
+					log_printf(ERROR,
+						   "Has material and fill\n");
+				}
+
+				f->cell.has_fill = true;
+				f->cell.fill = atoi(value);
+			}
+
+			if (strcmp(key, "material") == 0) {
+				if (f->cell.has_fill == true)
+					log_printf(ERROR, "Has 2 material\n");
+
+				if (f->cell.has_fill == true) {
+					log_printf(ERROR,
+						   "Has material and fill\n");
+				}
+
+				f->cell.has_material = true;
+				f->cell.material = atoi(value);
+			}
+
+			if (strcmp(key, "universe") == 0) {
+				if (f->cell.has_universe == true)
+					log_printf(ERROR, "Has 2 universes\n");
+
+				f->cell.has_universe = true;
+				f->cell.universe = atoi(value);
+			}
+
+			if (strcmp(key, "surfaces") == 0) {
+				if (f->cell.surfaces != NULL)
+					log_printf(ERROR, "Has 2 surfaces\n");
+
+				f->cell.surfaces =
+					strtok_int(value,
+						   &f->cell.surfaces_count);
+			}
+			break;
+		case NODE_TYPE_LATTICE:
+			if (strcmp(key, "id") == 0) {
+				if (f->lattice.has_id == true)
+					log_printf(ERROR, "Has 2 ids\n");
+
+				f->lattice.has_id = true;
+				f->lattice.id = atoi(value);
+			}
+
+			break;
+		case NODE_TYPE_TYPE:
+			break;
+		case NODE_TYPE_DIMENSION:
+		break;
+		case NODE_TYPE_ORIGIN:
+			break;
+		case NODE_TYPE_WIDTH:
+			break;
+		case NODE_TYPE_UNIVERSES:
+			break;
+		case NODE_TYPE_SURFACE:
+			if (strcmp(key, "id") == 0) {
+				if (f->surface.has_id == true)
+					log_printf(ERROR, "Has 2 ids\n");
+
+				f->surface.has_id = true;
+				f->surface.id = atoi(value);
+			}
+
+			if (strcmp(key, "type") == 0) {
+				if (f->surface.type != NULL)
+					log_printf(ERROR, "Has 2 types\n");
+
+				f->surface.type = strdup(value);
+			}
+
+			if (strcmp(key, "coeffs") == 0) {
+				if (f->surface.coeffs != NULL)
+					log_printf(ERROR, "Has 2 coeffs\n");
+
+				f->surface.coeffs =
+					strtok_double(value,
+						      &f->surface.coeffs_count);
+			}
+			break;
+		}
+	}
+}
+
+void XMLCALL Parser_XMLCallback_End(void *context,
+				    const XML_Char *name) {
+	struct stack *s;
+	struct frame *f, *p;
+	
+	s = (struct stack *)context;
+	f = stack_pop(s);
+	p = s->top;
+
+#ifdef DEBUG
+	/* Prints out the stack */
+	stack_print(f);
+#endif
+
+	switch (f->type) {
+	case NODE_TYPE_NONE:
+		break;
+	case NODE_TYPE_GEOMETRY:
+		break;
+	case NODE_TYPE_CELL:
+	{
+		Cell *cell;
+
+		cell = NULL;
+		if (f->cell.has_fill) {
+			cell = new CellFill(f->cell.id, 
+					    f->cell.universe,
+					    f->cell.surfaces_count,
+					    f->cell.surfaces,
+					    f->cell.fill);
+		} else if (f->cell.has_material) {
+			cell = new CellBasic(f->cell.id, 
+					    f->cell.universe,
+					    f->cell.surfaces_count,
+					    f->cell.surfaces,
+					    f->cell.material);
+		}
+
+		if (cell != NULL)
+			s->parser->cells.push_back(cell);
+		else
+			log_printf(ERROR, "Unknown cell type\n");
+
+		if (f->cell.surfaces != NULL)
+			free(f->cell.surfaces);
+		break;
+	}
+	case NODE_TYPE_LATTICE:
+		Lattice *lattice;
+
+		lattice = NULL;
+		if (f->lattice.has_id != true)
+			log_printf(ERROR, "Lattice without id\n");
+		if (f->lattice.dimmensions_count != 2)
+			log_printf(ERROR, "Lattice without exactly 2 dimms\n");
+		if (f->lattice.origin_count != 2)
+			log_printf(ERROR, "Lattice without exactly 2 origin\n");
+		if (f->lattice.width_count != 2)
+			log_printf(ERROR, "Lattice without exactly 2 widths\n");
+		if (f->lattice.universes == NULL)
+			log_printf(ERROR, "Lattice without universes\n");
+
+		lattice = new Lattice(f->lattice.id,
+				      f->lattice.dimmensions[0],
+				      f->lattice.dimmensions[1],
+				      f->lattice.origin[0],
+				      f->lattice.origin[1],
+				      f->lattice.width[0],
+				      f->lattice.width[1],
+				      f->lattice.universes_count,
+				      f->lattice.universes);
+
+		if (f->lattice.type != NULL)
+			free(f->lattice.type);
+		if (f->lattice.dimmensions != NULL)
+			free(f->lattice.dimmensions);
+		if (f->lattice.universes != NULL)
+			free(f->lattice.universes);
+		if (f->lattice.origin != NULL)
+			free(f->lattice.origin);
+		if (f->lattice.width != NULL)
+			free(f->lattice.width);
+		break;
+	case NODE_TYPE_TYPE:
+		switch (p->type) {
+		case NODE_TYPE_LATTICE:
+			p->lattice.type = f->ttype.data;
+			break;
+		case NODE_TYPE_NONE:
+		case NODE_TYPE_GEOMETRY:
+		case NODE_TYPE_CELL:
+		case NODE_TYPE_TYPE:	
+		case NODE_TYPE_DIMENSION:
+		case NODE_TYPE_ORIGIN:
+		case NODE_TYPE_WIDTH:
+		case NODE_TYPE_UNIVERSES:
+		case NODE_TYPE_SURFACE:
+			log_printf(ERROR, "Unexpected type subfield\n");
+		}
+		break;
+	case NODE_TYPE_DIMENSION:
+		switch (p->type) {
+		case NODE_TYPE_LATTICE:
+			if (p->lattice.dimmensions != NULL)
+				log_printf(ERROR, "Has 2 dimmensions\n");
+
+			p->lattice.dimmensions =
+				strtok_int(f->dimmension.data,
+					   &p->lattice.dimmensions_count);
+			
+			free(f->dimmension.data);
+			break;
+		case NODE_TYPE_NONE:
+		case NODE_TYPE_GEOMETRY:
+		case NODE_TYPE_CELL:
+		case NODE_TYPE_TYPE:	
+		case NODE_TYPE_DIMENSION:
+		case NODE_TYPE_ORIGIN:
+		case NODE_TYPE_WIDTH:
+		case NODE_TYPE_UNIVERSES:
+		case NODE_TYPE_SURFACE:
+			log_printf(ERROR, "Unexpected dimmension subfield\n");
+		}
+		break;
+	case NODE_TYPE_ORIGIN:
+		switch (p->type) {
+		case NODE_TYPE_LATTICE:
+			if (p->lattice.origin != NULL)
+				log_printf(ERROR, "Has 2 origins\n");
+
+			p->lattice.origin =
+				strtok_double(f->origin.data,
+					      &p->lattice.origin_count);
+			
+			free(f->origin.data);
+			break;
+		case NODE_TYPE_NONE:
+		case NODE_TYPE_GEOMETRY:
+		case NODE_TYPE_CELL:
+		case NODE_TYPE_TYPE:	
+		case NODE_TYPE_DIMENSION:
+		case NODE_TYPE_ORIGIN:
+		case NODE_TYPE_WIDTH:
+		case NODE_TYPE_UNIVERSES:
+		case NODE_TYPE_SURFACE:
+			log_printf(ERROR, "Unexpected dimmension subfield\n");
+		}
+		break;
+	case NODE_TYPE_WIDTH:
+		switch (p->type) {
+		case NODE_TYPE_LATTICE:
+			if (p->lattice.width != NULL)
+				log_printf(ERROR, "Has 2 widths\n");
+
+			p->lattice.width =
+				strtok_double(f->width.data,
+					      &p->lattice.width_count);
+			
+			free(f->width.data);
+			break;
+		case NODE_TYPE_NONE:
+		case NODE_TYPE_GEOMETRY:
+		case NODE_TYPE_CELL:
+		case NODE_TYPE_TYPE:	
+		case NODE_TYPE_DIMENSION:
+		case NODE_TYPE_ORIGIN:
+		case NODE_TYPE_WIDTH:
+		case NODE_TYPE_UNIVERSES:
+		case NODE_TYPE_SURFACE:
+			log_printf(ERROR, "Unexpected dimmension subfield\n");
+		}
+		break;
+	case NODE_TYPE_UNIVERSES:
+		switch (p->type) {
+		case NODE_TYPE_LATTICE:
+			if (p->lattice.universes != NULL)
+				log_printf(ERROR, "Has 2 universes\n");
+
+			p->lattice.universes =
+				strtok_int(f->universes.data,
+					   &p->lattice.universes_count);
+			
+			free(f->universes.data);
+			break;
+		case NODE_TYPE_NONE:
+		case NODE_TYPE_GEOMETRY:
+		case NODE_TYPE_CELL:
+		case NODE_TYPE_TYPE:	
+		case NODE_TYPE_DIMENSION:
+		case NODE_TYPE_ORIGIN:
+		case NODE_TYPE_WIDTH:
+		case NODE_TYPE_UNIVERSES:
+		case NODE_TYPE_SURFACE:
+			log_printf(ERROR, "Unexpected universes subfield\n");
+		}
+		break;
+	case NODE_TYPE_SURFACE:
+	{
+		Surface *surface;
+
+		surface = NULL;
+		if (strcmp(f->surface.type, "plane") == 0) {
+			if (f->surface.coeffs_count != 3)
+				log_printf(ERROR, "Wrong number of coeffs\n");
+
+			surface = new Plane(f->surface.id, 
+					    f->surface.coeffs[0],
+					    f->surface.coeffs[1],
+					    f->surface.coeffs[2]);
+		} else if (strcmp(f->surface.type, "x-plane") == 0) {
+			if (f->surface.coeffs_count != 1)
+				log_printf(ERROR, "Wrong number of coeffs\n");
+
+			surface = new XPlane(f->surface.id, 
+					     f->surface.coeffs[0]);
+		} else if (strcmp(f->surface.type, "y-plane") == 0) {
+			if (f->surface.coeffs_count != 1)
+				log_printf(ERROR, "Wrong number of coeffs\n");
+
+			surface = new YPlane(f->surface.id, 
+					     f->surface.coeffs[0]);
+		} else if (strcmp(f->surface.type, "circle") == 0) {
+			if (f->surface.coeffs_count != 3)
+				log_printf(ERROR, "Wrong number of coeffs\n");
+
+			surface = new Circle(f->surface.id, 
+					     f->surface.coeffs[0],
+					     f->surface.coeffs[1],
+					     f->surface.coeffs[2]);
+		}
+		
+		if (surface != NULL)
+			s->parser->surfaces.push_back(surface);
+		else {
+			log_printf(ERROR, "Unknown surface type '%s'\n",
+				   f->surface.type);
+		}
+
+		if (f->surface.type != NULL)
+			free(f->surface.type);
+		if (f->surface.coeffs != NULL)
+			free(f->surface.coeffs);
+		break;
+	}
+	}
+
+	free(f);
+}
+
+void XMLCALL Parser_XMLCallback_CData(void *context,
+				      const XML_Char *str_uncast,
+				      int len) {
+	struct stack *s;
+	struct frame *f;
+	char *str;
+
+	str = (char *)str_uncast;
+	s = (struct stack *)context;
+	f = s->top;
+
+	switch (f->type) {
+	case NODE_TYPE_NONE:
+		break;
+	case NODE_TYPE_GEOMETRY:
+		break;
+	case NODE_TYPE_CELL:
+		break;
+	case NODE_TYPE_LATTICE:
+		break;
+	case NODE_TYPE_TYPE:
+		break;
+	case NODE_TYPE_DIMENSION:
+		f->dimmension.data = astrncat(f->dimmension.data, str, len);
+		break;
+	case NODE_TYPE_ORIGIN:
+		f->origin.data = astrncat(f->origin.data, str, len);
+		break;
+	case NODE_TYPE_WIDTH:
+		f->width.data = astrncat(f->width.data, str, len);
+		break;
+	case NODE_TYPE_UNIVERSES:
+		f->universes.data = astrncat(f->universes.data, str, len);
+		break;
+	case NODE_TYPE_SURFACE:
+		break;
+	}
+}
+
+const char *frame_type_string(enum frame_type type) {
+	switch (type) {
+	case NODE_TYPE_NONE:
+		return "none";
+	case NODE_TYPE_GEOMETRY:
+		return "geometry";
+	case NODE_TYPE_CELL:
+		return "cell";
+	case NODE_TYPE_LATTICE:
+		return "lattice";
+	case NODE_TYPE_TYPE:
+		return "type";
+	case NODE_TYPE_DIMENSION:
+		return "dimension";
+	case NODE_TYPE_ORIGIN:
+		return "origin";
+	case NODE_TYPE_WIDTH:
+		return "width";
+	case NODE_TYPE_UNIVERSES:
+		return "universes";
+	case NODE_TYPE_SURFACE:
+		return "surface";
+	}
+	
+	abort();
+	return NULL;
+}
+
+struct frame *stack_push(struct stack *s, enum frame_type type) {
+	struct frame *f;
+
+	/* Allocates a new stack frame (it gets added way down at the end) */
+	f = (struct frame *)malloc(sizeof(*f));
+	if (f == NULL)
+		log_printf(ERROR, "malloc returned NULL!\n");
+
+	/* Different node types get initialized differently */
+	f->type = type;
+	switch (type) {
+	case NODE_TYPE_NONE:
+		free(f);
+		log_printf(ERROR, "Tried to push an unknown node type\n");
+		break;
+	case NODE_TYPE_GEOMETRY:
+		break;
+	case NODE_TYPE_CELL:
+		f->cell.has_id = false;
+		f->cell.has_fill = false;
+		f->cell.has_material = false;
+		f->cell.has_universe = false;
+		f->cell.surfaces = NULL;
+		f->cell.surfaces_count = -1;
+		break;
+	case NODE_TYPE_LATTICE:
+		f->lattice.has_id = false;
+		f->lattice.type = NULL;
+		f->lattice.dimmensions = NULL;
+		f->lattice.universes = NULL;
+		f->lattice.origin = NULL;
+		f->lattice.width = NULL;
+		break;
+	case NODE_TYPE_TYPE:
+		f->ttype.data = NULL;
+		break;
+	case NODE_TYPE_DIMENSION:
+		f->dimmension.data = NULL;
+		break;
+	case NODE_TYPE_ORIGIN:
+		f->origin.data = NULL;
+		break;
+	case NODE_TYPE_WIDTH:
+		f->width.data = NULL;
+		break;
+	case NODE_TYPE_UNIVERSES:
+		f->universes.data = NULL;
+		break;
+	case NODE_TYPE_SURFACE:
+		f->surface.has_id = false;
+		f->surface.type = NULL;
+		f->surface.coeffs = NULL;
+		break;
+	}
+
+	/* We always have one depth larger than our parent */
+	if (s->top == NULL)
+		f->depth = 0;
+	else
+		f->depth = s->top->depth + 1;
+
+	/* Actually adds this to the stack */
+	f->parent = s->top;
+	s->top = f;
+	return f;
+}
+
+struct frame *stack_pop(struct stack *s) {
+	struct frame *f;
+
+	f = s->top;
+	if (s->top != NULL)
+		s->top = s->top->parent;
+
+	return f;
+}
+
+void stack_print(struct frame *f) {
+	stack_print_help(f);
+	fprintf(stderr, "\n");
+}
+
+void stack_print_help(struct frame *f) {
+	unsigned int i;
+
+	if (f == NULL)
+		return;
+
+	stack_print_help(f->parent);
+	
+	for (i = 0; i < f->depth; i++)
+		fprintf(stderr, " ");
+	fprintf(stderr, "%s", frame_type_string(f->type));
+	
+	switch (f->type) {
+	case NODE_TYPE_NONE:
+		break;
+	case NODE_TYPE_GEOMETRY:
+		break;
+	case NODE_TYPE_CELL:
+		if (f->cell.has_id)
+			fprintf(stderr, " id=\"%d\"", f->cell.id);
+		if (f->cell.has_material)
+			fprintf(stderr, " material=\"%d\"", f->cell.material);
+		if (f->cell.has_fill)
+			fprintf(stderr, " fill=\"%d\"", f->cell.fill);
+		if (f->cell.has_universe)
+			fprintf(stderr, " universe=\"%d\"", f->cell.universe);
+		if (f->cell.surfaces != NULL) {
+			int i;
+
+			fprintf(stderr, " surfaces=\"");
+			for (i = 0; i < f->cell.surfaces_count; i++)
+				fprintf(stderr, " %d", f->cell.surfaces[i]);
+			fprintf(stderr, "\"");
+		}
+
+		break;
+	case NODE_TYPE_LATTICE:
+		if (f->lattice.has_id)
+			fprintf(stderr, " id=\"%d\"", f->lattice.id);
+		if (f->lattice.type != NULL)
+			fprintf(stderr, " type=\"%s\"", f->lattice.type);
+		if (f->lattice.dimmensions != NULL) {
+			int i;
+
+			fprintf(stderr, " dimmensions=\"");
+			for (i = 0; i < f->lattice.dimmensions_count; i++) {
+				fprintf(stderr, " %d",
+					f->lattice.dimmensions[i]);
+			}
+			fprintf(stderr, "\"");
+		}
+		if (f->lattice.universes != NULL) {
+			int i;
+
+			fprintf(stderr, " universes=\"");
+			for (i = 0; i < f->lattice.universes_count; i++) {
+				fprintf(stderr, " %d",
+					f->lattice.universes[i]);
+			}
+			fprintf(stderr, "\"");
+		}
+		if (f->lattice.width != NULL) {
+			int i;
+
+			fprintf(stderr, " width=\"");
+			for (i = 0; i < f->lattice.width_count; i++) {
+				fprintf(stderr, " %f",
+					f->lattice.width[i]);
+			}
+			fprintf(stderr, "\"");
+		}
+		if (f->lattice.origin != NULL) {
+			int i;
+
+			fprintf(stderr, " origin=\"");
+			for (i = 0; i < f->lattice.origin_count; i++) {
+				fprintf(stderr, " %f",
+					f->lattice.origin[i]);
+			}
+			fprintf(stderr, "\"");
+		}
+		break;
+	case NODE_TYPE_TYPE:
+		break;
+	case NODE_TYPE_DIMENSION:
+		break;
+	case NODE_TYPE_ORIGIN:
+		break;
+	case NODE_TYPE_WIDTH:
+		break;
+	case NODE_TYPE_UNIVERSES:
+		break;
+	case NODE_TYPE_SURFACE:
+		if (f->surface.has_id)
+			fprintf(stderr, " id=\"%d\"", f->surface.id);
+		if (f->surface.type != NULL)
+			fprintf(stderr, " type=\"%s\"", f->surface.type);
+		if (f->surface.coeffs != NULL) {
+			int i;
+
+			fprintf(stderr, " coeffs=\"");
+			for (i = 0; i < f->surface.coeffs_count; i++) {
+				fprintf(stderr, " %f",
+					f->surface.coeffs[i]);
+			}
+			fprintf(stderr, "\"");
+		}
+		break;
+	}
+
+	fprintf(stderr, "\n");
+}
+
+int *strtok_int(const char *str, int *count) {
+	int *arr;
+	int cnt;
+	char *duplicated;
+	char *st_tmp;
+	char *tok;
+	int i;
+			
+	cnt = 0;
+	duplicated = strdup(str);
+	tok = strtok_r(duplicated, " \n\t", &st_tmp);
+	while (tok != NULL) {
+		tok = strtok_r(NULL, " \n\t", &st_tmp);
+		cnt++;
+	}
+	free(duplicated);
+	
+	arr = (int *) malloc(sizeof(*arr) * cnt);
+	
+	duplicated = strdup(str);
+	i = 0;
+	tok = strtok_r(duplicated, " \n\t", &st_tmp);
+	while (tok != NULL) {
+		assert(i < cnt);
+		arr[i] = atoi(tok);
+		tok = strtok_r(NULL, " \n\t", &st_tmp);
+		i++;
+	}
+	free(duplicated);
+
+	*count = cnt;
+	return arr;
+}
+
+double *strtok_double(const char *str, int *count) {
+	double *arr;
+	int cnt;
+	char *duplicated;
+	char *st_tmp;
+	char *tok;
+	int i;
+			
+	cnt = 0;
+	duplicated = strdup(str);
+	tok = strtok_r(duplicated, " \n\t", &st_tmp);
+	while (tok != NULL) {
+		tok = strtok_r(NULL, " \n\t", &st_tmp);
+		cnt++;
+	}
+	free(duplicated);
+	
+	arr = (double *) malloc(sizeof(*arr) * cnt);
+	
+	duplicated = strdup(str);
+	i = 0;
+	tok = strtok_r(duplicated, " \n\t", &st_tmp);
+	while (tok != NULL) {
+		assert(i < cnt);
+		arr[i] = atof(tok);
+		tok = strtok_r(NULL, " \n\t", &st_tmp);
+		i++;
+	}
+	free(duplicated);
+
+	*count = cnt;
+	return arr;
+}
+
+char *astrncat(char *orig, char *str, int len) {
+	char *new_data;
+
+	if (orig == NULL) {
+		new_data = strndup(str, len);
+	} else {
+		int olen;
+
+		olen = strlen(orig);
+		new_data = (char *) realloc(orig, olen + len + 1);
+		new_data[olen+1] = '\0';
+		strncat(new_data, str, len);
+	}
+
+	return new_data;
 }
