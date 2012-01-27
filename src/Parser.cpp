@@ -261,9 +261,7 @@ void XMLCALL Parser_XMLCallback_Start(void *context,
 
 				f->cell.has_id = true;
 				f->cell.id = atoi(value);
-			}
-
-			if (strcmp(key, "fill") == 0) {
+			} else if (strcmp(key, "fill") == 0) {
 				if (f->cell.has_fill == true)
 					log_printf(ERROR, "Has 2 fills\n");
 
@@ -274,9 +272,7 @@ void XMLCALL Parser_XMLCallback_Start(void *context,
 
 				f->cell.has_fill = true;
 				f->cell.fill = atoi(value);
-			}
-
-			if (strcmp(key, "material") == 0) {
+			} else if (strcmp(key, "material") == 0) {
 				if (f->cell.has_fill == true)
 					log_printf(ERROR, "Has 2 material\n");
 
@@ -287,23 +283,22 @@ void XMLCALL Parser_XMLCallback_Start(void *context,
 
 				f->cell.has_material = true;
 				f->cell.material = atoi(value);
-			}
-
-			if (strcmp(key, "universe") == 0) {
+			} else if (strcmp(key, "universe") == 0) {
 				if (f->cell.has_universe == true)
 					log_printf(ERROR, "Has 2 universes\n");
 
 				f->cell.has_universe = true;
 				f->cell.universe = atoi(value);
-			}
-
-			if (strcmp(key, "surfaces") == 0) {
+			} else if (strcmp(key, "surfaces") == 0) {
 				if (f->cell.surfaces != NULL)
 					log_printf(ERROR, "Has 2 surfaces\n");
 
 				f->cell.surfaces =
 					strtok_int(value,
 						   &f->cell.surfaces_count);
+			} else {
+				log_printf(ERROR, "Unknown attribute '%s=%s'\n",
+					   key, value);
 			}
 			break;
 		case NODE_TYPE_LATTICE:
@@ -313,6 +308,9 @@ void XMLCALL Parser_XMLCallback_Start(void *context,
 
 				f->lattice.has_id = true;
 				f->lattice.id = atoi(value);
+			} else {
+				log_printf(ERROR, "Unknown attribute '%s=%s'\n",
+					   key, value);
 			}
 
 			break;
@@ -333,22 +331,21 @@ void XMLCALL Parser_XMLCallback_Start(void *context,
 
 				f->surface.has_id = true;
 				f->surface.id = atoi(value);
-			}
-
-			if (strcmp(key, "type") == 0) {
+			} else if (strcmp(key, "type") == 0) {
 				if (f->surface.type != NULL)
 					log_printf(ERROR, "Has 2 types\n");
 
 				f->surface.type = strdup(value);
-			}
-
-			if (strcmp(key, "coeffs") == 0) {
+			} else if (strcmp(key, "coeffs") == 0) {
 				if (f->surface.coeffs != NULL)
 					log_printf(ERROR, "Has 2 coeffs\n");
 
 				f->surface.coeffs =
 					strtok_double(value,
 						      &f->surface.coeffs_count);
+			} else {
+				log_printf(ERROR, "Unknown attribute '%s=%s'\n",
+					   key, value);
 			}
 			break;
 		}
@@ -391,6 +388,8 @@ void XMLCALL Parser_XMLCallback_End(void *context,
 					    f->cell.surfaces_count,
 					    f->cell.surfaces,
 					    f->cell.material);
+		} else {
+			log_printf(ERROR, "Cell without material or fill\n");
 		}
 
 		if (cell != NULL)
