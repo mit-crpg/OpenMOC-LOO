@@ -183,7 +183,16 @@ Parser::Parser (const Options *opts) {
 	fclose(geofile);
 }
 
-Parser::~Parser() { }
+Parser::~Parser() {
+	unsigned int i;
+
+	for (i = 0; i < this->surfaces.size(); i++)
+		delete this->surfaces.at(i);
+	for (i = 0; i < this->cells.size(); i++)
+		delete this->cells.at(i);
+	for (i = 0; i < this->lattices.size(); i++)
+		delete this->lattices.at(i);
+}
 
 void Parser::each_surface(std::function<void(Surface *)> callback) {
 	std::vector<Surface *>::size_type i;
