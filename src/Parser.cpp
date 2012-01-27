@@ -111,6 +111,8 @@ struct frame_surface {
 
 	double *coeffs;
 	int coeffs_count;
+
+	boundaryType boundary;
 };
 
 struct frame {
@@ -352,6 +354,14 @@ void XMLCALL Parser_XMLCallback_Start(void *context,
 				f->surface.coeffs =
 					strtok_double(value,
 						      &f->surface.coeffs_count);
+			} else if (strcmp(key, "boundary") == 0) {
+				if (f->surface.boundary != BOUNDARY_NONE)
+					log_printf(ERROR, "Has 2 boundaries\n");
+
+				if (strcmp(value, "reflective") == 0)
+					f->surface.boundary = REFLECTIVE;
+				else
+					log_printf(ERROR, "Only supports reflective boundary\n");
 			} else {
 				log_printf(ERROR, "Unknown attribute '%s=%s'\n",
 					   key, value);
@@ -571,6 +581,7 @@ void XMLCALL Parser_XMLCallback_End(void *context,
 				log_printf(ERROR, "Wrong number of coeffs\n");
 
 			surface = new Plane(f->surface.id, 
+					    f->surface.boundary,
 					    f->surface.coeffs[0],
 					    f->surface.coeffs[1],
 					    f->surface.coeffs[2]);
@@ -578,19 +589,22 @@ void XMLCALL Parser_XMLCallback_End(void *context,
 			if (f->surface.coeffs_count != 1)
 				log_printf(ERROR, "Wrong number of coeffs\n");
 
-			surface = new XPlane(f->surface.id, 
+			surface = new XPlane(f->surface.id, 		       
+					     f->surface.boundary,
 					     f->surface.coeffs[0]);
 		} else if (strcmp(f->surface.type, "y-plane") == 0) {
 			if (f->surface.coeffs_count != 1)
 				log_printf(ERROR, "Wrong number of coeffs\n");
 
 			surface = new YPlane(f->surface.id, 
+					     f->surface.boundary,
 					     f->surface.coeffs[0]);
 		} else if (strcmp(f->surface.type, "circle") == 0) {
 			if (f->surface.coeffs_count != 3)
 				log_printf(ERROR, "Wrong number of coeffs\n");
 
 			surface = new Circle(f->surface.id, 
+					     f->surface.boundary,
 					     f->surface.coeffs[0],
 					     f->surface.coeffs[1],
 					     f->surface.coeffs[2]);
@@ -733,6 +747,7 @@ struct frame *stack_push(struct stack *s, enum frame_type type) {
 		f->surface.has_id = false;
 		f->surface.type = NULL;
 		f->surface.coeffs = NULL;
+		f->surface.boundary = BOUNDARY_NONE;
 		break;
 	}
 

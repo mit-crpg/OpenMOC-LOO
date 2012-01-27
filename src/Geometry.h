@@ -24,7 +24,7 @@
 
 class Geometry {
 private:
-	double _width, _height;
+	double x_min, y_min, x_max, y_max; /* the corners   */
 	int _num_sectors;
 	int _num_rings;
 	double _sector_offset;
@@ -37,16 +37,16 @@ private:
 public:
 	Geometry();
 	virtual ~Geometry();
-	void setWidth(const double width);
-	void setHeight(const double height);
-    void setNumRings(int num_rings);
-    void setNumSectors(int num_sectors);
-    void setSectorOffset(double sector_offset);
+//	void setWidth(const double width);
+//	void setHeight(const double height);
+	void setNumRings(int num_rings);
+	void setNumSectors(int num_sectors);
+	void setSectorOffset(double sector_offset);
 	double getWidth() const;
 	double getHeight() const;
-    int getNumRings() const;
-    int getNumSectors() const;
-    double getSectorOffset() const;
+	int getNumRings() const;
+	int getNumSectors() const;
+	double getSectorOffset() const;
 
 	void addMaterial(Material* material);
 	Material* getMaterial(int id);

@@ -24,7 +24,7 @@
  */
 Options::Options(int argc, const char **argv) {
 
-	_geometry_file = strdup("xml-sample/6/geometry.xml"); 	 /* Default geometry input file */
+	_geometry_file = strdup("xml-sample/5/geometry.xml"); 	 /* Default geometry input file */
 	_track_spacing = 0.05;									 /* Default track spacing */
 	_num_azim = 128;										 /* Default number of azimuthal angles */
 	_num_sectors = 0;										 /* Default number of sectors */

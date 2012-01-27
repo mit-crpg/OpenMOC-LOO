@@ -35,10 +35,10 @@
     </universes>
   </lattice>
 
-  <surface id="1" type="x-plane" coeffs="-2.0"/>
-  <surface id="2" type="x-plane" coeffs="2.0"/>
-  <surface id="3" type="y-plane" coeffs="-2.0"/>
-  <surface id="4" type="y-plane" coeffs="2.0"/>
+  <surface id="1" type="x-plane" coeffs="-2.0" boundary="reflective" />
+  <surface id="2" type="x-plane" coeffs="2.0" boundary="reflective" />
+  <surface id="3" type="y-plane" coeffs="-2.0" boundary="reflective" />
+  <surface id="4" type="y-plane" coeffs="2.0" boundary="reflective"/>
   <surface id="5" type="circle" coeffs="0.0 0.0 0.4" />
   <surface id="6" type="circle" coeffs="0.0 0.0 0.3" />
   <surface id="7" type="circle" coeffs="0.0 0.0 0.2" />

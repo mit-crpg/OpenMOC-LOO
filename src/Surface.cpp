@@ -16,11 +16,12 @@ int Surface::_n = 0;
  * @param id the surface id
  * @param type the surface type
  */
-Surface::Surface(const int id, const surfaceType type){
+Surface::Surface(const int id, const surfaceType type, const boundaryType boundary){
 	_uid = _n;
 	_id = id;
 	_type = type;
 	_n++;
+	_boundary = boundary;
 }
 
 
@@ -131,6 +132,11 @@ void Surface::setNeighborNeg(int index, int cell) {
 	_neighbor_neg[index] = cell;
 }
 
+boundaryType Surface::getBoundary(){
+       return _boundary;
+}
+
+
 
 /**
  * Plane constructor
@@ -139,8 +145,9 @@ void Surface::setNeighborNeg(int index, int cell) {
  * @param B the second coefficient
  * @param C the third coefficient
  */
-Plane::Plane(const int id, const double A, const double B,
-		const double C): Surface(id, PLANE) {
+Plane::Plane(const int id, const boundaryType boundary,
+	     const double A, const double B,
+	     const double C): Surface(id, PLANE, boundary) {
 	_A = A;
 	_B = B;
 	_C = C;
@@ -279,13 +286,32 @@ int Plane::intersection(Plane* plane, Point* points) const {
 		return num;
 }
 
+double Plane::getXMin(){
+	log_printf(ERROR, "Plane::getXMin not implemented\n");
+	return -1.0/0.0;
+}
+
+double Plane::getXMax(){
+	log_printf(ERROR, "Plane::getXMax not implemented\n");
+	return 1.0/0.0;
+}
+
+double Plane::getYMin(){
+	log_printf(ERROR, "Plane::getYMin not implemented\n");
+	return -1.0/0.0;
+}
+
+double Plane::getYMax(){
+	log_printf(ERROR, "Plane::getYMax not implemented\n");
+	return 1.0/0.0;
+}
 
 /**
  * XPlane constructor for a plane parallel to the x-axis
  * @param id the surface id
  * @param the location of the plane along the y-axis
  */
-XPlane::XPlane(const int id, const double C): Plane(id, 1, 0, -C) {
+XPlane::XPlane(const int id, const boundaryType boundary, const double C): Plane(id, boundary, 1, 0, -C) {
 	_type = XPLANE;
 }
 
@@ -303,13 +329,28 @@ const char* XPlane::toString() {
 	return string.str().c_str();
 }
 
+double XPlane::getXMin(){
+	return -_C;
+}
+
+double XPlane::getXMax(){
+	return -_C;
+}
+
+double XPlane::getYMin(){
+	return 1.0/0.0;
+}
+
+double XPlane::getYMax(){
+	return -1.0/0.0;
+}
 
 /**
  * YPlane constructor for a plane parallel to the y-axis
  * @param id the surface id
  * @param the location of the plane along the x-axis
  */
-YPlane::YPlane(const int id, const double C): Plane(id, 1, 0, -C) {
+YPlane::YPlane(const int id, const boundaryType boundary, const double C): Plane(id, boundary, 1, 0, -C) {
 	_type = YPLANE;
 }
 
@@ -328,6 +369,27 @@ const char* YPlane::toString() {
 	return string.str().c_str();
 }
 
+double YPlane::getXMin(){
+	return 1.0/0.0;
+}
+
+double YPlane::getXMax(){
+	return -1.0/0.0;
+}
+
+double YPlane::getYMin(){
+	return -_C;
+}
+
+double YPlane::getYMax(){
+	return -_C;
+}
+
+
+
+
+
+
 /**
  * Circle constructor
  * @param id the surface id
@@ -335,8 +397,8 @@ const char* YPlane::toString() {
  * @param y the y-coordinate of the circle center
  * @param radius the radius of the circle
  */
-Circle::Circle(const int id, const double x, const double y,
-		const double radius): Surface(id, CIRCLE) {
+Circle::Circle(const int id, const boundaryType boundary, const double x, const double y,
+	       const double radius): Surface(id, CIRCLE, boundary) {
 	_A = 1;
 	_B = 1;
 	_C = -2*x;
@@ -589,4 +651,24 @@ const char* Circle::toString() {
 			<< ", E = " << _E << "\n";
 
 	return string.str().c_str();
+}
+
+double Circle::getXMin(){
+	log_printf(ERROR, "Circle::getXMin not implemented\n");
+	return -1.0/0.0;
+}
+
+double Circle::getXMax(){
+	log_printf(ERROR, "Circle::getXMax not implemented\n");
+	return 1.0/0.0;
+}
+
+double Circle::getYMin(){
+	log_printf(ERROR, "Circle::getYMin not implemented\n");
+	return -1.0/0.0;
+}
+
+double Circle::getYMax(){
+	log_printf(ERROR, "Circle::getYMax not implemented\n");
+	return 1.0/0.0;
 }

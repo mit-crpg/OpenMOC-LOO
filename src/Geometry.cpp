@@ -14,7 +14,14 @@
 /**
  * Geometry constructor
  */
-Geometry::Geometry() { }
+Geometry::Geometry() {
+	/* Initializing the corners to be infinite  */
+	x_min = 1.0/0.0;
+	y_min = 1.0/0.0;
+	x_max = -1.0/0.0;
+	y_max = -1.0/0.0;
+
+ }
 
 
 /**
@@ -28,7 +35,7 @@ Geometry::~Geometry() {
 	_lattices.clear();
 }
 
-
+#if 0
 /**
  * Sets the total height of the geometry
  * @param height the total height
@@ -45,6 +52,7 @@ void Geometry::setHeight(const double height) {
 void Geometry::setWidth(const double width) {
     _width = width;
 }
+#endif
 
 
 /* Set the number of ring divisions used for making flat source regions
@@ -80,7 +88,7 @@ void Geometry::setSectorOffset(double sector_offset) {
  * @param the toal height of the geometry
  */
 double Geometry::getHeight() const {
-	return _height;
+	return y_max - y_min;
 }
 
 
@@ -89,7 +97,7 @@ double Geometry::getHeight() const {
  * @param the total width of the geometry
  */
 double Geometry::getWidth() const {
-    return _width;
+    return x_max - x_min;
 }
 
 
@@ -178,6 +186,22 @@ void Geometry::addSurface(Surface* surface) {
 					surface->getId(), e.what());
 		}
 	}
+
+	switch (surface->getBoundary()) {
+	case REFLECTIVE:
+		if (surface->getXMin() <= x_min)
+			x_min = surface->getXMin();
+		if (surface->getXMax() >= x_max)
+			x_max = surface->getXMax();
+		if (surface->getYMin() <= y_min)
+			y_min = surface->getYMin();
+		if (surface->getYMax() >= y_max)
+			y_max = surface->getYMax();
+		break;
+	case BOUNDARY_NONE:
+		break;
+	}
+	
 }
 
 
@@ -378,7 +402,7 @@ const char* Geometry::toString() {
 	std::map<int, Lattice*>::iterator iter5;
 
 
-	string << "Geometry: width = " << _width << ", height = " << _height <<
+	string << "Geometry: width = " << getWidth() << ", height = " << getHeight() <<
 			", base universe id = " << _base_universe;
 
 	string << "\nCells:\n\t";
@@ -400,6 +424,10 @@ const char* Geometry::toString() {
 	string << "\n\tLattice ids:\t";
 	for (iter5 = _lattices.begin(); iter5 != _lattices.end(); ++iter5)
 		string << "\t" << iter5->second;
+
+	string << "\n\tBounding Box:\t ((" << x_min << ", " << y_min << "), (" << x_max << ", "
+	       << y_max << ")\n";
+	
 
 	return string.str().c_str();
 }
