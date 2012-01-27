@@ -453,9 +453,9 @@ std::string Geometry::toString() {
 
 	string << "\n\tMaterials:\n\t\t";
 	for (iter1 = _materials.begin(); iter1 != _materials.end(); ++iter1)
-		string << iter1->second->toString() << "\t\t";
+		string << iter1->second->toString() << "\n\t\t";
 
-	string << "\n\tSurfaces:\n\t\t";
+	string << "\tSurfaces:\n\t\t";
 	for (iter2 = _surfaces.begin(); iter2 != _surfaces.end(); ++iter2)
 		string << iter2->second->toString() << "\t\t";
 
@@ -600,7 +600,7 @@ void Geometry::adjustKeys() {
 		for (iter5 = _lattices.begin(); iter5 != _lattices.end(); ++iter5) {
 			uid = iter5->second->getUid();
 			Lattice* lattice = iter5->second;
-			adjusted_universes.insert(std::pair<int, Lattice*>(uid, lattice));
+			adjusted_lattices.insert(std::pair<int, Lattice*>(uid, lattice));
 		}
 		_lattices.clear();
 		_lattices = adjusted_lattices;
@@ -693,48 +693,51 @@ void Geometry::buildNeighborsLists() {
 bool Geometry::findCell(LocalCoords* coords) {
 
 	int universe_id = coords->getUniverse();
+	Universe* universe = _universes.at(universe_id);
 	std::vector<Cell*> cells = _universes.at(universe_id)->getCells();
 
-	/* Loop over all cells in this universe */
-	for (int c = 0; c < (int)cells.size(); c++) {
-		Cell* cell = cells.at(c);
+	if (universe->getType() == SIMPLE) {
+		/* Loop over all cells in this universe */
+		for (int c = 0; c < (int)cells.size(); c++) {
+			Cell* cell = cells.at(c);
 
-		if (cell->cellContains(coords)) {
-			/* Set the cell on this level */
-			coords->setCell(cell->getUid());
+			if (cell->cellContains(coords)) {
+				/* Set the cell on this level */
+				coords->setCell(cell->getUid());
 
-			/* MATERIAL type cell - lowest level, terminate search for cell */
-			if (cell->getType() == MATERIAL) { }
+				/* MATERIAL type cell - lowest level, terminate search for cell */
+				if (cell->getType() == MATERIAL) { }
 
-			/* FILL type cell - cell contains a universe at a lower level
-			 * Update coords to next level and continue search
-			 */
-			else if (cell->getType() == FILL) {
-				LocalCoords* new_coords = new LocalCoords(coords->getX(),coords->getY());
-				coords->setNext(new_coords);
-				coords->setUniverse(cell->getUniverse());
+				/* FILL type cell - cell contains a universe at a lower level
+				 * Update coords to next level and continue search
+				 */
+				else if (cell->getType() == FILL) {
+					LocalCoords* new_coords = new LocalCoords(coords->getX(),coords->getY());
+					coords->setNext(new_coords);
+					coords->setUniverse(cell->getUniverse());
 
+					if (!findCell(coords))
+						return false;
+				}
+
+
+				/* Lattice ? */
+
+				/* If none of the nested cells contained this coord
+				 * This should not be invoked unless there is a problem with
+				 * the way the geometry is setup
+				 */
 				if (!findCell(coords))
 					return false;
 			}
-
-
-
-			/* UNIVERSE FILL type cell */
-
-
-			/* Lattice ? */
-
-			/* If none of the nested cells contained this coord
-			 * This should not be invoked unless there is a problem with
-			 * the way the geometry is setup
-			 */
-			if (!findCell(coords))
-				return false;
 		}
+		return false;
 	}
 
-	return false;
+	/* If universe type is a LATTICE type */
+	else {
+
+	}
 
 }
 

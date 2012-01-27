@@ -76,6 +76,14 @@ int Universe::getId() const {
 
 
 /**
+ * Return the universe type (SIMPLE or LATTICE)
+ * @return the universe type
+ */
+universeType Universe::getType() {
+	return _type;
+}
+
+/**
  * Return the number of cells in this universe
  * @return the number of cells
  */
@@ -92,6 +100,14 @@ Point* Universe::getOrigin() {
     return &_origin;
 }
 
+
+/**
+ * Sets the universe type to SIMPLE or LATTICE
+ * @param type the universe type
+ */
+void Universe::setType(universeType type) {
+	_type = type;
+}
 
 /**
  * Set the origin for this universe

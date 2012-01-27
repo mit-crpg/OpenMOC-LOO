@@ -150,7 +150,7 @@ std::string Material::toString() {
 		string << "\n\t\t";
 	}
 
-	string << "\n\t\tChi = ";
+	string << "Chi = ";
 	for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
 		string << _chi[e] << ", ";
 

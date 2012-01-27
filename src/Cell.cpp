@@ -69,7 +69,7 @@ void Cell::setSurfacePointer(Surface* surface) {
 
 		/* If the cell contains the negative side of the surface */
 		else
-			_surfaces[-surface->getId()] = surface;
+			_surfaces[-1*surface->getId()] = surface;
 
 		log_printf(INFO, "Set the surface pointer for cell id = %d for "
 				"surface id = %d\n", _id, surface->getId());
@@ -211,11 +211,18 @@ void CellBasic::adjustKeys(int universe, int material) {
 	std::map<int, Surface*> adjusted_surfaces;
 
 	try {
-		/* Adjust surface ids to be the surface uids */
+		/* Adjust surface ids to be the positive/negative surface uids */
 		std::map<int, Surface*>::iterator iter;
-		for (iter = _surfaces.begin(); iter != _surfaces.end(); ++iter)
-			adjusted_surfaces.insert(std::pair<int, Surface*>
-									(iter->second->getUid(), iter->second));
+		for (iter = _surfaces.begin(); iter != _surfaces.end(); ++iter) {
+			/* Positive side of surface, use positive uid */
+			if (iter->first > 0)
+				adjusted_surfaces.insert(std::pair<int, Surface*>
+								(iter->second->getUid(), iter->second));
+			/* Negative side of surface, use negative uid */
+			else
+				adjusted_surfaces.insert(std::pair<int, Surface*>
+								(iter->second->getUid()*-1, iter->second));
+		}
 
 		_surfaces.clear();
 		_surfaces = adjusted_surfaces;
@@ -241,7 +248,7 @@ std::string CellBasic::toString() {
 
 	std::map<int, Surface*>::iterator iter;
 	for (iter = _surfaces.begin(); iter != _surfaces.end(); ++iter)
-		string << iter->second->getId() << ", ";
+		string << iter->first << ", ";
 
 	string << "\n";
 
@@ -291,11 +298,18 @@ void CellFill::adjustKeys(int universe, int universe_fill) {
 	std::map<int, Surface*> adjusted_surfaces;
 
 	try {
-		/* Adjust surface ids to be the surface uids */
+		/* Adjust surface ids to be the positive/negative surface uids */
 		std::map<int, Surface*>::iterator iter;
-		for (iter = _surfaces.begin(); iter != _surfaces.end(); ++iter)
-			adjusted_surfaces.insert(std::pair<int, Surface*>
+		for (iter = _surfaces.begin(); iter != _surfaces.end(); ++iter) {
+			/* Positive side of surface, use positive uid */
+			if (iter->first > 0)
+				adjusted_surfaces.insert(std::pair<int, Surface*>
 									(iter->second->getUid(), iter->second));
+			/* Negative side of surface, use negative uid */
+			else
+				adjusted_surfaces.insert(std::pair<int, Surface*>
+									(iter->second->getUid()*-1, iter->second));
+		}
 
 		_surfaces.clear();
 		_surfaces = adjusted_surfaces;
@@ -323,7 +337,7 @@ std::string CellFill::toString() {
 	std::map<int, Surface*>::iterator iter;
 	string << ", surface ids = ";
 	for (iter = _surfaces.begin(); iter != _surfaces.end(); ++iter)
-		string << iter->second->getId() << ", ";
+		string << iter->first << ", ";
 
 	string << "\n";
 
