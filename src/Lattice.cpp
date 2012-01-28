@@ -78,10 +78,10 @@ void Lattice::setUniversePointer(Universe* universe) {
 	if (universe_not_found)
 		log_printf(WARNING, "Tried to set the universe pointer for lattice "
 				"id = %d for universe id = %d but the lattice does not contain"
-				"the universe\n", _id, universe_id);
+				"the universe", _id, universe_id);
 	else
 		log_printf(INFO, "Set the universe pointer for lattice "
-				"id = %d for universe id = %d\n", _id, universe_id);
+				"id = %d for universe id = %d", _id, universe_id);
 
 	return;
 }
@@ -197,8 +197,6 @@ std::string Lattice::toString() {
 			string << _universes.at(i).at(j).first << "  ";
 		string << "\n\t\t";
 	}
-
-	string << "\n";
 
 	return string.str().c_str();
 }

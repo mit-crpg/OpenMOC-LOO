@@ -38,7 +38,7 @@ Universe::~Universe() {
 void Universe::addCell(Cell* cell) {
 	try {
 		_cells.push_back(cell);
-		log_printf(INFO, "Added cell with id = %d to universe with id = %d\n",
+		log_printf(INFO, "Added cell with id = %d to universe with id = %d",
 				cell->getId(), _id);
 	}
 	catch (std::exception &e) {
@@ -137,8 +137,6 @@ std::string Universe::toString() {
 
 	for (int c = 0; c < (int)_cells.size(); c++)
 		string << _cells.at(c)->getId() << ", ";
-
-	string << "\n";
 
 	return string.str();
 }

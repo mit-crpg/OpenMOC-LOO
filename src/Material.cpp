@@ -139,11 +139,11 @@ std::string Material::toString() {
 	for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
 		string << _sigma_t[e] << ", ";
 
-	string << "\n\t\tnU_Sigma_F = ";
+	string << "\n\t\tnu_sigma_f = ";
 	for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
 		string << _nu_sigma_f[e] << ", ";
 
-	string << "\n\t\tSigma_S = \n\t\t";
+	string << "\n\t\tSigma_s = \n\t\t";
 	for (int G = 0; G < NUM_ENERGY_GROUPS; G++) {
 		for (int g = 0; g < NUM_ENERGY_GROUPS; g++)
 			string << _sigma_s[G][g] << "\t\t ";
@@ -153,8 +153,6 @@ std::string Material::toString() {
 	string << "Chi = ";
 	for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
 		string << _chi[e] << ", ";
-
-	string << "\n";
 
 	return string.str();
 }

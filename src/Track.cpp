@@ -264,7 +264,5 @@ std::string Track::toString() {
 			<< " end, x = " << _end.getX() << ", y = " << _end.getY() <<
 			", phi = " << _phi << " weight = " << _weight;
 
-	string << "\n";
-
 	return string.str();
 }

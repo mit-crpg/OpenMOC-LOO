@@ -59,6 +59,7 @@ public:
 	void addLattice(Lattice* lattice);
 	Lattice* getLattice(int id);
 	std::string toString();
+	void printString();
 
 	void adjustKeys();
 	void buildNeighborsLists();

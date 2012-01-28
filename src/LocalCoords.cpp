@@ -184,8 +184,7 @@ std::string LocalCoords::toString() {
 		<< ", y = " << _coords.getY() << ", cell = "
 		<< _cell << ", universe = " << _universe <<
 		", lattice = " << _lattice << ", lattice x = "
-		<< _lattice_x << ", lattice y = " << _lattice_y
-		<< "\n";
+		<< _lattice_x << ", lattice y = " << _lattice_y;
 
 	return string.str();
 }

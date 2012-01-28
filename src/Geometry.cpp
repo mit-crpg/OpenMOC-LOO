@@ -148,7 +148,7 @@ void Geometry::addMaterial(Material* material) {
 	else {
 		try {
 			_materials.insert(std::pair<int, Material*>(material->getId(), material));
-			log_printf(INFO, "Added material with id = %d to geometry\n", material->getId());
+			log_printf(INFO, "Added material with id = %d to geometry", material->getId());
 		}
 		catch (std::exception &e) {
 			log_printf(ERROR, "Unable to add material with id = %d. Backtrace:\n%s",
@@ -169,7 +169,7 @@ Material* Geometry::getMaterial(int id) {
 	}
 	catch (std::exception & e) {
 		log_printf(ERROR, "Attempted to retrieve material with id = %d which does "
-				"not exist. Backtrace:%s\n", id, e.what());
+				"not exist. Backtrace:\n%s", id, e.what());
 	}
 	exit(0);
 }
@@ -186,7 +186,7 @@ void Geometry::addSurface(Surface* surface) {
 	else {
 		try {
 			_surfaces.insert(std::pair<int, Surface*>(surface->getId(), surface));
-			log_printf(INFO, "Added surface with id = %d to geometry\n", surface->getId());
+			log_printf(INFO, "Added surface with id = %d to geometry", surface->getId());
 		}
 		catch (std::exception &e) {
 			log_printf(ERROR, "Unable to add surface with id = %d. Backtrace:\n%s",
@@ -238,7 +238,7 @@ void Geometry::addCell(Cell* cell) {
 
 	/* If a cell with the same id already exists */
 	if (_cells.find(cell->getId()) != _cells.end())
-		log_printf(ERROR, "Cannot add a second cell with id = %d\n", cell->getId());
+		log_printf(ERROR, "Cannot add a second cell with id = %d", cell->getId());
 
 	/* If the cell is filled with a material which does not exist */
 	else if (cell->getType() == MATERIAL &&
@@ -272,7 +272,7 @@ void Geometry::addCell(Cell* cell) {
 		/* The surface does not exist */
 		if (_surfaces.find(surface_id) == _surfaces.end())
 			log_printf(ERROR, "Attempted to add cell with surface id = %d, "
-					"but surface does not exist\n", iter->first);
+					"but surface does not exist", iter->first);
 
 		/* The surface does exist, so set the surface pointer in the cell */
 		else
@@ -282,7 +282,7 @@ void Geometry::addCell(Cell* cell) {
 	/* Insert the cell into the geometry's cell container */
 	try {
 		_cells.insert(std::pair<int, Cell*>(cell->getId(), cell));
-		log_printf(INFO, "Added cell with id = %d to geometry\n", cell->getId());
+		log_printf(INFO, "Added cell with id = %d to geometry", cell->getId());
 	}
 	catch (std::exception &e) {
 			log_printf(ERROR, "Unable to add cell with id = %d. Backtrace:\n%s",
@@ -336,7 +336,7 @@ void Geometry::addUniverse(Universe* universe) {
 		try {
 			_universes.insert(std::pair<int, Universe*>(universe->getId(),
 														universe));
-			log_printf(INFO, "Added universe with id = %d to geometry\n",
+			log_printf(INFO, "Added universe with id = %d to geometry",
 					universe->getId());
 		}
 		catch (std::exception &e) {
@@ -402,7 +402,7 @@ void Geometry::addLattice(Lattice* lattice) {
 	/* Add the lattice to the geometry's lattices container */
 	try {
 		_lattices.insert(std::pair<int, Lattice*>(lattice->getId(), lattice));
-		log_printf(INFO, "Added lattice with id = %d to geometry\n",
+		log_printf(INFO, "Added lattice with id = %d to geometry",
 						lattice->getId());
 	}
 	catch (std::exception &e) {
@@ -453,34 +453,49 @@ std::string Geometry::toString() {
 
 	string << "\n\tMaterials:\n\t\t";
 	for (iter1 = _materials.begin(); iter1 != _materials.end(); ++iter1)
-		string << iter1->second->toString() << "\n\t\t";
+		string << iter1->second->toString() << "\n\n\t\t";
 
-	string << "\tSurfaces:\n\t\t";
+	string << "\n\tSurfaces:\n\t\t";
 	for (iter2 = _surfaces.begin(); iter2 != _surfaces.end(); ++iter2)
-		string << iter2->second->toString() << "\t\t";
+		string << iter2->second->toString() << "\n\t\t";
 
 	string << "\n\tCells:\n\t\t";
 	for (iter3 = _cells.begin(); iter3 != _cells.end(); ++iter3)
-		string << iter3->second->toString() << "\t\t";
+		string << iter3->second->toString() << "\n\t\t";
 
 	string << "\n\tUniverses:\n\t\t";
 	for (iter4 = _universes.begin(); iter4 != _universes.end(); ++iter4)
-		string << iter4->second->toString() << "\t\t";
+		string << iter4->second->toString() << "\n\t\t";
 
 	string << "\n\tLattices:\n\t\t";
 	for (iter5 = _lattices.begin(); iter5 != _lattices.end(); ++iter5) {
-		string << iter5->second->toString()  << "\t\t";
+		string << iter5->second->toString()  << "\n\t\t";
 	}
 
-	string << "\n";
-	return string.str();
+	std::string formatted_string = string.str();
+	formatted_string.erase(formatted_string.end()-3);
+
+	return formatted_string;
+}
+
+
+
+
+/*
+ * Prints a string representation of all of the geometry's
+ * objects to the console
+ */
+void Geometry::printString() {
+	log_printf(INFO, "Printing the geometry to the console:\n\t%s",
+				toString().c_str());
+	return;
 }
 
 
 // Adjusts the keys for surfaces, cells, universes, and lattices to uids
 void Geometry::adjustKeys() {
 
-	log_printf(NORMAL, "Adjusting the keys for the geometry...\n");
+	log_printf(NORMAL, "Adjusting the keys for the geometry...");
 
 	std::map<int, Material*>::iterator iter1;
 	std::map<int, Surface*>::iterator iter2;
@@ -620,7 +635,7 @@ void Geometry::adjustKeys() {
  */
 void Geometry::buildNeighborsLists() {
 
-	log_printf(NORMAL, "Building neighbor cell lists for each surface...\n");
+	log_printf(NORMAL, "Building neighbor cell lists for each surface...");
 
 	int count_positive[_surfaces.size()];
 	int count_negative[_surfaces.size()];
@@ -690,6 +705,7 @@ void Geometry::buildNeighborsLists() {
 }
 
 
+// FIXME: This method is still a work in progress
 bool Geometry::findCell(LocalCoords* coords) {
 
 	int universe_id = coords->getUniverse();
@@ -734,11 +750,15 @@ bool Geometry::findCell(LocalCoords* coords) {
 		return false;
 	}
 
-	/* If universe type is a LATTICE type */
-	else {
+//	/* If universe type is a LATTICE type */
+//	else {
+//		double x = coords->getX()
+//		LocalCoords* new_coords = new LocalCoords(coords->getX(),coords->getY());
+//		coords->setNext(new_coords);
+//		coords->setUniverse(cell->getUniverse());
+//	}
 
-	}
-
+	return false;
 }
 
 

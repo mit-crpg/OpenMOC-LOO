@@ -59,7 +59,7 @@ void Cell::setSurfacePointer(Surface* surface) {
 			_surfaces.find(-surface->getId()) == _surfaces.end())
 
 		log_printf(WARNING, "Unable to set surface pointer for cell id = %d "
-				"for surface id = %d since cell does not contain this surface\n",
+				"for surface id = %d since cell does not contain this surface",
 				_id, surface->getId());
 
 	try{
@@ -72,7 +72,7 @@ void Cell::setSurfacePointer(Surface* surface) {
 			_surfaces[-1*surface->getId()] = surface;
 
 		log_printf(INFO, "Set the surface pointer for cell id = %d for "
-				"surface id = %d\n", _id, surface->getId());
+				"surface id = %d", _id, surface->getId());
 	}
 	catch (std::exception &e) {
 		log_printf(ERROR, 
@@ -250,8 +250,6 @@ std::string CellBasic::toString() {
 	for (iter = _surfaces.begin(); iter != _surfaces.end(); ++iter)
 		string << iter->first << ", ";
 
-	string << "\n";
-
 	return string.str();
 }
 
@@ -338,8 +336,6 @@ std::string CellFill::toString() {
 	string << ", surface ids = ";
 	for (iter = _surfaces.begin(); iter != _surfaces.end(); ++iter)
 		string << iter->first << ", ";
-
-	string << "\n";
 
 	return string.str();
 }

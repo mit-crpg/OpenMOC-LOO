@@ -22,7 +22,7 @@
 
 // TODO: This is just stubbed out for now
 int main(int argc, const char **argv) {
-	log_printf(NORMAL, "Starting OpenMOC...\n");
+	log_printf(NORMAL, "Starting OpenMOC...");
 
 	/* Create an options class to parse command line options */
 	Options opts(argc, argv);
@@ -63,18 +63,21 @@ int main(int argc, const char **argv) {
 				  return;
 			  });
 
+	/* Print out geometry to console */
+	geometry.printString();
+
 	/* Adjust the indices for each geometry class to use uids */
 	geometry.adjustKeys();
 
 	/* Generate the neighbor cells for each surface in geometry */
 	geometry.buildNeighborsLists();
 
-	/* Print out geometry to console */
-	log_printf(INFO, "Printing the geometry to the console:\n\t%s",geometry.toString().c_str());
-
 	/* Initialize the trackgenerator */
-	TrackGenerator* trackGenerator = new TrackGenerator(&geometry,
-			opts.getTrackSpacing(), opts.getTrackSpacing());
+	TrackGenerator trackGenerator(&geometry, opts.getTrackSpacing(),
+									opts.getTrackSpacing());
+	trackGenerator.generateTracks();
+	trackGenerator.makeReflective();
 
-	log_printf(INFO, "OpenMOC completed\n");
+
+	log_printf(INFO, "Program complete");
 }

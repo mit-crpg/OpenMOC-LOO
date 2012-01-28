@@ -105,7 +105,7 @@ void TrackGenerator::generateTracks() {
 	/* Each element in following lists corresponds to a track angle in phi_eff */
 
 	try {
-		log_printf(NORMAL, "Computing azimuthal angles and track spacings...\n");
+		log_printf(NORMAL, "Computing azimuthal angles and track spacings...");
 
 		/* Track spacing along x-axis, y-axis, and perpendicular to each track */
 		double* dx_eff = new double[_num_azim];
@@ -157,7 +157,7 @@ void TrackGenerator::generateTracks() {
 			_azim_weights[i] = (x1 + x2) / (2 * M_PI) * d_eff[i] * 2;
 		}
 
-		log_printf(NORMAL, "Generating track start and end points...\n");
+		log_printf(NORMAL, "Generating track start and end points...");
 
 		/* Compute track starting and end points */
 		for (int i = 0; i < _num_azim; i++) {

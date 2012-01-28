@@ -25,25 +25,25 @@ void log_setlevel(logLevel newlevel) {
 
     switch (newlevel) {
     	case NORMAL:
-    		log_printf(INFO, "Logging level set to NORMAL\n");
+    		log_printf(INFO, "Logging level set to NORMAL");
     		break;
     	case INFO:
-    		log_printf(INFO, "Logging level set to INFO\n");
+    		log_printf(INFO, "Logging level set to INFO");
     		break;
     	case WARNING:
-    		log_printf(INFO, "Logging level set to WARNING\n");
+    		log_printf(INFO, "Logging level set to WARNING");
     		break;
     	case CRITICAL:
-    		log_printf(INFO, "Logging level set to CRITICAL\n");
+    		log_printf(INFO, "Logging level set to CRITICAL");
     		break;
     	case ERROR:
-    		log_printf(INFO, "Logging level set to ERROR\n");
+    		log_printf(INFO, "Logging level set to ERROR");
     		break;
     	case DEBUG:
-    		log_printf(INFO, "Logging level set to DEBUG\n");
+    		log_printf(INFO, "Logging level set to DEBUG");
     		break;
     	case RESULT:
-    		log_printf(INFO, "Logging level set to RESULT\n");
+    		log_printf(INFO, "Logging level set to RESULT");
     		break;
     }
 }
@@ -129,6 +129,7 @@ void log_printf(logLevel level, const char *format, ...) {
 		va_start(args, format);
 		vprintf(format, args);
 		va_end(args);
+		printf("\n");
     }
     if (level == ERROR) {
     	printf("\n[  EXIT   ]  Exiting program...\n");

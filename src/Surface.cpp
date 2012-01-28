@@ -175,7 +175,7 @@ std::string Plane::toString() {
 	std::stringstream string;
 
 	string << "Surface id = " << _id << ", type = PLANE " << ", A = "
-			<< _A << ", B = " << _B << ", C = " << _C << "\n";
+			<< _A << ", B = " << _B << ", C = " << _C;
 
 	return string.str();
 }
@@ -288,22 +288,22 @@ int Plane::intersection(Plane* plane, Point* points) const {
 }
 
 double Plane::getXMin(){
-	log_printf(ERROR, "Plane::getXMin not implemented\n");
+	log_printf(ERROR, "Plane::getXMin not implemented");
 	return -1.0/0.0;
 }
 
 double Plane::getXMax(){
-	log_printf(ERROR, "Plane::getXMax not implemented\n");
+	log_printf(ERROR, "Plane::getXMax not implemented");
 	return 1.0/0.0;
 }
 
 double Plane::getYMin(){
-	log_printf(ERROR, "Plane::getYMin not implemented\n");
+	log_printf(ERROR, "Plane::getYMin not implemented");
 	return -1.0/0.0;
 }
 
 double Plane::getYMax(){
-	log_printf(ERROR, "Plane::getYMax not implemented\n");
+	log_printf(ERROR, "Plane::getYMax not implemented");
 	return 1.0/0.0;
 }
 
@@ -325,7 +325,7 @@ std::string XPlane::toString() {
 	std::stringstream string;
 
 	string << "Surface id = " << _id << ", type = XPLANE " << ", A = "
-			<< _A << ", B = " << _B << ", C = " << _C << "\n";
+			<< _A << ", B = " << _B << ", C = " << _C;
 
 	return string.str();
 }
@@ -365,7 +365,7 @@ std::string YPlane::toString() {
 	std::stringstream string;
 
 	string << "Surface id = " << _id << ", type = YPLANE " << ", A = "
-			<< _A << ", B = " << _B << ", C = " << _C << "\n";
+			<< _A << ", B = " << _B << ", C = " << _C;
 
 	return string.str();
 }
@@ -649,27 +649,27 @@ std::string Circle::toString() {
 
 	string << "Surface id = " << _id << ", type = CIRCLE " << ", A = "
 			<< _A << ", B = " << _B << ", C = " << _C << ", D = " << _D
-			<< ", E = " << _E << "\n";
+			<< ", E = " << _E;
 
 	return string.str();
 }
 
 double Circle::getXMin(){
-	log_printf(ERROR, "Circle::getXMin not implemented\n");
+	log_printf(ERROR, "Circle::getXMin not implemented");
 	return -1.0/0.0;
 }
 
 double Circle::getXMax(){
-	log_printf(ERROR, "Circle::getXMax not implemented\n");
+	log_printf(ERROR, "Circle::getXMax not implemented");
 	return 1.0/0.0;
 }
 
 double Circle::getYMin(){
-	log_printf(ERROR, "Circle::getYMin not implemented\n");
+	log_printf(ERROR, "Circle::getYMin not implemented");
 	return -1.0/0.0;
 }
 
 double Circle::getYMax(){
-	log_printf(ERROR, "Circle::getYMax not implemented\n");
+	log_printf(ERROR, "Circle::getYMax not implemented");
 	return 1.0/0.0;
 }

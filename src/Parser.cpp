@@ -223,7 +223,7 @@ Parser::Parser (const Options *opts) {
 	 * is the easiest for now. */
 	while( EOF != (c = fgetc(matfile)) ) {
 		if (XML_Parse(parser, &c, 1, false) != XML_STATUS_OK)
-			log_printf(ERROR, "Expat error for material.xml\n");
+			log_printf(ERROR, "Expat error for material.xml");
         }
 
 	fclose(matfile);
@@ -294,7 +294,7 @@ void XMLCALL Parser_XMLCallback_Start(void *context,
 
 	/* Ensures that we know what type the node is */
 	if (type == NODE_TYPE_NONE)
-		log_printf(ERROR, "Unknown node type '%s'\n", name);
+		log_printf(ERROR, "Unknown node type '%s'", name);
 
 	/* Adds our item to the stack */
 	f = stack_push(s, type);
@@ -329,59 +329,59 @@ void XMLCALL Parser_XMLCallback_Start(void *context,
 		case NODE_TYPE_CELL:
 			if (strcmp(key, "id") == 0) {
 				if (f->cell.has_id == true)
-					log_printf(ERROR, "Cell has 2 ids\n");
+					log_printf(ERROR, "Cell has 2 ids");
 
 				f->cell.has_id = true;
 				f->cell.id = atoi(value);
 			} else if (strcmp(key, "fill") == 0) {
 				if (f->cell.has_fill == true)
-					log_printf(ERROR, "Has 2 fills\n");
+					log_printf(ERROR, "Has 2 fills");
 
 				if (f->cell.has_material == true) {
 					log_printf(ERROR,
-						   "Has material and fill\n");
+						   "Has material and fill");
 				}
 
 				f->cell.has_fill = true;
 				f->cell.fill = atoi(value);
 			} else if (strcmp(key, "material") == 0) {
 				if (f->cell.has_fill == true)
-					log_printf(ERROR, "Has 2 material\n");
+					log_printf(ERROR, "Has 2 material");
 
 				if (f->cell.has_fill == true) {
 					log_printf(ERROR,
-						   "Has material and fill\n");
+						   "Has material and fill");
 				}
 
 				f->cell.has_material = true;
 				f->cell.material = atoi(value);
 			} else if (strcmp(key, "universe") == 0) {
 				if (f->cell.has_universe == true)
-					log_printf(ERROR, "Has 2 universes\n");
+					log_printf(ERROR, "Has 2 universes");
 
 				f->cell.has_universe = true;
 				f->cell.universe = atoi(value);
 			} else if (strcmp(key, "surfaces") == 0) {
 				if (f->cell.surfaces != NULL)
-					log_printf(ERROR, "Has 2 surfaces\n");
+					log_printf(ERROR, "Has 2 surfaces");
 
 				f->cell.surfaces =
 					strtok_int(value,
 						   &f->cell.surfaces_count);
 			} else {
-				log_printf(ERROR, "Unknown attribute '%s=%s'\n",
+				log_printf(ERROR, "Unknown attribute '%s=%s'",
 					   key, value);
 			}
 			break;
 		case NODE_TYPE_LATTICE:
 			if (strcmp(key, "id") == 0) {
 				if (f->lattice.has_id == true)
-					log_printf(ERROR, "Lattice has 2 ids\n");
+					log_printf(ERROR, "Lattice has 2 ids");
 
 				f->lattice.has_id = true;
 				f->lattice.id = atoi(value);
 			} else {
-				log_printf(ERROR, "Unknown attribute '%s=%s'\n",
+				log_printf(ERROR, "Unknown attribute '%s=%s'",
 					   key, value);
 			}
 
@@ -399,7 +399,7 @@ void XMLCALL Parser_XMLCallback_Start(void *context,
 		case NODE_TYPE_MATERIAL:
 			if (strcmp(key, "id") == 0) {
 				if (f->material.has_id == true)
-					log_printf(ERROR, "Has 2 material ids\n");
+					log_printf(ERROR, "Has 2 material ids");
 				
 				f->material.has_id = true;
 				f->material.id = atoi(value);
@@ -408,32 +408,32 @@ void XMLCALL Parser_XMLCallback_Start(void *context,
 		case NODE_TYPE_SURFACE:
 			if (strcmp(key, "id") == 0) {
 				if (f->surface.has_id == true)
-					log_printf(ERROR, "Surface has 2 ids\n");
+					log_printf(ERROR, "Surface has 2 ids");
 
 				f->surface.has_id = true;
 				f->surface.id = atoi(value);
 			} else if (strcmp(key, "type") == 0) {
 				if (f->surface.type != NULL)
-					log_printf(ERROR, "Has 2 types\n");
+					log_printf(ERROR, "Has 2 types");
 
 				f->surface.type = strdup(value);
 			} else if (strcmp(key, "coeffs") == 0) {
 				if (f->surface.coeffs != NULL)
-					log_printf(ERROR, "Has 2 coeffs\n");
+					log_printf(ERROR, "Has 2 coeffs");
 
 				f->surface.coeffs =
 					strtok_double(value,
 						      &f->surface.coeffs_count);
 			} else if (strcmp(key, "boundary") == 0) {
 				if (f->surface.boundary != BOUNDARY_NONE)
-					log_printf(ERROR, "Has 2 boundaries\n");
+					log_printf(ERROR, "Has 2 boundaries");
 
 				if (strcmp(value, "reflective") == 0)
 					f->surface.boundary = REFLECTIVE;
 				else
-					log_printf(ERROR, "Only supports reflective boundary\n");
+					log_printf(ERROR, "Only supports reflective boundary");
 			} else {
-				log_printf(ERROR, "Unknown attribute '%s=%s'\n",
+				log_printf(ERROR, "Unknown attribute '%s=%s'",
 					   key, value);
 			}
 			break;
@@ -480,13 +480,13 @@ void XMLCALL Parser_XMLCallback_End(void *context,
 					    f->cell.surfaces,
 					    f->cell.material);
 		} else {
-			log_printf(ERROR, "Cell without material or fill\n");
+			log_printf(ERROR, "Cell without material or fill");
 		}
 
 		if (cell != NULL)
 			s->parser->cells.push_back(cell);
 		else
-			log_printf(ERROR, "Unknown cell type\n");
+			log_printf(ERROR, "Unknown cell type");
 
 		if (f->cell.surfaces != NULL)
 			free(f->cell.surfaces);
@@ -497,15 +497,15 @@ void XMLCALL Parser_XMLCallback_End(void *context,
 
 		lattice = NULL;
 		if (f->lattice.has_id != true)
-			log_printf(ERROR, "Lattice without id\n");
+			log_printf(ERROR, "Lattice without id");
 		if (f->lattice.dimmensions_count != 2)
-			log_printf(ERROR, "Lattice without exactly 2 dimms\n");
+			log_printf(ERROR, "Lattice without exactly 2 dimms");
 		if (f->lattice.origin_count != 2)
-			log_printf(ERROR, "Lattice without exactly 2 origin\n");
+			log_printf(ERROR, "Lattice without exactly 2 origin");
 		if (f->lattice.width_count != 2)
-			log_printf(ERROR, "Lattice without exactly 2 widths\n");
+			log_printf(ERROR, "Lattice without exactly 2 widths");
 		if (f->lattice.universes == NULL)
-			log_printf(ERROR, "Lattice without universes\n");
+			log_printf(ERROR, "Lattice without universes");
 
 		lattice = new Lattice(f->lattice.id,
 				      f->lattice.dimmensions[0],
@@ -546,14 +546,14 @@ void XMLCALL Parser_XMLCallback_End(void *context,
 		case NODE_TYPE_SURFACE:
 		case NODE_TYPE_MATERIAL:
 		case NODE_TYPE_MATERIALS:
-			log_printf(ERROR, "Unexpected type subfield\n");
+			log_printf(ERROR, "Unexpected type subfield");
 		}
 		break;
 	case NODE_TYPE_DIMENSION:
 		switch (p->type) {
 		case NODE_TYPE_LATTICE:
 			if (p->lattice.dimmensions != NULL)
-				log_printf(ERROR, "Has 2 dimmensions\n");
+				log_printf(ERROR, "Has 2 dimmensions");
 
 			p->lattice.dimmensions =
 				strtok_int(f->dimmension.data,
@@ -572,14 +572,14 @@ void XMLCALL Parser_XMLCallback_End(void *context,
 		case NODE_TYPE_SURFACE:
 		case NODE_TYPE_MATERIALS:
 		case NODE_TYPE_MATERIAL:
-			log_printf(ERROR, "Unexpected dimmension subfield\n");
+			log_printf(ERROR, "Unexpected dimmension subfield");
 		}
 		break;
 	case NODE_TYPE_ORIGIN:
 		switch (p->type) {
 		case NODE_TYPE_LATTICE:
 			if (p->lattice.origin != NULL)
-				log_printf(ERROR, "Has 2 origins\n");
+				log_printf(ERROR, "Has 2 origins");
 
 			p->lattice.origin =
 				strtok_double(f->origin.data,
@@ -598,14 +598,14 @@ void XMLCALL Parser_XMLCallback_End(void *context,
 		case NODE_TYPE_SURFACE:
 		case NODE_TYPE_MATERIAL:
 		case NODE_TYPE_MATERIALS:
-			log_printf(ERROR, "Unexpected dimmension subfield\n");
+			log_printf(ERROR, "Unexpected dimmension subfield");
 		}
 		break;
 	case NODE_TYPE_WIDTH:
 		switch (p->type) {
 		case NODE_TYPE_LATTICE:
 			if (p->lattice.width != NULL)
-				log_printf(ERROR, "Has 2 widths\n");
+				log_printf(ERROR, "Has 2 widths");
 
 			p->lattice.width =
 				strtok_double(f->width.data,
@@ -624,14 +624,14 @@ void XMLCALL Parser_XMLCallback_End(void *context,
 		case NODE_TYPE_SURFACE:
 		case NODE_TYPE_MATERIAL:
 		case NODE_TYPE_MATERIALS:
-			log_printf(ERROR, "Unexpected dimmension subfield\n");
+			log_printf(ERROR, "Unexpected dimmension subfield");
 		}
 		break;
 	case NODE_TYPE_UNIVERSES:
 		switch (p->type) {
 		case NODE_TYPE_LATTICE:
 			if (p->lattice.universes != NULL)
-				log_printf(ERROR, "Has 2 universes\n");
+				log_printf(ERROR, "Has 2 universes");
 
 			p->lattice.universes =
 				strtok_int(f->universes.data,
@@ -650,7 +650,7 @@ void XMLCALL Parser_XMLCallback_End(void *context,
 		case NODE_TYPE_SURFACE:
 		case NODE_TYPE_MATERIAL:
 		case NODE_TYPE_MATERIALS:
-			log_printf(ERROR, "Unexpected universes subfield\n");
+			log_printf(ERROR, "Unexpected universes subfield");
 		}
 		break;
 	case NODE_TYPE_SURFACE:
@@ -660,7 +660,7 @@ void XMLCALL Parser_XMLCallback_End(void *context,
 		surface = NULL;
 		if (strcmp(f->surface.type, "plane") == 0) {
 			if (f->surface.coeffs_count != 3)
-				log_printf(ERROR, "Wrong number of coeffs\n");
+				log_printf(ERROR, "Wrong number of coeffs");
 
 			surface = new Plane(f->surface.id, 
 					    f->surface.boundary,
@@ -669,21 +669,21 @@ void XMLCALL Parser_XMLCallback_End(void *context,
 					    f->surface.coeffs[2]);
 		} else if (strcmp(f->surface.type, "x-plane") == 0) {
 			if (f->surface.coeffs_count != 1)
-				log_printf(ERROR, "Wrong number of coeffs\n");
+				log_printf(ERROR, "Wrong number of coeffs");
 
 			surface = new XPlane(f->surface.id, 		       
 					     f->surface.boundary,
 					     f->surface.coeffs[0]);
 		} else if (strcmp(f->surface.type, "y-plane") == 0) {
 			if (f->surface.coeffs_count != 1)
-				log_printf(ERROR, "Wrong number of coeffs\n");
+				log_printf(ERROR, "Wrong number of coeffs");
 
 			surface = new YPlane(f->surface.id, 
 					     f->surface.boundary,
 					     f->surface.coeffs[0]);
 		} else if (strcmp(f->surface.type, "circle") == 0) {
 			if (f->surface.coeffs_count != 3)
-				log_printf(ERROR, "Wrong number of coeffs\n");
+				log_printf(ERROR, "Wrong number of coeffs");
 
 			surface = new Circle(f->surface.id, 
 					     f->surface.boundary,
@@ -695,7 +695,7 @@ void XMLCALL Parser_XMLCallback_End(void *context,
 		if (surface != NULL)
 			s->parser->surfaces.push_back(surface);
 		else {
-			log_printf(ERROR, "Unknown surface type '%s'\n",
+			log_printf(ERROR, "Unknown surface type '%s'",
 				   f->surface.type);
 		}
 
@@ -715,7 +715,7 @@ void XMLCALL Parser_XMLCallback_End(void *context,
 		if (material != NULL)
 			s->parser->materials.push_back(material);
 		else {
-			log_printf(ERROR, "Material unsuccessfully built\n");
+			log_printf(ERROR, "Material unsuccessfully built");
 		}		
 	}
 	}
@@ -804,14 +804,14 @@ struct frame *stack_push(struct stack *s, enum frame_type type) {
 	/* Allocates a new stack frame (it gets added way down at the end) */
 	f = (struct frame *)malloc(sizeof(*f));
 	if (f == NULL)
-		log_printf(ERROR, "malloc returned NULL!\n");
+		log_printf(ERROR, "malloc returned NULL!");
 
 	/* Different node types get initialized differently */
 	f->type = type;
 	switch (type) {
 	case NODE_TYPE_NONE:
 		free(f);
-		log_printf(ERROR, "Tried to push an unknown node type\n");
+		log_printf(ERROR, "Tried to push an unknown node type");
 		break;
 	case NODE_TYPE_GEOMETRY:
 		break;
