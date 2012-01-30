@@ -4,5 +4,6 @@ Makefile
 *~
 Configfile.local
 .cproject
+./Debug/*
 *.d
 *.o
