@@ -1,0 +1,8 @@
+LANGUAGES   += c++
+COMPILEOPTS += -Wall
+COMPILEOPTS += -Werror
+COMPILEOPTS += -std=gnu++0x
+
+BINARIES    += openmoc
+LINKOPTS    += -lexpat
+SOURCES     += openmoc.cpp

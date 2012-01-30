@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<materials>
+
+<!-- Definition of materials -->
+  <material id="1">
+  </material>
+
+  <material id="2">
+  </material>
+
+</materials>

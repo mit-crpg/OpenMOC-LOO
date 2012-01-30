@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Simplest case: 1 circular cell with fuel and coolant !-->
+<geometry>
+
+<!-- Definition of Cells -->
+  <cell id="100" material="40" surfaces="-1" />
+  <cell id="101" material="41" surfaces="1 -2" />
+
+<!-- Defition of Surfaces -->
+  <surface id="1" type="circle" coeffs="0 0 7" />
+  <surface id="2" type="circle" coeffs="0 0 11" />
+    
+</geometry>

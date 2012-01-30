@@ -1,0 +1,15 @@
+Class Naming Convention
+a) Each class will be camelcase beginning with an uppercase letter (ie, MyClassName)
+b) All classes will be placed in their own header and source files 
+   (ie, MyClassName.h and MyClassName.cpp)
+c) Class member attributes will start with an underscore and will be all lowercase 
+   with underscores separating words (ie, _my_class_attribute)
+d) Class methods will be camelcase starting with a lowercase letter
+   (ie, myClassMethod(....))
+
+File Naming Convention
+a) Files which define classes will begin with an uppercase letter and will have the same
+   name as the class they define (ie, MyClassName.h and MyClassName.h)
+b) Files with helper functions will be in all lowercase letters 
+   (ie, myhelperfunctions.h and myhelperfunctions.cpp)
+
