@@ -55,7 +55,7 @@ void log_setlevel(logLevel newlevel) {
  * ERROR, DEBUG, RESULT)
  * @param newlevel a character string loglevel
  */
-void log_setlevel(char* newlevel) {
+void log_setlevel(const char* newlevel) {
 
 	if (strcmp("NORMAL", newlevel) == 0) {
 		log_level = NORMAL;
@@ -132,7 +132,7 @@ void log_printf(logLevel level, const char *format, ...) {
 		printf("\n");
     }
     if (level == ERROR) {
-    	printf("\n[  EXIT   ]  Exiting program...\n");
+    	printf("[  EXIT   ]  Exiting program...\n");
     	abort();
     }
 }

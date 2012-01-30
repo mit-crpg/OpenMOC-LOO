@@ -102,11 +102,17 @@ Track **TrackGenerator::getTracks() const {
  */
 void TrackGenerator::generateTracks() {
 
-	/* Each element in following lists corresponds to a track angle in phi_eff */
+	/* Check to make sure that height, width of the geometry are nonzero */
+	if (_geom->getHeight() <= 0 || _geom->getHeight() <= 0)
+		log_printf(ERROR, "The total height and width of the geometry must be"
+				"nonzero for track generation. Please specify the height and "
+				"width in the geometry input file.");
+
 
 	try {
 		log_printf(NORMAL, "Computing azimuthal angles and track spacings...");
 
+		/* Each element in following lists corresponds to a track angle in phi_eff */
 		/* Track spacing along x-axis, y-axis, and perpendicular to each track */
 		double* dx_eff = new double[_num_azim];
 		double* dy_eff = new double[_num_azim];

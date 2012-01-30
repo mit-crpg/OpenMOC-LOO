@@ -11,8 +11,6 @@
  */
 
 #include "Options.h"
-#include <string.h>
-#include <stdlib.h>
 
 #define LAST(str) (strcmp(argv[i-1], (str)) == 0)
 
@@ -24,27 +22,31 @@
  */
 Options::Options(int argc, const char **argv) {
 
-	_geometry_file = strdup("xml-sample/5/geometry.xml"); 	 /* Default geometry input file */
-	_material_file = strdup("xml-sample/5/material.xml");    /* Default material input file */
+	/* Checks the working directory to set the relative path for input files
+	 * This is important so that default input files work when program is run
+	 * from both eclipse and the console */
+	if (std::string(getenv("PWD")).find("Release") != std::string::npos)
+		_relative_path = "../";
+	else
+		_relative_path = "";
+
+	_geometry_file = _relative_path + "xml-sample/5/geometry.xml"; 	 /* Default geometry input file */
+	_material_file = _relative_path + "xml-sample/5/material.xml";    /* Default material input file */
 	_track_spacing = 0.05;					 /* Default track spacing */
 	_num_azim = 128;					 /* Default number of azimuthal angles */
 	_num_sectors = 0;					 /* Default number of sectors */
 	_num_rings = 0;						 /* Default number of rings */
 	_sector_offset = 0;					 /* Default sector offset */
-	_verbosity = strdup("NORMAL");				 /* Default logging level */
+	_verbosity = "NORMAL";				 /* Default logging level */
 	_dump_geometry = false;									/* Default will not dump geometry */
 
 	for (int i = 0; i < argc; i++) {
 		if (i > 0) {
 			if (LAST("--geometryfile") || LAST("-g")) {
-				if (_geometry_file != NULL)
-					free(_geometry_file);
-				_geometry_file = strdup(argv[i]);
+				_geometry_file = argv[i];
 			}
 			else if (LAST("--materialfile") || LAST("-m")) {
-				if (_material_file != NULL)
-					free(_material_file);
-				_material_file = strdup(argv[i]);
+				_material_file = argv[i];
 			}
 			else if (LAST("--trackspacing") || LAST("-ts"))
 				_track_spacing = atof(argv[i]);
@@ -65,14 +67,7 @@ Options::Options(int argc, const char **argv) {
 	}
 }
 
-Options::~Options(void) {
-	if (this->_geometry_file != NULL)
-		free(this->_geometry_file);
-	if (this->_material_file != NULL)
-		free(this->_material_file);
-	if (this->_verbosity != NULL)
-		free(this->_verbosity);
-}
+Options::~Options(void) { }
 
 /**
  * Returns a character array with the path to the geometry input file. By default this
@@ -80,8 +75,8 @@ Options::~Options(void) {
  * console
  * @return path to the geometry input file
  */
-char *Options::getGeometryFile() const {
-    return _geometry_file;
+const char *Options::getGeometryFile() const {
+    return _geometry_file.c_str();
 }
 
 /**
@@ -90,8 +85,8 @@ char *Options::getGeometryFile() const {
  * console
  * @return path to the geometry input file
  */
-char *Options::getMaterialFile() const {
-    return _material_file;
+const char *Options::getMaterialFile() const {
+    return _material_file.c_str();
 }
 
 
@@ -157,6 +152,6 @@ double Options::getSectorOffset() const {
  * at runtime from the console
  * @return the verbosity
  */
-char* Options::getVerbosity() const {
-    return _verbosity;
+const char* Options::getVerbosity() const {
+    return _verbosity.c_str();
 }
