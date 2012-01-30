@@ -32,6 +32,7 @@ Options::Options(int argc, const char **argv) {
 	_num_rings = 0;						 /* Default number of rings */
 	_sector_offset = 0;					 /* Default sector offset */
 	_verbosity = strdup("NORMAL");				 /* Default logging level */
+	_dump_geometry = false;									/* Default will not dump geometry */
 
 	for (int i = 0; i < argc; i++) {
 		if (i > 0) {
@@ -57,6 +58,9 @@ Options::Options(int argc, const char **argv) {
 				_sector_offset = atof(argv[i]);
 			else if (LAST("--verbosity") || LAST("-v"))
 				_verbosity = strdup(argv[i]);
+			else if (strcmp(argv[i], "-dg") == 0 ||
+					strcmp(argv[i], "--dumpgeometry") == 0)
+				_dump_geometry = true;
 		}
 	}
 }
@@ -89,6 +93,17 @@ char *Options::getGeometryFile() const {
 char *Options::getMaterialFile() const {
     return _material_file;
 }
+
+
+/**
+ * Returns a boolean representing whether or not to dump the geometry to the
+ * console. If true, the geometry will be printed out after parsing is complete
+ * @return whether or not to dump the geometry to the console
+ */
+bool Options::dumpGeometry() const {
+	return _dump_geometry;
+}
+
 
 /**
  * Returns the number of azimuthal angles. By default this will return 128 angles if

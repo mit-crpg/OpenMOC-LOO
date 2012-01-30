@@ -63,8 +63,9 @@ int main(int argc, const char **argv) {
 				  return;
 			  });
 
-	/* Print out geometry to console */
-	geometry.printString();
+	/* Print out geometry to console if requested at runtime*/
+	if (opts.dumpGeometry())
+		geometry.printString();
 
 	/* Adjust the indices for each geometry class to use uids */
 	geometry.adjustKeys();

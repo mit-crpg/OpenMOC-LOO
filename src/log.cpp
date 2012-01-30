@@ -59,31 +59,31 @@ void log_setlevel(char* newlevel) {
 
 	if (strcmp("NORMAL", newlevel) == 0) {
 		log_level = NORMAL;
-		log_printf(INFO, "Logging level set to NORMAL\n");
+		log_printf(INFO, "Logging level set to NORMAL");
 	}
 	else if (strcmp("INFO", newlevel) == 0) {
 		log_level = INFO;
-		log_printf(INFO, "Logging level set to INFO\n");
+		log_printf(INFO, "Logging level set to INFO");
 	}
 	else if (strcmp("WARNING", newlevel) == 0) {
 		log_level = WARNING;
-		log_printf(INFO, "Logging level set to WARNING\n");
+		log_printf(INFO, "Logging level set to WARNING");
 	}
 	else if (strcmp("CRITICAL", newlevel) == 0) {
 		log_level = CRITICAL;
-		log_printf(INFO, "Logging level set to CRITICAL\n");
+		log_printf(INFO, "Logging level set to CRITICAL");
 	}
 	else if (strcmp("ERROR", newlevel) == 0) {
 		log_level = ERROR;
-		log_printf(INFO, "Logging level set to ERROR\n");
+		log_printf(INFO, "Logging level set to ERROR");
 	}
 	else if (strcmp("DEBUG", newlevel) == 0) {
 		log_level = DEBUG;
-		log_printf(INFO, "Logging level set to DEBUG\n");
+		log_printf(INFO, "Logging level set to DEBUG");
 	}
 	else if (strcmp("RESULT", newlevel) == 0) {
 		log_level = RESULT;
-		log_printf(INFO, "Logging level set to RESULT\n");
+		log_printf(INFO, "Logging level set to RESULT");
 	}
 
 	return;

@@ -25,11 +25,13 @@ private:
 	int _num_rings;
 	double _sector_offset;
 	char* _verbosity;
+	bool _dump_geometry;
 public:
     Options(int argc, const char **argv);
     ~Options(void);
     char *getGeometryFile() const;
     char *getMaterialFile() const;
+    bool dumpGeometry() const;
     double getNumAzim() const;
     double getTrackSpacing() const;
     char* getVerbosity() const;
