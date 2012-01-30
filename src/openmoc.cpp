@@ -15,6 +15,8 @@
 #include "Parser.h"
 #include "log.h"
 #include "Options.h"
+#include "LocalCoords.h"
+#include "Geometry.h"
 
 // FIXME: These should be removed when main() is properly implemented
 #pragma GCC diagnostic ignored "-Wunused"
@@ -63,21 +65,32 @@ int main(int argc, const char **argv) {
 				  return;
 			  });
 
-	/* Print out geometry to console if requested at runtime*/
-	if (opts.dumpGeometry())
-		geometry.printString();
+//	/* Print out geometry to console if requested at runtime*/
+//	if (opts.dumpGeometry())
+//		geometry.printString();
 
 	/* Adjust the indices for each geometry class to use uids */
-	geometry.adjustKeys();
+//	geometry.adjustKeys();
 
 	/* Generate the neighbor cells for each surface in geometry */
-	geometry.buildNeighborsLists();
+//	geometry.buildNeighborsLists();
 
 	/* Initialize the trackgenerator */
 	TrackGenerator trackGenerator(&geometry, opts.getTrackSpacing(),
 									opts.getTrackSpacing());
 	trackGenerator.generateTracks();
 	trackGenerator.makeReflective();
+
+	/* Print out geometry to console if requested at runtime*/
+	if (opts.dumpGeometry())
+		geometry.printString();
+
+
+	/* Testing findCell method */
+	LocalCoords* test_coords = new LocalCoords(1.9,-0.5);
+	test_coords->setUniverse(0);
+	bool result = geometry.findCell(test_coords);
+	log_printf(DEBUG, "Found cell for point %s: %d", test_coords->toString().c_str(), result);
 
 
 	log_printf(INFO, "Program complete");

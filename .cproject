@@ -30,6 +30,7 @@
 									<listOptionValue builtIn="false" value="expat"/>
 									<listOptionValue builtIn="false" value="rt"/>
 								</option>
+								<option id="gnu.cpp.compiler.option.debugging.prof.1849269997" superClass="gnu.cpp.compiler.option.debugging.prof" value="false" valueType="boolean"/>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1893069178" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 							</tool>
 							<tool id="cdt.managedbuild.tool.gnu.c.compiler.exe.debug.1729128452" name="GCC C Compiler" superClass="cdt.managedbuild.tool.gnu.c.compiler.exe.debug">

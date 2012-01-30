@@ -16,21 +16,30 @@
  */
 LocalCoords::LocalCoords(double x, double y) {
 	_coords.setCoords(x, y);
+	_next = NULL;
 }
 
 
 /**
  * LocalCoords destructor
  */
-LocalCoords::~LocalCoords() { }
+LocalCoords::~LocalCoords() {
+	LocalCoords* curr1 = _next;
+	LocalCoords* curr2;
+	while (curr1 != NULL) {
+		curr2 = curr1->getNext();
+		delete curr1;
+		curr1 = curr2;
+	}
+}
 
 
 /**
- * Return the cell id that this coordinate is in
- * @return the cell id
+ * Return the level (CELL or LATTICE) of this localcoords
+ * @return the level (CELL or LATTICE)
  */
-int LocalCoords::getCell() const {
-    return _cell;
+coordType LocalCoords::getType() {
+	return _type;
 }
 
 
@@ -40,6 +49,15 @@ int LocalCoords::getCell() const {
  */
 int LocalCoords::getUniverse() const {
     return _universe;
+}
+
+
+/**
+ * Return the cell id for this localcoords
+ * @return the cell id
+ */
+int LocalCoords::getCell() const {
+	return _cell;
 }
 
 
@@ -87,9 +105,14 @@ double LocalCoords::getY() const {
 }
 
 
+/**
+ * Returns a pointer to the coordinates for this localcoord
+ * @return pointer the coordinates
+ */
 Point* LocalCoords::getPoint() {
 	return &_coords;
 }
+
 
 /**
  * Return a pointer to the localcoord at the next level if
@@ -97,17 +120,16 @@ Point* LocalCoords::getPoint() {
  * @return pointer to the next localcoord
  */
 LocalCoords* LocalCoords::getNext() const {
-    return next;
+    return _next;
 }
 
 
-
 /**
- * Sets the cell id that this coordinate is in
- * @param cell the cell id
+ * Set the level for this localcoords
+ * @param level the level for this localcoords (LATTICE or CELL)
  */
-void LocalCoords::setCell(int cell) {
-    _cell = cell;
+void LocalCoords::setType(coordType type) {
+	_type = type;
 }
 
 
@@ -117,6 +139,15 @@ void LocalCoords::setCell(int cell) {
  */
 void LocalCoords::setUniverse(int universe) {
     _universe = universe;
+}
+
+
+/**
+ * Set the cell id for this localcoords
+ * @param cell the cell id
+ */
+void LocalCoords::setCell(int cell) {
+	_cell = cell;
 }
 
 
@@ -147,15 +178,6 @@ void LocalCoords::setLatticeY(int lattice_y) {
 
 
 /**
- * Sets the pointer to the next localcoord object
- * @param next
- */
-void LocalCoords::setNext(LocalCoords* next) {
-    this->next = next;
-}
-
-
-/**
  * Set the x-coordinate
  * @param x the x-coordinate
  */
@@ -174,17 +196,41 @@ void LocalCoords::setY(double y) {
 
 
 /**
- * Converts this localcoords's attributes to a character array representation
+ * Sets the pointer to the next localcoord object
+ * @param next
+ */
+void LocalCoords::setNext(LocalCoords* next) {
+    _next = next;
+}
+
+
+/**
+ * Converts this localcellcoords's attributes to a character array
+ * representation
  * @param a character array of its member's attributes
  */
 std::string LocalCoords::toString() {
-	std::stringstream string;
 
-	string << "LocalCoords: x = " << _coords.getX()
-		<< ", y = " << _coords.getY() << ", cell = "
-		<< _cell << ", universe = " << _universe <<
-		", lattice = " << _lattice << ", lattice x = "
-		<< _lattice_x << ", lattice y = " << _lattice_y;
+	std::stringstream string;
+	LocalCoords* curr = _next;
+
+	string << "LocalCoords: level = ";
+
+	if (_type == UNIV) {
+		string << " UNIVERSE, x = " << _coords.getX() << ", y = " << _coords.getY()
+				<< ", universe = " << _universe << ", cell = " << _cell;
+	}
+	else {
+		string << " LATTICE, x = " << _coords.getX() << ", y = " << _coords.getY()
+				<< ", universe = " << _universe << ", lattice = " << _lattice
+				<< ", lattice_x = " << _lattice_x << ", lattice_y = " << _lattice_y;
+	}
+
+	while (curr != NULL) {
+		log_printf(DEBUG, "here");
+		string << "\n" << curr->toString();
+		curr = _next->getNext();
+	}
 
 	return string.str();
 }

@@ -158,12 +158,16 @@ bool Cell::cellContains(Point* point) {
 //	std::vector<int> cell_surfaces = cell->getSurfaces();
 	std::map<int, Surface*>::iterator iter;
 
+	log_printf(DEBUG, "Inside cell contains method for cell id = %d", _id);
+
 	for (iter = _surfaces.begin(); iter != _surfaces.end(); ++iter) {
+		log_printf(DEBUG, "evaluated point for surface id = %d is = %f", iter->first, iter->second->evaluate(point));
 		if (iter->second->evaluate(point) * iter->first < ON_SURFACE_NEG)
 			return false;
 	}
 
-	return false;
+	log_printf(DEBUG, "Returning true: cell contains this point");
+	return true;
 }
 
 

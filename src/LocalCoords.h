@@ -13,21 +13,29 @@
 #include <sstream>
 #include <string>
 #include "Point.h"
+#include "Universe.h"
+
+enum coordType {
+	UNIV,
+	LAT
+};
 
 class LocalCoords {
 private:
-	int _cell;
+	coordType _type;
 	int _universe;
+	int _cell;
 	int _lattice;
 	int _lattice_x;
 	int _lattice_y;
 	Point _coords;
-	LocalCoords* next;
+	LocalCoords* _next;
 public:
 	LocalCoords(double x, double y);
 	virtual ~LocalCoords();
-    int getCell() const;
+	coordType getType();
     int getUniverse() const;
+    int getCell() const;
     int getLattice() const;
     int getLatticeX() const;
     int getLatticeY() const;
@@ -35,8 +43,9 @@ public:
     double getY() const;
     Point* getPoint();
     LocalCoords *getNext() const;
-    void setCell(int cell);
+    void setType(coordType type);
     void setUniverse(int universe);
+    void setCell(int cell);
     void setLattice(int lattice);
     void setLatticeX(int lattice_x);
     void setLatticeY(int lattice_y);

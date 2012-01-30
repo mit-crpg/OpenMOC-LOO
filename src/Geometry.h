@@ -14,6 +14,7 @@
 #include <utility>
 #include <sstream>
 #include <string>
+#include <math.h>
 #include "Material.h"
 #include "Surface.h"
 #include "Cell.h"

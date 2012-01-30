@@ -36,6 +36,7 @@ public:
     int getNumY() const;
     Point* getOrigin();
     std::vector< std::vector< std::pair<int, Universe*> > > getUniverses() const;
+    Universe* getUniverse(int lattice_x, int lattice_y) const;
     double getWidthX() const;
     double getWidthY() const;
     void adjustKeys();

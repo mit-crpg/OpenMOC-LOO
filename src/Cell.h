@@ -20,6 +20,7 @@
 #include "LocalCoords.h"
 
 class Surface;
+class LocalCoords;
 
 enum cellType {
 	MATERIAL,

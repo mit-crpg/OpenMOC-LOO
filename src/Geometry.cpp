@@ -256,6 +256,10 @@ void Geometry::addCell(Cell* cell) {
 														_universes.end()) {
 
 		Universe* univ = new Universe(cell->getUniverse());
+		Point* origin = new Point();
+		origin->setCoords(0,0);
+		univ->setOrigin(origin);
+		delete origin;
 		addUniverse(univ);
 	}
 
@@ -710,54 +714,89 @@ bool Geometry::findCell(LocalCoords* coords) {
 
 	int universe_id = coords->getUniverse();
 	Universe* universe = _universes.at(universe_id);
-	std::vector<Cell*> cells = _universes.at(universe_id)->getCells();
 
 	if (universe->getType() == SIMPLE) {
+
+		coords->setType(UNIV);
+
+		std::vector<Cell*> cells = _universes.at(universe_id)->getCells();
 		/* Loop over all cells in this universe */
 		for (int c = 0; c < (int)cells.size(); c++) {
 			Cell* cell = cells.at(c);
 
+			log_printf(DEBUG, "Loop over cell c = %d, cell id = %s", c, cell->toString().c_str());
+
 			if (cell->cellContains(coords)) {
 				/* Set the cell on this level */
 				coords->setCell(cell->getUid());
+				log_printf(DEBUG, "Cell id = %d contains this point", cell->getId());
 
 				/* MATERIAL type cell - lowest level, terminate search for cell */
-				if (cell->getType() == MATERIAL) { }
-
-				/* FILL type cell - cell contains a universe at a lower level
-				 * Update coords to next level and continue search
-				 */
-				else if (cell->getType() == FILL) {
-					LocalCoords* new_coords = new LocalCoords(coords->getX(),coords->getY());
-					coords->setNext(new_coords);
-					coords->setUniverse(cell->getUniverse());
-
-					if (!findCell(coords))
-						return false;
+				if (cell->getType() == MATERIAL) {
+	//				coords->setCell(cell->getUid());
+					coords->setCell(cell->getId());
+					return true;
 				}
 
-
-				/* Lattice ? */
-
-				/* If none of the nested cells contained this coord
-				 * This should not be invoked unless there is a problem with
-				 * the way the geometry is setup
-				 */
-				if (!findCell(coords))
-					return false;
+				/* FILL type cell - cell contains a universe at a lower level
+				 * Update coords to next level and continue search */
+				else if (cell->getType() == FILL) {
+					log_printf(DEBUG, "Inside a simple universe...going to next level");
+					LocalCoords* new_coords = new LocalCoords(coords->getX(),coords->getY());
+					coords->setNext(new_coords);
+					coords->setUniverse(static_cast<CellFill*>(cell)->getUniverseFill());
+					return findCell(coords);
+				}
 			}
 		}
-		return false;
 	}
 
-//	/* If universe type is a LATTICE type */
-//	else {
-//		double x = coords->getX()
-//		LocalCoords* new_coords = new LocalCoords(coords->getX(),coords->getY());
-//		coords->setNext(new_coords);
-//		coords->setUniverse(cell->getUniverse());
-//	}
+	/* LATTICE type universe */
+	else if (universe->getType() == LATTICE) {
 
+		coords->setType(LAT);
+
+		/* Compute the x and y indices for the lattice cell this coord is in */
+		Lattice* lat = _lattices.at(universe_id);
+		int lat_x = floor(coords->getX() - lat->getOrigin()->getX()) /
+								lat->getWidthX();
+		int lat_y = floor(coords->getY() - lat->getOrigin()->getY()) /
+								lat->getWidthY();
+
+		/* If the indices are outside the bound of the lattice */
+		if (lat_x < 0 || lat_x >= lat->getNumX() ||
+				lat_y < 0 || lat_y >= lat->getNumY()) {
+
+			log_printf(ERROR, "The lattice cell indices are out of "
+					"bounds (x = %d, y = %d) for the following "
+					"LocalCoords and and Lattice objects:\n%s\n%s",
+					lat_x, lat_y, coords->toString().c_str(),
+					lat->toString().c_str());
+		}
+
+		/* Compute local position of particle in the next level universe */
+		double nextX = coords->getX() - (lat->getOrigin()->getX()
+						+ (lat_x + 0.5) * lat->getWidthX());
+		double nextY = coords->getY() - (lat->getOrigin()->getY()
+						+ (lat_y + 0.5) * lat->getWidthY());
+		LocalCoords* newCoords = new LocalCoords(nextX, nextY);
+
+		/* Set lattice indices */
+//		coords->setLattice(lat->getUid());
+		coords->setLattice(lat->getId());
+		coords->setLatticeX(lat_x);
+		coords->setLatticeY(lat_y);
+
+		coords->setNext(newCoords);
+		coords = newCoords;
+
+//		coords->setUniverse(lat->getUniverse(lat_x, lat_y)->getUid());
+		coords->setUniverse(lat->getUniverse(lat_x, lat_y)->getId());
+
+		log_printf(DEBUG, "Was inside lattice type universe...coords now set to: %s", coords->toString().c_str());
+
+		return findCell(coords);
+	}
 	return false;
 }
 

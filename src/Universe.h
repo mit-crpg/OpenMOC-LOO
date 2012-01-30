@@ -15,6 +15,8 @@
 #include "Cell.h"
 #include "log.h"
 
+class Cell;
+
 enum universeType{
 	SIMPLE,
 	LATTICE

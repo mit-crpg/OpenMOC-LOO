@@ -34,11 +34,17 @@ Lattice::Lattice(const int id, const int num_x, int num_y,
 	_type = LATTICE;
 
 	Universe* empty_universe_pointer;
+
+	/* The parser gives the lattice cells in row major order starting from the
+	 * upper left corner. This double loop reorders the lattice cells from the
+	 * to start from th lower left corner */
 	for (int i = 0; i < num_y; i++) {
 		_universes.push_back(std::vector< std::pair<int, Universe*> >());
 		for (int j = 0; j< num_x; j++){
+//			_universes.at(i).push_back(std::pair<int, Universe*>
+//			(universes[i*num_x+j], empty_universe_pointer));
 			_universes.at(i).push_back(std::pair<int, Universe*>
-			(universes[i*num_x+j], empty_universe_pointer));
+			(universes[(num_y-1-i)*num_x+j], empty_universe_pointer));
 		}
 	}
 }
@@ -129,6 +135,17 @@ Point* Lattice::getOrigin() {
 std::vector< std::vector< std::pair<int, Universe*> > > Lattice::getUniverses() const {
     return _universes;
 }
+
+
+Universe* Lattice::getUniverse(int lattice_x, int lattice_y) const {
+	if (lattice_x > _num_x || lattice_y > _num_y)
+		log_printf(ERROR, "Cannot retrieve universe from lattice id = %d: Index"
+				" out of bounds: Tried to access cell x = %d, y = %d but bounds "
+				"are x = %d, y = %d", _id, lattice_x, lattice_y, _num_x, _num_y);
+
+	return _universes.at(lattice_y).at(lattice_x).second;
+}
+
 
 
 /**
