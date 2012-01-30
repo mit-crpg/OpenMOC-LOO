@@ -3,3 +3,6 @@ obj
 Makefile
 *~
 Configfile.local
+.cproject
+*.d
+*.o
