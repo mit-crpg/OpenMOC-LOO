@@ -20,7 +20,7 @@
 #define ONE_OVER_FOUR_PI 0.0795774715
 
 /* Error thresholds */
-#define ON_SURFACE_POS 1E-3
-#define ON_SURFACE_NEG -1E-3
+#define ON_SURFACE_THRESH 1E-8
+#define TINY_MOVE 1E-6
 
 #endif /* CONFIGURATIONS_H_ */

@@ -133,8 +133,62 @@ void Surface::setNeighborNeg(int index, Cell* cell) {
 	_neighbor_neg[index] = cell;
 }
 
+
 boundaryType Surface::getBoundary(){
        return _boundary;
+}
+
+
+/**
+ * Return true or false if a point is on or off of a surface.
+ * @param point pointer to the point of interest
+ * @return true (on) or false (off)
+ */
+bool Surface::onSurface(Point* point) {
+	if (abs(evaluate(point)) < ON_SURFACE_THRESH)
+		return true;
+	else
+		return false;
+}
+
+
+/**
+ * Return true or false if a localcoord is on or off of a surface.
+ * @param point pointer to the localcoord of interest
+ * @return true (on) or false (off)
+ */
+bool Surface::onSurface(LocalCoords* coord) {
+	return onSurface(coord->getPoint());
+}
+
+
+
+
+double Surface::getDistance(Point* point, double angle) {
+
+	Point intersections[2];
+	int num_inters = intersection(point, angle, intersections);
+	double distance = INFINITY;
+
+	/* If the track does not intersect the surface */
+	if (num_inters == 0)
+		distance = INFINITY;
+
+	/* If there is one intersection point */
+	else if (num_inters == 1)
+		distance = intersections[0].distance(point);
+
+	/* If there are two intersection points */
+	else if (num_inters == 2) {
+		double dist1 = intersections[0].distance(point);
+		double dist2 = intersections[0].distance(point);
+		if (dist1 < dist2)
+			distance = dist1;
+		else
+			distance = dist2;
+	}
+
+	return distance;
 }
 
 
@@ -178,6 +232,55 @@ std::string Plane::toString() {
 			<< _A << ", B = " << _B << ", C = " << _C;
 
 	return string.str();
+}
+
+
+
+int Plane::intersection(Point* point, double angle, Point* points) {
+
+	double x0 = point->getX();
+	double y0 = point->getY();
+
+	int num = 0; 			/* number of intersections */
+	double xcurr, ycurr;	/* coordinates of current intersection point */
+
+	/* The track is vertical */
+	if ((fabs(angle - (M_PI / 2))) < 1.0e-10) {
+
+		/* The plane is also vertical => no intersections */
+		if (_B == 0)
+			return 0;
+
+		/* The plane is not vertical */
+		else {
+			xcurr = x0;
+			ycurr = (-_A * x0 - _C) / _B;
+			points->setCoords(xcurr, ycurr);
+			/* Check that point is in same direction as angle */
+			if ((xcurr - x0)/(ycurr-y0)*sin(angle) > 0)
+				num++;
+			return num;
+		}
+	}
+
+	/* If the track isn't vertical */
+	else {
+		double m = sin(angle) / cos(angle);
+
+		/* The plane and track are parallel, no intersections */
+		if (fabs((fabs(m) - fabs(_A))) < 1e-5 && _B != 0)
+			return 0;
+
+		else {
+			xcurr = -(_B * (y0 - m * x0) + _C)
+					/ (_A + _B * m);
+			ycurr = y0 + m * (xcurr - x0);
+			points->setCoords(xcurr, ycurr);
+			if ((xcurr - x0)/(ycurr-y0)*sin(angle) > 0)
+				num++;
+			return num;
+		}
+	}
 }
 
 
@@ -346,6 +449,7 @@ double XPlane::getYMax(){
 	return -1.0/0.0;
 }
 
+
 /**
  * YPlane constructor for a plane parallel to the y-axis
  * @param id the surface id
@@ -373,6 +477,7 @@ std::string YPlane::toString() {
 double YPlane::getXMin(){
 	return 1.0/0.0;
 }
+
 
 double YPlane::getXMax(){
 	return -1.0/0.0;
@@ -423,6 +528,109 @@ double Circle::evaluate(const Point* point) const {
 }
 
 
+int Circle::intersection(Point* point, double angle, Point* points) {
+	double x0 = point->getX();
+	double y0 = point->getY();
+	double xcurr, ycurr;
+	int num = 0;			/* Number of intersection points */
+	double a, b, c, q, discr;
+
+	/* If the track is vertical */
+	if ((fabs(angle - (M_PI / 2))) < 1.0e-10) {
+		/* Solve for where the line x = x0 and the surface F(x,y) intersect
+		 * Find the y where F(x0, y) = 0			if (track->contains(points))
+				num++;
+		 *
+		 * Substitute x0 into F(x,y) and rearrange to put in
+		 * the form of the quadratic formula: ay^2 + by + c = 0
+		 */
+		a = _B * _B;
+		b = _D;
+		c = _A * x0 * x0 + _C * x0 + _E;
+
+		discr = b*b - 4*a*c;
+
+		/* There are no intersections */
+		if (discr < 0)
+			return 0;
+
+		/* There is one intersection (ie on the surface) */
+		else if (discr == 0) {
+			xcurr = x0;
+			ycurr = -b / (2*a);
+			points[num].setCoords(xcurr, ycurr);
+			if ((ycurr-y0)/(xcurr-x0)*sin(angle) > 0)
+				num++;
+			return num;
+		}
+
+		/* There are two intersections */
+		else {
+			xcurr = x0;
+			ycurr = (-b + sqrt(discr)) / (2 * a);
+			points[num].setCoords(xcurr, ycurr);
+			if ((ycurr-y0)/(xcurr-x0)*sin(angle) > 0)
+				num++;
+
+			xcurr = x0;
+			ycurr = (-b - sqrt(discr)) / (2 * a);
+			points[num].setCoords(xcurr, ycurr);
+			if ((ycurr-y0)/(xcurr-x0)*sin(angle) > 0)
+				num++;
+			return num;
+		}
+	}
+
+	/* If the track isn't vertical */
+	else {
+		/*Solve for where the line y-y0 = m*(x-x0) and the surface F(x,y) intersect
+		 * Find the (x,y) where F(x, y0 + m*(x-x0)) = 0
+		 * Substitute the point-slope formula for y into F(x,y) and rearrange to put in
+		 * the form of the quadratic formula: ax^2 + bx + c = 0
+		 * double m = sin(track->getPhi()) / cos(track->getPhi());
+		 */
+		double m = sin(angle) / cos(angle);
+		q = y0 - m * x0;
+		a = _A + _B * _B * m * m;
+		b = 2 * _B * m * q + _C + _D * m;
+		c = _B * q * q + _D * q + _E;
+
+		discr = b*b - 4*a*c;
+
+		/* There are no intersections */
+		if (discr < 0)
+			return 0;
+
+		/* There is one intersection (ie on the surface) */
+		else if (discr == 0) {
+			xcurr = -b / (2*a);
+			ycurr = y0 + m * (points[0].getX() - x0);
+			points[num].setCoords(xcurr, ycurr);
+			if ((ycurr-y0)/(xcurr-x0)*sin(angle) > 0)
+				num++;
+			return num;
+		}
+
+		/* There are two intersections */
+		else {
+			xcurr = (-b + sqrt(discr)) / (2*a);
+			ycurr = y0 + m * (xcurr - x0);
+			points[num].setCoords(xcurr, ycurr);
+			if ((ycurr-y0)/(xcurr-x0)*sin(angle) > 0)
+				num++;
+
+			xcurr = (-b - sqrt(discr)) / (2*a);
+			ycurr = y0 + m * (xcurr - x0);
+			points[num].setCoords(xcurr, ycurr);
+			if ((ycurr-y0)/(xcurr-x0)*sin(angle) > 0)
+				num++;
+
+			return num;
+		}
+	}
+}
+
+
 /**
  * Finds the intersection points (0, 1, or 2) of a track with a circle
  * @param track the track of interest
@@ -439,7 +647,9 @@ int Circle::intersection(Track* track, Point* points) const {
 	/* If the track is vertical */
 	if ((fabs(track->getPhi() - (M_PI / 2))) < 1.0e-10) {
 		/* Solve for where the line x = x0 and the surface F(x,y) intersect
-		 * Find the y where F(x0, y) = 0
+		 * Find the y where F(x0, y) = 0			if (track->contains(points))
+				num++;
+		 *
 		 * Substitute x0 into F(x,y) and rearrange to put in
 		 * the form of the quadratic formula: ay^2 + by + c = 0
 		 */
@@ -459,7 +669,9 @@ int Circle::intersection(Track* track, Point* points) const {
 			ycurr = -b / (2*a);
 			points[num].setCoords(xcurr, ycurr);
 			if (track->contains(&points[num]))
-				num++;
+				num++;			if (track->contains(points))
+					num++;
+
 			return num;
 		}
 

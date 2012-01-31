@@ -54,6 +54,7 @@ public:
 	void setUniverse(int universe);
 	bool cellContains(Point* point);
 	bool cellContains(LocalCoords* coords);
+	double minSurfaceDist(Point* point, double angle);
 	virtual std::string toString() =0;
 };
 

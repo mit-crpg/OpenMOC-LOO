@@ -52,6 +52,7 @@ public:
     void setX(double x);
     void setY(double y);
     void setNext(LocalCoords *next);
+    void adjustCoords(double delta_x, double delta_y);
     std::string toString();
 };
 

@@ -87,11 +87,12 @@ int main(int argc, const char **argv) {
 
 
 	/* Testing findCell method */
-	LocalCoords* test_coords = new LocalCoords(1.9,-0.5);
+	LocalCoords* test_coords = new LocalCoords(0, 0);
 	test_coords->setUniverse(0);
-	bool result = geometry.findCell(test_coords);
-	log_printf(DEBUG, "Found cell for point %s: %d", test_coords->toString().c_str(), result);
-
+	Cell* result = geometry.findCell(test_coords);
+	log_printf(DEBUG, "Found cell for point %s: %s", test_coords->toString().c_str(), result->toString().c_str());
+	result = geometry.findNextCell(test_coords, M_PI/2);
+	log_printf(DEBUG, "Found next cell for point %s: %s", test_coords->toString().c_str(), result->toString().c_str());
 
 	log_printf(INFO, "Program complete");
 }

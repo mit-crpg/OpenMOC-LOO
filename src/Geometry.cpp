@@ -71,7 +71,8 @@ void Geometry::setNumRings(int num_rings) {
 }
 
 
-/**
+/**	Cell* findNextCell(LocalCoords* coords);
+ *
  * Set the number of angular sectors used for making flat source regions
  * @param num_sectors the number of sectors
  */
@@ -116,6 +117,7 @@ double Geometry::getWidth() const {
 int Geometry::getNumRings() const{
     return _num_rings;
 }
+Cell* findNextCell(LocalCoords* coords);
 
 
 /**
@@ -161,7 +163,8 @@ void Geometry::addMaterial(Material* material) {
 /**
  * Return a material from the geometry
  * @param id the material id
- * @return a pointer to the material object
+ * @return a pointer to the material object	Cell* findNextCell(LocalCoords* coords);
+ *
  */
 Material* Geometry::getMaterial(int id) {
 	try {
@@ -710,7 +713,9 @@ void Geometry::buildNeighborsLists() {
 
 
 // FIXME: This method is still a work in progress
-bool Geometry::findCell(LocalCoords* coords) {
+Cell* Geometry::findCell(LocalCoords* coords) {
+
+	Cell* return_cell = NULL;
 
 	int universe_id = coords->getUniverse();
 	Universe* universe = _universes.at(universe_id);
@@ -724,28 +729,28 @@ bool Geometry::findCell(LocalCoords* coords) {
 		for (int c = 0; c < (int)cells.size(); c++) {
 			Cell* cell = cells.at(c);
 
-			log_printf(DEBUG, "Loop over cell c = %d, cell id = %s", c, cell->toString().c_str());
-
 			if (cell->cellContains(coords)) {
 				/* Set the cell on this level */
 				coords->setCell(cell->getUid());
-				log_printf(DEBUG, "Cell id = %d contains this point", cell->getId());
 
 				/* MATERIAL type cell - lowest level, terminate search for cell */
 				if (cell->getType() == MATERIAL) {
 	//				coords->setCell(cell->getUid());
 					coords->setCell(cell->getId());
-					return true;
+					return_cell = cell;
+					return cell;
 				}
 
 				/* FILL type cell - cell contains a universe at a lower level
 				 * Update coords to next level and continue search */
 				else if (cell->getType() == FILL) {
-					log_printf(DEBUG, "Inside a simple universe...going to next level");
 					LocalCoords* new_coords = new LocalCoords(coords->getX(),coords->getY());
+					new_coords->setUniverse(static_cast<CellFill*>(cell)->getUniverseFill());
+//					coords->setCell(cell->getUid());
+					coords->setCell(cell->getId());
+
 					coords->setNext(new_coords);
-					coords->setUniverse(static_cast<CellFill*>(cell)->getUniverseFill());
-					return findCell(coords);
+					return findCell(new_coords);
 				}
 			}
 		}
@@ -779,7 +784,9 @@ bool Geometry::findCell(LocalCoords* coords) {
 						+ (lat_x + 0.5) * lat->getWidthX());
 		double nextY = coords->getY() - (lat->getOrigin()->getY()
 						+ (lat_y + 0.5) * lat->getWidthY());
+
 		LocalCoords* newCoords = new LocalCoords(nextX, nextY);
+		newCoords->setUniverse(lat->getUniverse(lat_x, lat_y)->getId());
 
 		/* Set lattice indices */
 //		coords->setLattice(lat->getUid());
@@ -788,20 +795,45 @@ bool Geometry::findCell(LocalCoords* coords) {
 		coords->setLatticeY(lat_y);
 
 		coords->setNext(newCoords);
-		coords = newCoords;
 
-//		coords->setUniverse(lat->getUniverse(lat_x, lat_y)->getUid());
-		coords->setUniverse(lat->getUniverse(lat_x, lat_y)->getId());
-
-		log_printf(DEBUG, "Was inside lattice type universe...coords now set to: %s", coords->toString().c_str());
-
-		return findCell(coords);
+		return findCell(newCoords);
 	}
-	return false;
+	return return_cell;
 }
 
 
-/**
+Cell* Geometry::findNextCell(LocalCoords* coords, double angle) {
+
+	/* Move LocalCoords just a slit bit to find the next cell */
+	double delta_x = cos(angle)*TINY_MOVE;
+	double delta_y = sin(angle)*TINY_MOVE;
+	coords->adjustCoords(delta_x, delta_y);
+
+	return findCell(coords);
+}
+
+
+//FIXME: THIS IS A WORK IN PROGRESS
+void Geometry::segmentize(Track* track) {
+
+	double x0 = track->getStart()->getX();
+	double y0 = track->getStart()->getY();
+	double delta_x, delta_y;
+	double dist;
+
+	LocalCoords* segment_start = new LocalCoords(x0, y0);
+	segment_start->setUniverse(0);
+
+	Cell* cell = findCell(segment_start);
+	if (cell != NULL)
+		dist = cell->minSurfaceDist(track->getStart(), track->getPhi());
+
+	while(dist != INFINITY) { }
+
+}
+
+
+/*
  * Function to determine whether a key already exists in a templated map container
  * @param map the map container
  * @param key the key to check

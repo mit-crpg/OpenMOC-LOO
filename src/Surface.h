@@ -14,6 +14,9 @@
 #include "Point.h"
 #include "Track.h"
 #include "Cell.h"
+#include "LocalCoords.h"
+
+class LocalCoords;
 
 #include "log.h"
 
@@ -69,6 +72,7 @@ public:
 	void setNeighborNeg(int index, Cell* cell);
 	boundaryType getBoundary();
 	virtual double evaluate(const Point* point) const =0;
+	virtual int intersection(Point* point, double angle, Point* points) =0;
 	virtual int intersection(Track* track, Point* points) const =0;
 	virtual int intersection(Plane* plane, Point* points) const =0;
 	virtual std::string toString() =0;
@@ -76,6 +80,9 @@ public:
 	virtual double getXMax() =0;
 	virtual double getYMin() =0;
 	virtual double getYMax() =0;
+	bool onSurface(Point* point);
+	bool onSurface(LocalCoords* coord);
+	double getDistance(Point* point, double angle);
 };
 
 /**
@@ -89,6 +96,7 @@ protected:
 public:
 	Plane(const int id, const boundaryType boundary, const double A, const double B, const double C);
 	double evaluate(const Point* point) const;
+	int intersection(Point* point, double angle, Point* points);
 	int intersection(Track* track, Point* points) const;
 	int intersection(Plane* plane, Point* points) const;
 	std::string toString();
@@ -140,6 +148,7 @@ public:
 	Circle(const int id, const boundaryType boundary, const double x,
 				const double y, const double radius);
 	double evaluate(const Point* point) const;
+	int intersection(Point* point, double angle, Point* points);
 	int intersection(Track* track, Point* points) const;
 	int intersection(Plane* plane, Point* points) const;
 	std::string toString();
@@ -147,7 +156,6 @@ public:
 	virtual double getXMax();
 	virtual double getYMin();
 	virtual double getYMax();
-	
 };
 
 #endif /* SURFACE_H_ */

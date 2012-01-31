@@ -12,6 +12,7 @@
 
 #include <map>
 #include <utility>
+#include <vector>
 #include <sstream>
 #include <string>
 #include <math.h>
@@ -21,6 +22,7 @@
 #include "Universe.h"
 #include "Lattice.h"
 #include "LocalCoords.h"
+#include "Track.h"
 #include "log.h"
 #include "configurations.h"
 
@@ -64,7 +66,9 @@ public:
 
 	void adjustKeys();
 	void buildNeighborsLists();
-	bool findCell(LocalCoords* coords);
+	Cell* findCell(LocalCoords* coords);
+	Cell* findNextCell(LocalCoords* coords, double angle);
+	void segmentize(Track* track);
 
 	template <class K, class V>
 	bool mapContainsKey(std::map<K, V> map, K key);

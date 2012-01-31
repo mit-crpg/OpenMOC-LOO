@@ -27,8 +27,8 @@ Lattice::Lattice(const int id, const int num_x, int num_y,
 		 int universes_count, int *universes): Universe(id) {
 	_num_y = num_y;
 	_num_x = num_x;
-	_origin.setX(origin_x);
-	_origin.setY(origin_y);
+	_origin.setX(-width_x*num_x/2.0);
+	_origin.setY(-width_y*num_y/2.0);
 	_width_x = width_x;
 	_width_y = width_y;
 	_type = LATTICE;
@@ -209,7 +209,7 @@ std::string Lattice::toString() {
 			<< _width_x << ", y width = " << _width_y;
 
 	string << "\n\t\tUniverse ids within this lattice:\n\t\t";
-	for (int i = 0; i < _num_y;  i++) {
+	for (int i = _num_y-1; i > -1;  i--) {
 		for (int j = 0; j < _num_x; j++)
 			string << _universes.at(i).at(j).first << "  ";
 		string << "\n\t\t";

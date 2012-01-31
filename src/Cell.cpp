@@ -155,18 +155,13 @@ void Cell::setUniverse(int universe) {
  */
 bool Cell::cellContains(Point* point) {
 
-//	std::vector<int> cell_surfaces = cell->getSurfaces();
 	std::map<int, Surface*>::iterator iter;
 
-	log_printf(DEBUG, "Inside cell contains method for cell id = %d", _id);
-
 	for (iter = _surfaces.begin(); iter != _surfaces.end(); ++iter) {
-		log_printf(DEBUG, "evaluated point for surface id = %d is = %f", iter->first, iter->second->evaluate(point));
-		if (iter->second->evaluate(point) * iter->first < ON_SURFACE_NEG)
+		if (iter->second->evaluate(point) * iter->first < -ON_SURFACE_THRESH)
 			return false;
 	}
 
-	log_printf(DEBUG, "Returning true: cell contains this point");
 	return true;
 }
 
@@ -180,6 +175,28 @@ bool Cell::cellContains(Point* point) {
  */
 bool Cell::cellContains(LocalCoords* coords) {
 	return this->cellContains(coords->getPoint());
+}
+
+
+/*
+ * Computes the minimum distance to a surface from a point with a given
+ * trajectory at a certain angle. If the trajectory will not intersect
+ * any of the surfaces in the cell, returns INFINITY
+ * @param point the point of interest
+ * @param angle the angle of the trajectory (in radians from 0 to 2*PI)
+ */
+double Cell::minSurfaceDist(Point* point, double angle) {
+
+	double min_dist = INFINITY;
+	double d;
+
+	for (int s = 0; s < (int)_surfaces.size(); s++) {
+		d = _surfaces.at(s)->getDistance(point, angle);
+		if (d < min_dist)
+			min_dist = d;
+	}
+
+	return min_dist;
 }
 
 

@@ -204,6 +204,15 @@ void LocalCoords::setNext(LocalCoords* next) {
 }
 
 
+void LocalCoords::adjustCoords(double delta_x, double delta_y) {
+	LocalCoords* curr = this;
+	while (curr != NULL) {
+		curr->setX(curr->getX() + delta_x);
+		curr->setY(curr->getY() + delta_y);
+		curr = curr->getNext();
+	}
+}
+
 /**
  * Converts this localcellcoords's attributes to a character array
  * representation
@@ -212,25 +221,34 @@ void LocalCoords::setNext(LocalCoords* next) {
 std::string LocalCoords::toString() {
 
 	std::stringstream string;
-	LocalCoords* curr = _next;
-
-	string << "LocalCoords: level = ";
-
-	if (_type == UNIV) {
-		string << " UNIVERSE, x = " << _coords.getX() << ", y = " << _coords.getY()
-				<< ", universe = " << _universe << ", cell = " << _cell;
-	}
-	else {
-		string << " LATTICE, x = " << _coords.getX() << ", y = " << _coords.getY()
-				<< ", universe = " << _universe << ", lattice = " << _lattice
-				<< ", lattice_x = " << _lattice_x << ", lattice_y = " << _lattice_y;
-	}
+	LocalCoords* curr = this;
 
 	while (curr != NULL) {
-		log_printf(DEBUG, "here");
-		string << "\n" << curr->toString();
-		curr = _next->getNext();
+		string << "LocalCoords: level = ";
+
+		if (curr->getType() == UNIV) {
+			string << " UNIVERSE, x = " << curr->getX() << ", y = " << curr->getY()
+					<< ", universe = " << curr->getUniverse() << ", cell = " <<
+					curr->getCell();
+		}
+		else if (curr->getType() == LAT){
+			string << " LATTICE, x = " << curr->getX() << ", y = " << curr->getY()
+					<< ", universe = " << curr->getUniverse() << ", lattice = " <<
+					curr->getLattice() << ", lattice_x = " << curr->getLatticeX()
+					<< ", lattice_y = " << curr->getLatticeY();
+		}
+		else {
+			string << " NONE, x = " << curr->getX() << ", y = " << curr->getY()
+					<< ", universe = " << curr->getUniverse() << ", lattice = " <<
+					curr->getLattice() << ", lattice_x = " << curr->getLatticeX()
+					<< ", lattice_y = " << curr->getLatticeY()
+					<< ", cell = " << curr->getCell();
+		}
+
+		string << ", next:\n";
+		curr = curr->getNext();
 	}
+
 
 	return string.str();
 }
