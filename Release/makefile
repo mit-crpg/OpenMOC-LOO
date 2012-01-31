@@ -44,7 +44,7 @@ all: openmoc
 openmoc: $(OBJS) $(USER_OBJS)
 	@echo 'Building target: $@'
 	@echo 'Invoking: GCC C++ Linker'
-	g++ -p -pg -o "openmoc" $(OBJS) $(USER_OBJS) $(LIBS)
+	g++  -o "openmoc" $(OBJS) $(USER_OBJS) $(LIBS)
 	@echo 'Finished building target: $@'
 	@echo ' '
 

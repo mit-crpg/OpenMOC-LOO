@@ -74,10 +74,11 @@ int main(int argc, const char **argv) {
 	geometry.buildNeighborsLists();
 
 	/* Initialize the trackgenerator */
-	TrackGenerator trackGenerator(&geometry, opts.getTrackSpacing(),
+	TrackGenerator trackGenerator(&geometry, opts.getNumAzim(),
 									opts.getTrackSpacing());
 	trackGenerator.generateTracks();
 	trackGenerator.makeReflective();
+	trackGenerator.plotTracksTiff();
 
 
 	log_printf(INFO, "Program complete");

@@ -374,3 +374,44 @@ void TrackGenerator::makeReflective() {
 	return;
 }
 
+/*
+ * plot tracks in tiff file
+ */
+void TrackGenerator::plotTracksTiff() {
+	log_printf(NORMAL, "Creating tiff plot of tracks...");
+
+	/* get width and height */
+	float width = _geom->getWidth();
+	float height = _geom->getHeight();
+
+	float ratio = width/height;
+	int bit_length_x = 1000*ratio;
+	int bit_length_y = 1000;
+
+	// initialize image
+	Magick::Image image_tracks(Magick::Geometry(bit_length_x,bit_length_y), Magick::Color("white"));
+	std::list<Magick::Drawable> drawList;
+
+	float x_pixel = bit_length_x/width;
+	float y_pixel = bit_length_y/height;
+
+	// translate (0,height), rotate -90
+	drawList.push_back(Magick::DrawableTranslation(0,1000));
+	drawList.push_back(Magick::DrawableRotation(-90));
+
+
+	drawList.push_back(Magick::DrawableStrokeColor("black"));
+	drawList.push_back(Magick::DrawableStrokeWidth(1));
+
+	// append tracks to drawList
+	for (int i=0; i < _num_azim; i++) {
+		for (int j=0; j < _num_tracks[i]; j++) {
+			drawList.push_back(Magick::DrawableLine( _tracks[i][j].getStart()->getX()*x_pixel, _tracks[i][j].getStart()->getY()*y_pixel, _tracks[i][j].getEnd()->getX()*x_pixel, _tracks[i][j].getEnd()->getY()*y_pixel));
+		}
+	}
+
+	// output tracks to tracks.tiff
+	image_tracks.draw(drawList);
+	image_tracks.write("tracks.tiff");
+}
+
