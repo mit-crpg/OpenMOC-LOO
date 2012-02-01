@@ -15,9 +15,10 @@
  * @param num_sectors the number of angular sectors per cell
  * @param num_rings the number of rings per cell
  * @param sector_offset the angular offset for computing angular sectors
+ * @param parser pointer to the parser object
  */
 Geometry::Geometry(int num_sectors, int num_rings, double sector_offset, 
-		   Parser *p) {
+		   Parser* parser) {
 
 	_num_sectors = num_sectors;
 	_num_rings = num_rings;
@@ -29,21 +30,28 @@ Geometry::Geometry(int num_sectors, int num_rings, double sector_offset,
 	_x_max = -1.0/0.0;
 	_y_max = -1.0/0.0;
 
+	/* Add each material from parser */
 	p->each_material([this](Material *m) -> void
 			 {
 				 addMaterial(m);
 				 return;
 			 });
+
+	/* Add each surface from parser */
 	p->each_surface([this](Surface *s) -> void
 			{
 				addSurface(s);
 				return;
 			});
+
+	/* Add each cell from parser */
 	p->each_cell([this](Cell *c) -> void
 		     {
 			     addCell(c);
 			     return;
 		     });
+
+	/* Add each lattice from parser */
 	p->each_lattice([this](Lattice *l) -> void
 			{
 				addLattice(l);
@@ -53,7 +61,8 @@ Geometry::Geometry(int num_sectors, int num_rings, double sector_offset,
 
 
 /**
- * Destructor
+ * geometry Destructor clears all memory for materials, surfaces, cells,
+ * universes and lattices
  */
 Geometry::~Geometry() {
 	_materials.clear();
@@ -63,6 +72,7 @@ Geometry::~Geometry() {
 	_lattices.clear();
 }
 
+
 /* Set the number of ring divisions used for making flat source regions
  * @param num_rings the number of rings
  */
@@ -71,8 +81,7 @@ void Geometry::setNumRings(int num_rings) {
 }
 
 
-/**	Cell* findNextCell(LocalCoords* coords);
- *
+/**
  * Set the number of angular sectors used for making flat source regions
  * @param num_sectors the number of sectors
  */
@@ -143,17 +152,22 @@ double Geometry::getSectorOffset() const {
  * @param material a pointer to a material object
  */
 void Geometry::addMaterial(Material* material) {
+
+	/* Checks if material with same id has already been added */
 	if (_materials.find(material->getId()) != _materials.end())
-		log_printf(ERROR, "Cannot add a second material with id = %d", material->getId());
+		log_printf(ERROR, "Cannot add a second material with id = %d",
+				material->getId());
 
 	else {
 		try {
-			_materials.insert(std::pair<int, Material*>(material->getId(), material));
-			log_printf(INFO, "Added material with id = %d to geometry", material->getId());
+			_materials.insert(std::pair<int, Material*>(material->getId(),
+					material));
+			log_printf(INFO, "Added material with id = %d to geometry",
+					material->getId());
 		}
 		catch (std::exception &e) {
-			log_printf(ERROR, "Unable to add material with id = %d. Backtrace:\n%s",
-					material->getId(), e.what());
+			log_printf(ERROR, "Unable to add material with id = %d. Backtrace:"
+					"\n%s", material->getId(), e.what());
 		}
 	}
 }
@@ -162,7 +176,7 @@ void Geometry::addMaterial(Material* material) {
 /**
  * Return a material from the geometry
  * @param id the material id
- * @return a pointer to the material object	Cell* findNextCell(LocalCoords* coords);
+ * @return a pointer to the material object
  *
  */
 Material* Geometry::getMaterial(int id) {
@@ -170,8 +184,8 @@ Material* Geometry::getMaterial(int id) {
 		return _materials.at(id);
 	}
 	catch (std::exception & e) {
-		log_printf(ERROR, "Attempted to retrieve material with id = %d which does "
-				"not exist. Backtrace:\n%s", id, e.what());
+		log_printf(ERROR, "Attempted to retrieve material with id = %d which"
+				" does not exist. Backtrace:\n%s", id, e.what());
 	}
 	exit(0);
 }
@@ -182,20 +196,26 @@ Material* Geometry::getMaterial(int id) {
  * @param a pointer to the surface object
  */
 void Geometry::addSurface(Surface* surface) {
+
+	/* Checks if a surface with the same id has already been added */
 	if (_surfaces.find(surface->getId()) != _surfaces.end())
-		log_printf(ERROR, "Cannot add a second surface with id = %d", surface->getId());
+		log_printf(ERROR, "Cannot add a second surface with id = %d",
+				surface->getId());
 
 	else {
 		try {
-			_surfaces.insert(std::pair<int, Surface*>(surface->getId(), surface));
-			log_printf(INFO, "Added surface with id = %d to geometry", surface->getId());
+			_surfaces.insert(std::pair<int, Surface*>(surface->getId(),
+					surface));
+			log_printf(INFO, "Added surface with id = %d to geometry",
+					surface->getId());
 		}
 		catch (std::exception &e) {
-			log_printf(ERROR, "Unable to add surface with id = %d. Backtrace:\n%s",
-					surface->getId(), e.what());
+			log_printf(ERROR, "Unable to add surface with id = %d. Backtrace:"
+					"\n%s", surface->getId(), e.what());
 		}
 	}
 
+	/* Use new surface to update the boundaries of the geometry */
 	switch (surface->getBoundary()) {
 	case REFLECTIVE:
 		if (surface->getXMin() <= _x_min)
@@ -224,23 +244,24 @@ Surface* Geometry::getSurface(int id) {
 		return _surfaces.at(id);
 	}
 	catch (std::exception & e) {
-		log_printf(ERROR, "Attempted to retrieve surface with id = %d which has"
-				" not been declared. Backtrace:\n%s", id, e.what());
+		log_printf(ERROR, "Attempted to retrieve surface with id = %d which "
+				"has not been declared. Backtrace:\n%s", id, e.what());
 	}
 	exit(0);
 }
 
 
 /**
- * Add a cell to the geometry. Checks if the universe the cell is in already exists;
- * if not, it creates one and adds it to the geometry.
+ * Add a cell to the geometry. Checks if the universe the cell is in already
+ * exists; if not, it creates one and adds it to the geometry.
  * @param cell a pointer to the cell object
  */
 void Geometry::addCell(Cell* cell) {
 
-	/* If a cell with the same id already exists */
+	/* Checks if a cell with the same id has already been added */
 	if (_cells.find(cell->getId()) != _cells.end())
-		log_printf(ERROR, "Cannot add a second cell with id = %d", cell->getId());
+		log_printf(ERROR, "Cannot add a second cell with id = %d",
+				cell->getId());
 
 	/* If the cell is filled with a material which does not exist */
 	else if (cell->getType() == MATERIAL &&
@@ -257,6 +278,8 @@ void Geometry::addCell(Cell* cell) {
 			_universes.find(static_cast<CellFill*>(cell)->getUniverse()) ==
 														_universes.end()) {
 
+		/* Create a new universe with the origin at (0,0) and add it to
+		 * the universe list */
 		Universe* univ = new Universe(cell->getUniverse());
 		Point* origin = new Point();
 		origin->setCoords(0,0);
@@ -291,22 +314,24 @@ void Geometry::addCell(Cell* cell) {
 		log_printf(INFO, "Added cell with id = %d to geometry", cell->getId());
 	}
 	catch (std::exception &e) {
-			log_printf(ERROR, "Unable to add cell with id = %d. Backtrace:\n%s",
-					cell->getId(), e.what());
+			log_printf(ERROR, "Unable to add cell with id = %d. Backtrace:"
+					"\n%s", cell->getId(), e.what());
 	}
 
-	/* Checks if the universe the cell in exists; if not, creates new universe */
+	/* Checks if the universe the cell in exists; if not, creates universe */
 	if (_universes.find(cell->getUniverse()) == _universes.end()) {
 		try {
 			Universe* univ = new Universe(cell->getUniverse());
 			addUniverse(univ);
 		}
 		catch (std::exception &e) {
-			log_printf(ERROR, "Unable to create a new universe with id = %d and"
-					" add it to the geometry. Backtrace:\n%s",
+			log_printf(ERROR, "Unable to create a new universe with id = %d "
+					"and add it to the geometry. Backtrace:\n%s",
 					cell->getUniverse(), e.what());
 		}
 	}
+
+	/* Adds the cell to the appropriate universe */
 	_universes.at(cell->getUniverse())->addCell(cell);
 
 	return;
@@ -330,23 +355,17 @@ Cell* Geometry::getCell(int id) {
 }
 
 
-/**Hey guys,
-
-I finally managed to track down Bill. Here I attach the list of judges for outreach and my suggested changes to Deike's two invitation letters. Looks like we're good to go! Please keep us updated as to your progress. Happy hunting!
-
-As always, any questions, just ask!
-
-All the best,
-
-Robbie.
- *
+/*
  * Add a universe to the geometry
  * @param universe a pointer to the universe object
  */
 void Geometry::addUniverse(Universe* universe) {
+	/* Checks if a universe with the same id has already been added */
 	if (_universes.find(universe->getId()) != _universes.end())
 		log_printf(ERROR, "Cannot add a second universe with id = %d",
 				universe->getId());
+
+	/* Add the universe */
 	else {
 		try {
 			_universes.insert(std::pair<int, Universe*>(universe->getId(),
@@ -362,6 +381,7 @@ void Geometry::addUniverse(Universe* universe) {
 
 	return;
 }
+
 
 /**
  * Return a universe from the geometry
@@ -384,10 +404,9 @@ Universe* Geometry::getUniverse(int id) {
  * Add a lattice to the geometry. Adds the lattice to both the lattice and
  * universe containers
  * @param lattice a pointer to the lattice object
- *
  */
 void Geometry::addLattice(Lattice* lattice) {
-	/* If the lattices container already has a lattice with the same id */
+	/* Checks whether a lattice with the same id has already been added */
 	if (_lattices.find(lattice->getId()) != _lattices.end())
 		log_printf(ERROR, "Cannot add a second lattice with id = %d",
 				lattice->getId());
@@ -441,8 +460,8 @@ Lattice* Geometry::getLattice(int id) {
 		return _lattices.at(id);
 	}
 	catch (std::exception & e) {
-		log_printf(ERROR, "Attempted to retrieve lattice with id = %d which has"
-				"not been declared. Backtrace:\n%s", id, e.what());
+		log_printf(ERROR, "Attempted to retrieve lattice with id = %d which "
+				"has not been declared. Backtrace:\n%s", id, e.what());
 	}
 	exit(0);
 }
@@ -461,9 +480,9 @@ std::string Geometry::toString() {
 	std::map<int, Universe*>::iterator iter4;
 	std::map<int, Lattice*>::iterator iter5;
 
-
-	string << "Geometry: width = " << getWidth() << ", height = " << getHeight()
-			<< ", base universe id = " << _base_universe << ", Bounding Box: (("
+	string << "Geometry: width = " << getWidth() << ", height = " <<
+			getHeight() << ", base universe id = " << _base_universe <<
+			", Bounding Box: (("
 			<< _x_min << ", " << _y_min << "), (" << _x_max << ", " << _y_max
 			<< ")";
 
@@ -495,8 +514,6 @@ std::string Geometry::toString() {
 }
 
 
-
-
 /*
  * Prints a string representation of all of the geometry's
  * objects to the console
@@ -508,17 +525,20 @@ void Geometry::printString() {
 }
 
 
-// Adjusts the keys for surfaces, cells, universes, and lattices to uids
+/* Adjusts the keys for surfaces, cells, universes, and lattices to uids
+ */
 void Geometry::adjustKeys() {
 
 	log_printf(NORMAL, "Adjusting the keys for the geometry...");
 
+	/* Iterators for all geometry classes */
 	std::map<int, Material*>::iterator iter1;
 	std::map<int, Surface*>::iterator iter2;
 	std::map<int, Cell*>::iterator iter3;
 	std::map<int, Universe*>::iterator iter4;
 	std::map<int, Lattice*>::iterator iter5;
 
+	/* New maps for geometry classes using uids instead of ids as keys */
 	std::map<int, Material*> adjusted_materials;
 	std::map<int, Surface*> adjusted_surfaces;
 	std::map<int, Cell*> adjusted_cells;
@@ -526,7 +546,6 @@ void Geometry::adjustKeys() {
 	std::map<int, Lattice*> adjusted_lattices;
 
 	int uid;
-
 
 	/**************************************************************************
 	 * Ajust the indices for attributes of all cell and lattice
@@ -550,11 +569,11 @@ void Geometry::adjustKeys() {
 		/* FILL type cells */
 		else {
 			CellFill* cell_fill = static_cast<CellFill*>(cell);
-			int universe_fill = _universes.at(cell_fill->getUniverseFill())->getUid();
+			int universe_fill = _universes.at(cell_fill->getUniverseFill())->
+											getUid();
 			cell_fill->adjustKeys(universe, universe_fill);
 		}
 	}
-
 
 	/* Adjust the container of universe ids inside each lattice to hold the
 	 * universes' uids */
@@ -574,13 +593,17 @@ void Geometry::adjustKeys() {
 		for (iter1 = _materials.begin(); iter1 != _materials.end(); ++iter1) {
 			uid = iter1->second->getUid();
 			Material* material = iter1->second;
-			adjusted_materials.insert(std::pair<int, Material*>(uid, material));
+			adjusted_materials.insert(std::pair<int, Material*>
+														(uid, material));
 		}
+
+		/* Reset the materials container to the new map*/
 		_materials.clear();
 		_materials = adjusted_materials;
 	}
 	catch (std::exception &e) {
-		log_printf(ERROR, "Unable to adjust material' keys. Backtrace:\n%s", e.what());
+		log_printf(ERROR, "Unable to adjust material' keys. Backtrace:\n%s",
+					e.what());
 	}
 
 
@@ -591,11 +614,14 @@ void Geometry::adjustKeys() {
 			Surface* surface = iter2->second;
 			adjusted_surfaces.insert(std::pair<int, Surface*>(uid, surface));
 		}
+
+		/* Reset the surfaces container to the new map*/
 		_surfaces.clear();
 		_surfaces = adjusted_surfaces;
 	}
 	catch (std::exception &e) {
-		log_printf(ERROR, "Unable to adjust surface' keys. Backtrace:\n%s", e.what());
+		log_printf(ERROR, "Unable to adjust surface' keys. Backtrace:\n%s",
+					e.what());
 	}
 
 	/* Adjust cells indices to be uids */
@@ -605,11 +631,14 @@ void Geometry::adjustKeys() {
 			Cell* cell = iter3->second;
 			adjusted_cells.insert(std::pair<int, Cell*>(uid, cell));
 		}
+
+		/* Reset the cell container to the new map*/
 		_cells.clear();
 		_cells = adjusted_cells;
 	}
 	catch (std::exception &e) {
-		log_printf(ERROR, "Unable to adjust cell' keys Backtrace:\n%s", e.what());
+		log_printf(ERROR, "Unable to adjust cell' keys Backtrace:\n%s",
+					e.what());
 	}
 
 	/* Adjust universes indices to be uids */
@@ -617,13 +646,17 @@ void Geometry::adjustKeys() {
 		for (iter4 = _universes.begin(); iter4 != _universes.end(); ++iter4) {
 			uid = iter4->second->getUid();
 			Universe* universe = iter4->second;
-			adjusted_universes.insert(std::pair<int, Universe*>(uid, universe));
+			adjusted_universes.insert(std::pair<int, Universe*>
+												(uid, universe));
 		}
+
+		/* Reset the universes container to the new map*/
 		_universes.clear();
 		_universes = adjusted_universes;
 	}
 	catch (std::exception &e) {
-		log_printf(ERROR, "Unable to adjust universes' keys Backtrace:\n%s", e.what());
+		log_printf(ERROR, "Unable to adjust universes' keys Backtrace:\n%s",
+					e.what());
 	}
 
 	/* Adjust lattices indices to be uids */
@@ -633,11 +666,14 @@ void Geometry::adjustKeys() {
 			Lattice* lattice = iter5->second;
 			adjusted_lattices.insert(std::pair<int, Lattice*>(uid, lattice));
 		}
+
+		/* Reset the lattices container to the new map*/
 		_lattices.clear();
 		_lattices = adjusted_lattices;
 	}
 	catch (std::exception &e) {
-		log_printf(ERROR, "Unable to adjust lattices' keys Backtrace:\n%s", e.what());
+		log_printf(ERROR, "Unable to adjust lattices' keys Backtrace:\n%s",
+					e.what());
 	}
 
 	return;
@@ -645,16 +681,20 @@ void Geometry::adjustKeys() {
 
 
 /**
- * Builds each surfaces list of neighboring cells on the positive and negative side of the
- * surface. This function helps speed up searches for the next cell when for a surface is
- * is crossed while segmenting tracks across the geometry
+ * Builds each surfaces list of neighboring cells on the positive and negative
+ * side of the surface. This function helps speed up searches for the next cell
+ * when for a surface is is crossed while segmenting tracks across the geometry
  */
 void Geometry::buildNeighborsLists() {
 
 	log_printf(NORMAL, "Building neighbor cell lists for each surface...");
 
+	/* Arrays to count the number of surfaces found on the positive/negative
+	 * side of each surface */
 	int count_positive[_surfaces.size()];
 	int count_negative[_surfaces.size()];
+
+	/* Cell and Surface map iterators */
 	std::map<int, Cell*>::iterator iter1;
 	std::map<int, Surface*>::iterator iter2;
 
@@ -721,6 +761,19 @@ void Geometry::buildNeighborsLists() {
 }
 
 
+/**
+ * Find the cell that this localcoords object is in. This method assumes that
+ * the localcoord has coordinates and a universe id. The method will
+ * recursively find the localcoord by building a linked list of localcoords
+ * from the localcoord passed in as an argument down to the lowest level cell
+ * found. In the process it will set the local coordinates for each localcoord
+ * in the linked list for the lattice or universe that it is in. If the
+ * localcoord is outside the bounds of the geometry or on the boundaries this
+ * method will return NULL; otherwise it will return a pointer to the cell
+ * that the localcoords is currently in.
+ * @param coords pointer to a localcoords object
+ * @return returns a pointer to a cell if found, NULL if no cell found
+ */
 Cell* Geometry::findCell(LocalCoords* coords) {
 	int universe_id = coords->getUniverse();
 	Universe* univ = _universes.at(universe_id);
@@ -728,6 +781,22 @@ Cell* Geometry::findCell(LocalCoords* coords) {
 }
 
 
+/**
+ * Finds the next cell for a localcoords object along a trajectory defined
+ * by some angle (in radians from 0 to PI). The method will update the
+ * localcoord passed in as an argument to be the one at the boundary of the
+ * next cell crossed along the given trajectory. It will do this by
+ * recursively building a linked list of localcoords from the localcoord
+ * passed in as an argument down to the lowest level cell found. In the
+ * process it will set the local coordinates for each localcoord in the
+ * linked list for the lattice or universe that it is in. If the
+ * localcoord is outside the bounds of the geometry or on the boundaries this
+ * method will return NULL; otherwise it will return a pointer to the cell
+ * that the localcoords will reach next along its trajectory.
+ * @param coords pointer to a localcoords object
+ * @param angle the angle of the trajectory
+ * @return returns a pointer to a cell if found, NULL if no cell found
+ */
 Cell* Geometry::findNextCell(LocalCoords* coords, double angle) {
 
 	Cell* cell = NULL;
@@ -741,9 +810,11 @@ Cell* Geometry::findNextCell(LocalCoords* coords, double angle) {
 		return NULL;
 
 	else {
-		/* Check the min dist to the next surface in that cell */
+		/* Check the min dist to the next surface in the current cell */
 		dist = cell->minSurfaceDist(coords->getPoint(), angle);
 
+		/* If the distance returned is not INFINITY, the trajectory will
+		 * intersect a surface in the cell */
 		if (dist != INFINITY) {
 			/* Move LocalCoords just to the next surface in the cell plus an
 			 * additional small bit into the next cell */
@@ -755,43 +826,38 @@ Cell* Geometry::findNextCell(LocalCoords* coords, double angle) {
 			return findCell(coords);
 		}
 
-		/* Readjust to base universe */
+		/* If the distance returned is infinity, the trajectory will not
+		 * intersect a surface in the cell. We thus need to readjust to
+		 * the localcoord to the base universe and check whether we need
+		 * to move to a new lattice cell */
 		else if (dist == INFINITY) {
 
 			LocalCoords* curr = coords;
-			LocalCoords* prev = coords;
 
-			/* Loop over all coordinate levels and delete the first one that is not a
-			 * lattice type or the base universe */
+			/* Get the lowest level localcoords in the linked list */
 			while (curr->getNext() != NULL)
 				curr = curr->getNext();
 
+			/* Retrace linkedlist from lowest level */
 			while (curr != NULL && curr->getUniverse() != 0) {
 				curr = curr->getPrev();
+
+				/* If we reach a localcoord in a lattice, delete all lower
+				 * level localcoords in linked list and break loop. */
 				if (curr->getType() == LAT) {
 					curr->setNext(NULL);
 					delete curr->getNext();
 					curr = NULL;
 				}
 			}
-//			while(curr != NULL) {
-//				if (curr->getType() == UNIV && curr->getUniverse() != 0) {
-//					prev->setNext(NULL);
-//					delete curr;
-//					curr = NULL;
-//				}
-//				else {
-//					prev = curr;
-//					curr = curr->getNext();
-//				}
-//			}
 
+			/* Get the lowest level universe in linkedlist */
 			curr = coords;
-
-			/* Get the lowest level universe */
 			while(curr->getNext() != NULL)
 				curr = curr->getNext();
 
+			/* If the lowest level localcoords is inside a lattice, find the
+			 * next lattice cell */
 			if (curr->getType() == LAT) {
 				int lattice_id = curr->getLattice();
 				Lattice* lattice = _lattices.at(lattice_id);
@@ -810,38 +876,62 @@ Cell* Geometry::findNextCell(LocalCoords* coords, double angle) {
 }
 
 
+/**
+ * This method creates segments within flat source regions in the geometry
+ * for a given track. It starts at the beginning of the track and finds
+ * successive intersection points as the track passes through the geometry
+ * and creates segment structs and adds them to the track
+ * @param track a pointer to a track
+ */
 void Geometry::segmentize(Track* track) {
 
+	/* Track starting point coordinates and azimuthal angle */
 	double x0 = track->getStart()->getX();
 	double y0 = track->getStart()->getY();
 	double phi = track->getPhi();
-	double dist;
 
+	/* Length of each segment */
+	double segment_length;
+
+	/* Use a LocalCoords for the start and end of each segment */
 	LocalCoords segment_start(x0, y0);
 	LocalCoords segment_end(x0, y0);
 	segment_start.setUniverse(0);
 	segment_end.setUniverse(0);
 
+	/* Find the cell for the track starting point */
 	Cell* curr = findCell(&segment_end);
-	Cell* prev = curr;
+	Cell* prev;
+
+	/* If starting point was outside the bounds of the geometry */
 	if (curr == NULL)
 		log_printf(WARNING, "Could not find a cell containing the start point "
 				"of this track: %s", track->toString().c_str());
 
+	/* While the segment end localcoords is still within the geometry, move
+	 * it to the next cell, create a new segment, and add it to the geometry */
 	while (curr != NULL) {
 
+
+		/* Find the next cell */
+		prev = curr;
 		curr = findNextCell(&segment_end, phi);
-		dist = segment_end.getPoint()->distance(segment_start.getPoint());
+
+		/* Find the segment length between the segments start and end points */
+		segment_length = segment_end.getPoint()->distance(segment_start.getPoint());
+
+		/* Create a new segment */
 		segment* new_segment = new segment;
-		new_segment->_length = dist;
+		new_segment->_length = segment_length;
+		//FIXME: this needs to use our flat source region id from some equation
+		//mapping lattices, universes and cells to FSR ids
+		new_segment->_region_id = prev->getUid();
 
 		/* Update coordinates for start of next segment */
 		segment_start.setX(segment_end.getX());
 		segment_start.setY(segment_end.getY());
 
-		//FIXME: this needs to use our flat source region id from some equation
-		//mapping lattices, universes and cells to FSR ids
-		new_segment->_region_id = prev->getId();
+		/* Add the segment to the track */
 		track->addSegment(new_segment);
 	}
 

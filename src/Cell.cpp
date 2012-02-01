@@ -32,8 +32,7 @@ Cell::Cell(int id, cellType type, int universe, int num_surfaces,
 	
 	/* This empty surface pointer is just a null value for the _surfaces
 	 * map. The Geometry will register the actual surface pointer when
-	 * the cell is added to the geometry
-	 */
+	 * the cell is added to the geometry */
 	Surface* empty_surface_pointer;
 	for (int i = 0; i < num_surfaces; i++)
 		_surfaces.insert(std::pair<int, Surface*>(surfaces[i],
@@ -50,11 +49,13 @@ Cell::~Cell() {
 
 
 /**
- * Add a surface to the cell
- * @param surface the surface id
+ * Registers a surface pointer with the Cell's surfaces map. This method is
+ * used by the geometry whenever a new cell is added to it
+ * @param surface the surface pointer
  */
 void Cell::setSurfacePointer(Surface* surface) {
-	/* iF _surfaces does not contain this surface id throw an error */
+
+	/* if _surfaces does not contain this surface id throw an error */
 	if (_surfaces.find(surface->getId()) == _surfaces.end() &&
 			_surfaces.find(-surface->getId()) == _surfaces.end())
 
@@ -63,7 +64,7 @@ void Cell::setSurfacePointer(Surface* surface) {
 				_id, surface->getId());
 
 	try{
-		/* If the cell contains the negative side of the surface */
+		/* If the cell contains the positive side of the surface */
 		if (_surfaces.find(surface->getId()) != _surfaces.end())
 			_surfaces[surface->getId()] = surface;
 
@@ -155,9 +156,12 @@ void Cell::setUniverse(int universe) {
  */
 bool Cell::cellContains(Point* point) {
 
+	/* Loop over all surfaces inside the cell */
 	std::map<int, Surface*>::iterator iter;
-
 	for (iter = _surfaces.begin(); iter != _surfaces.end(); ++iter) {
+
+		/* If the surface evaluated point is not the same sign as the surface
+		 * or within a threshold, return false */
 		if (iter->second->evaluate(point) * iter->first < -ON_SURFACE_THRESH)
 			return false;
 	}
@@ -192,8 +196,11 @@ double Cell::minSurfaceDist(Point* point, double angle) {
 
 	std::map<int, Surface*>::iterator iter;
 
+	/* Loop over all of the cell's surface */
 	for (iter = _surfaces.begin(); iter != _surfaces.end(); ++iter) {
 		d = iter->second->getDistance(point, angle);
+
+		/* If the distance to cell is less than current min distance, update */
 		if (d < min_dist)
 			min_dist = d;
 	}
@@ -204,10 +211,14 @@ double Cell::minSurfaceDist(Point* point, double angle) {
 
 /**
  *  CellBasic constructor
- *  @param material the material used to fill this cell
+ *  @param id the cell id
+ *  @param universe the id of the universe this cell is in
+ *  @param num_surfaces the number of surfaces in this cell
+ *  @param surfaces array of surface ids in this cell
+ *  @param material id of the material filling this cell
  */
 CellBasic::CellBasic(int id, int universe, int num_surfaces, 
-		   int *surfaces, int material):
+		   int* surfaces, int material):
 	Cell(id, MATERIAL, universe, num_surfaces, surfaces) {
 	_material = material;
 }
@@ -226,27 +237,34 @@ int CellBasic::getMaterial() const {
  * universe that is filling this cell, and the id of the surfaces inside
  * this cell to be the uids of each rather than the ids defined by the
  * input file
+ * @param universe uid of the universe this cell is in
+ * @param material uid of the material this cell contains
  */
 void CellBasic::adjustKeys(int universe, int material) {
 
 	_universe = universe;
 	_material = material;
+
+	/* New surfaces map uses uid instead of id as the keys */
 	std::map<int, Surface*> adjusted_surfaces;
 
 	try {
 		/* Adjust surface ids to be the positive/negative surface uids */
 		std::map<int, Surface*>::iterator iter;
 		for (iter = _surfaces.begin(); iter != _surfaces.end(); ++iter) {
+
 			/* Positive side of surface, use positive uid */
 			if (iter->first > 0)
 				adjusted_surfaces.insert(std::pair<int, Surface*>
 								(iter->second->getUid(), iter->second));
+
 			/* Negative side of surface, use negative uid */
 			else
 				adjusted_surfaces.insert(std::pair<int, Surface*>
 								(iter->second->getUid()*-1, iter->second));
 		}
 
+		/* Reset the surfaces container to be the one with new keys*/
 		_surfaces.clear();
 		_surfaces = adjusted_surfaces;
 	}
@@ -279,6 +297,10 @@ std::string CellBasic::toString() {
 
 /**
  *  CellFill constructor
+ *  @param id the cell id
+ *  @param universe the id of the universe this cell is in
+ *  @param num_surfaces the number of surfaces in this cell
+ *  @param surfaces array of surface ids in this cell
  *  @param universe_fill the universe used to fill this cell
  */
 CellFill::CellFill(int id, int universe, int num_surfaces, 
@@ -310,28 +332,35 @@ void CellFill::setUniverseFill(int universe_fill) {
  * universe that is filling this cell, and the id of the surfaces inside
  * this cell to be the uids of each rather than the ids defined by the
  * input file
+ * @param universe uid of the universe this cell is in
+ * @param material uid of the material this cell contains
+ *
  */
 void CellFill::adjustKeys(int universe, int universe_fill) {
 
 	_universe = universe;
 	_universe_fill = universe_fill;
 
+	/* New surfaces map uses uid instead of id as the keys */
 	std::map<int, Surface*> adjusted_surfaces;
 
 	try {
 		/* Adjust surface ids to be the positive/negative surface uids */
 		std::map<int, Surface*>::iterator iter;
 		for (iter = _surfaces.begin(); iter != _surfaces.end(); ++iter) {
+
 			/* Positive side of surface, use positive uid */
 			if (iter->first > 0)
 				adjusted_surfaces.insert(std::pair<int, Surface*>
 									(iter->second->getUid(), iter->second));
+
 			/* Negative side of surface, use negative uid */
 			else
 				adjusted_surfaces.insert(std::pair<int, Surface*>
 									(iter->second->getUid()*-1, iter->second));
 		}
 
+		/* Reset the surfaces container to be the one with new keys*/
 		_surfaces.clear();
 		_surfaces = adjusted_surfaces;
 	}

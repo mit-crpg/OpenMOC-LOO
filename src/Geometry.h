@@ -12,10 +12,10 @@
 
 #include <map>
 #include <utility>
-#include <vector>
 #include <sstream>
 #include <string>
 #include <math.h>
+#include "Parser.h"
 #include "Material.h"
 #include "Surface.h"
 #include "Cell.h"
@@ -25,7 +25,6 @@
 #include "Track.h"
 #include "log.h"
 #include "configurations.h"
-#include "Parser.h"
 
 class Geometry {
 private:
@@ -38,9 +37,10 @@ private:
 	std::map<int, Cell*> _cells;
 	std::map<int, Universe*> _universes;
 	std::map<int, Lattice*> _lattices;
+
 public:
 	Geometry(int num_sectors, int num_rings, double sector_offset, 
-		 Parser *p);
+			Parser* parser);
 	virtual ~Geometry();
 	void setNumRings(int num_rings);
 	void setNumSectors(int num_sectors);

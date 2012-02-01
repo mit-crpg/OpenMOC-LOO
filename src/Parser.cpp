@@ -213,7 +213,7 @@ Parser::Parser (const Options *opts) {
 
 	fclose(geofile);
 
-	/* Tells the parse we've reached the end */
+	/* Tells the parse we've red the end */
 	XML_Parse(parser, NULL, 0, true);
 	XML_ParserFree(parser);
 
