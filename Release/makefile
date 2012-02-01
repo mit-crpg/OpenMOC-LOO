@@ -44,11 +44,7 @@ all: OpenMOC
 OpenMOC: $(OBJS) $(USER_OBJS)
 	@echo 'Building target: $@'
 	@echo 'Invoking: GCC C++ Linker'
-<<<<<<< HEAD
 	g++  -o "OpenMOC" $(OBJS) $(USER_OBJS) $(LIBS)
-=======
-	g++  -o "openmoc" $(OBJS) $(USER_OBJS) $(LIBS)
->>>>>>> branch 'master' of git@github.com:wbinventor/OpenMOC.git
 	@echo 'Finished building target: $@'
 	@echo ' '
 

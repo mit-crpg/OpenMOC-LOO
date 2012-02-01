@@ -32,8 +32,6 @@ public:
 		int universes_count, int *universes);
 	virtual ~Lattice();
 	void setUniversePointer(Universe* universe);
-    int getId() const;
-    int getLevel() const;
     int getNumX() const;
     int getNumY() const;
     Point* getOrigin();
@@ -46,16 +44,5 @@ public:
     Cell* findCell(LocalCoords* coords, std::map<int, Universe*> universes);
     Cell* findNextLatticeCell(LocalCoords* coords, double angle, std::map<int, Universe*> universes);
     std::string toString();
-	int getId() const;
-	int getLevel() const;
-	int getNumX() const;
-	int getNumY() const;
-	Point* getOrigin();
-	std::vector< std::vector< std::pair<int, Universe*> > > getUniverses() const;
-	double getWidthX() const;
-	double getWidthY() const;
-	void adjustKeys();
-	std::string toString();
 };
-
 #endif /* LATTICE_H_ */

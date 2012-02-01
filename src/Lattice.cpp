@@ -99,15 +99,6 @@ void Lattice::setUniversePointer(Universe* universe) {
 
 
 /**
- * Get the lattice id
- * @return the lattice id
- */
-int Lattice::getId() const {
-    return _id;
-}
-
-
-/**
  * Return the number of lattice cells along the x-axis
  * @return the number of lattice cells
  */
@@ -287,8 +278,8 @@ Cell* Lattice::findNextLatticeCell(LocalCoords* coords, double angle,
 	double m = sin(angle) / cos(angle);
 	int lattice_x = coords->getLatticeX();
 	int lattice_y = coords->getLatticeY();
-	int new_lattice_x;
-	int new_lattice_y;
+	int new_lattice_x = lattice_x;
+	int new_lattice_y = lattice_y;
 
 	Point test;
 
