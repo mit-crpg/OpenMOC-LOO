@@ -82,7 +82,7 @@ public:
 	virtual double getYMax() =0;
 	bool onSurface(Point* point);
 	bool onSurface(LocalCoords* coord);
-	double getDistance(Point* point, double angle);
+	double getMinDistance(Point* point, double angle, Point* intersection);
 };
 
 /**

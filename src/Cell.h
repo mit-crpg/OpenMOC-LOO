@@ -59,7 +59,7 @@ public:
 	void setUniverse(int universe);
 	bool cellContains(Point* point);
 	bool cellContains(LocalCoords* coords);
-	double minSurfaceDist(Point* point, double angle);
+	double minSurfaceDist(Point* point, double angle, Point* surf_intersection);
 	virtual std::string toString() =0;
 };
 

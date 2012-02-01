@@ -164,7 +164,7 @@ bool Surface::onSurface(LocalCoords* coord) {
 
 
 
-double Surface::getDistance(Point* point, double angle) {
+double Surface::getMinDistance(Point* point, double angle, Point* intersection) {
 
 	/* Point array for intersections with this surface */
 	Point intersections[2];
@@ -173,8 +173,8 @@ double Surface::getDistance(Point* point, double angle) {
 //	Track track;
 //	track.setValues(point->getX(), point->getY(), 0, 0, angle);
 
-//	int num_inters = intersection(&track, intersections);
-	int num_inters = intersection(point, angle, intersections);
+// 	int num_inters = intersection(&track, intersections);
+	int num_inters = this->intersection(point, angle, intersections);
 	double distance;
 
 	/* If the track does not intersect the surface */
@@ -187,17 +187,25 @@ double Surface::getDistance(Point* point, double angle) {
 	else if (num_inters == 1) {
 		log_printf(DEBUG, "Found 1 interesection points with surface");
 		distance = intersections[0].distance(point);
+		intersection->setX(intersections[0].getX());
+		intersection->setY(intersections[0].getY());
 	}
 
 	/* If there are two intersection points */
 	else if (num_inters == 2) {
 		log_printf(DEBUG, "Found 2 interesection points with surface");
 		double dist1 = intersections[0].distance(point);
-		double dist2 = intersections[0].distance(point);
-		if (dist1 < dist2)
+		double dist2 = intersections[1].distance(point);
+		if (dist1 < dist2) {
 			distance = dist1;
-		else
+			intersection->setX(intersections[0].getX());
+			intersection->setY(intersections[0].getY());
+		}
+		else {
 			distance = dist2;
+			intersection->setX(intersections[1].getX());
+			intersection->setY(intersections[1].getY());
+		}
 	}
 
 	else
@@ -434,7 +442,7 @@ double Plane::getYMax(){
  * @param id the surface id
  * @param the location of the plane along the y-axis
  */
-XPlane::XPlane(const int id, const boundaryType boundary, const double C): Plane(id, boundary, 1, 0, -C) {
+XPlane::XPlane(const int id, const boundaryType boundary, const double C): Plane(id, boundary, 0, 1, -C) {
 	_type = XPLANE;
 }
 
