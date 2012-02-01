@@ -15,7 +15,7 @@
 #include <assert.h>
 
 /* Verbose debugging of the parser, but doesn't follow log* format */
-#define DEBUG
+//#define DEBUG
 
 /* These should really be static, but thanks to C++ that's impossible.  I've
  * still declared them up here though, as at least they can be made private!
