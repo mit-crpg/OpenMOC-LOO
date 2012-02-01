@@ -47,6 +47,7 @@ void Plotting::plotSegments(TrackGenerator* track_generator){
 	for (int i = 0; i < 5; i++){
 		_draw_lists[i]->push_back(Magick::DrawableTranslation(_bit_length_x/2,_bit_length_y/2));
 		_draw_lists[i]->push_back(Magick::DrawableStrokeWidth(1));
+		_draw_lists[i]->push_back(Magick::DrawableStrokeAntialias(false));
 	}
 
 
@@ -115,6 +116,7 @@ void Plotting::plotTracksTiff(TrackGenerator* track_generator) {
 
 	drawList.push_back(Magick::DrawableStrokeColor("black"));
 	drawList.push_back(Magick::DrawableStrokeWidth(1));
+	drawList.push_back(Magick::DrawableStrokeAntialias(false));
 
 	Track** tracks = track_generator->getTracks();
 	int* num_tracks = track_generator->getNumTracks();
