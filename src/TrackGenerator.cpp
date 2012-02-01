@@ -403,6 +403,8 @@ void TrackGenerator::segmentize() {
 		}
 	}
 
+	log_printf(NORMAL, "Done segmenting...");
+
 	return;
 }
 
