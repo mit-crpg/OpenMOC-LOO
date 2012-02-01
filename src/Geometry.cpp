@@ -31,28 +31,28 @@ Geometry::Geometry(int num_sectors, int num_rings, double sector_offset,
 	_y_max = -1.0/0.0;
 
 	/* Add each material from parser */
-	p->each_material([this](Material *m) -> void
+	parser->each_material([this](Material *m) -> void
 			 {
 				 addMaterial(m);
 				 return;
 			 });
 
 	/* Add each surface from parser */
-	p->each_surface([this](Surface *s) -> void
+	parser->each_surface([this](Surface *s) -> void
 			{
 				addSurface(s);
 				return;
 			});
 
 	/* Add each cell from parser */
-	p->each_cell([this](Cell *c) -> void
+	parser->each_cell([this](Cell *c) -> void
 		     {
 			     addCell(c);
 			     return;
 		     });
 
 	/* Add each lattice from parser */
-	p->each_lattice([this](Lattice *l) -> void
+	parser->each_lattice([this](Lattice *l) -> void
 			{
 				addLattice(l);
 				return;
