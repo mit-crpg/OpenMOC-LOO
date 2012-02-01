@@ -27,7 +27,7 @@
 									<listOptionValue builtIn="false" value="/usr/local/include/ImageMagick"/>
 								</option>
 								<option id="gnu.cpp.compiler.option.other.other.716004089" name="Other flags" superClass="gnu.cpp.compiler.option.other.other" value="-c -fmessage-length=0 -std=gnu++0x" valueType="string"/>
-								<option id="gnu.cpp.compiler.option.include.files.675181306" name="Include files (-include)" superClass="gnu.cpp.compiler.option.include.files" valueType="includeFiles"/>
+								<option id="gnu.cpp.compiler.option.include.files.675181306" name="Include files (-include)" superClass="gnu.cpp.compiler.option.include.files"/>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1692722755" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 							</tool>
 							<tool id="cdt.managedbuild.tool.gnu.c.compiler.base.2117516768" name="GCC C Compiler" superClass="cdt.managedbuild.tool.gnu.c.compiler.base">

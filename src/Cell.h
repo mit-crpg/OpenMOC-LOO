@@ -22,22 +22,29 @@
 class Surface;
 class LocalCoords;
 
+/* Represents cell type */
 enum cellType {
 	MATERIAL,
 	FILL
 };
 
 /**
- * Represents a cell
+ * Represents a cell inside of a universe
+ * @param _n static counter of the number of cells instantiated
+ * @param _uid monotonically increasing unique id
+ * @param _id cell id from geometry input file
+ * @param _type Cell type (MATERIAL or FILL)
+ * @param _universe id for the universe this cell is in
+ * @param _surfaces map of surface ids (keys) to surface pointers (values)
  */
 class Cell {
 protected:
-	static int _n;				/* Counts the number of cells */
-	int _uid;					/* monotonically increasing id based on n */
+	static int _n;
+	int _uid;
 	int _id;
 	cellType _type;
-	int _universe;             	/* universe id this cell is in */
-	std::map<int, Surface*> _surfaces;  /* + or - depending on side of surface */
+	int _universe;
+	std::map<int, Surface*> _surfaces;  /* +/- depending on side of surface */
 public:
 	Cell(int id, cellType type, int universe, int num_surfaces, 
 	     int *surfaces);
@@ -58,11 +65,12 @@ public:
 
 
 /**
- * Represents a cell defined using a material type as a Cell subclass
+ * Represents a cell filled with a material as a Cell subclass
+ * @param _material id for the material filling this cell
  */
 class CellBasic: public Cell {
 private: 
-	int _material;             /* material filling this cell */
+	int _material;
 public:
 	CellBasic(int id, int universe, int num_surfaces, 
 		  int *, int material);
@@ -75,10 +83,11 @@ public:
 
 /**
  * Represents a cell filled with a universe as a Cell subclass
+ * @param _universe_fill id for the universe filling this cell
  */
 class CellFill: public Cell {
 private:
-	int _universe_fill;        /* universe filling this cell */
+	int _universe_fill;
 public:
 	CellFill(int id, int universe, int num_surfaces,
 		 int *surfaces, int universe_fill);
