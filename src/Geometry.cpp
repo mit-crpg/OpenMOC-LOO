@@ -845,8 +845,8 @@ void Geometry::segmentize(Track* track) {
 		track->addSegment(new_segment);
 	}
 
-	log_printf(DEBUG, "Created %d segments for track: %s",
-			track->getNumSegments(), track->toString().c_str());
+	//log_printf(DEBUG, "Created %d segments for track: %s",
+	//		track->getNumSegments(), track->toString().c_str());
 
 	return;
 }
