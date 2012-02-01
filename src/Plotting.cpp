@@ -38,10 +38,6 @@ void Plotting::plotSegments(TrackGenerator* track_generator){
 	std::list<Magick::Drawable> drawListOrange4;
 	std::list<Magick::Drawable>* _draw_lists[5] = {&drawListRed0, &drawListBlue1,
 			&drawListGreen2, &drawListPink3, &drawListOrange4};
-
-	_draw_lists[0]->push_back(Magick::DrawableTranslation(0,_bit_length_y/2));
-	_draw_lists[0]->push_back(Magick::DrawableTranslation(_bit_length_x/2,0));
-	_draw_lists[0]->push_back(Magick::DrawableRotation(-90));
 	_draw_lists[0]->push_back(Magick::DrawableStrokeColor("Red"));
 	_draw_lists[1]->push_back(Magick::DrawableStrokeColor("Blue"));
 	_draw_lists[2]->push_back(Magick::DrawableStrokeColor("Green"));
@@ -49,6 +45,7 @@ void Plotting::plotSegments(TrackGenerator* track_generator){
 	_draw_lists[4]->push_back(Magick::DrawableStrokeColor("Orange"));
 
 	for (int i = 0; i < 5; i++){
+		_draw_lists[i]->push_back(Magick::DrawableTranslation(_bit_length_x/2,_bit_length_y/2));
 		_draw_lists[i]->push_back(Magick::DrawableStrokeWidth(1));
 	}
 
@@ -73,18 +70,21 @@ void Plotting::plotSegments(TrackGenerator* track_generator){
 			start_x = tracks[i][j].getStart()->getX();
 			start_y = tracks[i][j].getStart()->getY();
 			num_segments = tracks[i][j].getNumSegments();
-			log_printf(DEBUG, "Now printing segments for track i: %d, j: %d", i, j);
+//			log_printf(DEBUG, "Now printing segments for track i: %d, j: %d", i, j);
 			for (int k=0; k < num_segments; k++){
 				 end_x = start_x + cos_phi*tracks[i][j].getSegment(k)->_length;
 				 end_y = start_y + sin_phi*tracks[i][j].getSegment(k)->_length;
-				 log_printf(DEBUG, "start_x: %f, start_y: %f, end_x: %f, end_y: %f, region: %d",
-						 start_x, start_y, end_x, end_y, tracks[i][j].getSegment(k)->_region_id);
+//				 log_printf(DEBUG, "start_x: %f, start_y: %f, end_x: %f, end_y: %f, region: %d",
+//						 start_x, start_y, end_x, end_y, tracks[i][j].getSegment(k)->_region_id);
+//				 log_printf(DEBUG, "start_x: %f, start_y: %f, end_x: %f, end_y: %f, region: %d",
+//				 						 start_x*_x_pixel, start_y*_y_pixel, end_x*_x_pixel, end_y*_y_pixel,
+//				 						 tracks[i][j].getSegment(k)->_region_id);
 				 _draw_lists[tracks[i][j].getSegment(k)->_region_id % 5]->push_back(Magick::DrawableLine
-						 (start_x*_x_pixel, start_y*_y_pixel, end_x*_x_pixel,end_y*_y_pixel));
+						 (start_x*_x_pixel, -start_y*_y_pixel, end_x*_x_pixel, -end_y*_y_pixel));
+
 				 start_x = end_x;
 				 start_y = end_y;
 			}
-			log_printf(DEBUG, "\n");
 		}
 	}
 
@@ -112,7 +112,6 @@ void Plotting::plotTracksTiff(TrackGenerator* track_generator) {
 
 	// translate (width/2,height/2), rotate -90
 	drawList.push_back(Magick::DrawableTranslation(_bit_length_x/2,_bit_length_y/2));
-	drawList.push_back(Magick::DrawableRotation(-90));
 
 	drawList.push_back(Magick::DrawableStrokeColor("black"));
 	drawList.push_back(Magick::DrawableStrokeWidth(1));
@@ -124,9 +123,9 @@ void Plotting::plotTracksTiff(TrackGenerator* track_generator) {
 	for (int i=0; i < track_generator->getNumAzim(); i++) {
 		for (int j=0; j < num_tracks[i]; j++) {
 			drawList.push_back(Magick::DrawableLine( tracks[i][j].getStart()->getX()*_x_pixel,
-					tracks[i][j].getStart()->getY()*_y_pixel
+					-tracks[i][j].getStart()->getY()*_y_pixel
 					, tracks[i][j].getEnd()->getX()*_x_pixel,
-					tracks[i][j].getEnd()->getY()*_y_pixel));
+					-tracks[i][j].getEnd()->getY()*_y_pixel));
 		}
 	}
 
