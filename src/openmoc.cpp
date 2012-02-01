@@ -52,7 +52,7 @@ int main(int argc, const char **argv) {
 				      opts.getTrackSpacing());
 	trackGenerator.generateTracks();
 	trackGenerator.makeReflective();
-	//trackGenerator.plotTracksTiff();
+	trackGenerator.plotTracksTiff();
 
 
 	log_printf(INFO, "Program complete");
