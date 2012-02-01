@@ -200,6 +200,8 @@ double Cell::minSurfaceDist(Point* point, double angle) {
 	for (iter = _surfaces.begin(); iter != _surfaces.end(); ++iter) {
 		d = iter->second->getDistance(point, angle);
 
+		log_printf(DEBUG, "Distance to surface id = %d, is: %f", iter->second->getId(), d);
+
 		/* If the distance to cell is less than current min distance, update */
 		if (d < min_dist)
 			min_dist = d;

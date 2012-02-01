@@ -170,25 +170,28 @@ double Surface::getDistance(Point* point, double angle) {
 	Point intersections[2];
 
 	/* Create a dummy track to represent this point and angle tracjectory */
-	Track track;
-	track.setValues(point->getX(), point->getY(), 0, 0, angle);
+//	Track track;
+//	track.setValues(point->getX(), point->getY(), 0, 0, angle);
 
-	int num_inters = intersection(&track, intersections);
+//	int num_inters = intersection(&track, intersections);
+	int num_inters = intersection(point, angle, intersections);
 	double distance;
 
 	/* If the track does not intersect the surface */
 	if (num_inters == 0) {
+		log_printf(DEBUG, "Found 0 interesection points with surface");
 		distance = INFINITY;
 	}
 
 	/* If there is one intersection point */
 	else if (num_inters == 1) {
+		log_printf(DEBUG, "Found 1 interesection points with surface");
 		distance = intersections[0].distance(point);
 	}
 
 	/* If there are two intersection points */
 	else if (num_inters == 2) {
-
+		log_printf(DEBUG, "Found 2 interesection points with surface");
 		double dist1 = intersections[0].distance(point);
 		double dist2 = intersections[0].distance(point);
 		if (dist1 < dist2)
@@ -269,7 +272,9 @@ int Plane::intersection(Point* point, double angle, Point* points) {
 			ycurr = (-_A * x0 - _C) / _B;
 			points->setCoords(xcurr, ycurr);
 			/* Check that point is in same direction as angle */
-			if ((xcurr - x0)/(ycurr-y0)*sin(angle) > 0)
+			if (angle < M_PI && ycurr > y0)
+				num++;
+			else if (angle > M_PI && ycurr < y0)
 				num++;
 			return num;
 		}
@@ -288,7 +293,9 @@ int Plane::intersection(Point* point, double angle, Point* points) {
 					/ (_A + _B * m);
 			ycurr = y0 + m * (xcurr - x0);
 			points->setCoords(xcurr, ycurr);
-			if ((xcurr - x0)/(ycurr-y0)*sin(angle) > 0)
+			if (angle < M_PI && ycurr > y0)
+				num++;
+			else if (angle > M_PI && ycurr < y0)
 				num++;
 			return num;
 		}
@@ -570,7 +577,9 @@ int Circle::intersection(Point* point, double angle, Point* points) {
 			xcurr = x0;
 			ycurr = -b / (2*a);
 			points[num].setCoords(xcurr, ycurr);
-			if ((ycurr-y0)/(xcurr-x0)*sin(angle) > 0)
+			if (angle < M_PI && ycurr > y0)
+				num++;
+			else if (angle > M_PI && ycurr < y0)
 				num++;
 			return num;
 		}
@@ -580,13 +589,17 @@ int Circle::intersection(Point* point, double angle, Point* points) {
 			xcurr = x0;
 			ycurr = (-b + sqrt(discr)) / (2 * a);
 			points[num].setCoords(xcurr, ycurr);
-			if ((ycurr-y0)/(xcurr-x0)*sin(angle) > 0)
+			if (angle < M_PI && ycurr > y0)
+				num++;
+			else if (angle > M_PI && ycurr < y0)
 				num++;
 
 			xcurr = x0;
 			ycurr = (-b - sqrt(discr)) / (2 * a);
 			points[num].setCoords(xcurr, ycurr);
-			if ((ycurr-y0)/(xcurr-x0)*sin(angle) > 0)
+			if (angle < M_PI && ycurr > y0)
+				num++;
+			else if (angle > M_PI && ycurr < y0)
 				num++;
 			return num;
 		}
@@ -617,7 +630,9 @@ int Circle::intersection(Point* point, double angle, Point* points) {
 			xcurr = -b / (2*a);
 			ycurr = y0 + m * (points[0].getX() - x0);
 			points[num].setCoords(xcurr, ycurr);
-			if ((ycurr-y0)/(xcurr-x0)*sin(angle) > 0)
+			if (angle < M_PI && ycurr > y0)
+				num++;
+			else if (angle > M_PI && ycurr < y0)
 				num++;
 			return num;
 		}
@@ -627,13 +642,17 @@ int Circle::intersection(Point* point, double angle, Point* points) {
 			xcurr = (-b + sqrt(discr)) / (2*a);
 			ycurr = y0 + m * (xcurr - x0);
 			points[num].setCoords(xcurr, ycurr);
-			if ((ycurr-y0)/(xcurr-x0)*sin(angle) > 0)
+			if (angle < M_PI && ycurr > y0)
+				num++;
+			else if (angle > M_PI && ycurr < y0)
 				num++;
 
 			xcurr = (-b - sqrt(discr)) / (2*a);
 			ycurr = y0 + m * (xcurr - x0);
 			points[num].setCoords(xcurr, ycurr);
-			if ((ycurr-y0)/(xcurr-x0)*sin(angle) > 0)
+			if (angle < M_PI && ycurr > y0)
+				num++;
+			else if (angle > M_PI && ycurr < y0)
 				num++;
 
 			return num;
@@ -680,8 +699,7 @@ int Circle::intersection(Track* track, Point* points) const {
 			xcurr = x0;
 			ycurr = -b / (2*a);
 			points[num].setCoords(xcurr, ycurr);
-//			if (track->contains(&points[num]))
-			if ((ycurr-y0)*sin(track->getPhi()) > 0)
+			if (track->contains(&points[num]))
 				num++;
 
 			return num;
@@ -692,15 +710,13 @@ int Circle::intersection(Track* track, Point* points) const {
 			xcurr = x0;
 			ycurr = (-b + sqrt(discr)) / (2 * a);
 			points[num].setCoords(xcurr, ycurr);
-//			if (track->contains(&points[num]))
-			if ((ycurr-y0)*sin(track->getPhi()) > 0)
+			if (track->contains(&points[num]))
 				num++;
 
 			xcurr = x0;
 			ycurr = (-b - sqrt(discr)) / (2 * a);
 			points[num].setCoords(xcurr, ycurr);
-//			if (track->contains(&points[num]))
-			if ((ycurr-y0)*sin(track->getPhi()) > 0)
+			if (track->contains(&points[num]))
 				num++;
 			return num;
 		}
@@ -732,8 +748,7 @@ int Circle::intersection(Track* track, Point* points) const {
 			xcurr = -b / (2*a);
 			ycurr = y0 + m * (points[0].getX() - x0);
 			points[num].setCoords(xcurr, ycurr);
-//			if (track->contains(&points[num]))
-			if ((ycurr-y0)*sin(track->getPhi()) > 0)
+			if (track->contains(&points[num]))
 				num++;
 			return num;
 		}
@@ -743,15 +758,13 @@ int Circle::intersection(Track* track, Point* points) const {
 			xcurr = (-b + sqrt(discr)) / (2*a);
 			ycurr = y0 + m * (xcurr - x0);
 			points[num].setCoords(xcurr, ycurr);
-//			if (track->contains(&points[num]))
-			if ((ycurr-y0)*sin(track->getPhi()) > 0)
+			if (track->contains(&points[num]))
 				num++;
 
 			xcurr = (-b - sqrt(discr)) / (2*a);
 			ycurr = y0 + m * (xcurr - x0);
 			points[num].setCoords(xcurr, ycurr);
-//			if (track->contains(&points[num]))
-			if ((ycurr-y0)*sin(track->getPhi()) > 0)
+			if (track->contains(&points[num]))
 				num++;
 
 			return num;

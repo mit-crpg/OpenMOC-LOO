@@ -804,6 +804,8 @@ Cell* Geometry::findNextCell(LocalCoords* coords, double angle) {
 
 	/* Find the current cell */
 	cell = findCell(coords);
+	log_printf(DEBUG, "Inside findNextCell. found current cell: %s", cell->toString().c_str());
+	log_printf(DEBUG, "Localcoords: %s", coords->toString().c_str());
 
 	/* If the current coords is not in any cell, return NULL */
 	if (cell == NULL)
@@ -812,6 +814,7 @@ Cell* Geometry::findNextCell(LocalCoords* coords, double angle) {
 	else {
 		/* Check the min dist to the next surface in the current cell */
 		dist = cell->minSurfaceDist(coords->getPoint(), angle);
+		log_printf(DEBUG, "found dist = %d", dist);
 
 		/* If the distance returned is not INFINITY, the trajectory will
 		 * intersect a surface in the cell */
@@ -925,7 +928,8 @@ void Geometry::segmentize(Track* track) {
 		new_segment->_length = segment_length;
 		//FIXME: this needs to use our flat source region id from some equation
 		//mapping lattices, universes and cells to FSR ids
-		new_segment->_region_id = prev->getUid();
+//		new_segment->_region_id = prev->getUid();
+		new_segment->_region_id = prev->getId();
 
 		/* Update coordinates for start of next segment */
 		segment_start.setX(segment_end.getX());
