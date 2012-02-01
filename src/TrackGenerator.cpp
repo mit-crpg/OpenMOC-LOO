@@ -400,7 +400,6 @@ void TrackGenerator::segmentize() {
 	for (int i = 0; i < _num_azim; i++) {
 		for (int j = 0; j < _num_tracks[i]; j++){
 			_geom->segmentize(&_tracks[i][j]);
-			_plotter->addTrackSegments(&_tracks[i][j]);
 		}
 	}
 

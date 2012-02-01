@@ -59,7 +59,7 @@ int main(int argc, const char **argv) {
 	plotter.plotTracksTiff(&track_generator);
 	track_generator.makeReflective();
 	track_generator.segmentize();
-	plotter.plotSegments();
+	plotter.plotSegments(&track_generator);
 
 	/* Testing findCell method */
 //	LocalCoords* test_coords = new LocalCoords(0, 0);
