@@ -94,43 +94,10 @@ void Plotting::plotSegments(TrackGenerator* track_generator){
 	for (int i = 0; i < 5; i++){
 		image_segments.draw(*_draw_lists[i]);
 	}
-	//log_printf(DEBUG, "size of draw list: %d", _draw_lists[0].size());
-	image_segments.draw(*_draw_lists[0]);
+
 	image_segments.write("segments.tiff");
 
 }
-
-/*
-void Plotting::addTrackSegments(Track* track){
-
-	double phi = track->getPhi();
-	double sin_phi = sin(phi);
-	double cos_phi = cos(phi);
-	double start_x, start_y, end_x, end_y;
-	int num_segments = track->getNumSegments();
-	std::list<Magick::Drawable> drawColor;
-
-	start_x = track->getStart()->getX();
-	start_y = track->getStart()->getY();
-
-	for (int i = 0; i < num_segments; i++){
-		 end_x = start_x + cos_phi*track->getSegment(i)->_length;
-		 end_y = start_y + sin_phi*track->getSegment(i)->_length;
-		 Magick::DrawableLine* new_line = new Magick::DrawableLine(start_x*_x_pixel, start_y*_y_pixel,
-		 						 end_x*_x_pixel,end_y*_y_pixel);
-		 _draw_lists[track->getSegment(i)->_region_id % 5].push_back(*new_line);
-//		 _draw_lists[track->getSegment(i)->_region_id % 5].push_back(Magick::DrawableLine
-//				 (start_x*_x_pixel, start_y*_y_pixel,
-//						 end_x*_x_pixel,end_y*_y_pixel));
-		 log_printf(DEBUG, "x_start: %f, y_start: %f, x_end: %f, y_end: %f",
-				 start_x*_x_pixel, start_y*_y_pixel,
-				 end_x*_x_pixel,end_y*_y_pixel);
-
-		 start_x = end_x;
-		 start_y = end_y;
-	}
-}
-*/
 
 
 /*
@@ -143,9 +110,8 @@ void Plotting::plotTracksTiff(TrackGenerator* track_generator) {
 	Magick::Image image_tracks(Magick::Geometry(_bit_length_x,_bit_length_y), Magick::Color("white"));
 	std::list<Magick::Drawable> drawList;
 
-	// translate (0,height), rotate -90
-	drawList.push_back(Magick::DrawableTranslation(0,_bit_length_y/2));
-	drawList.push_back(Magick::DrawableTranslation(_bit_length_x/2,0));
+	// translate (width/2,height/2), rotate -90
+	drawList.push_back(Magick::DrawableTranslation(_bit_length_x/2,_bit_length_y/2));
 	drawList.push_back(Magick::DrawableRotation(-90));
 
 	drawList.push_back(Magick::DrawableStrokeColor("black"));
