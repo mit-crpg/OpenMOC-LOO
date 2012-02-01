@@ -49,6 +49,15 @@ void Track::setWeight(const double weight) {
 }
 
 
+/*
+ * Set the track azimuthal angle
+ * @param phi the azimuthal angle
+ */
+void Track::setPhi(const double phi) {
+	_phi = phi;
+}
+
+
 /**
  * Adds a segment pointer to this Track's list of segments
  * IMPORTANT: assumes that segments are added in order of their starting

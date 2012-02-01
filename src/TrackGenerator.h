@@ -38,6 +38,7 @@ public:
 	void computeEndPoint(Point* start, Point* end,  const double phi,
 			const double width, const double height);
 	void makeReflective();
+	void segmentize();
 };
 
 #endif /* TRACKGENERATOR_H_ */

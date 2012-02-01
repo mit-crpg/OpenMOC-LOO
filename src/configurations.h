@@ -21,6 +21,7 @@
 
 /* Error thresholds */
 #define ON_SURFACE_THRESH 1E-8
+#define ON_LATTICE_CELL_THRESH 1E-6
 #define TINY_MOVE 1E-6
 
 #endif /* CONFIGURATIONS_H_ */

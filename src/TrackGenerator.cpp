@@ -197,6 +197,24 @@ void TrackGenerator::generateTracks() {
 
 				/* Set the track's azimuthal weight */
 				_tracks[i][j].setWeight(_azim_weights[i]);
+				_tracks[i][j].setPhi(phi_eff[i]);
+			}
+		}
+
+		/* Recalibrate track starting and end points to geometry global origin */
+		//FIXME: This could be more efficiently done when start/end points are set
+		for (int i = 0; i < _num_azim; i++) {
+			for (int j = 0; j < _num_tracks[i]; j++) {
+				double x0 = _tracks[i][j].getStart()->getX();
+				double y0 = _tracks[i][j].getStart()->getY();
+				double x1 = _tracks[i][j].getEnd()->getX();
+				double y1 = _tracks[i][j].getEnd()->getY();
+				double new_x0 = x0 - _geom->getWidth()/2.0;
+				double new_y0 = y0 - _geom->getHeight()/2.0;
+				double new_x1 = x1 - _geom->getWidth()/2.0;
+				double new_y1 = y1 - _geom->getHeight()/2.0;
+				double phi = _tracks[i][j].getPhi();
+				_tracks[i][j].setValues(new_x0, new_y0, new_x1, new_y1, phi);
 			}
 		}
 		return;
@@ -369,6 +387,19 @@ void TrackGenerator::makeReflective() {
 				}
 			}
 		}
+	}
+
+	return;
+}
+
+
+void TrackGenerator::segmentize() {
+
+	log_printf(NORMAL, "Segmenting tracks...");
+
+	for (int i = 0; i < _num_azim; i++) {
+		for (int j = 0; j < _num_tracks[i]; j++)
+			_geom->segmentize(&_tracks[i][j]);
 	}
 
 	return;

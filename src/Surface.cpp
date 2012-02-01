@@ -166,20 +166,29 @@ bool Surface::onSurface(LocalCoords* coord) {
 
 double Surface::getDistance(Point* point, double angle) {
 
+	/* Point array for intersections with this surface */
 	Point intersections[2];
-	int num_inters = intersection(point, angle, intersections);
-	double distance = INFINITY;
+
+	/* Create a dummy track to represent this point and angle tracjectory */
+	Track track;
+	track.setValues(point->getX(), point->getY(), 0, 0, angle);
+
+	int num_inters = intersection(&track, intersections);
+	double distance;
 
 	/* If the track does not intersect the surface */
-	if (num_inters == 0)
+	if (num_inters == 0) {
 		distance = INFINITY;
+	}
 
 	/* If there is one intersection point */
-	else if (num_inters == 1)
+	else if (num_inters == 1) {
 		distance = intersections[0].distance(point);
+	}
 
 	/* If there are two intersection points */
 	else if (num_inters == 2) {
+
 		double dist1 = intersections[0].distance(point);
 		double dist2 = intersections[0].distance(point);
 		if (dist1 < dist2)
@@ -187,6 +196,9 @@ double Surface::getDistance(Point* point, double angle) {
 		else
 			distance = dist2;
 	}
+
+	else
+		distance = INFINITY;
 
 	return distance;
 }
@@ -529,6 +541,7 @@ double Circle::evaluate(const Point* point) const {
 
 
 int Circle::intersection(Point* point, double angle, Point* points) {
+
 	double x0 = point->getX();
 	double y0 = point->getY();
 	double xcurr, ycurr;
@@ -538,9 +551,7 @@ int Circle::intersection(Point* point, double angle, Point* points) {
 	/* If the track is vertical */
 	if ((fabs(angle - (M_PI / 2))) < 1.0e-10) {
 		/* Solve for where the line x = x0 and the surface F(x,y) intersect
-		 * Find the y where F(x0, y) = 0			if (track->contains(points))
-				num++;
-		 *
+		 * Find the y where F(x0, y) = 0
 		 * Substitute x0 into F(x,y) and rearrange to put in
 		 * the form of the quadratic formula: ay^2 + by + c = 0
 		 */
@@ -638,6 +649,7 @@ int Circle::intersection(Point* point, double angle, Point* points) {
  * @return the number of intersection points (0, 1 or 2 for a circle)
  */
 int Circle::intersection(Track* track, Point* points) const {
+
 	double x0 = track->getStart()->getX();
 	double y0 = track->getStart()->getY();
 	double xcurr, ycurr;
@@ -668,9 +680,9 @@ int Circle::intersection(Track* track, Point* points) const {
 			xcurr = x0;
 			ycurr = -b / (2*a);
 			points[num].setCoords(xcurr, ycurr);
-			if (track->contains(&points[num]))
-				num++;			if (track->contains(points))
-					num++;
+//			if (track->contains(&points[num]))
+			if ((ycurr-y0)*sin(track->getPhi()) > 0)
+				num++;
 
 			return num;
 		}
@@ -680,13 +692,15 @@ int Circle::intersection(Track* track, Point* points) const {
 			xcurr = x0;
 			ycurr = (-b + sqrt(discr)) / (2 * a);
 			points[num].setCoords(xcurr, ycurr);
-			if (track->contains(&points[num]))
+//			if (track->contains(&points[num]))
+			if ((ycurr-y0)*sin(track->getPhi()) > 0)
 				num++;
 
 			xcurr = x0;
 			ycurr = (-b - sqrt(discr)) / (2 * a);
 			points[num].setCoords(xcurr, ycurr);
-			if (track->contains(&points[num]))
+//			if (track->contains(&points[num]))
+			if ((ycurr-y0)*sin(track->getPhi()) > 0)
 				num++;
 			return num;
 		}
@@ -694,6 +708,7 @@ int Circle::intersection(Track* track, Point* points) const {
 
 	/* If the track isn't vertical */
 	else {
+
 		/*Solve for where the line y-y0 = m*(x-x0) and the surface F(x,y) intersect
 		 * Find the (x,y) where F(x, y0 + m*(x-x0)) = 0
 		 * Substitute the point-slope formula for y into F(x,y) and rearrange to put in
@@ -717,7 +732,8 @@ int Circle::intersection(Track* track, Point* points) const {
 			xcurr = -b / (2*a);
 			ycurr = y0 + m * (points[0].getX() - x0);
 			points[num].setCoords(xcurr, ycurr);
-			if (track->contains(&points[num]))
+//			if (track->contains(&points[num]))
+			if ((ycurr-y0)*sin(track->getPhi()) > 0)
 				num++;
 			return num;
 		}
@@ -727,13 +743,15 @@ int Circle::intersection(Track* track, Point* points) const {
 			xcurr = (-b + sqrt(discr)) / (2*a);
 			ycurr = y0 + m * (xcurr - x0);
 			points[num].setCoords(xcurr, ycurr);
-			if (track->contains(&points[num]))
+//			if (track->contains(&points[num]))
+			if ((ycurr-y0)*sin(track->getPhi()) > 0)
 				num++;
 
 			xcurr = (-b - sqrt(discr)) / (2*a);
 			ycurr = y0 + m * (xcurr - x0);
 			points[num].setCoords(xcurr, ycurr);
-			if (track->contains(&points[num]))
+//			if (track->contains(&points[num]))
+			if ((ycurr-y0)*sin(track->getPhi()) > 0)
 				num++;
 
 			return num;

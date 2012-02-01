@@ -17,20 +17,16 @@
 LocalCoords::LocalCoords(double x, double y) {
 	_coords.setCoords(x, y);
 	_next = NULL;
+	_prev = NULL;
 }
 
 
 /**
- * LocalCoords destructor
+ * LocalCoords destructor recursively deletes all LocalCoords objects
+ * behind this one in the linked list
  */
 LocalCoords::~LocalCoords() {
-	LocalCoords* curr1 = _next;
-	LocalCoords* curr2;
-	while (curr1 != NULL) {
-		curr2 = curr1->getNext();
-		delete curr1;
-		curr1 = curr2;
-	}
+	delete _next;
 }
 
 
@@ -115,14 +111,17 @@ Point* LocalCoords::getPoint() {
 
 
 /**
- * Return a pointer to the localcoord at the next level if
- * one exists
+ * Return a pointer to the localcoord at the next level if one exists
  * @return pointer to the next localcoord
  */
 LocalCoords* LocalCoords::getNext() const {
     return _next;
 }
 
+
+LocalCoords* LocalCoords::getPrev() const {
+	return _prev;
+}
 
 /**
  * Set the level for this localcoords
@@ -203,18 +202,33 @@ void LocalCoords::setNext(LocalCoords* next) {
     _next = next;
 }
 
+void LocalCoords::setPrev(LocalCoords* prev) {
+	_prev = prev;
+}
+
 
 void LocalCoords::adjustCoords(double delta_x, double delta_y) {
+
+	/* Forward direction along linked list */
 	LocalCoords* curr = this;
 	while (curr != NULL) {
 		curr->setX(curr->getX() + delta_x);
 		curr->setY(curr->getY() + delta_y);
 		curr = curr->getNext();
 	}
+
+	/* Reverse direction along linked list */
+	curr = _prev;
+	while (curr != NULL) {
+		curr->setX(curr->getX() + delta_x);
+		curr->setY(curr->getY() + delta_y);
+		curr = curr->getPrev();
+	}
 }
 
+
 /**
- * Converts this localcellcoords's attributes to a character array
+ * Converts this localcoords's attributes to a character array
  * representation
  * @param a character array of its member's attributes
  */

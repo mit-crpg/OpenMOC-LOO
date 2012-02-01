@@ -40,8 +40,6 @@ private:
 public:
 	Geometry(int num_sectors, int num_rings, double sector_offset);
 	virtual ~Geometry();
-//	void setWidth(const double width);
-//	void setHeight(const double height);
 	void setNumRings(int num_rings);
 	void setNumSectors(int num_sectors);
 	void setSectorOffset(double sector_offset);

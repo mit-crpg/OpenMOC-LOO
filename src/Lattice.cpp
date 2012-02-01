@@ -41,8 +41,6 @@ Lattice::Lattice(const int id, const int num_x, int num_y,
 	for (int i = 0; i < num_y; i++) {
 		_universes.push_back(std::vector< std::pair<int, Universe*> >());
 		for (int j = 0; j< num_x; j++){
-//			_universes.at(i).push_back(std::pair<int, Universe*>
-//			(universes[i*num_x+j], empty_universe_pointer));
 			_universes.at(i).push_back(std::pair<int, Universe*>
 			(universes[(num_y-1-i)*num_x+j], empty_universe_pointer));
 		}
@@ -159,7 +157,8 @@ double Lattice::getWidthX() const {
 
 /**
  * Return the width of the lattice along the y-axis
- * @return the width of the lattice
+ * @return the width of the lattice    Cell* findNextLatticeCell();
+ *
  */
 double Lattice::getWidthY() const {
     return _width_y;
@@ -194,6 +193,185 @@ void Lattice::adjustKeys() {
 
 	_universes.clear();
 	_universes = adjusted_universes;
+}
+
+bool Lattice::withinBounds(Point* point) {
+
+	double bound_x = _num_x/2.0 * _width_x;
+	double bound_y = _num_y/2.0 * _width_y;
+	double x = point->getX();
+	double y = point->getY();
+
+	if (x > bound_x || x < -1*bound_x)
+		return false;
+	else if (y > bound_y || y < -1*bound_y)
+		return false;
+	else
+		return true;
+}
+
+
+Cell* Lattice::findCell(LocalCoords* coords, std::map<int, Universe*> universes) {
+
+	coords->setType(LAT);
+
+	/* Compute the x and y indices for the lattice cell this coord is in */
+	int lat_x = floor(coords->getX() - _origin.getX()) / _width_x;
+	int lat_y = floor(coords->getY() - _origin.getY()) / _width_y;
+
+	if (fabs(fabs(coords->getX()) - _num_x*_width_x*0.5) < ON_LATTICE_CELL_THRESH) {
+		if (coords->getX() > 0)
+			lat_x = _num_x - 1;
+		else
+			lat_x = 0;
+	}
+	if (fabs(fabs(coords->getY()) - _num_y*_width_y*0.5) < ON_LATTICE_CELL_THRESH) {
+		if (coords->getY() > 0)
+			lat_y = _num_y - 1;
+		else
+			lat_y = 0;
+	}
+
+	/* If the indices are outside the bound of the lattice */
+	if (lat_x < 0 || lat_x >= _num_x ||
+			lat_y < 0 || lat_y >= _num_y) {
+
+		log_printf(WARNING, "The lattice cell indices are out of "
+				"bounds (x = %d, y = %d) for the following "
+				"LocalCoords and and Lattice objects:\n%s\n%s",
+				lat_x, lat_y, coords->toString().c_str(), toString().c_str());
+
+		return NULL;
+	}
+
+	/* Compute local position of particle in the next level universe */
+	double nextX = coords->getX() - (_origin.getX()
+					+ (lat_x + 0.5) * _width_x);
+	double nextY = coords->getY() - (_origin.getY()
+					+ (lat_y + 0.5) * _width_y);
+
+	LocalCoords* newCoords = new LocalCoords(nextX, nextY);
+	int universe_id = getUniverse(lat_x, lat_y)->getId();
+	Universe* univ = universes.at(universe_id);
+	newCoords->setUniverse(universe_id);
+
+	/* Set lattice indices */
+//	coords->setLattice(_uid);
+	coords->setLattice(_id);
+	coords->setLatticeX(lat_x);
+	coords->setLatticeY(lat_y);
+
+	coords->setNext(newCoords);
+	newCoords->setPrev(coords);
+
+	return univ->findCell(newCoords, universes);
+}
+
+
+Cell* Lattice::findNextLatticeCell(LocalCoords* coords, double angle,
+		std::map<int, Universe*> universes) {
+
+	double distance = INFINITY;
+	double d;
+	double x0 = coords->getX();
+	double y0 = coords->getY();
+	double x1, y1;
+	double m = sin(angle) / cos(angle);
+	int lattice_x = coords->getLatticeX();
+	int lattice_y = coords->getLatticeY();
+	int new_lattice_x;
+	int new_lattice_y;
+
+	Point test;
+
+	/* Lower lattice cell */
+	if (lattice_y >= 0 && angle >= M_PI) {
+		y1 = (lattice_y - 1 - 0.5*_num_y) * _width_y;
+		x1 = x0 + (y1 - y0) / m;
+		test.setCoords(x1, y1);
+
+		if (withinBounds(&test)) {
+			d = test.distance(coords->getPoint());
+
+			if (d < distance) {
+				distance = d;
+				new_lattice_x = lattice_x;
+				new_lattice_y = lattice_y - 1;
+			}
+		}
+	}
+
+	/* Upper lattice cell */
+	if (lattice_y <= _num_y-1 && angle <= M_PI) {
+		y1 = (lattice_y + 1 - 0.5*_num_y) * _width_y;
+		x1 = x0 + (y1 - y0) / m;
+		test.setCoords(x1, y1);
+
+		if (withinBounds(&test)) {
+			d = test.distance(coords->getPoint());
+
+			if (d < distance) {
+				distance = d;
+				new_lattice_x = lattice_x;
+				new_lattice_y = lattice_y + 1;
+			}
+		}
+	}
+
+	/* Left lattice cell */
+	if (lattice_x >= 0 && (angle >= M_PI/2 && angle <= 3*M_PI/2)) {
+		x1 = (lattice_x - 1 - 0.5*_num_x) * _width_x;
+		y1 = y0 + m * (x1 - x0);
+		test.setCoords(x1, y1);
+
+		if (withinBounds(&test)) {
+			d = test.distance(coords->getPoint());
+
+			if (d < distance) {
+				distance = d;
+				new_lattice_x = lattice_x -1 ;
+				new_lattice_y = lattice_y;
+			}
+		}
+	}
+
+	/* Right lattice cell */
+	if (lattice_x <= _num_x-1 && (angle <= M_PI/2 || angle >= 3*M_PI/2)) {
+		x1 = (lattice_x + 1 - 0.5*_num_x) * _width_x;
+		y1 = y0 + m * (x1 - x0);
+		test.setCoords(x1, y1);
+
+		if (withinBounds(&test)) {
+			d = test.distance(coords->getPoint());
+
+			if (d < distance) {
+				distance = d;
+				new_lattice_x = lattice_x + 1;
+				new_lattice_y = lattice_y;
+			}
+		}
+	}
+
+
+	if (distance == INFINITY)
+		return NULL;
+
+	else {
+		double delta_x = cos(angle) * distance;
+		double delta_y = sin(angle) * distance;
+		coords->adjustCoords(delta_x, delta_y);
+
+		if (new_lattice_x >= _num_x || new_lattice_y < 0)
+			return NULL;
+		else if (new_lattice_y >= _num_y || new_lattice_y < 0)
+			return NULL;
+		else {
+			coords->setLatticeX(new_lattice_x);
+			coords->setLatticeY(new_lattice_y);
+			Universe* univ = _universes.at(lattice_y).at(lattice_x).second;
+			return univ->findCell(coords, universes);
+		}
+	}
 }
 
 

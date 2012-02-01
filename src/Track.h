@@ -17,8 +17,8 @@
 #include "log.h"
 
 struct segment {
-	double length;
-	int region;
+	double _length;
+	int _region_id;
 };
 
 
@@ -37,6 +37,7 @@ public:
 	void setValues(const double start_x, const double start_y,
 			const double end_x, const double end_y, const double phi);
     void setWeight(const double weight);
+    void setPhi(const double phi);
     void setReflIn(const bool refl_in);
     void setReflOut(const bool refl_out);
     void setTrackIn(Track *track_in);

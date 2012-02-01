@@ -190,8 +190,10 @@ double Cell::minSurfaceDist(Point* point, double angle) {
 	double min_dist = INFINITY;
 	double d;
 
-	for (int s = 0; s < (int)_surfaces.size(); s++) {
-		d = _surfaces.at(s)->getDistance(point, angle);
+	std::map<int, Surface*>::iterator iter;
+
+	for (iter = _surfaces.begin(); iter != _surfaces.end(); ++iter) {
+		d = iter->second->getDistance(point, angle);
 		if (d < min_dist)
 			min_dist = d;
 	}

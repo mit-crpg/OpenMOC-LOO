@@ -40,6 +40,9 @@ public:
     double getWidthX() const;
     double getWidthY() const;
     void adjustKeys();
+    bool withinBounds(Point* point);
+    Cell* findCell(LocalCoords* coords, std::map<int, Universe*> universes);
+    Cell* findNextLatticeCell(LocalCoords* coords, double angle, std::map<int, Universe*> universes);
     std::string toString();
 };
 

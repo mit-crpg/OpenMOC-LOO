@@ -119,6 +119,47 @@ void Universe::setOrigin(Point* origin) {
 }
 
 
+Cell* Universe::findCell(LocalCoords* coords, std::map<int, Universe*> universes) {
+
+	Cell* return_cell = NULL;
+
+	coords->setType(UNIV);
+
+	/* Loop over all cells in this universe */
+	for (int c = 0; c < (int)_cells.size(); c++) {
+		Cell* cell = _cells.at(c);
+
+		if (cell->cellContains(coords)) {
+			/* Set the cell on this level */
+			coords->setCell(cell->getUid());
+
+			/* MATERIAL type cell - lowest level, terminate search for cell */
+			if (cell->getType() == MATERIAL) {
+//				coords->setCell(cell->getUid());
+				coords->setCell(cell->getId());
+				return_cell = cell;
+				return cell;
+			}
+
+			/* FILL type cell - cell contains a universe at a lower level
+			 * Update coords to next level and continue search */
+			else if (cell->getType() == FILL) {
+				LocalCoords* new_coords = new LocalCoords(coords->getX(),coords->getY());
+				int universe_id = static_cast<CellFill*>(cell)->getUniverseFill();
+				new_coords->setUniverse(universe_id);
+				Universe* univ = universes.at(universe_id);
+//				coords->setCell(cell->getUid());
+				coords->setCell(cell->getId());
+
+				coords->setNext(new_coords);
+				new_coords->setPrev(coords);
+				return univ->findCell(new_coords, universes);
+			}
+		}
+	}
+	return return_cell;
+}
+
 
 /**
  * Convert the member attributes of this universe to a character array

@@ -9,11 +9,15 @@
 #define UNIVERSE_H_
 
 #include <vector>
+#include <map>
 #include <sstream>
 #include <string>
 #include "Point.h"
 #include "Cell.h"
+#include "LocalCoords.h"
 #include "log.h"
+
+class LocalCoords;
 
 class Cell;
 
@@ -44,6 +48,7 @@ public:
     void setType(universeType type);
     void setNumCells(const int num_cells);
     void setOrigin(Point* origin);
+    virtual Cell* findCell(LocalCoords* coords, std::map<int, Universe*> universes);
     std::string toString();
 };
 

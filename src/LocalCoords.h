@@ -30,6 +30,7 @@ private:
 	int _lattice_y;
 	Point _coords;
 	LocalCoords* _next;
+	LocalCoords* _prev;
 public:
 	LocalCoords(double x, double y);
 	virtual ~LocalCoords();
@@ -43,6 +44,7 @@ public:
     double getY() const;
     Point* getPoint();
     LocalCoords *getNext() const;
+    LocalCoords *getPrev() const;
     void setType(coordType type);
     void setUniverse(int universe);
     void setCell(int cell);
@@ -52,6 +54,7 @@ public:
     void setX(double x);
     void setY(double y);
     void setNext(LocalCoords *next);
+    void setPrev(LocalCoords* coords);
     void adjustCoords(double delta_x, double delta_y);
     std::string toString();
 };

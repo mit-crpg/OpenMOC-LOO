@@ -8,7 +8,6 @@
  */
 
 #include "Geometry.h"
-#include <stdexcept>
 
 
 /**
@@ -117,7 +116,6 @@ double Geometry::getWidth() const {
 int Geometry::getNumRings() const{
     return _num_rings;
 }
-Cell* findNextCell(LocalCoords* coords);
 
 
 /**
@@ -331,7 +329,16 @@ Cell* Geometry::getCell(int id) {
 }
 
 
-/**
+/**Hey guys,
+
+I finally managed to track down Bill. Here I attach the list of judges for outreach and my suggested changes to Deike's two invitation letters. Looks like we're good to go! Please keep us updated as to your progress. Happy hunting!
+
+As always, any questions, just ask!
+
+All the best,
+
+Robbie.
+ *
  * Add a universe to the geometry
  * @param universe a pointer to the universe object
  */
@@ -351,8 +358,9 @@ void Geometry::addUniverse(Universe* universe) {
 						"Backtrace:\n%s", universe->getId(), e.what());
 		}
 	}
-}
 
+	return;
+}
 
 /**
  * Return a universe from the geometry
@@ -712,124 +720,130 @@ void Geometry::buildNeighborsLists() {
 }
 
 
-// FIXME: This method is still a work in progress
 Cell* Geometry::findCell(LocalCoords* coords) {
-
-	Cell* return_cell = NULL;
-
 	int universe_id = coords->getUniverse();
-	Universe* universe = _universes.at(universe_id);
-
-	if (universe->getType() == SIMPLE) {
-
-		coords->setType(UNIV);
-
-		std::vector<Cell*> cells = _universes.at(universe_id)->getCells();
-		/* Loop over all cells in this universe */
-		for (int c = 0; c < (int)cells.size(); c++) {
-			Cell* cell = cells.at(c);
-
-			if (cell->cellContains(coords)) {
-				/* Set the cell on this level */
-				coords->setCell(cell->getUid());
-
-				/* MATERIAL type cell - lowest level, terminate search for cell */
-				if (cell->getType() == MATERIAL) {
-	//				coords->setCell(cell->getUid());
-					coords->setCell(cell->getId());
-					return_cell = cell;
-					return cell;
-				}
-
-				/* FILL type cell - cell contains a universe at a lower level
-				 * Update coords to next level and continue search */
-				else if (cell->getType() == FILL) {
-					LocalCoords* new_coords = new LocalCoords(coords->getX(),coords->getY());
-					new_coords->setUniverse(static_cast<CellFill*>(cell)->getUniverseFill());
-//					coords->setCell(cell->getUid());
-					coords->setCell(cell->getId());
-
-					coords->setNext(new_coords);
-					return findCell(new_coords);
-				}
-			}
-		}
-	}
-
-	/* LATTICE type universe */
-	else if (universe->getType() == LATTICE) {
-
-		coords->setType(LAT);
-
-		/* Compute the x and y indices for the lattice cell this coord is in */
-		Lattice* lat = _lattices.at(universe_id);
-		int lat_x = floor(coords->getX() - lat->getOrigin()->getX()) /
-								lat->getWidthX();
-		int lat_y = floor(coords->getY() - lat->getOrigin()->getY()) /
-								lat->getWidthY();
-
-		/* If the indices are outside the bound of the lattice */
-		if (lat_x < 0 || lat_x >= lat->getNumX() ||
-				lat_y < 0 || lat_y >= lat->getNumY()) {
-
-			log_printf(ERROR, "The lattice cell indices are out of "
-					"bounds (x = %d, y = %d) for the following "
-					"LocalCoords and and Lattice objects:\n%s\n%s",
-					lat_x, lat_y, coords->toString().c_str(),
-					lat->toString().c_str());
-		}
-
-		/* Compute local position of particle in the next level universe */
-		double nextX = coords->getX() - (lat->getOrigin()->getX()
-						+ (lat_x + 0.5) * lat->getWidthX());
-		double nextY = coords->getY() - (lat->getOrigin()->getY()
-						+ (lat_y + 0.5) * lat->getWidthY());
-
-		LocalCoords* newCoords = new LocalCoords(nextX, nextY);
-		newCoords->setUniverse(lat->getUniverse(lat_x, lat_y)->getId());
-
-		/* Set lattice indices */
-//		coords->setLattice(lat->getUid());
-		coords->setLattice(lat->getId());
-		coords->setLatticeX(lat_x);
-		coords->setLatticeY(lat_y);
-
-		coords->setNext(newCoords);
-
-		return findCell(newCoords);
-	}
-	return return_cell;
+	Universe* univ = _universes.at(universe_id);
+	return univ->findCell(coords, _universes);
 }
 
 
 Cell* Geometry::findNextCell(LocalCoords* coords, double angle) {
 
-	/* Move LocalCoords just a slit bit to find the next cell */
-	double delta_x = cos(angle)*TINY_MOVE;
-	double delta_y = sin(angle)*TINY_MOVE;
-	coords->adjustCoords(delta_x, delta_y);
+	Cell* cell = NULL;
+	double dist;
 
-	return findCell(coords);
+	/* Find the current cell */
+	cell = findCell(coords);
+
+	/* If the current coords is not in any cell, return NULL */
+	if (cell == NULL)
+		return NULL;
+
+	else {
+		/* Check the min dist to the next surface in that cell */
+		dist = cell->minSurfaceDist(coords->getPoint(), angle);
+
+		if (dist != INFINITY) {
+			/* Move LocalCoords just to the next surface in the cell plus an
+			 * additional small bit into the next cell */
+			double delta_x = cos(angle) * (dist + TINY_MOVE);
+			double delta_y = sin(angle) * (dist + TINY_MOVE);
+			coords->adjustCoords(delta_x, delta_y);
+
+			/* Find new cell and return it */
+			return findCell(coords);
+		}
+
+		/* Readjust to base universe */
+		else if (dist == INFINITY) {
+
+			LocalCoords* curr = coords;
+			LocalCoords* prev = coords;
+
+			/* Loop over all coordinate levels and delete the first one that is not a
+			 * lattice type or the base universe */
+			while (curr->getNext() != NULL)
+				curr = curr->getNext();
+
+			while (curr != NULL && curr->getUniverse() != 0) {
+				curr = curr->getPrev();
+				if (curr->getType() == LAT) {
+					curr->setNext(NULL);
+					delete curr->getNext();
+					curr = NULL;
+				}
+			}
+//			while(curr != NULL) {
+//				if (curr->getType() == UNIV && curr->getUniverse() != 0) {
+//					prev->setNext(NULL);
+//					delete curr;
+//					curr = NULL;
+//				}
+//				else {
+//					prev = curr;
+//					curr = curr->getNext();
+//				}
+//			}
+
+			curr = coords;
+
+			/* Get the lowest level universe */
+			while(curr->getNext() != NULL)
+				curr = curr->getNext();
+
+			if (curr->getType() == LAT) {
+				int lattice_id = curr->getLattice();
+				Lattice* lattice = _lattices.at(lattice_id);
+
+				return lattice->findNextLatticeCell(curr, angle, _universes);
+			}
+
+			//TODO: for simple geometries without lattices
+			else if (curr->getUniverse() == 0) {
+
+			}
+		}
+	}
+
+	return cell;
 }
 
 
-//FIXME: THIS IS A WORK IN PROGRESS
 void Geometry::segmentize(Track* track) {
 
 	double x0 = track->getStart()->getX();
 	double y0 = track->getStart()->getY();
-	double delta_x, delta_y;
+	double phi = track->getPhi();
 	double dist;
 
-	LocalCoords* segment_start = new LocalCoords(x0, y0);
-	segment_start->setUniverse(0);
+	LocalCoords segment_start(x0, y0);
+	LocalCoords segment_end(x0, y0);
+	segment_start.setUniverse(0);
+	segment_end.setUniverse(0);
 
-	Cell* cell = findCell(segment_start);
-	if (cell != NULL)
-		dist = cell->minSurfaceDist(track->getStart(), track->getPhi());
+	Cell* curr = findCell(&segment_end);
+	Cell* prev = curr;
+	if (curr == NULL)
+		log_printf(WARNING, "Could not find a cell containing the start point "
+				"of this track: %s", track->toString().c_str());
 
-	while(dist != INFINITY) { }
+	while (curr != NULL) {
 
+		curr = findNextCell(&segment_end, phi);
+		dist = segment_end.getPoint()->distance(segment_start.getPoint());
+		segment* new_segment = new segment;
+		new_segment->_length = dist;
+
+		//FIXME: this needs to use our flat source region id from some equation
+		//mapping lattices, universes and cells to FSR ids
+		new_segment->_region_id = prev->getId();
+		track->addSegment(new_segment);
+	}
+
+	log_printf(DEBUG, "Created %d segments for track: %s",
+			track->getNumSegments(), track->toString().c_str());
+
+	return;
 }
 
 
