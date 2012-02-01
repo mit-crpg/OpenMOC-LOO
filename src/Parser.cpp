@@ -15,7 +15,7 @@
 #include <assert.h>
 
 /* Verbose debugging of the parser, but doesn't follow log* format */
-//#define DEBUG
+#define DEBUG
 
 /* These should really be static, but thanks to C++ that's impossible.  I've
  * still declared them up here though, as at least they can be made private!
@@ -126,6 +126,18 @@ struct frame_surface {
 struct frame_material {
 	bool has_id;
 	int id;
+
+	double *sigma_t;
+	int sigma_t_cnt;
+	
+	double *nu_sigma_f;
+	int nu_sigma_f_cnt;
+
+	double *chi;
+	int chi_cnt;
+	
+	double *sigma_s;
+	int sigma_s_cnt;
 };
 
 
@@ -410,6 +422,35 @@ void XMLCALL Parser_XMLCallback_Start(void *context,
 				
 				f->material.has_id = true;
 				f->material.id = atoi(value);
+			} else if (strcmp(key, "sigma_t") == 0) {
+				if (f->material.sigma_t != NULL)
+					log_printf(ERROR, "Has 2 sigma_t");
+
+				f->material.sigma_t =
+					strtok_double(value,
+						      &f->material.sigma_t_cnt);
+			} else if (strcmp(key, "nu_sigma_f") == 0) {
+				if (f->material.nu_sigma_f != NULL)
+					log_printf(ERROR, "Has 2 nu_sigma_f");
+
+				f->material.nu_sigma_f =
+					strtok_double(value,
+						      &f->
+						      material.nu_sigma_f_cnt);
+			} else if (strcmp(key, "chi") == 0) {
+				if (f->material.chi != NULL)
+					log_printf(ERROR, "Has 2 chi");
+
+				f->material.chi =
+					strtok_double(value,
+						      &f->material.chi_cnt);
+			} else if (strcmp(key, "sigma_s") == 0) {
+				if (f->material.sigma_s != NULL)
+					log_printf(ERROR, "Has 2 sigma_s");
+
+				f->material.sigma_s =
+					strtok_double(value,
+						      &f->material.sigma_s_cnt);
 			}
 			break;
 		case NODE_TYPE_SURFACE:
@@ -732,14 +773,30 @@ void XMLCALL Parser_XMLCallback_End(void *context,
 	{
 		Material *material;
 
-		material = NULL;
-		material = new Material(f->material.id);
+		material = new Material(f->material.id,
+					f->material.sigma_t,
+					f->material.sigma_t_cnt,
+					f->material.nu_sigma_f,
+					f->material.nu_sigma_f_cnt,
+					f->material.chi,
+					f->material.chi_cnt,
+					f->material.sigma_s,
+					f->material.sigma_s_cnt);
 
 		if (material != NULL)
 			s->parser->materials.push_back(material);
 		else {
 			log_printf(ERROR, "Material unsuccessfully built");
-		}		
+		}
+
+		if (f->material.sigma_t != NULL)
+			free(f->material.sigma_t);
+		if (f->material.nu_sigma_f != NULL)
+			free(f->material.nu_sigma_f);
+		if (f->material.chi != NULL)
+			free(f->material.chi);
+		if (f->material.sigma_s != NULL)
+			free(f->material.sigma_s);
 	}
 	}
 
@@ -887,6 +944,10 @@ struct frame *stack_push(struct stack *s, enum frame_type type) {
 		break;
 	case NODE_TYPE_MATERIAL:
 		f->material.has_id = false;
+		f->material.sigma_t = NULL;
+		f->material.nu_sigma_f = NULL;
+		f->material.chi = NULL;
+		f->material.sigma_s = NULL;
 		break;
 	}
 
@@ -1030,11 +1091,51 @@ void stack_print_help(struct frame *f) {
 			}
 			fprintf(stderr, "\"");
 		}
+		break;
 	case NODE_TYPE_MATERIAL:
 		if (f->material.has_id)
 			fprintf(stderr, " id=\"%d\"", f->material.id);
-		break;
+		if (f->material.sigma_t != NULL) {
+			int i;
 
+			fprintf(stderr, " sigma_t=\"");
+			for (i = 0; i < f->material.sigma_t_cnt; i++) {
+				fprintf(stderr, " %f",
+					f->material.sigma_t[i]);
+			}
+			fprintf(stderr, "\"");
+		}
+		if (f->material.nu_sigma_f != NULL) {
+			int i;
+
+			fprintf(stderr, " nu_sigma_f=\"");
+			for (i = 0; i < f->material.nu_sigma_f_cnt; i++) {
+				fprintf(stderr, " %f",
+					f->material.nu_sigma_f[i]);
+			}
+			fprintf(stderr, "\"");
+		}
+		if (f->material.chi != NULL) {
+			int i;
+
+			fprintf(stderr, " chi=\"");
+			for (i = 0; i < f->material.chi_cnt; i++) {
+				fprintf(stderr, " %f",
+					f->material.chi[i]);
+			}
+			fprintf(stderr, "\"");
+		}
+		if (f->material.sigma_s != NULL) {
+			int i;
+
+			fprintf(stderr, " sigma_s=\"");
+			for (i = 0; i < f->material.sigma_s_cnt; i++) {
+				fprintf(stderr, " %f",
+					f->material.sigma_s[i]);
+			}
+			fprintf(stderr, "\"");
+		}
+		break;
 	}
 
 	fprintf(stderr, "\n");

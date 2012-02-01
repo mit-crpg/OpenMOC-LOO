@@ -3,8 +3,8 @@
 <geometry>
 
 <!-- Definition of Cells -->
-  <cell id="100" material="40" surfaces="-1" />
-  <cell id="101" material="41" surfaces="1 2 -3 4 -5" />
+  <cell id="100" material="1" surfaces="-1" />
+  <cell id="101" material="2" surfaces="1 2 -3 4 -5" />
 
 <!-- Defition of Surfaces -->
   <surface id="1" type="circle" coeffs="0 0 7" />
