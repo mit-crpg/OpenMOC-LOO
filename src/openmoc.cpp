@@ -75,7 +75,7 @@ int main(int argc, const char **argv) {
 
 	/* Initialize the trackgenerator */
 	TrackGenerator trackGenerator(&geometry, opts.getNumAzim(),
-									opts.getTrackSpacing());
+				      opts.getTrackSpacing());
 	trackGenerator.generateTracks();
 	trackGenerator.makeReflective();
 	trackGenerator.plotTracksTiff();

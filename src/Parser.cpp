@@ -37,7 +37,9 @@ enum frame_type {
 	NODE_TYPE_LATTICE,
 	NODE_TYPE_TYPE,
 	NODE_TYPE_DIMENSION,
+#ifdef USE_LATTICE_ORIGIN
 	NODE_TYPE_ORIGIN,
+#endif
 	NODE_TYPE_WIDTH,
 	NODE_TYPE_UNIVERSES,
 	NODE_TYPE_SURFACE,
@@ -101,9 +103,10 @@ struct frame_lattice {
 	int *universes;
 	int universes_count;
 
+#ifdef USE_LATTICE_ORIGIN
 	double *origin;
 	int origin_count;
-
+#endif
 	double *width;
 	int width_count;
 };
@@ -138,7 +141,9 @@ struct frame {
 		struct frame_lattice lattice;
 		struct frame_ttype ttype;
 		struct frame_dimension dimmension;
+#ifdef USE_LATTICE_ORIGIN
 		struct frame_origin origin;
+#endif
 		struct frame_width width;
 		struct frame_universes universes;
 		struct frame_surface surface;
@@ -390,8 +395,10 @@ void XMLCALL Parser_XMLCallback_Start(void *context,
 			break;
 		case NODE_TYPE_DIMENSION:
 		break;
+#ifdef USE_LATTICE_ORIGIN
 		case NODE_TYPE_ORIGIN:
 			break;
+#endif
 		case NODE_TYPE_WIDTH:
 			break;
 		case NODE_TYPE_UNIVERSES:
@@ -500,8 +507,10 @@ void XMLCALL Parser_XMLCallback_End(void *context,
 			log_printf(ERROR, "Lattice without id");
 		if (f->lattice.dimmensions_count != 2)
 			log_printf(ERROR, "Lattice without exactly 2 dimms");
+#ifdef USE_LATTICE_ORIGIN
 		if (f->lattice.origin_count != 2)
 			log_printf(ERROR, "Lattice without exactly 2 origin");
+#endif
 		if (f->lattice.width_count != 2)
 			log_printf(ERROR, "Lattice without exactly 2 widths");
 		if (f->lattice.universes == NULL)
@@ -510,8 +519,10 @@ void XMLCALL Parser_XMLCallback_End(void *context,
 		lattice = new Lattice(f->lattice.id,
 				      f->lattice.dimmensions[0],
 				      f->lattice.dimmensions[1],
+#ifdef USE_LATTICE_ORIGIN
 				      f->lattice.origin[0],
 				      f->lattice.origin[1],
+#endif
 				      f->lattice.width[0],
 				      f->lattice.width[1],
 				      f->lattice.universes_count,
@@ -525,8 +536,10 @@ void XMLCALL Parser_XMLCallback_End(void *context,
 			free(f->lattice.dimmensions);
 		if (f->lattice.universes != NULL)
 			free(f->lattice.universes);
+#ifdef USE_LATTICE_ORIGIN
 		if (f->lattice.origin != NULL)
 			free(f->lattice.origin);
+#endif
 		if (f->lattice.width != NULL)
 			free(f->lattice.width);
 		break;
@@ -540,7 +553,9 @@ void XMLCALL Parser_XMLCallback_End(void *context,
 		case NODE_TYPE_CELL:
 		case NODE_TYPE_TYPE:	
 		case NODE_TYPE_DIMENSION:
+#ifdef USE_LATTICE_ORIGIN
 		case NODE_TYPE_ORIGIN:
+#endif
 		case NODE_TYPE_WIDTH:
 		case NODE_TYPE_UNIVERSES:
 		case NODE_TYPE_SURFACE:
@@ -566,7 +581,9 @@ void XMLCALL Parser_XMLCallback_End(void *context,
 		case NODE_TYPE_CELL:
 		case NODE_TYPE_TYPE:	
 		case NODE_TYPE_DIMENSION:
+#ifdef USE_LATTICE_ORIGIN
 		case NODE_TYPE_ORIGIN:
+#endif
 		case NODE_TYPE_WIDTH:
 		case NODE_TYPE_UNIVERSES:
 		case NODE_TYPE_SURFACE:
@@ -575,6 +592,7 @@ void XMLCALL Parser_XMLCallback_End(void *context,
 			log_printf(ERROR, "Unexpected dimmension subfield");
 		}
 		break;
+#ifdef USE_LATTICE_ORIGIN
 	case NODE_TYPE_ORIGIN:
 		switch (p->type) {
 		case NODE_TYPE_LATTICE:
@@ -601,6 +619,7 @@ void XMLCALL Parser_XMLCallback_End(void *context,
 			log_printf(ERROR, "Unexpected dimmension subfield");
 		}
 		break;
+#endif
 	case NODE_TYPE_WIDTH:
 		switch (p->type) {
 		case NODE_TYPE_LATTICE:
@@ -618,7 +637,9 @@ void XMLCALL Parser_XMLCallback_End(void *context,
 		case NODE_TYPE_CELL:
 		case NODE_TYPE_TYPE:	
 		case NODE_TYPE_DIMENSION:
+#ifdef USE_LATTICE_ORIGIN
 		case NODE_TYPE_ORIGIN:
+#endif
 		case NODE_TYPE_WIDTH:
 		case NODE_TYPE_UNIVERSES:
 		case NODE_TYPE_SURFACE:
@@ -644,7 +665,9 @@ void XMLCALL Parser_XMLCallback_End(void *context,
 		case NODE_TYPE_CELL:
 		case NODE_TYPE_TYPE:	
 		case NODE_TYPE_DIMENSION:
+#ifdef USE_LATTICE_ORIGIN
 		case NODE_TYPE_ORIGIN:
+#endif
 		case NODE_TYPE_WIDTH:
 		case NODE_TYPE_UNIVERSES:
 		case NODE_TYPE_SURFACE:
@@ -750,9 +773,11 @@ void XMLCALL Parser_XMLCallback_CData(void *context,
 	case NODE_TYPE_DIMENSION:
 		f->dimmension.data = astrncat(f->dimmension.data, str, len);
 		break;
+#ifdef USE_LATTICE_ORIGIN
 	case NODE_TYPE_ORIGIN:
 		f->origin.data = astrncat(f->origin.data, str, len);
 		break;
+#endif
 	case NODE_TYPE_WIDTH:
 		f->width.data = astrncat(f->width.data, str, len);
 		break;
@@ -782,8 +807,10 @@ const char *frame_type_string(enum frame_type type) {
 		return "type";
 	case NODE_TYPE_DIMENSION:
 		return "dimension";
+#ifdef USE_LATTICE_ORIGIN
 	case NODE_TYPE_ORIGIN:
 		return "origin";
+#endif
 	case NODE_TYPE_WIDTH:
 		return "width";
 	case NODE_TYPE_UNIVERSES:
@@ -830,7 +857,9 @@ struct frame *stack_push(struct stack *s, enum frame_type type) {
 		f->lattice.type = NULL;
 		f->lattice.dimmensions = NULL;
 		f->lattice.universes = NULL;
+#ifdef USE_LATTICE_ORIGIN
 		f->lattice.origin = NULL;
+#endif
 		f->lattice.width = NULL;
 		break;
 	case NODE_TYPE_TYPE:
@@ -839,9 +868,11 @@ struct frame *stack_push(struct stack *s, enum frame_type type) {
 	case NODE_TYPE_DIMENSION:
 		f->dimmension.data = NULL;
 		break;
+#ifdef USE_LATTICE_ORIGIN
 	case NODE_TYPE_ORIGIN:
 		f->origin.data = NULL;
 		break;
+#endif
 	case NODE_TYPE_WIDTH:
 		f->width.data = NULL;
 		break;
@@ -959,6 +990,7 @@ void stack_print_help(struct frame *f) {
 			}
 			fprintf(stderr, "\"");
 		}
+#ifdef USE_LATTICE_ORIGIN
 		if (f->lattice.origin != NULL) {
 			int i;
 
@@ -969,13 +1001,16 @@ void stack_print_help(struct frame *f) {
 			}
 			fprintf(stderr, "\"");
 		}
+#endif
 		break;
 	case NODE_TYPE_TYPE:
 		break;
 	case NODE_TYPE_DIMENSION:
 		break;
+#ifdef USE_LATTICE_ORIGIN
 	case NODE_TYPE_ORIGIN:
 		break;
+#endif
 	case NODE_TYPE_WIDTH:
 		break;
 	case NODE_TYPE_UNIVERSES:

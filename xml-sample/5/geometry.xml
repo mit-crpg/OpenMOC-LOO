@@ -13,7 +13,6 @@
    <lattice id="5">
     <type>rectangular</type>
     <dimension>4 4</dimension>
-    <origin>-2.0 -2.0</origin>
     <width>1.0 1.0</width>
     <universes>
       1 2 1 2

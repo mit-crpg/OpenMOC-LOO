@@ -4,6 +4,7 @@ Makefile
 *~
 Configfile.local
 .cproject
-./Debug/*
+./Debug
 *.d
 *.o
+*.tiff

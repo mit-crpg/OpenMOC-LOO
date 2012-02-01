@@ -25,21 +25,25 @@ private:
 	friend class Universe;
 public:
 	Lattice(const int id, const int num_x, const int num_y, 
+#ifdef USE_LATTICE_ORIGIN
 		const double origin_x, const double origin_y,
+#endif
 		const double width_x, const double width_y,
 		int universes_count, int *universes);
 	virtual ~Lattice();
 	void setUniversePointer(Universe* universe);
-    int getId() const;
-    int getLevel() const;
-    int getNumX() const;
-    int getNumY() const;
-    Point* getOrigin();
-    std::vector< std::vector< std::pair<int, Universe*> > > getUniverses() const;
-    double getWidthX() const;
-    double getWidthY() const;
-    void adjustKeys();
-    std::string toString();
+	int getId() const;
+	int getLevel() const;
+	int getNumX() const;
+	int getNumY() const;
+#ifdef USE_LATTICE_ORIGIN
+	Point* getOrigin();
+#endif
+	std::vector< std::vector< std::pair<int, Universe*> > > getUniverses() const;
+	double getWidthX() const;
+	double getWidthY() const;
+	void adjustKeys();
+	std::string toString();
 };
 
 #endif /* LATTICE_H_ */

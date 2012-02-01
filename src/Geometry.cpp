@@ -43,26 +43,6 @@ Geometry::~Geometry() {
 	_lattices.clear();
 }
 
-#if 0
-/**
- * Sets the total height of the geometry
- * @param height the total height
- */
-void Geometry::setHeight(const double height) {
-	_height = height;
-}
-
-
-/**
- * Sets the total width of the geometry
- * @param width the total width
- */
-void Geometry::setWidth(const double width) {
-    _width = width;
-}
-#endif
-
-
 /* Set the number of ring divisions used for making flat source regions
  * @param num_rings the number of rings
  */
@@ -549,7 +529,7 @@ void Geometry::adjustKeys() {
 
 
 	/**************************************************************************
-	 * Ajust the indices of the containers of geometry objects which are
+	 * Adjust the indices of the containers of geometry objects which are
 	 * attributes of this geometry class
 	 *************************************************************************/
 
