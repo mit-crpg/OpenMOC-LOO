@@ -227,6 +227,22 @@ void LocalCoords::adjustCoords(double delta_x, double delta_y) {
 }
 
 
+void LocalCoords::updateMostLocal(Point* point) {
+
+	LocalCoords* curr = this;
+	while(curr->getNext() != NULL)
+		curr = curr->getNext();
+
+	double delta_x = point->getX() - curr->getX();
+	double delta_y = point->getY() - curr->getY();
+
+	adjustCoords(delta_x, delta_y);
+
+	return;
+}
+
+
+
 /**
  * Converts this localcoords's attributes to a character array
  * representation

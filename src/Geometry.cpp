@@ -804,6 +804,8 @@ Cell* Geometry::findNextCell(LocalCoords* coords, double angle) {
 
 	/* Find the current cell */
 	cell = findCell(coords);
+	log_printf(DEBUG, "Inside findNextCell. found current cell: %s", cell->toString().c_str());
+	log_printf(DEBUG, "Localcoords: %s", coords->toString().c_str());
 
 	/* If the current coords is not in any cell, return NULL */
 	if (cell == NULL)
@@ -811,19 +813,28 @@ Cell* Geometry::findNextCell(LocalCoords* coords, double angle) {
 
 	else {
 		/* Check the min dist to the next surface in the current cell */
-		dist = cell->minSurfaceDist(coords->getPoint(), angle);
+		Point surf_intersection;
+		dist = cell->minSurfaceDist(coords->getPoint(), angle, &surf_intersection);
+		log_printf(DEBUG, "found dist = %f", dist);
 
 		/* If the distance returned is not INFINITY, the trajectory will
 		 * intersect a surface in the cell */
 		if (dist != INFINITY) {
 			/* Move LocalCoords just to the next surface in the cell plus an
 			 * additional small bit into the next cell */
-			double delta_x = cos(angle) * (dist + TINY_MOVE);
-			double delta_y = sin(angle) * (dist + TINY_MOVE);
+//			double delta_x = cos(angle) * (dist + TINY_MOVE);
+//			double delta_y = sin(angle) * (dist + TINY_MOVE);
+//			coords->adjustCoords(delta_x, delta_y);
+			coords->updateMostLocal(&surf_intersection);
+			double delta_x = cos(angle) * TINY_MOVE;
+			double delta_y = sin(angle) * TINY_MOVE;
 			coords->adjustCoords(delta_x, delta_y);
 
 			/* Find new cell and return it */
-			return findCell(coords);
+//			return findCell(coords);
+			Cell* cell = findCell(coords);
+			log_printf(DEBUG, "Next cell is: %s", coords->toString().c_str());
+			return cell;
 		}
 
 		/* If the distance returned is infinity, the trajectory will not
@@ -925,7 +936,8 @@ void Geometry::segmentize(Track* track) {
 		new_segment->_length = segment_length;
 		//FIXME: this needs to use our flat source region id from some equation
 		//mapping lattices, universes and cells to FSR ids
-		new_segment->_region_id = prev->getUid();
+//		new_segment->_region_id = prev->getUid();
+		new_segment->_region_id = prev->getId();
 
 		/* Update coordinates for start of next segment */
 		segment_start.setX(segment_end.getX());

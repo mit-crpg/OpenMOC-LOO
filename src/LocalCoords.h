@@ -56,6 +56,7 @@ public:
     void setNext(LocalCoords *next);
     void setPrev(LocalCoords* coords);
     void adjustCoords(double delta_x, double delta_y);
+    void updateMostLocal(Point* point);
     std::string toString();
 };
 
