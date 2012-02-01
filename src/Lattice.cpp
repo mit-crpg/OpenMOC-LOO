@@ -22,13 +22,20 @@
  * @param universes 
  */
 Lattice::Lattice(const int id, const int num_x, int num_y, 
+#ifdef USE_LATTICE_ORIGIN
 		 double origin_x, double origin_y,
+#endif
 		 double width_x, double width_y, 
 		 int universes_count, int *universes): Universe(id) {
 	_num_y = num_y;
 	_num_x = num_x;
+#ifdef USE_LATTICE_ORIGIN
+	_origin.setX(origin_x);
+	_origin.setY(origin_y);
+#else
 	_origin.setX(-width_x*num_x/2.0);
 	_origin.setY(-width_y*num_y/2.0);
+#endif
 	_width_x = width_x;
 	_width_y = width_y;
 	_type = LATTICE;
@@ -117,6 +124,7 @@ int Lattice::getNumY() const {
 }
 
 
+#ifdef USE_LATTICE_ORIGIN
 /**
  * Return the origin of the lattice
  * @return the origin of the lattice
@@ -124,7 +132,7 @@ int Lattice::getNumY() const {
 Point* Lattice::getOrigin() {
     return &_origin;
 }
-
+#endif
 
 /**
  * Return a 2D vector array of the universes in the lattice

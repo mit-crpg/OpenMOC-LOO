@@ -15,6 +15,7 @@
 #include "Point.h"
 #include "Track.h"
 #include "Geometry.h"
+//#include "Magick++.h"
 
 class TrackGenerator {
 private:
@@ -39,6 +40,7 @@ public:
 			const double width, const double height);
 	void makeReflective();
 	void segmentize();
+	void plotTracksTiff();
 };
 
 #endif /* TRACKGENERATOR_H_ */

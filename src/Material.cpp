@@ -16,12 +16,36 @@ int Material::_n = 0;
  * Material constructor
  * @param id the material's id
  */
-Material::Material(int id) {
+Material::Material(int id,
+		   double *sigma_t, int sigma_t_cnt,
+		   double *nu_sigma_f, int nu_sigma_f_cnt,
+		   double *chi, int chi_cnt,
+		   double *sigma_s, int sigma_s_cnt) {
 	_uid = _n;
 	_id = id;
 	_n++;
-}
 
+	if (sigma_t_cnt != NUM_ENERGY_GROUPS)
+		log_printf(ERROR, "Wrong number of sigma_t");
+	memcpy(_sigma_t, sigma_t, NUM_ENERGY_GROUPS*sizeof(*_sigma_t));
+
+	if (nu_sigma_f_cnt != NUM_ENERGY_GROUPS)
+		log_printf(ERROR, "Wrong number of nu_sigma_f");
+	memcpy(_nu_sigma_f, nu_sigma_f, NUM_ENERGY_GROUPS*sizeof(*_nu_sigma_f));
+
+	if (chi_cnt != NUM_ENERGY_GROUPS)
+		log_printf(ERROR, "Wrong number of chi");
+	memcpy(_chi, chi, NUM_ENERGY_GROUPS*sizeof(*_chi));
+
+	if (sigma_s_cnt != NUM_ENERGY_GROUPS*NUM_ENERGY_GROUPS)
+		log_printf(ERROR, "Wrong number of sigma_s");
+	
+	for (int i=0; i<NUM_ENERGY_GROUPS; i++) {
+		for (int j=0; j<NUM_ENERGY_GROUPS; j++) {
+			_sigma_s[i][j] = sigma_s[i+NUM_ENERGY_GROUPS*j];
+		}
+	}
+}
 
 /**
  * Destructor

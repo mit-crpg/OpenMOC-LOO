@@ -37,7 +37,9 @@ enum frame_type {
 	NODE_TYPE_LATTICE,
 	NODE_TYPE_TYPE,
 	NODE_TYPE_DIMENSION,
+#ifdef USE_LATTICE_ORIGIN
 	NODE_TYPE_ORIGIN,
+#endif
 	NODE_TYPE_WIDTH,
 	NODE_TYPE_UNIVERSES,
 	NODE_TYPE_SURFACE,
@@ -101,9 +103,10 @@ struct frame_lattice {
 	int *universes;
 	int universes_count;
 
+#ifdef USE_LATTICE_ORIGIN
 	double *origin;
 	int origin_count;
-
+#endif
 	double *width;
 	int width_count;
 };
@@ -123,6 +126,18 @@ struct frame_surface {
 struct frame_material {
 	bool has_id;
 	int id;
+
+	double *sigma_t;
+	int sigma_t_cnt;
+	
+	double *nu_sigma_f;
+	int nu_sigma_f_cnt;
+
+	double *chi;
+	int chi_cnt;
+	
+	double *sigma_s;
+	int sigma_s_cnt;
 };
 
 
@@ -138,7 +153,9 @@ struct frame {
 		struct frame_lattice lattice;
 		struct frame_ttype ttype;
 		struct frame_dimension dimmension;
+#ifdef USE_LATTICE_ORIGIN
 		struct frame_origin origin;
+#endif
 		struct frame_width width;
 		struct frame_universes universes;
 		struct frame_surface surface;
@@ -390,8 +407,10 @@ void XMLCALL Parser_XMLCallback_Start(void *context,
 			break;
 		case NODE_TYPE_DIMENSION:
 		break;
+#ifdef USE_LATTICE_ORIGIN
 		case NODE_TYPE_ORIGIN:
 			break;
+#endif
 		case NODE_TYPE_WIDTH:
 			break;
 		case NODE_TYPE_UNIVERSES:
@@ -403,6 +422,35 @@ void XMLCALL Parser_XMLCallback_Start(void *context,
 				
 				f->material.has_id = true;
 				f->material.id = atoi(value);
+			} else if (strcmp(key, "sigma_t") == 0) {
+				if (f->material.sigma_t != NULL)
+					log_printf(ERROR, "Has 2 sigma_t");
+
+				f->material.sigma_t =
+					strtok_double(value,
+						      &f->material.sigma_t_cnt);
+			} else if (strcmp(key, "nu_sigma_f") == 0) {
+				if (f->material.nu_sigma_f != NULL)
+					log_printf(ERROR, "Has 2 nu_sigma_f");
+
+				f->material.nu_sigma_f =
+					strtok_double(value,
+						      &f->
+						      material.nu_sigma_f_cnt);
+			} else if (strcmp(key, "chi") == 0) {
+				if (f->material.chi != NULL)
+					log_printf(ERROR, "Has 2 chi");
+
+				f->material.chi =
+					strtok_double(value,
+						      &f->material.chi_cnt);
+			} else if (strcmp(key, "sigma_s") == 0) {
+				if (f->material.sigma_s != NULL)
+					log_printf(ERROR, "Has 2 sigma_s");
+
+				f->material.sigma_s =
+					strtok_double(value,
+						      &f->material.sigma_s_cnt);
 			}
 			break;
 		case NODE_TYPE_SURFACE:
@@ -500,8 +548,10 @@ void XMLCALL Parser_XMLCallback_End(void *context,
 			log_printf(ERROR, "Lattice without id");
 		if (f->lattice.dimmensions_count != 2)
 			log_printf(ERROR, "Lattice without exactly 2 dimms");
+#ifdef USE_LATTICE_ORIGIN
 		if (f->lattice.origin_count != 2)
 			log_printf(ERROR, "Lattice without exactly 2 origin");
+#endif
 		if (f->lattice.width_count != 2)
 			log_printf(ERROR, "Lattice without exactly 2 widths");
 		if (f->lattice.universes == NULL)
@@ -510,8 +560,10 @@ void XMLCALL Parser_XMLCallback_End(void *context,
 		lattice = new Lattice(f->lattice.id,
 				      f->lattice.dimmensions[0],
 				      f->lattice.dimmensions[1],
+#ifdef USE_LATTICE_ORIGIN
 				      f->lattice.origin[0],
 				      f->lattice.origin[1],
+#endif
 				      f->lattice.width[0],
 				      f->lattice.width[1],
 				      f->lattice.universes_count,
@@ -525,8 +577,10 @@ void XMLCALL Parser_XMLCallback_End(void *context,
 			free(f->lattice.dimmensions);
 		if (f->lattice.universes != NULL)
 			free(f->lattice.universes);
+#ifdef USE_LATTICE_ORIGIN
 		if (f->lattice.origin != NULL)
 			free(f->lattice.origin);
+#endif
 		if (f->lattice.width != NULL)
 			free(f->lattice.width);
 		break;
@@ -540,7 +594,9 @@ void XMLCALL Parser_XMLCallback_End(void *context,
 		case NODE_TYPE_CELL:
 		case NODE_TYPE_TYPE:	
 		case NODE_TYPE_DIMENSION:
+#ifdef USE_LATTICE_ORIGIN
 		case NODE_TYPE_ORIGIN:
+#endif
 		case NODE_TYPE_WIDTH:
 		case NODE_TYPE_UNIVERSES:
 		case NODE_TYPE_SURFACE:
@@ -566,7 +622,9 @@ void XMLCALL Parser_XMLCallback_End(void *context,
 		case NODE_TYPE_CELL:
 		case NODE_TYPE_TYPE:	
 		case NODE_TYPE_DIMENSION:
+#ifdef USE_LATTICE_ORIGIN
 		case NODE_TYPE_ORIGIN:
+#endif
 		case NODE_TYPE_WIDTH:
 		case NODE_TYPE_UNIVERSES:
 		case NODE_TYPE_SURFACE:
@@ -575,6 +633,7 @@ void XMLCALL Parser_XMLCallback_End(void *context,
 			log_printf(ERROR, "Unexpected dimmension subfield");
 		}
 		break;
+#ifdef USE_LATTICE_ORIGIN
 	case NODE_TYPE_ORIGIN:
 		switch (p->type) {
 		case NODE_TYPE_LATTICE:
@@ -601,6 +660,7 @@ void XMLCALL Parser_XMLCallback_End(void *context,
 			log_printf(ERROR, "Unexpected dimmension subfield");
 		}
 		break;
+#endif
 	case NODE_TYPE_WIDTH:
 		switch (p->type) {
 		case NODE_TYPE_LATTICE:
@@ -618,7 +678,9 @@ void XMLCALL Parser_XMLCallback_End(void *context,
 		case NODE_TYPE_CELL:
 		case NODE_TYPE_TYPE:	
 		case NODE_TYPE_DIMENSION:
+#ifdef USE_LATTICE_ORIGIN
 		case NODE_TYPE_ORIGIN:
+#endif
 		case NODE_TYPE_WIDTH:
 		case NODE_TYPE_UNIVERSES:
 		case NODE_TYPE_SURFACE:
@@ -644,7 +706,9 @@ void XMLCALL Parser_XMLCallback_End(void *context,
 		case NODE_TYPE_CELL:
 		case NODE_TYPE_TYPE:	
 		case NODE_TYPE_DIMENSION:
+#ifdef USE_LATTICE_ORIGIN
 		case NODE_TYPE_ORIGIN:
+#endif
 		case NODE_TYPE_WIDTH:
 		case NODE_TYPE_UNIVERSES:
 		case NODE_TYPE_SURFACE:
@@ -709,14 +773,30 @@ void XMLCALL Parser_XMLCallback_End(void *context,
 	{
 		Material *material;
 
-		material = NULL;
-		material = new Material(f->material.id);
+		material = new Material(f->material.id,
+					f->material.sigma_t,
+					f->material.sigma_t_cnt,
+					f->material.nu_sigma_f,
+					f->material.nu_sigma_f_cnt,
+					f->material.chi,
+					f->material.chi_cnt,
+					f->material.sigma_s,
+					f->material.sigma_s_cnt);
 
 		if (material != NULL)
 			s->parser->materials.push_back(material);
 		else {
 			log_printf(ERROR, "Material unsuccessfully built");
-		}		
+		}
+
+		if (f->material.sigma_t != NULL)
+			free(f->material.sigma_t);
+		if (f->material.nu_sigma_f != NULL)
+			free(f->material.nu_sigma_f);
+		if (f->material.chi != NULL)
+			free(f->material.chi);
+		if (f->material.sigma_s != NULL)
+			free(f->material.sigma_s);
 	}
 	}
 
@@ -750,9 +830,11 @@ void XMLCALL Parser_XMLCallback_CData(void *context,
 	case NODE_TYPE_DIMENSION:
 		f->dimmension.data = astrncat(f->dimmension.data, str, len);
 		break;
+#ifdef USE_LATTICE_ORIGIN
 	case NODE_TYPE_ORIGIN:
 		f->origin.data = astrncat(f->origin.data, str, len);
 		break;
+#endif
 	case NODE_TYPE_WIDTH:
 		f->width.data = astrncat(f->width.data, str, len);
 		break;
@@ -782,8 +864,10 @@ const char *frame_type_string(enum frame_type type) {
 		return "type";
 	case NODE_TYPE_DIMENSION:
 		return "dimension";
+#ifdef USE_LATTICE_ORIGIN
 	case NODE_TYPE_ORIGIN:
 		return "origin";
+#endif
 	case NODE_TYPE_WIDTH:
 		return "width";
 	case NODE_TYPE_UNIVERSES:
@@ -830,7 +914,9 @@ struct frame *stack_push(struct stack *s, enum frame_type type) {
 		f->lattice.type = NULL;
 		f->lattice.dimmensions = NULL;
 		f->lattice.universes = NULL;
+#ifdef USE_LATTICE_ORIGIN
 		f->lattice.origin = NULL;
+#endif
 		f->lattice.width = NULL;
 		break;
 	case NODE_TYPE_TYPE:
@@ -839,9 +925,11 @@ struct frame *stack_push(struct stack *s, enum frame_type type) {
 	case NODE_TYPE_DIMENSION:
 		f->dimmension.data = NULL;
 		break;
+#ifdef USE_LATTICE_ORIGIN
 	case NODE_TYPE_ORIGIN:
 		f->origin.data = NULL;
 		break;
+#endif
 	case NODE_TYPE_WIDTH:
 		f->width.data = NULL;
 		break;
@@ -856,6 +944,10 @@ struct frame *stack_push(struct stack *s, enum frame_type type) {
 		break;
 	case NODE_TYPE_MATERIAL:
 		f->material.has_id = false;
+		f->material.sigma_t = NULL;
+		f->material.nu_sigma_f = NULL;
+		f->material.chi = NULL;
+		f->material.sigma_s = NULL;
 		break;
 	}
 
@@ -959,6 +1051,7 @@ void stack_print_help(struct frame *f) {
 			}
 			fprintf(stderr, "\"");
 		}
+#ifdef USE_LATTICE_ORIGIN
 		if (f->lattice.origin != NULL) {
 			int i;
 
@@ -969,13 +1062,16 @@ void stack_print_help(struct frame *f) {
 			}
 			fprintf(stderr, "\"");
 		}
+#endif
 		break;
 	case NODE_TYPE_TYPE:
 		break;
 	case NODE_TYPE_DIMENSION:
 		break;
+#ifdef USE_LATTICE_ORIGIN
 	case NODE_TYPE_ORIGIN:
 		break;
+#endif
 	case NODE_TYPE_WIDTH:
 		break;
 	case NODE_TYPE_UNIVERSES:
@@ -995,11 +1091,51 @@ void stack_print_help(struct frame *f) {
 			}
 			fprintf(stderr, "\"");
 		}
+		break;
 	case NODE_TYPE_MATERIAL:
 		if (f->material.has_id)
 			fprintf(stderr, " id=\"%d\"", f->material.id);
-		break;
+		if (f->material.sigma_t != NULL) {
+			int i;
 
+			fprintf(stderr, " sigma_t=\"");
+			for (i = 0; i < f->material.sigma_t_cnt; i++) {
+				fprintf(stderr, " %f",
+					f->material.sigma_t[i]);
+			}
+			fprintf(stderr, "\"");
+		}
+		if (f->material.nu_sigma_f != NULL) {
+			int i;
+
+			fprintf(stderr, " nu_sigma_f=\"");
+			for (i = 0; i < f->material.nu_sigma_f_cnt; i++) {
+				fprintf(stderr, " %f",
+					f->material.nu_sigma_f[i]);
+			}
+			fprintf(stderr, "\"");
+		}
+		if (f->material.chi != NULL) {
+			int i;
+
+			fprintf(stderr, " chi=\"");
+			for (i = 0; i < f->material.chi_cnt; i++) {
+				fprintf(stderr, " %f",
+					f->material.chi[i]);
+			}
+			fprintf(stderr, "\"");
+		}
+		if (f->material.sigma_s != NULL) {
+			int i;
+
+			fprintf(stderr, " sigma_s=\"");
+			for (i = 0; i < f->material.sigma_s_cnt; i++) {
+				fprintf(stderr, " %f",
+					f->material.sigma_s[i]);
+			}
+			fprintf(stderr, "\"");
+		}
+		break;
 	}
 
 	fprintf(stderr, "\n");

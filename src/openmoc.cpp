@@ -32,38 +32,12 @@ int main(int argc, const char **argv) {
 	/* Set the verbosity */
 	log_setlevel(opts.getVerbosity());
 
-	/* Create an empty geometry */
-	Geometry geometry(opts.getNumSectors(), opts.getNumRings(),
-						opts.getSectorOffset());
-
-	// FIXME: PUT THIS INSIDE THE PARSER TO HIDE IT FROM THE MAIN PROGRAM
-	/* We only want general functional calls inside the main program
-	 * The logic going on here is too specific and should be hidden from
-	 * main */
 	/* Initialize the parser */
 	Parser parser(&opts);
-	parser.each_material([&geometry](Material *m) -> void
-			  {
-				  geometry.addMaterial(m);
-				  return;
-			  });
-	parser.each_surface([&geometry](Surface *s) -> void
-			    {
-				    geometry.addSurface(s);
-				    return;
-			    });
-	parser.each_cell([&geometry](Cell *c) -> void
-			 {
-				 geometry.addCell(c);
-				 return;
-			 });
-	
 
-	parser.each_lattice([&geometry](Lattice *l) -> void
-			  {
-				  geometry.addLattice(l);
-				  return;
-			  });
+	/* Create an empty geometry */
+	Geometry geometry(opts.getNumSectors(), opts.getNumRings(),
+			  opts.getSectorOffset(), &parser);
 
 //	/* Print out geometry to console if requested at runtime*/
 	if (opts.dumpGeometry())
@@ -80,11 +54,7 @@ int main(int argc, const char **argv) {
 									opts.getTrackSpacing());
 	trackGenerator.generateTracks();
 	trackGenerator.makeReflective();
-
-	log_printf(DEBUG, "NUM-AZIM = %d", trackGenerator.getNumAzim());
-	/* Print out geometry to console if requested at runtime*/
-//	if (opts.dumpGeometry())
-//		geometry.printString();
+//	trackGenerator.plotTracksTiff();
 
 	trackGenerator.segmentize();
 

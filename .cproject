@@ -27,8 +27,9 @@
 								<option id="gnu.cpp.compiler.exe.debug.option.debugging.level.1891651707" name="Debug Level" superClass="gnu.cpp.compiler.exe.debug.option.debugging.level" value="gnu.cpp.compiler.debugging.level.max" valueType="enumerated"/>
 								<option id="gnu.cpp.compiler.option.other.other.1141214560" name="Other flags" superClass="gnu.cpp.compiler.option.other.other" value="-c -fmessage-length=0 -std=gnu++0x" valueType="string"/>
 								<option id="gnu.cpp.compiler.option.include.paths.1105491033" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" valueType="includePath">
+									<listOptionValue builtIn="false" value="/usr/local/include/ImageMagick"/>
+									<listOptionValue builtIn="false" value="/usr/local/include/ImageMagick/Magick++"/>
 									<listOptionValue builtIn="false" value="expat"/>
-									<listOptionValue builtIn="false" value="rt"/>
 								</option>
 								<option id="gnu.cpp.compiler.option.debugging.prof.1849269997" name="Generate prof information (-p)" superClass="gnu.cpp.compiler.option.debugging.prof" value="false" valueType="boolean"/>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1893069178" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
@@ -41,8 +42,8 @@
 							<tool id="cdt.managedbuild.tool.gnu.c.linker.exe.debug.584280283" name="GCC C Linker" superClass="cdt.managedbuild.tool.gnu.c.linker.exe.debug"/>
 							<tool id="cdt.managedbuild.tool.gnu.cpp.linker.exe.debug.296692575" name="GCC C++ Linker" superClass="cdt.managedbuild.tool.gnu.cpp.linker.exe.debug">
 								<option id="gnu.cpp.link.option.libs.411578984" name="Libraries (-l)" superClass="gnu.cpp.link.option.libs" valueType="libs">
+									<listOptionValue builtIn="false" value="Magick++"/>
 									<listOptionValue builtIn="false" value="expat"/>
-									<listOptionValue builtIn="false" value="rt"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.linker.input.2132498371" superClass="cdt.managedbuild.tool.gnu.cpp.linker.input">
 									<additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>
@@ -80,11 +81,18 @@
 							<tool command="g++" commandLinePattern="${COMMAND} ${FLAGS} ${OUTPUT_FLAG} ${OUTPUT_PREFIX}${OUTPUT} ${INPUTS}" id="cdt.managedbuild.tool.gnu.cpp.compiler.exe.release.1710552051" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.exe.release">
 								<option id="gnu.cpp.compiler.exe.release.option.optimization.level.216382685" name="Optimization Level" superClass="gnu.cpp.compiler.exe.release.option.optimization.level" value="gnu.cpp.compiler.optimization.level.none" valueType="enumerated"/>
 								<option id="gnu.cpp.compiler.exe.release.option.debugging.level.1527902383" name="Debug Level" superClass="gnu.cpp.compiler.exe.release.option.debugging.level" value="gnu.cpp.compiler.debugging.level.none" valueType="enumerated"/>
+<<<<<<< HEAD
 								<option id="gnu.cpp.compiler.option.other.other.1709050748" name="Other flags" superClass="gnu.cpp.compiler.option.other.other" value="-c -fmessage-length=0 -std=gnu++0x" valueType="string"/>
 								<option id="gnu.cpp.compiler.option.include.paths.1817278844" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" valueType="includePath">
 									<listOptionValue builtIn="false" value="rt"/>
 									<listOptionValue builtIn="false" value="expat"/>
 								</option>
+=======
+								<option id="gnu.cpp.compiler.option.include.paths.142792342" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" valueType="includePath">
+									<listOptionValue builtIn="false" value="/usr/local/include/ImageMagick"/>
+								</option>
+								<option id="gnu.cpp.compiler.option.other.other.703730651" name="Other flags" superClass="gnu.cpp.compiler.option.other.other" value="-c -fmessage-length=0 -std=gnu++0x" valueType="string"/>
+>>>>>>> branch 'master' of git@github.com:wbinventor/OpenMOC.git
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.814588354" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 							</tool>
 							<tool id="cdt.managedbuild.tool.gnu.c.compiler.exe.release.434758413" name="GCC C Compiler" superClass="cdt.managedbuild.tool.gnu.c.compiler.exe.release">
@@ -94,9 +102,15 @@
 							</tool>
 							<tool id="cdt.managedbuild.tool.gnu.c.linker.exe.release.579163311" name="GCC C Linker" superClass="cdt.managedbuild.tool.gnu.c.linker.exe.release"/>
 							<tool id="cdt.managedbuild.tool.gnu.cpp.linker.exe.release.23802709" name="GCC C++ Linker" superClass="cdt.managedbuild.tool.gnu.cpp.linker.exe.release">
+<<<<<<< HEAD
 								<option id="gnu.cpp.link.option.libs.1867492896" name="Libraries (-l)" superClass="gnu.cpp.link.option.libs" valueType="libs">
 									<listOptionValue builtIn="false" value="rt"/>
 									<listOptionValue builtIn="false" value="expat"/>
+=======
+								<option id="gnu.cpp.link.option.libs.1144662218" name="Libraries (-l)" superClass="gnu.cpp.link.option.libs" valueType="libs">
+									<listOptionValue builtIn="false" value="expat"/>
+									<listOptionValue builtIn="false" value="Magick++"/>
+>>>>>>> branch 'master' of git@github.com:wbinventor/OpenMOC.git
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.linker.input.2091494942" superClass="cdt.managedbuild.tool.gnu.cpp.linker.input">
 									<additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>

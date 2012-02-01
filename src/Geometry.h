@@ -25,10 +25,11 @@
 #include "Track.h"
 #include "log.h"
 #include "configurations.h"
+#include "Parser.h"
 
 class Geometry {
 private:
-	double _x_min, _y_min, _x_max, _y_max; 		/* the corners   */
+	double _x_min, _y_min, _x_max, _y_max; 		/* the corners */
 	int _num_sectors, _num_rings;
 	double _sector_offset;
 	int _base_universe;
@@ -38,7 +39,8 @@ private:
 	std::map<int, Universe*> _universes;
 	std::map<int, Lattice*> _lattices;
 public:
-	Geometry(int num_sectors, int num_rings, double sector_offset);
+	Geometry(int num_sectors, int num_rings, double sector_offset, 
+		 Parser *p);
 	virtual ~Geometry();
 	void setNumRings(int num_rings);
 	void setNumSectors(int num_sectors);

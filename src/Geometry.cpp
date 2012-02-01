@@ -16,7 +16,8 @@
  * @param num_rings the number of rings per cell
  * @param sector_offset the angular offset for computing angular sectors
  */
-Geometry::Geometry(int num_sectors, int num_rings, double sector_offset) {
+Geometry::Geometry(int num_sectors, int num_rings, double sector_offset, 
+		   Parser *p) {
 
 	_num_sectors = num_sectors;
 	_num_rings = num_rings;
@@ -28,7 +29,27 @@ Geometry::Geometry(int num_sectors, int num_rings, double sector_offset) {
 	_x_max = -1.0/0.0;
 	_y_max = -1.0/0.0;
 
- }
+	p->each_material([this](Material *m) -> void
+			 {
+				 this->addMaterial(m);
+				 return;
+			 });
+	p->each_surface([this](Surface *s) -> void
+			{
+				this->addSurface(s);
+				return;
+			});
+	p->each_cell([this](Cell *c) -> void
+		     {
+			     this->addCell(c);
+			     return;
+		     });
+	p->each_lattice([this](Lattice *l) -> void
+			{
+				this->addLattice(l);
+				return;
+			});
+}
 
 
 /**
@@ -41,26 +62,6 @@ Geometry::~Geometry() {
 	_universes.clear();
 	_lattices.clear();
 }
-
-#if 0
-/**
- * Sets the total height of the geometry
- * @param height the total height
- */
-void Geometry::setHeight(const double height) {
-	_height = height;
-}
-
-
-/**
- * Sets the total width of the geometry
- * @param width the total width
- */
-void Geometry::setWidth(const double width) {
-    _width = width;
-}
-#endif
-
 
 /* Set the number of ring divisions used for making flat source regions
  * @param num_rings the number of rings
@@ -564,7 +565,7 @@ void Geometry::adjustKeys() {
 
 
 	/**************************************************************************
-	 * Ajust the indices of the containers of geometry objects which are
+	 * Adjust the indices of the containers of geometry objects which are
 	 * attributes of this geometry class
 	 *************************************************************************/
 
