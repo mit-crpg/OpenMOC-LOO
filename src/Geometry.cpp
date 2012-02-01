@@ -835,6 +835,10 @@ void Geometry::segmentize(Track* track) {
 		segment* new_segment = new segment;
 		new_segment->_length = dist;
 
+		/* Update coordinates for start of next segment */
+		segment_start.setX(segment_end.getX());
+		segment_start.setY(segment_end.getY());
+
 		//FIXME: this needs to use our flat source region id from some equation
 		//mapping lattices, universes and cells to FSR ids
 		new_segment->_region_id = prev->getId();
