@@ -11,6 +11,7 @@ CPP_SRCS += \
 ../src/Material.cpp \
 ../src/Options.cpp \
 ../src/Parser.cpp \
+../src/Plotting.cpp \
 ../src/Point.cpp \
 ../src/Quadrature.cpp \
 ../src/Surface.cpp \
@@ -29,6 +30,7 @@ OBJS += \
 ./src/Material.o \
 ./src/Options.o \
 ./src/Parser.o \
+./src/Plotting.o \
 ./src/Point.o \
 ./src/Quadrature.o \
 ./src/Surface.o \
@@ -47,6 +49,7 @@ CPP_DEPS += \
 ./src/Material.d \
 ./src/Options.d \
 ./src/Parser.d \
+./src/Plotting.d \
 ./src/Point.d \
 ./src/Quadrature.d \
 ./src/Surface.d \

@@ -2,7 +2,8 @@ src/TrackGenerator.d: ../src/TrackGenerator.cpp ../src/TrackGenerator.h \
  ../src/Point.h ../src/configurations.h ../src/log.h ../src/Track.h \
  ../src/Geometry.h ../src/Material.h ../src/Surface.h ../src/Cell.h \
  ../src/LocalCoords.h ../src/Universe.h ../src/Lattice.h ../src/Parser.h \
- ../src/Options.h /usr/local/include/ImageMagick/Magick++.h \
+ ../src/Options.h ../src/Plotting.h \
+ /usr/local/include/ImageMagick/Magick++.h \
  /usr/local/include/ImageMagick/Magick++/Include.h \
  /usr/local/include/ImageMagick/magick/magick-config.h \
  /usr/local/include/ImageMagick/magick/MagickCore.h \
@@ -148,6 +149,8 @@ src/TrackGenerator.d: ../src/TrackGenerator.cpp ../src/TrackGenerator.h \
 ../src/Parser.h:
 
 ../src/Options.h:
+
+../src/Plotting.h:
 
 /usr/local/include/ImageMagick/Magick++.h:
 

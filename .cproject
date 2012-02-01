@@ -16,7 +16,7 @@
 				</extensions>
 			</storageModule>
 			<storageModule moduleId="cdtBuildSystem" version="4.0.0">
-				<configuration artifactName="${ProjName}" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.exe" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.exe" cleanCommand="rm -rf" description="" id="intel.linux.x86_64.exe.rel.2022684333_12.1.0" name="Release" parent="intel.linux.x86_64.exe.rel_12.1.0">
+				<configuration artifactName="${ProjName}" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.exe" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.exe" cleanCommand="rm -rf" description="" id="intel.linux.x86_64.exe.rel.2022684333_12.1.0" name="Release" parent="intel.linux.x86_64.exe.rel.2022684333_12.1.0">
 					<folderInfo id="intel.linux.x86_64.exe.rel.2022684333._12.1.0" name="/" resourcePath="">
 						<toolChain id="cdt.managedbuild.toolchain.gnu.base.1112772716" name="Linux GCC" superClass="cdt.managedbuild.toolchain.gnu.base">
 							<targetPlatform archList="all" binaryParser="org.eclipse.cdt.core.ELF" id="cdt.managedbuild.target.gnu.platform.base.532168208" name="Debug Platform" osList="linux,hpux,aix,qnx" superClass="cdt.managedbuild.target.gnu.platform.base"/>
@@ -38,7 +38,6 @@
 								<option id="gnu.cpp.link.option.libs.1329435742" name="Libraries (-l)" superClass="gnu.cpp.link.option.libs" valueType="libs">
 									<listOptionValue builtIn="false" value="expat"/>
 									<listOptionValue builtIn="false" value="Magick++"/>
-									<listOptionValue builtIn="false" value="rt"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.linker.input.1204095061" superClass="cdt.managedbuild.tool.gnu.cpp.linker.input">
 									<additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>
@@ -60,28 +59,20 @@
 				<extensions>
 					<extension id="org.eclipse.cdt.core.ELF" point="org.eclipse.cdt.core.BinaryParser"/>
 					<extension id="org.eclipse.cdt.core.GmakeErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
-					<extension id="org.eclipse.cdt.core.ICCErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
+					<extension id="org.eclipse.cdt.core.VCErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
+					<extension id="org.eclipse.cdt.core.CWDLocator" point="org.eclipse.cdt.core.ErrorParser"/>
+					<extension id="org.eclipse.cdt.core.MakeErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
+					<extension id="org.eclipse.cdt.core.GCCErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
+					<extension id="org.eclipse.cdt.core.GASErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
+					<extension id="org.eclipse.cdt.core.GLDErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
 				</extensions>
 			</storageModule>
 			<storageModule moduleId="cdtBuildSystem" version="4.0.0">
-				<configuration artifactName="${ProjName}" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.exe" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.exe" cleanCommand="rm -rf" description="" id="intel.linux.x86_64.exe.dbg.1341788329_12.1.0" name="Debug" parent="intel.linux.x86_64.exe.dbg_12.1.0">
+				<configuration artifactName="${ProjName}" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.exe" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.exe" cleanCommand="rm -rf" description="" id="intel.linux.x86_64.exe.dbg.1341788329_12.1.0" name="Debug" parent="intel.linux.x86_64.exe.dbg.1341788329_12.1.0">
 					<folderInfo id="intel.linux.x86_64.exe.dbg.1341788329._12.1.0" name="/" resourcePath="">
-						<toolChain id="intel.toolchain.linux.x86_64.exe.dbg.79816047_12.1.0" name="Intel Toolchain for Executable on Intel(R) 64" superClass="intel.toolchain.linux.x86_64.exe.dbg_12.1.0">
-							<targetPlatform archList="x86_64" binaryParser="org.eclipse.cdt.core.ELF" id="intel.platform.linux.x86_64.exe.dbg_12.1.0.356692179" name="Platform.Executable.Debug" osList="linux" superClass="intel.platform.linux.x86_64.exe.dbg_12.1.0"/>
-							<builder buildPath="${workspace_loc:/OpenMOC/Debug}" id="intel.builder.linux.x86_64.exe.dbg.1965838285_12.1.0" keepEnvironmentInBuildfile="false" managedBuildOn="true" name="Intel Builder" superClass="intel.builder.linux.x86_64.exe.dbg_12.1.0"/>
-							<tool id="intel.cpp.compilestep.linux.x86_64.exe.dbg.492114131_12.1.0" name="Intel Intel(R) 64 C++ Compiler " superClass="intel.cpp.compilestep.linux.x86_64.exe.dbg_12.1.0">
-								<inputType id="intel.cpp.compilestep.input.450598961" superClass="intel.cpp.compilestep.input"/>
-							</tool>
-							<tool id="intel.c.compilestep.linux.x86_64.exe.dbg.435543168_12.1.0" name="Intel Intel(R) 64 C Compiler" superClass="intel.c.compilestep.linux.x86_64.exe.dbg_12.1.0">
-								<inputType id="intel.c.compilestep.input.1279425631" superClass="intel.c.compilestep.input"/>
-							</tool>
-							<tool id="intel.c.linkstep.linux.x86_64.exe.dbg.880158361_12.1.0" name="Intel Intel(R) 64 C Linker" superClass="intel.c.linkstep.linux.x86_64.exe.dbg_12.1.0"/>
-							<tool id="intel.cpp.linkstep.linux.x86_64.exe.dbg.1990096365_12.1.0" name="Intel Intel(R) 64 C++ Linker" superClass="intel.cpp.linkstep.linux.x86_64.exe.dbg_12.1.0">
-								<inputType id="intel.linkstep.input.712696660" superClass="intel.linkstep.input">
-									<additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>
-									<additionalInput kind="additionalinput" paths="$(LIBS)"/>
-								</inputType>
-							</tool>
+						<toolChain id="intel.toolchain.linux.x86_64.exe.dbg.79816047_12.1.0" name="Intel Toolchain for Executable on Intel(R) 64">
+							<targetPlatform archList="x86_64" binaryParser="org.eclipse.cdt.core.ELF" id="intel.platform.linux.x86_64.exe.dbg_12.1.0.356692179" name="Platform.Executable.Debug" osList="linux"/>
+							<builder buildPath="${workspace_loc:/OpenMOC/Debug}" id="intel.builder.linux.x86_64.exe.dbg.1965838285_12.1.0" keepEnvironmentInBuildfile="false" managedBuildOn="true" name="Intel Builder"/>
 						</toolChain>
 					</folderInfo>
 				</configuration>
@@ -90,7 +81,7 @@
 		</cconfiguration>
 	</storageModule>
 	<storageModule moduleId="cdtBuildSystem" version="4.0.0">
-		<project id="OpenMOC.intel.linux.executable.2.952090142" name="Executable" projectType="intel.linux.executable.2"/>
+		<project id="OpenMOC.intel.linux.executable.2.952090142" name="Executable"/>
 	</storageModule>
 	<storageModule moduleId="refreshScope"/>
 	<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>
