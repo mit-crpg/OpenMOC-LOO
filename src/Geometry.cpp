@@ -31,22 +31,22 @@ Geometry::Geometry(int num_sectors, int num_rings, double sector_offset,
 
 	p->each_material([this](Material *m) -> void
 			 {
-				 this->addMaterial(m);
+				 addMaterial(m);
 				 return;
 			 });
 	p->each_surface([this](Surface *s) -> void
 			{
-				this->addSurface(s);
+				addSurface(s);
 				return;
 			});
 	p->each_cell([this](Cell *c) -> void
 		     {
-			     this->addCell(c);
+			     addCell(c);
 			     return;
 		     });
 	p->each_lattice([this](Lattice *l) -> void
 			{
-				this->addLattice(l);
+				addLattice(l);
 				return;
 			});
 }

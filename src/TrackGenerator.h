@@ -15,7 +15,7 @@
 #include "Point.h"
 #include "Track.h"
 #include "Geometry.h"
-//#include "Magick++.h"
+#include "Magick++.h"
 
 class TrackGenerator {
 private:

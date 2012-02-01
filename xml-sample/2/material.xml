@@ -2,6 +2,7 @@
 <materials>
 
 <!-- Definition of materials -->
+<!-- These materials are only useful for testing input parser -->
   <material id="40">
   </material>
 

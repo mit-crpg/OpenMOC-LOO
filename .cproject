@@ -23,7 +23,9 @@
 							<builder buildPath="${workspace_loc:/OpenMOC/Release}" id="cdt.managedbuild.target.gnu.builder.base.319700954" keepEnvironmentInBuildfile="false" name="Gnu Make Builder" superClass="cdt.managedbuild.target.gnu.builder.base"/>
 							<tool id="cdt.managedbuild.tool.gnu.archiver.base.1264133473" name="GCC Archiver" superClass="cdt.managedbuild.tool.gnu.archiver.base"/>
 							<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.290726735" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base">
-								<option id="gnu.cpp.compiler.option.include.paths.1034835854" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" valueType="includePath"/>
+								<option id="gnu.cpp.compiler.option.include.paths.1034835854" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" valueType="includePath">
+									<listOptionValue builtIn="false" value="/usr/local/include/ImageMagick"/>
+								</option>
 								<option id="gnu.cpp.compiler.option.other.other.716004089" name="Other flags" superClass="gnu.cpp.compiler.option.other.other" value="-c -fmessage-length=0 -std=gnu++0x" valueType="string"/>
 								<option id="gnu.cpp.compiler.option.include.files.675181306" name="Include files (-include)" superClass="gnu.cpp.compiler.option.include.files" valueType="includeFiles"/>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1692722755" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
@@ -35,6 +37,7 @@
 							<tool id="cdt.managedbuild.tool.gnu.cpp.linker.base.1618639351" name="GCC C++ Linker" superClass="cdt.managedbuild.tool.gnu.cpp.linker.base">
 								<option id="gnu.cpp.link.option.libs.1329435742" name="Libraries (-l)" superClass="gnu.cpp.link.option.libs" valueType="libs">
 									<listOptionValue builtIn="false" value="expat"/>
+									<listOptionValue builtIn="false" value="Magick++"/>
 									<listOptionValue builtIn="false" value="rt"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.linker.input.1204095061" superClass="cdt.managedbuild.tool.gnu.cpp.linker.input">
@@ -89,9 +92,15 @@
 	<storageModule moduleId="cdtBuildSystem" version="4.0.0">
 		<project id="OpenMOC.intel.linux.executable.2.952090142" name="Executable" projectType="intel.linux.executable.2"/>
 	</storageModule>
-	<storageModule moduleId="scannerConfiguration">
-		<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
-	</storageModule>
 	<storageModule moduleId="refreshScope"/>
 	<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>
+	<storageModule moduleId="scannerConfiguration">
+		<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		<scannerConfigBuildInfo instanceId="intel.linux.x86_64.exe.rel.2022684333_12.1.0;intel.linux.x86_64.exe.rel.2022684333._12.1.0;cdt.managedbuild.tool.gnu.c.compiler.base.2117516768;cdt.managedbuild.tool.gnu.c.compiler.input.1854984273">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId="org.eclipse.cdt.managedbuilder.core.GCCManagedMakePerProjectProfileC"/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="intel.linux.x86_64.exe.rel.2022684333_12.1.0;intel.linux.x86_64.exe.rel.2022684333._12.1.0;cdt.managedbuild.tool.gnu.cpp.compiler.base.290726735;cdt.managedbuild.tool.gnu.cpp.compiler.input.1692722755">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId="org.eclipse.cdt.managedbuilder.core.GCCManagedMakePerProjectProfileCPP"/>
+		</scannerConfigBuildInfo>
+	</storageModule>
 </cproject>
