@@ -16,6 +16,7 @@
 #include "log.h"
 #include "Options.h"
 #include "LocalCoords.h"
+#include "Plotting.h"
 #include "Geometry.h"
 
 // FIXME: These should be removed when main() is properly implemented
@@ -38,6 +39,7 @@ int main(int argc, const char **argv) {
 	/* Create an empty geometry */
 	Geometry geometry(opts.getNumSectors(), opts.getNumRings(),
 			  opts.getSectorOffset(), &parser);
+	Plotting plotter(&geometry);
 
 //	/* Print out geometry to console if requested at runtime*/
 	if (opts.dumpGeometry())
@@ -50,13 +52,14 @@ int main(int argc, const char **argv) {
 //	geometry.buildNeighborsLists();
 
 	/* Initialize the trackgenerator */
-	TrackGenerator trackGenerator(&geometry, opts.getNumAzim(),
+	TrackGenerator track_generator(&geometry, &plotter, opts.getNumAzim(),
 									opts.getTrackSpacing());
-	trackGenerator.generateTracks();
-	trackGenerator.makeReflective();
-	trackGenerator.plotTracksTiff();
 
-	trackGenerator.segmentize();
+	track_generator.generateTracks();
+	plotter.plotTracksTiff(&track_generator);
+	track_generator.makeReflective();
+	track_generator.segmentize();
+	plotter.plotSegments();
 
 	/* Testing findCell method */
 //	LocalCoords* test_coords = new LocalCoords(0, 0);

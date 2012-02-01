@@ -15,7 +15,10 @@
 #include "Point.h"
 #include "Track.h"
 #include "Geometry.h"
+#include "Plotting.h"
 #include "Magick++.h"
+
+class Plotting;
 
 class TrackGenerator {
 private:
@@ -27,8 +30,10 @@ private:
 	double* _azim_weights;	/* azimuthal weights */
 	Track** _tracks;
 	Geometry* _geom;
+	Plotting* _plotter;
 public:
-	TrackGenerator(Geometry* geom, const int num_azim, const double spacing);
+	TrackGenerator(Geometry* geom, Plotting* plotter, const int num_azim,
+			const double spacing);
 	virtual ~TrackGenerator();
     double *getAzimWeights() const;
     int getNumAzim() const;

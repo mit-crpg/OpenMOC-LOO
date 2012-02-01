@@ -4,5 +4,5 @@
 
 USER_OBJS :=
 
-LIBS := -lexpat -lMagick++ -lrt
+LIBS := -lexpat -lMagick++
 

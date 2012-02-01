@@ -2,7 +2,8 @@ src/openmoc.d: ../src/openmoc.cpp ../src/Geometry.h ../src/Material.h \
  ../src/configurations.h ../src/log.h ../src/Surface.h ../src/Point.h \
  ../src/Track.h ../src/Cell.h ../src/LocalCoords.h ../src/Universe.h \
  ../src/Lattice.h ../src/Parser.h ../src/Options.h \
- ../src/TrackGenerator.h /usr/local/include/ImageMagick/Magick++.h \
+ ../src/TrackGenerator.h ../src/Plotting.h \
+ /usr/local/include/ImageMagick/Magick++.h \
  /usr/local/include/ImageMagick/Magick++/Include.h \
  /usr/local/include/ImageMagick/magick/magick-config.h \
  /usr/local/include/ImageMagick/magick/MagickCore.h \
@@ -148,6 +149,8 @@ src/openmoc.d: ../src/openmoc.cpp ../src/Geometry.h ../src/Material.h \
 ../src/Options.h:
 
 ../src/TrackGenerator.h:
+
+../src/Plotting.h:
 
 /usr/local/include/ImageMagick/Magick++.h:
 
