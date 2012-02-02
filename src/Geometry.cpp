@@ -802,10 +802,6 @@ Cell* Geometry::findNextCell(LocalCoords* coords, double angle) {
 	Cell* cell = NULL;
 	double dist;
 
-	/* Find the current cell */
-	cell = findCell(coords);
-	if (cell != NULL)
-
 	/* If the current coords is not in any cell, return NULL */
 	if (cell == NULL)
 		return NULL;
