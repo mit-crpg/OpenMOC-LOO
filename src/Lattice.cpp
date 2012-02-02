@@ -218,17 +218,37 @@ Cell* Lattice::findCell(LocalCoords* coords, std::map<int, Universe*> universes)
 	int lat_x = floor(coords->getX() - _origin.getX()) / _width_x;
 	int lat_y = floor(coords->getY() - _origin.getY()) / _width_y;
 
+//	int lat_x = ceil((coords->getX() - _origin.getX()) / _width_x);
+//	int lat_y = ceil((coords->getY() - _origin.getY()) / _width_y);
+
+
+//	if (coords->getX() < ON_LATTICE_CELL_THRESH && coords->getX() > -ON_LATTICE_CELL_THRESH) {
+//		lat_x = 0;
+//		log_printf(DEBUG, "Resetting lat_x since it is within the THRESH");
+//	}
+//	if (coords->getY() < ON_LATTICE_CELL_THRESH && coords->getY() > -ON_LATTICE_CELL_THRESH) {
+//		lat_y = 0;
+//		log_printf(DEBUG, "Resetting lat_x since it is within the THRESH");
+//	}
+
+	log_printf(DEBUG, "coords.getY() = %1.10f, _origin.getY() = %1.10f, floor(.....) = %f", coords->getY(), _origin.getY(), floor(coords->getY() - _origin.getY())/ _width_y);
+	log_printf(DEBUG, "Inside Lattice findCell. x = %1.10f, y = %1.10f, lat_x = %d, lat_y = %d, _width_y = %f", coords->getX(), coords->getY(), lat_x, lat_y, _width_y);
+
 	if (fabs(fabs(coords->getX()) - _num_x*_width_x*0.5) < ON_LATTICE_CELL_THRESH) {
 		if (coords->getX() > 0)
 			lat_x = _num_x - 1;
 		else
 			lat_x = 0;
+
+		log_printf(DEBUG, "ON_LATTICE_CELL_THRESH, updated lat_x = %d", lat_x);
 	}
 	if (fabs(fabs(coords->getY()) - _num_y*_width_y*0.5) < ON_LATTICE_CELL_THRESH) {
 		if (coords->getY() > 0)
 			lat_y = _num_y - 1;
 		else
 			lat_y = 0;
+
+		log_printf(DEBUG, "ON_LATTICE_CELL_THRESH, updated lat_y = %d", lat_y);
 	}
 
 	/* If the indices are outside the bound of the lattice */
@@ -275,33 +295,19 @@ Cell* Lattice::findNextLatticeCell(LocalCoords* coords, double angle,
 	double x0 = coords->getX();
 	double y0 = coords->getY();
 	double x1, y1;
+	double x_new, y_new;
 	double m = sin(angle) / cos(angle);
 	int lattice_x = coords->getLatticeX();
 	int lattice_y = coords->getLatticeY();
 	int new_lattice_x = lattice_x;
 	int new_lattice_y = lattice_y;
 
+	log_printf(DEBUG, "Inside latticeFindNextCell. lat_x = %d, lat_y = %d, x0 = %f, y0 = %f", lattice_x, lattice_y, x0, y0);
+
 	Point test;
 
 	/* Lower lattice cell */
 	if (lattice_y >= 0 && angle >= M_PI) {
-		y1 = (lattice_y - 2) * _width_y;
-		x1 = x0 + (y1 - y0) / m;
-		test.setCoords(x1, y1);
-
-		if (withinBounds(&test)) {
-			d = test.distance(coords->getPoint());
-
-			if (d < distance) {
-				distance = d;
-				new_lattice_x = lattice_x;
-				new_lattice_y = lattice_y - 1;
-			}
-		}
-	}
-
-	/* Upper lattice cell */
-	if (lattice_y <= _num_y-1 && angle <= M_PI) {
 		y1 = (lattice_y - 1) * _width_y;
 		x1 = x0 + (y1 - y0) / m;
 		test.setCoords(x1, y1);
@@ -310,32 +316,38 @@ Cell* Lattice::findNextLatticeCell(LocalCoords* coords, double angle,
 			d = test.distance(coords->getPoint());
 
 			if (d < distance) {
+				log_printf(DEBUG, "Moving to lower lattice cell. dist = %f, x1 = %f, y1 = %f", d, x1, y1);
 				distance = d;
 				new_lattice_x = lattice_x;
-				new_lattice_y = lattice_y + 1;
+				new_lattice_y = lattice_y - 1;
+				x_new = x1;
+				y_new = y1;
 			}
 		}
 	}
 
-	/* Left lattice cell */
-	if (lattice_x >= 0 && (angle >= M_PI/2 && angle <= 3*M_PI/2)) {
-		x1 = (lattice_x - 2) * _width_x;
-		y1 = y0 + m * (x1 - x0);
+	/* Upper lattice cell */
+	if (lattice_y <= _num_y-1 && angle <= M_PI) {
+		y1 = lattice_y * _width_y;
+		x1 = x0 + (y1 - y0) / m;
 		test.setCoords(x1, y1);
 
 		if (withinBounds(&test)) {
 			d = test.distance(coords->getPoint());
 
 			if (d < distance) {
+				log_printf(DEBUG, "Moving to upper lattice cell. dist = %f, x1 = %f, y1 = %f", d, x1, y1);
 				distance = d;
-				new_lattice_x = lattice_x -1 ;
-				new_lattice_y = lattice_y;
+				new_lattice_x = lattice_x;
+				new_lattice_y = lattice_y + 1;
+				x_new = x1;
+				y_new = y1;
 			}
 		}
 	}
 
-	/* Right lattice cell */
-	if (lattice_x <= _num_x-1 && (angle <= M_PI/2 || angle >= 3*M_PI/2)) {
+	/* Left lattice cell */
+	if (lattice_x >= 0 && (angle >= M_PI/2 && angle <= 3*M_PI/2)) {
 		x1 = (lattice_x - 1) * _width_x;
 		y1 = y0 + m * (x1 - x0);
 		test.setCoords(x1, y1);
@@ -344,9 +356,32 @@ Cell* Lattice::findNextLatticeCell(LocalCoords* coords, double angle,
 			d = test.distance(coords->getPoint());
 
 			if (d < distance) {
+				log_printf(DEBUG, "Moving to left lattice cell. dist = %f, x1 = %f, y1 = %f", d, x1, y1);
+				distance = d;
+				new_lattice_x = lattice_x -1 ;
+				new_lattice_y = lattice_y;
+				x_new = x1;
+				y_new = y1;
+			}
+		}
+	}
+
+	/* Right lattice cell */
+	if (lattice_x <= _num_x-1 && (angle <= M_PI/2 || angle >= 3*M_PI/2)) {
+		x1 = (lattice_x) * _width_x;
+		y1 = y0 + m * (x1 - x0);
+		test.setCoords(x1, y1);
+
+		if (withinBounds(&test)) {
+			d = test.distance(coords->getPoint());
+
+			if (d < distance) {
+				log_printf(DEBUG, "Moving to right lattice cell. dist = %f, x1 = %f, y1 = %f", d, x1, y1);
 				distance = d;
 				new_lattice_x = lattice_x + 1;
 				new_lattice_y = lattice_y;
+				x_new = x1;
+				y_new = y1;
 			}
 		}
 	}
@@ -355,14 +390,20 @@ Cell* Lattice::findNextLatticeCell(LocalCoords* coords, double angle,
 		return NULL;
 
 	else {
-		double delta_x = cos(angle) * (distance + TINY_MOVE);
-		double delta_y = sin(angle) * (distance + TINY_MOVE);
+		double delta_x = (x_new - coords->getX()) + cos(angle) * TINY_MOVE;
+		double delta_y = (y_new - coords->getY()) + sin(angle) * TINY_MOVE;
+//		double delta_x = cos(angle) * (distance + TINY_MOVE);
+//		double delta_y = sin(angle) * (distance + TINY_MOVE);
 		coords->adjustCoords(delta_x, delta_y);
 
-		if (new_lattice_x >= _num_x || new_lattice_x < 0)
+		if (new_lattice_x >= _num_x || new_lattice_x < 0) {
+			log_printf(DEBUG, "Returning NULL from findNextLatticeCell method. new_lattice_x = %d, localcoords: %s", new_lattice_x, coords->toString().c_str());
 			return NULL;
-		else if (new_lattice_y >= _num_y || new_lattice_y < 0)
+		}
+		else if (new_lattice_y >= _num_y || new_lattice_y < 0) {
+			log_printf(DEBUG, "Returning NULL from findNextLatticeCell method. new_lattice_y = %d, localcoords: %s", new_lattice_y, coords->toString().c_str());
 			return NULL;
+		}
 		else {
 			coords->setLatticeX(new_lattice_x);
 			coords->setLatticeY(new_lattice_y);
@@ -381,8 +422,10 @@ Cell* Lattice::findNextLatticeCell(LocalCoords* coords, double angle,
 				new_coords = new LocalCoords(nextX, nextY);
 				new_coords->setPrev(coords);
 				coords->setNext(new_coords);
+				log_printf(DEBUG, "Moving coordinates in lower universe");
 			}
 
+			log_printf(DEBUG, "new coords: %s", new_coords->toString().c_str());
 			new_coords->setUniverse(univ->getId());
 
 			return findCell(coords, universes);
