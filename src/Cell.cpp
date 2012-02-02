@@ -188,8 +188,10 @@ bool Cell::cellContains(LocalCoords* coords) {
  * any of the surfaces in the cell, returns INFINITY
  * @param point the point of interest
  * @param angle the angle of the trajectory (in radians from 0 to 2*PI)
+ * @param min_intersection a pointer to the intersection point that is found
  */
-double Cell::minSurfaceDist(Point* point, double angle, Point* surf_intersection) {
+double Cell::minSurfaceDist(Point* point, double angle,
+		Point* min_intersection) {
 
 	double min_dist = INFINITY;
 	double d;
@@ -197,15 +199,17 @@ double Cell::minSurfaceDist(Point* point, double angle, Point* surf_intersection
 
 	std::map<int, Surface*>::iterator iter;
 
-	/* Loop over all of the cell's surface */
+	/* Loop over all of the cell's surfaces */
 	for (iter = _surfaces.begin(); iter != _surfaces.end(); ++iter) {
+
+		/* Find the minimum distance from this surface to this point */
 		d = iter->second->getMinDistance(point, angle, &intersection);
 
 		/* If the distance to cell is less than current min distance, update */
 		if (d < min_dist) {
 			min_dist = d;
-			surf_intersection->setX(intersection.getX());
-			surf_intersection->setY(intersection.getY());
+			min_intersection->setX(intersection.getX());
+			min_intersection->setY(intersection.getY());
 		}
 	}
 
