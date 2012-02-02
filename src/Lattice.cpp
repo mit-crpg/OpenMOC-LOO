@@ -308,7 +308,9 @@ Cell* Lattice::findNextLatticeCell(LocalCoords* coords, double angle,
 
 	/* Lower lattice cell */
 	if (lattice_y >= 0 && angle >= M_PI) {
-		y1 = (lattice_y - 1) * _width_y;
+//		y1 = (lattice_y - 1) * _width_y;
+//		y1 = (lattice_y - 2) * _width_y;
+		y1 = (lattice_y - _num_y/2.0) * _width_y;
 		x1 = x0 + (y1 - y0) / m;
 		test.setCoords(x1, y1);
 
@@ -328,9 +330,13 @@ Cell* Lattice::findNextLatticeCell(LocalCoords* coords, double angle,
 
 	/* Upper lattice cell */
 	if (lattice_y <= _num_y-1 && angle <= M_PI) {
-		y1 = lattice_y * _width_y;
+//		y1 = lattice_y * _width_y;
+//		y1 = (lattice_y - 1) * _width_y;
+		y1 = (lattice_y - _num_y/2.0 + 1) * _width_y;
 		x1 = x0 + (y1 - y0) / m;
 		test.setCoords(x1, y1);
+
+		log_printf(DEBUG, "Testing upper lattice cell. x1 = %f, y1 = %f", x1, y1);
 
 		if (withinBounds(&test)) {
 			d = test.distance(coords->getPoint());
@@ -348,7 +354,9 @@ Cell* Lattice::findNextLatticeCell(LocalCoords* coords, double angle,
 
 	/* Left lattice cell */
 	if (lattice_x >= 0 && (angle >= M_PI/2 && angle <= 3*M_PI/2)) {
-		x1 = (lattice_x - 1) * _width_x;
+//		x1 = (lattice_x - 1) * _width_x;
+//		x1 = (lattice_x - 2) * _width_x;
+		x1 = (lattice_x - _num_x/2.0) * _width_x;
 		y1 = y0 + m * (x1 - x0);
 		test.setCoords(x1, y1);
 
@@ -368,9 +376,13 @@ Cell* Lattice::findNextLatticeCell(LocalCoords* coords, double angle,
 
 	/* Right lattice cell */
 	if (lattice_x <= _num_x-1 && (angle <= M_PI/2 || angle >= 3*M_PI/2)) {
-		x1 = (lattice_x) * _width_x;
+//		x1 = (lattice_x) * _width_x;
+//		x1 = (lattice_x - 1) * _width_x;
+		x1 = (lattice_x - _num_x/2.0 + 1) * _width_x;
 		y1 = y0 + m * (x1 - x0);
 		test.setCoords(x1, y1);
+
+		log_printf(DEBUG, "Testing right lattice cell. x1 = %f, y1 = %f", x1, y1);
 
 		if (withinBounds(&test)) {
 			d = test.distance(coords->getPoint());
@@ -386,8 +398,10 @@ Cell* Lattice::findNextLatticeCell(LocalCoords* coords, double angle,
 		}
 	}
 
-	if (distance == INFINITY)
+	if (distance == INFINITY) {
+		log_printf(DEBUG, "Distance to next lattice cell is INFINITY");
 		return NULL;
+	}
 
 	else {
 		double delta_x = (x_new - coords->getX()) + cos(angle) * TINY_MOVE;

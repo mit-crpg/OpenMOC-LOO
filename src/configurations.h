@@ -33,8 +33,16 @@
  *************************** ERROR THRESHOLDS *********************************
  *****************************************************************************/
 
+/* Error threshold for determining how close a point needs to be to a surface
+ * to be considered on it */
 #define ON_SURFACE_THRESH 1E-12
+
+/* Error threshold for determining how close to the boundary of a lattice cell
+ * a point needs to be to be considered on it */
 #define ON_LATTICE_CELL_THRESH 1E-10
+
+/* Distance a point is moved to cross over a surface into a new cell during
+ * track segmentation */
 #define TINY_MOVE 1E-8
 
 

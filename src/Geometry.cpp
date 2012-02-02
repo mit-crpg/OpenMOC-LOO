@@ -883,11 +883,17 @@ Cell* Geometry::findNextCell(LocalCoords* coords, double angle) {
 				if (cell == NULL) {
 					log_printf(DEBUG, "Lattice findNextLatticeCell returned NULL");
 
+					curr->getPrev()->setNext(NULL);   // ????? //
+					delete curr;  // ??????? Delete this lattice //
 					curr = coords;
+
+//					curr = coords;
 
 					/* Get the lowest level localcoords in the linked list */
 					while (curr->getNext() != NULL)
 						curr = curr->getNext();
+
+					log_printf(DEBUG, "lowest level localcoords: %s", curr->toString().c_str());
 
 					/* Retrace linkedlist from lowest level */
 					while (curr != NULL && curr->getUniverse() != 0) {
@@ -900,15 +906,17 @@ Cell* Geometry::findNextCell(LocalCoords* coords, double angle) {
 							delete curr->getNext();
 							curr = NULL;
 						}
-
-//						if (curr != NULL)
-//							curr = curr->getPrev();
+////						if (curr != NULL)
+////							curr = curr->getPrev();
 					}
+
 
 					/* Get the lowest level universe in linkedlist */
 					curr = coords;
 					while(curr->getNext() != NULL)
 						curr = curr->getNext();
+
+					log_printf(DEBUG, "lowest level localcoords after retracing linked list: %s", curr->toString().c_str());
 
 					if (curr->getType() == LAT) {
 						int lattice_id = curr->getLattice();
@@ -923,6 +931,9 @@ Cell* Geometry::findNextCell(LocalCoords* coords, double angle) {
 
 						return cell;
 					}
+					// ??????? //
+					else
+						return NULL;
 				}
 				else
 					return cell;
