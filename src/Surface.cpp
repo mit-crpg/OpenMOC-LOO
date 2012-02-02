@@ -179,13 +179,11 @@ double Surface::getMinDistance(Point* point, double angle, Point* intersection) 
 
 	/* If the track does not intersect the surface */
 	if (num_inters == 0) {
-		log_printf(DEBUG, "Found 0 interesection points with surface");
 		distance = INFINITY;
 	}
 
 	/* If there is one intersection point */
 	else if (num_inters == 1) {
-		log_printf(DEBUG, "Found 1 interesection points with surface");
 		distance = intersections[0].distance(point);
 		intersection->setX(intersections[0].getX());
 		intersection->setY(intersections[0].getY());
@@ -193,7 +191,6 @@ double Surface::getMinDistance(Point* point, double angle, Point* intersection) 
 
 	/* If there are two intersection points */
 	else if (num_inters == 2) {
-		log_printf(DEBUG, "Found 2 interesection points with surface");
 		double dist1 = intersections[0].distance(point);
 		double dist2 = intersections[1].distance(point);
 		if (dist1 < dist2) {
@@ -650,18 +647,22 @@ int Circle::intersection(Point* point, double angle, Point* points) {
 			xcurr = (-b + sqrt(discr)) / (2*a);
 			ycurr = y0 + m * (xcurr - x0);
 			points[num].setCoords(xcurr, ycurr);
-			if (angle < M_PI && ycurr > y0)
+			if (angle < M_PI && ycurr > y0) {
 				num++;
-			else if (angle > M_PI && ycurr < y0)
+			}
+			else if (angle > M_PI && ycurr < y0) {
 				num++;
+			}
 
 			xcurr = (-b - sqrt(discr)) / (2*a);
 			ycurr = y0 + m * (xcurr - x0);
 			points[num].setCoords(xcurr, ycurr);
-			if (angle < M_PI && ycurr > y0)
+			if (angle < M_PI && ycurr > y0) {
 				num++;
-			else if (angle > M_PI && ycurr < y0)
+			}
+			else if (angle > M_PI && ycurr < y0) {
 				num++;
+		}
 
 			return num;
 		}

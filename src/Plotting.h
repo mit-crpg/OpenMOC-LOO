@@ -25,7 +25,7 @@ private:
 	int _x_pixel;
 	int _y_pixel;
 	Geometry* _geom;
-	std::list<Magick::Drawable> _draw_lists[5];
+	std::list<Magick::Drawable> _draw_lists[7];
 public:
 	Plotting(Geometry* geom);
 	virtual ~Plotting();

@@ -201,10 +201,6 @@ double Cell::minSurfaceDist(Point* point, double angle, Point* surf_intersection
 	for (iter = _surfaces.begin(); iter != _surfaces.end(); ++iter) {
 		d = iter->second->getMinDistance(point, angle, &intersection);
 
-		log_printf(DEBUG, "Distance to surface id = %d, is: %f", iter->second->getId(), d);
-		if (d != INFINITY)
-			log_printf(DEBUG, "intersection point: %s", intersection.toString().c_str());
-
 		/* If the distance to cell is less than current min distance, update */
 		if (d < min_dist) {
 			min_dist = d;

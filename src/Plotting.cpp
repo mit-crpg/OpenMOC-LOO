@@ -36,15 +36,19 @@ void Plotting::plotSegments(TrackGenerator* track_generator){
 	std::list<Magick::Drawable> drawListGreen2;
 	std::list<Magick::Drawable> drawListPink3;
 	std::list<Magick::Drawable> drawListOrange4;
-	std::list<Magick::Drawable>* _draw_lists[5] = {&drawListRed0, &drawListBlue1,
-			&drawListGreen2, &drawListPink3, &drawListOrange4};
+	std::list<Magick::Drawable> drawListMaroon5;
+	std::list<Magick::Drawable> drawListOrchid6;
+	std::list<Magick::Drawable>* _draw_lists[7] = {&drawListRed0, &drawListBlue1,
+			&drawListGreen2, &drawListPink3, &drawListOrange4, &drawListMaroon5, &drawListOrchid6};
 	_draw_lists[0]->push_back(Magick::DrawableStrokeColor("Red"));
 	_draw_lists[1]->push_back(Magick::DrawableStrokeColor("Blue"));
 	_draw_lists[2]->push_back(Magick::DrawableStrokeColor("Green"));
 	_draw_lists[3]->push_back(Magick::DrawableStrokeColor("Pink"));
 	_draw_lists[4]->push_back(Magick::DrawableStrokeColor("Orange"));
+	_draw_lists[5]->push_back(Magick::DrawableStrokeColor("Maroon"));
+	_draw_lists[6]->push_back(Magick::DrawableStrokeColor("Orchid"));
 
-	for (int i = 0; i < 5; i++){
+	for (int i = 0; i < 7; i++){
 		_draw_lists[i]->push_back(Magick::DrawableTranslation(_bit_length_x/2,_bit_length_y/2));
 		_draw_lists[i]->push_back(Magick::DrawableStrokeWidth(1));
 	}
@@ -70,16 +74,16 @@ void Plotting::plotSegments(TrackGenerator* track_generator){
 			start_x = tracks[i][j].getStart()->getX();
 			start_y = tracks[i][j].getStart()->getY();
 			num_segments = tracks[i][j].getNumSegments();
-//			log_printf(DEBUG, "Now printing segments for track i: %d, j: %d", i, j);
+			log_printf(DEBUG, "Now printing segments for track i: %d, j: %d", i, j);
 			for (int k=0; k < num_segments; k++){
 				 end_x = start_x + cos_phi*tracks[i][j].getSegment(k)->_length;
 				 end_y = start_y + sin_phi*tracks[i][j].getSegment(k)->_length;
-//				 log_printf(DEBUG, "start_x: %f, start_y: %f, end_x: %f, end_y: %f, region: %d",
-//						 start_x, start_y, end_x, end_y, tracks[i][j].getSegment(k)->_region_id);
+				 log_printf(DEBUG, "start_x: %f, start_y: %f, end_x: %f, end_y: %f, region: %d",
+						 start_x, start_y, end_x, end_y, tracks[i][j].getSegment(k)->_region_id);
 //				 log_printf(DEBUG, "start_x: %f, start_y: %f, end_x: %f, end_y: %f, region: %d",
 //				 						 start_x*_x_pixel, start_y*_y_pixel, end_x*_x_pixel, end_y*_y_pixel,
 //				 						 tracks[i][j].getSegment(k)->_region_id);
-				 _draw_lists[tracks[i][j].getSegment(k)->_region_id % 5]->push_back(Magick::DrawableLine
+				 _draw_lists[tracks[i][j].getSegment(k)->_region_id % 7]->push_back(Magick::DrawableLine
 						 (start_x*_x_pixel, -start_y*_y_pixel, end_x*_x_pixel, -end_y*_y_pixel));
 
 				 start_x = end_x;
@@ -91,7 +95,7 @@ void Plotting::plotSegments(TrackGenerator* track_generator){
 	/* make image and write tiff file */
 	Magick::Image image_segments(Magick::Geometry(_bit_length_x,_bit_length_y), Magick::Color("white"));
 
-	for (int i = 0; i < 5; i++){
+	for (int i = 0; i < 7; i++){
 		image_segments.draw(*_draw_lists[i]);
 	}
 

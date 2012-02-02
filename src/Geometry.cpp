@@ -814,7 +814,8 @@ Cell* Geometry::findNextCell(LocalCoords* coords, double angle) {
 	else {
 		/* Check the min dist to the next surface in the current cell */
 		Point surf_intersection;
-		dist = cell->minSurfaceDist(coords->getPoint(), angle, &surf_intersection);
+		LocalCoords* lowest_level = coords->getLowestLevel();
+		dist = cell->minSurfaceDist(lowest_level->getPoint(), angle, &surf_intersection);
 		log_printf(DEBUG, "found dist = %f", dist);
 
 		/* If the distance returned is not INFINITY, the trajectory will
@@ -883,6 +884,7 @@ Cell* Geometry::findNextCell(LocalCoords* coords, double angle) {
 		}
 	}
 
+	log_printf(DEBUG, "Not where I'm supposed to be in findNextCell method");
 	return cell;
 }
 
@@ -928,6 +930,9 @@ void Geometry::segmentize(Track* track) {
 		prev = curr;
 		curr = findNextCell(&segment_end, phi);
 
+		if (curr != NULL)
+			log_printf(DEBUG, "Found the next cell inside segmentize...: %d", curr->getId());
+
 		/* Find the segment length between the segments start and end points */
 		segment_length = segment_end.getPoint()->distance(segment_start.getPoint());
 
@@ -937,7 +942,9 @@ void Geometry::segmentize(Track* track) {
 		//FIXME: this needs to use our flat source region id from some equation
 		//mapping lattices, universes and cells to FSR ids
 //		new_segment->_region_id = prev->getUid();
-		new_segment->_region_id = prev->getId();
+		new_segment->_region_id = prev->getUid();
+
+		log_printf(DEBUG, "Created a new segment in region id = %d with end point: %s", new_segment->_region_id, segment_end.getPoint()->toString().c_str());
 
 		/* Update coordinates for start of next segment */
 		segment_start.setX(segment_end.getX());
@@ -947,8 +954,8 @@ void Geometry::segmentize(Track* track) {
 		track->addSegment(new_segment);
 	}
 
-	//log_printf(DEBUG, "Created %d segments for track: %s",
-	//		track->getNumSegments(), track->toString().c_str());
+	log_printf(DEBUG, "Created %d segments for track: %s",
+			track->getNumSegments(), track->toString().c_str());
 
 	return;
 }

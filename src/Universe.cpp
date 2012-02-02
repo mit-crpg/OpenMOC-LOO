@@ -131,14 +131,16 @@ Cell* Universe::findCell(LocalCoords* coords, std::map<int, Universe*> universes
 
 		if (cell->cellContains(coords)) {
 			/* Set the cell on this level */
-			coords->setCell(cell->getUid());
+			coords->setCell(cell->getId());
+
+			log_printf(DEBUG, "Cell id = %d contains this coord", cell->getId());
 
 			/* MATERIAL type cell - lowest level, terminate search for cell */
 			if (cell->getType() == MATERIAL) {
 //				coords->setCell(cell->getUid());
 				coords->setCell(cell->getId());
 				return_cell = cell;
-				return cell;
+				return return_cell;
 			}
 
 			/* FILL type cell - cell contains a universe at a lower level

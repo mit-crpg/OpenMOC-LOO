@@ -344,6 +344,7 @@ Cell* Lattice::findNextLatticeCell(LocalCoords* coords, double angle,
 			d = test.distance(coords->getPoint());
 
 			if (d < distance) {
+				log_printf(DEBUG, "Moving to right lattice cell...");
 				distance = d;
 				new_lattice_x = lattice_x + 1;
 				new_lattice_y = lattice_y;
@@ -367,8 +368,14 @@ Cell* Lattice::findNextLatticeCell(LocalCoords* coords, double angle,
 		else {
 			coords->setLatticeX(new_lattice_x);
 			coords->setLatticeY(new_lattice_y);
-			Universe* univ = _universes.at(lattice_y).at(lattice_x).second;
-			return univ->findCell(coords, universes);
+			Universe* univ = _universes.at(new_lattice_y).at(new_lattice_x).second;
+
+			log_printf(DEBUG, "Moved to lattice cell x = %d, y = %d, universe_id = %d", new_lattice_x, new_lattice_y, univ->getId());
+
+			/** ?????? **/
+			return findCell(coords, universes);
+			/** ?????? **/
+			//return univ->findCell(coords, universes);
 		}
 	}
 }

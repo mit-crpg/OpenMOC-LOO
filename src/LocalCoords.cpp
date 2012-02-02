@@ -207,6 +207,15 @@ void LocalCoords::setPrev(LocalCoords* prev) {
 }
 
 
+LocalCoords* LocalCoords::getLowestLevel() {
+	LocalCoords* curr = this;
+	while (curr->getNext() != NULL)
+		curr = curr->getNext();
+
+	return curr;
+}
+
+
 void LocalCoords::adjustCoords(double delta_x, double delta_y) {
 
 	/* Forward direction along linked list */
