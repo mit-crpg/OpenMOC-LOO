@@ -37,9 +37,11 @@ int main(int argc, const char **argv) {
 	/* Initialize the parser */
 	Parser parser(&opts);
 
-	/* Create an empty geometry */
+	/* Initialize the geometry with surfaces, cells & materials */
 	Geometry geometry(opts.getNumSectors(), opts.getNumRings(),
 			  opts.getSectorOffset(), &parser);
+
+	/* Plot geometry */
 	Plotting plotter(&geometry);
 
 //	/* Print out geometry to console if requested at runtime*/
@@ -54,7 +56,7 @@ int main(int argc, const char **argv) {
 
 	/* Initialize the trackgenerator */
 	TrackGenerator track_generator(&geometry, &plotter, opts.getNumAzim(),
-									opts.getTrackSpacing());
+				       opts.getTrackSpacing());
 
 	track_generator.generateTracks();
 	plotter.plotTracksTiff(&track_generator);
