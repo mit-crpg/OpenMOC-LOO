@@ -15,6 +15,7 @@
 #include <string>
 #include "Point.h"
 #include "Universe.h"
+#include "LocalCoords.h"
 #include "log.h"
 
 class Lattice: public Universe {

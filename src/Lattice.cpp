@@ -285,7 +285,7 @@ Cell* Lattice::findNextLatticeCell(LocalCoords* coords, double angle,
 
 	/* Lower lattice cell */
 	if (lattice_y >= 0 && angle >= M_PI) {
-		y1 = (lattice_y - 1 - 0.5*_num_y) * _width_y;
+		y1 = (lattice_y - 2) * _width_y;
 		x1 = x0 + (y1 - y0) / m;
 		test.setCoords(x1, y1);
 
@@ -302,7 +302,7 @@ Cell* Lattice::findNextLatticeCell(LocalCoords* coords, double angle,
 
 	/* Upper lattice cell */
 	if (lattice_y <= _num_y-1 && angle <= M_PI) {
-		y1 = (lattice_y + 1 - 0.5*_num_y) * _width_y;
+		y1 = (lattice_y - 1) * _width_y;
 		x1 = x0 + (y1 - y0) / m;
 		test.setCoords(x1, y1);
 
@@ -319,7 +319,7 @@ Cell* Lattice::findNextLatticeCell(LocalCoords* coords, double angle,
 
 	/* Left lattice cell */
 	if (lattice_x >= 0 && (angle >= M_PI/2 && angle <= 3*M_PI/2)) {
-		x1 = (lattice_x - 1 - 0.5*_num_x) * _width_x;
+		x1 = (lattice_x - 2) * _width_x;
 		y1 = y0 + m * (x1 - x0);
 		test.setCoords(x1, y1);
 
@@ -336,7 +336,7 @@ Cell* Lattice::findNextLatticeCell(LocalCoords* coords, double angle,
 
 	/* Right lattice cell */
 	if (lattice_x <= _num_x-1 && (angle <= M_PI/2 || angle >= 3*M_PI/2)) {
-		x1 = (lattice_x + 1 - 0.5*_num_x) * _width_x;
+		x1 = (lattice_x - 1) * _width_x;
 		y1 = y0 + m * (x1 - x0);
 		test.setCoords(x1, y1);
 
@@ -344,7 +344,6 @@ Cell* Lattice::findNextLatticeCell(LocalCoords* coords, double angle,
 			d = test.distance(coords->getPoint());
 
 			if (d < distance) {
-				log_printf(DEBUG, "Moving to right lattice cell...");
 				distance = d;
 				new_lattice_x = lattice_x + 1;
 				new_lattice_y = lattice_y;
@@ -352,16 +351,15 @@ Cell* Lattice::findNextLatticeCell(LocalCoords* coords, double angle,
 		}
 	}
 
-
 	if (distance == INFINITY)
 		return NULL;
 
 	else {
-		double delta_x = cos(angle) * distance;
-		double delta_y = sin(angle) * distance;
+		double delta_x = cos(angle) * (distance + TINY_MOVE);
+		double delta_y = sin(angle) * (distance + TINY_MOVE);
 		coords->adjustCoords(delta_x, delta_y);
 
-		if (new_lattice_x >= _num_x || new_lattice_y < 0)
+		if (new_lattice_x >= _num_x || new_lattice_x < 0)
 			return NULL;
 		else if (new_lattice_y >= _num_y || new_lattice_y < 0)
 			return NULL;
@@ -369,13 +367,25 @@ Cell* Lattice::findNextLatticeCell(LocalCoords* coords, double angle,
 			coords->setLatticeX(new_lattice_x);
 			coords->setLatticeY(new_lattice_y);
 			Universe* univ = _universes.at(new_lattice_y).at(new_lattice_x).second;
+			LocalCoords* new_coords;
 
-			log_printf(DEBUG, "Moved to lattice cell x = %d, y = %d, universe_id = %d", new_lattice_x, new_lattice_y, univ->getId());
+			if (coords->getNext() != NULL)
+				new_coords = coords->getNext();
+			else {
+				/* Compute local position of particle in the next level universe */
+				double nextX = coords->getX() - (_origin.getX()
+								+ (new_lattice_x + 0.5) * _width_x);
+				double nextY = coords->getY() - (_origin.getY()
+								+ (new_lattice_y + 0.5) * _width_y);
 
-			/** ?????? **/
+				new_coords = new LocalCoords(nextX, nextY);
+				new_coords->setPrev(coords);
+				coords->setNext(new_coords);
+			}
+
+			new_coords->setUniverse(univ->getId());
+
 			return findCell(coords, universes);
-			/** ?????? **/
-			//return univ->findCell(coords, universes);
 		}
 	}
 }

@@ -18,6 +18,7 @@
 #include "LocalCoords.h"
 #include "Plotting.h"
 #include "Geometry.h"
+#include "Surface.h"
 
 // FIXME: These should be removed when main() is properly implemented
 #pragma GCC diagnostic ignored "-Wunused"
@@ -60,14 +61,6 @@ int main(int argc, const char **argv) {
 	track_generator.makeReflective();
 	track_generator.segmentize();
 	plotter.plotSegments(&track_generator);
-
-	/* Testing findCell method */
-//	LocalCoords* test_coords = new LocalCoords(0, 0);
-//	test_coords->setUniverse(0);
-//	Cell* result = geometry.findCell(test_coords);
-//	log_printf(DEBUG, "Found cell for point %s: %s", test_coords->toString().c_str(), result->toString().c_str());
-//	result = geometry.findNextCell(test_coords, M_PI/2);
-//	log_printf(DEBUG, "Found next cell for point %s: %s", test_coords->toString().c_str(), result->toString().c_str());
 
 	log_printf(INFO, "Program complete");
 }

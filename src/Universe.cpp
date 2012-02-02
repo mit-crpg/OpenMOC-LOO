@@ -133,8 +133,6 @@ Cell* Universe::findCell(LocalCoords* coords, std::map<int, Universe*> universes
 			/* Set the cell on this level */
 			coords->setCell(cell->getId());
 
-			log_printf(DEBUG, "Cell id = %d contains this coord", cell->getId());
-
 			/* MATERIAL type cell - lowest level, terminate search for cell */
 			if (cell->getType() == MATERIAL) {
 //				coords->setCell(cell->getUid());

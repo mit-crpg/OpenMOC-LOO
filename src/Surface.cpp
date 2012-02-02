@@ -258,6 +258,7 @@ std::string Plane::toString() {
 
 int Plane::intersection(Point* point, double angle, Point* points) {
 
+
 	double x0 = point->getX();
 	double y0 = point->getY();
 

@@ -33,9 +33,9 @@
  *************************** ERROR THRESHOLDS *********************************
  *****************************************************************************/
 
-#define ON_SURFACE_THRESH 1E-8
-#define ON_LATTICE_CELL_THRESH 1E-6
-#define TINY_MOVE 1E-6
+#define ON_SURFACE_THRESH 1E-12
+#define ON_LATTICE_CELL_THRESH 1E-10
+#define TINY_MOVE 1E-8
 
 
 
