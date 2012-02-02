@@ -41,16 +41,23 @@ void Plotting::plotSegments(TrackGenerator* track_generator){
 	std::list<Magick::Drawable>* _draw_lists[7] = {&drawListRed0, &drawListBlue1,
 			&drawListGreen2, &drawListPink3, &drawListOrange4, &drawListMaroon5, &drawListOrchid6};
 	_draw_lists[0]->push_back(Magick::DrawableStrokeColor("Red"));
+	_draw_lists[0]->push_back(Magick::DrawableFillColor("Red"));
 	_draw_lists[1]->push_back(Magick::DrawableStrokeColor("Blue"));
+	_draw_lists[1]->push_back(Magick::DrawableFillColor("Blue"));
 	_draw_lists[2]->push_back(Magick::DrawableStrokeColor("Green"));
+	_draw_lists[2]->push_back(Magick::DrawableFillColor("Green"));
 	_draw_lists[3]->push_back(Magick::DrawableStrokeColor("Pink"));
+	_draw_lists[3]->push_back(Magick::DrawableFillColor("Pink"));
 	_draw_lists[4]->push_back(Magick::DrawableStrokeColor("Orange"));
+	_draw_lists[4]->push_back(Magick::DrawableFillColor("Orange"));
 	_draw_lists[5]->push_back(Magick::DrawableStrokeColor("Maroon"));
+	_draw_lists[5]->push_back(Magick::DrawableFillColor("Maroon"));
 	_draw_lists[6]->push_back(Magick::DrawableStrokeColor("Orchid"));
+	_draw_lists[6]->push_back(Magick::DrawableFillColor("Orchid"));
 
 	for (int i = 0; i < 7; i++){
 		_draw_lists[i]->push_back(Magick::DrawableTranslation(_bit_length_x/2,_bit_length_y/2));
-		_draw_lists[i]->push_back(Magick::DrawableStrokeWidth(1));
+		_draw_lists[i]->push_back(Magick::DrawableStrokeWidth(0));
 		_draw_lists[i]->push_back(Magick::DrawableStrokeAntialias(false));
 	}
 
@@ -119,7 +126,8 @@ void Plotting::plotTracksTiff(TrackGenerator* track_generator) {
 	drawList.push_back(Magick::DrawableTranslation(_bit_length_x/2,_bit_length_y/2));
 
 	drawList.push_back(Magick::DrawableStrokeColor("black"));
-	drawList.push_back(Magick::DrawableStrokeWidth(1));
+	drawList.push_back(Magick::DrawableFillColor("black"));
+	drawList.push_back(Magick::DrawableStrokeWidth(0));
 	drawList.push_back(Magick::DrawableStrokeAntialias(false));
 
 	Track** tracks = track_generator->getTracks();
