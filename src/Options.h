@@ -24,6 +24,7 @@ private:
 	std::string _material_file;
 	double _track_spacing;
 	int _num_azim;
+	int _bit_dimension;
 	int _num_sectors;
 	int _num_rings;
 	double _sector_offset;
@@ -36,6 +37,7 @@ public:
     const char *getMaterialFile() const;
     bool dumpGeometry() const;
     double getNumAzim() const;
+    int getBitDimension() const;
     double getTrackSpacing() const;
     const char* getVerbosity() const;
     int getNumRings() const;
