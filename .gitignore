@@ -1,5 +1,6 @@
 bin
 obj
+Makefile
 *~
 Configfile.local
 ./Debug
@@ -7,3 +8,5 @@ Configfile.local
 *.o
 *.tiff
 *.out
+.cproject
+.project
