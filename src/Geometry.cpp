@@ -290,6 +290,9 @@ void Geometry::addCell(Cell* cell) {
 		univ->setOrigin(origin);
 		delete origin;
 		addUniverse(univ);
+
+		// ????? //
+		static_cast<CellFill*>(cell)->setUniverseFillPointer(univ);
 	}
 
 
@@ -576,7 +579,7 @@ void Geometry::adjustKeys() {
 		/* FILL type cells */
 		else {
 			CellFill* cell_fill = static_cast<CellFill*>(cell);
-			int universe_fill = _universes.at(cell_fill->getUniverseFill())->
+			int universe_fill = _universes.at(cell_fill->getUniverseFillId())->
 											getUid();
 			cell_fill->adjustKeys(universe, universe_fill);
 		}

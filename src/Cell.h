@@ -15,9 +15,12 @@
 #include <sstream>
 #include <string>
 #include "Surface.h"
+#include "Universe.h"
 #include "log.h"
 #include "Point.h"
 #include "LocalCoords.h"
+
+class Universe;
 
 class Surface;
 class LocalCoords;
@@ -87,12 +90,16 @@ public:
  */
 class CellFill: public Cell {
 private:
-	int _universe_fill;
+	std::pair<int, Universe*> _universe_fill;
+//	int _universe_fill;
+//	Universe* _universe;
 public:
 	CellFill(int id, int universe, int num_surfaces,
 		 int *surfaces, int universe_fill);
-	int getUniverseFill() const;
+	int getUniverseFillId() const;
+	Universe* getUniverseFill() const;
 	void setUniverseFill(int universe_Fill);
+	void setUniverseFillPointer(Universe* universe_fill);
 	void adjustKeys(int universe, int universe_fill);
 	std::string toString();
 };
