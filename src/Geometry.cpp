@@ -290,6 +290,9 @@ void Geometry::addCell(Cell* cell) {
 		univ->setOrigin(origin);
 		delete origin;
 		addUniverse(univ);
+
+		// ????? //
+		static_cast<CellFill*>(cell)->setUniverseFillPointer(univ);
 	}
 
 
@@ -576,7 +579,7 @@ void Geometry::adjustKeys() {
 		/* FILL type cells */
 		else {
 			CellFill* cell_fill = static_cast<CellFill*>(cell);
-			int universe_fill = _universes.at(cell_fill->getUniverseFill())->
+			int universe_fill = _universes.at(cell_fill->getUniverseFillId())->
 											getUid();
 			cell_fill->adjustKeys(universe, universe_fill);
 		}
@@ -993,6 +996,10 @@ void Geometry::segmentize(Track* track) {
 		else {
 			segment_start.setX(segment_end.getX());
 			segment_start.setY(segment_end.getY());
+			log_printf(DEBUG, "Created a new segment with start: x = %f, y = "
+					"%f, and end: x = %f, y = %f", segment_start.getX(),
+					segment_start.getY(), segment_end.getX(),
+					segment_end.getY());
 		}
 
 		/* Add the segment to the track */

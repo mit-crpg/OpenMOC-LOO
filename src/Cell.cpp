@@ -232,7 +232,9 @@ CellBasic::CellBasic(int id, int universe, int num_surfaces,
 }
 
 /**
- * Return the material in the cell
+ * Return the material in the cell	int getUniverseFillId() const;
+	Universe* getUniverseFill() const;
+ *
  * @return the material's id
  */
 int CellBasic::getMaterial() const {
@@ -270,6 +272,7 @@ void CellBasic::adjustKeys(int universe, int material) {
 			else
 				adjusted_surfaces.insert(std::pair<int, Surface*>
 								(iter->second->getUid()*-1, iter->second));
+
 		}
 
 		/* Reset the surfaces container to be the one with new keys*/
@@ -315,25 +318,34 @@ CellFill::CellFill(int id, int universe, int num_surfaces,
 		   int *surfaces, int universe_fill):
 	Cell(id, FILL, universe, num_surfaces, surfaces) {
 
-	_universe_fill = universe_fill;
+	_universe_fill.first = universe_fill;
 }
 
 /**
  * Return the universe filling this cell
  * @return the universe's id
  */
-int CellFill::getUniverseFill() const {
-	return _universe_fill;
+int CellFill::getUniverseFillId() const {
+	return _universe_fill.first;
 }
+
+Universe* CellFill::getUniverseFill() const {
+	return _universe_fill.second;
+}
+
 
 /**
  * Set the universe filling this cell
  * @param the universe's id
  */
 void CellFill::setUniverseFill(int universe_fill) {
-	_universe_fill = universe_fill;
+	_universe_fill.first = universe_fill;
 }
 
+
+void CellFill::setUniverseFillPointer(Universe* universe) {
+	_universe_fill.second = universe;
+}
 
 /**
  * Adjusts the cell's id of the universe this cell is in, the id of the
@@ -347,7 +359,7 @@ void CellFill::setUniverseFill(int universe_fill) {
 void CellFill::adjustKeys(int universe, int universe_fill) {
 
 	_universe = universe;
-	_universe_fill = universe_fill;
+	_universe_fill.first = universe_fill;
 
 	/* New surfaces map uses uid instead of id as the keys */
 	std::map<int, Surface*> adjusted_surfaces;
@@ -389,7 +401,7 @@ std::string CellFill::toString() {
 	std::stringstream string;
 
 	string << "Cell id = " << _id << ", type = FILL, universe_fill = " <<
-			_universe_fill << ", universe = " << _universe << ", num_surfaces = "
+			_universe_fill.first << ", universe = " << _universe << ", num_surfaces = "
 	       << getNumSurfaces();
 
 	std::map<int, Surface*>::iterator iter;

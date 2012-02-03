@@ -27,7 +27,7 @@ private:
 	int* _pix_map_tracks;
 	int* _pix_map_segments;
 	Geometry* _geom;
-	std::list<Magick::Drawable> _draw_lists[7];
+	std::list<Magick::Drawable> _draw_lists[15];
 public:
 	Plotting(Geometry* geom, int bitDim);
 	virtual ~Plotting();

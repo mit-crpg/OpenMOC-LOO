@@ -119,6 +119,30 @@ void Plotting::plotSegments(TrackGenerator* track_generator){
 			case 7:
 				*(view.get(i,_bit_length_y - 1 - j,1,1)) = Magick::Color("orchid");
 				break;
+			case 8:
+				*(view.get(i,_bit_length_y - 1 - j,1,1)) = Magick::Color("blue violet");
+				break;
+			case 9:
+				*(view.get(i,_bit_length_y - 1 - j,1,1)) = Magick::Color("crimson");
+				break;
+			case 10:
+				*(view.get(i,_bit_length_y - 1 - j,1,1)) = Magick::Color("salmon");
+				break;
+			case 11:
+				*(view.get(i,_bit_length_y - 1 - j,1,1)) = Magick::Color("gold");
+				break;
+			case 12:
+				*(view.get(i,_bit_length_y - 1 - j,1,1)) = Magick::Color("blue violet");
+				break;
+			case 13:
+				*(view.get(i,_bit_length_y - 1 - j,1,1)) = Magick::Color("orange red");
+				break;
+			case 14:
+				*(view.get(i,_bit_length_y - 1 - j,1,1)) = Magick::Color("spring green");
+				break;
+			case 15:
+				*(view.get(i,_bit_length_y - 1 - j,1,1)) = Magick::Color("pale green");
+				break;
 			}
 		}
 	}
@@ -219,7 +243,7 @@ void Plotting::LineFct(int a, int b, int c, int d, int col) {
  * taken from http://www.cprogramming.com/tutorial/tut3.html
  */
 void Plotting::SegFct(int a, int b, int c, int d, int col) {
-	col = col % 7 + 1;
+	col = col % 15 + 1;
 	long u,s,v,d1x,d1y,d2x,d2y,m,n;
 	int  i;
 	u   = c-a;

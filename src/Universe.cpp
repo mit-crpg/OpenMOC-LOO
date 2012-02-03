@@ -141,6 +141,7 @@ Cell* Universe::findCell(LocalCoords* coords,
 		Cell* cell = iter->second;
 
 		if (cell->cellContains(coords)) {
+
 			/* Set the cell on this level */
 			coords->setCell(cell->getId());
 
@@ -157,7 +158,7 @@ Cell* Universe::findCell(LocalCoords* coords,
 				LocalCoords* new_coords = new LocalCoords(coords->getX(),
 														coords->getY());
 				CellFill* cell_fill = static_cast<CellFill*>(cell);
-				int universe_id = cell_fill->getUniverseFill();
+				int universe_id = cell_fill->getUniverseFillId();
 				new_coords->setUniverse(universe_id);
 				Universe* univ = universes.at(universe_id);
 				coords->setCell(cell->getId());
