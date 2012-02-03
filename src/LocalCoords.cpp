@@ -31,8 +31,8 @@ LocalCoords::~LocalCoords() {
 
 
 /**
- * Return the level (CELL or LATTICE) of this localcoords
- * @return the level (CELL or LATTICE)
+ * Return the level (UNIV or LAT) of this localcoords
+ * @return the level (UNIV or LAT)
  */
 coordType LocalCoords::getType() {
 	return _type;
@@ -125,7 +125,7 @@ LocalCoords* LocalCoords::getPrev() const {
 
 /**
  * Set the level for this localcoords
- * @param level the level for this localcoords (LATTICE or CELL)
+ * @param level the level for this localcoords (UNIV or LAT)
  */
 void LocalCoords::setType(coordType type) {
 	_type = type;
@@ -195,20 +195,32 @@ void LocalCoords::setY(double y) {
 
 
 /**
- * Sets the pointer to the next localcoord object
- * @param next
+ * Sets the pointer to the next localcoord in the linked list
+ * @param next pointer to the next localcoord
  */
 void LocalCoords::setNext(LocalCoords* next) {
     _next = next;
 }
 
+
+/**
+ * Sets the pointer to the previous localcoord in the linked list
+ * @param prev pointer to the previous localcoord
+ */
 void LocalCoords::setPrev(LocalCoords* prev) {
 	_prev = prev;
 }
 
 
+/**
+ * Find and return the last localcoord in the linked list wich represents
+ * the local coordinates on the lowest level of a geometry of nested universes
+ * @return a pointer to the last localcoord object in the list
+ */
 LocalCoords* LocalCoords::getLowestLevel() {
 	LocalCoords* curr = this;
+
+	/* Traverse linked list */
 	while (curr->getNext() != NULL)
 		curr = curr->getNext();
 
@@ -216,6 +228,13 @@ LocalCoords* LocalCoords::getLowestLevel() {
 }
 
 
+/**
+ * Update all of the x,y coordinates for each localcoord object in the linked
+ * list. This method will traverse the entire linked list and apply the
+ * translation to each element
+ * @param delta_x amount we wish to move x by
+ * @param delta y amount we wish to move y by
+ */
 void LocalCoords::adjustCoords(double delta_x, double delta_y) {
 
 	/* Forward direction along linked list */
@@ -233,28 +252,31 @@ void LocalCoords::adjustCoords(double delta_x, double delta_y) {
 		curr->setY(curr->getY() + delta_y);
 		curr = curr->getPrev();
 	}
+	return;
 }
 
 
+/**
+ * Update the last element in the linked list (the one at the lowest level
+ * of nested universes) to have the same coordinates as a given point
+ * @param point a pointer to a point
+ */
 void LocalCoords::updateMostLocal(Point* point) {
 
-	LocalCoords* curr = this;
-	while(curr->getNext() != NULL)
-		curr = curr->getNext();
+	/* Get the lowest level coordinate */
+	LocalCoords* curr = getLowestLevel();
 
+	/* Translate coordinates by appropriate amount */
 	double delta_x = point->getX() - curr->getX();
 	double delta_y = point->getY() - curr->getY();
-
 	adjustCoords(delta_x, delta_y);
 
 	return;
 }
 
 
-
 /**
- * Converts this localcoords's attributes to a character array
- * representation
+ * Converts this localcoords's attributes to a character array representation
  * @param a character array of its member's attributes
  */
 std::string LocalCoords::toString() {
@@ -262,6 +284,7 @@ std::string LocalCoords::toString() {
 	std::stringstream string;
 	LocalCoords* curr = this;
 
+	/* Loops over all localcoords lower than this one in the list */
 	while (curr != NULL) {
 		string << "LocalCoords: level = ";
 
@@ -287,7 +310,6 @@ std::string LocalCoords::toString() {
 		string << ", next:\n";
 		curr = curr->getNext();
 	}
-
 
 	return string.str();
 }

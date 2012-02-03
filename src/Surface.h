@@ -35,6 +35,10 @@ enum surfaceType {
 	QUADRATIC
 };
 
+
+/**
+ * Surface boundary types
+ */
 enum boundaryType {
 	BOUNDARY_NONE,
 	REFLECTIVE
@@ -61,11 +65,8 @@ public:
 	int getUid() const;
 	int getId() const;
 	surfaceType getType() const;
-//	std::vector<int> getNeighborPos();
-//	std::vector<int> getNeighborNeg();
 	std::vector<Cell*> getNeighborPos();
 	std::vector<Cell*> getNeighborNeg();
-
 	void setNeighborPosSize(int size);
 	void setNeighborNegSize(int size);
 	void setNeighborPos(int index, Cell* cell);
@@ -84,6 +85,7 @@ public:
 	bool onSurface(LocalCoords* coord);
 	double getMinDistance(Point* point, double angle, Point* intersection);
 };
+
 
 /**
  * Represents a plane in 2D as a Surface subclass
@@ -105,6 +107,7 @@ public:
 	virtual double getYMin();
 	virtual double getYMax();
 };
+
 
 /**
  * Represents a plane parallel to the x-axis as a Plane subclass

@@ -8,17 +8,15 @@
 #ifndef UNIVERSE_H_
 #define UNIVERSE_H_
 
-#include <vector>
-#include <map>
 #include <sstream>
 #include <string>
+#include <map>
 #include "Point.h"
 #include "Cell.h"
 #include "LocalCoords.h"
 #include "log.h"
 
 class LocalCoords;
-
 class Cell;
 
 enum universeType{
@@ -32,13 +30,13 @@ protected:
 	int _uid;					/* monotonically increasing id based on n */
 	int _id;
 	universeType _type;
-	std::vector<Cell*> _cells;
+	std::map<int, Cell*> _cells;
 	Point _origin;
 public:
 	Universe(const int id);
 	virtual ~Universe();
 	void addCell(Cell* cell);
-    std::vector<Cell*> getCells() const;
+	std::map<int, Cell*> getCells() const;
     int getUid() const;
     int getId() const;
     universeType getType();
@@ -48,7 +46,8 @@ public:
     void setType(universeType type);
     void setNumCells(const int num_cells);
     void setOrigin(Point* origin);
-    virtual Cell* findCell(LocalCoords* coords, std::map<int, Universe*> universes);
+    virtual Cell* findCell(LocalCoords* coords,
+    		std::map<int, Universe*> universes);
     std::string toString();
 };
 

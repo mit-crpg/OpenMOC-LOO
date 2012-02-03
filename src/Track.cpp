@@ -31,9 +31,11 @@ Track::~Track() {
  * @param start_y the y-coordinate at the starting point
  * @param end_x the x-coordinate at the ending point
  * @param end_y the y-coordinate at the ending point
+ * @param phi the track's azimuthal angle
  */
 void Track::setValues(const double start_x, const double start_y,
 		const double end_x, const double end_y, const double phi) {
+
 	_start.setCoords(start_x, start_y);
 	_end.setCoords(end_x, end_y);
 	_phi = phi;
@@ -225,30 +227,39 @@ bool Track::contains(Point* point) {
 
 	double m; 		// the slope of the track
 
-	// If the point is outside of the bounds of the start and end points of the track it
-	// does not lie on the track
-	if (!(((point->getX() <= _start.getX()+1.0E-2 && point->getX() >= _end.getX()-1.0E-2)
-		|| (point->getX() >= _start.getX()-1.0E-2 && point->getX() <= _end.getX()+1.0E-2))
+	/* If the point is outside of the bounds of the start and end points of the
+	 * track it does not lie on the track */
+	if (!(((point->getX() <= _start.getX()+1.0E-2 &&
+			point->getX() >= _end.getX()-1.0E-2)
+		|| (point->getX() >= _start.getX()-1.0E-2 &&
+				point->getX() <= _end.getX()+1.0E-2))
 		&&
-		((point->getY() <= _start.getY()+1.0E-2 && point->getY() >= _end.getY()-1.0E-2)
-		|| (point->getY() >= _start.getY()-1.0E-2 && point->getY() <= _end.getY()+1.0E-2))))
+		((point->getY() <= _start.getY()+1.0E-2 &&
+				point->getY() >= _end.getY()-1.0E-2)
+		|| (point->getY() >= _start.getY()-1.0E-2 &&
+				point->getY() <= _end.getY()+1.0E-2)))) {
+
 		return false;
+	}
 
 
-	// If the track is vertical
+	/* If the track is vertical */
 	if (fabs(_phi - M_PI / 2) < 1E-10) {
 		if (fabs(point->getX() - _start.getX()) < 1E-10)
 			return true;
 		else
 			return false;
 	}
-	// If the track is not vertical
+	/* If the track is not vertical */
 	else {
 		m = sin(_phi) / cos(_phi);
 
-		// Use point-slope formula
-		if (fabs(point->getY() - (_start.getY() + m * (point->getX() - _start.getX()))) < 1e-10)
+		/* Use point-slope formula */
+		if (fabs(point->getY() - (_start.getY() +
+				m * (point->getX() - _start.getX()))) < 1e-10) {
+
 			return true;
+		}
 		else
 			return false;
 	}
@@ -269,9 +280,9 @@ void Track::clearSegments() {
  */
 std::string Track::toString() {
 	std::stringstream string;
-	string << "Track: start, x = " << _start.getX() << ", y = " << _start.getY()
-			<< " end, x = " << _end.getX() << ", y = " << _end.getY() <<
-			", phi = " << _phi << " weight = " << _weight;
+	string << "Track: start, x = " << _start.getX() << ", y = " <<
+			_start.getY() << " end, x = " << _end.getX() << ", y = "
+			<< _end.getY() << ", phi = " << _phi << " weight = " << _weight;
 
 	return string.str();
 }

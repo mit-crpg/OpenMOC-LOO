@@ -32,12 +32,21 @@ Universe::~Universe() {
 
 
 /**
+ * Returns the universe's uid
+ * @return the universe's uid
+ */
+int Universe::getUid() const {
+	return _uid;
+}
+
+
+/**
  * Adds a cell to this universe
  * @param cell the cell id
  */
 void Universe::addCell(Cell* cell) {
 	try {
-		_cells.push_back(cell);
+		_cells.insert(std::pair<int, Cell*>(cell->getId(), cell));
 		log_printf(INFO, "Added cell with id = %d to universe with id = %d",
 				cell->getId(), _id);
 	}
@@ -52,17 +61,8 @@ void Universe::addCell(Cell* cell) {
  * Return the vector of cells in this universe
  * @return vector of cell ids
  */
-std::vector<Cell*> Universe::getCells() const {
+std::map<int, Cell*> Universe::getCells() const {
     return _cells;
-}
-
-
-/**
- * Returns the universe's uid
- * @return the universe's uid
- */
-int Universe::getUid() const {
-	return _uid;
 }
 
 
@@ -119,15 +119,26 @@ void Universe::setOrigin(Point* origin) {
 }
 
 
-Cell* Universe::findCell(LocalCoords* coords, std::map<int, Universe*> universes) {
+/**
+ * Finds the cell that a localcoord object is located inside by checking
+ * each of this universe's cells. Returns NULL if the localcoord is not
+ * in any of the cells
+ * @param coords a pointer to the localcoords of interest
+ * @param universes a container of all of the universes passed in by geometry
+ * @return a pointer the cell where the localcoords is located
+ */
+Cell* Universe::findCell(LocalCoords* coords,
+						std::map<int, Universe*> universes) {
 
 	Cell* return_cell = NULL;
+	std::map<int, Cell*>::iterator iter;
 
+	/* Sets the localcoord type to UNIV at this level */
 	coords->setType(UNIV);
 
 	/* Loop over all cells in this universe */
-	for (int c = 0; c < (int)_cells.size(); c++) {
-		Cell* cell = _cells.at(c);
+	for (iter = _cells.begin(); iter != _cells.end(); ++iter) {
+		Cell* cell = iter->second;
 
 		if (cell->cellContains(coords)) {
 			/* Set the cell on this level */
@@ -135,7 +146,6 @@ Cell* Universe::findCell(LocalCoords* coords, std::map<int, Universe*> universes
 
 			/* MATERIAL type cell - lowest level, terminate search for cell */
 			if (cell->getType() == MATERIAL) {
-//				coords->setCell(cell->getUid());
 				coords->setCell(cell->getId());
 				return_cell = cell;
 				return return_cell;
@@ -144,11 +154,12 @@ Cell* Universe::findCell(LocalCoords* coords, std::map<int, Universe*> universes
 			/* FILL type cell - cell contains a universe at a lower level
 			 * Update coords to next level and continue search */
 			else if (cell->getType() == FILL) {
-				LocalCoords* new_coords = new LocalCoords(coords->getX(),coords->getY());
-				int universe_id = static_cast<CellFill*>(cell)->getUniverseFill();
+				LocalCoords* new_coords = new LocalCoords(coords->getX(),
+														coords->getY());
+				CellFill* cell_fill = static_cast<CellFill*>(cell);
+				int universe_id = cell_fill->getUniverseFill();
 				new_coords->setUniverse(universe_id);
 				Universe* univ = universes.at(universe_id);
-//				coords->setCell(cell->getUid());
 				coords->setCell(cell->getId());
 
 				coords->setNext(new_coords);

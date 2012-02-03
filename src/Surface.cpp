@@ -15,6 +15,7 @@ int Surface::_n = 0;
  * Default Surface constructor
  * @param id the surface id
  * @param type the surface type
+ * @param boundary this surface's boundary type
  */
 Surface::Surface(const int id, const surfaceType type,
 					const boundaryType boundary){
@@ -27,7 +28,7 @@ Surface::Surface(const int id, const surfaceType type,
 
 
 /**
- * Destructor
+ * Surface Destructor
  */
 Surface::~Surface() { }
 
@@ -59,8 +60,7 @@ surfaceType Surface::getType() const {
 
 
 /**
- * Returns the vector of the surface ids on the positive side
- * of this surface
+ * Returns the vector of the surface ids on the positive side of this surface
  * @return vector of surface ids
  */
 std::vector<Cell*> Surface::getNeighborPos() {
@@ -69,9 +69,8 @@ std::vector<Cell*> Surface::getNeighborPos() {
 
 
 /**
- * Returns the vector of the surface ids on the negative side
- * of this surface
- * @return vector of surface ids
+ * Returns the vector of the surface ids on the negative side of this surface
+ * @return vector of surface id
  */
 std::vector<Cell*> Surface::getNeighborNeg() {
 	return _neighbor_neg;
@@ -134,6 +133,10 @@ void Surface::setNeighborNeg(int index, Cell* cell) {
 }
 
 
+/**
+ * Returns the surface's boundary type
+ * @return the boundary type (REFLECTIVE or BOUNDARY_NONE)
+ */
 boundaryType Surface::getBoundary(){
        return _boundary;
 }
@@ -145,6 +148,8 @@ boundaryType Surface::getBoundary(){
  * @return true (on) or false (off)
  */
 bool Surface::onSurface(Point* point) {
+
+	/* Uses a threshold to determine whether the point is on the surface */
 	if (abs(evaluate(point)) < ON_SURFACE_THRESH)
 		return true;
 	else
@@ -153,7 +158,7 @@ bool Surface::onSurface(Point* point) {
 
 
 /**
- * Return true or false if a localcoord is on or off of a surface.
+ * Return true or false if a localcoord is on or off of a surface
  * @param point pointer to the localcoord of interest
  * @return true (on) or false (off)
  */
@@ -162,28 +167,27 @@ bool Surface::onSurface(LocalCoords* coord) {
 }
 
 
-
-
-double Surface::getMinDistance(Point* point, double angle, Point* intersection) {
+/**
+ * Finds the minimum distance from a point with a given trajectory defined
+ * by an angle to this surface. If the trajectory will not intersect the
+ * surface, returns INFINITY
+ * @param point a pointer to the point of interest
+ * @param angle the angle defining the trajectory in radians
+ * @param intersection a pointer to a point for storing the intersection
+ * @return the minimum distance
+ */
+double Surface::getMinDistance(Point* point, double angle,
+									Point* intersection) {
 
 	/* Point array for intersections with this surface */
 	Point intersections[2];
 
-	/* Create a dummy track to represent this point and angle tracjectory */
-//	Track track;
-//	track.setValues(point->getX(), point->getY(), 0, 0, angle);
-
-// 	int num_inters = intersection(&track, intersections);
+	/* Find the intersection point(s) */
 	int num_inters = this->intersection(point, angle, intersections);
-	double distance;
-
-	/* If the track does not intersect the surface */
-	if (num_inters == 0) {
-		distance = INFINITY;
-	}
+	double distance = INFINITY;
 
 	/* If there is one intersection point */
-	else if (num_inters == 1) {
+	if (num_inters == 1) {
 		distance = intersections[0].distance(point);
 		intersection->setX(intersections[0].getX());
 		intersection->setY(intersections[0].getY());
@@ -193,6 +197,8 @@ double Surface::getMinDistance(Point* point, double angle, Point* intersection) 
 	else if (num_inters == 2) {
 		double dist1 = intersections[0].distance(point);
 		double dist2 = intersections[1].distance(point);
+
+		/* Determine which intersection point is nearest */
 		if (dist1 < dist2) {
 			distance = dist1;
 			intersection->setX(intersections[0].getX());
@@ -205,9 +211,6 @@ double Surface::getMinDistance(Point* point, double angle, Point* intersection) 
 		}
 	}
 
-	else
-		distance = INFINITY;
-
 	return distance;
 }
 
@@ -216,6 +219,7 @@ double Surface::getMinDistance(Point* point, double angle, Point* intersection) 
 /**
  * Plane constructor
  * @param id the surface id
+ * @param boundary this surface's boundary type
  * @param A the first coefficient
  * @param B the second coefficient
  * @param C the third coefficient
@@ -256,8 +260,15 @@ std::string Plane::toString() {
 
 
 
+/**
+ * Finds the intersection point with this plane from a given point and
+ * trajectory defined by an angle
+ * @param point pointer to the point of interest
+ * @param angle the angle defining the trajectory in radians
+ * @param points pointer to a point to store the intersection point
+ * @return the number of intersection points (0 or 1)
+ */
 int Plane::intersection(Point* point, double angle, Point* points) {
-
 
 	double x0 = point->getX();
 	double y0 = point->getY();
@@ -312,8 +323,8 @@ int Plane::intersection(Point* point, double angle, Point* points) {
 /**
  * Finds the intersection points (0 or 1) of a track with a plane.
  * @param track the track of interest
- * @param points an array of two points where the intersection points are stored
- * @return the number of intersection points (0 or 1 for a plane)
+ * @param points an array of two points where intersection points are stored
+ * @return the number of intersection points (0 or 1)
  */
 int Plane::intersection(Track* track, Point* points) const {
 
@@ -365,7 +376,7 @@ int Plane::intersection(Track* track, Point* points) const {
 /**
  * Finds the intersection points (0 or 1) of a plane with this plane.
  * @param plane the plane of interest
- * @param points an array of two points where the intersection points are stored
+ * @param points an array of two points where intersection points are stored
  * @return the number of intersection points (0 or 1 for a plane)
  */
 int Plane::intersection(Plane* plane, Point* points) const {
@@ -415,21 +426,41 @@ int Plane::intersection(Plane* plane, Point* points) const {
 		return num;
 }
 
+
+/**
+ * Returns the minimum x value on this surface
+ * @return the minimum x value
+ */
 double Plane::getXMin(){
 	log_printf(ERROR, "Plane::getXMin not implemented");
 	return -1.0/0.0;
 }
 
+
+/**
+ * Returns the maximum x value on this surface
+ * @return the maximum x value
+ */
 double Plane::getXMax(){
 	log_printf(ERROR, "Plane::getXMax not implemented");
 	return 1.0/0.0;
 }
 
+
+/**
+ * Returns the minimum y value on this surface
+ * @return the minimum y value
+ */
 double Plane::getYMin(){
 	log_printf(ERROR, "Plane::getYMin not implemented");
 	return -1.0/0.0;
 }
 
+
+/**
+ * Returns the maximum y value on this surface
+ * @return the maximum y value
+ */
 double Plane::getYMax(){
 	log_printf(ERROR, "Plane::getYMax not implemented");
 	return 1.0/0.0;
@@ -438,9 +469,11 @@ double Plane::getYMax(){
 /**
  * XPlane constructor for a plane parallel to the x-axis
  * @param id the surface id
- * @param the location of the plane along the y-axis
+ * @param boundary this surface's boundary type
+ * @param C the location of the plane along the y-axis
  */
-XPlane::XPlane(const int id, const boundaryType boundary, const double C): Plane(id, boundary, 0, 1, -C) {
+XPlane::XPlane(const int id, const boundaryType boundary,
+		const double C): Plane(id, boundary, 0, 1, -C) {
 	_type = XPLANE;
 }
 
@@ -458,18 +491,38 @@ std::string XPlane::toString() {
 	return string.str();
 }
 
+
+/**
+ * Returns the minimum x value on this surface
+ * @return the minimum x value
+ */
 double XPlane::getXMin(){
 	return -_C;
 }
 
+
+/**
+ * Returns the maximum x value on this surface
+ * @return the maximum x value
+ */
 double XPlane::getXMax(){
 	return -_C;
 }
 
+
+/**
+ * Returns the minimum y value on this surface
+ * @return the minimum y value
+ */
 double XPlane::getYMin(){
 	return 1.0/0.0;
 }
 
+
+/**
+ * Returns the maximum y value on this surface
+ * @return the maximum y value
+ */
 double XPlane::getYMax(){
 	return -1.0/0.0;
 }
@@ -478,9 +531,11 @@ double XPlane::getYMax(){
 /**
  * YPlane constructor for a plane parallel to the y-axis
  * @param id the surface id
- * @param the location of the plane along the x-axis
+ * @param boundary the surface boundary type
+ * @param C the location of the plane along the x-axis
  */
-YPlane::YPlane(const int id, const boundaryType boundary, const double C): Plane(id, boundary, 1, 0, -C) {
+YPlane::YPlane(const int id, const boundaryType boundary,
+		const double C): Plane(id, boundary, 1, 0, -C) {
 	_type = YPLANE;
 }
 
@@ -499,37 +554,52 @@ std::string YPlane::toString() {
 	return string.str();
 }
 
+
+/**
+ * Returns the minimum x value on this surface
+ * @return the minimum x value
+ */
 double YPlane::getXMin(){
 	return 1.0/0.0;
 }
 
 
+/**
+ * Returns the maximum x value on this surface
+ * @return the maximum x value
+ */
 double YPlane::getXMax(){
 	return -1.0/0.0;
 }
 
+
+/**
+ * Returns the minimum y value on this surface
+ * @return the minimum y value
+ */
 double YPlane::getYMin(){
 	return -_C;
 }
 
+/**
+ * Returns the maximum y value on this surface
+ * @return the maximum y value
+ */
 double YPlane::getYMax(){
 	return -_C;
 }
 
 
-
-
-
-
 /**
  * Circle constructor
  * @param id the surface id
+ * @param boundary the surface boundary type
  * @param x the x-coordinte of the circle center
  * @param y the y-coordinate of the circle center
  * @param radius the radius of the circle
  */
-Circle::Circle(const int id, const boundaryType boundary, const double x, const double y,
-	       const double radius): Surface(id, CIRCLE, boundary) {
+Circle::Circle(const int id, const boundaryType boundary, const double x,
+		const double y, const double radius): Surface(id, CIRCLE, boundary) {
 	_A = 1;
 	_B = 1;
 	_C = -2*x;
@@ -553,6 +623,15 @@ double Circle::evaluate(const Point* point) const {
 }
 
 
+
+/**
+ * Finds the intersection point with this circle from a given point and
+ * trajectory defined by an angle (0, 1, or 2 points)
+ * @param point pointer to the point of interest
+ * @param angle the angle defining the trajectory in radians
+ * @param points pointer to a an array of points to store intersection points
+ * @return the number of intersection points (0 or 1)
+ */
 int Circle::intersection(Point* point, double angle, Point* points) {
 
 	double x0 = point->getX();
@@ -663,7 +742,7 @@ int Circle::intersection(Point* point, double angle, Point* points) {
 			}
 			else if (angle > M_PI && ycurr < y0) {
 				num++;
-		}
+			}
 
 			return num;
 		}
@@ -735,10 +814,11 @@ int Circle::intersection(Track* track, Point* points) const {
 	/* If the track isn't vertical */
 	else {
 
-		/*Solve for where the line y-y0 = m*(x-x0) and the surface F(x,y) intersect
+		/*Solve for where the line y-y0 = m*(x-x0) and the surface F(x,y)
+		 * intersect
 		 * Find the (x,y) where F(x, y0 + m*(x-x0)) = 0
-		 * Substitute the point-slope formula for y into F(x,y) and rearrange to put in
-		 * the form of the quadratic formula: ax^2 + bx + c = 0
+		 * Substitute the point-slope formula for y into F(x,y) and rearrange
+		 * to put in the form of the quadratic formula: ax^2 + bx + c = 0
 		 * double m = sin(track->getPhi()) / cos(track->getPhi());
 		 */
 		double m = sin(track->getPhi()) / cos(track->getPhi());
@@ -786,7 +866,7 @@ int Circle::intersection(Track* track, Point* points) const {
 /**
  * Finds the intersection points (0, 1, or 2) of a plane with a circle
  * @param plane the plane of interest
- * @param points an array of two points where the intersection points are stored
+ * @param points an array of two points where intersection points are stored
  * @return the number of intersection points (0, 1 or 2 for a circle)
  */
 int Circle::intersection(Plane* plane, Point* points) const {

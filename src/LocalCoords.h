@@ -15,10 +15,14 @@
 #include "Point.h"
 #include "Universe.h"
 
+
+/* Type represents whether a localcoords is in a simple
+ * universe or lattice */
 enum coordType {
 	UNIV,
 	LAT
 };
+
 
 class LocalCoords {
 private:
@@ -43,8 +47,8 @@ public:
     double getX() const;
     double getY() const;
     Point* getPoint();
-    LocalCoords *getNext() const;
-    LocalCoords *getPrev() const;
+    LocalCoords* getNext() const;
+    LocalCoords* getPrev() const;
     void setType(coordType type);
     void setUniverse(int universe);
     void setCell(int cell);

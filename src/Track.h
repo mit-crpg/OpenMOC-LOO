@@ -16,6 +16,7 @@
 #include "Point.h"
 #include "log.h"
 
+/* Represent a segment along a given track */
 struct segment {
 	double _length;
 	int _region_id;
@@ -57,7 +58,5 @@ public:
 	void clearSegments();
 	std::string toString();
 };
-
-
 
 #endif /* TRACK_H_ */

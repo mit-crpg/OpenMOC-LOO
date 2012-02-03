@@ -13,11 +13,12 @@
 /**
  * TrackGenerator constructor
  * @param geom a pointer to a geometry object
+ * @param plotter a pointer to a plotting object
  * @param num_azim number of azimuthal angles
  * @param spacing track spacing
  */
-TrackGenerator::TrackGenerator(Geometry* geom, Plotting* plotter, const int num_azim,
-								const double spacing) {
+TrackGenerator::TrackGenerator(Geometry* geom, Plotting* plotter,
+		const int num_azim, const double spacing) {
 
 	_geom = geom;
 	_plotter = plotter;
@@ -32,8 +33,8 @@ TrackGenerator::TrackGenerator(Geometry* geom, Plotting* plotter, const int num_
 		_tracks = new Track*[_num_azim];
 	}
 	catch (std::exception &e) {
-		log_printf(ERROR, "Unable to allocate memory for TrackGenerator. Backtrace:"
-				"\n%s", e.what());
+		log_printf(ERROR, "Unable to allocate memory for TrackGenerator. "
+				"Backtrace:\n%s", e.what());
 	}
 }
 
@@ -70,7 +71,7 @@ int TrackGenerator::getNumAzim() const {
 
 
 /**
- * Return the number of tracks array
+ * Return the number of tracks array indexed by azimuthal angle
  * @return the number of tracks
  */
 int *TrackGenerator::getNumTracks() const {
@@ -97,9 +98,10 @@ Track **TrackGenerator::getTracks() const {
 
 
 /**
- * Computes the effective angles and track spacings. Computes the number of tracks for each
- * azimuthal angle, allocates memory for all tracks at each angle and sets each track's
- * starting and ending points, azimuthal weight, and azimuthal angle.
+ * Computes the effective angles and track spacings. Computes the number of
+ * tracks for each azimuthal angle, allocates memory for all tracks at each
+ * angle and sets each track's starting and ending points, azimuthal weight,
+ * and azimuthal angle
  */
 void TrackGenerator::generateTracks() {
 
@@ -113,8 +115,8 @@ void TrackGenerator::generateTracks() {
 	try {
 		log_printf(NORMAL, "Computing azimuthal angles and track spacings...");
 
-		/* Each element in following lists corresponds to a track angle in phi_eff */
-		/* Track spacing along x-axis, y-axis, and perpendicular to each track */
+		/* Each element in arrays corresponds to a track angle in phi_eff */
+		/* Track spacing along x,y-axes, and perpendicular to each track */
 		double* dx_eff = new double[_num_azim];
 		double* dy_eff = new double[_num_azim];
 		double* d_eff = new double[_num_azim];
@@ -131,17 +133,24 @@ void TrackGenerator::generateTracks() {
 		/* Determine azimuthal angles and track spacing */
 		for (int i = 0; i < _num_azim; i++) {
 
-			double phi = 2.0 * M_PI / iazim * (0.5 + i); 				/* desired angle */
-			_num_x[i] = (int) (fabs(width / _spacing * sin(phi))) + 1; 		/* num intersections with y-axis */
-			_num_y[i] = (int) (fabs(height / _spacing * cos(phi))) + 1; 	/* num intersections with x-axis */
-			_num_tracks[i] = _num_x[i] + _num_y[i]; 							/* total num of tracks */
-			phi_eff[i] = atan((height * _num_x[i]) / (width * _num_y[i])); 		/* effective angle */
+			/* desired angle */
+			double phi = 2.0 * M_PI / iazim * (0.5 + i);
 
-			/* fix angles in range(pi/2, pi) due to atan function return values */
+			/* num intersections with x,y-axes */
+			_num_x[i] = (int) (fabs(width / _spacing * sin(phi))) + 1;
+			_num_y[i] = (int) (fabs(height / _spacing * cos(phi))) + 1;
+
+			/* total num of tracks */
+			_num_tracks[i] = _num_x[i] + _num_y[i];
+
+			/* effective/actual angle (not the angle we desire, but close */
+			phi_eff[i] = atan((height * _num_x[i]) / (width * _num_y[i]));
+
+			/* fix angles in range(pi/2, pi) */
 			if (phi > M_PI / 2)
 				phi_eff[i] = M_PI - phi_eff[i];
 
-			/* Effective track spacing */
+			/* Effective track spacing (not spacing we desire, but close */
 			dx_eff[i] = (width / _num_x[i]);
 			dy_eff[i] = (height / _num_y[i]);
 			d_eff[i] = (dx_eff[i] * sin(phi_eff[i]));
@@ -181,11 +190,13 @@ void TrackGenerator::generateTracks() {
 
 				/* If track points to the upper right */
 				if (sin(phi_eff[i]) > 0 && cos(phi_eff[i]) > 0)
-					_tracks[i][_num_x[i]+j].getStart()->setCoords(0, dy_eff[i] * (0.5 + j));
+					_tracks[i][_num_x[i]+j].getStart()->setCoords(0,
+													dy_eff[i] * (0.5 + j));
 
 				/* If track points to the upper left */
 				else if (sin(phi_eff[i]) > 0 && cos(phi_eff[i]) < 0)
-					_tracks[i][_num_x[i]+j].getStart()->setCoords(width, dy_eff[i] * (0.5 + j));
+					_tracks[i][_num_x[i]+j].getStart()->setCoords(width,
+														dy_eff[i] * (0.5 + j));
 			}
 
 			/* Compute the exit points for each track */
@@ -202,7 +213,7 @@ void TrackGenerator::generateTracks() {
 			}
 		}
 
-		/* Recalibrate track starting and end points to geometry global origin */
+		/* Recalibrate track start and end points to geometry global origin */
 		//FIXME: This could be more efficiently done when start/end points are set
 		for (int i = 0; i < _num_azim; i++) {
 			for (int j = 0; j < _num_tracks[i]; j++) {
@@ -222,8 +233,8 @@ void TrackGenerator::generateTracks() {
 	}
 
 	catch (std::exception &e) {
-		log_printf(ERROR, "Unable to allocate memory needed to generate tracks. "
-				"Backtrace:\n%s", e.what());
+		log_printf(ERROR, "Unable to allocate memory needed to generate tracks"
+				".Backtrace:\n%s", e.what());
 	}
 
 }
@@ -240,8 +251,8 @@ void TrackGenerator::generateTracks() {
  * @param width the width of the geometry
  * @param height the height of the geometry
  */
-void TrackGenerator::computeEndPoint(Point* start, Point* end,  const double phi,
-		const double width, const double height) {
+void TrackGenerator::computeEndPoint(Point* start, Point* end,
+		const double phi, const double width, const double height) {
 
 	double m = sin(phi) / cos(phi); 		/* slope */
 	double yin = start->getY(); 			/* y-coord */
@@ -256,7 +267,7 @@ void TrackGenerator::computeEndPoint(Point* start, Point* end,  const double phi
 		points[2].setCoords(xin - yin / m, 0);
 		points[3].setCoords(xin - (yin - height) / m, height);
 
-		// For each of the possible intersection points
+		/* For each of the possible intersection points */
 		for (int i = 0; i < 4; i++) {
 			/* neglect the trivial point (xin, yin) */
 			if (points[i].getX() == xin && points[i].getY() == yin) { }
@@ -273,8 +284,9 @@ void TrackGenerator::computeEndPoint(Point* start, Point* end,  const double phi
 	}
 
 	catch (std::exception &e) {
-		log_printf(ERROR, "Unable to allocate memory for intersection points in "
-				"computeEndPoint method of TrackGenerator. Backtrace:\n%s", e.what());
+		log_printf(ERROR, "Unable to allocate memory for intersection points "
+				"in computeEndPoint method of TrackGenerator. Backtrace:\n%s",
+				e.what());
 	}
 
 }
@@ -393,17 +405,19 @@ void TrackGenerator::makeReflective() {
 	return;
 }
 
+
+/**
+ * Generate segments for each track
+ */
 void TrackGenerator::segmentize() {
 
 	log_printf(NORMAL, "Segmenting tracks...");
 
+	/* Loop over all tracks */
 	for (int i = 0; i < _num_azim; i++) {
-		for (int j = 0; j < _num_tracks[i]; j++){
+		for (int j = 0; j < _num_tracks[i]; j++)
 			_geom->segmentize(&_tracks[i][j]);
-		}
 	}
-
-	log_printf(NORMAL, "Done segmenting...");
 
 	return;
 }
