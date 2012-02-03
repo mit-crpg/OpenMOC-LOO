@@ -3,8 +3,10 @@ obj
 Makefile
 *~
 Configfile.local
-.cproject
 ./Debug
 *.d
 *.o
 *.tiff
+*.out
+.cproject
+.project
