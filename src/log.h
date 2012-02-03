@@ -18,13 +18,13 @@
 #include <string.h>
 
 typedef enum logLevels {
-	NORMAL,
+	DEBUG,
 	INFO,
+	NORMAL,
 	WARNING,
 	CRITICAL,
-	ERROR,
-	DEBUG,
-	RESULT
+	RESULT,
+	ERROR
 } logLevel;
 
 void log_setlevel(logLevel newlevel);

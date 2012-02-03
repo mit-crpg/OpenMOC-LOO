@@ -64,5 +64,5 @@ int main(int argc, const char **argv) {
 	track_generator.segmentize();
 	plotter.plotSegments(&track_generator);
 
-	log_printf(INFO, "Program complete");
+	log_printf(NORMAL, "Program complete");
 }
