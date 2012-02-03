@@ -82,12 +82,12 @@ void Plotting::plotSegments(TrackGenerator* track_generator){
 			start_x = tracks[i][j].getStart()->getX();
 			start_y = tracks[i][j].getStart()->getY();
 			num_segments = tracks[i][j].getNumSegments();
-			log_printf(DEBUG, "Now printing segments for track i: %d, j: %d", i, j);
+//			log_printf(DEBUG, "Now printing segments for track i: %d, j: %d", i, j);
 			for (int k=0; k < num_segments; k++){
 				 end_x = start_x + cos_phi*tracks[i][j].getSegment(k)->_length;
 				 end_y = start_y + sin_phi*tracks[i][j].getSegment(k)->_length;
-				 log_printf(DEBUG, "start_x: %f, start_y: %f, end_x: %f, end_y: %f, region: %d",
-						 start_x, start_y, end_x, end_y, tracks[i][j].getSegment(k)->_region_id);
+//				 log_printf(DEBUG, "start_x: %f, start_y: %f, end_x: %f, end_y: %f, region: %d",
+//						 start_x, start_y, end_x, end_y, tracks[i][j].getSegment(k)->_region_id);
 //				 log_printf(DEBUG, "start_x: %f, start_y: %f, end_x: %f, end_y: %f, region: %d",
 //				 						 start_x*_x_pixel, start_y*_y_pixel, end_x*_x_pixel, end_y*_y_pixel,
 //				 						 tracks[i][j].getSegment(k)->_region_id);

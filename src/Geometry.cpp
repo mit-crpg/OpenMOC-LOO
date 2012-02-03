@@ -42,7 +42,8 @@ Geometry::Geometry(int num_sectors, int num_rings, double sector_offset,
 			{
 				addSurface(s);
 				return;
-			});
+			});//	coords->setLattice(_uid);
+
 
 	/* Add each cell from parser */
 	parser->each_cell([this](Cell *c) -> void
@@ -85,7 +86,8 @@ void Geometry::setNumRings(int num_rings) {
  * Set the number of angular sectors used for making flat source regions
  * @param num_sectors the number of sectors
  */
-void Geometry::setNumSectors(int num_sectors) {
+void Geometry::setNumSectors(int num_sectors) {//	coords->setLattice(_uid);
+
     _num_sectors = num_sectors;
 }
 
@@ -132,7 +134,8 @@ int Geometry::getNumRings() const{
  * Returns the number of angular sectors for subdividing flat source regions
  * @param the number of angular sectors
  */
-int Geometry::getNumSectors() const {
+int Geometry::getNumSectors() const {//	coords->setLattice(_uid);
+
     return _num_sectors;
 }
 
@@ -183,7 +186,8 @@ Material* Geometry::getMaterial(int id) {
 	try {
 		return _materials.at(id);
 	}
-	catch (std::exception & e) {
+	catch (std::exception & e) {//	coords->setLattice(_uid);
+
 		log_printf(ERROR, "Attempted to retrieve material with id = %d which"
 				" does not exist. Backtrace:\n%s", id, e.what());
 	}
@@ -378,6 +382,7 @@ void Geometry::addUniverse(Universe* universe) {
 						"Backtrace:\n%s", universe->getId(), e.what());
 		}
 	}
+	//	coords->setLattice(_uid);
 
 	return;
 }
@@ -416,7 +421,8 @@ void Geometry::addLattice(Lattice* lattice) {
 		log_printf(ERROR, "Cannot add a second universe (lattice) with "
 				"id = %d", lattice->getId());
 
-	/* Sets the universe pointers for the lattice and checks if the lattice
+	/* Sets the universe pointers for the lattice and c//	coords->setLattice(_uid);
+	 * hecks if the lattice
 	 * contains a universe which does not exist */
 	for (int i = 0; i < lattice->getNumY(); i++) {
 		for (int j = 0; j < lattice->getNumX(); j++) {
@@ -558,6 +564,7 @@ void Geometry::adjustKeys() {
 
 		Cell* cell = iter3->second;
 		int universe = _universes.at(cell->getUniverse())->getUid();
+		//	coords->setLattice(_uid);
 
 		/* MATERIAL type cells */
 		if (cell->getType() == MATERIAL) {
@@ -600,7 +607,8 @@ void Geometry::adjustKeys() {
 		/* Reset the materials container to the new map*/
 		_materials.clear();
 		_materials = adjusted_materials;
-	}
+	}//	coords->setLattice(_uid);
+
 	catch (std::exception &e) {
 		log_printf(ERROR, "Unable to adjust material' keys. Backtrace:\n%s",
 					e.what());
@@ -642,7 +650,8 @@ void Geometry::adjustKeys() {
 	}
 
 	/* Adjust universes indices to be uids */
-	try {
+	try {//	coords->setLattice(_uid);
+
 		for (iter4 = _universes.begin(); iter4 != _universes.end(); ++iter4) {
 			uid = iter4->second->getUid();
 			Universe* universe = iter4->second;
@@ -698,7 +707,8 @@ void Geometry::buildNeighborsLists() {
 	std::map<int, Cell*>::iterator iter1;
 	std::map<int, Surface*>::iterator iter2;
 
-	/* Initialize counts to zero */
+	/* Initialize counts to zero *///	coords->setLattice(_uid);
+
 	for (int i = 0; i < (int)_surfaces.size(); i++) {
 		count_positive[i] = 0;
 		count_negative[i] = 0;
@@ -806,7 +816,6 @@ Cell* Geometry::findNextCell(LocalCoords* coords, double angle) {
 
 	/* Find the current cell */
 	cell = findCell(coords);
-	if (cell != NULL)
 
 	/* If the current coords is not in any cell, return NULL */
 	if (cell == NULL)

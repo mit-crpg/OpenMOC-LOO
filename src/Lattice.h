@@ -29,21 +29,22 @@ public:
 #ifdef USE_LATTICE_ORIGIN
 		const double origin_x, const double origin_y,
 #endif
-		const double width_x, const double width_y,
-		int universes_count, int *universes);
+	const double width_x, const double width_y,
+	int universes_count, int *universes);
 	virtual ~Lattice();
 	void setUniversePointer(Universe* universe);
     int getNumX() const;
     int getNumY() const;
     Point* getOrigin();
-    std::vector< std::vector< std::pair<int, Universe*> > > getUniverses() const;
+    std::vector< std::vector< std::pair<int, Universe*>>> getUniverses() const;
     Universe* getUniverse(int lattice_x, int lattice_y) const;
     double getWidthX() const;
     double getWidthY() const;
     void adjustKeys();
     bool withinBounds(Point* point);
     Cell* findCell(LocalCoords* coords, std::map<int, Universe*> universes);
-    Cell* findNextLatticeCell(LocalCoords* coords, double angle, std::map<int, Universe*> universes);
+    Cell* findNextLatticeCell(LocalCoords* coords, double angle,
+    							std::map<int, Universe*> universes);
     std::string toString();
 };
 #endif /* LATTICE_H_ */
