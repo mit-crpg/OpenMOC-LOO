@@ -417,6 +417,6 @@ int CellBasic::getNumFSRs() {
 }
 
 int CellFill::getNumFSRs() {
-	Universe *univ = _universes.at(_universe_fill);
+	Universe *univ = getUniverseFill();
 	return univ->computeFSRMaps();
 }
