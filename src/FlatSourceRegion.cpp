@@ -62,7 +62,7 @@ double FlatSourceRegion::getVolume() const {
  * Returns an array of the multi energy group fluxes tallied in this region
  * @return a flux array
  */
-double FlatSourceRegion::getFlux() const {
+double* FlatSourceRegion::getFlux() {
     return _flux;
 }
 
@@ -72,7 +72,7 @@ double FlatSourceRegion::getFlux() const {
  * during the previous iteration in the solver
  * @return a flux array
  */
-double FlatSourceRegion::getOldFlux() const {
+double* FlatSourceRegion::getOldFlux() {
     return _old_flux;
 }
 
@@ -82,7 +82,7 @@ double FlatSourceRegion::getOldFlux() const {
  * computed by the solver
  * @return the old source array
  */
-double FlatSourceRegion::getSource() const{
+double* FlatSourceRegion::getSource() {
     return _source;
 }
 
@@ -92,7 +92,7 @@ double FlatSourceRegion::getSource() const{
  * the previous iteration computed by the solver
  * @return the old source array
  */
-double FlatSourceRegion::getOldSource() const {
+double* FlatSourceRegion::getOldSource() {
     return _old_source;
 }
 
