@@ -193,3 +193,20 @@ std::string Universe::toString() {
 
 	return string.str();
 }
+
+/*
+ * Compute the FSR Maps for this universe
+ */
+int Universe::computeFSRMaps() {
+	/* initialize a counter count */
+	int count = 0;
+    
+	/* loop over cells in the universe to set the map and update count */
+	for (int i = 0; i < (int)_cells.size(); i++) {
+		Cell *c = _cells.at(i);
+		_regionMap.insert(std::pair<int, int>(c->getId(), count));
+		count += c->getNumFSRs();
+	}
+
+	return count;
+}

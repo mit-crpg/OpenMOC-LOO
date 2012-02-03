@@ -412,4 +412,11 @@ std::string CellFill::toString() {
 	return string.str();
 }
 
+int CellBasic::getNumFSRs() {
+	return 1;
+}
 
+int CellFill::getNumFSRs() {
+	Universe *univ = _universes.at(_universe_fill);
+	return univ->computeFSRMaps();
+}

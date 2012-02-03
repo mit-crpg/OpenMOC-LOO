@@ -64,6 +64,8 @@ public:
 	bool cellContains(LocalCoords* coords);
 	double minSurfaceDist(Point* point, double angle, Point* min_intersection);
 	virtual std::string toString() =0;
+
+	virtual int getNumFSRs() =0;
 };
 
 
@@ -81,6 +83,7 @@ public:
 	void setMaterial(int material);
 	void adjustKeys(int universe, int material);
 	std::string toString();
+	int getNumFSRs();
 };
 
 
@@ -102,6 +105,7 @@ public:
 	void setUniverseFillPointer(Universe* universe_fill);
 	void adjustKeys(int universe, int universe_fill);
 	std::string toString();
+	int getNumFSRs();
 };
 
 #endif /* CELL_H_ */
