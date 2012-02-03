@@ -7,5 +7,4 @@ Configfile.local
 *.o
 *.tiff
 *.out
-.cproject
 .project
