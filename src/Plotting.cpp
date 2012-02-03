@@ -93,8 +93,6 @@ void Plotting::plotSegments(TrackGenerator* track_generator){
 
 	Magick::Pixels view(image_segments);
 
-	log_printf(NORMAL, "coloring pixels...");
-
 	for (int i=0;i<_bit_length_x; i++){
 		for (int j = 0; j < _bit_length_y; j++){
 			switch (_pix_map_segments[i * _bit_length_x + j]){
@@ -158,8 +156,6 @@ void Plotting::plotTracksTiff(TrackGenerator* track_generator) {
 	image_tracks.type(Magick::TrueColorType);
 
 	Magick::Pixels view(image_tracks);
-
-	log_printf(NORMAL, "coloring pixels...");
 
 	for (int i=0;i<_bit_length_x; i++){
 		for (int j = 0; j < _bit_length_y; j++){
