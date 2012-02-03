@@ -22,16 +22,22 @@ class Plotting {
 private:
 	int _bit_length_x;
 	int _bit_length_y;
-	int _x_pixel;
-	int _y_pixel;
+	double _x_pixel;
+	double _y_pixel;
+	int* _pix_map_tracks;
+	int* _pix_map_segments;
 	Geometry* _geom;
 	std::list<Magick::Drawable> _draw_lists[7];
 public:
-	Plotting(Geometry* geom);
+	Plotting(Geometry* geom, int bitDim);
 	virtual ~Plotting();
 	void plotTracksTiff(TrackGenerator* track_generator);
 	// void addTrackSegments(Track* track);
 	void plotSegments(TrackGenerator* track_generator);
+	int sgn (long a);
+	void LineFct(int a, int b, int c, int d, int col);
+	void SegFct(int a, int b, int c, int d, int col);
+
 };
 
 

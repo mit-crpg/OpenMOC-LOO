@@ -34,6 +34,7 @@ Options::Options(int argc, const char **argv) {
 	_material_file = _relative_path + "xml-sample/5/material.xml";    /* Default material input file */
 	_track_spacing = 0.05;					 /* Default track spacing */
 	_num_azim = 128;					 /* Default number of azimuthal angles */
+	_bit_dimension = 1000;					 /* y dimension of tracks and segments plots */
 	_num_sectors = 0;					 /* Default number of sectors */
 	_num_rings = 0;						 /* Default number of rings */
 	_sector_offset = 0;					 /* Default sector offset */
@@ -52,6 +53,8 @@ Options::Options(int argc, const char **argv) {
 				_track_spacing = atof(argv[i]);
 			else if (LAST("--numazimuthal") || LAST("-na"))
 				_num_azim = atoi(argv[i]);
+			else if (LAST("--bitdimension") || LAST("-bd"))
+							_bit_dimension = atoi(argv[i]);
 			else if (LAST("--numrings") || LAST("-nr"))
 				_num_rings = atoi(argv[i]);
 			else if (LAST("--numsectors") || LAST("-ns"))
@@ -108,6 +111,16 @@ bool Options::dumpGeometry() const {
 double Options::getNumAzim() const {
     return _num_azim;
 }
+
+/**
+ * Returns the y dimension of plots. By default this will return 1000 bits
+ * (or pixels) if not set at runtime from the console
+ * @return the y dimension of plots.
+ */
+int Options::getBitDimension() const{
+	return _bit_dimension;
+}
+
 
 
 /**

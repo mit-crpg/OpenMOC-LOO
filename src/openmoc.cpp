@@ -42,7 +42,7 @@ int main(int argc, const char **argv) {
 			  opts.getSectorOffset(), &parser);
 
 	/* Plot geometry */
-	Plotting plotter(&geometry);
+	Plotting plotter(&geometry, opts.getBitDimension());
 
 //	/* Print out geometry to console if requested at runtime*/
 	if (opts.dumpGeometry())
