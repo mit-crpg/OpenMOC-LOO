@@ -16,7 +16,6 @@
 #include "log.h"
 #include "Options.h"
 #include "LocalCoords.h"
-#include "Plotting.h"
 #include "Geometry.h"
 #include "Surface.h"
 
@@ -41,9 +40,6 @@ int main(int argc, const char **argv) {
 	Geometry geometry(opts.getNumSectors(), opts.getNumRings(),
 			  opts.getSectorOffset(), &parser);
 
-	/* Plot geometry */
-	Plotting plotter(&geometry, opts.getBitDimension());
-
 //	/* Print out geometry to console if requested at runtime*/
 	if (opts.dumpGeometry())
 		geometry.printString();
@@ -55,14 +51,12 @@ int main(int argc, const char **argv) {
 //	geometry.buildNeighborsLists();
 
 	/* Initialize the trackgenerator */
-	TrackGenerator track_generator(&geometry, &plotter, opts.getNumAzim(),
-				       opts.getTrackSpacing());
+	TrackGenerator track_generator(&geometry, opts.getNumAzim(),
+				       opts.getTrackSpacing(), opts.getBitDimension());
 
 	track_generator.generateTracks();
-	plotter.plotTracksTiff(&track_generator);
 	track_generator.makeReflective();
 	track_generator.segmentize();
-	plotter.plotSegments(&track_generator);
 
 	log_printf(NORMAL, "Program complete");
 }

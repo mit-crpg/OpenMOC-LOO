@@ -63,7 +63,7 @@ double FlatSourceRegion::getVolume() const {
  * @return a flux array
  */
 double FlatSourceRegion::getFlux() const {
-    return _flux;
+    return *_flux;
 }
 
 
@@ -73,7 +73,7 @@ double FlatSourceRegion::getFlux() const {
  * @return a flux array
  */
 double FlatSourceRegion::getOldFlux() const {
-    return _old_flux;
+    return *_old_flux;
 }
 
 
@@ -83,7 +83,7 @@ double FlatSourceRegion::getOldFlux() const {
  * @return the old source array
  */
 double FlatSourceRegion::getSource() const{
-    return _source;
+    return *_source;
 }
 
 
@@ -93,7 +93,7 @@ double FlatSourceRegion::getSource() const{
  * @return the old source array
  */
 double FlatSourceRegion::getOldSource() const {
-    return _old_source;
+    return *_old_source;
 }
 
 

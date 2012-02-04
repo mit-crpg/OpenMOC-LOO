@@ -15,7 +15,6 @@
 #include "Point.h"
 #include "Track.h"
 #include "Geometry.h"
-#include "Plotting.h"
 #include "Magick++.h"
 
 class Plotting;
@@ -28,12 +27,19 @@ private:
 	int* _num_x;			/* number of tracks starting on x-axis */
 	int* _num_y;			/* number of tracks starting on y-axis */
 	double* _azim_weights;	/* azimuthal weights */
+	double _width;
+	double _height;
 	Track** _tracks;
 	Geometry* _geom;
-	Plotting* _plotter;
+	int _bit_length_x;
+	int _bit_length_y;
+	double _x_pixel;
+	double _y_pixel;
+	int* _pix_map_tracks;
+	int* _pix_map_segments;
 public:
-	TrackGenerator(Geometry* geom, Plotting* plotter, const int num_azim,
-			const double spacing);
+	TrackGenerator(Geometry* geom, const int num_azim,
+			const double spacing, const int bitDim);
 	virtual ~TrackGenerator();
     double *getAzimWeights() const;
     int getNumAzim() const;
@@ -46,6 +52,11 @@ public:
 	void makeReflective();
 	void segmentize();
 	void plotTracksTiff();
+	void plotSegmentsBitMap(Track* track, double sin_phi, double cos_phi);
+	void plotSegmentsTiff();
+	int sgn (long a);
+	void LineFct(int a, int b, int c, int d);
+	void SegFct(int a, int b, int c, int d, int col);
 };
 
 #endif /* TRACKGENERATOR_H_ */

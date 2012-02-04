@@ -17,13 +17,26 @@
  * @param num_azim number of azimuthal angles
  * @param spacing track spacing
  */
-TrackGenerator::TrackGenerator(Geometry* geom, Plotting* plotter,
-		const int num_azim, const double spacing) {
+TrackGenerator::TrackGenerator(Geometry* geom,
+		const int num_azim, const double spacing, const int bitDim) {
 
 	_geom = geom;
-	_plotter = plotter;
 	_num_azim = num_azim/2.0;
 	_spacing = spacing;
+
+	/* get width and height */
+	_width = _geom->getWidth();
+	_height = _geom->getHeight();
+	double ratio = _width/_height;
+
+	_bit_length_x = int (bitDim*ratio) + 1;
+	_bit_length_y = bitDim + 1;
+
+	_pix_map_tracks = new int[_bit_length_x*_bit_length_y];
+	_pix_map_segments = new int[_bit_length_x*_bit_length_y];
+
+	_x_pixel = double(_bit_length_x)/_width;
+	_y_pixel = double(_bit_length_y)/_height;
 
 	try {
 		_num_tracks = new int[_num_azim];
@@ -45,6 +58,8 @@ TrackGenerator::TrackGenerator(Geometry* geom, Plotting* plotter,
 TrackGenerator::~TrackGenerator() {
 	delete [] _num_tracks;
 	delete [] _azim_weights;
+	delete _pix_map_segments;
+	delete _pix_map_tracks;
 
 	for (int i = 0; i < _num_azim; i++)
 		delete [] _tracks[i];
@@ -227,8 +242,15 @@ void TrackGenerator::generateTracks() {
 				double new_y1 = y1 - _geom->getHeight()/2.0;
 				double phi = _tracks[i][j].getPhi();
 				_tracks[i][j].setValues(new_x0, new_y0, new_x1, new_y1, phi);
+				LineFct( new_x0*_x_pixel + _bit_length_x/2,
+						-new_y0*_y_pixel + _bit_length_y/2,
+						new_x1*_x_pixel + _bit_length_x/2,
+						-new_y1*_y_pixel + _bit_length_y/2);
 			}
 		}
+
+		plotTracksTiff();
+
 		return;
 	}
 
@@ -413,15 +435,225 @@ void TrackGenerator::segmentize() {
 
 	log_printf(NORMAL, "Segmenting tracks...");
 
+	double phi, sin_phi, cos_phi;
+
 	/* Loop over all tracks */
 	for (int i = 0; i < _num_azim; i++) {
-		for (int j = 0; j < _num_tracks[i]; j++)
+		phi = _tracks[i][0].getPhi();
+		sin_phi = sin(phi);
+		cos_phi = cos(phi);
+		for (int j = 0; j < _num_tracks[i]; j++){
 			_geom->segmentize(&_tracks[i][j]);
+			plotSegmentsBitMap(&_tracks[i][j], sin_phi, cos_phi);
+		}
 	}
+
+	plotSegmentsTiff();
 
 	return;
 }
 
 
+/*
+ * plot tracks in tiff file using fast drawing method
+ */
+void TrackGenerator::plotTracksTiff() {
+	log_printf(NORMAL, "Writing tracks bitmap to tiff...");
 
+	/* write _pix_map to tiff file  */
+	Magick::Image image_tracks(Magick::Geometry(_bit_length_x,_bit_length_y), "white");
+	image_tracks.type(Magick::TrueColorType);
+	Magick::Pixels view(image_tracks);
+
+	for (int i=0;i<_bit_length_x; i++){
+		for (int j = 0; j < _bit_length_y; j++){
+			if (_pix_map_tracks[i * _bit_length_x + j] != 0){
+				*(view.get(i,_bit_length_y - 1 - j,1,1)) = Magick::Color("black");
+			}
+		}
+	}
+
+	view.sync();
+	image_tracks.write("tracks.tiff");
+}
+
+
+/* plot segments in bitmap on the fly */
+void TrackGenerator::plotSegmentsBitMap(Track* track, double sin_phi, double cos_phi){
+
+	double start_x, start_y, end_x, end_y;
+	int num_segments;
+
+	start_x = track->getStart()->getX();
+	start_y = track->getStart()->getY();
+	num_segments = track->getNumSegments();
+
+	for (int k=0; k < num_segments; k++){
+		end_x = start_x + cos_phi*track->getSegment(k)->_length;
+		end_y = start_y + sin_phi*track->getSegment(k)->_length;
+		SegFct(start_x*_x_pixel + _bit_length_x/2,
+				-start_y*_y_pixel + _bit_length_y/2,
+				end_x*_x_pixel + _bit_length_x/2,
+				-end_y*_y_pixel + _bit_length_y/2,
+				track->getSegment(k)->_region_id);
+
+		start_x = end_x;
+		start_y = end_y;
+	}
+}
+
+
+
+/* plot segments in tiff file */
+void TrackGenerator::plotSegmentsTiff(){
+	log_printf(NORMAL, "Writing segments bitmap to tiff...");
+
+	/* write _pix_map to tiff file  */
+	Magick::Image image_segments(Magick::Geometry(_bit_length_x,_bit_length_y), "white");
+
+	image_segments.type(Magick::TrueColorType);
+
+	Magick::Pixels view(image_segments);
+
+	for (int i=0;i<_bit_length_x; i++){
+		for (int j = 0; j < _bit_length_y; j++){
+			switch (_pix_map_segments[i * _bit_length_x + j]){
+			case 0:
+				break;
+			case 1:
+				*(view.get(i,_bit_length_y - 1 - j,1,1)) = Magick::Color("red");
+				break;
+			case 2:
+				*(view.get(i,_bit_length_y - 1 - j,1,1)) = Magick::Color("blue");
+				break;
+			case 3:
+				*(view.get(i,_bit_length_y - 1 - j,1,1)) = Magick::Color("green");
+				break;
+			case 4:
+				*(view.get(i,_bit_length_y - 1 - j,1,1)) = Magick::Color("magenta");
+				break;
+			case 5:
+				*(view.get(i,_bit_length_y - 1 - j,1,1)) = Magick::Color("orange");
+				break;
+			case 6:
+				*(view.get(i,_bit_length_y - 1 - j,1,1)) = Magick::Color("maroon");
+				break;
+			case 7:
+				*(view.get(i,_bit_length_y - 1 - j,1,1)) = Magick::Color("orchid");
+				break;
+			case 8:
+				*(view.get(i,_bit_length_y - 1 - j,1,1)) = Magick::Color("blue violet");
+				break;
+			case 9:
+				*(view.get(i,_bit_length_y - 1 - j,1,1)) = Magick::Color("crimson");
+				break;
+			case 10:
+				*(view.get(i,_bit_length_y - 1 - j,1,1)) = Magick::Color("salmon");
+				break;
+			case 11:
+				*(view.get(i,_bit_length_y - 1 - j,1,1)) = Magick::Color("gold");
+				break;
+			case 12:
+				*(view.get(i,_bit_length_y - 1 - j,1,1)) = Magick::Color("blue violet");
+				break;
+			case 13:
+				*(view.get(i,_bit_length_y - 1 - j,1,1)) = Magick::Color("orange red");
+				break;
+			case 14:
+				*(view.get(i,_bit_length_y - 1 - j,1,1)) = Magick::Color("spring green");
+				break;
+			case 15:
+				*(view.get(i,_bit_length_y - 1 - j,1,1)) = Magick::Color("pale green");
+				break;
+			}
+		}
+	}
+
+	view.sync();
+
+	image_segments.write("segments.tiff");
+}
+
+
+/* finds the sign of a value */
+int TrackGenerator::sgn (long a) {
+	if (a > 0) return +1;
+	else if (a < 0) return -1;
+	else return 0;
+}
+
+/*
+ * track drawing algorithm
+ * taken from http://www.cprogramming.com/tutorial/tut3.html
+*/
+void TrackGenerator::LineFct(int a, int b, int c, int d) {
+	long u,s,v,d1x,d1y,d2x,d2y,m,n;
+	int  i;
+	u   = c-a;
+	v   = d-b;
+	d1x = sgn(u);
+	d1y = sgn(v);
+	d2x = sgn(u);
+	d2y = 0;
+	m   = abs(u);
+	n   = abs(v);
+	if (m<=n) {
+		d2x = 0;
+		d2y = sgn(v);
+		m   = abs(v);
+	    n   = abs(u);
+	}
+	s = (int)(m / 2);
+	for (i=0;i<round(m);i++) {
+		_pix_map_tracks[a * _bit_length_x + b] = 1;
+		s += n;
+		if (s >= m) {
+			s -= m;
+			a += d1x;
+			b += d1y;
+		}
+		else {
+			a += d2x;
+			b += d2y;
+		}
+	}
+}
+
+/*
+ * segment drawing algorithm
+ * taken from http://www.cprogramming.com/tutorial/tut3.html
+ */
+void TrackGenerator::SegFct(int a, int b, int c, int d, int col) {
+	col = col % 15 + 1;
+	long u,s,v,d1x,d1y,d2x,d2y,m,n;
+	int  i;
+	u   = c-a;
+	v   = d-b;
+	d1x = sgn(u);
+	d1y = sgn(v);
+	d2x = sgn(u);
+	d2y = 0;
+	m   = abs(u);
+	n   = abs(v);
+	if (m<=n) {
+		d2x = 0;
+		d2y = sgn(v);
+		m   = abs(v);
+	    n   = abs(u);
+	}
+	s = (int)(m / 2);
+	for (i=0;i<round(m);i++) {
+		_pix_map_segments[a * _bit_length_x + b] = col;
+		s += n;
+		if (s >= m) {
+			s -= m;
+			a += d1x;
+			b += d1y;
+		}
+		else {
+			a += d2x;
+			b += d2y;
+		}
+	}
+}
 
