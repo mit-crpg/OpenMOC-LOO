@@ -30,10 +30,10 @@ public:
     int getCellId() const;
     int getMaterialId() const;
     double getVolume() const;
-    double getFlux() const;
-    double getOldFlux() const;
-    double getOldSource() const;
-    double getSource() const;
+    double* getFlux();
+    double* getOldFlux();
+    double* getOldSource();
+    double* getSource();
     void setId(int id);
     void setCellId(int cellId);
     void setMaterialId(int material_id);
