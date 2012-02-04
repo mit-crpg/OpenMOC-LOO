@@ -55,8 +55,7 @@ public:
 	void plotSegmentsBitMap(Track* track, double sin_phi, double cos_phi);
 	void plotSegmentsTiff();
 	int sgn (long a);
-	void LineFct(int a, int b, int c, int d);
-	void SegFct(int a, int b, int c, int d, int col);
+	void LineFct(int a, int b, int c, int d, int* pixMap, int col = 1);
 };
 
 #endif /* TRACKGENERATOR_H_ */

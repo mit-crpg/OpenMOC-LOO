@@ -245,7 +245,8 @@ void TrackGenerator::generateTracks() {
 				LineFct( new_x0*_x_pixel + _bit_length_x/2,
 						-new_y0*_y_pixel + _bit_length_y/2,
 						new_x1*_x_pixel + _bit_length_x/2,
-						-new_y1*_y_pixel + _bit_length_y/2);
+						-new_y1*_y_pixel + _bit_length_y/2,
+						_pix_map_tracks);
 			}
 		}
 
@@ -491,10 +492,11 @@ void TrackGenerator::plotSegmentsBitMap(Track* track, double sin_phi, double cos
 	for (int k=0; k < num_segments; k++){
 		end_x = start_x + cos_phi*track->getSegment(k)->_length;
 		end_y = start_y + sin_phi*track->getSegment(k)->_length;
-		SegFct(start_x*_x_pixel + _bit_length_x/2,
+		LineFct(start_x*_x_pixel + _bit_length_x/2,
 				-start_y*_y_pixel + _bit_length_y/2,
 				end_x*_x_pixel + _bit_length_x/2,
 				-end_y*_y_pixel + _bit_length_y/2,
+				_pix_map_segments,
 				track->getSegment(k)->_region_id);
 
 		start_x = end_x;
@@ -586,7 +588,7 @@ int TrackGenerator::sgn (long a) {
  * track drawing algorithm
  * taken from http://www.cprogramming.com/tutorial/tut3.html
 */
-void TrackGenerator::LineFct(int a, int b, int c, int d) {
+void TrackGenerator::LineFct(int a, int b, int c, int d, int* pixMap, int col) {
 	long u,s,v,d1x,d1y,d2x,d2y,m,n;
 	int  i;
 	u   = c-a;
@@ -605,45 +607,7 @@ void TrackGenerator::LineFct(int a, int b, int c, int d) {
 	}
 	s = (int)(m / 2);
 	for (i=0;i<round(m);i++) {
-		_pix_map_tracks[a * _bit_length_x + b] = 1;
-		s += n;
-		if (s >= m) {
-			s -= m;
-			a += d1x;
-			b += d1y;
-		}
-		else {
-			a += d2x;
-			b += d2y;
-		}
-	}
-}
-
-/*
- * segment drawing algorithm
- * taken from http://www.cprogramming.com/tutorial/tut3.html
- */
-void TrackGenerator::SegFct(int a, int b, int c, int d, int col) {
-	col = col % 15 + 1;
-	long u,s,v,d1x,d1y,d2x,d2y,m,n;
-	int  i;
-	u   = c-a;
-	v   = d-b;
-	d1x = sgn(u);
-	d1y = sgn(v);
-	d2x = sgn(u);
-	d2y = 0;
-	m   = abs(u);
-	n   = abs(v);
-	if (m<=n) {
-		d2x = 0;
-		d2y = sgn(v);
-		m   = abs(v);
-	    n   = abs(u);
-	}
-	s = (int)(m / 2);
-	for (i=0;i<round(m);i++) {
-		_pix_map_segments[a * _bit_length_x + b] = col;
+		pixMap[a * _bit_length_x + b] = col;
 		s += n;
 		if (s >= m) {
 			s -= m;
