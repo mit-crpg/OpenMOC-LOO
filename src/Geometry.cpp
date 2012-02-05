@@ -58,6 +58,12 @@ Geometry::Geometry(int num_sectors, int num_rings, double sector_offset,
 				addLattice(l);
 				return;
 			});
+
+#if 0
+	Universe *univ = _universes.at(0);
+	_num_FSRs = univ->computeFSRMaps();
+	log_printf(INFO, "num of FSR = %d\n", _num_FSRs);
+#endif
 }
 
 
@@ -1030,4 +1036,13 @@ bool Geometry::mapContainsKey(std::map<K, V> map, K key) {
 
 	/* If no exception is thrown, element does exist */
 	return true;
+}
+
+void Geometry::checkUniverse() {
+	std::map<int, Universe*>::iterator iter;
+
+	for (iter = _universes.begin(); iter != _universes.end(); ++iter) {
+		//log_printf(NORMAL, iter->second->toString().c_str());
+		std::cout << iter->second->toString() << std::endl;
+	}
 }
