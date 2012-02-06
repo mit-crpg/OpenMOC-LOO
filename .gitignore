@@ -10,3 +10,6 @@ Configfile.local
 *.out
 .cproject
 .project
+Doxyfile
+html/
+latex/
