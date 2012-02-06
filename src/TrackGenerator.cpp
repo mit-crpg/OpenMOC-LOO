@@ -34,6 +34,13 @@ TrackGenerator::TrackGenerator(Geometry* geom,
 	_pix_map_tracks = new int[_bit_length_x*_bit_length_y];
 	_pix_map_segments = new int[_bit_length_x*_bit_length_y];
 
+	for (int i=0;i<_bit_length_x; i++){
+		for (int j = 0; j < _bit_length_y; j++){
+			_pix_map_segments[i * _bit_length_x + j] = -1;
+		}
+	}
+
+
 	_x_pixel = double(_bit_length_x)/_width;
 	_y_pixel = double(_bit_length_y)/_height;
 
@@ -547,6 +554,7 @@ void TrackGenerator::plotSegmentsTiff(){
 		for (int j = 0; j < _bit_length_y; j++){
 			switch (_pix_map_segments[i * _bit_length_x + j]){
 			case 0:
+				*(view.get(i,j,1,1)) = Magick::Color("indigo");
 				break;
 			case 1:
 				*(view.get(i,j,1,1)) = Magick::Color("red");
