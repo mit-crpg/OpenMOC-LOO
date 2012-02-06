@@ -135,6 +135,7 @@ void TrackGenerator::generateTracks() {
 
 	try {
 		log_printf(NORMAL, "Computing azimuthal angles and track spacings...");
+		_timer_tracking.start();
 
 		/* Each element in arrays corresponds to a track angle in phi_eff */
 		/* Track spacing along x,y-axes, and perpendicular to each track */
@@ -263,7 +264,11 @@ void TrackGenerator::generateTracks() {
 			}
 		}
 
+		_timer_tracking.stop();
+
+		_timer_track_plotting.start();
 		plotTracksTiff();
+		_timer_track_plotting.stop();
 
 		return;
 	}
@@ -449,7 +454,7 @@ void TrackGenerator::makeReflective() {
 void TrackGenerator::segmentize() {
 
 	log_printf(NORMAL, "Segmenting tracks...");
-
+	_timer_segmentation.start();
 	double phi, sin_phi, cos_phi;
 
 	/* Loop over all tracks */
@@ -463,7 +468,11 @@ void TrackGenerator::segmentize() {
 		}
 	}
 
+	_timer_segmentation.stop();
+
+	_timer_segment_plotting.start();
 	plotSegmentsTiff();
+	_timer_segment_plotting.stop();
 
 	return;
 }
@@ -661,4 +670,11 @@ void TrackGenerator::LineFct(int a, int b, int c, int d, int* pixMap, int col) {
 		}
 	}
 }
+
+void TrackGenerator::printTrackingTimers(){
+	log_printf(NORMAL, "Time: Tracking: %f s, Segmenting: %f s, track plotting: %f s, segment plotting: %f s",
+			_timer_tracking.getTime(),_timer_segmentation.getTime(),
+			_timer_track_plotting.getTime(), _timer_segment_plotting.getTime());
+}
+
 
