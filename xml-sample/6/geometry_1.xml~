@@ -1,0 +1,94 @@
+<?xml version="1.0"?>
+
+<!-- lower half of hoogenboom-martin core adapted from OpenMC input specifications !-->
+
+<geometry>
+
+<!-- Surface definitions -->
+  <surface id="1" type="circle" coeffs="0. 0. 0.41" />
+  <surface id="2" type="circle" coeffs="0. 0. 0.475" />
+  <surface id="3" type="circle" coeffs="0. 0. 0.56" />
+  <surface id="4" type="circle" coeffs="0. 0. 0.62" />
+
+  <surface id="6" type="circle" coeffs="0. 0. 209.0" />
+
+  
+<!-- Cell definitions -->
+  <!-- All geometry on base universe -->
+  <cell id="1"  fill="200"    surfaces="-6" />
+
+  <!-- containing cell for fuel assembly -->
+  <cell id="2" universe="1" fill="100"   surfaces="" />
+ 
+ <!-- Fuel pin, cladding, cold water -->
+  <cell id="3" universe="2" material="1" surfaces="-1"   />
+  <cell id="4" universe="2" material="2" surfaces="1 -2" />
+  <cell id="5" universe="2" material="3" surfaces="2"    />
+
+  <!-- Instrumentation guide tube -->
+  <cell id="6" universe="3" material="3" surfaces="-3"   />
+  <cell id="7" universe="3" material="2" surfaces="3 -4" />
+  <cell id="8" universe="3" material="3" surfaces="4"    />
+
+  <!-- Water assembly -->
+  <cell id="9" universe="4" material="4" surfaces="" />
+
+
+
+
+<!-- Fuel Assembly (Lower Half) -->
+  <lattice id="100">
+    <type>rectangular</type>
+    <dimension>17 17</dimension>
+    <width>1.26 1.26</width>
+    <universes>
+      2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
+      2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
+      2 2 2 2 2 3 2 2 3 2 2 3 2 2 2 2 2
+      2 2 2 3 2 2 2 2 2 2 2 2 2 3 2 2 2
+      2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
+      2 2 3 2 2 3 2 2 3 2 2 3 2 2 3 2 2
+      2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
+      2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
+      2 2 3 2 2 3 2 2 3 2 2 3 2 2 3 2 2
+      2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
+      2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
+      2 2 3 2 2 3 2 2 3 2 2 3 2 2 3 2 2
+      2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
+      2 2 2 3 2 2 2 2 2 2 2 2 2 3 2 2 2
+      2 2 2 2 2 3 2 2 3 2 2 3 2 2 2 2 2
+      2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
+      2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
+    </universes>
+  </lattice>
+
+
+ <!-- Core Lattice (Lower Half) -->
+  <lattice id="200">
+    <type>rectangular</type>
+    <dimension>21 21</dimension>
+    <width>21.42 21.42</width>
+    <universes>
+      4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4
+      4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4
+      4 4 4 4 4 4 4 1 1 1 1 1 1 1 4 4 4 4 4 4 4
+      4 4 4 4 4 1 1 1 1 1 1 1 1 1 1 1 4 4 4 4 4
+      4 4 4 4 1 1 1 1 1 1 1 1 1 1 1 1 1 4 4 4 4
+      4 4 4 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 4 4 4
+      4 4 4 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 4 4 4
+      4 4 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 4 4
+      4 4 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 4 4
+      4 4 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 4 4
+      4 4 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 4 4
+      4 4 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 4 4
+      4 4 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 4 4
+      4 4 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 4 4
+      4 4 4 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 4 4 4
+      4 4 4 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 4 4 4
+      4 4 4 4 1 1 1 1 1 1 1 1 1 1 1 1 1 4 4 4 4
+      4 4 4 4 4 1 1 1 1 1 1 1 1 1 1 1 4 4 4 4 4
+      4 4 4 4 4 4 4 1 1 1 1 1 1 1 4 4 4 4 4 4 4
+      4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4
+      4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4
+    </universes>
+  </lattice>
