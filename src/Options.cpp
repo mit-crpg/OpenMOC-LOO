@@ -30,10 +30,10 @@ Options::Options(int argc, const char **argv) {
 	else
 		_relative_path = "";
 
-	_geometry_file = _relative_path + "xml-sample/5/geometry.xml"; 	 /* Default geometry input file */
-	_material_file = _relative_path + "xml-sample/5/material.xml";    /* Default material input file */
-	_track_spacing = 0.05;					 /* Default track spacing */
-	_num_azim = 128;					 /* Default number of azimuthal angles */
+	_geometry_file = _relative_path + "xml-sample/4/geometry.xml"; 	 /* Default geometry input file */
+	_material_file = _relative_path + "xml-sample/4/material.xml";    /* Default material input file */
+	_track_spacing = 0.1;					 /* Default track spacing */
+	_num_azim = 32;					 /* Default number of azimuthal angles */
 	_bit_dimension = 1000;					 /* y dimension of tracks and segments plots */
 	_num_sectors = 0;					 /* Default number of sectors */
 	_num_rings = 0;						 /* Default number of rings */
