@@ -63,6 +63,7 @@ int main(int argc, const char **argv) {
 	track_generator.generateTracks();
 	track_generator.makeReflective();
 	track_generator.segmentize();
+	track_generator.printTrackingTimers();
 
 	log_printf(NORMAL, "Program complete");
 }
