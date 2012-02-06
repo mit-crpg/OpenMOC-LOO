@@ -24,7 +24,6 @@ TrackGenerator::TrackGenerator(Geometry* geom,
 	_num_azim = num_azim/2.0;
 	_spacing = spacing;
 
-	/* get width and height */
 	_width = _geom->getWidth();
 	_height = _geom->getHeight();
 	double ratio = _width/_height;
@@ -242,6 +241,13 @@ void TrackGenerator::generateTracks() {
 				double new_y1 = y1 - _geom->getHeight()/2.0;
 				double phi = _tracks[i][j].getPhi();
 				_tracks[i][j].setValues(new_x0, new_y0, new_x1, new_y1, phi);
+
+				/*
+				 * Add line to _pix_map segments bitmap array.
+				 * Note conversion from geometric coordinate system to
+				 * bitmap coordinates.
+				 */
+
 				LineFct( new_x0*_x_pixel + _bit_length_x/2,
 						-new_y0*_y_pixel + _bit_length_y/2,
 						new_x1*_x_pixel + _bit_length_x/2,
@@ -430,7 +436,8 @@ void TrackGenerator::makeReflective() {
 
 
 /**
- * Generate segments for each track
+ * Generate segments for each track and plot segments
+ * in bitmap array.
  */
 void TrackGenerator::segmentize() {
 
@@ -456,42 +463,57 @@ void TrackGenerator::segmentize() {
 
 
 /*
- * plot tracks in tiff file using fast drawing method
+ * Plot tracks in tiff file using fast drawing method
  */
 void TrackGenerator::plotTracksTiff() {
 	log_printf(NORMAL, "Writing tracks bitmap to tiff...");
 
-	/* write _pix_map to tiff file  */
-	Magick::Image image_tracks(Magick::Geometry(_bit_length_x,_bit_length_y), "white");
+	/* Create Magick image and open pixels for viewing/changing  */
+	Magick::Image image_tracks(Magick::Geometry(_bit_length_x,_bit_length_y), "black");
 	image_tracks.type(Magick::TrueColorType);
 	Magick::Pixels view(image_tracks);
 
+	/* Convert _pix_map_tracks bitmap array to Magick bitmap pixel array. */
 	for (int i=0;i<_bit_length_x; i++){
 		for (int j = 0; j < _bit_length_y; j++){
-			if (_pix_map_tracks[i * _bit_length_x + j] != 0){
-				*(view.get(i,_bit_length_y - 1 - j,1,1)) = Magick::Color("black");
+			if (_pix_map_tracks[i * _bit_length_x + j] != 1){
+				*(view.get(i,j,1,1)) = Magick::Color("white");
 			}
 		}
 	}
 
+	/* Close pixel viewing/changing */
 	view.sync();
+
+	/* Write pixel bitmap to tiff file */
 	image_tracks.write("tracks.tiff");
 }
 
 
-/* plot segments in bitmap on the fly */
+/*
+ * Plots track segments in a _pix_map_segments bitmap array on the fly
+ */
 void TrackGenerator::plotSegmentsBitMap(Track* track, double sin_phi, double cos_phi){
 
+	/* Initialize variables */
 	double start_x, start_y, end_x, end_y;
 	int num_segments;
 
+	/* Set first segment start point and get the number of tracks*/
 	start_x = track->getStart()->getX();
 	start_y = track->getStart()->getY();
 	num_segments = track->getNumSegments();
 
+	/* loop over segments and write to _pix_map_segments bitmap array */
 	for (int k=0; k < num_segments; k++){
 		end_x = start_x + cos_phi*track->getSegment(k)->_length;
 		end_y = start_y + sin_phi*track->getSegment(k)->_length;
+
+		/*
+		 * Add line to _pix_map segments bitmap array.
+		 * Note conversion from geometric coordinate system to
+		 * bitmap coordinates.
+		 */
 		LineFct(start_x*_x_pixel + _bit_length_x/2,
 				-start_y*_y_pixel + _bit_length_y/2,
 				end_x*_x_pixel + _bit_length_x/2,
@@ -506,73 +528,79 @@ void TrackGenerator::plotSegmentsBitMap(Track* track, double sin_phi, double cos
 
 
 
-/* plot segments in tiff file */
+/*
+ * Plot segments in tiff file
+ */
 void TrackGenerator::plotSegmentsTiff(){
 	log_printf(NORMAL, "Writing segments bitmap to tiff...");
 
-	/* write _pix_map to tiff file  */
+	/* Create Magick image and open pixels for viewing/changing */
 	Magick::Image image_segments(Magick::Geometry(_bit_length_x,_bit_length_y), "white");
-
 	image_segments.type(Magick::TrueColorType);
-
 	Magick::Pixels view(image_segments);
 
+	/*
+	 * Convert _pix_map_segments bitmap array to Magick bitmap pixel
+	 * color array
+	 */
 	for (int i=0;i<_bit_length_x; i++){
 		for (int j = 0; j < _bit_length_y; j++){
 			switch (_pix_map_segments[i * _bit_length_x + j]){
 			case 0:
 				break;
 			case 1:
-				*(view.get(i,_bit_length_y - 1 - j,1,1)) = Magick::Color("red");
+				*(view.get(i,j,1,1)) = Magick::Color("red");
 				break;
 			case 2:
-				*(view.get(i,_bit_length_y - 1 - j,1,1)) = Magick::Color("blue");
+				*(view.get(i,j,1,1)) = Magick::Color("blue");
 				break;
 			case 3:
-				*(view.get(i,_bit_length_y - 1 - j,1,1)) = Magick::Color("green");
+				*(view.get(i,j,1,1)) = Magick::Color("green");
 				break;
 			case 4:
-				*(view.get(i,_bit_length_y - 1 - j,1,1)) = Magick::Color("magenta");
+				*(view.get(i,j,1,1)) = Magick::Color("magenta");
 				break;
 			case 5:
-				*(view.get(i,_bit_length_y - 1 - j,1,1)) = Magick::Color("orange");
+				*(view.get(i,j,1,1)) = Magick::Color("orange");
 				break;
 			case 6:
-				*(view.get(i,_bit_length_y - 1 - j,1,1)) = Magick::Color("maroon");
+				*(view.get(i,j,1,1)) = Magick::Color("maroon");
 				break;
 			case 7:
-				*(view.get(i,_bit_length_y - 1 - j,1,1)) = Magick::Color("orchid");
+				*(view.get(i,j,1,1)) = Magick::Color("orchid");
 				break;
 			case 8:
-				*(view.get(i,_bit_length_y - 1 - j,1,1)) = Magick::Color("blue violet");
+				*(view.get(i,j,1,1)) = Magick::Color("blue violet");
 				break;
 			case 9:
-				*(view.get(i,_bit_length_y - 1 - j,1,1)) = Magick::Color("crimson");
+				*(view.get(i,j,1,1)) = Magick::Color("crimson");
 				break;
 			case 10:
-				*(view.get(i,_bit_length_y - 1 - j,1,1)) = Magick::Color("salmon");
+				*(view.get(i,j,1,1)) = Magick::Color("salmon");
 				break;
 			case 11:
-				*(view.get(i,_bit_length_y - 1 - j,1,1)) = Magick::Color("gold");
+				*(view.get(i,j,1,1)) = Magick::Color("gold");
 				break;
 			case 12:
-				*(view.get(i,_bit_length_y - 1 - j,1,1)) = Magick::Color("blue violet");
+				*(view.get(i,j,1,1)) = Magick::Color("blue violet");
 				break;
 			case 13:
-				*(view.get(i,_bit_length_y - 1 - j,1,1)) = Magick::Color("orange red");
+				*(view.get(i,j,1,1)) = Magick::Color("orange red");
 				break;
 			case 14:
-				*(view.get(i,_bit_length_y - 1 - j,1,1)) = Magick::Color("spring green");
+				*(view.get(i,j,1,1)) = Magick::Color("spring green");
 				break;
 			case 15:
-				*(view.get(i,_bit_length_y - 1 - j,1,1)) = Magick::Color("pale green");
+				*(view.get(i,j,1,1)) = Magick::Color("pale green");
 				break;
 			}
 		}
 	}
 
+	/* close pixel viewing/changing */
 	view.sync();
 
+	/* write Magick pixel color array to tiff file */
 	image_segments.write("segments.tiff");
 }
 
@@ -585,8 +613,10 @@ int TrackGenerator::sgn (long a) {
 }
 
 /*
- * track drawing algorithm
- * taken from http://www.cprogramming.com/tutorial/tut3.html
+ * Line drawing algorithm. Takes in the start (a,b) and end (c,d) coordinates
+ * of line, pointer to _pix_map bitmap array (pixMap), and line color (col).
+ * "Draws" the line on _pix_map bitmap array.
+ * Algorithm taken from http://www.cprogramming.com/tutorial/tut3.html
 */
 void TrackGenerator::LineFct(int a, int b, int c, int d, int* pixMap, int col) {
 	long u,s,v,d1x,d1y,d2x,d2y,m,n;
