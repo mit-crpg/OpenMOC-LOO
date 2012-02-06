@@ -34,6 +34,13 @@ TrackGenerator::TrackGenerator(Geometry* geom,
 	_pix_map_tracks = new int[_bit_length_x*_bit_length_y];
 	_pix_map_segments = new int[_bit_length_x*_bit_length_y];
 
+	for (int i=0;i<_bit_length_x; i++){
+		for (int j = 0; j < _bit_length_y; j++){
+			_pix_map_segments[i * _bit_length_x + j] = -1;
+		}
+	}
+
+
 	_x_pixel = double(_bit_length_x)/_width;
 	_y_pixel = double(_bit_length_y)/_height;
 
@@ -128,6 +135,7 @@ void TrackGenerator::generateTracks() {
 
 	try {
 		log_printf(NORMAL, "Computing azimuthal angles and track spacings...");
+		_timer_tracking.start();
 
 		/* Each element in arrays corresponds to a track angle in phi_eff */
 		/* Track spacing along x,y-axes, and perpendicular to each track */
@@ -256,7 +264,11 @@ void TrackGenerator::generateTracks() {
 			}
 		}
 
+		_timer_tracking.stop();
+
+		_timer_track_plotting.start();
 		plotTracksTiff();
+		_timer_track_plotting.stop();
 
 		return;
 	}
@@ -442,7 +454,7 @@ void TrackGenerator::makeReflective() {
 void TrackGenerator::segmentize() {
 
 	log_printf(NORMAL, "Segmenting tracks...");
-
+	_timer_segmentation.start();
 	double phi, sin_phi, cos_phi;
 
 	/* Loop over all tracks */
@@ -456,7 +468,11 @@ void TrackGenerator::segmentize() {
 		}
 	}
 
+	_timer_segmentation.stop();
+
+	_timer_segment_plotting.start();
 	plotSegmentsTiff();
+	_timer_segment_plotting.stop();
 
 	return;
 }
@@ -547,6 +563,7 @@ void TrackGenerator::plotSegmentsTiff(){
 		for (int j = 0; j < _bit_length_y; j++){
 			switch (_pix_map_segments[i * _bit_length_x + j]){
 			case 0:
+				*(view.get(i,j,1,1)) = Magick::Color("indigo");
 				break;
 			case 1:
 				*(view.get(i,j,1,1)) = Magick::Color("red");
@@ -653,4 +670,11 @@ void TrackGenerator::LineFct(int a, int b, int c, int d, int* pixMap, int col) {
 		}
 	}
 }
+
+void TrackGenerator::printTrackingTimers(){
+	log_printf(NORMAL, "Time: Tracking: %f s, Segmenting: %f s, track plotting: %f s, segment plotting: %f s",
+			_timer_tracking.getTime(),_timer_segmentation.getTime(),
+			_timer_track_plotting.getTime(), _timer_segment_plotting.getTime());
+}
+
 
