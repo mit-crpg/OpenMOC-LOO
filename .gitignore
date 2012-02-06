@@ -11,5 +11,7 @@ Configfile.local
 .cproject
 .project
 Doxyfile
+src/Doxyfile
+src/Doxyfile.bak
 html/
 latex/

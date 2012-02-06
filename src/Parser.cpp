@@ -28,7 +28,9 @@ void XMLCALL Parser_XMLCallback_End(void *context,
 void XMLCALL Parser_XMLCallback_CData(void *context,
 				      const XML_Char *s,
 				      int len);
-
+/**
+ * Frame to keep track of all nodes in parser
+ */
 enum frame_type {
 	NODE_TYPE_NONE,
 	NODE_TYPE_GEOMETRY,
@@ -48,12 +50,21 @@ enum frame_type {
 	NODE_TYPE_MAX = NODE_TYPE_MATERIAL /* Keep this in sync */
 };
 
+/**
+ * Frame to keep track of nodes specific to geometry
+ */
 struct frame_geometry {
 };
 
+/**
+ * Frame to keep track of nodes specific to materials
+ */
 struct frame_materials {
 };
 
+/**
+ * Frame to keep track of data specific to cell
+ */
 struct frame_cell {
 	bool has_id;
 	int id;
@@ -71,26 +82,44 @@ struct frame_cell {
 	int *surfaces;
 };
 
+/**
+ * Frame to keep track of lattice type
+ */
 struct frame_ttype {
 	char *data;
 };
 
+/**
+ * Frame to keep track of lattice dimension
+ */
 struct frame_dimension {
 	char *data;
 };
 
+/**
+ * Frame to keep track of lattice origin
+ */
 struct frame_origin {
 	char *data;
 };
 
+/**
+ * Frame to keep track of lattice width
+ */
 struct frame_width {
 	char *data;
 };
 
+/**
+ * Frame to keep track of lattice universes
+ */
 struct frame_universes {
 	char *data;
 };
 
+/**
+ * Frame to keep track of lattice information
+ */
 struct frame_lattice {
 	bool has_id;
 	int id;
@@ -111,6 +140,9 @@ struct frame_lattice {
 	int width_count;
 };
 
+/**
+ * Frame to keep track of surface information
+ */
 struct frame_surface {
 	bool has_id;
 	int id;
@@ -123,6 +155,9 @@ struct frame_surface {
 	boundaryType boundary;
 };
 
+/**
+ * Frame to keep track of material information
+ */
 struct frame_material {
 	bool has_id;
 	int id;
@@ -140,7 +175,9 @@ struct frame_material {
 	int sigma_s_cnt;
 };
 
-
+/**
+ * High-level frame combining all other frames
+ */
 struct frame {
 	struct frame *parent;
 	enum frame_type type;
@@ -163,7 +200,9 @@ struct frame {
 	};
 };
 
-
+/**
+ * Stack for book-keeping inside of parser
+ */
 struct stack {
 	struct frame *top;
 	Parser *parser;
@@ -181,6 +220,10 @@ static inline double *strtok_double(const char *str, int *count);
 
 static inline char *astrncat(char *orig, char *next, int len);
 
+/**
+ * Default Parser constructor
+ * @param options a pointer to the options, e.g., pathes to input files
+ */
 Parser::Parser (const Options *opts) {
 	FILE* geofile;
 	FILE* matfile;
@@ -217,8 +260,6 @@ Parser::Parser (const Options *opts) {
 	XML_Parse(parser, NULL, 0, true);
 	XML_ParserFree(parser);
 
-
-
 	/* Sets up the parser */
 	stack.top = NULL;
 	stack.parser = this;
@@ -227,7 +268,6 @@ Parser::Parser (const Options *opts) {
 	XML_SetStartElementHandler(parser, &Parser_XMLCallback_Start);
 	XML_SetEndElementHandler(parser, &Parser_XMLCallback_End);
 	XML_SetCharacterDataHandler(parser, &Parser_XMLCallback_CData);
-
 
 	/* Assures that the input file(s) exists and is readable */
 	matfile = fopen(opts->getMaterialFile(), "r");
@@ -245,13 +285,14 @@ Parser::Parser (const Options *opts) {
 
 	fclose(matfile);
 
-
 	/* Tells the parse we've reached the end */
 	XML_Parse(parser, NULL, 0, true);
 	XML_ParserFree(parser); 
-
 }
 
+/**
+ * Parser Destructor
+ */
 Parser::~Parser() {
 	unsigned int i;
 
@@ -265,6 +306,10 @@ Parser::~Parser() {
 		delete this->materials.at(i);
 }
 
+/**
+ * Iterate through to add in every surface into the Surface class
+ * @param callback a function object for Surface class
+ */
 void Parser::each_surface(std::function<void(Surface *)> callback) {
 	std::vector<Surface *>::size_type i;
 
@@ -272,6 +317,10 @@ void Parser::each_surface(std::function<void(Surface *)> callback) {
 		callback(this->surfaces.at(i));
 }
 
+/**
+ * Iterate through to add in every cell into the Cell class
+ * @param callback a function object for Cell class
+ */
 void Parser::each_cell(std::function<void(Cell *)> callback) {
 	std::vector<Cell *>::size_type i;
 
@@ -279,6 +328,10 @@ void Parser::each_cell(std::function<void(Cell *)> callback) {
 		callback(this->cells.at(i));
 }
 
+/**
+ * Iterate through to add in every lattice into the Lattice class
+ * @param callback a function object for Lattice class
+ */
 void Parser::each_lattice(std::function<void(Lattice *)> callback) {
 	std::vector<Lattice *>::size_type i;
 
@@ -286,6 +339,10 @@ void Parser::each_lattice(std::function<void(Lattice *)> callback) {
 		callback(this->lattices.at(i));
 }
 
+/**
+ * Iterate through to add in every material into the Material class
+ * @param callback a function object for Material class
+ */
 void Parser::each_material(std::function<void(Material *)> callback) {
 	std::vector<Material *>::size_type i;
 
@@ -293,6 +350,13 @@ void Parser::each_material(std::function<void(Material *)> callback) {
 		callback(this->materials.at(i));
 }
 
+/**
+ * Set handler for start tags; for each tag, validate the data, then pass 
+ * data to the corresponding location on the stack.
+ * @param context the stack for book-keeping
+ * @param name a pointer point to the attribute name
+ * @param attrs a double pointer point to the attribute value
+ */
 void XMLCALL Parser_XMLCallback_Start(void *context,
 				      const XML_Char *name,
 				      const XML_Char **attrs) {
@@ -489,6 +553,13 @@ void XMLCALL Parser_XMLCallback_Start(void *context,
 	}
 }
 
+/**
+ * Set handler for end tags; process data on the stack, allocate memory for
+ * new class, construct them with corresponding data from the stack, free
+ * any pointer after we are done.
+ * @param context the stack for book-keeping
+ * @param name a pointer point to the attribute name
+ */
 void XMLCALL Parser_XMLCallback_End(void *context,
 				    const XML_Char *name) {
 	struct stack *s;
@@ -803,6 +874,13 @@ void XMLCALL Parser_XMLCallback_End(void *context,
 	free(f);
 }
 
+/**
+ * Update Stack: convert Lattice's data from uncast string to their 
+ * corresponding formats
+ * @param context pointer to the stack for book-keeping
+ * @param str_uncast pointer to the uncast string
+ * @param len length of the uncast string
+ */
 void XMLCALL Parser_XMLCallback_CData(void *context,
 				      const XML_Char *str_uncast,
 				      int len) {
@@ -848,6 +926,11 @@ void XMLCALL Parser_XMLCallback_CData(void *context,
 	}
 }
 
+/**
+ * Return the type of a node in string
+ * @param type the enum frame type
+ * @return type pointer to characters that correspond to the type
+ */
 const char *frame_type_string(enum frame_type type) {
 	switch (type) {
 	case NODE_TYPE_NONE:
@@ -882,6 +965,13 @@ const char *frame_type_string(enum frame_type type) {
 	return NULL;
 }
 
+/**
+ * Push a fram onto the stack and return it: allocate a new stack frame, 
+ * initialize it based on nodes, add it to the stack
+ * @param stack a pointer to the stack
+ * @param type an enum frame type
+ * @return frame a pointer to the stack frame
+ */
 struct frame *stack_push(struct stack *s, enum frame_type type) {
 	struct frame *f;
 
@@ -963,6 +1053,11 @@ struct frame *stack_push(struct stack *s, enum frame_type type) {
 	return f;
 }
 
+/**
+ * Pop the top item off the stack and return it
+ * @param stack a pointer to the stack
+ * @return frame a pointer to the stack frame
+ */
 struct frame *stack_pop(struct stack *s) {
 	struct frame *f;
 
@@ -973,11 +1068,19 @@ struct frame *stack_pop(struct stack *s) {
 	return f;
 }
 
+/**
+ * Call stack_print_help(frame) to print out the context in a frame
+ * @param frame pointer to a frame
+ */
 void stack_print(struct frame *f) {
 	stack_print_help(f);
 	fprintf(stderr, "\n");
 }
 
+/**
+ * Iterate through a frame and print the data to standard output
+ * @param frame pointer to a frame
+ */
 void stack_print_help(struct frame *f) {
 	unsigned int i;
 
@@ -1141,6 +1244,12 @@ void stack_print_help(struct frame *f) {
 	fprintf(stderr, "\n");
 }
 
+/**
+ * Convert a character string to an interger
+ * @param str pointer to character string
+ * @param count pointer to the number of characters
+ * @return arr pointer to the interger converted from the string
+ */
 int *strtok_int(const char *str, int *count) {
 	int *arr;
 	int cnt;
@@ -1175,6 +1284,12 @@ int *strtok_int(const char *str, int *count) {
 	return arr;
 }
 
+/**
+ * Convert a character string into double
+ * @param str pointer to character string
+ * @param count pointer to the number of characters
+ * @return arr pointer to the double converted from the string
+ */
 double *strtok_double(const char *str, int *count) {
 	double *arr;
 	int cnt;
@@ -1209,6 +1324,13 @@ double *strtok_double(const char *str, int *count) {
 	return arr;
 }
 
+/**
+ * Combine two strings
+ * @param orig pointer to the original string
+ * @param str pointer to the string to be added to the end of orig
+ * @param len the length of the str
+ * @return new_data the new string adding str to the end of orig
+ */ 
 char *astrncat(char *orig, char *str, int len) {
 	char *new_data;
 
