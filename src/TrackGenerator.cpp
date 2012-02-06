@@ -462,7 +462,7 @@ void TrackGenerator::segmentize() {
 }
 
 
-/*
+/**
  * Plot tracks in tiff file using fast drawing method
  */
 void TrackGenerator::plotTracksTiff() {
@@ -490,7 +490,7 @@ void TrackGenerator::plotTracksTiff() {
 }
 
 
-/*
+/**
  * Plots track segments in a _pix_map_segments bitmap array on the fly
  */
 void TrackGenerator::plotSegmentsBitMap(Track* track, double sin_phi, double cos_phi){
@@ -528,7 +528,7 @@ void TrackGenerator::plotSegmentsBitMap(Track* track, double sin_phi, double cos
 
 
 
-/*
+/**
  * Plot segments in tiff file
  */
 void TrackGenerator::plotSegmentsTiff(){
@@ -605,14 +605,17 @@ void TrackGenerator::plotSegmentsTiff(){
 }
 
 
-/* finds the sign of a value */
+/**
+ *  finds the sign of a value
+ *  @param a find the sign of a
+ */
 int TrackGenerator::sgn (long a) {
 	if (a > 0) return +1;
 	else if (a < 0) return -1;
 	else return 0;
 }
 
-/*
+/**
  * Line drawing algorithm. Takes in the start (a,b) and end (c,d) coordinates
  * of line, pointer to _pix_map bitmap array (pixMap), and line color (col).
  * "Draws" the line on _pix_map bitmap array.
