@@ -40,6 +40,12 @@ int main(int argc, const char **argv) {
 	Geometry geometry(opts.getNumSectors(), opts.getNumRings(),
 			  opts.getSectorOffset(), &parser);
 
+	/* Prints out all universes */
+//	geometry.checkUniverse();
+
+	/* Plot geometry */
+//	Plotting plotter(&geometry, opts.getBitDimension());
+
 //	/* Print out geometry to console if requested at runtime*/
 	if (opts.dumpGeometry())
 		geometry.printString();

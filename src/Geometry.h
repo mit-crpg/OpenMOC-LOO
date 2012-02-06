@@ -32,6 +32,7 @@ private:
 	int _num_sectors, _num_rings;
 	double _sector_offset;
 	int _base_universe;
+	int _num_FSRs;
 	std::map<int, Material*> _materials;
 	std::map<int, Surface*> _surfaces;
 	std::map<int, Cell*> _cells;
@@ -72,6 +73,9 @@ public:
 
 	template <class K, class V>
 	bool mapContainsKey(std::map<K, V> map, K key);
+
+	void checkUniverse();
+
 };
 
 #endif /* GEOMETRY_H_ */

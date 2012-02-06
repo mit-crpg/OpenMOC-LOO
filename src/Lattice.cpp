@@ -52,6 +52,14 @@ Lattice::Lattice(const int id, const int num_x, int num_y,
 			(universes[(num_y-1-i)*num_x+j], empty_universe_pointer));
 		}
 	}
+
+	/* intialize _region_map */
+	for (int i = 0; i < num_y; i++) {
+		_region_map.push_back(std::vector< std::pair<int, int> >());
+		for (int j = 0; j < num_x; j++) {
+			_region_map.at(i).push_back(std::pair<int, int>());
+		}
+	}
 }
 
 
@@ -503,4 +511,20 @@ std::string Lattice::toString() {
 	}
 
 	return string.str().c_str();
+}
+
+int Lattice::computeFSRMaps() {
+	/* initialize a counter count */
+	int count = 0;
+    
+	/* loop over universes in the lattice to set the map and update count */
+	for (int i = _num_y -1; i>-1; i--) {
+		for (int j = 0; j < _num_x; j++) {
+			Universe *u = _universes.at(i).at(j).second;
+			_region_map[i][j].second = count;
+			count += u->computeFSRMaps();
+		}
+	}
+
+	return count;
 }
