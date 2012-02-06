@@ -1,5 +1,8 @@
 <?xml version="1.0"?>
-<!-- rectangular core with three types of cells using lattice !-->
+
+<!-- simple nested lattice with three differently sized pin cells -->
+<!-- geometry is identical to sample input 2 but is nested -->
+
 <geometry>
 
   <cell id="1" fill="6" surfaces="1 -2 3 -4" />

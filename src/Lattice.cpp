@@ -261,8 +261,8 @@ Cell* Lattice::findCell(LocalCoords* coords,
 	coords->setType(LAT);
 
 	/* Compute the x and y indices for the lattice cell this coord is in */
-	int lat_x = floor(coords->getX() - _origin.getX()) / _width_x;
-	int lat_y = floor(coords->getY() - _origin.getY()) / _width_y;
+	int lat_x = (int)floor((coords->getX() - _origin.getX()) / _width_x);
+	int lat_y = (int)floor((coords->getY() - _origin.getY()) / _width_y);
 
 	/* Check if the localcoord is on the lattice boundaries and if so adjust
 	 * x or y lattice cell indices i */
