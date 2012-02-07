@@ -135,7 +135,6 @@ void TrackGenerator::generateTracks() {
 
 	try {
 		log_printf(NORMAL, "Computing azimuthal angles and track spacings...");
-		_timer_tracking.start();
 
 		/* Each element in arrays corresponds to a track angle in phi_eff */
 		/* Track spacing along x,y-axes, and perpendicular to each track */
@@ -263,12 +262,6 @@ void TrackGenerator::generateTracks() {
 						_pix_map_tracks);
 			}
 		}
-
-		_timer_tracking.stop();
-
-		_timer_track_plotting.start();
-		plotTracksTiff();
-		_timer_track_plotting.stop();
 
 		return;
 	}
@@ -454,7 +447,6 @@ void TrackGenerator::makeReflective() {
 void TrackGenerator::segmentize() {
 
 	log_printf(NORMAL, "Segmenting tracks...");
-	_timer_segmentation.start();
 	double phi, sin_phi, cos_phi;
 
 	/* Loop over all tracks */
@@ -467,12 +459,6 @@ void TrackGenerator::segmentize() {
 			plotSegmentsBitMap(&_tracks[i][j], sin_phi, cos_phi);
 		}
 	}
-
-	_timer_segmentation.stop();
-
-
-	plotSegmentsTiff();
-
 	return;
 }
 
@@ -481,7 +467,7 @@ void TrackGenerator::segmentize() {
  * Plot tracks in tiff file using fast drawing method
  */
 void TrackGenerator::plotTracksTiff() {
-	log_printf(NORMAL, "Writing tracks bitmap to tiff...");
+	log_printf(NORMAL, "Writing tracks bitmap to png...");
 
 	/* Create Magick image and open pixels for viewing/changing  */
 	Magick::Image image_tracks(Magick::Geometry(_bit_length_x,_bit_length_y), "black");
@@ -500,8 +486,8 @@ void TrackGenerator::plotTracksTiff() {
 	/* Close pixel viewing/changing */
 	view.sync();
 
-	/* Write pixel bitmap to tiff file */
-	image_tracks.write("tracks.tiff");
+	/* Write pixel bitmap to png file */
+	image_tracks.write("tracks.png");
 }
 
 
@@ -547,9 +533,7 @@ void TrackGenerator::plotSegmentsBitMap(Track* track, double sin_phi, double cos
  * Plot segments in tiff file
  */
 void TrackGenerator::plotSegmentsTiff(){
-	log_printf(NORMAL, "Writing segments bitmap to tiff...");
-
-	_timer_segment_plotting.start();
+	log_printf(NORMAL, "Writing segments bitmap to png...");
 
 	/* Create Magick image and open pixels for viewing/changing */
 	Magick::Image image_segments(Magick::Geometry(_bit_length_x,_bit_length_y), "white");
@@ -623,9 +607,8 @@ void TrackGenerator::plotSegmentsTiff(){
 	my_pixel_cache.sync();
 
 
-	/* write Magick pixel color array to tiff file */
-	image_segments.write("segments.tiff");
-	_timer_segment_plotting.stop();
+	/* write Magick pixel color array to png file */
+	image_segments.write("segments.png");
 }
 
 /**
@@ -667,13 +650,5 @@ void TrackGenerator::LineFct(int x0, int y0, int x1, int y1, int* pixMap, int co
 			y0 = y0 + sy;
 		}
 	}
-
 }
-
-void TrackGenerator::printTrackingTimers(){
-	log_printf(NORMAL, "Time: Tracking: %f s, Segmenting: %f s, track plotting: %f s, segment plotting: %f s",
-			_timer_tracking.getTime(),_timer_segmentation.getTime(),
-			_timer_track_plotting.getTime(), _timer_segment_plotting.getTime());
-}
-
 

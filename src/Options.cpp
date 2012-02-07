@@ -33,13 +33,15 @@ Options::Options(int argc, const char **argv) {
 	_geometry_file = _relative_path + "xml-sample/4/geometry.xml"; 	 /* Default geometry input file */
 	_material_file = _relative_path + "xml-sample/4/material.xml";    /* Default material input file */
 	_track_spacing = 0.1;					 /* Default track spacing */
-	_num_azim = 32;					 /* Default number of azimuthal angles */
+	_num_azim = 16;					 /* Default number of azimuthal angles */
 	_bit_dimension = 1000;					 /* y dimension of tracks and segments plots */
 	_num_sectors = 0;					 /* Default number of sectors */
 	_num_rings = 0;						 /* Default number of rings */
 	_sector_offset = 0;					 /* Default sector offset */
 	_verbosity = "NORMAL";				 /* Default logging level */
-	_dump_geometry = false;									/* Default will not dump geometry */
+	_dump_geometry = false;				/* Default will not dump geometry */
+	_plot_tracks = false;				/* Default will not plot tracks */
+	_plot_segments = false;				/* Default will not plot segments */
 
 	for (int i = 0; i < argc; i++) {
 		if (i > 0) {
@@ -66,6 +68,12 @@ Options::Options(int argc, const char **argv) {
 			else if (strcmp(argv[i], "-dg") == 0 ||
 					strcmp(argv[i], "--dumpgeometry") == 0)
 				_dump_geometry = true;
+			else if (strcmp(argv[i], "-pt") == 0 ||
+					strcmp(argv[i], "--plottracks") == 0)
+				_plot_tracks = true;
+			else if (strcmp(argv[i], "-ps") == 0 ||
+					strcmp(argv[i], "--plotsegments") == 0)
+				_plot_segments = true;
 		}
 	}
 }
@@ -100,6 +108,26 @@ const char *Options::getMaterialFile() const {
  */
 bool Options::dumpGeometry() const {
 	return _dump_geometry;
+}
+
+
+/**
+ * Returns a boolean representing whether or not to convert a bitmap of the
+ * tracks produced by the TrackGenerator into an image file
+ * @return whether or not to plot tracks
+ */
+bool Options::plotTracks() const {
+	return _plot_tracks;
+}
+
+
+/**
+ * Returns a boolean representing whether or not to convert a bitmap of the
+ * tracks produced by the TrackGenerator into an image file
+ * @return whether or not to plot tracks
+ */
+bool Options::plotSegments() const {
+	return _plot_segments;
 }
 
 

@@ -13,11 +13,9 @@
 #include "Geometry.h"
 #include "TrackGenerator.h"
 #include "Parser.h"
-#include "log.h"
 #include "Options.h"
-#include "LocalCoords.h"
-#include "Geometry.h"
-#include "Surface.h"
+#include "Timer.h"
+#include "log.h"
 
 // FIXME: These should be removed when main() is properly implemented
 #pragma GCC diagnostic ignored "-Wunused"
@@ -27,6 +25,8 @@
 int main(int argc, const char **argv) {
 	log_printf(NORMAL, "Starting OpenMOC...");
 
+	Timer timer;
+
 	/* Create an options class to parse command line options */
 	Options opts(argc, argv);
 
@@ -34,17 +34,18 @@ int main(int argc, const char **argv) {
 	log_setlevel(opts.getVerbosity());
 
 	/* Initialize the parser */
+	timer.start();
 	Parser parser(&opts);
+	timer.stop();
+	timer.recordSplit("Parsing input files");
 
 	/* Initialize the geometry with surfaces, cells & materials */
+	timer.reset();
+	timer.start();
 	Geometry geometry(opts.getNumSectors(), opts.getNumRings(),
 			  opts.getSectorOffset(), &parser);
-
-	/* Prints out all universes */
-//	geometry.checkUniverse();
-
-	/* Plot geometry */
-//	Plotting plotter(&geometry, opts.getBitDimension());
+	timer.stop();
+	timer.recordSplit("Geomery initialization");
 
 //	/* Print out geometry to console if requested at runtime*/
 	if (opts.dumpGeometry())
@@ -60,10 +61,42 @@ int main(int argc, const char **argv) {
 	TrackGenerator track_generator(&geometry, opts.getNumAzim(),
 				       opts.getTrackSpacing(), opts.getBitDimension());
 
+	/* Generate tracks */
+	timer.reset();
+	timer.start();
 	track_generator.generateTracks();
 	track_generator.makeReflective();
-	track_generator.segmentize();
-	track_generator.printTrackingTimers();
+	timer.stop();
+	timer.recordSplit("Generating tracks");
 
+
+	/* Plot tracks if requested at runtime */
+	if (opts.plotTracks()) {
+		timer.reset();
+		timer.start();
+		track_generator.plotTracksTiff();
+		timer.stop();
+		timer.recordSplit("Creating tiff of tracks");
+	}
+
+	/* Segment tracks */
+	timer.reset();
+	timer.start();
+	track_generator.segmentize();
+	timer.stop();
+	timer.recordSplit("Segmenting tracks");
+
+
+	/* Plot track segments if requested at runtime */
+	if (opts.plotSegments()) {
+		timer.reset();
+		timer.start();
+		track_generator.plotSegmentsTiff();
+		timer.stop();
+		timer.recordSplit("Creating tiff of segments");
+	}
+
+	/* Print timer splits to console */
 	log_printf(NORMAL, "Program complete");
+	timer.printSplits();
 }
