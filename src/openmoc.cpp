@@ -76,7 +76,7 @@ int main(int argc, const char **argv) {
 		timer.start();
 		track_generator.plotTracksTiff();
 		timer.stop();
-		timer.recordSplit("Creating tiff of tracks");
+		timer.recordSplit("Creating png of tracks");
 	}
 
 	/* Segment tracks */
@@ -93,7 +93,7 @@ int main(int argc, const char **argv) {
 		timer.start();
 		track_generator.plotSegmentsTiff();
 		timer.stop();
-		timer.recordSplit("Creating tiff of segments");
+		timer.recordSplit("Creating png of segments");
 	}
 
 	/* Print timer splits to console */
