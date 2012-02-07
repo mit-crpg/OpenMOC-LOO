@@ -1,5 +1,7 @@
 <?xml version="1.0"?>
-<!-- 1 rectangular cell with fuel and coolant using lattice !-->
+
+<!-- simple lattice with 3 differently sized pin cells -->
+
 <geometry>
 
   <cell id="1" fill="5" surfaces="1 -2 3 -4" />

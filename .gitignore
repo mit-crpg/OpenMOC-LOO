@@ -3,15 +3,19 @@ obj
 Makefile
 *~
 Configfile.local
-./Debug
+Debug/
+Release/
 *.d
 *.o
 *.tiff
 *.out
 .cproject
 .project
+<<<<<<< HEAD
+=======
 Doxyfile
 src/Doxyfile
 src/Doxyfile.bak
 html/
 latex/
+>>>>>>> branch 'master' of https://wbinventor@github.com/wbinventor/OpenMOC.git

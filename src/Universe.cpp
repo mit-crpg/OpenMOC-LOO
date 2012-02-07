@@ -179,6 +179,7 @@ Cell* Universe::findCell(LocalCoords* coords,
  */
 std::string Universe::toString() {
 	std::stringstream string;
+	std::map<int, Cell*>::iterator iter;
 
 	string << "Universe id = " << _id << ", type = ";
 	if (_type == SIMPLE)
@@ -188,8 +189,8 @@ std::string Universe::toString() {
 
 	string << ", num cells = " << _cells.size() << ", cell ids = ";
 
-	for (int c = 0; c < (int)_cells.size(); c++)
-		string << _cells.at(c)->getId() << ", ";
+	for (iter = _cells.begin(); iter != _cells.end(); ++iter)
+		string << iter->first << ", ";
 
 	return string.str();
 }
@@ -199,13 +200,13 @@ std::string Universe::toString() {
  */
 int Universe::computeFSRMaps() {
 	/* initialize a counter count */
+	std::map<int, Cell*>::iterator iter;
 	int count = 0;
     
 	/* loop over cells in the universe to set the map and update count */
-	for (int i = 0; i < (int)_cells.size(); i++) {
-		Cell *c = _cells.at(i);
-		_regionMap.insert(std::pair<int, int>(c->getId(), count));
-		count += c->getNumFSRs();
+	for (iter = _cells.begin(); iter != _cells.end(); ++iter) {
+		_regionMap.insert(std::pair<int, int>(iter->first, count));
+		count += iter->second->getNumFSRs();
 	}
 
 	return count;
