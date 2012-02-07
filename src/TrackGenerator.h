@@ -59,8 +59,7 @@ public:
 	void plotTracksTiff();
 	void plotSegmentsBitMap(Track* track, double sin_phi, double cos_phi);
 	void plotSegmentsTiff();
-	int sgn (long a);
-	void LineFct(int a, int b, int c, int d, int* pixMap, int col = 1);
+	void LineFct(int x0, int y0, int x1, int y1, int* pixMap, int color = 1);
 	void printTrackingTimers();
 };
 

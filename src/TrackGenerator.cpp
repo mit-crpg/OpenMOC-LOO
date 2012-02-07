@@ -470,9 +470,8 @@ void TrackGenerator::segmentize() {
 
 	_timer_segmentation.stop();
 
-	_timer_segment_plotting.start();
+
 	plotSegmentsTiff();
-	_timer_segment_plotting.stop();
 
 	return;
 }
@@ -550,6 +549,8 @@ void TrackGenerator::plotSegmentsBitMap(Track* track, double sin_phi, double cos
 void TrackGenerator::plotSegmentsTiff(){
 	log_printf(NORMAL, "Writing segments bitmap to tiff...");
 
+	_timer_segment_plotting.start();
+
 	/* Create Magick image and open pixels for viewing/changing */
 	Magick::Image image_segments(Magick::Geometry(_bit_length_x,_bit_length_y), "white");
 	image_segments.type(Magick::TrueColorType);
@@ -559,56 +560,56 @@ void TrackGenerator::plotSegmentsTiff(){
 	 * Convert _pix_map_segments bitmap array to Magick bitmap pixel
 	 * color array
 	 */
-	for (int i=0;i<_bit_length_x; i++){
-		for (int j = 0; j < _bit_length_y; j++){
-			switch (_pix_map_segments[i * _bit_length_x + j]){
+	for (int y=0;y < _bit_length_y; y++){
+		for (int x = 0; x < _bit_length_x; x++){
+			switch (_pix_map_segments[y * _bit_length_x + x]){
 			case 0:
-				*(view.get(i,j,1,1)) = Magick::Color("indigo");
+				*view.set(x,y,1,1) = Magick::Color("indigo");
 				break;
 			case 1:
-				*(view.get(i,j,1,1)) = Magick::Color("red");
+				*view.set(x,y,1,1) = Magick::Color("red");
 				break;
 			case 2:
-				*(view.get(i,j,1,1)) = Magick::Color("blue");
+				*(view.set(x,y,1,1)) = Magick::Color("blue");
 				break;
 			case 3:
-				*(view.get(i,j,1,1)) = Magick::Color("green");
+				*(view.set(x,y,1,1)) = Magick::Color("green");
 				break;
 			case 4:
-				*(view.get(i,j,1,1)) = Magick::Color("magenta");
+				*(view.set(x,y,1,1)) = Magick::Color("magenta");
 				break;
 			case 5:
-				*(view.get(i,j,1,1)) = Magick::Color("orange");
+				*(view.set(x,y,1,1)) = Magick::Color("orange");
 				break;
 			case 6:
-				*(view.get(i,j,1,1)) = Magick::Color("maroon");
+				*(view.set(x,y,1,1)) = Magick::Color("maroon");
 				break;
 			case 7:
-				*(view.get(i,j,1,1)) = Magick::Color("orchid");
+				*(view.set(x,y,1,1)) = Magick::Color("orchid");
 				break;
 			case 8:
-				*(view.get(i,j,1,1)) = Magick::Color("blue violet");
+				*(view.set(x,y,1,1)) = Magick::Color("blue violet");
 				break;
 			case 9:
-				*(view.get(i,j,1,1)) = Magick::Color("crimson");
+				*(view.set(x,y,1,1)) = Magick::Color("crimson");
 				break;
 			case 10:
-				*(view.get(i,j,1,1)) = Magick::Color("salmon");
+				*(view.set(x,y,1,1)) = Magick::Color("salmon");
 				break;
 			case 11:
-				*(view.get(i,j,1,1)) = Magick::Color("gold");
+				*(view.set(x,y,1,1)) = Magick::Color("gold");
 				break;
 			case 12:
-				*(view.get(i,j,1,1)) = Magick::Color("blue violet");
+				*(view.set(x,y,1,1)) = Magick::Color("DarkSlateGray");
 				break;
 			case 13:
-				*(view.get(i,j,1,1)) = Magick::Color("orange red");
+				*(view.set(x,y,1,1)) = Magick::Color("orange red");
 				break;
 			case 14:
-				*(view.get(i,j,1,1)) = Magick::Color("spring green");
+				*(view.set(x,y,1,1)) = Magick::Color("spring green");
 				break;
 			case 15:
-				*(view.get(i,j,1,1)) = Magick::Color("pale green");
+				*(view.set(x,y,1,1)) = Magick::Color("pale green");
 				break;
 			}
 		}
@@ -617,58 +618,52 @@ void TrackGenerator::plotSegmentsTiff(){
 	/* close pixel viewing/changing */
 	view.sync();
 
+
 	/* write Magick pixel color array to tiff file */
 	image_segments.write("segments.tiff");
-}
-
-
-/**
- *  finds the sign of a value
- *  @param a find the sign of a
- */
-int TrackGenerator::sgn (long a) {
-	if (a > 0) return +1;
-	else if (a < 0) return -1;
-	else return 0;
+	_timer_segment_plotting.stop();
 }
 
 /**
- * Line drawing algorithm. Takes in the start (a,b) and end (c,d) coordinates
- * of line, pointer to _pix_map bitmap array (pixMap), and line color (col).
+ * Bresenham's line drawing algorithm. Takes in the start and end coordinates
+ * of line, pointer to _pix_map bitmap array (pixMap), and line color.
  * "Draws" the line on _pix_map bitmap array.
- * Algorithm taken from http://www.cprogramming.com/tutorial/tut3.html
+ * Taken from "Simplificaiton" code at link below
+ * http://en.wikipedia.org/wiki/Bresenham%27s_line_algorithm
 */
-void TrackGenerator::LineFct(int a, int b, int c, int d, int* pixMap, int col) {
-	long u,s,v,d1x,d1y,d2x,d2y,m,n;
-	int  i;
-	u   = c-a;
-	v   = d-b;
-	d1x = sgn(u);
-	d1y = sgn(v);
-	d2x = sgn(u);
-	d2y = 0;
-	m   = abs(u);
-	n   = abs(v);
-	if (m<=n) {
-		d2x = 0;
-		d2y = sgn(v);
-		m   = abs(v);
-	    n   = abs(u);
+void TrackGenerator::LineFct(int x0, int y0, int x1, int y1, int* pixMap, int color){
+	int dx = abs(x1-x0);
+	int dy = abs(y1-y0);
+	int sx, sy;
+	if (x0 < x1){
+		sx = 1;
 	}
-	s = (int)(m / 2);
-	for (i=0;i<round(m);i++) {
-		pixMap[a * _bit_length_x + b] = col;
-		s += n;
-		if (s >= m) {
-			s -= m;
-			a += d1x;
-			b += d1y;
+	else{
+		sx = -1;
+
+	}
+	if (y0 < y1){
+		sy = 1;
+	}
+	else{
+		sy = -1;
+	}
+	int error = dx - dy;
+	pixMap[y0 * _bit_length_x + x0] = color;
+	pixMap[y1 * _bit_length_x + x1] = color;
+	while (x0 != x1 && y0 != y1){
+		pixMap[y0 * _bit_length_x + x0] = color;
+		int e2 = 2 * error;
+		if (e2 > -dy){
+			error = error - dy;
+			x0 = x0 + sx;
 		}
-		else {
-			a += d2x;
-			b += d2y;
+		if (e2 < dx){
+			error = error + dx;
+			y0 = y0 + sy;
 		}
 	}
+
 }
 
 void TrackGenerator::printTrackingTimers(){
