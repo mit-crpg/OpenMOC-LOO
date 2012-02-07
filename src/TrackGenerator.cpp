@@ -553,8 +553,12 @@ void TrackGenerator::plotSegmentsTiff(){
 
 	/* Create Magick image and open pixels for viewing/changing */
 	Magick::Image image_segments(Magick::Geometry(_bit_length_x,_bit_length_y), "white");
-	image_segments.type(Magick::TrueColorType);
-	Magick::Pixels view(image_segments);
+	image_segments.modifyImage();
+
+	/* Make pixel cache */
+	Magick::Pixels my_pixel_cache(image_segments);
+	Magick::PixelPacket* pixels;
+	pixels = my_pixel_cache.get(0,0,_bit_length_x,_bit_length_y);
 
 	/*
 	 * Convert _pix_map_segments bitmap array to Magick bitmap pixel
@@ -564,59 +568,59 @@ void TrackGenerator::plotSegmentsTiff(){
 		for (int x = 0; x < _bit_length_x; x++){
 			switch (_pix_map_segments[y * _bit_length_x + x]){
 			case 0:
-				*view.set(x,y,1,1) = Magick::Color("indigo");
+				*(pixels+(y * _bit_length_x + x)) = Magick::Color("indigo");
 				break;
 			case 1:
-				*view.set(x,y,1,1) = Magick::Color("red");
+				*(pixels+(y * _bit_length_x + x)) = Magick::Color("red");
 				break;
 			case 2:
-				*(view.set(x,y,1,1)) = Magick::Color("blue");
+				*(pixels+(y * _bit_length_x + x)) = Magick::Color("blue");
 				break;
 			case 3:
-				*(view.set(x,y,1,1)) = Magick::Color("green");
+				*(pixels+(y * _bit_length_x + x)) = Magick::Color("green");
 				break;
 			case 4:
-				*(view.set(x,y,1,1)) = Magick::Color("magenta");
+				*(pixels+(y * _bit_length_x + x)) = Magick::Color("magenta");
 				break;
 			case 5:
-				*(view.set(x,y,1,1)) = Magick::Color("orange");
+				*(pixels+(y * _bit_length_x + x)) = Magick::Color("orange");
 				break;
 			case 6:
-				*(view.set(x,y,1,1)) = Magick::Color("maroon");
+				*(pixels+(y * _bit_length_x + x)) = Magick::Color("maroon");
 				break;
 			case 7:
-				*(view.set(x,y,1,1)) = Magick::Color("orchid");
+				*(pixels+(y * _bit_length_x + x)) = Magick::Color("orchid");
 				break;
 			case 8:
-				*(view.set(x,y,1,1)) = Magick::Color("blue violet");
+				*(pixels+(y * _bit_length_x + x)) = Magick::Color("blue violet");
 				break;
 			case 9:
-				*(view.set(x,y,1,1)) = Magick::Color("crimson");
+				*(pixels+(y * _bit_length_x + x)) = Magick::Color("crimson");
 				break;
 			case 10:
-				*(view.set(x,y,1,1)) = Magick::Color("salmon");
+				*(pixels+(y * _bit_length_x + x)) = Magick::Color("salmon");
 				break;
 			case 11:
-				*(view.set(x,y,1,1)) = Magick::Color("gold");
+				*(pixels+(y * _bit_length_x + x)) = Magick::Color("gold");
 				break;
 			case 12:
-				*(view.set(x,y,1,1)) = Magick::Color("DarkSlateGray");
+				*(pixels+(y * _bit_length_x + x)) = Magick::Color("DarkSlateGray");
 				break;
 			case 13:
-				*(view.set(x,y,1,1)) = Magick::Color("orange red");
+				*(pixels+(y * _bit_length_x + x)) = Magick::Color("orange red");
 				break;
 			case 14:
-				*(view.set(x,y,1,1)) = Magick::Color("spring green");
+				*(pixels+(y * _bit_length_x + x)) = Magick::Color("spring green");
 				break;
 			case 15:
-				*(view.set(x,y,1,1)) = Magick::Color("pale green");
+				*(pixels+(y * _bit_length_x + x)) = Magick::Color("pale green");
 				break;
 			}
 		}
 	}
 
 	/* close pixel viewing/changing */
-	view.sync();
+	my_pixel_cache.sync();
 
 
 	/* write Magick pixel color array to tiff file */
