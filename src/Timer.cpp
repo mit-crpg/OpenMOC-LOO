@@ -71,7 +71,7 @@ void Timer::reset() {
 
 
 /**
- * Restarts the timer. The elapsed time will accumulate along with the
+ * Restarts the timer. The elapsed time will accumulate along doublewith the
  * previous time(s) the timer was running. If the timer was already running
  * this function does nothing
  */
@@ -81,6 +81,18 @@ void Timer::restart() {
 		this->start();
 	}
 }
+
+
+/**
+ * Records a message corresponding to a given time recorded by the timer.
+ * When this method is called it assumes that the timer has been stopped
+ * and has the current time for the process corresponding to the message
+ * @param msg a msg corresponding to this time split
+ */
+void Timer::recordSplit(const char* msg) {
+	_timer_splits.push_back(std::pair<double, const char*>(getTime(), msg));
+}
+
 
 
 /**
@@ -157,4 +169,37 @@ double Timer::diff(timespec start, timespec end) {
 	#else
 		return(sec*1.0E9 + nsec);
 	#endif
+}
+
+
+/**
+ * This method will loop through all of the Timer's splits and print a
+ * formatted message string (80 characters in length) to the console
+ * with the message and the time corresponding to that message
+ */
+void Timer::printSplits() {
+
+	const char* curr_msg;
+	double curr_split;
+	int msg_length, num_whitespaces;
+
+	for (int i=0; i < (int)_timer_splits.size(); i++) {
+		std::stringstream formatted_msg;
+
+		curr_split = _timer_splits.at(i).first;
+		curr_msg = _timer_splits.at(i).second;
+		msg_length = strlen(curr_msg);
+
+		/* Num whitespaces for formatting is:
+		 * 80 max char - 13 char for logger - 13 for time - msg length */
+		num_whitespaces = 80 - 13 - 11 - msg_length;
+
+		formatted_msg << curr_msg;
+
+		/* Add periods to format message to 80 characters length */
+		for (int i=0; i < num_whitespaces; i++)
+			formatted_msg << ".";
+
+		log_printf(RESULT, "%s%.7f sec", formatted_msg.str().c_str(), curr_split);
+	}
 }

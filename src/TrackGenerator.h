@@ -16,7 +16,6 @@
 #include "Track.h"
 #include "Geometry.h"
 #include "Magick++.h"
-#include "Timer.h"
 
 class Plotting;
 
@@ -30,10 +29,6 @@ private:
 	double* _azim_weights;	/* azimuthal weights */
 	double _width;
 	double _height;
-	Timer _timer_segmentation;
-	Timer _timer_tracking;
-	Timer _timer_segment_plotting;
-	Timer _timer_track_plotting;
 	Track** _tracks;
 	Geometry* _geom;
 	int _bit_length_x;
@@ -44,7 +39,7 @@ private:
 	int* _pix_map_segments;
 public:
 	TrackGenerator(Geometry* geom, const int num_azim,
-			const double spacing, const int bitDim);
+			const double spacing, const int bit_dim);
 	virtual ~TrackGenerator();
     double *getAzimWeights() const;
     int getNumAzim() const;

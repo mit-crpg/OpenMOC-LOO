@@ -30,12 +30,16 @@ private:
 	double _sector_offset;
 	std::string _verbosity;
 	bool _dump_geometry;
+	bool _plot_tracks;
+	bool _plot_segments;
 public:
     Options(int argc, const char **argv);
     ~Options(void);
     const char *getGeometryFile() const;
     const char *getMaterialFile() const;
     bool dumpGeometry() const;
+    bool plotTracks() const;
+    bool plotSegments() const;
     double getNumAzim() const;
     int getBitDimension() const;
     double getTrackSpacing() const;
