@@ -408,7 +408,6 @@ Cell* Lattice::findNextLatticeCell(LocalCoords* coords, double angle,
 
 			/* Check if distance to test point is current minimum */
 			if (d < distance) {
-				log_printf(DEBUG, "Moving to left lattice cell");
 				distance = d;
 				new_lattice_x = lattice_x -1 ;
 				new_lattice_y = lattice_y;

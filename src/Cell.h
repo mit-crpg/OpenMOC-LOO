@@ -94,8 +94,6 @@ public:
 class CellFill: public Cell {
 private:
 	std::pair<int, Universe*> _universe_fill;
-//	int _universe_fill;
-//	Universe* _universe;
 public:
 	CellFill(int id, int universe, int num_surfaces,
 		 int *surfaces, int universe_fill);

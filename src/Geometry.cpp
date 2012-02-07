@@ -59,11 +59,9 @@ Geometry::Geometry(int num_sectors, int num_rings, double sector_offset,
 				return;
 			});
 
-#if 0
 	Universe *univ = _universes.at(0);
 	_num_FSRs = univ->computeFSRMaps();
-	log_printf(INFO, "num of FSR = %d\n", _num_FSRs);
-#endif
+	log_printf(NORMAL, "Number of flat source regions computed: %d", _num_FSRs);
 }
 
 
@@ -283,25 +281,6 @@ void Geometry::addCell(Cell* cell) {
 				static_cast<CellBasic*>(cell)->getMaterial());
 	}
 
-	/* If the cell is filled with a universe which doesn't exist, create it */
-	else if (cell->getType() == FILL &&
-			_universes.find(static_cast<CellFill*>(cell)->getUniverse()) ==
-														_universes.end()) {
-
-		/* Create a new universe with the origin at (0,0) and add it to
-		 * the universe list */
-		Universe* univ = new Universe(cell->getUniverse());
-		Point* origin = new Point();
-		origin->setCoords(0,0);
-		univ->setOrigin(origin);
-		delete origin;
-		addUniverse(univ);
-
-		// ????? //
-		static_cast<CellFill*>(cell)->setUniverseFillPointer(univ);
-	}
-
-
 	/* Set the pointers for each of the surfaces inside the cell and also
 	 * checks whether the cell's surfaces exist */
 	std::map<int, Surface*> cells_surfaces = cell->getSurfaces();
@@ -392,6 +371,16 @@ void Geometry::addUniverse(Universe* universe) {
 		}
 	}
 	//	coords->setLattice(_uid);
+
+	/* Checks if any cellfill references this universe and sets its pointer */
+	std::map<int, Cell*>::iterator iter;
+	for (iter = _cells.begin(); iter != _cells.end(); ++iter) {
+		if (iter->second->getType() == FILL) {
+			CellFill* cell = static_cast<CellFill*>(iter->second);
+			if (cell->getUniverseFillId() == universe->getId())
+				cell->setUniverseFillPointer(universe);
+		}
+	}
 
 	return;
 }
@@ -514,8 +503,9 @@ std::string Geometry::toString() {
 		string << iter3->second->toString() << "\n\t\t";
 
 	string << "\n\tUniverses:\n\t\t";
-	for (iter4 = _universes.begin(); iter4 != _universes.end(); ++iter4)
+	for (iter4 = _universes.begin(); iter4 != _universes.end(); ++iter4) {
 		string << iter4->second->toString() << "\n\t\t";
+	}
 
 	string << "\n\tLattices:\n\t\t";
 	for (iter5 = _lattices.begin(); iter5 != _lattices.end(); ++iter5) {
@@ -534,7 +524,7 @@ std::string Geometry::toString() {
  * the console
  */
 void Geometry::printString() {
-	log_printf(INFO, "Printing the geometry to the console:\n\t%s",
+	log_printf(RESULT, "Printing the geometry to the console:\n\t%s",
 				toString().c_str());
 	return;
 }
