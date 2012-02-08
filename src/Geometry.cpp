@@ -885,8 +885,6 @@ Cell* Geometry::findNextCell(LocalCoords* coords, double angle) {
 				/* If we reach a localcoord in a lattice, delete all lower
 				 * level localcoords in linked list and break loop. */
 				if (curr->getType() == LAT) {
-//					curr->setNext(NULL);
-//					delete curr->getNext();
 					curr->prune();
 					curr = NULL;
 				}
@@ -918,8 +916,6 @@ Cell* Geometry::findNextCell(LocalCoords* coords, double angle) {
 
 						/* Delete current lattice */
 						curr->getPrev()->prune();
-//						curr->getPrev()->setNext(NULL);
-//						delete curr;
 
 						/* Get the lowest level localcoords in the linked list */
 						curr = coords->getLowestLevel();
@@ -931,8 +927,6 @@ Cell* Geometry::findNextCell(LocalCoords* coords, double angle) {
 							/* If we reach a localcoord in a lattice, delete all lower
 							 * level localcoords in linked list and break loop. */
 							if (curr->getType() == LAT) {
-//								curr->setNext(NULL);
-//								delete curr->getNext();
 								curr->prune();
 								curr = NULL;
 							}
@@ -974,16 +968,13 @@ void Geometry::segmentize(Track* track) {
 	double segment_length;
 
 	/* Use a LocalCoords for the start and end of each segment */
-	LocalCoords* segment_start = new LocalCoords(x0, y0);
-	LocalCoords* segment_end = new LocalCoords(x0, y0);
-
-//	LocalCoords segment_start(x0, y0);
-//	LocalCoords segment_end(x0, y0);
-	segment_start->setUniverse(0);
-	segment_end->setUniverse(0);
+	LocalCoords segment_start(x0, y0);
+	LocalCoords segment_end(x0, y0);
+	segment_start.setUniverse(0);
+	segment_end.setUniverse(0);
 
 	/* Find the cell for the track starting point */
-	Cell* curr = findCell(segment_end);
+	Cell* curr = findCell(&segment_end);
 	Cell* prev;
 
 	/* If starting point was outside the bounds of the geometry */
@@ -997,10 +988,10 @@ void Geometry::segmentize(Track* track) {
 
 		/* Find the next cell */
 		prev = curr;
-		curr = findNextCell(segment_end, phi);
+		curr = findNextCell(&segment_end, phi);
 
 		/* Find the segment length between the segments start and end points */
-		segment_length = segment_end->getPoint()->distance(segment_start->getPoint());
+		segment_length = segment_end.getPoint()->distance(segment_start.getPoint());
 
 		/* Create a new segment */
 		segment* new_segment = new segment;
@@ -1013,21 +1004,21 @@ void Geometry::segmentize(Track* track) {
 
 		/* Checks to make sure that new segment does not have the same start
 		 * and end points */
-		if (segment_start->getX() == segment_end->getX() &&
-				segment_start->getY() == segment_end->getY()) {
+		if (segment_start.getX() == segment_end.getX() &&
+				segment_start.getY() == segment_end.getY()) {
 
 			log_printf(ERROR, "Created a segment with the same start and end "
-					"point: x = %f, y = %f", segment_start->getX(),
-					segment_start->getY());
+					"point: x = %f, y = %f", segment_start.getX(),
+					segment_start.getY());
 		}
 		/* Update coordinates for start of next segment */
 		else {
 			log_printf(DEBUG, "Created a new segment with start: x = %f, y = "
-					"%f, and end: x = %f, y = %f", segment_start->getX(),
-					segment_start->getY(), segment_end->getX(),
-					segment_end->getY());
-			segment_start->setX(segment_end->getX());
-			segment_start->setY(segment_end->getY());
+					"%f, and end: x = %f, y = %f", segment_start.getX(),
+					segment_start.getY(), segment_end.getX(),
+					segment_end.getY());
+			segment_start.setX(segment_end.getX());
+			segment_start.setY(segment_end.getY());
 		}
 
 		/* Add the segment to the track */
@@ -1038,11 +1029,10 @@ void Geometry::segmentize(Track* track) {
 			track->getNumSegments(), track->toString().c_str());
 
 
-	log_printf(INFO, "Trying to delete segments. end: %s", segment_end->toString().c_str());
-	segment_start->prune();
-	segment_end->prune();
-	delete segment_start;
-	delete segment_end;
+	log_printf(INFO, "Trying to delete segments. end: %s", segment_end.toString().c_str());
+
+	segment_start.prune();
+	segment_end.prune();
 
 	return;
 }

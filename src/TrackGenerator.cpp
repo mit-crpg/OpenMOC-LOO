@@ -617,6 +617,7 @@ void TrackGenerator::plotSegmentsTiff(){
 
 	/* write Magick pixel color array to png file */
 	image_segments.write("segments.png");
+
 }
 
 /**

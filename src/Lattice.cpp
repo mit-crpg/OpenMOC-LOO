@@ -296,13 +296,10 @@ Cell* Lattice::findCell(LocalCoords* coords,
 	/* Create a new localcoords object for the next level universe */
 	LocalCoords* next_coords;
 
-	// ??? //
-	coords->prune();
-
-	//	if (coords->getNext() == NULL)
+	if (coords->getNext() == NULL)
 		next_coords = new LocalCoords(nextX, nextY);
-//	else
-//		next_coords = coords->getNext();
+	else
+		next_coords = coords->getNext();
 
 	int universe_id = getUniverse(lat_x, lat_y)->getId();
 	Universe* univ = universes.at(universe_id);
@@ -476,11 +473,9 @@ Cell* Lattice::findNextLatticeCell(LocalCoords* coords, double angle,
 			Universe* univ = _universes.at(new_lattice_y).at(new_lattice_x).second;
 			LocalCoords* next_coords;
 
-			coords->prune();
-
-//			if (coords->getNext() != NULL)
-//				next_coords = coords->getNext();
-//			else {
+			if (coords->getNext() != NULL)
+				next_coords = coords->getNext();
+			else {
 				/* Compute local position of particle in next level universe */
 				double nextX = coords->getX() - (_origin.getX()
 								+ (new_lattice_x + 0.5) * _width_x);
@@ -488,11 +483,10 @@ Cell* Lattice::findNextLatticeCell(LocalCoords* coords, double angle,
 								+ (new_lattice_y + 0.5) * _width_y);
 
 				/* Set the coordinates at the next level localcoord */
-
 				next_coords = new LocalCoords(nextX, nextY);
 				next_coords->setPrev(coords);
 				coords->setNext(next_coords);
-//			}
+			}
 
 			next_coords->setUniverse(univ->getId());
 

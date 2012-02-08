@@ -156,16 +156,13 @@ Cell* Universe::findCell(LocalCoords* coords,
 			 * Update coords to next level and continue search */
 			else if (cell->getType() == FILL) {
 
-				// ??? //
-				coords->prune();
-
 				LocalCoords* next_coords;
 
-//				if (coords->getNext() == NULL)
+				if (coords->getNext() == NULL)
 					next_coords = new LocalCoords(coords->getX(),
 													coords->getY());
-//				else
-//					next_coords = coords->getNext();
+				else
+					next_coords = coords->getNext();
 
 				CellFill* cell_fill = static_cast<CellFill*>(cell);
 				int universe_id = cell_fill->getUniverseFillId();
