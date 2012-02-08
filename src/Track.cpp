@@ -270,6 +270,9 @@ bool Track::contains(Point* point) {
  * Deletes each of this track's segments
  */
 void Track::clearSegments() {
+	for (int i=0; i < (int)_segments.size(); i++)
+		delete _segments.at(i);
+
 	_segments.clear();
 }
 

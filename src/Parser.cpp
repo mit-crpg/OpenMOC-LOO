@@ -294,16 +294,20 @@ Parser::Parser (const Options *opts) {
  * Parser Destructor
  */
 Parser::~Parser() {
-	unsigned int i;
+//	unsigned int i;
 
-	for (i = 0; i < this->surfaces.size(); i++)
-		delete this->surfaces.at(i);
-	for (i = 0; i < this->cells.size(); i++)
-		delete this->cells.at(i);
-	for (i = 0; i < this->lattices.size(); i++)
-		delete this->lattices.at(i);
-	for (i = 0; i < this->materials.size(); i++)
-		delete this->materials.at(i);
+//	for (i = 0; i < this->surfaces.size(); i++)
+//		delete this->surfaces.at(i);
+//	for (i = 0; i < this->cells.size(); i++)
+//		delete this->cells.at(i);
+//	for (i = 0; i < this->lattices.size(); i++)
+//		delete this->lattices.at(i);
+//	for (i = 0; i < this->materials.size(); i++)
+//		delete this->materials.at(i);
+	materials.clear();
+	surfaces.clear();
+	cells.clear();
+	lattices.clear();
 }
 
 /**

@@ -51,6 +51,7 @@ public:
 	int getNumRings() const;
 	int getNumSectors() const;
 	double getSectorOffset() const;
+	int getNumFSRs() const;
 
 	void addMaterial(Material* material);
 	Material* getMaterial(int id);

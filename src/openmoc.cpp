@@ -14,6 +14,7 @@
 #include "TrackGenerator.h"
 #include "Parser.h"
 #include "Options.h"
+#include "LocalCoords.h"
 #include "Timer.h"
 #include "log.h"
 
@@ -95,6 +96,14 @@ int main(int argc, const char **argv) {
 		timer.stop();
 		timer.recordSplit("Creating tiff of segments");
 	}
+
+
+//	LocalCoords* test = new LocalCoords(0.2, 0.2);
+//	test->setUniverse(0);
+//	geometry.findCell(test);
+//
+//	log_printf(DEBUG,"Found cell and localcoords:%s", test->toString().c_str());
+//	delete test;
 
 	/* Print timer splits to console */
 	log_printf(NORMAL, "Program complete");
