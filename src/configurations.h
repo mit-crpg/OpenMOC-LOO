@@ -18,6 +18,8 @@
 #define NUM_ENERGY_GROUPS 7
 #define GRP_TIMES_ANG NUM_POLAR_ANGLES*NUM_ENERGY_GROUPS
 
+/* Max number of regions for precomputing pre-factors in solver */
+#define NUM_REGIONS_THRESH
 
 /******************************************************************************
  *********************** PHYSICAL CONSTANTS ***********************************

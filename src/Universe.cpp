@@ -155,17 +155,27 @@ Cell* Universe::findCell(LocalCoords* coords,
 			/* FILL type cell - cell contains a universe at a lower level
 			 * Update coords to next level and continue search */
 			else if (cell->getType() == FILL) {
-				LocalCoords* new_coords = new LocalCoords(coords->getX(),
-														coords->getY());
+
+				// ??? //
+				coords->prune();
+
+				LocalCoords* next_coords;
+
+//				if (coords->getNext() == NULL)
+					next_coords = new LocalCoords(coords->getX(),
+													coords->getY());
+//				else
+//					next_coords = coords->getNext();
+
 				CellFill* cell_fill = static_cast<CellFill*>(cell);
 				int universe_id = cell_fill->getUniverseFillId();
-				new_coords->setUniverse(universe_id);
+				next_coords->setUniverse(universe_id);
 				Universe* univ = universes.at(universe_id);
 				coords->setCell(cell->getId());
 
-				coords->setNext(new_coords);
-				new_coords->setPrev(coords);
-				return univ->findCell(new_coords, universes);
+				coords->setNext(next_coords);
+				next_coords->setPrev(coords);
+				return univ->findCell(next_coords, universes);
 			}
 		}
 	}

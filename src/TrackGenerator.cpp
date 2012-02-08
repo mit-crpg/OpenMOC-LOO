@@ -63,12 +63,15 @@ TrackGenerator::TrackGenerator(Geometry* geom,
  */
 TrackGenerator::~TrackGenerator() {
 	delete [] _num_tracks;
+	delete [] _num_x;
+	delete [] _num_y;
 	delete [] _azim_weights;
-	delete _pix_map_segments;
-	delete _pix_map_tracks;
+	delete [] _pix_map_segments;
+	delete [] _pix_map_tracks;
 
 	for (int i = 0; i < _num_azim; i++)
 		delete [] _tracks[i];
+
 	delete [] _tracks;
 }
 
@@ -109,7 +112,7 @@ double TrackGenerator::getSpacing() const {
 }
 
 
-/**
+/**-na 16 -ts 0.2 -ps
  * Return the 2D jagged array of track pointers
  * @return the 2D jagged array of tracks
  */
@@ -249,7 +252,7 @@ void TrackGenerator::generateTracks() {
 				double phi = _tracks[i][j].getPhi();
 				_tracks[i][j].setValues(new_x0, new_y0, new_x1, new_y1, phi);
 
-				/*
+				/*-na 16 -ts 0.2 -ps
 				 * Add line to _pix_map segments bitmap array.
 				 * Note conversion from geometric coordinate system to
 				 * bitmap coordinates.
@@ -262,6 +265,11 @@ void TrackGenerator::generateTracks() {
 						_pix_map_tracks);
 			}
 		}
+
+		delete [] dx_eff;
+		delete [] dy_eff;
+		delete [] d_eff;
+		delete [] phi_eff;
 
 		return;
 	}

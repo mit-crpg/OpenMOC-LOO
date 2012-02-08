@@ -70,9 +70,27 @@ Geometry::Geometry(int num_sectors, int num_rings, double sector_offset,
  * universes and lattices
  */
 Geometry::~Geometry() {
+	std::map<int, Material*>::iterator iter1;
+	std::map<int, Surface*>::iterator iter2;
+	std::map<int, Cell*>::iterator iter3;
+	std::map<int, Universe*>::iterator iter4;
+	std::map<int, Lattice*>::iterator iter5;
+
+
+	for (iter1 = _materials.begin(); iter1 != _materials.end(); ++iter1)
+		delete iter1->second;
 	_materials.clear();
+
+	for (iter2 = _surfaces.begin(); iter2 != _surfaces.end(); ++iter2)
+		delete iter2->second;
 	_surfaces.clear();
+
+	for (iter3 = _cells.begin(); iter3 != _cells.end(); ++iter3)
+		delete iter3->second;
 	_cells.clear();
+
+	for (iter4 = _universes.begin(); iter4 != _universes.end(); ++iter4)
+		delete iter4->second;
 	_universes.clear();
 	_lattices.clear();
 }
@@ -151,6 +169,14 @@ int Geometry::getNumSectors() const {//	coords->setLattice(_uid);
  */
 double Geometry::getSectorOffset() const {
     return _sector_offset;
+}
+
+/**
+ * Returns the number of flat source regions in the geometry
+ * @return number of flat source regions
+ */
+int Geometry::getNumFSRs() const {
+	return _num_FSRs;
 }
 
 
@@ -274,7 +300,7 @@ void Geometry::addCell(Cell* cell) {
 	/* If the cell is filled with a material which does not exist */
 	else if (cell->getType() == MATERIAL &&
 			_materials.find(static_cast<CellBasic*>(cell)->getMaterial()) ==
-														_materials.end()) {
+						_materials.end()) {
 
 		log_printf(ERROR, "Attempted to add cell with material with id = %d,"
 				" but material does not exist",
@@ -456,7 +482,7 @@ void Geometry::addLattice(Lattice* lattice) {
 
 /**
  * Return a lattice from the geometry
- * @param the lattice (universe) id
+ * @param the lattiLocalCoords* ce (universe) id
  * @return a pointer to the lattice object
  */
 Lattice* Geometry::getLattice(int id) {
@@ -859,8 +885,9 @@ Cell* Geometry::findNextCell(LocalCoords* coords, double angle) {
 				/* If we reach a localcoord in a lattice, delete all lower
 				 * level localcoords in linked list and break loop. */
 				if (curr->getType() == LAT) {
-					curr->setNext(NULL);
-					delete curr->getNext();
+//					curr->setNext(NULL);
+//					delete curr->getNext();
+					curr->prune();
 					curr = NULL;
 				}
 			}
@@ -890,8 +917,9 @@ Cell* Geometry::findNextCell(LocalCoords* coords, double angle) {
 					if (cell == NULL) {
 
 						/* Delete current lattice */
-						curr->getPrev()->setNext(NULL);
-						delete curr;
+						curr->getPrev()->prune();
+//						curr->getPrev()->setNext(NULL);
+//						delete curr;
 
 						/* Get the lowest level localcoords in the linked list */
 						curr = coords->getLowestLevel();
@@ -903,8 +931,9 @@ Cell* Geometry::findNextCell(LocalCoords* coords, double angle) {
 							/* If we reach a localcoord in a lattice, delete all lower
 							 * level localcoords in linked list and break loop. */
 							if (curr->getType() == LAT) {
-								curr->setNext(NULL);
-								delete curr->getNext();
+//								curr->setNext(NULL);
+//								delete curr->getNext();
+								curr->prune();
 								curr = NULL;
 							}
 						}
@@ -945,13 +974,16 @@ void Geometry::segmentize(Track* track) {
 	double segment_length;
 
 	/* Use a LocalCoords for the start and end of each segment */
-	LocalCoords segment_start(x0, y0);
-	LocalCoords segment_end(x0, y0);
-	segment_start.setUniverse(0);
-	segment_end.setUniverse(0);
+	LocalCoords* segment_start = new LocalCoords(x0, y0);
+	LocalCoords* segment_end = new LocalCoords(x0, y0);
+
+//	LocalCoords segment_start(x0, y0);
+//	LocalCoords segment_end(x0, y0);
+	segment_start->setUniverse(0);
+	segment_end->setUniverse(0);
 
 	/* Find the cell for the track starting point */
-	Cell* curr = findCell(&segment_end);
+	Cell* curr = findCell(segment_end);
 	Cell* prev;
 
 	/* If starting point was outside the bounds of the geometry */
@@ -965,10 +997,10 @@ void Geometry::segmentize(Track* track) {
 
 		/* Find the next cell */
 		prev = curr;
-		curr = findNextCell(&segment_end, phi);
+		curr = findNextCell(segment_end, phi);
 
 		/* Find the segment length between the segments start and end points */
-		segment_length = segment_end.getPoint()->distance(segment_start.getPoint());
+		segment_length = segment_end->getPoint()->distance(segment_start->getPoint());
 
 		/* Create a new segment */
 		segment* new_segment = new segment;
@@ -981,21 +1013,21 @@ void Geometry::segmentize(Track* track) {
 
 		/* Checks to make sure that new segment does not have the same start
 		 * and end points */
-		if (segment_start.getX() == segment_end.getX() &&
-				segment_start.getY() == segment_end.getY()) {
+		if (segment_start->getX() == segment_end->getX() &&
+				segment_start->getY() == segment_end->getY()) {
 
 			log_printf(ERROR, "Created a segment with the same start and end "
-					"point: x = %f, y = %f", segment_start.getX(),
-					segment_start.getY());
+					"point: x = %f, y = %f", segment_start->getX(),
+					segment_start->getY());
 		}
 		/* Update coordinates for start of next segment */
 		else {
 			log_printf(DEBUG, "Created a new segment with start: x = %f, y = "
-					"%f, and end: x = %f, y = %f", segment_start.getX(),
-					segment_start.getY(), segment_end.getX(),
-					segment_end.getY());
-			segment_start.setX(segment_end.getX());
-			segment_start.setY(segment_end.getY());
+					"%f, and end: x = %f, y = %f", segment_start->getX(),
+					segment_start->getY(), segment_end->getX(),
+					segment_end->getY());
+			segment_start->setX(segment_end->getX());
+			segment_start->setY(segment_end->getY());
 		}
 
 		/* Add the segment to the track */
@@ -1004,6 +1036,13 @@ void Geometry::segmentize(Track* track) {
 
 	log_printf(INFO, "Created %d segments for track: %s",
 			track->getNumSegments(), track->toString().c_str());
+
+
+	log_printf(INFO, "Trying to delete segments. end: %s", segment_end->toString().c_str());
+	segment_start->prune();
+	segment_end->prune();
+	delete segment_start;
+	delete segment_end;
 
 	return;
 }

@@ -294,21 +294,30 @@ Cell* Lattice::findCell(LocalCoords* coords,
 					+ (lat_y + 0.5) * _width_y);
 
 	/* Create a new localcoords object for the next level universe */
-	LocalCoords* newCoords = new LocalCoords(nextX, nextY);
+	LocalCoords* next_coords;
+
+	// ??? //
+	coords->prune();
+
+	//	if (coords->getNext() == NULL)
+		next_coords = new LocalCoords(nextX, nextY);
+//	else
+//		next_coords = coords->getNext();
+
 	int universe_id = getUniverse(lat_x, lat_y)->getId();
 	Universe* univ = universes.at(universe_id);
-	newCoords->setUniverse(universe_id);
+	next_coords->setUniverse(universe_id);
 
 	/* Set lattice indices */
 	coords->setLattice(_id);
 	coords->setLatticeX(lat_x);
 	coords->setLatticeY(lat_y);
 
-	coords->setNext(newCoords);
-	newCoords->setPrev(coords);
+	coords->setNext(next_coords);
+	next_coords->setPrev(coords);
 
 	/* Search the next lowest level universe for the cell */
-	return univ->findCell(newCoords, universes);
+	return univ->findCell(next_coords, universes);
 }
 
 
@@ -465,11 +474,13 @@ Cell* Lattice::findNextLatticeCell(LocalCoords* coords, double angle,
 
 			/* Move to next lowest level universe */
 			Universe* univ = _universes.at(new_lattice_y).at(new_lattice_x).second;
-			LocalCoords* new_coords;
+			LocalCoords* next_coords;
 
-			if (coords->getNext() != NULL)
-				new_coords = coords->getNext();
-			else {
+			coords->prune();
+
+//			if (coords->getNext() != NULL)
+//				next_coords = coords->getNext();
+//			else {
 				/* Compute local position of particle in next level universe */
 				double nextX = coords->getX() - (_origin.getX()
 								+ (new_lattice_x + 0.5) * _width_x);
@@ -477,12 +488,13 @@ Cell* Lattice::findNextLatticeCell(LocalCoords* coords, double angle,
 								+ (new_lattice_y + 0.5) * _width_y);
 
 				/* Set the coordinates at the next level localcoord */
-				new_coords = new LocalCoords(nextX, nextY);
-				new_coords->setPrev(coords);
-				coords->setNext(new_coords);
-			}
 
-			new_coords->setUniverse(univ->getId());
+				next_coords = new LocalCoords(nextX, nextY);
+				next_coords->setPrev(coords);
+				coords->setNext(next_coords);
+//			}
+
+			next_coords->setUniverse(univ->getId());
 
 			/* Search lower level universe */
 			return findCell(coords, universes);
