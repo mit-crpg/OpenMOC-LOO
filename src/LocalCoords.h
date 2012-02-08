@@ -63,6 +63,7 @@ public:
     void adjustCoords(double delta_x, double delta_y);
     void updateMostLocal(Point* point);
     void prune();
+    void copyCoords(LocalCoords* coords);
     std::string toString();
 };
 

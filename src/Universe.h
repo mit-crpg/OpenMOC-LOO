@@ -9,6 +9,7 @@
 #define UNIVERSE_H_
 
 #include <sstream>
+#include <iostream>
 #include <string>
 #include <map>
 #include "Point.h"
@@ -32,7 +33,7 @@ protected:
 	universeType _type;
 	std::map<int, Cell*> _cells;
 	Point _origin;
-	std::map<int, int> _regionMap;
+	std::map<int, int> _region_map;
 public:
 	Universe(const int id);
 	virtual ~Universe();
@@ -42,6 +43,7 @@ public:
 	int getId() const;
 	universeType getType();
 	int getNumCells() const;
+	int getFSR(int cell_id);
 	Point* getOrigin();
 	void setId(const int id);
 	void setType(universeType type);

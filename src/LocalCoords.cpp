@@ -127,7 +127,8 @@ LocalCoords* LocalCoords::getPrev() const {
  */
 void LocalCoords::setType(coordType type) {
 	_type = type;
-}
+}    void copyCoords(LocalCoords* coords);
+
 
 
 /**
@@ -285,6 +286,41 @@ void LocalCoords::prune() {
 	}
 
 	setNext(NULL);
+}
+
+
+void LocalCoords::copyCoords(LocalCoords* coords) {
+
+	LocalCoords* curr1 = this;
+	LocalCoords* curr2 = coords;
+
+	while (curr1 != NULL) {
+		curr2->setX(curr1->getX());
+		curr2->setY(curr1->getY());
+		curr2->setUniverse(curr1->getUniverse());
+
+		if (curr1->getType() == UNIV) {
+			curr2->setType(UNIV);
+			curr2->setCell(curr1->getCell());
+		}
+		else {
+			curr2->setLattice(curr1->getLattice());
+			curr2->setLatticeX(curr1->getLatticeX());
+			curr2->setLatticeY(curr1->getLatticeY());
+			curr2->setType(LAT);
+		}
+
+		curr1 = curr1->getNext();
+
+		if (curr1 != NULL && curr2->getNext() == NULL) {
+			LocalCoords* new_coords = new LocalCoords(0.0, 0.0);
+			curr2->setNext(new_coords);
+			new_coords->setPrev(curr2);
+			curr2 = new_coords;
+		}
+		else
+			curr2 = curr2->getNext();
+	}
 }
 
 /**

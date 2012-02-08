@@ -40,7 +40,7 @@
 
 /* Error threshold for determining how close to the boundary of a lattice cell
  * a point needs to be to be considered on it */
-#define ON_LATTICE_CELL_THRESH 1E-10
+#define ON_LATTICE_CELL_THRESH 1E-12
 
 /* Distance a point is moved to cross over a surface into a new cell during
  * track segmentation */

@@ -322,7 +322,8 @@ void Geometry::addCell(Cell* cell) {
 					"but surface does not exist", iter->first);
 
 		/* The surface does exist, so set the surface pointer in the cell */
-		else
+		else	int findFSRId(LocalCoords* coords);
+
 			cell->setSurfacePointer(_surfaces.at(surface_id));
 	}
 
@@ -404,7 +405,8 @@ void Geometry::addUniverse(Universe* universe) {
 		if (iter->second->getType() == FILL) {
 			CellFill* cell = static_cast<CellFill*>(iter->second);
 			if (cell->getUniverseFillId() == universe->getId())
-				cell->setUniverseFillPointer(universe);
+				cell->setUniverseFillPointer(universe);	int findFSRId(LocalCoords* coords);
+
 		}
 	}
 
@@ -459,7 +461,8 @@ void Geometry::addLattice(Lattice* lattice) {
 						lattice->getUniverses().at(i).at(j));
 
 			/* Set the universe pointer */
-			else
+			else	int findFSRId(LocalCoords* coords);
+
 				lattice->setUniversePointer(_universes.at(universe_id));
 		}
 	}
@@ -495,6 +498,7 @@ Lattice* Geometry::getLattice(int id) {
 	}
 	exit(0);
 }
+int findFSRId(LocalCoords* coords);
 
 
 /**
@@ -533,7 +537,8 @@ std::string Geometry::toString() {
 		string << iter4->second->toString() << "\n\t\t";
 	}
 
-	string << "\n\tLattices:\n\t\t";
+	string << "\n\tLattices:\n\t\t";	int findFSRId(LocalCoords* coords);
+
 	for (iter5 = _lattices.begin(); iter5 != _lattices.end(); ++iter5) {
 		string << iter5->second->toString()  << "\n\t\t";
 	}
@@ -667,7 +672,8 @@ void Geometry::adjustKeys() {
 
 		/* Reset the cell container to the new map*/
 		_cells.clear();
-		_cells = adjusted_cells;
+		_cells = adjusted_cells;	int findFSRId(LocalCoords* coords);
+
 	}
 	catch (std::exception &e) {
 		log_printf(ERROR, "Unable to adjust cell' keys Backtrace:\n%s",
@@ -889,6 +895,7 @@ Cell* Geometry::findNextCell(LocalCoords* coords, double angle) {
 					curr = NULL;
 				}
 			}
+			int findFSRId(LocalCoords* coords);
 
 			/* Get the lowest level universe in linkedlist */
 			curr = coords->getLowestLevel();
@@ -986,6 +993,8 @@ void Geometry::segmentize(Track* track) {
 	 * it to the next cell, create a new segment, and add it to the geometry */
 	while (curr != NULL) {
 
+		segment_end.copyCoords(&segment_start);
+
 		/* Find the next cell */
 		prev = curr;
 		curr = findNextCell(&segment_end, phi);
@@ -999,7 +1008,8 @@ void Geometry::segmentize(Track* track) {
 
 		//FIXME: this needs to use our flat source region id from some equation
 		//mapping lattices, universes and cells to FSR ids
-		new_segment->_region_id = prev->getUid();
+		new_segment->_region_id = findFSRId(&segment_start);
+//		new_segment->_region_id = prev->getUid();
 //		new_segment->_region_id = static_cast<CellBasic*>(_cells.at(prev->getId()))->getMaterial();
 
 		/* Checks to make sure that new segment does not have the same start
@@ -1017,8 +1027,8 @@ void Geometry::segmentize(Track* track) {
 					"%f, and end: x = %f, y = %f", segment_start.getX(),
 					segment_start.getY(), segment_end.getX(),
 					segment_end.getY());
-			segment_start.setX(segment_end.getX());
-			segment_start.setY(segment_end.getY());
+//			segment_start.setX(segment_end.getX());
+//			segment_start.setY(segment_end.getY());
 		}
 
 		/* Add the segment to the track */
@@ -1028,14 +1038,32 @@ void Geometry::segmentize(Track* track) {
 	log_printf(INFO, "Created %d segments for track: %s",
 			track->getNumSegments(), track->toString().c_str());
 
-
-	log_printf(INFO, "Trying to delete segments. end: %s", segment_end.toString().c_str());
-
 	segment_start.prune();
 	segment_end.prune();
 
 	return;
 }
+
+
+int Geometry::findFSRId(LocalCoords* coords) {
+	int fsr_id = 0;
+	LocalCoords* curr = coords;
+
+	while (curr != NULL) {
+		if (curr->getType() == LAT) {
+			Lattice* lattice = _lattices.at(curr->getLattice());
+			fsr_id += lattice->getFSR(curr->getLatticeX(), curr->getLatticeY());
+		}
+		else if (curr->getType() == UNIV) {
+			Universe* universe = _universes.at(curr->getUniverse());
+			fsr_id += universe->getFSR(curr->getCell());
+		}
+		curr = curr->getNext();
+	}
+
+	return fsr_id;
+}
+
 
 
 /*
@@ -1055,13 +1083,4 @@ bool Geometry::mapContainsKey(std::map<K, V> map, K key) {
 
 	/* If no exception is thrown, element does exist */
 	return true;
-}
-
-void Geometry::checkUniverse() {
-	std::map<int, Universe*>::iterator iter;
-
-	for (iter = _universes.begin(); iter != _universes.end(); ++iter) {
-		//log_printf(NORMAL, iter->second->toString().c_str());
-		std::cout << iter->second->toString() << std::endl;
-	}
 }

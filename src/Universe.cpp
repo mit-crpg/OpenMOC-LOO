@@ -101,6 +101,17 @@ Point* Universe::getOrigin() {
 }
 
 
+int Universe::getFSR(int cell_id) {
+
+	if (_cells.find(cell_id) == _cells.end())
+		log_printf(ERROR, "Tried to find FSR id for cell with id = %d was found"
+				" in universe with id = %d but no cell exists", cell_id, _id);
+
+	return _region_map.at(cell_id);
+}
+
+
+
 /**
  * Sets the universe type to SIMPLE or LATTICE
  * @param type the universe type
@@ -212,7 +223,7 @@ int Universe::computeFSRMaps() {
     
 	/* loop over cells in the universe to set the map and update count */
 	for (iter = _cells.begin(); iter != _cells.end(); ++iter) {
-		_regionMap.insert(std::pair<int, int>(iter->first, count));
+		_region_map.insert(std::pair<int, int>(iter->first, count));
 		count += iter->second->getNumFSRs();
 	}
 

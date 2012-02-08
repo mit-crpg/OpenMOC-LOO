@@ -43,6 +43,7 @@ public:
 	Universe* getUniverse(int lattice_x, int lattice_y) const;
 	double getWidthX() const;
 	double getWidthY() const;
+	int getFSR(int lat_x, int lat_y);
 	void adjustKeys();
 	bool withinBounds(Point* point);
 	Cell* findCell(LocalCoords* coords, std::map<int, Universe*> universes);

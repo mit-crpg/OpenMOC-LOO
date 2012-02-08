@@ -645,10 +645,10 @@ void TrackGenerator::LineFct(int x0, int y0, int x1, int y1, int* pixMap, int co
 		sy = -1;
 	}
 	int error = dx - dy;
-	pixMap[y0 * _bit_length_x + x0] = color;
-	pixMap[y1 * _bit_length_x + x1] = color;
+	pixMap[y0 * _bit_length_x + x0] = color%15;
+	pixMap[y1 * _bit_length_x + x1] = color%15;
 	while (x0 != x1 && y0 != y1){
-		pixMap[y0 * _bit_length_x + x0] = color;
+		pixMap[y0 * _bit_length_x + x0] = color%15;
 		int e2 = 2 * error;
 		if (e2 > -dy){
 			error = error - dy;

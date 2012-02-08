@@ -182,6 +182,17 @@ double Lattice::getWidthY() const {
 }
 
 
+int Lattice::getFSR(int lat_x, int lat_y) {
+	/* Check if lattice indices are out of bounds */
+	if (lat_x > _num_x || lat_y > _num_y)
+		log_printf(ERROR, "Tried to access FSR map of lattice id = %d, but "
+				"indices lat_x = %d and lat_y = %d were out of bounds", _id,
+				lat_x, lat_y);
+
+	return _region_map[lat_x][lat_y].second;
+}
+
+
 /**
  * Adjusts the ids of the universes inside this lattice to be the uids of each
  * rather than the ids defined by the input file
