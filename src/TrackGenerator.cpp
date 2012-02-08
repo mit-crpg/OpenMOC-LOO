@@ -479,14 +479,15 @@ void TrackGenerator::plotTracksTiff() {
 
 	/* Create Magick image and open pixels for viewing/changing  */
 	Magick::Image image_tracks(Magick::Geometry(_bit_length_x,_bit_length_y), "black");
-	image_tracks.type(Magick::TrueColorType);
+	image_tracks.modifyImage();
+
 	Magick::Pixels view(image_tracks);
 
 	/* Convert _pix_map_tracks bitmap array to Magick bitmap pixel array. */
-	for (int i=0;i<_bit_length_x; i++){
-		for (int j = 0; j < _bit_length_y; j++){
-			if (_pix_map_tracks[i * _bit_length_x + j] != 1){
-				*(view.get(i,j,1,1)) = Magick::Color("white");
+	for (int y=0;y<_bit_length_y; y++){
+		for (int x = 0; x < _bit_length_x; x++){
+			if (_pix_map_tracks[y * _bit_length_x + x] != 1){
+				*(view.get(x,y,1,1)) = Magick::Color("white");
 			}
 		}
 	}
