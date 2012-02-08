@@ -25,30 +25,7 @@ LocalCoords::LocalCoords(double x, double y) {
  * LocalCoords destructor recursively deletes all LocalCoords objects
  * behind this one in the linked list
  */
-LocalCoords::~LocalCoords() {
-//	delete _next;
-
-	log_printf(INFO, "Inside localcoords destructor:%s", toString().c_str());
-
-//	prune();
-
-//	LocalCoords* curr = getLowestLevel();
-//	LocalCoords* next = curr->getPrev();
-
-//	log_printf(INFO, "Found lowest level: %s", curr->toString().c_str());
-//	log_printf(INFO, "Next level up:%s", next->toString().c_str());
-
-//	while (curr != this) {
-//		next->setNext(NULL);
-//		log_printf(RESULT, "Deleting localcoords:%s", curr->toString().c_str());
-//		delete curr;
-//		curr = next;
-//		next = next->getPrev();
-//	}
-//	curr->setNext(NULL);
-//	if (_next != NULL)
-//		delete _next;
-}
+LocalCoords::~LocalCoords() { }
 
 
 /**
