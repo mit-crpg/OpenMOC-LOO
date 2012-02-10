@@ -49,9 +49,11 @@ protected:
 	int _universe;
 	std::map<int, Surface*> _surfaces;  /* +/- depending on side of surface */
 public:
+	Cell();
 	Cell(int id, cellType type, int universe, int num_surfaces, 
 	     int *surfaces);
 	virtual ~Cell();
+	void addSurface(int surface_id, Surface* surface);
 	void setSurfacePointer(Surface* surface);
 	int getUid() const;
 	int getId() const;
@@ -79,11 +81,14 @@ private:
 public:
 	CellBasic(int id, int universe, int num_surfaces, 
 		  int *, int material);
+	CellBasic(int id, int universe, int material);
 	int getMaterial() const;
 	void setMaterial(int material);
+	void addSurface(int surface_id, Surface* surface);
 	void adjustKeys(int universe, int material);
 	std::string toString();
 	int getNumFSRs();
+	CellBasic* clone(int new_id);
 };
 
 
