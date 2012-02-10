@@ -15,6 +15,7 @@
 #include <sstream>
 #include <string>
 #include <math.h>
+#include <vector>
 #include "Parser.h"
 #include "Material.h"
 #include "Surface.h"
@@ -25,6 +26,9 @@
 #include "Track.h"
 #include "log.h"
 #include "configurations.h"
+#include "Point.h"
+#include "silo.h"
+
 
 class Geometry {
 private:
@@ -38,6 +42,13 @@ private:
 	std::map<int, Cell*> _cells;
 	std::map<int, Universe*> _universes;
 	std::map<int, Lattice*> _lattices;
+
+	std::vector<int> _surf_flags;
+	std::vector<double> _surf_coeffs;
+	std::vector<int> _oper_flags;
+	std::vector<int> _left_ids;
+	std::vector<int> _right_ids;
+	std::vector<int> _zones;
 
 public:
 	Geometry(int num_sectors, int num_rings, double sector_offset, 
@@ -72,6 +83,8 @@ public:
 	Cell* findNextCell(LocalCoords* coords, double angle);
 	int findFSRId(LocalCoords* coords);
 	void segmentize(Track* track);
+	void generateCSG();
+//	void generateCSGLists(Universe* univ, Point* point);
 
 	template <class K, class V>
 	bool mapContainsKey(std::map<K, V> map, K key);

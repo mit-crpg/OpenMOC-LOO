@@ -544,3 +544,88 @@ int Lattice::computeFSRMaps() {
 
 	return count;
 }
+
+void Lattice::generateCSGLists(std::vector<int>* surf_flags, std::vector<double>* surf_coeffs,
+		std::vector<int>* oper_flags, std::vector<int>* left_ids, std::vector<int>* right_ids,
+		std::vector<int>* zones, Point* point, Point* point_cur) {
+
+	double global_x, global_y;
+
+	/* Loop over all lattice cells from left to right, bottom to top */
+	for (int i=0; i < _num_y; i++) {
+		/* Compute global_y coordinate for center of current lattice cell */
+		global_y = point->getY() + (i * _width_y) - (_num_y * _width_y / 2.0);
+
+
+		for (int j=0; j < _num_x; j++) {
+
+			/* Compute global_x coordinate for center of current
+			 * lattice cell
+			 */
+			global_x = point->getX() + (j * _width_x)
+					- (_num_x * _width_x / 2.0);
+			point_cur->setCoords(global_x + _width_x / 2.0 , global_y + _width_x / 2.0);
+
+			/* Create the boundary surfaces for this particular lattice cell.
+			 * You know the global_x and global_y which represent the center
+			 * of the cell, and from this you can use the _width_x and _width_y
+			 * to create the boundary surfaces and add them to the vectors.
+			 * Then add the operations that would need to be done to intersect
+			 * these surfaces into a square region.
+			 */
+			int surf_flags_index = surf_flags->size();
+			// add to surf_flags
+			surf_flags->push_back(DBCSG_LINE_X);
+			surf_flags->push_back(DBCSG_LINE_X);
+			surf_flags->push_back(DBCSG_LINE_Y);
+			surf_flags->push_back(DBCSG_LINE_Y);
+
+			// add to surf_coeffs
+			surf_coeffs->push_back(global_x);
+			surf_coeffs->push_back(global_x + _width_x);
+			surf_coeffs->push_back(global_y);
+			surf_coeffs->push_back(global_y + _width_y);
+
+			// add to oper_flags
+			oper_flags->push_back(DBCSG_OUTER);
+			oper_flags->push_back(DBCSG_INNER);
+			oper_flags->push_back(DBCSG_OUTER);
+			oper_flags->push_back(DBCSG_INNER);
+			oper_flags->push_back(DBCSG_INTERSECT);
+			oper_flags->push_back(DBCSG_INTERSECT);
+			oper_flags->push_back(DBCSG_INTERSECT);
+
+			int left_ids_index = left_ids->size();
+			// add to left_ids
+			left_ids->push_back(surf_flags_index);
+			left_ids->push_back(surf_flags_index + 1);
+			left_ids->push_back(surf_flags_index + 2);
+			left_ids->push_back(surf_flags_index + 3);
+			left_ids->push_back(left_ids_index);
+			left_ids->push_back(left_ids_index + 2);
+			left_ids->push_back(left_ids_index + 4);
+
+			// add to right_ids
+			right_ids->push_back(-1);
+			right_ids->push_back(-1);
+			right_ids->push_back(-1);
+			right_ids->push_back(-1);
+			right_ids->push_back(left_ids_index + 1);
+			right_ids->push_back(left_ids_index + 3);
+			right_ids->push_back(left_ids_index + 5);
+
+			/* Now recursively call next lowest level universe for
+			 *  this lattice cell
+			 */
+			Universe* univ = _universes.at(i).at(j).second;
+			univ->generateCSGLists(surf_flags, surf_coeffs, oper_flags,
+					left_ids, right_ids, zones, point, point_cur);
+		}
+	}
+
+
+}
+
+
+
+
