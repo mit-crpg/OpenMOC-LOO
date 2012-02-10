@@ -97,14 +97,6 @@ int main(int argc, const char **argv) {
 		timer.recordSplit("Creating png of segments");
 	}
 
-
-//	LocalCoords* test = new LocalCoords(0.2, 0.2);
-//	test->setUniverse(0);
-//	geometry.findCell(test);
-//
-//	log_printf(DEBUG,"Found cell and localcoords:%s", test->toString().c_str());
-//	delete test;
-
 	/* Print timer splits to console */
 	log_printf(NORMAL, "Program complete");
 	timer.printSplits();

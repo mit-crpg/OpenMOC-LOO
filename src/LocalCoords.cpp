@@ -127,7 +127,7 @@ LocalCoords* LocalCoords::getPrev() const {
  */
 void LocalCoords::setType(coordType type) {
 	_type = type;
-}    void copyCoords(LocalCoords* coords);
+}
 
 
 

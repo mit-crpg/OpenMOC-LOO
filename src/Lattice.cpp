@@ -279,6 +279,7 @@ Cell* Lattice::findCell(LocalCoords* coords,
 	 * x or y lattice cell indices i */
 	if (fabs(fabs(coords->getX()) - _num_x*_width_x*0.5) <
 													ON_LATTICE_CELL_THRESH) {
+
 		if (coords->getX() > 0)
 			lat_x = _num_x - 1;
 		else
@@ -367,8 +368,8 @@ Cell* Lattice::findNextLatticeCell(LocalCoords* coords, double angle,
 	double x_curr, y_curr;			/* Current point of minimum distance */
 	double x_new = x0;				/* x-coordinate on new lattice cell */
 	double y_new = x0; 				/* y-coordinate on new lattice cell */
-	int new_lattice_x = lattice_x;	/* New x lattice cell index */
-	int new_lattice_y = lattice_y;	/* New y lattice cell index */
+	int new_lattice_x;				/* New x lattice cell index */
+	int new_lattice_y;				/* New y lattice cell index */
 	Point test;						/* Test point for computing distance */
 
 	/* Check lower lattice cell Lower lattice cell */
@@ -384,8 +385,6 @@ Cell* Lattice::findNextLatticeCell(LocalCoords* coords, double angle,
 			/* Check if distance to test point is current minimum */
 			if (d < distance) {
 				distance = d;
-				new_lattice_x = lattice_x;
-				new_lattice_y = lattice_y - 1;
 				x_new = x_curr;
 				y_new = y_curr;
 			}
@@ -405,8 +404,6 @@ Cell* Lattice::findNextLatticeCell(LocalCoords* coords, double angle,
 			/* Check if distance to test point is current minimum */
 			if (d < distance) {
 				distance = d;
-				new_lattice_x = lattice_x;
-				new_lattice_y = lattice_y + 1;
 				x_new = x_curr;
 				y_new = y_curr;
 			}
@@ -426,8 +423,6 @@ Cell* Lattice::findNextLatticeCell(LocalCoords* coords, double angle,
 			/* Check if distance to test point is current minimum */
 			if (d < distance) {
 				distance = d;
-				new_lattice_x = lattice_x -1 ;
-				new_lattice_y = lattice_y;
 				x_new = x_curr;
 				y_new = y_curr;
 			}
@@ -447,8 +442,6 @@ Cell* Lattice::findNextLatticeCell(LocalCoords* coords, double angle,
 			/* Check if distance to test point is current minimum */
 			if (d < distance) {
 				distance = d;
-				new_lattice_x = lattice_x + 1;
-				new_lattice_y = lattice_y;
 				x_new = x_curr;
 				y_new = y_curr;
 			}
@@ -467,6 +460,28 @@ Cell* Lattice::findNextLatticeCell(LocalCoords* coords, double angle,
 		double delta_x = (x_new - coords->getX()) + cos(angle) * TINY_MOVE;
 		double delta_y = (y_new - coords->getY()) + sin(angle) * TINY_MOVE;
 		coords->adjustCoords(delta_x, delta_y);
+
+		/* Compute the x and y indices for the new lattice cell */
+		new_lattice_x = (int)floor((coords->getX() - _origin.getX()) / _width_x);
+		new_lattice_y = (int)floor((coords->getY() - _origin.getY()) / _width_y);
+
+		/* Check if the localcoord is on the lattice boundaries and if so adjust
+		 * x or y lattice cell indices i */
+		if (fabs(fabs(coords->getX()) - _num_x*_width_x*0.5) <
+														ON_LATTICE_CELL_THRESH) {
+
+			if (coords->getX() > 0)
+				new_lattice_x = _num_x - 1;
+			else
+				new_lattice_x = 0;
+		}
+		if (fabs(fabs(coords->getY()) - _num_y*_width_y*0.5) <
+														ON_LATTICE_CELL_THRESH) {
+			if (coords->getY() > 0)
+				new_lattice_y = _num_y - 1;
+			else
+				new_lattice_y = 0;
+		}
 
 		/* Check if new lattice cell indices are within the bounds, if not, then
 		 * new localcoords is now on the boundary of the lattice */

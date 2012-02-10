@@ -895,7 +895,6 @@ Cell* Geometry::findNextCell(LocalCoords* coords, double angle) {
 					curr = NULL;
 				}
 			}
-			int findFSRId(LocalCoords* coords);
 
 			/* Get the lowest level universe in linkedlist */
 			curr = coords->getLowestLevel();
@@ -913,6 +912,7 @@ Cell* Geometry::findNextCell(LocalCoords* coords, double angle) {
 
 					int lattice_id = curr->getLattice();
 					Lattice* lattice = _lattices.at(lattice_id);
+
 					cell = lattice->findNextLatticeCell(curr, angle,
 															_universes);
 
@@ -966,6 +966,11 @@ Cell* Geometry::findNextCell(LocalCoords* coords, double angle) {
  */
 void Geometry::segmentize(Track* track) {
 
+
+	if (track->getStart()->getX() == 0.0 && track->getStart()->getY() == -2.0 && track->getPhi() == 3*M_PI/4) {
+
+	};
+
 	/* Track starting point coordinates and azimuthal angle */
 	double x0 = track->getStart()->getX();
 	double y0 = track->getStart()->getY();
@@ -1006,10 +1011,8 @@ void Geometry::segmentize(Track* track) {
 		segment* new_segment = new segment;
 		new_segment->_length = segment_length;
 
-		//FIXME: this needs to use our flat source region id from some equation
-		//mapping lattices, universes and cells to FSR ids
-		new_segment->_region_id = findFSRId(&segment_start);
-//		new_segment->_region_id = prev->getUid();
+//		new_segment->_region_id = findFSRId(&segment_start);
+		new_segment->_region_id = prev->getUid();
 //		new_segment->_region_id = static_cast<CellBasic*>(_cells.at(prev->getId()))->getMaterial();
 
 		/* Checks to make sure that new segment does not have the same start
@@ -1027,8 +1030,6 @@ void Geometry::segmentize(Track* track) {
 					"%f, and end: x = %f, y = %f", segment_start.getX(),
 					segment_start.getY(), segment_end.getX(),
 					segment_end.getY());
-//			segment_start.setX(segment_end.getX());
-//			segment_start.setY(segment_end.getY());
 		}
 
 		/* Add the segment to the track */
