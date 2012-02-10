@@ -1011,8 +1011,8 @@ void Geometry::segmentize(Track* track) {
 		segment* new_segment = new segment;
 		new_segment->_length = segment_length;
 
-//		new_segment->_region_id = findFSRId(&segment_start);
-		new_segment->_region_id = prev->getUid();
+		new_segment->_region_id = findFSRId(&segment_start);
+//		new_segment->_region_id = prev->getUid();
 //		new_segment->_region_id = static_cast<CellBasic*>(_cells.at(prev->getId()))->getMaterial();
 
 		/* Checks to make sure that new segment does not have the same start

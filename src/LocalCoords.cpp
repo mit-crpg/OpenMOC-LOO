@@ -219,6 +219,8 @@ void LocalCoords::setPrev(LocalCoords* prev) {
 LocalCoords* LocalCoords::getLowestLevel() {
 	LocalCoords* curr = this;
 
+	if (curr )
+
 	/* Traverse linked list */
 	while (curr->getNext() != NULL)
 		curr = curr->getNext();
@@ -318,9 +320,13 @@ void LocalCoords::copyCoords(LocalCoords* coords) {
 			new_coords->setPrev(curr2);
 			curr2 = new_coords;
 		}
-		else
+		else if (curr1 != NULL)
 			curr2 = curr2->getNext();
 	}
+
+	/* Prune any remainder from the old coords linked list */
+	if (curr2 != NULL)
+		curr2->prune();
 }
 
 /**
