@@ -12,8 +12,14 @@
 /* _n keeps track of the number cells of instantiated */
 int Cell::_n = 0;
 
+
 /**
  * Default Cell constructor
+ */
+Cell::Cell() { }
+
+/**
+ * Cell constructor
  * @param id the cell id
  * @param type the type of cell
  * @param universe the universe this cell is in
@@ -46,6 +52,16 @@ Cell::Cell(int id, cellType type, int universe, int num_surfaces,
 Cell::~Cell() {
 	_surfaces.clear();
 }
+
+/**
+ * Insert the a surface into this cell's container
+ * @param surface_id the surface id (positiv/negative for surface side)
+ * @param surface surface pointer
+ */
+void Cell::addSurface(int surface_id, Surface* surface) {
+	_surfaces.insert(std::pair<int, Surface*>(surface_id, surface));
+}
+
 
 
 /**
@@ -103,7 +119,8 @@ int Cell::getId() const {
 
 
 /**
- * Return the cell type (FILL or MATERIAL)
+ * Return the cell type (FILL or MATERIAL)	Cell();
+ *
  * @return the cell type
  */
 cellType Cell::getType() const {
@@ -171,7 +188,8 @@ bool Cell::cellContains(Point* point) {
 
 
 /*
- * Determines whether a point is contained inside a cell. Queries each surface
+ * Determines whether a point is contained inside a ce	void clone(int new_id);
+ * ll. Queries each surface
  * inside the cell to determine if the particle is on the same side of the
  * surface. This particle is only inside the cell if it is on the same side of
  * every surface in the cell.
@@ -182,7 +200,8 @@ bool Cell::cellContains(LocalCoords* coords) {
 }
 
 
-/*
+/*	Cell();
+ *
  * Computes the minimum distance to a surface from a point with a given
  * trajectory at a certain angle. If the trajectory will not intersect
  * any of the surfaces in the cell, returns INFINITY
@@ -193,7 +212,8 @@ bool Cell::cellContains(LocalCoords* coords) {
 double Cell::minSurfaceDist(Point* point, double angle,
 		Point* min_intersection) {
 
-	double min_dist = INFINITY;
+	double min_dist = INFINITY;	void clone(int new_id);
+
 	double d;
 	Point intersection;
 
@@ -225,11 +245,26 @@ double Cell::minSurfaceDist(Point* point, double angle,
  *  @param surfaces array of surface ids in this cell
  *  @param material id of the material filling this cell
  */
+
 CellBasic::CellBasic(int id, int universe, int num_surfaces, 
 		   int* surfaces, int material):
 	Cell(id, MATERIAL, universe, num_surfaces, surfaces) {
 	_material = material;
 }
+
+
+/**
+ * Constructor for the CellBasic's clone method
+ * @param id the cell id
+ * @param universe the id of the universe this cell is in
+ * @param num_surfaces the number of surfaces inside this cell
+ */
+CellBasic::CellBasic(int id, int universe, int material) {
+	_id = id;
+	_universe = universe;
+	_material = material;
+}
+
 
 /**
  * Return the material in the cell	int getUniverseFillId() const;
@@ -303,6 +338,20 @@ std::string CellBasic::toString() {
 		string << iter->first << ", ";
 
 	return string.str();
+}
+
+
+CellBasic* CellBasic::clone(int new_id) {
+
+	CellBasic* new_cell = new CellBasic(new_id, _universe, _material);
+
+
+	/* Loop over all of this cell's surfaces and add them to the clone */
+	std::map<int, Surface*>::iterator iter;
+	for (iter = _surfaces.begin(); iter != _surfaces.end(); ++iter)
+		static_cast<Cell*>(new_cell)->addSurface(iter->first, iter->second);
+
+	return new_cell;
 }
 
 

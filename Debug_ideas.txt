@@ -1,0 +1,1 @@
+1. Create a lattice with just empty water cells. Try tracking acros it. Then try adding an "L" of pin cells. It appears that tracking breaks down around "L" type shapes based on the full core geometry 6 tracking.
