@@ -78,6 +78,9 @@ struct frame_cell {
 	bool has_universe;
 	int universe;
 
+	bool has_rings;
+	int rings;
+
 	int surfaces_count;
 	int *surfaces;
 };
@@ -420,15 +423,21 @@ void XMLCALL Parser_XMLCallback_Start(void *context,
 				f->cell.id = atoi(value);
 			} else if (strcmp(key, "fill") == 0) {
 				if (f->cell.has_fill == true)
-					log_printf(ERROR, "Has 2 fills");
+					log_printf(ERROR, "Cell has 2 fills");
 
 				if (f->cell.has_material == true) {
 					log_printf(ERROR,
-						   "Has material and fill");
+						   "Cell has material & fill");
 				}
 
 				f->cell.has_fill = true;
 				f->cell.fill = atoi(value);
+			} else if (strcmp(key, "rings") == 0) {
+				if (f->cell.has_rings == true)
+					log_printf(ERROR, "Cell has 2 ring def");
+
+				f->cell.has_rings = true;
+				f->cell.rings = atoi(value);
 			} else if (strcmp(key, "material") == 0) {
 				if (f->cell.has_fill == true)
 					log_printf(ERROR, "Has 2 material");
@@ -598,10 +607,11 @@ void XMLCALL Parser_XMLCallback_End(void *context,
 					    f->cell.fill);
 		} else if (f->cell.has_material) {
 			cell = new CellBasic(f->cell.id, 
-					    f->cell.universe,
-					    f->cell.surfaces_count,
-					    f->cell.surfaces,
-					    f->cell.material);
+					     f->cell.universe,
+					     f->cell.surfaces_count,
+					     f->cell.surfaces,
+					     f->cell.material,
+					     f->cell.rings);
 		} else {
 			log_printf(ERROR, "Cell without material or fill");
 		}
@@ -998,6 +1008,7 @@ struct frame *stack_push(struct stack *s, enum frame_type type) {
 	case NODE_TYPE_CELL:
 		f->cell.has_id = false;
 		f->cell.has_fill = false;
+		f->cell.has_rings = false;
 		f->cell.has_material = false;
 		f->cell.has_universe = false;
 		f->cell.surfaces = NULL;
@@ -1111,6 +1122,8 @@ void stack_print_help(struct frame *f) {
 			fprintf(stderr, " material=\"%d\"", f->cell.material);
 		if (f->cell.has_fill)
 			fprintf(stderr, " fill=\"%d\"", f->cell.fill);
+		if (f->cell.has_rings)
+			fprintf(stderr, " rings=\"%d\"", f->cell.rings);
 		if (f->cell.has_universe)
 			fprintf(stderr, " universe=\"%d\"", f->cell.universe);
 		if (f->cell.surfaces != NULL) {
