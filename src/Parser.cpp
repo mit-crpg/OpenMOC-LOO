@@ -611,7 +611,7 @@ void XMLCALL Parser_XMLCallback_End(void *context,
 					     f->cell.surfaces_count,
 					     f->cell.surfaces,
 					     f->cell.material
-//					     ,f->cell.rings
+// ,					     f->cell.rings
 				);
 		} else {
 			log_printf(ERROR, "Cell without material or fill");
