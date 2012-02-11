@@ -16,6 +16,7 @@
 #include "Track.h"
 #include "Geometry.h"
 #include "Magick++.h"
+#include "silo.h"
 
 class Plotting;
 
@@ -37,6 +38,7 @@ private:
 	double _y_pixel;
 	int* _pix_map_tracks;
 	int* _pix_map_segments;
+	int* _pix_map_visit;
 public:
 	TrackGenerator(Geometry* geom, const int num_azim,
 			const double spacing, const int bit_dim);
@@ -56,6 +58,7 @@ public:
 	void plotSegmentsTiff();
 	void LineFct(int x0, int y0, int x1, int y1, int* pixMap, int color = 1);
 	void printTrackingTimers();
+	void plotFSRs();
 };
 
 #endif /* TRACKGENERATOR_H_ */

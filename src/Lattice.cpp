@@ -572,7 +572,7 @@ void Lattice::generateCSGLists(std::vector<int>* surf_flags, std::vector<double>
 	/* Loop over all lattice cells from left to right, bottom to top */
 	for (int i=0; i < _num_y; i++) {
 
-		current_origin->setCoords(current_origin->getX(), global_y + (i * _width_y) - ((float(_num_y/2) - .5) * _width_y));
+		current_origin->setCoords(current_origin->getX(), global_y + (i * _width_y) - ((float(_num_y)/2.0 - .5) * _width_y));
 
 
 		for (int j=0; j < _num_x; j++) {
@@ -586,7 +586,7 @@ void Lattice::generateCSGLists(std::vector<int>* surf_flags, std::vector<double>
 
 			Cell* cell = cells.begin()->second;
 
-			current_origin->setCoords(global_x + (j * _width_x) - ((float(_num_x/2) - .5) * _width_x),
+			current_origin->setCoords(global_x + (j * _width_x) - ((float(_num_x)/2.0 - .5) * _width_x),
 					current_origin->getY());
 
 			log_printf(DEBUG, "Lattice: set current_origin: (%f,%f)", current_origin->getX(), current_origin->getY());

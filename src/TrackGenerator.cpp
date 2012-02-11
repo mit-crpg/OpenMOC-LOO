@@ -33,6 +33,7 @@ TrackGenerator::TrackGenerator(Geometry* geom,
 
 	_pix_map_tracks = new int[_bit_length_x*_bit_length_y];
 	_pix_map_segments = new int[_bit_length_x*_bit_length_y];
+	_pix_map_visit = new int[_bit_length_x*_bit_length_y];
 
 	for (int i=0;i<_bit_length_x; i++){
 		for (int j = 0; j < _bit_length_y; j++){
@@ -559,7 +560,7 @@ void TrackGenerator::plotSegmentsTiff(){
 	 */
 	for (int y=0;y < _bit_length_y; y++){
 		for (int x = 0; x < _bit_length_x; x++){
-			switch (_pix_map_segments[y * _bit_length_x + x]){
+			switch (_pix_map_segments[y * _bit_length_x + x] % 15){
 			case 0:
 				*(pixels+(y * _bit_length_x + x)) = Magick::Color("indigo");
 				break;
@@ -621,6 +622,60 @@ void TrackGenerator::plotSegmentsTiff(){
 
 }
 
+
+/**
+ * plot flat source regions in pdb file using segments bitmap
+ */
+void TrackGenerator::plotFSRs(){
+	log_printf(NORMAL, "plotting FSRs in visit...");
+
+    DBfile *dbfile1;
+    dbfile1 = DBCreate("structured_mesh.pdb", DB_CLOBBER, DB_LOCAL, "structured mesh test file", DB_PDB);
+
+	double mesh_x[_bit_length_x + 1];
+	double mesh_y[_bit_length_y + 1];
+
+	for (int i = 0; i < (_bit_length_x + 1); i++){
+		mesh_x[i] = double(i * (_width/double(_bit_length_x)));
+	}
+	for (int i = 0; i < (_bit_length_y + 1); i++){
+		mesh_y[i] = double(i * (_height/double(_bit_length_y)));
+	}
+
+	double *coords[] = {mesh_x, mesh_y};
+	int dims[] = {_bit_length_x + 1, _bit_length_y + 1};
+	int ndims = 2;
+
+	DBPutQuadmesh(dbfile1, "quadmesh", NULL, coords, dims, ndims, DB_DOUBLE, DB_COLLINEAR, NULL);
+
+	int dimsvar[] = {_bit_length_x, _bit_length_y};
+
+	_pix_map_visit = _pix_map_segments;
+
+	int m1, m2, cur, p1, p2;
+
+	// smoothing pixel map so there's fewer missing pixels
+	for (int i = 2; i < (_bit_length_x*_bit_length_y - 2); i++){
+		p2 = _pix_map_visit[i + 2];
+		p1 = _pix_map_visit[i + 1];
+		cur = _pix_map_visit[i];
+		m1 = _pix_map_visit[i - 1];
+		m2 = _pix_map_visit[i - 2];
+		if (p1==m1 && cur != m1){
+			_pix_map_visit[i] = m1;
+		}
+		else if (p2==p1 && m1==m2 && cur != p1 && cur != m1){
+			_pix_map_visit[i] = m1;
+		}
+	}
+
+	DBPutQuadvar1(dbfile1, "FSRs", "quadmesh", _pix_map_visit, dimsvar, ndims, NULL, 0, DB_INT, DB_ZONECENT, NULL);
+
+    DBClose(dbfile1);
+}
+
+
+
 /**
  * Bresenham's line drawing algorithm. Takes in the start and end coordinates
  * of line, pointer to _pix_map bitmap array (pixMap), and line color.
@@ -646,10 +701,10 @@ void TrackGenerator::LineFct(int x0, int y0, int x1, int y1, int* pixMap, int co
 		sy = -1;
 	}
 	int error = dx - dy;
-	pixMap[y0 * _bit_length_x + x0] = color%15;
-	pixMap[y1 * _bit_length_x + x1] = color%15;
+	pixMap[y0 * _bit_length_x + x0] = color;
+	pixMap[y1 * _bit_length_x + x1] = color;
 	while (x0 != x1 && y0 != y1){
-		pixMap[y0 * _bit_length_x + x0] = color%15;
+		pixMap[y0 * _bit_length_x + x0] = color;
 		int e2 = 2 * error;
 		if (e2 > -dy){
 			error = error - dy;
@@ -661,4 +716,5 @@ void TrackGenerator::LineFct(int x0, int y0, int x1, int y1, int* pixMap, int co
 		}
 	}
 }
+
 

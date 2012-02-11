@@ -33,6 +33,7 @@ private:
 	bool _plot_tracks;
 	bool _plot_segments;
 	bool _plot_visit;
+	bool _plot_fsrs;
 public:
     Options(int argc, const char **argv);
     ~Options(void);
@@ -41,7 +42,8 @@ public:
     bool dumpGeometry() const;
     bool plotTracks() const;
     bool plotSegments() const;
-    bool plotVisIt() const;
+    bool plotCSG() const;
+    bool plotFSRs() const;
     double getNumAzim() const;
     int getBitDimension() const;
     double getTrackSpacing() const;

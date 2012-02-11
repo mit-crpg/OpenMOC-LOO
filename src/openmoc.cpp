@@ -97,12 +97,20 @@ int main(int argc, const char **argv) {
 		timer.recordSplit("Creating png of segments");
 	}
 
-	if (opts.plotVisIt()){
+	if (opts.plotCSG()){
 		timer.reset();
 		timer.start();
 		geometry.generateCSG();
 		timer.stop();
 		timer.recordSplit("Creating VisIt pdb plot");
+	}
+
+	if (opts.plotFSRs()){
+		timer.reset();
+		timer.start();
+		track_generator.plotFSRs();
+		timer.stop();
+		timer.recordSplit("Creating pdb of FSRs");
 	}
 
 

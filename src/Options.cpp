@@ -43,6 +43,7 @@ Options::Options(int argc, const char **argv) {
 	_plot_tracks = false;				/* Default will not plot tracks */
 	_plot_segments = false;				/* Default will not plot segments */
 	_plot_visit = false;               /* Default will not make visit plot */
+	_plot_fsrs = false;               /* Default will not plot flat source regions */
 
 	for (int i = 0; i < argc; i++) {
 		if (i > 0) {
@@ -78,6 +79,9 @@ Options::Options(int argc, const char **argv) {
 			else if (strcmp(argv[i], "-pv") == 0 ||
 					strcmp(argv[i], "--plotvisit") == 0)
 				_plot_visit = true;
+			else if (strcmp(argv[i], "-pf") == 0 ||
+					strcmp(argv[i], "--plotfsrs") == 0)
+				_plot_fsrs = true;
 		}
 	}
 }
@@ -139,8 +143,17 @@ bool Options::plotSegments() const {
  * that can be plotted in VisIt.
  * @return whether or not to make VisIt plot
  */
-bool Options::plotVisIt() const {
+bool Options::plotCSG() const {
 	return _plot_visit;
+}
+
+/**
+ * Returns a boolean representing whether or not to convert a bitmap of the
+ * flat source regions produced from TrackGenerator into an pdb file
+ * @return whether or not to make VisIt plot
+ */
+bool Options::plotFSRs() const {
+	return _plot_fsrs;
 }
 
 /**

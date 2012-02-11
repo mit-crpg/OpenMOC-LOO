@@ -1115,42 +1115,39 @@ void Geometry::generateCSG(){
     dbfile = DBCreate("csg.pdb", DB_CLOBBER, DB_LOCAL, "csg test file", DB_PDB);
 
     /* build and output the csg mesh (boundaries) */
-//	int nbounds = sizeof(surf_flags_arr) / sizeof(surf_flags_arr[0]);
-//	int lcoeffs = sizeof(surf_coeffs_arr) / sizeof(surf_coeffs_arr[0]);
 
     int nbounds = _surf_flags.size();
     int lcoeffs = _surf_coeffs.size();
 
 	double extents[] = {-getWidth()/2.0, -getHeight()/2.0, 0.0, getWidth()/2.0, getHeight()/2.0, 0.0};
 
-//	log_printf(DEBUG, "nbounds: %d, lcoeffs: %d", nbounds, lcoeffs);
-//	for (int i = 0; i < nbounds; i++){
-//		log_printf(DEBUG, "surf flag arr [%d]: %d", i, surf_flags_arr[i]);
-//	}
-//
-//	for (int i = 0; i < lcoeffs; i++){
-//		log_printf(DEBUG, "surf coeffs arr [%d]: %f", i, surf_coeffs_arr[i]);
-//	}
+	log_printf(DEBUG, "extents: %f, %f, %f, %f", -getWidth()/2.0, -getHeight()/2.0, getWidth()/2.0, getHeight()/2.0);
+
+	log_printf(DEBUG, "nbounds: %d, lcoeffs: %d", nbounds, lcoeffs);
+	for (int i = 0; i < nbounds; i++){
+		log_printf(DEBUG, "surf flag arr [%d]: %d", i, surf_flags_arr[i]);
+	}
+
+	for (int i = 0; i < lcoeffs; i++){
+		log_printf(DEBUG, "surf coeffs arr [%d]: %f", i, surf_coeffs_arr[i]);
+	}
 
 
 	DBPutCsgmesh(dbfile, "csg_geometry", 2, nbounds, surf_flags_arr, NULL, surf_coeffs_arr, lcoeffs, DB_DOUBLE, extents, "csgzl", NULL);
 
     /* build and output the csg zonelist */
-//	int nregs = sizeof(oper_flags_arr) / sizeof(oper_flags_arr[0]);
-//	int nzones = sizeof(zones_arr) / sizeof(zones_arr[0]);
-
-    int nregs = _oper_flags.size();
+	int nregs = _oper_flags.size();
     int nzones = _zones.size();
 
-//    log_printf(DEBUG, "inner: %d, outer: %d, intersect: %d", DBCSG_INNER, DBCSG_OUTER, DBCSG_INTERSECT);
-//
-//    for (int i = 0; i < nregs; i++){
-//    	log_printf(DEBUG, "oper flags arr [%d]: %d", i, oper_flags_arr[i]);
-//    }
-//
-//    for (int i = 0; i < nzones; i++){
-//    	log_printf(DEBUG, "zones [%d]: %d", i, zones_arr[i]);
-//    }
+    log_printf(DEBUG, "inner: %d, outer: %d, intersect: %d", DBCSG_INNER, DBCSG_OUTER, DBCSG_INTERSECT);
+
+    for (int i = 0; i < nregs; i++){
+    	log_printf(DEBUG, "oper flags arr [%d]: %d", i, oper_flags_arr[i]);
+    }
+
+    for (int i = 0; i < nzones; i++){
+    	log_printf(DEBUG, "zones [%d]: %d", i, zones_arr[i]);
+    }
 
 
 	log_printf(DEBUG,"nregs: %d, nzones: %d", nregs, nzones);
@@ -1183,6 +1180,8 @@ void Geometry::generateCSG(){
 
     DBClose(dbfile);
 }
+
+
 
 
 
