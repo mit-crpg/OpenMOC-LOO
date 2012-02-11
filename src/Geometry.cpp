@@ -1072,6 +1072,7 @@ int Geometry::findFSRId(LocalCoords* coords) {
 void Geometry::generateCSG(){
 
 	/* Initialize vectors for all quantities that SILO needs */
+
 	std::vector<int> _surf_flags;
 	std::vector<double> _surf_coeffs;
 	std::vector<int> _oper_flags;
@@ -1081,14 +1082,14 @@ void Geometry::generateCSG(){
 
 	/* Create a Point that is centered in the base universe (global level) */
 	Point point;
-	Point point_cur;
+	Point current_origin;
 	point.setCoords(0,0);
-	point_cur.setCoords(0,0);
+	current_origin.setCoords(0,0);
 
 	/* Get a pointer to universe zero from the geometryÕs map of universes */
 	Universe* universe_zero = _universes.at(0);
 
-	universe_zero->generateCSGLists(&_surf_flags, &_surf_coeffs, &_oper_flags, &_left_ids, &_right_ids, &_zones, &point, &point_cur);
+	universe_zero->generateCSGLists(&_surf_flags, &_surf_coeffs, &_oper_flags, &_left_ids, &_right_ids, &_zones, &point, &current_origin);
 
 	log_printf(DEBUG, "size of _surf_flags vector: %d", _surf_flags.size());
 	log_printf(DEBUG, "size of _surf_coeffs vector: %d", _surf_coeffs.size());
@@ -1100,13 +1101,6 @@ void Geometry::generateCSG(){
 	int* left_ids_arr = new int[_left_ids.size()];
 	int* right_ids_arr = new int[_right_ids.size()];
 	int* zones_arr = new int[_zones.size()];
-
-
-//	memcpy (surf_flags_arr, &_surf_flags[0], _surf_flags.size());
-//	memcpy (surf_coeffs_arr, &_surf_coeffs[0], _surf_coeffs.size());
-//	memcpy (oper_flags_arr, &_oper_flags[0], _oper_flags.size());
-//	memcpy (left_ids_arr, &_left_ids[0], _left_ids.size());
-//	memcpy (right_ids_arr, &_right_ids[0], _right_ids.size());
 
 	surf_flags_arr = &_surf_flags[0];
 	surf_coeffs_arr = &_surf_coeffs[0];
@@ -1129,14 +1123,14 @@ void Geometry::generateCSG(){
 
 	double extents[] = {-getWidth()/2.0, -getHeight()/2.0, 0.0, getWidth()/2.0, getHeight()/2.0, 0.0};
 
-	log_printf(DEBUG, "nbounds: %d, lcoeffs: %d", nbounds, lcoeffs);
-	for (int i = 0; i < nbounds; i++){
-		log_printf(DEBUG, "surf flag arr [%d]: %d", i, surf_flags_arr[i]);
-	}
-
-	for (int i = 0; i < lcoeffs; i++){
-		log_printf(DEBUG, "surf coeffs arr [%d]: %f", i, surf_coeffs_arr[i]);
-	}
+//	log_printf(DEBUG, "nbounds: %d, lcoeffs: %d", nbounds, lcoeffs);
+//	for (int i = 0; i < nbounds; i++){
+//		log_printf(DEBUG, "surf flag arr [%d]: %d", i, surf_flags_arr[i]);
+//	}
+//
+//	for (int i = 0; i < lcoeffs; i++){
+//		log_printf(DEBUG, "surf coeffs arr [%d]: %f", i, surf_coeffs_arr[i]);
+//	}
 
 
 	DBPutCsgmesh(dbfile, "csg_geometry", 2, nbounds, surf_flags_arr, NULL, surf_coeffs_arr, lcoeffs, DB_DOUBLE, extents, "csgzl", NULL);
@@ -1148,18 +1142,18 @@ void Geometry::generateCSG(){
     int nregs = _oper_flags.size();
     int nzones = _zones.size();
 
-    log_printf(DEBUG, "inner: %d, outer: %d, intersect: %d", DBCSG_INNER, DBCSG_OUTER, DBCSG_INTERSECT);
+//    log_printf(DEBUG, "inner: %d, outer: %d, intersect: %d", DBCSG_INNER, DBCSG_OUTER, DBCSG_INTERSECT);
+//
+//    for (int i = 0; i < nregs; i++){
+//    	log_printf(DEBUG, "oper flags arr [%d]: %d", i, oper_flags_arr[i]);
+//    }
+//
+//    for (int i = 0; i < nzones; i++){
+//    	log_printf(DEBUG, "zones [%d]: %d", i, zones_arr[i]);
+//    }
 
-    for (int i = 0; i < nregs; i++){
-    	log_printf(DEBUG, "oper flags arr [%d]: %d", i, oper_flags_arr[i]);
-    }
 
-    for (int i = 0; i < nzones; i++){
-    	log_printf(DEBUG, "zones [%d]: %d", i, zones_arr[i]);
-    }
-
-
-	printf("nregs: %d, nzones: %d\n", nregs, nzones);
+	log_printf(DEBUG,"nregs: %d, nzones: %d", nregs, nzones);
 
 	DBPutCSGZonelist(dbfile, "csgzl", nregs, oper_flags_arr, left_ids_arr, right_ids_arr,
 			NULL, 0, DB_INT, nzones, zones_arr, NULL);
@@ -1169,12 +1163,12 @@ void Geometry::generateCSG(){
     double flux_data[nzones];
 
     for (int i = 0; i < nzones; i++){
-    	flux_data[i] = (double)i;
+    	flux_data[i] = (double)((i * 3) % 7);
     }
 
-    for (int i = 0; i < nzones; i++){
-    	log_printf(DEBUG, "flux_data[%d]: %f", i, flux_data[i]);
-    }
+//    for (int i = 0; i < nzones; i++){
+//    	log_printf(DEBUG, "flux_data[%d]: %f", i, flux_data[i]);
+//    }
 
     char *pname[1];
     char name1[] = "flux";
@@ -1189,88 +1183,6 @@ void Geometry::generateCSG(){
 
     DBClose(dbfile);
 }
-
-//void Geometry::generateCSGLists(Universe* univ, Point* point){
-//
-//	/* Get the starting index into the vectors passed in...this will be the current length of the vector and may come in handy for when you create surfaces and regions and zones */
-//
-//	int ids_index = _left_ids.size();
-//	std::map<int, Cell*> cells = univ->getCells();
-//	std::map<int, Cell*>::iterator iter;
-//
-//	/* Loop over all of this universes cells */
-//	for (iter = cells.begin(); iter != cells.end(); ++iter){
-//		Cell* cell_cur = iter->second;
-//
-//		/* If the Universe contains a FILL type Cell, then recursively go into
-//				 *  the universe filling this cell
-//				 */
-//		if (cell_cur->getType() == FILL) {
-//			// find out if fill universes are SIMPLE or LATTICE
-//			// if fill universes are SIMPLE, make box
-//			// else recursively call this function with current universe
-//
-//
-//			if (fill universes == SIMPLE){
-//
-//			}
-//			else{
-//				Universe* univ_cur = static_cast<CellFill*>(cell)->getUniverseFill();
-//				generateCSGLists(univ_cur, point);
-//			}
-//		}
-//
-//
-//		else if (cell_cur->getType() == MATERIAL) {
-//			/* Do everything you would do to add surfaces to the vectors and
-//			 *  make them intersect into regions and create a new zone.
-//			 *   This will assume that the most recent set of surfaces are
-//			 *   those boundary planes surrounding the pin cell, and that the
-//			 *    most recent region created is the box of surfaces surrounding
-//			 *   the pin cell (see notes below for Lattice.cpp)
-//			 */
-//
-//			std::map<int, Surface*> cells_surfaces = cell_cur->getSurfaces();
-//			std::map<int, Surface*>::iterator iter2;
-//			double radius;
-//
-//			for (iter2 = cells_surfaces.begin(); iter2 != cells_surfaces.end(); ++iter2) {
-//					if (iter->second->getType() == CIRCLE) {
-//						radius = static_cast<Circle*>(iter2->second)->getRadius();
-//					}
-//			}
-//
-//			// add to surf_flags
-//			_surf_flags.push_back(DBCSG_CIRCLE_PR);
-//
-//			// add to surf_coeffs
-//			_surf_coeffs.push_back(point->getX());
-//			_surf_coeffs.push_back(point->getY());
-//			_surf_coeffs.push_back(radius);
-//
-//			// add to oper_flags
-//			_oper_flags.push_back(DBCSG_OUTER);
-//			_oper_flags.push_back(DBCSG_INTERSECT);
-//			_oper_flags.push_back(DBCSG_INNER);
-//
-//			// add to left_ids
-//			_left_ids.push_back(1);
-//			_left_ids.push_back(0);
-//			_left_ids.push_back(1);
-//
-//			// add to right_ids
-//			_right_ids.push_back(-1);
-//			_right_ids.push_back(1);
-//			_right_ids.push_back(-1);
-//
-//			// add to zones
-//			_zones.push_back(ids_index + 1);
-//			_zones.push_back(ids_index + 2);
-//
-//		}
-//	}
-//}
-//
 
 
 

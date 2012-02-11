@@ -562,85 +562,158 @@ int Lattice::computeFSRMaps() {
 
 void Lattice::generateCSGLists(std::vector<int>* surf_flags, std::vector<double>* surf_coeffs,
 		std::vector<int>* oper_flags, std::vector<int>* left_ids, std::vector<int>* right_ids,
-		std::vector<int>* zones, Point* point, Point* point_cur) {
+		std::vector<int>* zones, Point* point, Point* current_origin) {
 
 	double global_x, global_y;
+	global_x = current_origin->getX();
+	global_y = current_origin->getY();
+
+	Point first_origin;
+	first_origin.setCoords(current_origin->getX(), current_origin->getY());
 
 	/* Loop over all lattice cells from left to right, bottom to top */
 	for (int i=0; i < _num_y; i++) {
-		/* Compute global_y coordinate for center of current lattice cell */
-		global_y = point->getY() + (i * _width_y) - (_num_y * _width_y / 2.0);
+
+		current_origin->setCoords(current_origin->getX(), global_y + (i * _width_y) - ((float(_num_y/2) - .5) * _width_y));
 
 
 		for (int j=0; j < _num_x; j++) {
 
-			/* Compute global_x coordinate for center of current
-			 * lattice cell
-			 */
-			global_x = point->getX() + (j * _width_x)
-					- (_num_x * _width_x / 2.0);
-			point_cur->setCoords(global_x + _width_x / 2.0 , global_y + _width_x / 2.0);
 
-			/* Create the boundary surfaces for this particular lattice cell.
-			 * You know the global_x and global_y which represent the center
-			 * of the cell, and from this you can use the _width_x and _width_y
-			 * to create the boundary surfaces and add them to the vectors.
-			 * Then add the operations that would need to be done to intersect
-			 * these surfaces into a square region.
-			 */
-			int surf_flags_index = surf_flags->size();
-			// add to surf_flags
-			surf_flags->push_back(DBCSG_LINE_X);
-			surf_flags->push_back(DBCSG_LINE_X);
-			surf_flags->push_back(DBCSG_LINE_Y);
-			surf_flags->push_back(DBCSG_LINE_Y);
+			Universe* univ;
+			univ = getUniverse(j,i);
 
-			// add to surf_coeffs
-			surf_coeffs->push_back(global_x);
-			surf_coeffs->push_back(global_x + _width_x);
-			surf_coeffs->push_back(global_y);
-			surf_coeffs->push_back(global_y + _width_y);
+			std::map<int, Cell*> cells;
+			cells = univ->getCells();
 
-			// add to oper_flags
-			oper_flags->push_back(DBCSG_OUTER);
-			oper_flags->push_back(DBCSG_INNER);
-			oper_flags->push_back(DBCSG_OUTER);
-			oper_flags->push_back(DBCSG_INNER);
-			oper_flags->push_back(DBCSG_INTERSECT);
-			oper_flags->push_back(DBCSG_INTERSECT);
-			oper_flags->push_back(DBCSG_INTERSECT);
+			Cell* cell = cells.begin()->second;
 
-			int left_ids_index = left_ids->size();
-			// add to left_ids
-			left_ids->push_back(surf_flags_index);
-			left_ids->push_back(surf_flags_index + 1);
-			left_ids->push_back(surf_flags_index + 2);
-			left_ids->push_back(surf_flags_index + 3);
-			left_ids->push_back(left_ids_index);
-			left_ids->push_back(left_ids_index + 2);
-			left_ids->push_back(left_ids_index + 4);
+			current_origin->setCoords(global_x + (j * _width_x) - ((float(_num_x/2) - .5) * _width_x),
+					current_origin->getY());
 
-			// add to right_ids
-			right_ids->push_back(-1);
-			right_ids->push_back(-1);
-			right_ids->push_back(-1);
-			right_ids->push_back(-1);
-			right_ids->push_back(left_ids_index + 1);
-			right_ids->push_back(left_ids_index + 3);
-			right_ids->push_back(left_ids_index + 5);
+			log_printf(DEBUG, "Lattice: set current_origin: (%f,%f)", current_origin->getX(), current_origin->getY());
+
 
 			/* Now recursively call next lowest level universe for
 			 *  this lattice cell
 			 */
-			Universe* univ = _universes.at(i).at(j).second;
-			univ->generateCSGLists(surf_flags, surf_coeffs, oper_flags,
-					left_ids, right_ids, zones, point, point_cur);
+			if (cell->getType() == MATERIAL){
+				/* Create the boundary surfaces for this particular lattice cell.
+				 * You know the global_x and global_y which represent the center
+				 * of the cell, and from this you can use the _width_x and _width_y
+				 * to create the boundary surfaces and add them to the vectors.
+				 * Then add the operations that would need to be done to intersect
+				 * these surfaces into a square region.
+				 */
+
+				log_printf(DEBUG, "Lattice: making box (xmin, ymin, xmax, ymax): (%f,%f,%f,%f)",
+						current_origin->getX() - _width_x/2.0, current_origin->getX() + _width_x/2.0,
+						current_origin->getY() - _width_y/2.0, current_origin->getY() + _width_y/2.0);
+
+
+				int surf_flags_index = surf_flags->size();
+
+				// add to surf_flags
+				surf_flags->push_back(DBCSG_LINE_X);
+				surf_flags->push_back(DBCSG_LINE_X);
+				surf_flags->push_back(DBCSG_LINE_Y);
+				surf_flags->push_back(DBCSG_LINE_Y);
+
+				// add to surf_coeffs
+				surf_coeffs->push_back(current_origin->getX() - _width_x/2.0);
+				surf_coeffs->push_back(current_origin->getX() + _width_x/2.0);
+				surf_coeffs->push_back(current_origin->getY() - _width_y/2.0);
+				surf_coeffs->push_back(current_origin->getY() + _width_y/2.0);
+
+				// add to oper_flags
+				oper_flags->push_back(DBCSG_OUTER);
+				oper_flags->push_back(DBCSG_INNER);
+				oper_flags->push_back(DBCSG_OUTER);
+				oper_flags->push_back(DBCSG_INNER);
+				oper_flags->push_back(DBCSG_INTERSECT);
+				oper_flags->push_back(DBCSG_INTERSECT);
+				oper_flags->push_back(DBCSG_INTERSECT);
+
+				int left_ids_index = left_ids->size();
+
+				// add to left_ids
+				left_ids->push_back(surf_flags_index);
+				left_ids->push_back(surf_flags_index + 1);
+				left_ids->push_back(surf_flags_index + 2);
+				left_ids->push_back(surf_flags_index + 3);
+				left_ids->push_back(left_ids_index);
+				left_ids->push_back(left_ids_index + 2);
+				left_ids->push_back(left_ids_index + 4);
+
+				// add to right_ids
+				right_ids->push_back(-1);
+				right_ids->push_back(-1);
+				right_ids->push_back(-1);
+				right_ids->push_back(-1);
+				right_ids->push_back(left_ids_index + 1);
+				right_ids->push_back(left_ids_index + 3);
+				right_ids->push_back(left_ids_index + 5);
+
+				std::map<int, Surface*> cells_surfaces = cell->getSurfaces();
+				std::map<int, Surface*>::iterator iter2;
+				double radius;
+
+				for (iter2 = cells_surfaces.begin(); iter2 != cells_surfaces.end(); ++iter2) {
+
+					if (iter2->second->getType() == CIRCLE && iter2->first < 0) {
+						radius = static_cast<Circle*>(iter2->second)->getRadius();
+						log_printf(DEBUG, "Lattice: making circle (center_x, center_y, radius): (%f,%f,%f)", current_origin->getX(), current_origin->getY(), radius);
+
+						int surf_flags_index = surf_flags->size();
+
+						// add to surf_flags
+						surf_flags->push_back(DBCSG_CIRCLE_PR);
+
+						// add to surf_coeffs
+						surf_coeffs->push_back(current_origin->getX());
+						surf_coeffs->push_back(current_origin->getY());
+						surf_coeffs->push_back(radius);
+
+
+						// add to oper_flags
+						oper_flags->push_back(DBCSG_OUTER);
+						oper_flags->push_back(DBCSG_INTERSECT);
+						oper_flags->push_back(DBCSG_INNER);
+
+						int left_ids_cur = left_ids->size();
+
+						// add to left_ids
+						left_ids->push_back(surf_flags_index);
+						left_ids->push_back(left_ids_cur - 1);
+						left_ids->push_back(surf_flags_index);
+
+						// add to right_ids
+						right_ids->push_back(-1);
+						right_ids->push_back(left_ids_cur);
+						right_ids->push_back(-1);
+
+
+						// add to zones
+						zones->push_back(left_ids_cur + 1);
+						zones->push_back(left_ids_cur + 2);
+
+					}
+				}
+			}
+			else {
+
+				Universe* univ_fill = static_cast<CellFill*>(cell)->getUniverseFill();
+				univ_fill = getUniverse(j,i);
+
+				log_printf(DEBUG, "Lattice: nested universe cell is fill type...");
+				univ_fill->generateCSGLists(surf_flags, surf_coeffs, oper_flags,
+						left_ids, right_ids, zones, point, current_origin);
+			}
 		}
 	}
 
-
+	current_origin->setCoords(first_origin.getX(), first_origin.getY());
+	log_printf(DEBUG, "Lattice: set current_origin: (%f,%f)", current_origin->getX(), current_origin->getY());
 }
-
-
 
 

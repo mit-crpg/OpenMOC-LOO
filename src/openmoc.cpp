@@ -97,7 +97,6 @@ int main(int argc, const char **argv) {
 		timer.recordSplit("Creating png of segments");
 	}
 
-
 	geometry.generateCSG();
 
 //	LocalCoords* test = new LocalCoords(0.2, 0.2);
