@@ -97,7 +97,14 @@ int main(int argc, const char **argv) {
 		timer.recordSplit("Creating png of segments");
 	}
 
-	geometry.generateCSG();
+	if (opts.plotVisIt()){
+		timer.reset();
+		timer.start();
+		geometry.generateCSG();
+		timer.stop();
+		timer.recordSplit("Creating VisIt pdb plot");
+	}
+
 
 //	LocalCoords* test = new LocalCoords(0.2, 0.2);
 //	test->setUniverse(0);

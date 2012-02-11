@@ -42,6 +42,7 @@ Options::Options(int argc, const char **argv) {
 	_dump_geometry = false;				/* Default will not dump geometry */
 	_plot_tracks = false;				/* Default will not plot tracks */
 	_plot_segments = false;				/* Default will not plot segments */
+	_plot_visit = false;               /* Default will not make visit plot */
 
 	for (int i = 0; i < argc; i++) {
 		if (i > 0) {
@@ -74,6 +75,9 @@ Options::Options(int argc, const char **argv) {
 			else if (strcmp(argv[i], "-ps") == 0 ||
 					strcmp(argv[i], "--plotsegments") == 0)
 				_plot_segments = true;
+			else if (strcmp(argv[i], "-pv") == 0 ||
+					strcmp(argv[i], "--plotvisit") == 0)
+				_plot_visit = true;
 		}
 	}
 }
@@ -130,6 +134,14 @@ bool Options::plotSegments() const {
 	return _plot_segments;
 }
 
+/**
+ * Returns a boolean representing whether or not to create a pdb file
+ * that can be plotted in VisIt.
+ * @return whether or not to make VisIt plot
+ */
+bool Options::plotVisIt() const {
+	return _plot_visit;
+}
 
 /**
  * Returns the number of azimuthal angles. By default this will return 128 angles if
