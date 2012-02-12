@@ -358,166 +358,180 @@ void Geometry::addCell(Cell* cell) {
 
 	/* Check if the cell has number of rings; if so, add more cells */
 	/* FIXME: need to add error checking */
-	int t_num_rings = dynamic_cast<CellBasic*>(cell)->getNumRings() + 1;
-	if (cell->getType() == MATERIAL && t_num_rings > 1) {
-		/* print out for debugging purpose */
-		log_printf(DEBUG, "cell %d has multiple rings; num_rings = %d", 
-			   cell->getId(), dynamic_cast<CellBasic*>(cell)->getNumRings());
+	if (cell->getType() == MATERIAL) {
+		int t_num_rings = 
+			dynamic_cast<CellBasic*>(cell)->getNumRings() + 1;
 
-		/* case 1: cell is a circle with one surface */
-		if (cell->getNumSurfaces() == 1) {
+		if (t_num_rings > 1) {
+			/* print out for debugging purpose */
+			log_printf(DEBUG, 
+				   "cell %d has multiple rings; num_rings = %d",
+				   cell->getId(), dynamic_cast<CellBasic*>
+				   (cell)->getNumRings());
 
-			/* FIXME: find an alternative to using a larger number for startId */
-			int startId = 10 * (cell->getId()); 
-			double r, r0, r1, rold;
-			int i = 2, newId = startId, previousId = newId;
+			/* case 1: cell is a circle with one surface */
+			if (cell->getNumSurfaces() == 1) {
+
+				/* FIXME: find an alternative for indexing */
+				int startId = 10 * (cell->getId()); 
+				double r, r0, r1, rold;
+				int i = 2, newId = startId, previousId = newId;
 			
-			/* get cell's radius and compute the radius of the inner-most 
-			   circle */
-			iter = cells_surfaces.begin();
-			int surface_id = abs(iter->first);
-			r0 =  (dynamic_cast<Circle*>(_surfaces.at(surface_id)))->getRadius();
-			log_printf(DEBUG, "Single Circle with radius %f", r0);
-			r1 = r0 / sqrt(t_num_rings);
-			rold = r1;
+				/* get cell's radius and compute the radius 
+				   of the inner-most circle */
+				iter = cells_surfaces.begin();
+				int surface_id = abs(iter->first);
+				r0 =  (dynamic_cast<Circle*>
+					   (_surfaces.at(surface_id)))->getRadius();
+				log_printf(DEBUG, "Single Circle with radius %f", r0);
+				r1 = r0 / sqrt(t_num_rings);
+				rold = r1;
 
-			/* create the inner-most circle surface */
-			Circle *s = new Circle(startId, BOUNDARY_NONE, 0, 0, r1);
-			addSurface(s);
-			log_printf(DEBUG, "Added new %s", s->toString().c_str());
-
-			/* create the inner-most circle cell */
-			CellBasic *c = new CellBasic(startId, cell->getUniverse(), 
-						     dynamic_cast<CellBasic*>(cell)
-						     ->getMaterial());
-			dynamic_cast<Cell*>(c)->addSurface(-startId, s);
-			addCell(c);
-			log_printf(DEBUG, "Added new %s", c->toString().c_str());
-
-			while (i < t_num_rings) {
-				/* generate id and radius for the next circle */
-				newId = startId + i;
-				r = sqrt( rold*rold + ((r0*r0)/t_num_rings) );
-				
-				/* create a new ring cell, and add the old surface before
-				   we generate a new one*/
-				CellBasic *c = new CellBasic(newId, cell->getUniverse(), 
-							     dynamic_cast<CellBasic*>(cell)
-							     ->getMaterial());
-				dynamic_cast<Cell*>(c)->addSurface(previousId, s);
-
-				/* create the new surface and add to the new cell */
-				Circle *s = new Circle(newId, BOUNDARY_NONE, 0, 0, r);
+				/* create the inner-most circle surface */
+				Circle *s = new Circle(startId, BOUNDARY_NONE, 
+									   0, 0, r1);
 				addSurface(s);
-				dynamic_cast<Cell*>(c)->addSurface(-newId, s);
+				log_printf(DEBUG, "Added new %s", 
+						   s->toString().c_str());
+
+				/* create the inner-most circle cell */
+				CellBasic *c = new CellBasic(startId, cell->getUniverse(), 
+											 dynamic_cast<CellBasic*>(cell)
+											 ->getMaterial());
+				dynamic_cast<Cell*>(c)->addSurface(-startId, s);
 				addCell(c);
-				log_printf(DEBUG, "Added  %s", c->toString().c_str());	
+				log_printf(DEBUG, "Added new %s", 
+						   c->toString().c_str());
+
+				while (i < t_num_rings) {
+					/* generate id and radius for the next circle */
+					newId = startId + i;
+					r = sqrt( rold*rold + ((r0*r0)/t_num_rings) );
+					
+					/* create a new ring cell, and add the old surface before
+					   we generate a new one*/
+					CellBasic *c = new CellBasic(newId, cell->getUniverse(), 
+												 dynamic_cast<CellBasic*>(cell)
+												 ->getMaterial());
+					dynamic_cast<Cell*>(c)->addSurface(previousId, s);
+					
+					/* create the new surface and add to the new cell */
+					Circle *s = new Circle(newId, BOUNDARY_NONE, 0, 0, r);
+					addSurface(s);
+					dynamic_cast<Cell*>(c)->addSurface(-newId, s);
+					addCell(c);
+					log_printf(DEBUG, "Added  %s", c->toString().c_str());	
       
-				/* book-keeping */
-				previousId = newId;
-				rold = r;
-				i++;
+					/* book-keeping */
+					previousId = newId;
+					rold = r;
+					i++;
+				}
+
+				/* update the original circle cell to be the outside 
+				   most ring cell */
+				static_cast<Cell*>(cell)->addSurface(newId, s); 
+				log_printf(DEBUG, "Update original %s",
+						   cell->toString().c_str());
+				
 			}
 
-			/* update the original circle cell to be the outside most ring cell */
-			static_cast<Cell*>(cell)->addSurface(newId, s); 
-			log_printf(DEBUG, "Update original %s",cell->toString().c_str());
+			/* case 2: cell is a ring with two surfaces */
+			else if (cell->getNumSurfaces() == 2) {
+				/* FIXME: find an alternative to using a larger number for 
+				   startId */
+				int startId = 10* (cell->getId()); 
+				double r, r01, r02, r1, rold;
+				int i = 2, newId = startId, previousId = newId;
+				int inner_surface, outer_surface;
 			
-		}
-
-		/* case 2: cell is a ring with two surfaces */
-		else if (cell->getNumSurfaces() == 2) {
-			/* FIXME: find an alternative to using a larger number for startId */
-			int startId = 10* (cell->getId()); 
-			double r, r01, r02, r1, rold;
-			int i = 2, newId = startId, previousId = newId;
-			int inner_surface, outer_surface;
+				/* get cell's two surfaces */
+				iter = cells_surfaces.begin();
+				int surface_id = abs(iter->first);
+				iter++;
+				int surface_id2 = abs(iter->first);
 			
-			/* get cell's two surfaces */
-			iter = cells_surfaces.begin();
-			int surface_id = abs(iter->first);
-			iter++;
-			int surface_id2 = abs(iter->first);
-			
-			/* distinguish which surface is the inner one */
-			if (surface_id < surface_id2) {
-				inner_surface = surface_id;
-				outer_surface = surface_id2;
-			}
-			else {
-				inner_surface = surface_id2;
-				outer_surface = surface_id; 
-			}
+				/* distinguish which surface is the inner one */
+				if (surface_id < surface_id2) {
+					inner_surface = surface_id;
+					outer_surface = surface_id2;
+				}
+				else {
+					inner_surface = surface_id2;
+					outer_surface = surface_id; 
+				}
 			      
-			/* get the cell's two radii */
-			r01=(dynamic_cast<Circle*>(_surfaces.at(inner_surface)))->getRadius();
-			r02=(dynamic_cast<Circle*>(_surfaces.at(outer_surface)))->getRadius();
-			log_printf(DEBUG, "Read a ring with radii %f and %f", r01, r02);
+				/* get the cell's two radii */
+				r01=(dynamic_cast<Circle*>(_surfaces.at(inner_surface)))
+					->getRadius();
+				r02=(dynamic_cast<Circle*>(_surfaces.at(outer_surface)))
+					->getRadius();
+				log_printf(DEBUG, "Read a ring with radii %f and %f", r01, r02);
 			
-			/* initialize the inner-most circle cell with the inner radius*/
-			CellBasic *c = new CellBasic(startId, cell->getUniverse(), 
-						     dynamic_cast<CellBasic*>(cell)
-						     ->getMaterial());
-			dynamic_cast<Cell*>(c)->addSurface(inner_surface, 
-							   _surfaces.at(inner_surface));
+				/* initialize the inner-most circle cell with the inner radius*/
+				CellBasic *c = new CellBasic(startId, cell->getUniverse(), 
+											 dynamic_cast<CellBasic*>(cell)
+											 ->getMaterial());
+				dynamic_cast<Cell*>(c)->addSurface(inner_surface, 
+												   _surfaces.at(inner_surface));
 
-			/* generate the inner-most radius */
-			r1 =  sqrt( r01*r01 + ((r02*r02 - r01*r01)/t_num_rings) );
-			rold = r1;
+				/* generate the inner-most radius */
+				r1 =  sqrt( r01*r01 + ((r02*r02 - r01*r01)/t_num_rings) );
+				rold = r1;
 
-			/* create the inner-most circle surface */
-			Circle *s = new Circle(startId, BOUNDARY_NONE, 0, 0, r1);
-			addSurface(s);
-			log_printf(DEBUG, "%s", s->toString().c_str());
-
-			/* complete the inner-most circle cell */
-			dynamic_cast<Cell*>(c)->addSurface(-startId, s);
-			addCell(c);
-			log_printf(DEBUG, "Added  %s", c->toString().c_str());
-
-			while (i < t_num_rings) {
-				/* generate id and radius for the next circle */
-				newId = startId + i;
-				r = sqrt( rold*rold + ((r02*r02 - r01*r01)/t_num_rings) );
-				
-				/* create a new ring cell, and add the old surface before
-				   we generate a new one*/
-				CellBasic *c = new CellBasic(newId, cell->getUniverse(), 
-							     dynamic_cast<CellBasic*>(cell)
-							     ->getMaterial());
-				dynamic_cast<Cell*>(c)->addSurface(previousId, s);
-
-				/* create the new surface and add to the new cell */
-				Circle *s = new Circle(newId, BOUNDARY_NONE, 0, 0, r);
+				/* create the inner-most circle surface */
+				Circle *s = new Circle(startId, BOUNDARY_NONE, 0, 0, r1);
 				addSurface(s);
-				dynamic_cast<Cell*>(c)->addSurface(-newId, s);
+				log_printf(DEBUG, "%s", s->toString().c_str());
+				
+				/* complete the inner-most circle cell */
+				dynamic_cast<Cell*>(c)->addSurface(-startId, s);
 				addCell(c);
-				log_printf(DEBUG, "Added  %s", c->toString().c_str());	
+				log_printf(DEBUG, "Added  %s", c->toString().c_str());
+
+				while (i < t_num_rings) {
+					/* generate id and radius for the next circle */
+					newId = startId + i;
+					r = sqrt( rold*rold + ((r02*r02 - r01*r01)/t_num_rings) );
+				
+					/* create a new ring cell, and add the old surface before
+					   we generate a new one*/
+					CellBasic *c = new CellBasic(newId, cell->getUniverse(), 
+												 dynamic_cast<CellBasic*>(cell)
+												 ->getMaterial());
+					dynamic_cast<Cell*>(c)->addSurface(previousId, s);
+					
+					/* create the new surface and add to the new cell */
+					Circle *s = new Circle(newId, BOUNDARY_NONE, 0, 0, r);
+					addSurface(s);
+					dynamic_cast<Cell*>(c)->addSurface(-newId, s);
+					addCell(c);
+					log_printf(DEBUG, "Added  %s", c->toString().c_str());	
       
-				/* book-keeping */
-				previousId = newId;
-				rold = r;
-				i++;
+					/* book-keeping */
+					previousId = newId;
+					rold = r;
+					i++;
+				}
+
+				/* update the original circle cell to be the outside most 
+				   ring cell */
+				/* FIXME: the old inner surface is kept; may need to remove */
+				static_cast<Cell*>(cell)->addSurface(newId, s); 
+				log_printf(DEBUG, "Update original ring %s",
+						   cell->toString().c_str());
+				
 			}
 
-			/* update the original circle cell to be the outside most ring cell */
-			/* FIXME: the old inner surface is still here. may need to remove */
-			static_cast<Cell*>(cell)->addSurface(newId, s); 
-			log_printf(DEBUG, "Update original ring %s",
-				   cell->toString().c_str());
-			
+			/* unsupported surface types */
+			else {
+				log_printf(ERROR, 
+						   "num_rings not supported for these surfaces");	
+			}
 		}
-		else {
-			log_printf(ERROR, "num_rings only suppoprted for circle or ring cell"
-				);	
-		}
+
 	}
-
-	if (cell->getType() == FILL && t_num_rings > 1) {
-		log_printf(ERROR, "num_rings not supported by cells of fill type.");
-	}
-
-
+		
 	return;
 }
 

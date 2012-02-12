@@ -1,5 +1,5 @@
 ((nil . ((indent-tabs-mode . t)
-         (tab-width . 8)
-         (c-basic-offset . 8)
+         (tab-width . 4)
+         (c-basic-offset . 4)
 	)
 ))
