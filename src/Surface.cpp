@@ -610,6 +610,15 @@ Circle::Circle(const int id, const boundaryType boundary, const double x,
 	center.setY(y);
 }
 
+/**
+ * Return the radius of the circle
+ * @return the radius of the circle
+ */
+double Circle::getRadius() {
+	return this->_radius;
+}
+
+
 
 /**
  * Evaluate a point using the circle's quadratic surface equation
