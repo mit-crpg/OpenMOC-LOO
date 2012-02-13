@@ -16,6 +16,7 @@
 #include "Track.h"
 #include "Geometry.h"
 #include "Magick++.h"
+#include "silo.h"
 
 class Plotting;
 
@@ -37,6 +38,8 @@ private:
 	double _y_pixel;
 	int* _pix_map_tracks;
 	int* _pix_map_segments;
+	int* _pix_map_fsr;
+	int* _pix_map_reflect;
 public:
 	TrackGenerator(Geometry* geom, const int num_azim,
 			const double spacing, const int bit_dim);
@@ -52,10 +55,12 @@ public:
 	void makeReflective();
 	void segmentize();
 	void plotTracksTiff();
-	void plotSegmentsBitMap(Track* track, double sin_phi, double cos_phi);
+	void plotSegmentsBitMap(Track* track, double sin_phi, double cos_phi, int* map_array);
 	void plotSegmentsTiff();
 	void LineFct(int x0, int y0, int x1, int y1, int* pixMap, int color = 1);
 	void printTrackingTimers();
+	void plotFSRs();
+	void plotTracksReflective(Track* track, int numReflect);
 };
 
 #endif /* TRACKGENERATOR_H_ */

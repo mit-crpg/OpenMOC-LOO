@@ -229,3 +229,34 @@ int Universe::computeFSRMaps() {
 
 	return count;
 }
+
+void Universe::generateCSGLists(std::vector<int>* surf_flags, std::vector<double>* surf_coeffs,
+		std::vector<int>* oper_flags, std::vector<int>* left_ids, std::vector<int>* right_ids,
+		std::vector<int>* zones, Point* current_origin){
+
+//	std::map<int, Cell*>::iterator iter;
+//
+//	/* Loop over all of this universes cells */
+//	for (iter = _cells.begin(); iter != _cells.end(); ++iter){
+//		Cell* cell = iter->second;
+
+
+	Cell* cell = _cells.begin()->second;
+
+		/* If the Universe contains a FILL type Cell, try to generate tracks for
+		 * daughter universes. Else, throw error.
+		 */
+	if (cell->getType() == FILL) {
+		log_printf(DEBUG, "Universe: Cell is fill type...");
+
+		Universe* univ = static_cast<CellFill*>(cell)->getUniverseFill();
+		univ->generateCSGLists(surf_flags, surf_coeffs, oper_flags,
+				left_ids, right_ids, zones, current_origin);
+	}
+	else {
+		log_printf(ERROR, "Parent Universe must be FILL type");
+	}
+//	}
+}
+
+

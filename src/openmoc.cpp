@@ -97,6 +97,33 @@ int main(int argc, const char **argv) {
 		timer.recordSplit("Creating png of segments");
 	}
 
+	/* Create pdb file with csg plot */
+	if (opts.plotCSG()){
+		timer.reset();
+		timer.start();
+		geometry.generateCSG();
+		timer.stop();
+		timer.recordSplit("Creating VisIt pdb plot");
+	}
+
+	/* Create pdb file with FSR plot */
+	if (opts.plotFSRs()){
+		timer.reset();
+		timer.start();
+		track_generator.plotFSRs();
+		timer.stop();
+		timer.recordSplit("Creating pdb of FSRs");
+	}
+
+
+
+//	LocalCoords* test = new LocalCoords(0.2, 0.2);
+//	test->setUniverse(0);
+//	geometry.findCell(test);
+//
+//	log_printf(DEBUG,"Found cell and localcoords:%s", test->toString().c_str());
+//	delete test;
+
 	/* Print timer splits to console */
 	log_printf(NORMAL, "Program complete");
 	timer.printSplits();

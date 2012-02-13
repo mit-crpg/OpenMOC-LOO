@@ -1015,3 +1015,10 @@ double Circle::getYMax(){
 	log_printf(ERROR, "Circle::getYMax not implemented");
 	return 1.0/0.0;
 }
+
+double Circle::getRadius(){
+	return _radius;
+}
+
+
+

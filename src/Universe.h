@@ -11,11 +11,14 @@
 #include <sstream>
 #include <iostream>
 #include <string>
+#include <vector>
 #include <map>
 #include "Point.h"
 #include "Cell.h"
 #include "LocalCoords.h"
 #include "log.h"
+#include "silo.h"
+#include "surface.h"
 
 class LocalCoords;
 class Cell;
@@ -51,9 +54,12 @@ public:
 	void setOrigin(Point* origin);
 	virtual Cell* findCell(LocalCoords* coords,
 			       std::map<int, Universe*> universes);
+	virtual void generateCSGLists(std::vector<int>* surf_flags, std::vector<double>* surf_coeffs,
+			std::vector<int>* oper_flags, std::vector<int>* left_ids, std::vector<int>* right_ids,
+			std::vector<int>* zones, Point* point_cur);
 	std::string toString();
 
-	int virtual computeFSRMaps();
+	virtual int computeFSRMaps();
 };
 
 #endif /* UNIVERSE_H_ */
