@@ -677,7 +677,6 @@ Lattice* Geometry::getLattice(int id) {
 	}
 	exit(0);
 }
-int findFSRId(LocalCoords* coords);
 
 
 /**
@@ -1189,6 +1188,7 @@ void Geometry::segmentize(Track* track) {
 		/* Create a new segment */
 		segment* new_segment = new segment;
 		new_segment->_length = segment_length;
+		new_segment->_material = _materials.at(static_cast<CellBasic*>(prev)->getMaterial());
 
 		new_segment->_region_id = findFSRId(&segment_start);
 //		new_segment->_region_id = prev->getUid();

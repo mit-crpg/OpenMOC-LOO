@@ -14,11 +14,13 @@
 #include <stdlib.h>
 #include <string>
 #include "Point.h"
+#include "Material.h"
 #include "log.h"
 
 /* Represent a segment along a given track */
 struct segment {
 	double _length;
+	Material* _material;
 	int _region_id;
 };
 
