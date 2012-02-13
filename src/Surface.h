@@ -51,8 +51,8 @@ enum boundaryType {
  */
 class Surface {
 protected:
-	static int _n;				/* Counts the number of surfaces */
-	int _uid;				/* monotonically increasing id based on n */
+	static int _n;		  /* Counts the number of surfaces */
+	int _uid;		  /* monotonically increasing id based on n */
 	int _id;
 	surfaceType _type;
 	boundaryType _boundary;
@@ -60,7 +60,8 @@ protected:
 	std::vector<Cell*> _neighbor_neg;
 
 public:
-	Surface(const int id, const surfaceType type, const boundaryType boundary);
+	Surface(const int id, const surfaceType type, 
+		const boundaryType boundary);
 	virtual ~Surface();
 	int getUid() const;
 	int getId() const;
@@ -150,6 +151,7 @@ private:
 public:
 	Circle(const int id, const boundaryType boundary, const double x,
 				const double y, const double radius);
+	double getRadius();
 	double evaluate(const Point* point) const;
 	int intersection(Point* point, double angle, Point* points);
 	int intersection(Track* track, Point* points) const;

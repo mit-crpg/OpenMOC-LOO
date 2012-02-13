@@ -34,7 +34,7 @@ int main(int argc, const char **argv) {
 	/* Set the verbosity */
 	log_setlevel(opts.getVerbosity());
 
-	/* Initialize the parser */
+	/* Initialize the parser and time the parser */
 	timer.start();
 	Parser parser(&opts);
 	timer.stop();

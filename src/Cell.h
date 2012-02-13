@@ -64,9 +64,9 @@ public:
 	void setUniverse(int universe);
 	bool cellContains(Point* point);
 	bool cellContains(LocalCoords* coords);
-	double minSurfaceDist(Point* point, double angle, Point* min_intersection);
+	double minSurfaceDist(Point* point, double angle, 
+			      Point* min_intersection);
 	virtual std::string toString() =0;
-
 	virtual int getNumFSRs() =0;
 };
 
@@ -78,9 +78,10 @@ public:
 class CellBasic: public Cell {
 private: 
 	int _material;
+	int _num_rings;
 public:
 	CellBasic(int id, int universe, int num_surfaces, 
-		  int *, int material);
+		  int *surfaces, int material, int num_rings);
 	CellBasic(int id, int universe, int material);
 	int getMaterial() const;
 	void setMaterial(int material);
@@ -89,6 +90,7 @@ public:
 	std::string toString();
 	int getNumFSRs();
 	CellBasic* clone(int new_id);
+	int getNumRings();
 };
 
 

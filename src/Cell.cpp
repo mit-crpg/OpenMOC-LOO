@@ -146,6 +146,7 @@ int Cell::getNumSurfaces() const {
 }
 
 
+
 /**
  * Return the vector of surfaces in the cell
  * @return vector of surface ids
@@ -247,9 +248,10 @@ double Cell::minSurfaceDist(Point* point, double angle,
  */
 
 CellBasic::CellBasic(int id, int universe, int num_surfaces, 
-		   int* surfaces, int material):
+		     int* surfaces, int material, int num_rings):
 	Cell(id, MATERIAL, universe, num_surfaces, surfaces) {
 	_material = material;
+	_num_rings = num_rings;
 }
 
 
@@ -354,6 +356,13 @@ CellBasic* CellBasic::clone(int new_id) {
 	return new_cell;
 }
 
+/**
+ * Return the number of rings in the cell
+ * @return the number of rings
+ */
+int CellBasic::getNumRings() {
+	return this->_num_rings;
+}
 
 /**
  *  CellFill constructor

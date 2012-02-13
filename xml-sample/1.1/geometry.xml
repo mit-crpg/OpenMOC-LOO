@@ -3,11 +3,13 @@
 <geometry>
 
 <!-- Definition of Cells -->
-  <cell id="100" material="1" surfaces="-1" />
-  <cell id="101" material="2" surfaces="1 2 -3 4 -5" />
+  <cell id="100" material="1" surfaces="-1" rings = "2"/>
+  <cell id="101" material="3" surfaces="1 -6" rings = "2"/>
+  <cell id="102" material="2" surfaces="2 -3 4 -5" />
 
 <!-- Defition of Surfaces -->
   <surface id="1" type="circle" coeffs="0 0 1" />
+  <surface id="6" type="circle" coeffs="0 0 2" />
   <surface id="2" type="x-plane" coeffs="-2.0" boundary="reflective" />
   <surface id="3" type="x-plane" coeffs="2.0" boundary="reflective" />
   <surface id="4" type="y-plane" coeffs="-2.0" boundary="reflective" />

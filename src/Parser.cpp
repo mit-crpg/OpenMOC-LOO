@@ -606,13 +606,22 @@ void XMLCALL Parser_XMLCallback_End(void *context,
 					    f->cell.surfaces,
 					    f->cell.fill);
 		} else if (f->cell.has_material) {
-			cell = new CellBasic(f->cell.id, 
-					     f->cell.universe,
-					     f->cell.surfaces_count,
-					     f->cell.surfaces,
-					     f->cell.material
-// ,					     f->cell.rings
-				);
+			if (f->cell.has_rings) {
+				cell = new CellBasic(f->cell.id, 
+						     f->cell.universe,
+						     f->cell.surfaces_count,
+						     f->cell.surfaces,
+						     f->cell.material,
+						     f->cell.rings);
+			}
+			else {
+				cell = new CellBasic(f->cell.id, 
+						     f->cell.universe,
+						     f->cell.surfaces_count,
+						     f->cell.surfaces,
+						     f->cell.material,
+						     0);		     
+			}
 		} else {
 			log_printf(ERROR, "Cell without material or fill");
 		}
