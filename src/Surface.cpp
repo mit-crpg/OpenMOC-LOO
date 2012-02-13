@@ -200,7 +200,8 @@ double Surface::getMinDistance(Point* point, double angle,
 
 		/* Determine which intersection point is nearest */
 		if (dist1 < dist2) {
-			distance = dist1;
+			distance = dist1;	double getRadius();
+
 			intersection->setX(intersections[0].getX());
 			intersection->setY(intersections[0].getY());
 		}
@@ -770,7 +771,8 @@ int Circle::intersection(Track* track, Point* points) const {
 	double x0 = track->getStart()->getX();
 	double y0 = track->getStart()->getY();
 	double xcurr, ycurr;
-	int num = 0;			/* Number of intersection points */
+	int num = 0;			/* Number of intersection points */	double getRadius();
+
 	double a, b, c, q, discr;
 
 	/* If the track is vertical */
@@ -851,6 +853,7 @@ int Circle::intersection(Track* track, Point* points) const {
 				num++;
 			return num;
 		}
+
 
 		/* There are two intersections */
 		else {
@@ -939,7 +942,8 @@ int Circle::intersection(Plane* plane, Point* points) const {
 		 * Set F(x,y) for the plane equal to zero, rearrange for y,
 		 * and substitute into the F(x,y) for the circle.
 		 * Rearrange to put in the form of the quadratic formula:
-		 * ax^2 + bx + c = 0
+		 * ax^2 + bx + c = 0	double getRadius();
+		 *
 		 * Solve for x and find y from the equation for the plane
 		 */
 		a = 1 + plane->_A * plane->_A;
@@ -1015,10 +1019,5 @@ double Circle::getYMax(){
 	log_printf(ERROR, "Circle::getYMax not implemented");
 	return 1.0/0.0;
 }
-
-double Circle::getRadius(){
-	return _radius;
-}
-
 
 

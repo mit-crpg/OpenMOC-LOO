@@ -161,7 +161,6 @@ public:
 	virtual double getXMax();
 	virtual double getYMin();
 	virtual double getYMax();
-	double getRadius();
 };
 
 #endif /* SURFACE_H_ */
