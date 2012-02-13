@@ -22,6 +22,9 @@ struct segment {
 	double _length;
 	Material* _material;
 	int _region_id;
+#ifdef PRECOMPUTE_FACTORS
+	double prefactors[NUM_POLAR_ANGLES][NUM_ENERGY_GROUPS];
+#endif
 };
 
 
@@ -30,7 +33,8 @@ private:
 	Point _start;
 	Point _end;
 	double _phi;
-	double _weight;
+	double _azim_weight;
+	double _polar_weights[NUM_POLAR_ANGLES];
 	std::vector<segment*> _segments;
 	Track *_track_in, *_track_out;
 	bool _refl_in, _refl_out;
@@ -39,7 +43,8 @@ public:
 	virtual ~Track();
 	void setValues(const double start_x, const double start_y,
 			const double end_x, const double end_y, const double phi);
-    void setWeight(const double weight);
+    void setAzimuthalWeight(const double azim_weight);
+    void setPolarWeight(const int angle, double polar_weight);
     void setPhi(const double phi);
     void setReflIn(const bool refl_in);
     void setReflOut(const bool refl_out);
@@ -48,7 +53,8 @@ public:
     Point* getEnd();
     Point* getStart();
     double getPhi() const;
-    double getWeight() const;
+    double getAzimuthalWeight() const;
+    double* getPolarWeights();
 	segment* getSegment(int s);
 	int getNumSegments();
     Track *getTrackIn() const;

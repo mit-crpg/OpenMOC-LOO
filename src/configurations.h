@@ -18,8 +18,15 @@
 #define NUM_ENERGY_GROUPS 7
 #define GRP_TIMES_ANG NUM_POLAR_ANGLES*NUM_ENERGY_GROUPS
 
+/* Precompute and store exponential pre-factors in transport equation */
+#define PRECOMPUTE_FACTORS TRUE
+
 /* Max number of regions for precomputing pre-factors in solver */
-#define NUM_REGIONS_THRESH
+#define FSR_HASHMAP_THRESH 10000
+
+/* Number of significant digits for computing hashmap exponential prefactors */
+#define FSR_HASHMAP_PRECISION 5
+
 
 /******************************************************************************
  *********************** PHYSICAL CONSTANTS ***********************************

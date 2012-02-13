@@ -23,6 +23,8 @@ Geometry::Geometry(int num_sectors, int num_rings, double sector_offset,
 	_num_sectors = num_sectors;
 	_num_rings = num_rings;
 	_sector_offset = sector_offset;
+	_max_seg_length = 0;
+	_min_seg_length = INFINITY;
 
 	/* Initializing the corners to be infinite  */
 	_x_min = 1.0/0.0;
@@ -180,6 +182,22 @@ int Geometry::getNumFSRs() const {
 }
 
 
+/* Return the maximum segment length computed during segmentation
+ * return max segment length
+ */
+double Geometry::getMaxSegmentLength() const {
+	return _max_seg_length;
+}
+
+
+/* Return the minimum segment length computed during segmentation
+ * return min segment length
+ */
+double Geometry::getMinSegmentLength() const {
+	return _min_seg_length;
+}
+
+
 /**
  * Add a material to the geometry
  * @param material a pointer to a material object
@@ -203,7 +221,10 @@ void Geometry::addMaterial(Material* material) {
 					"\n%s", material->getId(), e.what());
 		}
 	}
-}
+}/* Return the maximum segment length computed during segmentation
+ * return max segment length
+ */
+
 
 
 /**
@@ -320,6 +341,9 @@ void Geometry::addCell(Cell* cell) {
 		if (_surfaces.find(surface_id) == _surfaces.end())
 			log_printf(ERROR, "Attempted to add cell with surface id = %d, "
 				   "but surface does not exist", iter->first);
+		/* Return the maximum segment length computed during segmentation
+		 * return max segment length
+		 */
 
 		/* The surface does exist, so set the surface pointer in the cell */
 		else	
@@ -353,6 +377,9 @@ void Geometry::addCell(Cell* cell) {
 
 	/* Adds the cell to the appropriate universe */
 	_universes.at(cell->getUniverse())->addCell(cell);
+	/* Return the maximum segment length computed during segmentation
+	 * return max segment length
+	 */
 
 
 
@@ -394,7 +421,10 @@ void Geometry::addCell(Cell* cell) {
 				log_printf(DEBUG, "Added new %s", 
 						   s->toString().c_str());
 
-				/* create the inner-most circle cell */
+				/* Return the maximum segment length computed during segmentation
+				 * return max segment length
+				 */
+/* create the inner-most circle cell */
 				CellBasic *c = new CellBasic(startId, cell->getUniverse(), 
 											 dynamic_cast<CellBasic*>(cell)
 											 ->getMaterial());
@@ -427,6 +457,9 @@ void Geometry::addCell(Cell* cell) {
 					rold = r;
 					i++;
 				}
+				/* Return the maximum segment length computed during segmentation
+				 * return max segment length
+				 */
 
 				/* update the original circle cell to be the outside 
 				   most ring cell */
@@ -1184,6 +1217,12 @@ void Geometry::segmentize(Track* track) {
 
 		/* Find the segment length between the segments start and end points */
 		segment_length = segment_end.getPoint()->distance(segment_start.getPoint());
+
+		/* Update the max and min segment lengths */
+		if (segment_length > _max_seg_length)
+			_max_seg_length = segment_length;
+		if (segment_length < _min_seg_length)
+			_min_seg_length = segment_length;
 
 		/* Create a new segment */
 		segment* new_segment = new segment;

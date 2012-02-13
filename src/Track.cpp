@@ -46,10 +46,19 @@ void Track::setValues(const double start_x, const double start_y,
  * Set the track azimuthal weight
  * @param weight the azimuthal weight
  */
-void Track::setWeight(const double weight) {
-    _weight = weight;
+void Track::setAzimuthalWeight(const double azim_weight) {
+    _azim_weight = azim_weight;
 }
 
+
+/**
+ * Sets the weight of this track at one of the quadrature polar angles
+ * @param angle polar angle
+ * @param polar_weight the weight of that angle
+ */
+void Track::setPolarWeight(const int angle, double polar_weight) {
+	_polar_weights[angle] = polar_weight;
+}
 
 /*
  * Set the track azimuthal angle
@@ -146,10 +155,18 @@ double Track::getPhi() const {
  * Return the track's azimuthal weight
  * @param the track's azimuthal weight
  */
-double Track::getWeight() const {
-    return _weight;
+double Track::getAzimuthalWeight() const {
+    return _azim_weight;
 }
 
+
+/**
+ * Return an array pointer to the track's polar weights
+ * @return pointer to the tracks' polar weights
+ */
+double* Track::getPolarWeights() {
+	return _polar_weights;
+}
 
 
 /**
@@ -285,7 +302,8 @@ std::string Track::toString() {
 	std::stringstream string;
 	string << "Track: start, x = " << _start.getX() << ", y = " <<
 			_start.getY() << " end, x = " << _end.getX() << ", y = "
-			<< _end.getY() << ", phi = " << _phi << " weight = " << _weight;
+			<< _end.getY() << ", phi = " << _phi << " azim_weight = " <<
+			_azim_weight;
 
 	return string.str();
 }
