@@ -42,7 +42,7 @@ Options::Options(int argc, const char **argv) {
 	_dump_geometry = false;				/* Default will not dump geometry */
 	_plot_tracks = false;				/* Default will not plot tracks */
 	_plot_segments = false;				/* Default will not plot segments */
-	_plot_visit = false;               /* Default will not make visit plot */
+	_plot_csg = false;               /* Default will not make visit plot */
 	_plot_fsrs = false;               /* Default will not plot flat source regions */
 
 	for (int i = 0; i < argc; i++) {
@@ -77,8 +77,8 @@ Options::Options(int argc, const char **argv) {
 					strcmp(argv[i], "--plotsegments") == 0)
 				_plot_segments = true;
 			else if (strcmp(argv[i], "-pv") == 0 ||
-					strcmp(argv[i], "--plotvisit") == 0)
-				_plot_visit = true;
+					strcmp(argv[i], "--plotcsg") == 0)
+				_plot_csg = true;
 			else if (strcmp(argv[i], "-pf") == 0 ||
 					strcmp(argv[i], "--plotfsrs") == 0)
 				_plot_fsrs = true;
@@ -144,7 +144,7 @@ bool Options::plotSegments() const {
  * @return whether or not to make VisIt plot
  */
 bool Options::plotCSG() const {
-	return _plot_visit;
+	return _plot_csg;
 }
 
 /**

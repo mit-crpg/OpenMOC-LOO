@@ -51,9 +51,9 @@ public:
 	Cell* findNextLatticeCell(LocalCoords* coords, 
 				  double angle,
 				  std::map<int, Universe*> universes);
-	void generateCSGLists(std::vector<int>* surf_flags, std::vector<double>* surf_coeffs,
+	virtual void generateCSGLists(std::vector<int>* surf_flags, std::vector<double>* surf_coeffs,
 			std::vector<int>* oper_flags, std::vector<int>* left_ids, std::vector<int>* right_ids,
-			std::vector<int>* zones, Point* point, Point* point_cur);
+			std::vector<int>* zones, Point* point_cur);
 	std::string toString();
 	
 	int virtual computeFSRMaps();

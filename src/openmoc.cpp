@@ -97,6 +97,7 @@ int main(int argc, const char **argv) {
 		timer.recordSplit("Creating png of segments");
 	}
 
+	/* Create pdb file with csg plot */
 	if (opts.plotCSG()){
 		timer.reset();
 		timer.start();
@@ -105,6 +106,7 @@ int main(int argc, const char **argv) {
 		timer.recordSplit("Creating VisIt pdb plot");
 	}
 
+	/* Create pdb file with FSR plot */
 	if (opts.plotFSRs()){
 		timer.reset();
 		timer.start();
@@ -112,6 +114,7 @@ int main(int argc, const char **argv) {
 		timer.stop();
 		timer.recordSplit("Creating pdb of FSRs");
 	}
+
 
 
 //	LocalCoords* test = new LocalCoords(0.2, 0.2);

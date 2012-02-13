@@ -1065,14 +1065,12 @@ int Geometry::findFSRId(LocalCoords* coords) {
 	return fsr_id;
 }
 
-
 /**
  * generate CSG of geometry
  */
 void Geometry::generateCSG(){
 
 	/* Initialize vectors for all quantities that SILO needs */
-
 	std::vector<int> _surf_flags;
 	std::vector<double> _surf_coeffs;
 	std::vector<int> _oper_flags;
@@ -1080,21 +1078,20 @@ void Geometry::generateCSG(){
 	std::vector<int> _right_ids;
 	std::vector<int> _zones;
 
-	/* Create a Point that is centered in the base universe (global level) */
-	Point point;
+	/* Create a point that represents the origin of current_universe */
 	Point current_origin;
-	point.setCoords(0,0);
 	current_origin.setCoords(0,0);
 
 	/* Get a pointer to universe zero from the geometryÕs map of universes */
 	Universe* universe_zero = _universes.at(0);
 
-	universe_zero->generateCSGLists(&_surf_flags, &_surf_coeffs, &_oper_flags, &_left_ids, &_right_ids, &_zones, &point, &current_origin);
+	/* recursively generate csg zones for geometry */
+	universe_zero->generateCSGLists(&_surf_flags, &_surf_coeffs, &_oper_flags, &_left_ids, &_right_ids, &_zones, &current_origin);
 
 	log_printf(DEBUG, "size of _surf_flags vector: %d", _surf_flags.size());
 	log_printf(DEBUG, "size of _surf_coeffs vector: %d", _surf_coeffs.size());
 
-	/* Convert vectors to arrays by getting a pointer to the first element in each vector*/
+	/* Convert vectors to arrays by first getting a pointer to the first element in each vector*/
 	int* surf_flags_arr = new int[_surf_flags.size()];
 	double* surf_coeffs_arr = new double[_surf_coeffs.size()];
 	int* oper_flags_arr = new int[_oper_flags.size()];
@@ -1102,6 +1099,7 @@ void Geometry::generateCSG(){
 	int* right_ids_arr = new int[_right_ids.size()];
 	int* zones_arr = new int[_zones.size()];
 
+	/* write vectors to arrays */
 	surf_flags_arr = &_surf_flags[0];
 	surf_coeffs_arr = &_surf_coeffs[0];
 	oper_flags_arr = &_oper_flags[0];
@@ -1109,20 +1107,24 @@ void Geometry::generateCSG(){
 	right_ids_arr = &_right_ids[0];
 	zones_arr = &_zones[0];
 
-	/* Call appropriate SILO / VISIT functions */
+	/* Call appropriate SILO functions */
 
+	/* create pdb file */
     DBfile *dbfile;
     dbfile = DBCreate("csg.pdb", DB_CLOBBER, DB_LOCAL, "csg test file", DB_PDB);
 
     /* build and output the csg mesh (boundaries) */
 
+    /* number of boundaries and corresponding coefficients */
     int nbounds = _surf_flags.size();
     int lcoeffs = _surf_coeffs.size();
 
+    /* size of geometry */
 	double extents[] = {-getWidth()/2.0, -getHeight()/2.0, 0.0, getWidth()/2.0, getHeight()/2.0, 0.0};
 
 	log_printf(DEBUG, "extents: %f, %f, %f, %f", -getWidth()/2.0, -getHeight()/2.0, getWidth()/2.0, getHeight()/2.0);
 
+	/* print surface data if debugging */
 	log_printf(DEBUG, "nbounds: %d, lcoeffs: %d", nbounds, lcoeffs);
 	for (int i = 0; i < nbounds; i++){
 		log_printf(DEBUG, "surf flag arr [%d]: %d", i, surf_flags_arr[i]);
@@ -1132,15 +1134,18 @@ void Geometry::generateCSG(){
 		log_printf(DEBUG, "surf coeffs arr [%d]: %f", i, surf_coeffs_arr[i]);
 	}
 
-
+	/* write surface data to pdb file */
 	DBPutCsgmesh(dbfile, "csg_geometry", 2, nbounds, surf_flags_arr, NULL, surf_coeffs_arr, lcoeffs, DB_DOUBLE, extents, "csgzl", NULL);
 
     /* build and output the csg zonelist */
+
+	/* get the number of regions and zones */
 	int nregs = _oper_flags.size();
     int nzones = _zones.size();
 
     log_printf(DEBUG, "inner: %d, outer: %d, intersect: %d", DBCSG_INNER, DBCSG_OUTER, DBCSG_INTERSECT);
 
+    /* print region and zone data if debugging */
     for (int i = 0; i < nregs; i++){
     	log_printf(DEBUG, "oper flags arr [%d]: %d", i, oper_flags_arr[i]);
     }
@@ -1152,6 +1157,7 @@ void Geometry::generateCSG(){
 
 	log_printf(DEBUG,"nregs: %d, nzones: %d", nregs, nzones);
 
+	/* write region and zone data to csg file */
 	DBPutCSGZonelist(dbfile, "csgzl", nregs, oper_flags_arr, left_ids_arr, right_ids_arr,
 			NULL, 0, DB_INT, nzones, zones_arr, NULL);
 
@@ -1163,27 +1169,21 @@ void Geometry::generateCSG(){
     	flux_data[i] = (double)((i * 3) % 7);
     }
 
-//    for (int i = 0; i < nzones; i++){
-//    	log_printf(DEBUG, "flux_data[%d]: %f", i, flux_data[i]);
-//    }
-
     char *pname[1];
     char name1[] = "flux";
 
     pv[0] = (void*) flux_data;
     pname[0] = name1;
 
+    /* write data to the zones */
     DBPutCsgvar(dbfile, "flux", "csg_geometry", 1, pname, pv, nzones, DB_DOUBLE,
     		DB_ZONECENT, NULL);
 
-    DBGetCsgvar(dbfile, "flux");
+//    DBGetCsgvar(dbfile, "flux");
 
+    /* close pdb file */
     DBClose(dbfile);
 }
-
-
-
-
 
 
 /*

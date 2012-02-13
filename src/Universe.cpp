@@ -232,86 +232,31 @@ int Universe::computeFSRMaps() {
 
 void Universe::generateCSGLists(std::vector<int>* surf_flags, std::vector<double>* surf_coeffs,
 		std::vector<int>* oper_flags, std::vector<int>* left_ids, std::vector<int>* right_ids,
-		std::vector<int>* zones, Point* point, Point* current_origin){
+		std::vector<int>* zones, Point* current_origin){
 
-	std::map<int, Cell*>::iterator iter;
+//	std::map<int, Cell*>::iterator iter;
+//
+//	/* Loop over all of this universes cells */
+//	for (iter = _cells.begin(); iter != _cells.end(); ++iter){
+//		Cell* cell = iter->second;
 
-	/* Loop over all of this universes cells */
-	for (iter = _cells.begin(); iter != _cells.end(); ++iter){
-		Cell* cell = iter->second;
 
-//		log_printf(DEBUG, "Universe: Inside Universe CSGLists method for id = %d, cell id = %d", _id, cell->getId());
+	Cell* cell = _cells.begin()->second;
 
-//		if (cell->getType() == MATERIAL) {
-//			/* Do everything you would do to add surfaces to the vectors and
-//			 *  make them intersect into regions and create a new zone.
-//			 *   This will assume that the most recent set of surfaces are
-//			 *   those boundary planes surrounding the pin cell, and that the
-//			 *    most recent region created is the box of surfaces surrounding
-//			 *   the pin cell (see notes below for Lattice.cpp)
-//			 */
-//
-//			std::map<int, Surface*> cells_surfaces = cell->getSurfaces();
-//			std::map<int, Surface*>::iterator iter2;
-//			double radius;
-//
-//			for (iter2 = cells_surfaces.begin(); iter2 != cells_surfaces.end(); ++iter2) {
-//
-////				log_printf(DEBUG, "Checking surface id = %d", iter2->first);
-//				if (iter2->second->getType() == CIRCLE && iter2->first < 0) {
-//					radius = static_cast<Circle*>(iter2->second)->getRadius();
-////					log_printf(DEBUG, "Universe: Cell is material type...");
-//					log_printf(DEBUG, "Universe: making circle (center_x, center_y, radius): (%f,%f,%f)", current_origin->getX(), current_origin->getX(), radius);
-//
-//					int surf_flags_index = surf_flags->size();
-//
-//					// add to surf_flags
-//					surf_flags->push_back(DBCSG_CIRCLE_PR);
-//
-//					// add to surf_coeffs
-//					surf_coeffs->push_back(current_origin->getX());
-//					surf_coeffs->push_back(current_origin->getY());
-//					surf_coeffs->push_back(radius);
-//
-//
-//					// add to oper_flags
-//					oper_flags->push_back(DBCSG_OUTER);
-//					oper_flags->push_back(DBCSG_INTERSECT);
-//					oper_flags->push_back(DBCSG_INNER);
-//
-//					int left_ids_cur = left_ids->size();
-//
-//					// add to left_ids
-//					left_ids->push_back(surf_flags_index);
-//					left_ids->push_back(left_ids_cur - 1);
-//					left_ids->push_back(surf_flags_index);
-//
-//					// add to right_ids
-//					right_ids->push_back(-1);
-//					right_ids->push_back(left_ids_cur);
-//					right_ids->push_back(-1);
-//
-//
-//					// add to zones
-//					zones->push_back(left_ids_cur + 1);
-//					zones->push_back(left_ids_cur + 2);
-//
-//				}
-//			}
-//
-//		}
-
-		/* If the Universe contains a FILL type Cell, then recursively go into
-		 *  the universe filling this cell
+		/* If the Universe contains a FILL type Cell, try to generate tracks for
+		 * daughter universes. Else, throw error.
 		 */
-		if (cell->getType() == FILL) {
-			log_printf(DEBUG, "Universe: Cell is fill type...");
+	if (cell->getType() == FILL) {
+		log_printf(DEBUG, "Universe: Cell is fill type...");
 
-			Universe* univ = static_cast<CellFill*>(cell)->getUniverseFill();
-			univ->generateCSGLists(surf_flags, surf_coeffs, oper_flags,
-					left_ids, right_ids, zones, point, current_origin);
-		}
+		Universe* univ = static_cast<CellFill*>(cell)->getUniverseFill();
+		univ->generateCSGLists(surf_flags, surf_coeffs, oper_flags,
+				left_ids, right_ids, zones, current_origin);
 	}
+	else {
+		log_printf(ERROR, "Parent Universe must be FILL type");
+	}
+//	}
 }
 
 

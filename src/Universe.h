@@ -56,7 +56,7 @@ public:
 			       std::map<int, Universe*> universes);
 	virtual void generateCSGLists(std::vector<int>* surf_flags, std::vector<double>* surf_coeffs,
 			std::vector<int>* oper_flags, std::vector<int>* left_ids, std::vector<int>* right_ids,
-			std::vector<int>* zones, Point* point, Point* point_cur);
+			std::vector<int>* zones, Point* point_cur);
 	std::string toString();
 
 	virtual int computeFSRMaps();

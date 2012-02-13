@@ -31,13 +31,20 @@ TrackGenerator::TrackGenerator(Geometry* geom,
 	_bit_length_x = int (bitDim*ratio) + 1;
 	_bit_length_y = bitDim + 1;
 
-	_pix_map_tracks = new int[_bit_length_x*_bit_length_y];
-	_pix_map_segments = new int[_bit_length_x*_bit_length_y];
-	_pix_map_visit = new int[_bit_length_x*_bit_length_y];
-
+	try{
+		_pix_map_tracks = new int[_bit_length_x*_bit_length_y];
+		_pix_map_segments = new int[_bit_length_x*_bit_length_y];
+		_pix_map_fsr = new int[_bit_length_x*_bit_length_y];
+		_pix_map_reflect = new int[_bit_length_x*_bit_length_y];
+	}
+	catch (std::exception &e) {
+		log_printf(ERROR, "Unable to allocate memory needed to generate pixel maps"
+				".Backtrace:\n%s", e.what());
+	}
 	for (int i=0;i<_bit_length_x; i++){
 		for (int j = 0; j < _bit_length_y; j++){
 			_pix_map_segments[i * _bit_length_x + j] = -1;
+			_pix_map_reflect[i * _bit_length_x + j] = -1;
 		}
 	}
 
@@ -69,6 +76,8 @@ TrackGenerator::~TrackGenerator() {
 	delete [] _azim_weights;
 	delete [] _pix_map_segments;
 	delete [] _pix_map_tracks;
+	delete [] _pix_map_fsr;
+	delete [] _pix_map_reflect;
 
 	for (int i = 0; i < _num_azim; i++)
 		delete [] _tracks[i];
@@ -263,7 +272,8 @@ void TrackGenerator::generateTracks() {
 						-new_y0*_y_pixel + _bit_length_y/2,
 						new_x1*_x_pixel + _bit_length_x/2,
 						-new_y1*_y_pixel + _bit_length_y/2,
-						_pix_map_tracks);
+						_pix_map_tracks, 1);
+
 			}
 		}
 
@@ -458,6 +468,7 @@ void TrackGenerator::segmentize() {
 	log_printf(NORMAL, "Segmenting tracks...");
 	double phi, sin_phi, cos_phi;
 
+
 	/* Loop over all tracks */
 	for (int i = 0; i < _num_azim; i++) {
 		phi = _tracks[i][0].getPhi();
@@ -465,9 +476,10 @@ void TrackGenerator::segmentize() {
 		cos_phi = cos(phi);
 		for (int j = 0; j < _num_tracks[i]; j++){
 			_geom->segmentize(&_tracks[i][j]);
-			plotSegmentsBitMap(&_tracks[i][j], sin_phi, cos_phi);
+			plotSegmentsBitMap(&_tracks[i][j], sin_phi, cos_phi, _pix_map_segments);
 		}
 	}
+
 	return;
 }
 
@@ -482,19 +494,22 @@ void TrackGenerator::plotTracksTiff() {
 	Magick::Image image_tracks(Magick::Geometry(_bit_length_x,_bit_length_y), "black");
 	image_tracks.modifyImage();
 
-	Magick::Pixels view(image_tracks);
+	/* Make pixel cache */
+	Magick::Pixels my_pixel_cache(image_tracks);
+	Magick::PixelPacket* pixels;
+	pixels = my_pixel_cache.get(0,0,_bit_length_x,_bit_length_y);
 
 	/* Convert _pix_map_tracks bitmap array to Magick bitmap pixel array. */
 	for (int y=0;y<_bit_length_y; y++){
 		for (int x = 0; x < _bit_length_x; x++){
 			if (_pix_map_tracks[y * _bit_length_x + x] != 1){
-				*(view.get(x,y,1,1)) = Magick::Color("white");
+				*(pixels+(y * _bit_length_x + x)) = Magick::Color("white");
 			}
 		}
 	}
 
 	/* Close pixel viewing/changing */
-	view.sync();
+	my_pixel_cache.sync();
 
 	/* Write pixel bitmap to png file */
 	image_tracks.write("tracks.png");
@@ -504,7 +519,7 @@ void TrackGenerator::plotTracksTiff() {
 /**
  * Plots track segments in a _pix_map_segments bitmap array on the fly
  */
-void TrackGenerator::plotSegmentsBitMap(Track* track, double sin_phi, double cos_phi){
+void TrackGenerator::plotSegmentsBitMap(Track* track, double sin_phi, double cos_phi, int* map_array){
 
 	/* Initialize variables */
 	double start_x, start_y, end_x, end_y;
@@ -529,8 +544,9 @@ void TrackGenerator::plotSegmentsBitMap(Track* track, double sin_phi, double cos
 				-start_y*_y_pixel + _bit_length_y/2,
 				end_x*_x_pixel + _bit_length_x/2,
 				-end_y*_y_pixel + _bit_length_y/2,
-				_pix_map_segments,
+				map_array,
 				track->getSegment(k)->_region_id);
+
 
 		start_x = end_x;
 		start_y = end_y;
@@ -540,7 +556,7 @@ void TrackGenerator::plotSegmentsBitMap(Track* track, double sin_phi, double cos
 
 
 /**
- * Plot segments in tiff file
+ * Plot segments in png file
  */
 void TrackGenerator::plotSegmentsTiff(){
 	log_printf(NORMAL, "Writing segments bitmap to png...");
@@ -613,6 +629,7 @@ void TrackGenerator::plotSegmentsTiff(){
 		}
 	}
 
+
 	/* close pixel viewing/changing */
 	my_pixel_cache.sync();
 
@@ -629,50 +646,226 @@ void TrackGenerator::plotSegmentsTiff(){
 void TrackGenerator::plotFSRs(){
 	log_printf(NORMAL, "plotting FSRs in visit...");
 
-    DBfile *dbfile1;
-    dbfile1 = DBCreate("structured_mesh.pdb", DB_CLOBBER, DB_LOCAL, "structured mesh test file", DB_PDB);
+	/* Create pdb file */
+    DBfile *pdb_file;
+    pdb_file = DBCreate("structured_mesh.pdb", DB_CLOBBER, DB_LOCAL, "structured mesh test file", DB_PDB);
 
+    /* create mesh point arrays */
 	double mesh_x[_bit_length_x + 1];
 	double mesh_y[_bit_length_y + 1];
 
+	/* create pixmap mesh */
 	for (int i = 0; i < (_bit_length_x + 1); i++){
-		mesh_x[i] = double(i * (_width/double(_bit_length_x)));
+		mesh_x[i] = (double(i) - double(_bit_length_x)/2.0 + 1.0) * (_width/double(_bit_length_x));
 	}
 	for (int i = 0; i < (_bit_length_y + 1); i++){
-		mesh_y[i] = double(i * (_height/double(_bit_length_y)));
+		mesh_y[i] = (double(i) - double(_bit_length_y)/2.0) * (_height/double(_bit_length_y));
 	}
 
+	/* descriptions of mesh */
 	double *coords[] = {mesh_x, mesh_y};
 	int dims[] = {_bit_length_x + 1, _bit_length_y + 1};
 	int ndims = 2;
 
-	DBPutQuadmesh(dbfile1, "quadmesh", NULL, coords, dims, ndims, DB_DOUBLE, DB_COLLINEAR, NULL);
+	/* create structured mesh bit map in pdb_file */
+	DBPutQuadmesh(pdb_file, "quadmesh", NULL, coords, dims, ndims, DB_DOUBLE, DB_COLLINEAR, NULL);
 
+	/* dimensions of _pix_map_fsr */
 	int dimsvar[] = {_bit_length_x, _bit_length_y};
 
-	_pix_map_visit = _pix_map_segments;
-
-	int m1, m2, cur, p1, p2;
-
-	// smoothing pixel map so there's fewer missing pixels
-	for (int i = 2; i < (_bit_length_x*_bit_length_y - 2); i++){
-		p2 = _pix_map_visit[i + 2];
-		p1 = _pix_map_visit[i + 1];
-		cur = _pix_map_visit[i];
-		m1 = _pix_map_visit[i - 1];
-		m2 = _pix_map_visit[i - 2];
-		if (p1==m1 && cur != m1){
-			_pix_map_visit[i] = m1;
-		}
-		else if (p2==p1 && m1==m2 && cur != p1 && cur != m1){
-			_pix_map_visit[i] = m1;
+	/*
+	 * write _pix_map_segments (bitmap coordinates)
+	 * to _pix_map_fsr (cartesian coordinates)
+	*/
+	for (int y = 0; y < _bit_length_x; y++){
+		for ( int x = 0; x < _bit_length_y; x++){
+			_pix_map_fsr[(_bit_length_x - 1 - y) * _bit_length_x + x] = _pix_map_segments[y * _bit_length_x + x];
 		}
 	}
 
-	DBPutQuadvar1(dbfile1, "FSRs", "quadmesh", _pix_map_visit, dimsvar, ndims, NULL, 0, DB_INT, DB_ZONECENT, NULL);
 
-    DBClose(dbfile1);
+	/* contiguous pixel values used for smoothing */
+	int m2; 		/* pixel(i - 2) */
+	int m1; 		/* pixel(i - 1) */
+	int cur;		/* pixel(i) */
+	int p1;			/* pixel(i + 1) */
+	int p2;			/* pixel(i + 2) */
+	int up;         /* pixel(i - _bit_length_x) */
+	int down; 		/* pixel(i + _bit_length_x) */
+
+	/* smoothing pixel map so there's fewer missing pixels */
+	for (int k = 0; k < 4; k++){
+		for (int i = 2; i < ((_bit_length_x*_bit_length_y) - 2); i++){
+			if ( i >= _bit_length_x){
+				up = _pix_map_fsr[i - _bit_length_x];
+			}
+			else{
+				up = -1;
+			}
+			if ( i <= ((_bit_length_x - 1) * _bit_length_y)){
+				down = _pix_map_fsr[i + _bit_length_x];
+			}
+			else{
+				down = -1;
+			}
+			p2 = _pix_map_fsr[i + 2];
+			p1 = _pix_map_fsr[i + 1];
+			cur = _pix_map_fsr[i];
+			m1 = _pix_map_fsr[i - 1];
+			m2 = _pix_map_fsr[i - 2];
+			/* a_a -> aaa */
+			if (cur == -1 && p1==m1 && m1 != -1){
+				_pix_map_fsr[i] = m1;
+			}
+			 /*   a     a
+			 *    _ ->  a
+			 *    a     a
+			 */
+			if (cur == -1 && up == down && up != -1 && down != -1){
+				_pix_map_fsr[i] = down;
+			}
+			/* a__a -> aaaa */
+			if (cur == -1 && p2 == m1 && p2 != -1){
+				_pix_map_fsr[i] = p2;
+				_pix_map_fsr[i + 1] = p2;
+			}
+			/* aa_bb -> aaabb */
+			if (cur == -1 && p1 == p2 && m1 == m2 && m1 != -1 && p1 != -1){
+				if (i % _bit_length_x == 0){
+					_pix_map_fsr[i] = p1;
+				}
+				else{
+					_pix_map_fsr[i] = m1;
+				}
+			}
+		}
+	}
+
+	/* Save FSR bit map (_bit_map_visit) to the pdb file */
+	DBPutQuadvar1(pdb_file, "FSRs", "quadmesh", _pix_map_fsr, dimsvar, ndims, NULL, 0, DB_INT, DB_ZONECENT, NULL);
+
+	/* close pdb file */
+    DBClose(pdb_file);
 }
+
+/**
+ * plot given track and numReflect reflected tracks
+ */
+void TrackGenerator::plotTracksReflective(Track* track, int numReflect){
+	log_printf(NORMAL, "Writing tracks reflect bitmap to png...");
+
+	/* initialize variables */
+	double sin_phi, cos_phi, phi;
+	Track *track2;
+	bool get_out = TRUE;
+
+	/* loop through tracks and write to _pix_map_reflect bitmap */
+	for (int i = 0; i < (numReflect + 1); i++){
+		log_printf(DEBUG, "plotting reflective track: %d", i);
+		log_printf(DEBUG, "x_start, y_start, x_end, y_end: %f, %f, %f, %f",
+				track->getStart()->getX(),track->getStart()->getY(),
+				track->getEnd()->getX(),track->getEnd()->getY());
+		phi = track->getPhi();
+		sin_phi = sin(phi);
+		cos_phi = cos(phi);
+		plotSegmentsBitMap(track, sin_phi, cos_phi, _pix_map_reflect);
+
+		/* Get next track */
+		track2 = track;
+		if (get_out){
+			track = track->getTrackOut();
+		}
+		else {
+			track = track->getTrackIn();
+		}
+
+		/*determine whether we want TrackIn or TrackOut of next track */
+		if (track->getTrackOut() == track2){
+			get_out = FALSE;
+		}
+		else{
+			get_out = TRUE;
+		}
+	}
+
+	/* Create Magick image and open pixels for viewing/changing  */
+	Magick::Image image_reflect(Magick::Geometry(_bit_length_x,_bit_length_y), "white");
+	image_reflect.modifyImage();
+
+	/* Make pixel cache */
+	Magick::Pixels my_pixel_cache(image_reflect);
+	Magick::PixelPacket* pixels;
+	pixels = my_pixel_cache.get(0,0,_bit_length_x,_bit_length_y);
+
+	/*
+	 * Convert _pix_map_reflect bitmap array to Magick bitmap pixel
+	 * color array
+	 */
+	for (int y=0;y < _bit_length_y; y++){
+		for (int x = 0; x < _bit_length_x; x++){
+			switch (_pix_map_reflect[y * _bit_length_x + x] % 15){
+			case 0:
+				*(pixels+(y * _bit_length_x + x)) = Magick::Color("indigo");
+				break;
+			case 1:
+				*(pixels+(y * _bit_length_x + x)) = Magick::Color("red");
+				break;
+			case 2:
+				*(pixels+(y * _bit_length_x + x)) = Magick::Color("blue");
+				break;
+			case 3:
+				*(pixels+(y * _bit_length_x + x)) = Magick::Color("green");
+				break;
+			case 4:
+				*(pixels+(y * _bit_length_x + x)) = Magick::Color("magenta");
+				break;
+			case 5:
+				*(pixels+(y * _bit_length_x + x)) = Magick::Color("orange");
+				break;
+			case 6:
+				*(pixels+(y * _bit_length_x + x)) = Magick::Color("maroon");
+				break;
+			case 7:
+				*(pixels+(y * _bit_length_x + x)) = Magick::Color("orchid");
+				break;
+			case 8:
+				*(pixels+(y * _bit_length_x + x)) = Magick::Color("blue violet");
+				break;
+			case 9:
+				*(pixels+(y * _bit_length_x + x)) = Magick::Color("crimson");
+				break;
+			case 10:
+				*(pixels+(y * _bit_length_x + x)) = Magick::Color("salmon");
+				break;
+			case 11:
+				*(pixels+(y * _bit_length_x + x)) = Magick::Color("gold");
+				break;
+			case 12:
+				*(pixels+(y * _bit_length_x + x)) = Magick::Color("DarkSlateGray");
+				break;
+			case 13:
+				*(pixels+(y * _bit_length_x + x)) = Magick::Color("orange red");
+				break;
+			case 14:
+				*(pixels+(y * _bit_length_x + x)) = Magick::Color("spring green");
+				break;
+			case 15:
+				*(pixels+(y * _bit_length_x + x)) = Magick::Color("pale green");
+				break;
+			}
+		}
+	}
+
+	/* Close pixel viewing/changing */
+	my_pixel_cache.sync();
+
+	/* Write pixel bitmap to png file */
+	image_reflect.write("reflect.png");
+}
+
+
+
+
 
 
 
