@@ -15,6 +15,7 @@
 #include <sstream>
 #include <string>
 #include <math.h>
+#include <limits.h>
 #include <vector>
 #include "Parser.h"
 #include "Material.h"
@@ -84,6 +85,7 @@ public:
 	void adjustKeys();
 	void buildNeighborsLists();
 	Cell* findCell(LocalCoords* coords);
+	Cell* findCell(Universe* univ, int fsr_id);
 	Cell* findNextCell(LocalCoords* coords, double angle);
 	int findFSRId(LocalCoords* coords);
 	void segmentize(Track* track);

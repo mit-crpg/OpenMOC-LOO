@@ -16,17 +16,17 @@
 #include "Point.h"
 #include "Material.h"
 #include "log.h"
+#include "configurations.h"
 
 /* Represent a segment along a given track */
 struct segment {
 	double _length;
 	Material* _material;
 	int _region_id;
-#ifdef PRECOMPUTE_FACTORS
-	double prefactors[NUM_POLAR_ANGLES][NUM_ENERGY_GROUPS];
+#if STORE_PREFACTORS
+	double _prefactors[NUM_POLAR_ANGLES][NUM_ENERGY_GROUPS];
 #endif
 };
-
 
 class Track {
 private:
@@ -35,6 +35,7 @@ private:
 	double _phi;
 	double _azim_weight;
 	double _polar_weights[NUM_POLAR_ANGLES];
+	double _polar_fluxes[2 * GRP_TIMES_ANG];
 	std::vector<segment*> _segments;
 	Track *_track_in, *_track_out;
 	bool _refl_in, _refl_out;
@@ -45,6 +46,7 @@ public:
 			const double end_x, const double end_y, const double phi);
     void setAzimuthalWeight(const double azim_weight);
     void setPolarWeight(const int angle, double polar_weight);
+    void setPolarFluxes(const int direction, double* polar_fluxes);
     void setPhi(const double phi);
     void setReflIn(const bool refl_in);
     void setReflOut(const bool refl_out);
@@ -55,6 +57,7 @@ public:
     double getPhi() const;
     double getAzimuthalWeight() const;
     double* getPolarWeights();
+    double* getPolarFluxes();
 	segment* getSegment(int s);
 	int getNumSegments();
     Track *getTrackIn() const;

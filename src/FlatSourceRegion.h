@@ -10,14 +10,14 @@
 #ifndef FLATSOURCEREGION_H_
 #define FLATSOURCEREGION_H_
 
+#include "Material.h"
 #include "configurations.h"
-
+#include "log.h"
 
 class FlatSourceRegion {
 private:
 	int _id;
-	int _cell_id;
-	int _material_id;
+	Material* _material;
 	double _volume;
 	double _flux[NUM_ENERGY_GROUPS];
 	double _old_flux[NUM_ENERGY_GROUPS];
@@ -27,17 +27,20 @@ public:
 	FlatSourceRegion();
 	virtual ~FlatSourceRegion();
     int getId() const;
-    int getCellId() const;
-    int getMaterialId() const;
+    Material* getMaterial();
     double getVolume() const;
     double* getFlux();
     double* getOldFlux();
     double* getOldSource();
     double* getSource();
     void setId(int id);
-    void setCellId(int cellId);
-    void setMaterialId(int material_id);
+    void setMaterial(Material* material);
     void setVolume(double volume);
+    void incrementVolume(double volume);
+    void setFlux(int energy, double flux);
+    void setOldFlux(int energy, double old_flux);
+    void setSource(int energy, double source);
+    void setOldSource(int energy, double old_source);
 };
 
 

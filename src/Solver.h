@@ -12,6 +12,7 @@
 
 #include <utility>
 #include <math.h>
+#include <unordered_map>
 #include "Geometry.h"
 #include "Quadrature.h"
 #include "Track.h"
@@ -31,21 +32,25 @@ private:
 	int _num_FSRs;
 	double _k_eff;
 	double _k_eff_old;
-	bool _precomputed;
-#ifndef PRECOMPUTE_FACTORS
-	std::unordered_map<double, double, prefactor_hash> _prefactors_map;
+#if !STORE_PREFACTORS
 	struct prefactor_hash {
 		size_t operator()(const double length) const {
 			log_printf(ERROR, "The hash for the pre-factors table has not "
 								"yet been implemented");
+			return 0;
 		}
 	};
+	std::unordered_map<double, double, prefactor_hash> _prefactors_map;
 #endif
 	void precomputeFactors();
 	double computePreFactor(segment* seg, int energy, int angle);
+	void initializeFSRs();
 public:
 	Solver(Geometry* geom, TrackGenerator* track_generator);
 	virtual ~Solver();
+	void zeroTrackFluxes();
+	void setUnitFSRFluxes();
+	void computeKeff();
 };
 
 #endif /* SOLVER_H_ */

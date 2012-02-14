@@ -109,6 +109,15 @@ double* Material::getSigmaT() {
 
 
 /**
+ * Return the material's absorption cross section array
+ * @return the material's absorption cross-section array
+ */
+double* Material::getSigmaA() {
+	return _sigma_a;
+}
+
+
+/**
  * Set the material's chi array
  * @param chi the chi array
  */
@@ -151,6 +160,16 @@ void Material::setSigmaT(double sigma_t[NUM_ENERGY_GROUPS]) {
 
 
 /**
+ * Set the material's absorption scattering cross-section array
+ * @param sigma_a the material's absorption scattering cross-section
+ */
+void Material::setSigmaA(double sigma_a[NUM_ENERGY_GROUPS]) {
+	for (int i=0; i < NUM_ENERGY_GROUPS; i++)
+		_sigma_a[i] = sigma_a[i];
+}
+
+
+/**
  * Converts this material's attributes to a character array representation
  * @param a character array of this member's attributes
  */
@@ -162,6 +181,10 @@ std::string Material::toString() {
 	string << "\n\t\tSigma_t = ";
 	for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
 		string << _sigma_t[e] << ", ";
+
+	string << "\n\t\tSigma_a = ";
+	for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
+		string << _sigma_a[e] << ", ";
 
 	string << "\n\t\tnu_sigma_f = ";
 	for (int e = 0; e < NUM_ENERGY_GROUPS; e++)

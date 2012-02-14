@@ -22,6 +22,7 @@ private:
 	int _uid;      /* monotonically increasing id based on n */
 	int _id;
 	double _sigma_t[NUM_ENERGY_GROUPS];
+	double _sigma_a[NUM_ENERGY_GROUPS];
 	double _nu_sigma_f[NUM_ENERGY_GROUPS];
 	double _chi[NUM_ENERGY_GROUPS];
 	/* first index is row number; second index is column number */
@@ -38,11 +39,13 @@ public:
 	double* getNuSigmaF();
 	double* getSigmaS();
 	double* getSigmaT();
+	double* getSigmaA();
 	double* getChi();
 	void setChi(double chi[NUM_ENERGY_GROUPS]);
 	void setNuSigmaF(double nu_sigma_f[NUM_ENERGY_GROUPS]);
 	void setSigmaS(double sigma_s[NUM_ENERGY_GROUPS][NUM_ENERGY_GROUPS]);
 	void setSigmaT(double sigma_t[NUM_ENERGY_GROUPS]);
+	void setSigmaA(double sigma_a[NUM_ENERGY_GROUPS]);
 	std::string toString();
 };
 

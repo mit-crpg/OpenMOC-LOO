@@ -14,7 +14,7 @@
  * Quadrature constructor
  * @param type the quadrature type (Leonard or Tabuchi)
  */
-Quadrature::Quadrature(const quadratureType type) {
+Quadrature::Quadrature(quadratureType type) {
 
 	/* If TabuchiYamomoto */
 	if (type == TABUCHI) {

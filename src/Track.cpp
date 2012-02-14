@@ -60,6 +60,24 @@ void Track::setPolarWeight(const int angle, double polar_weight) {
 	_polar_weights[angle] = polar_weight;
 }
 
+
+/**
+ * Set this track's polar fluxes for a particular direction (0 or 1)
+ * @param direction incoming/outgoing (0/1) flux for forward/reverse directions
+ * @param polar_fluxes pointer to an array of fluxes
+ */
+void Track::setPolarFluxes(const int direction, double* polar_fluxes) {
+	if (direction != 0 && direction != 1)
+		log_printf(ERROR, "Tried to set this track's polar flux for a direction"
+				"which does not exist: direction = %d", direction);
+
+	for (int i = 0; i < GRP_TIMES_ANG * 2; i++)
+		_polar_fluxes[i] = polar_fluxes[i];
+
+	return;
+}
+
+
 /*
  * Set the track azimuthal angle
  * @param phi the azimuthal angle
@@ -168,6 +186,14 @@ double* Track::getPolarWeights() {
 	return _polar_weights;
 }
 
+
+/**
+ * Return a pointer to this track's polar flux array
+ * @return a pointer to the polar flux array
+ */
+double* Track::getPolarFluxes() {
+	return _polar_fluxes;
+}
 
 /**
  * Returns the incoming track

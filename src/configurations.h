@@ -19,7 +19,7 @@
 #define GRP_TIMES_ANG NUM_POLAR_ANGLES*NUM_ENERGY_GROUPS
 
 /* Precompute and store exponential pre-factors in transport equation */
-#define PRECOMPUTE_FACTORS TRUE
+#define STORE_PREFACTORS true
 
 /* Max number of regions for precomputing pre-factors in solver */
 #define FSR_HASHMAP_THRESH 10000
@@ -54,5 +54,11 @@
 #define TINY_MOVE 1E-8
 
 
+
+/******************************************************************************
+ ************************ HELPFUL MACROS **************************************
+ *****************************************************************************/
+
+#define FLUX_INDEX(d,p,e) d*GRP_TIMES_ANG + p*NUM_ENERGY_GROUPS + e
 
 #endif /* CONFIGURATIONS_H_ */
