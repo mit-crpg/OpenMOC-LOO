@@ -673,73 +673,96 @@ void TrackGenerator::plotFSRs(){
 	/* dimensions of _pix_map_fsr */
 	int dimsvar[] = {_bit_length_x, _bit_length_y};
 
-	/*
-	 * write _pix_map_segments (bitmap coordinates)
-	 * to _pix_map_fsr (cartesian coordinates)
-	*/
-	for (int y = 0; y < _bit_length_x; y++){
-		for ( int x = 0; x < _bit_length_y; x++){
-			_pix_map_fsr[(_bit_length_x - 1 - y) * _bit_length_x + x] = _pix_map_segments[y * _bit_length_x + x];
+//	/*
+//	 * write _pix_map_segments (bitmap coordinates)
+//	 * to _pix_map_fsr (cartesian coordinates)
+//	*/
+//	for (int y = 0; y < _bit_length_x; y++){
+//		for ( int x = 0; x < _bit_length_y; x++){
+//			_pix_map_fsr[(_bit_length_x - 1 - y) * _bit_length_x + x] = _pix_map_segments[y * _bit_length_x + x];
+//		}
+//	}
+//
+//
+//	/* contiguous pixel values used for smoothing */
+//	int m2; 		/* pixel(i - 2) */
+//	int m1; 		/* pixel(i - 1) */
+//	int cur;		/* pixel(i) */
+//	int p1;			/* pixel(i + 1) */
+//	int p2;			/* pixel(i + 2) */
+//	int up;         /* pixel(i - _bit_length_x) */
+//	int down; 		/* pixel(i + _bit_length_x) */
+//
+//	/* smoothing pixel map so there's fewer missing pixels */
+//	for (int k = 0; k < 4; k++){
+//		for (int i = 2; i < ((_bit_length_x*_bit_length_y) - 2); i++){
+//			if ( i >= _bit_length_x){
+//				up = _pix_map_fsr[i - _bit_length_x];
+//			}
+//			else{
+//				up = -1;
+//			}
+//			if ( i <= ((_bit_length_x - 1) * _bit_length_y)){
+//				down = _pix_map_fsr[i + _bit_length_x];
+//			}
+//			else{
+//				down = -1;
+//			}
+//			p2 = _pix_map_fsr[i + 2];
+//			p1 = _pix_map_fsr[i + 1];
+//			cur = _pix_map_fsr[i];
+//			m1 = _pix_map_fsr[i - 1];
+//			m2 = _pix_map_fsr[i - 2];
+//			/* a_a -> aaa */
+//			if (cur == -1 && p1==m1 && m1 != -1){
+//				_pix_map_fsr[i] = m1;
+//			}
+//			 /*   a     a
+//			 *    _ ->  a
+//			 *    a     a
+//			 */
+//			if (cur == -1 && up == down && up != -1 && down != -1){
+//				_pix_map_fsr[i] = down;
+//			}
+//			/* a__a -> aaaa */
+//			if (cur == -1 && p2 == m1 && p2 != -1){
+//				_pix_map_fsr[i] = p2;
+//				_pix_map_fsr[i + 1] = p2;
+//			}
+//			/* aa_bb -> aaabb */
+//			if (cur == -1 && p1 == p2 && m1 == m2 && m1 != -1 && p1 != -1){
+//				if (i % _bit_length_x == 0){
+//					_pix_map_fsr[i] = p1;
+//				}
+//				else{
+//					_pix_map_fsr[i] = m1;
+//				}
+//			}
+//		}
+//	}
+
+	LocalCoords coord(0,0);
+	coord.setUniverse(0);
+
+	/* Find the cell for the track starting point */
+	int fsrId;
+
+
+
+	for (int x = 0; x < _bit_length_x; x++){
+		for (int y = 0; y < _bit_length_x; y++){
+			coord.setX(mesh_x[x]);
+			coord.setY(mesh_y[y]);
+			Cell* curr = _geom->findCell(&coord);
+			fsrId = _geom->findFSRId(&coord);
+			_pix_map_fsr[(_bit_length_x - 1 - y) * _bit_length_x + x] = fsrId;
+			coord.prune();
 		}
 	}
 
 
-	/* contiguous pixel values used for smoothing */
-	int m2; 		/* pixel(i - 2) */
-	int m1; 		/* pixel(i - 1) */
-	int cur;		/* pixel(i) */
-	int p1;			/* pixel(i + 1) */
-	int p2;			/* pixel(i + 2) */
-	int up;         /* pixel(i - _bit_length_x) */
-	int down; 		/* pixel(i + _bit_length_x) */
 
-	/* smoothing pixel map so there's fewer missing pixels */
-	for (int k = 0; k < 4; k++){
-		for (int i = 2; i < ((_bit_length_x*_bit_length_y) - 2); i++){
-			if ( i >= _bit_length_x){
-				up = _pix_map_fsr[i - _bit_length_x];
-			}
-			else{
-				up = -1;
-			}
-			if ( i <= ((_bit_length_x - 1) * _bit_length_y)){
-				down = _pix_map_fsr[i + _bit_length_x];
-			}
-			else{
-				down = -1;
-			}
-			p2 = _pix_map_fsr[i + 2];
-			p1 = _pix_map_fsr[i + 1];
-			cur = _pix_map_fsr[i];
-			m1 = _pix_map_fsr[i - 1];
-			m2 = _pix_map_fsr[i - 2];
-			/* a_a -> aaa */
-			if (cur == -1 && p1==m1 && m1 != -1){
-				_pix_map_fsr[i] = m1;
-			}
-			 /*   a     a
-			 *    _ ->  a
-			 *    a     a
-			 */
-			if (cur == -1 && up == down && up != -1 && down != -1){
-				_pix_map_fsr[i] = down;
-			}
-			/* a__a -> aaaa */
-			if (cur == -1 && p2 == m1 && p2 != -1){
-				_pix_map_fsr[i] = p2;
-				_pix_map_fsr[i + 1] = p2;
-			}
-			/* aa_bb -> aaabb */
-			if (cur == -1 && p1 == p2 && m1 == m2 && m1 != -1 && p1 != -1){
-				if (i % _bit_length_x == 0){
-					_pix_map_fsr[i] = p1;
-				}
-				else{
-					_pix_map_fsr[i] = m1;
-				}
-			}
-		}
-	}
+
 
 	/* Save FSR bit map (_bit_map_visit) to the pdb file */
 	DBPutQuadvar1(pdb_file, "FSRs", "quadmesh", _pix_map_fsr, dimsvar, ndims, NULL, 0, DB_INT, DB_ZONECENT, NULL);

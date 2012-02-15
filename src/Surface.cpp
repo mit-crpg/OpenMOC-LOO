@@ -1016,9 +1016,5 @@ double Circle::getYMax(){
 	return 1.0/0.0;
 }
 
-double Circle::getRadius(){
-	return _radius;
-}
-
 
 

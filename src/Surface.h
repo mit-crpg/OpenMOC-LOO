@@ -151,7 +151,6 @@ private:
 public:
 	Circle(const int id, const boundaryType boundary, const double x,
 				const double y, const double radius);
-	double getRadius();
 	double evaluate(const Point* point) const;
 	int intersection(Point* point, double angle, Point* points);
 	int intersection(Track* track, Point* points) const;
