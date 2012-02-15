@@ -31,6 +31,23 @@ TrackGenerator::TrackGenerator(Geometry* geom,
 	_bit_length_x = int (bitDim*ratio) + 1;
 	_bit_length_y = bitDim + 1;
 
+	/* make _color_map for plotting */
+	_color_map.insert(std::pair<int, std::string>(0,"indigo"));
+	_color_map.insert(std::pair<int, std::string>(1,"red"));
+	_color_map.insert(std::pair<int, std::string>(2,"blue"));
+	_color_map.insert(std::pair<int, std::string>(3,"green"));
+	_color_map.insert(std::pair<int, std::string>(4,"magenta"));
+	_color_map.insert(std::pair<int, std::string>(5,"orange"));
+	_color_map.insert(std::pair<int, std::string>(6,"maroon"));
+	_color_map.insert(std::pair<int, std::string>(7,"orchid"));
+	_color_map.insert(std::pair<int, std::string>(8,"blue violet"));
+	_color_map.insert(std::pair<int, std::string>(9,"crimson"));
+	_color_map.insert(std::pair<int, std::string>(10,"salmon"));
+	_color_map.insert(std::pair<int, std::string>(11,"gold"));
+	_color_map.insert(std::pair<int, std::string>(12, "DarkSlateGray"));
+	_color_map.insert(std::pair<int, std::string>(13,"orange red"));
+	_color_map.insert(std::pair<int, std::string>(14,"spring green"));
+
 	try{
 		_pix_map_tracks = new int[_bit_length_x*_bit_length_y];
 		_pix_map_segments = new int[_bit_length_x*_bit_length_y];
@@ -485,9 +502,9 @@ void TrackGenerator::segmentize() {
 
 
 /**
- * Plot tracks in tiff file using fast drawing method
+ * Plot tracks in png file using fast drawing method
  */
-void TrackGenerator::plotTracksTiff() {
+void TrackGenerator::plotTracksPng() {
 	log_printf(NORMAL, "Writing tracks bitmap to png...");
 
 	/* Create Magick image and open pixels for viewing/changing  */
@@ -558,8 +575,10 @@ void TrackGenerator::plotSegmentsBitMap(Track* track, double sin_phi, double cos
 /**
  * Plot segments in png file
  */
-void TrackGenerator::plotSegmentsTiff(){
+void TrackGenerator::plotSegmentsPng(){
 	log_printf(NORMAL, "Writing segments bitmap to png...");
+
+	int color_int;
 
 	/* Create Magick image and open pixels for viewing/changing */
 	Magick::Image image_segments(Magick::Geometry(_bit_length_x,_bit_length_y), "white");
@@ -576,59 +595,13 @@ void TrackGenerator::plotSegmentsTiff(){
 	 */
 	for (int y=0;y < _bit_length_y; y++){
 		for (int x = 0; x < _bit_length_x; x++){
-			switch (_pix_map_segments[y * _bit_length_x + x] % 15){
-			case 0:
-				*(pixels+(y * _bit_length_x + x)) = Magick::Color("indigo");
-				break;
-			case 1:
-				*(pixels+(y * _bit_length_x + x)) = Magick::Color("red");
-				break;
-			case 2:
-				*(pixels+(y * _bit_length_x + x)) = Magick::Color("blue");
-				break;
-			case 3:
-				*(pixels+(y * _bit_length_x + x)) = Magick::Color("green");
-				break;
-			case 4:
-				*(pixels+(y * _bit_length_x + x)) = Magick::Color("magenta");
-				break;
-			case 5:
-				*(pixels+(y * _bit_length_x + x)) = Magick::Color("orange");
-				break;
-			case 6:
-				*(pixels+(y * _bit_length_x + x)) = Magick::Color("maroon");
-				break;
-			case 7:
-				*(pixels+(y * _bit_length_x + x)) = Magick::Color("orchid");
-				break;
-			case 8:
-				*(pixels+(y * _bit_length_x + x)) = Magick::Color("blue violet");
-				break;
-			case 9:
-				*(pixels+(y * _bit_length_x + x)) = Magick::Color("crimson");
-				break;
-			case 10:
-				*(pixels+(y * _bit_length_x + x)) = Magick::Color("salmon");
-				break;
-			case 11:
-				*(pixels+(y * _bit_length_x + x)) = Magick::Color("gold");
-				break;
-			case 12:
-				*(pixels+(y * _bit_length_x + x)) = Magick::Color("DarkSlateGray");
-				break;
-			case 13:
-				*(pixels+(y * _bit_length_x + x)) = Magick::Color("orange red");
-				break;
-			case 14:
-				*(pixels+(y * _bit_length_x + x)) = Magick::Color("spring green");
-				break;
-			case 15:
-				*(pixels+(y * _bit_length_x + x)) = Magick::Color("pale green");
-				break;
+			color_int = _pix_map_segments[y * _bit_length_x + x] % 15;
+
+			if ( color_int != -1){
+			*(pixels+(y * _bit_length_x + x)) = Magick::Color(_color_map.at(color_int));
 			}
 		}
 	}
-
 
 	/* close pixel viewing/changing */
 	my_pixel_cache.sync();
@@ -777,6 +750,8 @@ void TrackGenerator::plotFSRs(){
 void TrackGenerator::plotTracksReflective(Track* track, int numReflect){
 	log_printf(NORMAL, "Writing tracks reflect bitmap to png...");
 
+	int color_int;
+
 	/* initialize variables */
 	double sin_phi, cos_phi, phi;
 	Track *track2;
@@ -824,57 +799,12 @@ void TrackGenerator::plotTracksReflective(Track* track, int numReflect){
 	 * Convert _pix_map_reflect bitmap array to Magick bitmap pixel
 	 * color array
 	 */
-	for (int y=0;y < _bit_length_y; y++){
+	for (int y = 0; y < _bit_length_y; y++){
 		for (int x = 0; x < _bit_length_x; x++){
-			switch (_pix_map_reflect[y * _bit_length_x + x] % 15){
-			case 0:
-				*(pixels+(y * _bit_length_x + x)) = Magick::Color("indigo");
-				break;
-			case 1:
-				*(pixels+(y * _bit_length_x + x)) = Magick::Color("red");
-				break;
-			case 2:
-				*(pixels+(y * _bit_length_x + x)) = Magick::Color("blue");
-				break;
-			case 3:
-				*(pixels+(y * _bit_length_x + x)) = Magick::Color("green");
-				break;
-			case 4:
-				*(pixels+(y * _bit_length_x + x)) = Magick::Color("magenta");
-				break;
-			case 5:
-				*(pixels+(y * _bit_length_x + x)) = Magick::Color("orange");
-				break;
-			case 6:
-				*(pixels+(y * _bit_length_x + x)) = Magick::Color("maroon");
-				break;
-			case 7:
-				*(pixels+(y * _bit_length_x + x)) = Magick::Color("orchid");
-				break;
-			case 8:
-				*(pixels+(y * _bit_length_x + x)) = Magick::Color("blue violet");
-				break;
-			case 9:
-				*(pixels+(y * _bit_length_x + x)) = Magick::Color("crimson");
-				break;
-			case 10:
-				*(pixels+(y * _bit_length_x + x)) = Magick::Color("salmon");
-				break;
-			case 11:
-				*(pixels+(y * _bit_length_x + x)) = Magick::Color("gold");
-				break;
-			case 12:
-				*(pixels+(y * _bit_length_x + x)) = Magick::Color("DarkSlateGray");
-				break;
-			case 13:
-				*(pixels+(y * _bit_length_x + x)) = Magick::Color("orange red");
-				break;
-			case 14:
-				*(pixels+(y * _bit_length_x + x)) = Magick::Color("spring green");
-				break;
-			case 15:
-				*(pixels+(y * _bit_length_x + x)) = Magick::Color("pale green");
-				break;
+			color_int = _pix_map_reflect[y * _bit_length_x + x] % 15;
+
+			if ( color_int != -1){
+				*(pixels+(y * _bit_length_x + x)) = Magick::Color(_color_map.at(color_int));
 			}
 		}
 	}
@@ -885,12 +815,6 @@ void TrackGenerator::plotTracksReflective(Track* track, int numReflect){
 	/* Write pixel bitmap to png file */
 	image_reflect.write("reflect.png");
 }
-
-
-
-
-
-
 
 /**
  * Bresenham's line drawing algorithm. Takes in the start and end coordinates

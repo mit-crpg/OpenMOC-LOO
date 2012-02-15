@@ -75,7 +75,7 @@ int main(int argc, const char **argv) {
 	if (opts.plotTracks()) {
 		timer.reset();
 		timer.start();
-		track_generator.plotTracksTiff();
+		track_generator.plotTracksPng();
 		timer.stop();
 		timer.recordSplit("Creating png of tracks");
 	}
@@ -92,7 +92,7 @@ int main(int argc, const char **argv) {
 	if (opts.plotSegments()) {
 		timer.reset();
 		timer.start();
-		track_generator.plotSegmentsTiff();
+		track_generator.plotSegmentsPng();
 		timer.stop();
 		timer.recordSplit("Creating png of segments");
 	}

@@ -12,6 +12,9 @@
 
 #define _USE_MATH_DEFINES
 #include <math.h>
+#include <string>
+#include <map>
+#include <utility>
 #include "Point.h"
 #include "Track.h"
 #include "Geometry.h"
@@ -40,6 +43,7 @@ private:
 	int* _pix_map_segments;
 	int* _pix_map_fsr;
 	int* _pix_map_reflect;
+	std::map<int, std::string> _color_map;
 public:
 	TrackGenerator(Geometry* geom, const int num_azim,
 			const double spacing, const int bit_dim);
@@ -54,9 +58,9 @@ public:
 			const double width, const double height);
 	void makeReflective();
 	void segmentize();
-	void plotTracksTiff();
+	void plotTracksPng();
 	void plotSegmentsBitMap(Track* track, double sin_phi, double cos_phi, int* map_array);
-	void plotSegmentsTiff();
+	void plotSegmentsPng();
 	void LineFct(int x0, int y0, int x1, int y1, int* pixMap, int color = 1);
 	void printTrackingTimers();
 	void plotFSRs();
