@@ -14,7 +14,7 @@
 #include "TrackGenerator.h"
 #include "Parser.h"
 #include "Options.h"
-#include "LocalCoords.h"
+#include "Solver.h"
 #include "Timer.h"
 #include "log.h"
 
@@ -115,14 +115,9 @@ int main(int argc, const char **argv) {
 		timer.recordSplit("Creating pdb of FSRs");
 	}
 
-
-
-//	LocalCoords* test = new LocalCoords(0.2, 0.2);
-//	test->setUniverse(0);
-//	geometry.findCell(test);
-//
-//	log_printf(DEBUG,"Found cell and localcoords:%s", test->toString().c_str());
-//	delete test;
+	Solver solver(&geometry, &track_generator);
+	solver.zeroTrackFluxes();
+	solver.oneFSRFluxes();
 
 	/* Print timer splits to console */
 	log_printf(NORMAL, "Program complete");

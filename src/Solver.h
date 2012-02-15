@@ -11,6 +11,9 @@
 #define SOLVER_H_
 
 #include <utility>
+#include <math.h>
+#include <unordered_map>
+#include <limits.h>
 #include "Geometry.h"
 #include "Quadrature.h"
 #include "Track.h"
@@ -30,9 +33,29 @@ private:
 	int _num_FSRs;
 	double _k_eff;
 	double _k_eff_old;
+#if !STORE_PREFACTORS
+	struct prefactor_hash {
+		size_t operator()(const double length) const {
+			log_printf(ERROR, "The hash for the pre-factors table has not "
+								"yet been implemented");
+			return 0;
+		}
+	};
+	std::unordered_map<double, double, prefactor_hash> _prefactors_map;
+#endif
+	void precomputeFactors();
+	double computePreFactor(segment* seg, int energy, int angle);
+	void initializeFSRs();
 public:
 	Solver(Geometry* geom, TrackGenerator* track_generator);
 	virtual ~Solver();
+	void zeroTrackFluxes();
+	void oneFSRFluxes();
+	void zeroFSRFluxes();
+	void computeRatios();
+	void updateKeff();
+	void fixedSourceIteration(int max_iterations);
+	double computeKeff(int max_iterations);
 };
 
 #endif /* SOLVER_H_ */

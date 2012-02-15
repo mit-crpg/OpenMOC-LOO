@@ -242,7 +242,7 @@ void TrackGenerator::generateTracks() {
 				computeEndPoint(start, end, phi_eff[i], width, height);
 
 				/* Set the track's azimuthal weight */
-				_tracks[i][j].setWeight(_azim_weights[i]);
+				_tracks[i][j].setAzimuthalWeight(_azim_weights[i]);
 				_tracks[i][j].setPhi(phi_eff[i]);
 			}
 		}

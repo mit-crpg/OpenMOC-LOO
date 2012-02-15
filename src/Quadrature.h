@@ -29,7 +29,7 @@ private:
 	double _weights[NUM_POLAR_ANGLES];
 	double _multiples[NUM_POLAR_ANGLES];
 public:
-	Quadrature(const quadratureType type);
+	Quadrature(quadratureType type);
 	virtual ~Quadrature();
 	quadratureType getType() const;
 	double getSinTheta(const int n) const;

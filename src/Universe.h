@@ -18,7 +18,7 @@
 #include "LocalCoords.h"
 #include "log.h"
 #include "silo.h"
-#include "surface.h"
+#include "Surface.h"
 
 class LocalCoords;
 class Cell;

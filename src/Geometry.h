@@ -15,6 +15,7 @@
 #include <sstream>
 #include <string>
 #include <math.h>
+#include <limits.h>
 #include <vector>
 #include "Parser.h"
 #include "Material.h"
@@ -37,6 +38,8 @@ private:
 	double _sector_offset;
 	int _base_universe;
 	int _num_FSRs;
+	double _max_seg_length;
+	double _min_seg_length;
 	std::map<int, Material*> _materials;
 	std::map<int, Surface*> _surfaces;
 	std::map<int, Cell*> _cells;
@@ -63,6 +66,8 @@ public:
 	int getNumSectors() const;
 	double getSectorOffset() const;
 	int getNumFSRs() const;
+	double getMaxSegmentLength() const;
+	double getMinSegmentLength() const;
 
 	void addMaterial(Material* material);
 	Material* getMaterial(int id);
@@ -80,6 +85,7 @@ public:
 	void adjustKeys();
 	void buildNeighborsLists();
 	Cell* findCell(LocalCoords* coords);
+	Cell* findCell(Universe* univ, int fsr_id);
 	Cell* findNextCell(LocalCoords* coords, double angle);
 	int findFSRId(LocalCoords* coords);
 	void segmentize(Track* track);

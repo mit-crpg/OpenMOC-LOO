@@ -18,8 +18,15 @@
 #define NUM_ENERGY_GROUPS 7
 #define GRP_TIMES_ANG NUM_POLAR_ANGLES*NUM_ENERGY_GROUPS
 
+/* Precompute and store exponential pre-factors in transport equation */
+#define STORE_PREFACTORS true
+
 /* Max number of regions for precomputing pre-factors in solver */
-#define NUM_REGIONS_THRESH
+#define FSR_HASHMAP_THRESH 10000
+
+/* Number of significant digits for computing hashmap exponential prefactors */
+#define FSR_HASHMAP_PRECISION 5
+
 
 /******************************************************************************
  *********************** PHYSICAL CONSTANTS ***********************************
@@ -46,6 +53,18 @@
  * track segmentation */
 #define TINY_MOVE 1E-8
 
+/* Convergence threshold for scalar flux in each region during fixed source
+ * iteration */
+#define FLUX_CONVERGENCE_THRESH 1E-7
 
+/* Convergence threshold for computing k_eff */
+#define KEFF_CONVERG_THRESH 1E-7
+
+
+/******************************************************************************
+ ************************ HELPFUL MACROS **************************************
+ *****************************************************************************/
+
+#define FLUX_INDEX(d,p,e) d*GRP_TIMES_ANG + p*NUM_ENERGY_GROUPS + e
 
 #endif /* CONFIGURATIONS_H_ */

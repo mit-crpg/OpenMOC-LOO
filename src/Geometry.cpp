@@ -23,6 +23,8 @@ Geometry::Geometry(int num_sectors, int num_rings, double sector_offset,
 	_num_sectors = num_sectors;
 	_num_rings = num_rings;
 	_sector_offset = sector_offset;
+	_max_seg_length = 0;
+	_min_seg_length = INFINITY;
 
 	/* Initializing the corners to be infinite  */
 	_x_min = 1.0/0.0;
@@ -180,6 +182,22 @@ int Geometry::getNumFSRs() const {
 }
 
 
+/* Return the maximum segment length computed during segmentation
+ * return max segment length
+ */
+double Geometry::getMaxSegmentLength() const {
+	return _max_seg_length;
+}
+
+
+/* Return the minimum segment length computed during segmentation
+ * return min segment length
+ */
+double Geometry::getMinSegmentLength() const {
+	return _min_seg_length;
+}
+
+
 /**
  * Add a material to the geometry
  * @param material a pointer to a material object
@@ -203,7 +221,10 @@ void Geometry::addMaterial(Material* material) {
 					"\n%s", material->getId(), e.what());
 		}
 	}
-}
+}/* Return the maximum segment length computed during segmentation
+ * return max segment length
+ */
+
 
 
 /**
@@ -320,6 +341,9 @@ void Geometry::addCell(Cell* cell) {
 		if (_surfaces.find(surface_id) == _surfaces.end())
 			log_printf(ERROR, "Attempted to add cell with surface id = %d, "
 				   "but surface does not exist", iter->first);
+		/* Return the maximum segment length computed during segmentation
+		 * return max segment length
+		 */
 
 		/* The surface does exist, so set the surface pointer in the cell */
 		else	
@@ -353,6 +377,9 @@ void Geometry::addCell(Cell* cell) {
 
 	/* Adds the cell to the appropriate universe */
 	_universes.at(cell->getUniverse())->addCell(cell);
+	/* Return the maximum segment length computed during segmentation
+	 * return max segment length
+	 */
 
 
 
@@ -394,7 +421,10 @@ void Geometry::addCell(Cell* cell) {
 				log_printf(DEBUG, "Added new %s", 
 						   s->toString().c_str());
 
-				/* create the inner-most circle cell */
+				/* Return the maximum segment length computed during segmentation
+				 * return max segment length
+				 */
+/* create the inner-most circle cell */
 				CellBasic *c = new CellBasic(startId, cell->getUniverse(), 
 											 dynamic_cast<CellBasic*>(cell)
 											 ->getMaterial());
@@ -427,6 +457,9 @@ void Geometry::addCell(Cell* cell) {
 					rold = r;
 					i++;
 				}
+				/* Return the maximum segment length computed during segmentation
+				 * return max segment length
+				 */
 
 				/* update the original circle cell to be the outside 
 				   most ring cell */
@@ -1003,6 +1036,112 @@ Cell* Geometry::findCell(LocalCoords* coords) {
 
 
 /**
+ * Find the cell for an fsr_id at a certain universe level. This is a recursive
+ * function which is intended to be called with the base universe 0 and an fsr
+ * id. It will recursively call itself until it reaches the cell which
+ * corresponds to this fsr.
+ * @param univ a universe pointer for this fsr's universe level
+ * @param fsr_id a flat source region id
+ * @return a pointer to the cell that this fsr is in
+ */
+Cell* Geometry::findCell(Universe* univ, int fsr_id) {
+
+	Cell* cell = NULL;
+
+	/* Check if the FSR id is out of bounds */
+	if (fsr_id < -1 || fsr_id > _num_FSRs)
+		log_printf(ERROR, "Tried to find the cell for an fsr_id which does not "
+							"exist: %d", fsr_id);
+
+
+	/* If the universe is a SIMPLE type, then find the cell the smallest fsr map
+	   entry that is not larger than the fsr_id argument to this function.	*/
+	if (univ->getType() == SIMPLE) {
+		std::map<int, Cell*>::iterator iter;
+		std::map<int, Cell*> cells = univ->getCells();
+		Cell* cell_min = NULL;
+		int max_id = 0;
+		int min_id = INT_MAX;
+		int fsr_map_id;
+
+		/* Loop over this universe's cells */
+		for (iter = cells.begin(); iter != cells.end(); ++iter) {
+			fsr_map_id = univ->getFSR(iter->first);
+			if (fsr_map_id <= fsr_id && fsr_map_id >= max_id) {
+				max_id = fsr_map_id;
+				cell = iter->second;
+			}
+			if (fsr_map_id < min_id) {
+				min_id = fsr_map_id;
+				cell_min = iter->second;
+			}
+		}
+
+		/* If the max_id is greater than the fsr_id, there has either been an error
+		  or we are at universe 0 and need to go down one level */
+		if (max_id > fsr_id) {
+			if (cell_min->getType() == MATERIAL)
+				log_printf(ERROR, "Could not find cell for fsr_id = %d: "
+						"max_id(%d) > fsr_id(%d)", fsr_id, max_id, fsr_id);
+			else {
+				CellFill* cellfill = static_cast<CellFill*>(cell_min);
+				return findCell(cellfill->getUniverseFill(), fsr_id);
+			}
+		}
+		/* Otherwise, decrement the fsr_id and make recursive call to next
+		   universe unless an error condition is met */
+		else {
+			fsr_id -= max_id;
+			if (fsr_id == 0 && cell_min->getType() == MATERIAL)
+				return cell;
+			else if (fsr_id != 0 && cell_min->getType() == MATERIAL)
+				log_printf(ERROR, "Could not find cell for fsr_id = %d: "
+					"fsr_id = %d and cell type = MATERIAL", fsr_id, fsr_id);
+			else {
+				CellFill* cellfill = static_cast<CellFill*>(cell_min);
+				return findCell(cellfill->getUniverseFill(), fsr_id);
+			}
+		}
+	}
+
+	/* If the universe is a lattice then we find the lattice cell with the
+	   smallest fsr map entry that is not larger than the fsr id argument to
+	   the function. */
+	else {
+		Lattice* lat = static_cast<Lattice*>(univ);
+		Universe* next_univ = NULL;
+		int num_y = lat->getNumY();
+		int num_x = lat->getNumX();
+		int max_id = 0;
+		int fsr_map_id;
+
+		/* Loop over all lattice cells */
+		for (int i = 0; i < num_y; i++) {
+			for (int j = 0; j < num_x; j++) {
+				fsr_map_id = lat->getFSR(j, i);
+				if (fsr_map_id <= fsr_id && fsr_map_id >= max_id) {
+					max_id = fsr_map_id;
+					next_univ = lat->getUniverse(j, i);
+				}
+			}
+		}
+
+		/* If the max_id is out of bounds, then query failed */
+		if (max_id > fsr_id || next_univ == NULL)
+			log_printf(ERROR, "No lattice cell found for fsr = %d, max_id = "
+						"%d", fsr_id, max_id);
+
+		/* Otherwise update fsr_id and make recursive call to next level */
+		fsr_id -= max_id;
+		return findCell(next_univ, fsr_id);
+	}
+
+	return cell;
+}
+
+
+
+/**
  * Finds the next cell for a localcoords object along a trajectory defined
  * by some angle (in radians from 0 to PI). The method will update the
  * localcoord passed in as an argument to be the one at the boundary of the
@@ -1185,6 +1324,12 @@ void Geometry::segmentize(Track* track) {
 		/* Find the segment length between the segments start and end points */
 		segment_length = segment_end.getPoint()->distance(segment_start.getPoint());
 
+		/* Update the max and min segment lengths */
+		if (segment_length > _max_seg_length)
+			_max_seg_length = segment_length;
+		if (segment_length < _min_seg_length)
+			_min_seg_length = segment_length;
+
 		/* Create a new segment */
 		segment* new_segment = new segment;
 		new_segment->_length = segment_length;
@@ -1202,13 +1347,6 @@ void Geometry::segmentize(Track* track) {
 			log_printf(ERROR, "Created a segment with the same start and end "
 					"point: x = %f, y = %f", segment_start.getX(),
 					segment_start.getY());
-		}
-		/* Update coordinates for start of next segment */
-		else {
-			log_printf(DEBUG, "Created a new segment with start: x = %f, y = "
-					"%f, and end: x = %f, y = %f", segment_start.getX(),
-					segment_start.getY(), segment_end.getX(),
-					segment_end.getY());
 		}
 
 		/* Add the segment to the track */
@@ -1261,7 +1399,7 @@ void Geometry::generateCSG(){
 	Point current_origin;
 	current_origin.setCoords(0,0);
 
-	/* Get a pointer to universe zero from the geometryÕs map of universes */
+	/* Get a pointer to universe zero from the geometryï¿½s map of universes */
 	Universe* universe_zero = _universes.at(0);
 
 	/* recursively generate csg zones for geometry */
