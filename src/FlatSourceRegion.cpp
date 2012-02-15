@@ -100,6 +100,15 @@ double* FlatSourceRegion::getOldSource() {
 }
 
 
+/**
+ * Return an array of ratios of source / sigma_t for this flat source region
+ * for each energy group
+ * @return array of source / sigma_t ratio
+ */
+double* FlatSourceRegion::getRatios() {
+	return _ratios;
+}
+
 
 /**
  * Sets this region's id
@@ -153,6 +162,21 @@ void FlatSourceRegion::setFlux(int energy, double flux) {
 
 
 /**
+ * Increment the scalar flux for one energy group inside this FSR
+ * @param energy the energy group index
+ * @param flux the scalar flux
+ */
+void FlatSourceRegion::incrementFlux(int energy, double flux) {
+	if (energy < -1 || energy >= NUM_ENERGY_GROUPS)
+		log_printf(ERROR, "Attempted to increment the scalar flux for FSR id = "
+				"%d in an energy group which does not exist: %d", _id, energy);
+
+	_flux[energy] += flux;
+	return;
+}
+
+
+/**
  * Set the old scalar flux from the previous iteration for one energy group
  * inside this FSR
  * @param energy the energy group index
@@ -195,5 +219,19 @@ void FlatSourceRegion::setOldSource(int energy, double old_source) {
 				"in an energy group which does not exist: %d", _id, energy);
 
 	_old_source[energy] = old_source;
+	return;
+}
+
+
+/**
+ * Compute source / sigma_t for each energy group
+ */
+void FlatSourceRegion::computeRatios() {
+
+	double* sigma_t = _material->getSigmaT();
+
+	for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
+		_ratios[e] = _source[e]/sigma_t[e];
+
 	return;
 }

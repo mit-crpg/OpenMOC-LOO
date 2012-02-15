@@ -117,7 +117,7 @@ int main(int argc, const char **argv) {
 
 	Solver solver(&geometry, &track_generator);
 	solver.zeroTrackFluxes();
-	solver.setUnitFSRFluxes();
+	solver.oneFSRFluxes();
 
 	/* Print timer splits to console */
 	log_printf(NORMAL, "Program complete");

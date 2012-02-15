@@ -23,6 +23,8 @@ private:
 	double _old_flux[NUM_ENERGY_GROUPS];
 	double _source[NUM_ENERGY_GROUPS];
 	double _old_source[NUM_ENERGY_GROUPS];
+	/* Pre-computed Ratio of source / sigma_t */
+	double _ratios[NUM_ENERGY_GROUPS];
 public:
 	FlatSourceRegion();
 	virtual ~FlatSourceRegion();
@@ -33,14 +35,17 @@ public:
     double* getOldFlux();
     double* getOldSource();
     double* getSource();
+    double* getRatios();
     void setId(int id);
     void setMaterial(Material* material);
     void setVolume(double volume);
     void incrementVolume(double volume);
     void setFlux(int energy, double flux);
+    void incrementFlux(int energy, double flux);
     void setOldFlux(int energy, double old_flux);
     void setSource(int energy, double source);
     void setOldSource(int energy, double old_source);
+    void computeRatios();
 };
 
 

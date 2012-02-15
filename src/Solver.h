@@ -13,6 +13,7 @@
 #include <utility>
 #include <math.h>
 #include <unordered_map>
+#include <limits.h>
 #include "Geometry.h"
 #include "Quadrature.h"
 #include "Track.h"
@@ -49,8 +50,12 @@ public:
 	Solver(Geometry* geom, TrackGenerator* track_generator);
 	virtual ~Solver();
 	void zeroTrackFluxes();
-	void setUnitFSRFluxes();
-	void computeKeff();
+	void oneFSRFluxes();
+	void zeroFSRFluxes();
+	void computeRatios();
+	void updateKeff();
+	void fixedSourceIteration(int max_iterations);
+	double computeKeff(int max_iterations);
 };
 
 #endif /* SOLVER_H_ */

@@ -66,13 +66,14 @@ void Track::setPolarWeight(const int angle, double polar_weight) {
  * @param direction incoming/outgoing (0/1) flux for forward/reverse directions
  * @param polar_fluxes pointer to an array of fluxes
  */
-void Track::setPolarFluxes(const int direction, double* polar_fluxes) {
+void Track::setPolarFluxes(int direction, int start_index,
+							double* polar_fluxes) {
 	if (direction != 0 && direction != 1)
-		log_printf(ERROR, "Tried to set this track's polar flux for a direction"
+		log_printf(ERROR, "Tried to set this track's polar flux in a direction"
 				"which does not exist: direction = %d", direction);
 
 	for (int i = 0; i < GRP_TIMES_ANG * 2; i++)
-		_polar_fluxes[i] = polar_fluxes[i];
+		_polar_fluxes[i] = polar_fluxes[i+start_index];
 
 	return;
 }
@@ -251,6 +252,17 @@ segment* Track::getSegment(int segment) {
 				"has %d segments", segment, _segments.size());
 	exit(1);
 }
+
+
+
+/**
+ * Returns a vector of this track's segments
+ * @return vector of segment pointer
+ */
+std::vector<segment*> Track::getSegments() {
+	return _segments;
+}
+
 
 /**
  * Return the number of segments along this track
