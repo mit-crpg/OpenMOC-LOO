@@ -22,6 +22,7 @@ private:
 	std::string _relative_path;
 	std::string _geometry_file;
 	std::string _material_file;
+	std::string _extension;
 	double _track_spacing;
 	int _num_azim;
 	int _bit_dimension;
@@ -30,24 +31,17 @@ private:
 	double _sector_offset;
 	std::string _verbosity;
 	bool _dump_geometry;
-	bool _plot_tracks;
-	bool _plot_segments;
-	bool _plot_csg;
-	bool _plot_fsrs;
 public:
     Options(int argc, const char **argv);
     ~Options(void);
     const char *getGeometryFile() const;
     const char *getMaterialFile() const;
     bool dumpGeometry() const;
-    bool plotTracks() const;
-    bool plotSegments() const;
-    bool plotCSG() const;
-    bool plotFSRs() const;
     double getNumAzim() const;
     int getBitDimension() const;
     double getTrackSpacing() const;
     const char* getVerbosity() const;
+    std::string getExtension() const;
     int getNumRings() const;
     int getNumSectors() const;
     double getSectorOffset() const;

@@ -40,10 +40,7 @@ Options::Options(int argc, const char **argv) {
 	_sector_offset = 0;					 /* Default sector offset */
 	_verbosity = "NORMAL";				 /* Default logging level */
 	_dump_geometry = false;				/* Default will not dump geometry */
-	_plot_tracks = false;				/* Default will not plot tracks */
-	_plot_segments = false;				/* Default will not plot segments */
-	_plot_csg = false;               /* Default will not make visit plot */
-	_plot_fsrs = false;               /* Default will not plot flat source regions */
+	_extension = "png";				/* Default will plot png */
 
 	for (int i = 0; i < argc; i++) {
 		if (i > 0) {
@@ -70,18 +67,8 @@ Options::Options(int argc, const char **argv) {
 			else if (strcmp(argv[i], "-dg") == 0 ||
 					strcmp(argv[i], "--dumpgeometry") == 0)
 				_dump_geometry = true;
-			else if (strcmp(argv[i], "-pt") == 0 ||
-					strcmp(argv[i], "--plottracks") == 0)
-				_plot_tracks = true;
-			else if (strcmp(argv[i], "-ps") == 0 ||
-					strcmp(argv[i], "--plotsegments") == 0)
-				_plot_segments = true;
-			else if (strcmp(argv[i], "-pv") == 0 ||
-					strcmp(argv[i], "--plotcsg") == 0)
-				_plot_csg = true;
-			else if (strcmp(argv[i], "-pf") == 0 ||
-					strcmp(argv[i], "--plotfsrs") == 0)
-				_plot_fsrs = true;
+			else if (LAST("--extension") || LAST("-ex"))
+							_extension = argv[i];
 		}
 	}
 }
@@ -116,44 +103,6 @@ const char *Options::getMaterialFile() const {
  */
 bool Options::dumpGeometry() const {
 	return _dump_geometry;
-}
-
-
-/**
- * Returns a boolean representing whether or not to convert a bitmap of the
- * tracks produced by the TrackGenerator into an image file
- * @return whether or not to plot tracks
- */
-bool Options::plotTracks() const {
-	return _plot_tracks;
-}
-
-
-/**
- * Returns a boolean representing whether or not to convert a bitmap of the
- * tracks produced by the TrackGenerator into an image file
- * @return whether or not to plot tracks
- */
-bool Options::plotSegments() const {
-	return _plot_segments;
-}
-
-/**
- * Returns a boolean representing whether or not to create a pdb file
- * that can be plotted in VisIt.
- * @return whether or not to make VisIt plot
- */
-bool Options::plotCSG() const {
-	return _plot_csg;
-}
-
-/**
- * Returns a boolean representing whether or not to convert a bitmap of the
- * flat source regions produced from TrackGenerator into an pdb file
- * @return whether or not to make VisIt plot
- */
-bool Options::plotFSRs() const {
-	return _plot_fsrs;
 }
 
 /**
@@ -221,3 +170,14 @@ double Options::getSectorOffset() const {
 const char* Options::getVerbosity() const {
     return _verbosity.c_str();
 }
+
+/**
+ * Returns the image files extension. By default this will return .png if not set
+ * at runtime from the console
+ * @return the image files extension
+ */
+std::string Options::getExtension() const {
+    return _extension.c_str();
+}
+
+

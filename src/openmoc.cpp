@@ -17,6 +17,7 @@
 #include "Solver.h"
 #include "Timer.h"
 #include "log.h"
+#include "Plotter.h"
 
 // FIXME: These should be removed when main() is properly implemented
 #pragma GCC diagnostic ignored "-Wunused"
@@ -52,6 +53,8 @@ int main(int argc, const char **argv) {
 	if (opts.dumpGeometry())
 		geometry.printString();
 
+	Plotter plotter(&geometry, opts.getBitDimension(), opts.getExtension());
+
 	/* Adjust the indices for each geometry class to use uids */
 //	geometry.adjustKeys();
 
@@ -59,8 +62,8 @@ int main(int argc, const char **argv) {
 //	geometry.buildNeighborsLists();
 
 	/* Initialize the trackgenerator */
-	TrackGenerator track_generator(&geometry, opts.getNumAzim(),
-				       opts.getTrackSpacing(), opts.getBitDimension());
+	TrackGenerator track_generator(&geometry, &plotter, opts.getNumAzim(),
+				       opts.getTrackSpacing());
 
 	/* Generate tracks */
 	timer.reset();
@@ -70,50 +73,12 @@ int main(int argc, const char **argv) {
 	timer.stop();
 	timer.recordSplit("Generating tracks");
 
-
-	/* Plot tracks if requested at runtime */
-	if (opts.plotTracks()) {
-		timer.reset();
-		timer.start();
-		track_generator.plotTracksPng();
-		timer.stop();
-		timer.recordSplit("Creating png of tracks");
-	}
-
 	/* Segment tracks */
 	timer.reset();
 	timer.start();
 	track_generator.segmentize();
 	timer.stop();
 	timer.recordSplit("Segmenting tracks");
-
-
-	/* Plot track segments if requested at runtime */
-	if (opts.plotSegments()) {
-		timer.reset();
-		timer.start();
-		track_generator.plotSegmentsPng();
-		timer.stop();
-		timer.recordSplit("Creating png of segments");
-	}
-
-	/* Create pdb file with csg plot */
-	if (opts.plotCSG()){
-		timer.reset();
-		timer.start();
-		geometry.generateCSG();
-		timer.stop();
-		timer.recordSplit("Creating VisIt pdb plot");
-	}
-
-	/* Create pdb file with FSR plot */
-	if (opts.plotFSRs()){
-		timer.reset();
-		timer.start();
-		track_generator.plotFSRs();
-		timer.stop();
-		timer.recordSplit("Creating pdb of FSRs");
-	}
 
 	Solver solver(&geometry, &track_generator);
 	solver.zeroTrackFluxes();

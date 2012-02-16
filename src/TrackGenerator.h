@@ -12,16 +12,11 @@
 
 #define _USE_MATH_DEFINES
 #include <math.h>
-#include <string>
-#include <map>
-#include <utility>
 #include "Point.h"
 #include "Track.h"
 #include "Geometry.h"
-#include "Magick++.h"
-#include "silo.h"
+#include "Plotter.h"
 
-class Plotting;
 
 class TrackGenerator {
 private:
@@ -31,22 +26,12 @@ private:
 	int* _num_x;			/* number of tracks starting on x-axis */
 	int* _num_y;			/* number of tracks starting on y-axis */
 	double* _azim_weights;	/* azimuthal weights */
-	double _width;
-	double _height;
 	Track** _tracks;
 	Geometry* _geom;
-	int _bit_length_x;
-	int _bit_length_y;
-	double _x_pixel;
-	double _y_pixel;
-	int* _pix_map_tracks;
-	int* _pix_map_segments;
-	int* _pix_map_fsr;
-	int* _pix_map_reflect;
-	std::map<int, std::string> _color_map;
+	Plotter* _plotter;
 public:
-	TrackGenerator(Geometry* geom, const int num_azim,
-			const double spacing, const int bit_dim);
+	TrackGenerator(Geometry* geom, Plotter* plotter,
+			const int num_azim,const double spacing);
 	virtual ~TrackGenerator();
     double *getAzimWeights() const;
     int getNumAzim() const;
@@ -58,13 +43,7 @@ public:
 			const double width, const double height);
 	void makeReflective();
 	void segmentize();
-	void plotTracksPng();
-	void plotSegmentsBitMap(Track* track, double sin_phi, double cos_phi, int* map_array);
-	void plotSegmentsPng();
-	void LineFct(int x0, int y0, int x1, int y1, int* pixMap, int color = 1);
 	void printTrackingTimers();
-	void plotFSRs();
-	void plotTracksReflective(Track* track, int numReflect);
 };
 
 #endif /* TRACKGENERATOR_H_ */

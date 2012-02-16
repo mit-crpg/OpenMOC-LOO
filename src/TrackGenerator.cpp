@@ -17,57 +17,13 @@
  * @param num_azim number of azimuthal angles
  * @param spacing track spacing
  */
-TrackGenerator::TrackGenerator(Geometry* geom,
-		const int num_azim, const double spacing, const int bitDim) {
+TrackGenerator::TrackGenerator(Geometry* geom, Plotter* plotter,
+		const int num_azim, const double spacing) {
 
+	_plotter = plotter;
 	_geom = geom;
 	_num_azim = num_azim/2.0;
 	_spacing = spacing;
-
-	_width = _geom->getWidth();
-	_height = _geom->getHeight();
-	double ratio = _width/_height;
-
-	_bit_length_x = int (bitDim*ratio) + 1;
-	_bit_length_y = bitDim + 1;
-
-	/* make _color_map for plotting */
-	_color_map.insert(std::pair<int, std::string>(0,"indigo"));
-	_color_map.insert(std::pair<int, std::string>(1,"red"));
-	_color_map.insert(std::pair<int, std::string>(2,"blue"));
-	_color_map.insert(std::pair<int, std::string>(3,"green"));
-	_color_map.insert(std::pair<int, std::string>(4,"magenta"));
-	_color_map.insert(std::pair<int, std::string>(5,"orange"));
-	_color_map.insert(std::pair<int, std::string>(6,"maroon"));
-	_color_map.insert(std::pair<int, std::string>(7,"orchid"));
-	_color_map.insert(std::pair<int, std::string>(8,"blue violet"));
-	_color_map.insert(std::pair<int, std::string>(9,"crimson"));
-	_color_map.insert(std::pair<int, std::string>(10,"salmon"));
-	_color_map.insert(std::pair<int, std::string>(11,"gold"));
-	_color_map.insert(std::pair<int, std::string>(12, "DarkSlateGray"));
-	_color_map.insert(std::pair<int, std::string>(13,"orange red"));
-	_color_map.insert(std::pair<int, std::string>(14,"spring green"));
-
-	try{
-		_pix_map_tracks = new int[_bit_length_x*_bit_length_y];
-		_pix_map_segments = new int[_bit_length_x*_bit_length_y];
-		_pix_map_fsr = new int[_bit_length_x*_bit_length_y];
-		_pix_map_reflect = new int[_bit_length_x*_bit_length_y];
-	}
-	catch (std::exception &e) {
-		log_printf(ERROR, "Unable to allocate memory needed to generate pixel maps"
-				".Backtrace:\n%s", e.what());
-	}
-	for (int i=0;i<_bit_length_x; i++){
-		for (int j = 0; j < _bit_length_y; j++){
-			_pix_map_segments[i * _bit_length_x + j] = -1;
-			_pix_map_reflect[i * _bit_length_x + j] = -1;
-		}
-	}
-
-
-	_x_pixel = double(_bit_length_x)/_width;
-	_y_pixel = double(_bit_length_y)/_height;
 
 	try {
 		_num_tracks = new int[_num_azim];
@@ -91,10 +47,6 @@ TrackGenerator::~TrackGenerator() {
 	delete [] _num_x;
 	delete [] _num_y;
 	delete [] _azim_weights;
-	delete [] _pix_map_segments;
-	delete [] _pix_map_tracks;
-	delete [] _pix_map_fsr;
-	delete [] _pix_map_reflect;
 
 	for (int i = 0; i < _num_azim; i++)
 		delete [] _tracks[i];
@@ -165,6 +117,8 @@ void TrackGenerator::generateTracks() {
 
 	try {
 		log_printf(NORMAL, "Computing azimuthal angles and track spacings...");
+
+		int* pixMap = _plotter->getPixMap("tracks");
 
 		/* Each element in arrays corresponds to a track angle in phi_eff */
 		/* Track spacing along x,y-axes, and perpendicular to each track */
@@ -279,17 +233,13 @@ void TrackGenerator::generateTracks() {
 				double phi = _tracks[i][j].getPhi();
 				_tracks[i][j].setValues(new_x0, new_y0, new_x1, new_y1, phi);
 
-				/*-na 16 -ts 0.2 -ps
-				 * Add line to _pix_map segments bitmap array.
-				 * Note conversion from geometric coordinate system to
-				 * bitmap coordinates.
-				 */
+				/* Add line to _pix_map segments bitmap array */
 
-				LineFct( new_x0*_x_pixel + _bit_length_x/2,
-						-new_y0*_y_pixel + _bit_length_y/2,
-						new_x1*_x_pixel + _bit_length_x/2,
-						-new_y1*_y_pixel + _bit_length_y/2,
-						_pix_map_tracks, 1);
+				_plotter->LineFct(new_x0*_plotter->getXPixel() + _plotter->getBitLengthX()/2,
+						-new_y0*_plotter->getYPixel() + _plotter->getBitLengthY()/2,
+						new_x1*_plotter->getXPixel() + _plotter->getBitLengthX()/2,
+						-new_y1*_plotter->getYPixel() + _plotter->getBitLengthY()/2,
+						pixMap, 1);
 
 			}
 		}
@@ -298,6 +248,15 @@ void TrackGenerator::generateTracks() {
 		delete [] dy_eff;
 		delete [] d_eff;
 		delete [] phi_eff;
+
+		std::string extension = _plotter->getExtension();
+
+		if (extension == "png" || extension == "tiff" || extension == "jpg"){
+			_plotter->plotMagick(pixMap, "tracks");
+		}
+		else if (extension == "pdb"){
+			_plotter->plotSilo(pixMap, "tracls");
+		}
 
 		return;
 	}
@@ -485,6 +444,7 @@ void TrackGenerator::segmentize() {
 	log_printf(NORMAL, "Segmenting tracks...");
 	double phi, sin_phi, cos_phi;
 
+	int* pixMap = _plotter->getPixMap("segments");
 
 	/* Loop over all tracks */
 	for (int i = 0; i < _num_azim; i++) {
@@ -493,368 +453,22 @@ void TrackGenerator::segmentize() {
 		cos_phi = cos(phi);
 		for (int j = 0; j < _num_tracks[i]; j++){
 			_geom->segmentize(&_tracks[i][j]);
-			plotSegmentsBitMap(&_tracks[i][j], sin_phi, cos_phi, _pix_map_segments);
+			log_printf(DEBUG, "Segmented track...");
+			_plotter->plotSegmentsBitMap(&_tracks[i][j], sin_phi, cos_phi, pixMap);
 		}
+	}
+
+	log_printf(DEBUG, "Done segmenting...");
+
+	std::string extension = _plotter->getExtension();
+
+	if (extension == "png" || extension == "tiff" || extension == "jpg"){
+		_plotter->plotMagick(pixMap, "segments");
+	}
+	else if (extension == "pdb"){
+		_plotter->plotSilo(pixMap, "segments");
 	}
 
 	return;
 }
-
-
-/**
- * Plot tracks in png file using fast drawing method
- */
-void TrackGenerator::plotTracksPng() {
-	log_printf(NORMAL, "Writing tracks bitmap to png...");
-
-	/* Create Magick image and open pixels for viewing/changing  */
-	Magick::Image image_tracks(Magick::Geometry(_bit_length_x,_bit_length_y), "black");
-	image_tracks.modifyImage();
-
-	/* Make pixel cache */
-	Magick::Pixels my_pixel_cache(image_tracks);
-	Magick::PixelPacket* pixels;
-	pixels = my_pixel_cache.get(0,0,_bit_length_x,_bit_length_y);
-
-	/* Convert _pix_map_tracks bitmap array to Magick bitmap pixel array. */
-	for (int y=0;y<_bit_length_y; y++){
-		for (int x = 0; x < _bit_length_x; x++){
-			if (_pix_map_tracks[y * _bit_length_x + x] != 1){
-				*(pixels+(y * _bit_length_x + x)) = Magick::Color("white");
-			}
-		}
-	}
-
-	/* Close pixel viewing/changing */
-	my_pixel_cache.sync();
-
-	/* Write pixel bitmap to png file */
-	image_tracks.write("tracks.png");
-}
-
-
-/**
- * Plots track segments in a _pix_map_segments bitmap array on the fly
- */
-void TrackGenerator::plotSegmentsBitMap(Track* track, double sin_phi, double cos_phi, int* map_array){
-
-	/* Initialize variables */
-	double start_x, start_y, end_x, end_y;
-	int num_segments;
-
-	/* Set first segment start point and get the number of tracks*/
-	start_x = track->getStart()->getX();
-	start_y = track->getStart()->getY();
-	num_segments = track->getNumSegments();
-
-	/* loop over segments and write to _pix_map_segments bitmap array */
-	for (int k=0; k < num_segments; k++){
-		end_x = start_x + cos_phi*track->getSegment(k)->_length;
-		end_y = start_y + sin_phi*track->getSegment(k)->_length;
-
-		/*
-		 * Add line to _pix_map segments bitmap array.
-		 * Note conversion from geometric coordinate system to
-		 * bitmap coordinates.
-		 */
-		LineFct(start_x*_x_pixel + _bit_length_x/2,
-				-start_y*_y_pixel + _bit_length_y/2,
-				end_x*_x_pixel + _bit_length_x/2,
-				-end_y*_y_pixel + _bit_length_y/2,
-				map_array,
-				track->getSegment(k)->_region_id);
-
-
-		start_x = end_x;
-		start_y = end_y;
-	}
-}
-
-
-
-/**
- * Plot segments in png file
- */
-void TrackGenerator::plotSegmentsPng(){
-	log_printf(NORMAL, "Writing segments bitmap to png...");
-
-	int color_int;
-
-	/* Create Magick image and open pixels for viewing/changing */
-	Magick::Image image_segments(Magick::Geometry(_bit_length_x,_bit_length_y), "white");
-	image_segments.modifyImage();
-
-	/* Make pixel cache */
-	Magick::Pixels my_pixel_cache(image_segments);
-	Magick::PixelPacket* pixels;
-	pixels = my_pixel_cache.get(0,0,_bit_length_x,_bit_length_y);
-
-	/*
-	 * Convert _pix_map_segments bitmap array to Magick bitmap pixel
-	 * color array
-	 */
-	for (int y=0;y < _bit_length_y; y++){
-		for (int x = 0; x < _bit_length_x; x++){
-			color_int = _pix_map_segments[y * _bit_length_x + x] % 15;
-
-			if ( color_int != -1){
-			*(pixels+(y * _bit_length_x + x)) = Magick::Color(_color_map.at(color_int));
-			}
-		}
-	}
-
-	/* close pixel viewing/changing */
-	my_pixel_cache.sync();
-
-
-	/* write Magick pixel color array to png file */
-	image_segments.write("segments.png");
-
-}
-
-
-/**
- * plot flat source regions in pdb file using segments bitmap
- */
-void TrackGenerator::plotFSRs(){
-	log_printf(NORMAL, "plotting FSRs in visit...");
-
-	/* Create pdb file */
-    DBfile *pdb_file;
-    pdb_file = DBCreate("structured_mesh.pdb", DB_CLOBBER, DB_LOCAL, "structured mesh test file", DB_PDB);
-
-    /* create mesh point arrays */
-	double mesh_x[_bit_length_x + 1];
-	double mesh_y[_bit_length_y + 1];
-
-	/* create pixmap mesh */
-	for (int i = 0; i < (_bit_length_x + 1); i++){
-		mesh_x[i] = (double(i) - double(_bit_length_x)/2.0 + 1.0) * (_width/double(_bit_length_x));
-	}
-	for (int i = 0; i < (_bit_length_y + 1); i++){
-		mesh_y[i] = (double(i) - double(_bit_length_y)/2.0) * (_height/double(_bit_length_y));
-	}
-
-	/* descriptions of mesh */
-	double *coords[] = {mesh_x, mesh_y};
-	int dims[] = {_bit_length_x + 1, _bit_length_y + 1};
-	int ndims = 2;
-
-	/* create structured mesh bit map in pdb_file */
-	DBPutQuadmesh(pdb_file, "quadmesh", NULL, coords, dims, ndims, DB_DOUBLE, DB_COLLINEAR, NULL);
-
-	/* dimensions of _pix_map_fsr */
-	int dimsvar[] = {_bit_length_x, _bit_length_y};
-
-//	/*
-//	 * write _pix_map_segments (bitmap coordinates)
-//	 * to _pix_map_fsr (cartesian coordinates)
-//	*/
-//	for (int y = 0; y < _bit_length_x; y++){
-//		for ( int x = 0; x < _bit_length_y; x++){
-//			_pix_map_fsr[(_bit_length_x - 1 - y) * _bit_length_x + x] = _pix_map_segments[y * _bit_length_x + x];
-//		}
-//	}
-//
-//
-//	/* contiguous pixel values used for smoothing */
-//	int m2; 		/* pixel(i - 2) */
-//	int m1; 		/* pixel(i - 1) */
-//	int cur;		/* pixel(i) */
-//	int p1;			/* pixel(i + 1) */
-//	int p2;			/* pixel(i + 2) */
-//	int up;         /* pixel(i - _bit_length_x) */
-//	int down; 		/* pixel(i + _bit_length_x) */
-//
-//	/* smoothing pixel map so there's fewer missing pixels */
-//	for (int k = 0; k < 4; k++){
-//		for (int i = 2; i < ((_bit_length_x*_bit_length_y) - 2); i++){
-//			if ( i >= _bit_length_x){
-//				up = _pix_map_fsr[i - _bit_length_x];
-//			}
-//			else{
-//				up = -1;
-//			}
-//			if ( i <= ((_bit_length_x - 1) * _bit_length_y)){
-//				down = _pix_map_fsr[i + _bit_length_x];
-//			}
-//			else{
-//				down = -1;
-//			}
-//			p2 = _pix_map_fsr[i + 2];
-//			p1 = _pix_map_fsr[i + 1];
-//			cur = _pix_map_fsr[i];
-//			m1 = _pix_map_fsr[i - 1];
-//			m2 = _pix_map_fsr[i - 2];
-//			/* a_a -> aaa */
-//			if (cur == -1 && p1==m1 && m1 != -1){
-//				_pix_map_fsr[i] = m1;
-//			}
-//			 /*   a     a
-//			 *    _ ->  a
-//			 *    a     a
-//			 */
-//			if (cur == -1 && up == down && up != -1 && down != -1){
-//				_pix_map_fsr[i] = down;
-//			}
-//			/* a__a -> aaaa */
-//			if (cur == -1 && p2 == m1 && p2 != -1){
-//				_pix_map_fsr[i] = p2;
-//				_pix_map_fsr[i + 1] = p2;
-//			}
-//			/* aa_bb -> aaabb */
-//			if (cur == -1 && p1 == p2 && m1 == m2 && m1 != -1 && p1 != -1){
-//				if (i % _bit_length_x == 0){
-//					_pix_map_fsr[i] = p1;
-//				}
-//				else{
-//					_pix_map_fsr[i] = m1;
-//				}
-//			}
-//		}
-//	}
-
-	LocalCoords coord(0,0);
-	coord.setUniverse(0);
-
-	/* Find the cell for the track starting point */
-	int fsrId;
-
-
-
-	for (int x = 0; x < _bit_length_x; x++){
-		for (int y = 0; y < _bit_length_x; y++){
-			coord.setX(mesh_x[x]);
-			coord.setY(mesh_y[y]);
-			Cell* curr = _geom->findCell(&coord);
-			fsrId = _geom->findFSRId(&coord);
-			_pix_map_fsr[(_bit_length_x - 1 - y) * _bit_length_x + x] = fsrId;
-			coord.prune();
-		}
-	}
-
-
-
-
-
-	/* Save FSR bit map (_bit_map_visit) to the pdb file */
-	DBPutQuadvar1(pdb_file, "FSRs", "quadmesh", _pix_map_fsr, dimsvar, ndims, NULL, 0, DB_INT, DB_ZONECENT, NULL);
-
-	/* close pdb file */
-    DBClose(pdb_file);
-}
-
-/**
- * plot given track and numReflect reflected tracks
- */
-void TrackGenerator::plotTracksReflective(Track* track, int numReflect){
-	log_printf(NORMAL, "Writing tracks reflect bitmap to png...");
-
-	int color_int;
-
-	/* initialize variables */
-	double sin_phi, cos_phi, phi;
-	Track *track2;
-	bool get_out = TRUE;
-
-	/* loop through tracks and write to _pix_map_reflect bitmap */
-	for (int i = 0; i < (numReflect + 1); i++){
-		log_printf(DEBUG, "plotting reflective track: %d", i);
-		log_printf(DEBUG, "x_start, y_start, x_end, y_end: %f, %f, %f, %f",
-				track->getStart()->getX(),track->getStart()->getY(),
-				track->getEnd()->getX(),track->getEnd()->getY());
-		phi = track->getPhi();
-		sin_phi = sin(phi);
-		cos_phi = cos(phi);
-		plotSegmentsBitMap(track, sin_phi, cos_phi, _pix_map_reflect);
-
-		/* Get next track */
-		track2 = track;
-		if (get_out){
-			track = track->getTrackOut();
-		}
-		else {
-			track = track->getTrackIn();
-		}
-
-		/*determine whether we want TrackIn or TrackOut of next track */
-		if (track->getTrackOut() == track2){
-			get_out = FALSE;
-		}
-		else{
-			get_out = TRUE;
-		}
-	}
-
-	/* Create Magick image and open pixels for viewing/changing  */
-	Magick::Image image_reflect(Magick::Geometry(_bit_length_x,_bit_length_y), "white");
-	image_reflect.modifyImage();
-
-	/* Make pixel cache */
-	Magick::Pixels my_pixel_cache(image_reflect);
-	Magick::PixelPacket* pixels;
-	pixels = my_pixel_cache.get(0,0,_bit_length_x,_bit_length_y);
-
-	/*
-	 * Convert _pix_map_reflect bitmap array to Magick bitmap pixel
-	 * color array
-	 */
-	for (int y = 0; y < _bit_length_y; y++){
-		for (int x = 0; x < _bit_length_x; x++){
-			color_int = _pix_map_reflect[y * _bit_length_x + x] % 15;
-
-			if ( color_int != -1){
-				*(pixels+(y * _bit_length_x + x)) = Magick::Color(_color_map.at(color_int));
-			}
-		}
-	}
-
-	/* Close pixel viewing/changing */
-	my_pixel_cache.sync();
-
-	/* Write pixel bitmap to png file */
-	image_reflect.write("reflect.png");
-}
-
-/**
- * Bresenham's line drawing algorithm. Takes in the start and end coordinates
- * of line, pointer to _pix_map bitmap array (pixMap), and line color.
- * "Draws" the line on _pix_map bitmap array.
- * Taken from "Simplificaiton" code at link below
- * http://en.wikipedia.org/wiki/Bresenham%27s_line_algorithm
-*/
-void TrackGenerator::LineFct(int x0, int y0, int x1, int y1, int* pixMap, int color){
-	int dx = abs(x1-x0);
-	int dy = abs(y1-y0);
-	int sx, sy;
-	if (x0 < x1){
-		sx = 1;
-	}
-	else{
-		sx = -1;
-
-	}
-	if (y0 < y1){
-		sy = 1;
-	}
-	else{
-		sy = -1;
-	}
-	int error = dx - dy;
-	pixMap[y0 * _bit_length_x + x0] = color;
-	pixMap[y1 * _bit_length_x + x1] = color;
-	while (x0 != x1 && y0 != y1){
-		pixMap[y0 * _bit_length_x + x0] = color;
-		int e2 = 2 * error;
-		if (e2 > -dy){
-			error = error - dy;
-			x0 = x0 + sx;
-		}
-		if (e2 < dx){
-			error = error + dx;
-			y0 = y0 + sy;
-		}
-	}
-}
-
 
