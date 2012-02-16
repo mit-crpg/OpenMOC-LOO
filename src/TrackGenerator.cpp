@@ -255,7 +255,7 @@ void TrackGenerator::generateTracks() {
 			_plotter->plotMagick(pixMap, "tracks");
 		}
 		else if (extension == "pdb"){
-			_plotter->plotSilo(pixMap, "tracls");
+			_plotter->plotSilo(pixMap, "tracks");
 		}
 
 		return;

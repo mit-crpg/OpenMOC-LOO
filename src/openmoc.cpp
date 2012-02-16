@@ -80,6 +80,8 @@ int main(int argc, const char **argv) {
 	timer.stop();
 	timer.recordSplit("Segmenting tracks");
 
+	plotter.generateFsrMap();
+
 	Solver solver(&geometry, &track_generator);
 	solver.zeroTrackFluxes();
 	solver.oneFSRFluxes();
