@@ -17,13 +17,18 @@ int Material::_n = 0;
  * @param id the material's id
  */
 Material::Material(int id,
-		   double *sigma_t, int sigma_t_cnt,
-		   double *nu_sigma_f, int nu_sigma_f_cnt,
-		   double *chi, int chi_cnt,
-		   double *sigma_s, int sigma_s_cnt) {
+				   double *sigma_a, int sigma_a_cnt,
+				   double *sigma_t, int sigma_t_cnt,
+				   double *nu_sigma_f, int nu_sigma_f_cnt,
+				   double *chi, int chi_cnt,
+				   double *sigma_s, int sigma_s_cnt) {
 	_uid = _n;
 	_id = id;
 	_n++;
+
+	if (sigma_a_cnt != NUM_ENERGY_GROUPS)
+		log_printf(ERROR, "Wrong number of sigma_a");
+	memcpy(_sigma_a, sigma_a, NUM_ENERGY_GROUPS*sizeof(*_sigma_a));
 
 	if (sigma_t_cnt != NUM_ENERGY_GROUPS)
 		log_printf(ERROR, "Wrong number of sigma_t");
@@ -178,13 +183,13 @@ std::string Material::toString() {
 
 	string << "Material id = " << _id;
 
-	string << "\n\t\tSigma_t = ";
-	for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
-		string << _sigma_t[e] << ", ";
-
 	string << "\n\t\tSigma_a = ";
 	for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
 		string << _sigma_a[e] << ", ";
+
+	string << "\n\t\tSigma_t = ";
+	for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
+		string << _sigma_t[e] << ", ";
 
 	string << "\n\t\tnu_sigma_f = ";
 	for (int e = 0; e < NUM_ENERGY_GROUPS; e++)

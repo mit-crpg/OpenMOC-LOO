@@ -29,10 +29,11 @@ private:
 	double _sigma_s[NUM_ENERGY_GROUPS][NUM_ENERGY_GROUPS]; 
 public:
 	Material(int id,
-		 double *sigma_t, int sigma_t_cnt,
-		 double *nu_sigma_f, int nu_sigma_f_cnt,
-		 double *chi, int chi_cnt,
-		 double *sigma_s, int sigma_s_cnt);
+			 double *sigma_a, int sigma_a_cnt,
+			 double *sigma_t, int sigma_t_cnt,
+			 double *nu_sigma_f, int nu_sigma_f_cnt,
+			 double *chi, int chi_cnt,
+			 double *sigma_s, int sigma_s_cnt);
 	virtual ~Material();
 	int getUid() const;
 	int getId() const;
