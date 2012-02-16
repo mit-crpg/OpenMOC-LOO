@@ -5,6 +5,7 @@ COMPILEOPTS += -std=gnu++0x
 
 BINARIES    += openmoc
 LINKOPTS    += -lexpat
+LINKOPTS	+= -lsilo
 LINKOPTS    += `pkg-config Magick++ --libs`
 COMPILEOPTS += `pkg-config Magick++ --cflags | sed s/-fopenmp//`
 SOURCES     += openmoc.cpp

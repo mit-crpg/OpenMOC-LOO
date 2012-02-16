@@ -192,7 +192,7 @@ void Timer::printSplits() {
 
 		/* Num whitespaces for formatting is:
 		 * 80 max char - 13 char for logger - 13 for time - msg length */
-		num_whitespaces = 80 - 13 - 11 - msg_length;
+		num_whitespaces = 80 - 13 - 11 - msg_length -3;
 
 		formatted_msg << curr_msg;
 

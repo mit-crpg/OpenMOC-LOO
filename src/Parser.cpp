@@ -165,6 +165,9 @@ struct frame_material {
 	bool has_id;
 	int id;
 
+	double *sigma_a;
+	int sigma_a_cnt;
+
 	double *sigma_t;
 	int sigma_t_cnt;
 	
@@ -506,6 +509,13 @@ void XMLCALL Parser_XMLCallback_Start(void *context,
 				f->material.sigma_t =
 					strtok_double(value,
 						      &f->material.sigma_t_cnt);
+			} else if (strcmp(key, "sigma_a") == 0) {
+				if (f->material.sigma_a != NULL)
+					log_printf(ERROR, "Has 2 sigma_a");
+
+				f->material.sigma_a =
+					strtok_double(value,
+						      &f->material.sigma_a_cnt);
 			} else if (strcmp(key, "nu_sigma_f") == 0) {
 				if (f->material.nu_sigma_f != NULL)
 					log_printf(ERROR, "Has 2 nu_sigma_f");
@@ -601,26 +611,26 @@ void XMLCALL Parser_XMLCallback_End(void *context,
 		cell = NULL;
 		if (f->cell.has_fill) {
 			cell = new CellFill(f->cell.id, 
-					    f->cell.universe,
-					    f->cell.surfaces_count,
-					    f->cell.surfaces,
-					    f->cell.fill);
+								f->cell.universe,
+								f->cell.surfaces_count,
+								f->cell.surfaces,
+								f->cell.fill);
 		} else if (f->cell.has_material) {
 			if (f->cell.has_rings) {
 				cell = new CellBasic(f->cell.id, 
-						     f->cell.universe,
-						     f->cell.surfaces_count,
-						     f->cell.surfaces,
-						     f->cell.material,
-						     f->cell.rings);
+									 f->cell.universe,
+									 f->cell.surfaces_count,
+									 f->cell.surfaces,
+									 f->cell.material,
+									 f->cell.rings);
 			}
 			else {
 				cell = new CellBasic(f->cell.id, 
-						     f->cell.universe,
-						     f->cell.surfaces_count,
-						     f->cell.surfaces,
-						     f->cell.material,
-						     0);		     
+									 f->cell.universe,
+									 f->cell.surfaces_count,
+									 f->cell.surfaces,
+									 f->cell.material,
+									 0);		     
 			}
 		} else {
 			log_printf(ERROR, "Cell without material or fill");
@@ -869,6 +879,8 @@ void XMLCALL Parser_XMLCallback_End(void *context,
 		Material *material;
 
 		material = new Material(f->material.id,
+					f->material.sigma_a,
+					f->material.sigma_a_cnt,
 					f->material.sigma_t,
 					f->material.sigma_t_cnt,
 					f->material.nu_sigma_f,
@@ -883,7 +895,8 @@ void XMLCALL Parser_XMLCallback_End(void *context,
 		else {
 			log_printf(ERROR, "Material unsuccessfully built");
 		}
-
+		if (f->material.sigma_a != NULL)
+			free(f->material.sigma_a);
 		if (f->material.sigma_t != NULL)
 			free(f->material.sigma_t);
 		if (f->material.nu_sigma_f != NULL)
@@ -1059,6 +1072,7 @@ struct frame *stack_push(struct stack *s, enum frame_type type) {
 		break;
 	case NODE_TYPE_MATERIAL:
 		f->material.has_id = false;
+		f->material.sigma_a = NULL;
 		f->material.sigma_t = NULL;
 		f->material.nu_sigma_f = NULL;
 		f->material.chi = NULL;
@@ -1225,6 +1239,16 @@ void stack_print_help(struct frame *f) {
 	case NODE_TYPE_MATERIAL:
 		if (f->material.has_id)
 			fprintf(stderr, " id=\"%d\"", f->material.id);
+		if (f->material.sigma_a != NULL) {
+			int i;
+
+			fprintf(stderr, " sigma_a=\"");
+			for (i = 0; i < f->material.sigma_a_cnt; i++) {
+				fprintf(stderr, " %f",
+					f->material.sigma_a[i]);
+			}
+			fprintf(stderr, "\"");
+		}
 		if (f->material.sigma_t != NULL) {
 			int i;
 
