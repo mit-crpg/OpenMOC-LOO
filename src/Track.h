@@ -46,7 +46,7 @@ public:
 			const double end_x, const double end_y, const double phi);
     void setAzimuthalWeight(const double azim_weight);
     void setPolarWeight(const int angle, double polar_weight);
-    void setPolarFluxes(int direction, int start_index, double* polar_fluxes);
+    void setPolarFluxes(bool direction, int start_index, double* polar_fluxes);
     void setPhi(const double phi);
     void setReflIn(const bool refl_in);
     void setReflOut(const bool refl_out);
