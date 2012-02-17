@@ -469,6 +469,8 @@ void TrackGenerator::segmentize() {
 		_plotter->plotSilo(pixMap, "segments");
 	}
 
+	_plotter->generateFsrMap();
+
 	return;
 }
 

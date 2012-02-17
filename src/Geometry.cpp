@@ -1359,6 +1359,9 @@ void Geometry::segmentize(Track* track) {
 	segment_start.prune();
 	segment_end.prune();
 
+	log_printf(DEBUG, "max segment length: %f", _max_seg_length);
+	log_printf(DEBUG, "min segment length: %f", _min_seg_length);
+
 	return;
 }
 

@@ -15,10 +15,13 @@
  * @param num_azim number of azimuthal angles
  * @param spacing track spacing
  */
-Plotter::Plotter(Geometry* geom, const int bitDim, std::string extension) {
+Plotter::Plotter(Geometry* geom, const int bitDim, std::string extension,
+		bool plotMaterials, bool plotCells) {
 
 	_extension = extension;
 	_geom = geom;
+	_plot_materials = plotMaterials;
+	_plot_cells = plotCells;
 
 	_width = _geom->getWidth();
 	_height = _geom->getHeight();
@@ -48,6 +51,15 @@ Plotter::Plotter(Geometry* geom, const int bitDim, std::string extension) {
 		_pix_map_segments = new int[_bit_length_x*_bit_length_y];
 		_pix_map_tracks = new int[_bit_length_x*_bit_length_y];
 		_pix_map_FSR = new int[_bit_length_x*_bit_length_y];
+
+		if (_plot_materials == true){
+			_pix_map_materials = new int[_bit_length_x*_bit_length_y];
+		}
+		if (_plot_cells == true){
+			_pix_map_cells = new int[_bit_length_x*_bit_length_y];
+		}
+
+
 	}
 	catch (std::exception &e) {
 		log_printf(ERROR, "Unable to allocate memory needed to generate pixel maps"
@@ -57,7 +69,14 @@ Plotter::Plotter(Geometry* geom, const int bitDim, std::string extension) {
 		for (int j = 0; j < _bit_length_y; j++){
 			_pix_map_segments[i * _bit_length_x + j] = -1;
 			_pix_map_tracks[i * _bit_length_x + j] = -1;
+			_pix_map_FSR[i * _bit_length_x + j] = -1;
 
+			if (_plot_materials == true){
+				_pix_map_materials[i * _bit_length_x + j] = -1;;
+			}
+			if (_plot_cells == true){
+				_pix_map_cells[i * _bit_length_x + j] = -1;;
+			}
 		}
 	}
 
@@ -305,15 +324,23 @@ int* Plotter::getPixMap(std::string type){
 	if (type == "tracks"){
 		return _pix_map_tracks;
 	}
-	else if (type == "segments")
+	else if (type == "segments"){
 		return _pix_map_segments;
+	}
+	else if (type == "FSR"){
+		return _pix_map_FSR;
+	}
+	else {
+		log_printf(ERROR, "Invalid pixMap name give to Plotter::getPixMap");
+		return NULL;
+	}
 }
 
 /*
  * Generate bitmap of geometry with pixels mapped to FSR ids
  */
 void Plotter::generateFsrMap(){
-	log_printf(NORMAL, "Generating FSR map...");
+	log_printf(NORMAL, "Generating FSR maps...");
 
 	double x_global;
 	double y_global;
@@ -322,7 +349,7 @@ void Plotter::generateFsrMap(){
 		for (int x = 0; x < _bit_length_x; x++){
 
 			x_global = (double(x) - _bit_length_x/2)/_x_pixel;
-			y_global = (double(y) - _bit_length_y/2)/_y_pixel;
+			y_global = -(double(y) - _bit_length_y/2)/_y_pixel;
 
 			LocalCoords point(x_global,y_global);
 			point.setUniverse(0);
@@ -331,14 +358,33 @@ void Plotter::generateFsrMap(){
 
 			_pix_map_FSR[y * _bit_length_x + x] = _geom->findFSRId(&point);
 
+			if (_plot_materials == true){
+				_pix_map_materials[y * _bit_length_x + x] = static_cast<CellBasic*>(curr)->getMaterial();
+			}
+			if (_plot_cells == true){
+				_pix_map_cells[y * _bit_length_x + x] = curr->getUid();
+			}
 		}
 	}
 
 	if (_extension == "png" || _extension == "tiff" || _extension == "jpg"){
-		plotMagick(_pix_map_FSR, "FSR");
+		plotMagick(_pix_map_FSR, "fsr");
+		if (_plot_materials == true){
+			plotMagick(_pix_map_materials, "materials");
+		}
+		if (_plot_cells == true){
+			plotMagick(_pix_map_cells, "cells");
+		}
 	}
 	else if (_extension == "pdb"){
-		plotSilo(_pix_map_FSR, "FSR");
+		plotSilo(_pix_map_FSR, "fsr");
+		if (_plot_materials == true){
+			plotSilo(_pix_map_materials, "materials");
+
+		}
+		if (_plot_cells == true){
+			plotSilo(_pix_map_cells, "cells");
+		}
 	}
 }
 
@@ -361,7 +407,4 @@ double Plotter::getXPixel(){
 double Plotter::getYPixel(){
 	return _y_pixel;
 }
-
-
-
 

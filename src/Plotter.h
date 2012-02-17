@@ -27,6 +27,8 @@ class Plotter{
 private:
 	double _width;
 	double _height;
+	bool _plot_materials;
+	bool _plot_cells;
 	std::string _extension;
 	Geometry* _geom;
 	int _bit_length_x;
@@ -35,11 +37,13 @@ private:
 	double _y_pixel;
 	int* _pix_map_tracks;
 	int* _pix_map_segments;
-	int* _pix_map_fsr;
 	int* _pix_map_FSR;
+	int* _pix_map_materials;
+	int* _pix_map_cells;
 	std::map<int, std::string> _color_map;
 public:
-	Plotter(Geometry* geom, const int bit_dim, std::string extension);
+	Plotter(Geometry* geom, const int bit_dim, std::string extension,
+			bool plotMaterials, bool plotCells);
 	virtual ~Plotter();
 	void plotMagick(int* pixMap, std::string type);
 	void plotTracksPng();

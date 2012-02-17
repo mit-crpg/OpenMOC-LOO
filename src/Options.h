@@ -31,6 +31,8 @@ private:
 	double _sector_offset;
 	std::string _verbosity;
 	bool _dump_geometry;
+	bool _plot_materials;
+	bool _plot_cells;
 public:
     Options(int argc, const char **argv);
     ~Options(void);
@@ -45,6 +47,8 @@ public:
     int getNumRings() const;
     int getNumSectors() const;
     double getSectorOffset() const;
+    bool plotMaterials() const;
+    bool plotCells() const;
 };
 
 #endif
