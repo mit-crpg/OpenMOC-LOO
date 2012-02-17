@@ -83,7 +83,7 @@ int main(int argc, const char **argv) {
 	plotter.generateFsrMap();
 
 	Solver solver(&geometry, &track_generator);
-	double k_eff = solver.computeKeff(3);
+	double k_eff = solver.computeKeff(3000);
 	log_printf(RESULT, "k_eff = %f", k_eff);
 
 	/* Print timer splits to console */

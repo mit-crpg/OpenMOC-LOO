@@ -334,7 +334,7 @@ void Plotter::generateFsrMap(){
 			point.setUniverse(0);
 
 			/* comment out for now because it is apparently unused */
-			// Cell* curr = _geom->findCell(&point);
+			_geom->findCell(&point);
 
 			_pix_map_FSR[y * _bit_length_x + x] = _geom->findFSRId(&point);
 

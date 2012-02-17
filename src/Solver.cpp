@@ -130,8 +130,10 @@ double Solver::computePreFactor(segment* seg, int energy, int angle) {
  * source region for efficient fixed source iteration
  */
 void Solver::computeRatios() {
-	for (int i = 0; i < _num_FSRs; i++)
+	for (int i = 0; i < _num_FSRs; i++) {
+//		log_printf(RESULT, "Computing ratios... for i = %d",i);
 		_flat_source_regions[i].computeRatios();
+	}
 	return;
 }
 
@@ -219,11 +221,13 @@ void Solver::zeroTrackFluxes() {
 void Solver::oneFSRFluxes() {
 
 	log_printf(INFO, "Setting all FSR scalar fluxes to unity...");
+	FlatSourceRegion* fsr;
 
 	/* Loop over all FSRs and energy groups */
 	for (int r = 0; r < _num_FSRs; r++) {
+		fsr = &_flat_source_regions[r];
 		for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
-			_flat_source_regions->setFlux(e, 1.0);
+			fsr->setFlux(e, 1.0);
 	}
 
 	return;
@@ -237,11 +241,13 @@ void Solver::oneFSRFluxes() {
 void Solver::zeroFSRFluxes() {
 
 	log_printf(INFO, "Setting all FSR scalar fluxes to zero...");
+	FlatSourceRegion* fsr;
 
 	/* Loop over all FSRs and energy groups */
 	for (int r = 0; r < _num_FSRs; r++) {
+		fsr = &_flat_source_regions[r];
 		for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
-			_flat_source_regions->setFlux(e, 0.0);
+			fsr->setFlux(e, 0.0);
 	}
 
 	return;
@@ -270,13 +276,13 @@ void Solver::updateKeff() {
 		flux = fsr->getFlux();
 
 		for (int e = 0; e < NUM_ENERGY_GROUPS; e++) {
-			log_printf(RESULT, "r = %d, e = %d, sigma_a = %f, flux = %f, volume = %f",r,e,sigma_a[e], flux[e], fsr->getVolume());
+//			log_printf(RESULT, "r = %d, e = %d, sigma_a = %f, flux = %f, volume = %f",r,e,sigma_a[e], flux[e], fsr->getVolume());
 			tot_abs += sigma_a[e] * flux[e] * fsr->getVolume();
 			tot_fission += nu_sigma_f[e] * flux[e] * fsr->getVolume();
 		}
 	}
 
-	log_printf(RESULT, "tot_fission = %f, tot_abs = %f", tot_fission, tot_abs);
+//	log_printf(RESULT, "tot_fission = %f, tot_abs = %f", tot_fission, tot_abs);
 
 	_k_eff = tot_fission/tot_abs;
 	log_printf(INFO, "Computed k_eff = %f", _k_eff);
@@ -332,6 +338,8 @@ void Solver::fixedSourceIteration(int max_iterations) {
 						for (int e = 0; e < NUM_ENERGY_GROUPS; e++) {
 							delta = (polar_fluxes[GRP_TIMES_ANG + p*NUM_ENERGY_GROUPS + e] -
 									ratios[e]) * segment->_prefactors[p][e];
+//							log_printf(RESULT, "p = %d, e = %d, ratios[e] = %f, prefactors[e] = %f, polarflux = %f, delta = %f",
+//									p, e, ratios[e], segment->_prefactors[p][e], polar_fluxes[GRP_TIMES_ANG + p*NUM_ENERGY_GROUPS + e], delta);
 							fsr->incrementFlux(e, delta*weights[p]);
 							polar_fluxes[GRP_TIMES_ANG + p*NUM_ENERGY_GROUPS + e] -= delta;
 						}
@@ -445,6 +453,14 @@ double Solver::computeKeff(int max_iterations) {
 			fsr->setOldSource(e, 1.0);
 	}
 
+//	for (int r = 0; r < _num_FSRs; r++) {
+//		fsr = &_flat_source_regions[r];
+//
+//		for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
+//			log_printf(RESULT, "r = %d, e = %d, scalar_flux[e] = %f", r, e, fsr->getFlux()[e]);
+//	}
+
+
 	// Source iteration loop
 	for (int i = 0; i < max_iterations; i++) {
 
@@ -467,8 +483,10 @@ double Solver::computeKeff(int max_iterations) {
 			scalar_flux = fsr->getFlux();
 			volume = fsr->getVolume();
 
-			for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
+			for (int e = 0; e < NUM_ENERGY_GROUPS; e++) {
 				fission_source += nu_sigma_f[e] * scalar_flux[e] * volume;
+//				log_printf(RESULT, "scalar_flux[e] = %f, nu_sigma_f[e] = %f, fission_source = %f", scalar_flux[e], nu_sigma_f[e], fission_source);
+			}
 		}
 
 		/* Renormalize scalar fluxes in each region */
@@ -519,8 +537,10 @@ double Solver::computeKeff(int max_iterations) {
 			sigma_s = material->getSigmaS();
 
 			/* Compute total fission source for current region */
-			for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
+			for (int e = 0; e < NUM_ENERGY_GROUPS; e++) {
 				fission_source += scalar_flux[e] * nu_sigma_f[e];
+//				log_printf(RESULT, "scalar_flux[e] = %f, nu_sigma_f[e] = %f, fission_source = %f", scalar_flux[e], nu_sigma_f[e], fission_source);
+			}
 
 			/* Compute total scattering source for group G */
 			for (int G = 0; G < NUM_ENERGY_GROUPS; G++) {
@@ -532,6 +552,8 @@ double Solver::computeKeff(int max_iterations) {
 				/* Set the total source for region r in group G */
 				source[G] = ((1.0 / (_k_eff_old)) * fission_source * chi[G] +
 								scatter_source) * ONE_OVER_FOUR_PI;
+//				log_printf(RESULT, "_k_eff_old = %f, fission_source = %f, chi[G] = %f, "
+//						"scatter_source = %f, source[G] = %f", _k_eff_old, fission_source, chi[G], scatter_source, source[G]);
 			}
 		}
 

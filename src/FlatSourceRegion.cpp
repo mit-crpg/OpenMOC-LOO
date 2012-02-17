@@ -171,6 +171,8 @@ void FlatSourceRegion::incrementFlux(int energy, double flux) {
 		log_printf(ERROR, "Attempted to increment the scalar flux for FSR id = "
 				"%d in an energy group which does not exist: %d", _id, energy);
 
+//	log_printf(RESULT, "Region id = %d, energy = %d, Incrementing flux by flux = %f", _id, energy, flux);
+
 	_flux[energy] += flux;
 	return;
 }
@@ -230,8 +232,10 @@ void FlatSourceRegion::computeRatios() {
 
 	double* sigma_t = _material->getSigmaT();
 
-	for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
+	for (int e = 0; e < NUM_ENERGY_GROUPS; e++) {
 		_ratios[e] = _source[e]/sigma_t[e];
+//		log_printf(RESULT, "id = %d, e = %d, source[e] = %f, sigma_t[e] = %f, ratios[e] = %f", _id, e, _source[e], sigma_t[e], _ratios[e]);
+	}
 
 	return;
 }
