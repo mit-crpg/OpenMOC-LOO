@@ -66,14 +66,17 @@ void Track::setPolarWeight(const int angle, double polar_weight) {
  * @param direction incoming/outgoing (0/1) flux for forward/reverse directions
  * @param polar_fluxes pointer to an array of fluxes
  */
-void Track::setPolarFluxes(int direction, int start_index,
+void Track::setPolarFluxes(bool direction, int start_index,
 							double* polar_fluxes) {
-	if (direction != 0 && direction != 1)
-		log_printf(ERROR, "Tried to set this track's polar flux in a direction"
-				"which does not exist: direction = %d", direction);
 
-	for (int i = 0; i < GRP_TIMES_ANG * 2; i++)
-		_polar_fluxes[i] = polar_fluxes[i+start_index];
+	int start = direction * GRP_TIMES_ANG;
+
+	if (direction != true && direction != false)
+		log_printf(ERROR, "Tried to set this track's polar flux in a direction"
+				"which does not exist: direction = %b", direction);
+
+	for (int i = 0; i < GRP_TIMES_ANG; i++)
+		_polar_fluxes[start + i] = polar_fluxes[i+start_index];
 
 	return;
 }
@@ -243,7 +246,7 @@ bool Track::isReflOut() const {
 segment* Track::getSegment(int segment) {
 
 	/* Checks to see if segments container contains this segment index */
-	if (segment <= (int)_segments.size())
+	if (segment < (int)_segments.size())
 		return _segments.at(segment);
 
 	/* If track doesn't contain this segment, exits program */

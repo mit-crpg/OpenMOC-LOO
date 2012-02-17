@@ -270,10 +270,13 @@ void Solver::updateKeff() {
 		flux = fsr->getFlux();
 
 		for (int e = 0; e < NUM_ENERGY_GROUPS; e++) {
+			log_printf(RESULT, "r = %d, e = %d, sigma_a = %f, flux = %f, volume = %f",r,e,sigma_a[e], flux[e], fsr->getVolume());
 			tot_abs += sigma_a[e] * flux[e] * fsr->getVolume();
 			tot_fission += nu_sigma_f[e] * flux[e] * fsr->getVolume();
 		}
 	}
+
+	log_printf(RESULT, "tot_fission = %f, tot_abs = %f", tot_fission, tot_abs);
 
 	_k_eff = tot_fission/tot_abs;
 	log_printf(INFO, "Computed k_eff = %f", _k_eff);
@@ -309,12 +312,12 @@ void Solver::fixedSourceIteration(int max_iterations) {
 
 		/* Loop over azimuthal angle, track */
 		for (int i = 0; i < _num_azim; i++) {
-			for (int j = 0; j < _num_tracks[j]; j++) {
+			for (int j = 0; j < _num_tracks[i]; j++) {
 
 				/* Initialize local pointers to important data structures */
 				track = &_tracks[i][j];
-				num_segments = track->getNumSegments();
 				segments = track->getSegments();
+				num_segments = track->getNumSegments();
 				weights = track->getPolarWeights();
 				polar_fluxes = track->getPolarFluxes();
 
@@ -403,7 +406,8 @@ void Solver::fixedSourceIteration(int max_iterations) {
 		}
 	}
 
-	log_printf(WARNING, "Scalar flux did not converge after %d iterations",
+	if (max_iterations > 1)
+		log_printf(WARNING, "Scalar flux did not converge after %d iterations",
 															max_iterations);
 
 	return;
@@ -416,13 +420,11 @@ double Solver::computeKeff(int max_iterations) {
 	double renorm_factor, volume;
 	double* nu_sigma_f;
 	double* sigma_s;
-	double* sigma_t;
 	double* chi;
 	double* polar_flux;
 	double* scalar_flux;
 	double* source;
 	double* old_source;
-	double* ratios;
 	FlatSourceRegion* fsr;
 	Material* material;
 
@@ -433,6 +435,7 @@ double Solver::computeKeff(int max_iterations) {
 
 	/* Set scalar flux to unit for each region */
 	oneFSRFluxes();
+	zeroTrackFluxes();
 
 	/* Set the old source to unity for each Region */
 	for (int r = 0; r < _num_FSRs; r++) {
@@ -445,7 +448,7 @@ double Solver::computeKeff(int max_iterations) {
 	// Source iteration loop
 	for (int i = 0; i < max_iterations; i++) {
 
-		log_printf(NORMAL, "Iteration: %d%", i);
+		log_printf(NORMAL, "Iteration %d: k_eff = %f", i, _k_eff);
 
 		/*********************************************************************
 		 * Renormalize scalar and boundary fluxes
@@ -470,7 +473,7 @@ double Solver::computeKeff(int max_iterations) {
 
 		/* Renormalize scalar fluxes in each region */
 		renorm_factor = 1.0 / fission_source;
-		log_printf(INFO, "Renormalization factor = %f\n", renorm_factor);
+		log_printf(INFO, "Renormalization factor = %f", renorm_factor);
 
 		for (int r = 0; r < _num_FSRs; r++) {
 			fsr = &_flat_source_regions[r];
@@ -510,10 +513,8 @@ double Solver::computeKeff(int max_iterations) {
 			fission_source = 0;
 			scalar_flux = fsr->getFlux();
 			source = fsr->getSource();
-			ratios = fsr->getRatios();
 			material = fsr->getMaterial();
 			nu_sigma_f = material->getNuSigmaF();
-			sigma_t = material->getSigmaT();
 			chi = material->getChi();
 			sigma_s = material->getSigmaS();
 
@@ -531,13 +532,15 @@ double Solver::computeKeff(int max_iterations) {
 				/* Set the total source for region r in group G */
 				source[G] = ((1.0 / (_k_eff_old)) * fission_source * chi[G] +
 								scatter_source) * ONE_OVER_FOUR_PI;
-				ratios[G] = source[G] / sigma_t[G];
 			}
 		}
 
 		/*********************************************************************
 		 * Update flux and check for convergence
 		 *********************************************************************/
+
+		/* Update pre-computed source / sigma_t ratios */
+		computeRatios();
 
 		/* Iteration the flux with the new source */
 		fixedSourceIteration(1);
@@ -563,5 +566,5 @@ double Solver::computeKeff(int max_iterations) {
 
 	log_printf(WARNING, "Unable to converge the source after %d iterations", max_iterations);
 
-	return INT_MAX;
+	return _k_eff;
 }

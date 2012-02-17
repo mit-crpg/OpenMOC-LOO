@@ -327,7 +327,7 @@ int* Plotter::getPixMap(std::string type){
 	else if (type == "segments"){
 		return _pix_map_segments;
 	}
-	else if (type == "FSR"){
+	else if (type == "fsr"){
 		return _pix_map_FSR;
 	}
 	else {

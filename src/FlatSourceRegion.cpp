@@ -15,6 +15,7 @@
 FlatSourceRegion::FlatSourceRegion() {
 
 	_material = NULL;
+	_volume = 0.0;
 
 	/* Zero the region's flux and source */
 	for (int e = 0; e < NUM_ENERGY_GROUPS; e++) {
@@ -23,7 +24,6 @@ FlatSourceRegion::FlatSourceRegion() {
 		_source[e] = 0.0;
 		_old_source[e] = 0.0;
 	}
-
 }
 
 
