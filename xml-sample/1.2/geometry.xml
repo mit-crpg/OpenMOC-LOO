@@ -3,8 +3,9 @@
 <geometry>
 
 <!-- Definition of Cells -->
-  <cell id="100" material="1" surfaces="-1" rings="1"/>
+  <cell id="100" material="1" surfaces="-1 1000" />
   <cell id="101" material="3" surfaces="1 2 -3 4 -5" />
+  <cell id="1000" material="1" surfaces="-1000" />
 
 <!-- Defition of Surfaces -->
   <surface id="1" type="circle" coeffs="0 0 1.0" />
@@ -12,5 +13,6 @@
   <surface id="3" type="x-plane" coeffs="2.0" boundary="reflective" />
   <surface id="4" type="y-plane" coeffs="-2.0" boundary="reflective" />
   <surface id="5" type="y-plane" coeffs="2.0" boundary="reflective" />
-    
+  <surface id="1000" type="circle" coeffs="0 0 0.70711" />
+  
 </geometry>

@@ -307,6 +307,12 @@ int* Plotter::getPixMap(std::string type){
 	}
 	else if (type == "segments")
 		return _pix_map_segments;
+	/* FIXME: my compiler complains about reaching end of non-void function
+	 * I added a return NULL for now; need to be replaced with corresponding
+	 * pointer or error out.  
+	 */
+	else
+		return NULL;
 }
 
 /*
@@ -327,7 +333,8 @@ void Plotter::generateFsrMap(){
 			LocalCoords point(x_global,y_global);
 			point.setUniverse(0);
 
-			Cell* curr = _geom->findCell(&point);
+			/* comment out for now because it is apparently unused */
+			// Cell* curr = _geom->findCell(&point);
 
 			_pix_map_FSR[y * _bit_length_x + x] = _geom->findFSRId(&point);
 
