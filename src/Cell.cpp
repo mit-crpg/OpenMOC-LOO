@@ -261,13 +261,18 @@ CellBasic::CellBasic(int id, int universe, int num_surfaces,
  * @param universe the id of the universe this cell is in
  * @param num_surfaces the number of surfaces inside this cell
  */
+CellBasic::CellBasic(int id, int universe, int material, int num_rings) {
+	_id = id;
+	_universe = universe;
+	_material = material;
+	_num_rings = num_rings;
+}
+
 CellBasic::CellBasic(int id, int universe, int material) {
 	_id = id;
 	_universe = universe;
 	_material = material;
 }
-
-
 /**
  * Return the material in the cell	int getUniverseFillId() const;
 	Universe* getUniverseFill() const;

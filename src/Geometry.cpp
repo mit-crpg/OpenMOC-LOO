@@ -44,7 +44,7 @@ Geometry::Geometry(int num_sectors, int num_rings, double sector_offset,
 			{
 				addSurface(s);
 				return;
-			});//	coords->setLattice(_uid);
+			});
 
 
 	/* Add each cell from parser */
@@ -221,9 +221,7 @@ void Geometry::addMaterial(Material* material) {
 					"\n%s", material->getId(), e.what());
 		}
 	}
-}/* Return the maximum segment length computed during segmentation
- * return max segment length
- */
+}
 
 
 
@@ -386,15 +384,13 @@ void Geometry::addCell(Cell* cell) {
 	/* Check if the cell has number of rings; if so, add more cells */
 	/* FIXME: need to add error checking */
 	if (cell->getType() == MATERIAL) {
-		int t_num_rings = 
-			dynamic_cast<CellBasic*>(cell)->getNumRings() + 1;
+		int t_num_rings = dynamic_cast<CellBasic*>(cell)->getNumRings() + 1;
 
 		if (t_num_rings > 1) {
 			/* print out for debugging purpose */
-			log_printf(DEBUG, 
-				   "cell %d has multiple rings; num_rings = %d",
-				   cell->getId(), dynamic_cast<CellBasic*>
-				   (cell)->getNumRings());
+			log_printf(NORMAL, "cell %d has multiple rings; num_rings = %d",
+					   cell->getId(), dynamic_cast<CellBasic*>
+					   (cell)->getNumRings());
 
 			/* case 1: cell is a circle with one surface */
 			if (cell->getNumSurfaces() == 1) {
@@ -403,35 +399,42 @@ void Geometry::addCell(Cell* cell) {
 				int startId = 10 * (cell->getId()); 
 				double r, r0, r1, rold;
 				int i = 2, newId = startId, previousId = newId;
-			
+				
 				/* get cell's radius and compute the radius 
 				   of the inner-most circle */
 				iter = cells_surfaces.begin();
 				int surface_id = abs(iter->first);
 				r0 =  (dynamic_cast<Circle*>
 					   (_surfaces.at(surface_id)))->getRadius();
-				log_printf(DEBUG, "Single Circle with radius %f", r0);
+				log_printf(NORMAL, "Single Circle with radius %f", r0);
+				log_printf(NORMAL, "Original %s", 
+						   (_surfaces.at(surface_id))->toString().c_str());
+		
 				r1 = r0 / sqrt(t_num_rings);
 				rold = r1;
-
+				
+				
 				/* create the inner-most circle surface */
-				Circle *s = new Circle(startId, BOUNDARY_NONE, 
-									   0, 0, r1);
-				addSurface(s);
-				log_printf(DEBUG, "Added new %s", 
-						   s->toString().c_str());
-
-				/* Return the maximum segment length computed during segmentation
-				 * return max segment length
-				 */
-/* create the inner-most circle cell */
+				Circle *s = new Circle(startId, BOUNDARY_NONE, 0.0, 0.0, r1);
+				//addSurface(s);
+				log_printf(NORMAL, "Added new %s", s->toString().c_str());
+#if 0
+				
+                /* create the inner-most circle cell */
 				CellBasic *c = new CellBasic(startId, cell->getUniverse(), 
 											 dynamic_cast<CellBasic*>(cell)
-											 ->getMaterial());
-				dynamic_cast<Cell*>(c)->addSurface(-startId, s);
+											 ->getMaterial(), 0);
 				addCell(c);
-				log_printf(DEBUG, "Added new %s", 
-						   c->toString().c_str());
+				static_cast<Cell*>(c)->addSurface(-1*startId, s);
+
+				log_printf(NORMAL, "Added new %s", c->toString().c_str());
+				#endif
+
+				CellBasic *c;
+				c = static_cast<CellBasic*>(cell)->clone(startId); 
+				static_cast<Cell*>(c)->addSurface(-1*startId, s);
+
+
 
 				while (i < t_num_rings) {
 					/* generate id and radius for the next circle */
@@ -440,15 +443,16 @@ void Geometry::addCell(Cell* cell) {
 					
 					/* create a new ring cell, and add the old surface before
 					   we generate a new one*/
-					CellBasic *c = new CellBasic(newId, cell->getUniverse(), 
-												 dynamic_cast<CellBasic*>(cell)
-												 ->getMaterial());
+					CellBasic *c = new CellBasic
+						(newId, cell->getUniverse(), 
+						 dynamic_cast<CellBasic*>(cell)->getMaterial(), 
+						 0);
 					dynamic_cast<Cell*>(c)->addSurface(previousId, s);
 					
 					/* create the new surface and add to the new cell */
 					Circle *s = new Circle(newId, BOUNDARY_NONE, 0, 0, r);
 					addSurface(s);
-					dynamic_cast<Cell*>(c)->addSurface(-newId, s);
+					dynamic_cast<Cell*>(c)->addSurface(-1*newId, s);
 					addCell(c);
 					log_printf(DEBUG, "Added  %s", c->toString().c_str());	
       
@@ -457,14 +461,11 @@ void Geometry::addCell(Cell* cell) {
 					rold = r;
 					i++;
 				}
-				/* Return the maximum segment length computed during segmentation
-				 * return max segment length
-				 */
 
 				/* update the original circle cell to be the outside 
 				   most ring cell */
 				static_cast<Cell*>(cell)->addSurface(newId, s); 
-				log_printf(DEBUG, "Update original %s",
+				log_printf(NORMAL, "Update original %s",
 						   cell->toString().c_str());
 				
 			}
@@ -504,7 +505,7 @@ void Geometry::addCell(Cell* cell) {
 				/* initialize the inner-most circle cell with the inner radius*/
 				CellBasic *c = new CellBasic(startId, cell->getUniverse(), 
 											 dynamic_cast<CellBasic*>(cell)
-											 ->getMaterial());
+											 ->getMaterial(), 0);
 				dynamic_cast<Cell*>(c)->addSurface(inner_surface, 
 												   _surfaces.at(inner_surface));
 
@@ -531,7 +532,7 @@ void Geometry::addCell(Cell* cell) {
 					   we generate a new one*/
 					CellBasic *c = new CellBasic(newId, cell->getUniverse(), 
 												 dynamic_cast<CellBasic*>(cell)
-												 ->getMaterial());
+												 ->getMaterial(), 0);
 					dynamic_cast<Cell*>(c)->addSurface(previousId, s);
 					
 					/* create the new surface and add to the new cell */

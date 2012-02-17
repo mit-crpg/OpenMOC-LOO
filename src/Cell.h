@@ -82,6 +82,7 @@ private:
 public:
 	CellBasic(int id, int universe, int num_surfaces, 
 		  int *surfaces, int material, int num_rings);
+	CellBasic(int id, int universe, int material, int num_rings);
 	CellBasic(int id, int universe, int material);
 	int getMaterial() const;
 	void setMaterial(int material);
