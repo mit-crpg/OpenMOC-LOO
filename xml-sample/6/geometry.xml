@@ -24,6 +24,7 @@
   <cell id="2" universe="21" fill="4" surfaces="" />
   <cell id="3" universe="22" fill="3" surfaces="" />
 
+
   <!-- Fuel pin, cladding, water -->
   <cell id="101" universe="1" material="1" surfaces="-5" />
   <cell id="102" universe="1" material="2" surfaces="5 -6" />
@@ -65,6 +66,7 @@
     </universes>
   </lattice>
 
+    
   <!-- 21 x 21 core -->
   <lattice id="5">
     <type>rectangular</type>

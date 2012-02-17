@@ -53,7 +53,8 @@ int main(int argc, const char **argv) {
 	if (opts.dumpGeometry())
 		geometry.printString();
 
-	Plotter plotter(&geometry, opts.getBitDimension(), opts.getExtension());
+	Plotter plotter(&geometry, opts.getBitDimension(), opts.getExtension(),
+			opts.plotMaterials(), opts.plotCells());
 
 	/* Adjust the indices for each geometry class to use uids */
 //	geometry.adjustKeys();
@@ -79,8 +80,6 @@ int main(int argc, const char **argv) {
 	track_generator.segmentize();
 	timer.stop();
 	timer.recordSplit("Segmenting tracks");
-
-	plotter.generateFsrMap();
 
 	Solver solver(&geometry, &track_generator);
 	double k_eff = solver.computeKeff(3000);
