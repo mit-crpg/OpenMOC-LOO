@@ -9,6 +9,7 @@ Release/
 *.o
 *.tiff
 *.out
+*.png
 .cproject
 .project
 Doxyfile
