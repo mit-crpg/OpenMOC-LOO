@@ -15,7 +15,7 @@
  *****************************************************************************/
 
 #define NUM_POLAR_ANGLES 3
-#define NUM_ENERGY_GROUPS 7
+#define NUM_ENERGY_GROUPS 1
 #define GRP_TIMES_ANG NUM_POLAR_ANGLES*NUM_ENERGY_GROUPS
 
 /* Precompute and store exponential pre-factors in transport equation */

@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <materials>
 
-  <!-- Definition of materials from c5g7 benchmark -->
+  <!-- Definition of materials from paul's homework -->
   <!-- material 1: UO2 fuel -->
   <material id="1" energy="1"
 			sigma_a="0.069389522"
@@ -9,12 +9,4 @@
 			nu_sigma_f="0.0994076580"
 			chi="1.0"
 			sigma_s="0.383259177"/>
-
-  <!-- material 2: water -->
-  <material id="2" energy="1"
-			sigma_a="0.003751099"
-			sigma_t="0.841545641" 
-			nu_sigma_f="0.0"
-			chi="1.0"
-			sigma_s="0.837794542"/>
 </materials>
