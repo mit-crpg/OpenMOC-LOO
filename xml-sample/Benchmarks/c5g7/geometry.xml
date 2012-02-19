@@ -31,14 +31,18 @@
   <!-- Moderator cell !-->
   <cell id="13" universe="7" material="7" surfaces="" />
 
+  <!-- Moderator cell !-->
+  <cell id="50" universe="30" material="8" surfaces="" />
+
+
   <!-- Top left, bottom right lattice !-->
-  <cell id="20" universe="8" fill="20" surfaces="">
+  <cell id="20" universe="8" fill="20" surfaces="" />
 
   <!-- Top right, bottom left lattice !-->
-  <cell id="21" universe="9" fill="21" surfaces="">
+  <cell id="21" universe="9" fill="21" surfaces="" />
 
   <!-- Full geometry !-->
-  <cell id="22" universe="0" fill="22" surfaces="1 -2 3 -4">
+  <cell id="22" universe="0" fill="22" surfaces="1 -2 3 -4" />
 
 
 
@@ -96,21 +100,22 @@
   </lattice>
 
   <!-- 3 x 3 core -->
-  <lattice id="22"
+  <lattice id="22">
     <type>rectangular</type>
-    <dimension>3 3</dimension>
+    <dimension>4 4</dimension>
     <width>21.42 21.42</width>
     <universes>
-      8 9 7
-	  9 8 7
-      7 7 7
+      8 9 7 30
+	  9 8 7 30
+      7 7 7 30
+	 30 30 30 30
   </universes>
   </lattice>
 
-  <surface id="1" type="x-plane" coeffs="-32.13" boundary="reflective" />
-  <surface id="2" type="x-plane" coeffs="32.13" boundary="reflective" />
-  <surface id="3" type="y-plane" coeffs="-32.13" boundary="reflective" />
-  <surface id="4" type="y-plane" coeffs="32.13" boundary="reflective"/>
+  <surface id="1" type="x-plane" coeffs="-42.84" boundary="reflective" />
+  <surface id="2" type="x-plane" coeffs="42.84" boundary="reflective" />
+  <surface id="3" type="y-plane" coeffs="-42.84" boundary="reflective" />
+  <surface id="4" type="y-plane" coeffs="42.84" boundary="reflective"/>
   <surface id="5" type="circle" coeffs="0.0 0.0 0.54" />
 
 </geometry>
