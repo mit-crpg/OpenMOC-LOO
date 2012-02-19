@@ -134,6 +134,46 @@ void Plotter::plotMagick(int* pixMap, std::string type){
 	image.write(title);
 }
 
+//
+//void Plotter::plotMagick(double* pixMap, std::string type){
+//	log_printf(NORMAL, "Writing Magick bitmap...");
+//
+//	double color_int;
+//
+//	Magick::Image image(Magick::Geometry(_bit_length_x,_bit_length_y), "white");
+//	image.modifyImage();
+//
+//	/* Make pixel cache */
+//	Magick::Pixels pixel_cache(image);
+//	Magick::PixelPacket* pixels;
+//	pixels = pixel_cache.get(0,0,_bit_length_x,_bit_length_y);
+//
+//	/* Convert _pix_map_tracks bitmap array to Magick bitmap pixel array. */
+//	for (int y=0;y<_bit_length_y; y++){
+//		for (int x = 0; x < _bit_length_x; x++){
+//			//color_int = pixMap[y * _bit_length_x + x] % 15;
+//
+//			if (color_int != -1){
+//				*(pixels+(y * _bit_length_x + x)) =
+//						Magick::Color(_color_map.at(color_int));
+//			}
+//		}
+//	}
+//
+//	/* Close pixel viewing/changing */
+//	pixel_cache.sync();
+//
+//	/* Write pixel bitmap to png file */
+//
+//	std::stringstream string;
+//	string << type << "." << _extension;
+//	std::string title = string.str();
+//
+//	image.write(title);
+//}
+
+
+
 
 /**
  * Plots track segments in a _pix_map_segments bitmap array on the fly
@@ -223,6 +263,56 @@ void Plotter::plotSilo(int* pixMap, std::string type){
     DBClose(pdb_file);
 }
 
+void Plotter::plotSilo(double* pixMap, std::string type){
+	log_printf(NORMAL, "plotting silo mesh...");
+
+	/* Create pdb file */
+    DBfile *pdb_file;
+
+	std::stringstream string;
+	string << type << "." << _extension;
+	std::string title_str = string.str();
+	const char* title = title_str.c_str();
+
+
+    pdb_file = DBCreate(title, DB_CLOBBER, DB_LOCAL, "structured mesh bitmap", DB_PDB);
+
+    /* create mesh point arrays */
+	double mesh_x[_bit_length_x + 1];
+	double mesh_y[_bit_length_y + 1];
+
+	/* create pixmap mesh */
+	for (int i = 0; i < (_bit_length_x + 1); i++){
+		mesh_x[i] = (double(i) - double(_bit_length_x)/2.0 + 1.0) * (_width/double(_bit_length_x));
+	}
+	for (int i = 0; i < (_bit_length_y + 1); i++){
+		mesh_y[i] = (double(i) - double(_bit_length_y)/2.0) * (_height/double(_bit_length_y));
+	}
+
+	/* descriptions of mesh */
+	double *coords[] = {mesh_x, mesh_y};
+	int dims[] = {_bit_length_x + 1, _bit_length_y + 1};
+	int ndims = 2;
+
+	/* create structured mesh bit map in pdb_file */
+	DBPutQuadmesh(pdb_file, "quadmesh", NULL, coords, dims, ndims, DB_DOUBLE, DB_COLLINEAR, NULL);
+
+	/* dimensions of mesh */
+	int dimsvar[] = {_bit_length_x, _bit_length_y};
+
+	/* Save FSR bit map (_bit_map_visit) to the pdb file */
+
+	const char* type_char = type.c_str();
+
+	DBPutQuadvar1(pdb_file, type_char, "quadmesh", pixMap, dimsvar, ndims, NULL, 0, DB_INT, DB_ZONECENT, NULL);
+
+	/* close pdb file */
+    DBClose(pdb_file);
+}
+
+
+
+
 /**
  * plot given track and numReflect reflected tracks
  */
@@ -265,15 +355,9 @@ void Plotter::plotTracksReflective(Track* track, int numReflect){
 		}
 	}
 
-	if (_extension == "png" || _extension == "tiff" || _extension == "jpg"){
-		plotMagick(pix_map_reflect, "reflect");
-	}
-	else if (_extension == "pdb"){
-		plotSilo(pix_map_reflect, "reflect");
-	}
+	plot(pix_map_reflect, "reflect");
 
 	delete [] pix_map_reflect;
-
 }
 
 /**
@@ -367,26 +451,35 @@ void Plotter::generateFsrMap(){
 		}
 	}
 
-	if (_extension == "png" || _extension == "tiff" || _extension == "jpg"){
-		plotMagick(_pix_map_FSR, "fsr");
-		if (_plot_materials == true){
-			plotMagick(_pix_map_materials, "materials");
-		}
-		if (_plot_cells == true){
-			plotMagick(_pix_map_cells, "cells");
-		}
-	}
-	else if (_extension == "pdb"){
-		plotSilo(_pix_map_FSR, "fsr");
-		if (_plot_materials == true){
-			plotSilo(_pix_map_materials, "materials");
 
-		}
-		if (_plot_cells == true){
-			plotSilo(_pix_map_cells, "cells");
-		}
+	if (_plot_materials == true){
+		plot(_pix_map_materials, "materials");
+	}
+	if (_plot_cells == true){
+		plot(_pix_map_cells, "cells");
 	}
 }
+
+void Plotter::plot(int* pixMap, std::string type){
+	if (_extension == "png" || _extension == "tiff" || _extension == "jpg"){
+		plotMagick(pixMap, type);
+	}
+	else if (_extension == "pdb"){
+		plotSilo(pixMap, type);
+	}
+}
+
+void Plotter::plot(double* pixMap, std::string type){
+//	if (_extension == "png" || _extension == "tiff" || _extension == "jpg"){
+//		plotMagick(pixMap, type);
+//	}
+//	else if (_extension == "pdb"){
+//		plotSilo(pixMap, type);
+//	}
+
+	plotSilo(pixMap, type);
+}
+
 
 std::string Plotter::getExtension(){
 	return _extension;

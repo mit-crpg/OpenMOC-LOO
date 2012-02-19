@@ -33,6 +33,7 @@ private:
 	int _num_FSRs;
 	double _k_eff;
 	double _k_eff_old;
+	Plotter* _plotter;
 #if !STORE_PREFACTORS
 	struct prefactor_hash {
 		size_t operator()(const double length) const {
@@ -47,7 +48,7 @@ private:
 	double computePreFactor(segment* seg, int energy, int angle);
 	void initializeFSRs();
 public:
-	Solver(Geometry* geom, TrackGenerator* track_generator);
+	Solver(Geometry* geom, TrackGenerator* track_generator, Plotter* plotter);
 	virtual ~Solver();
 	void zeroTrackFluxes();
 	void oneFSRFluxes();
@@ -56,6 +57,7 @@ public:
 	void updateKeff();
 	void fixedSourceIteration(int max_iterations);
 	double computeKeff(int max_iterations);
+	void plotVariable(FlatSourceRegion* variable, std::string type);
 };
 
 #endif /* SOLVER_H_ */

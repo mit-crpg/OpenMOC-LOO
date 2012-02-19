@@ -244,19 +244,12 @@ void TrackGenerator::generateTracks() {
 			}
 		}
 
+		_plotter->plot(pixMap, "tracks");
+
 		delete [] dx_eff;
 		delete [] dy_eff;
 		delete [] d_eff;
 		delete [] phi_eff;
-
-		std::string extension = _plotter->getExtension();
-
-		if (extension == "png" || extension == "tiff" || extension == "jpg"){
-			_plotter->plotMagick(pixMap, "tracks");
-		}
-		else if (extension == "pdb"){
-			_plotter->plotSilo(pixMap, "tracks");
-		}
 
 		return;
 	}
@@ -460,15 +453,7 @@ void TrackGenerator::segmentize() {
 
 	log_printf(DEBUG, "Done segmenting...");
 
-	std::string extension = _plotter->getExtension();
-
-	if (extension == "png" || extension == "tiff" || extension == "jpg"){
-		_plotter->plotMagick(pixMap, "segments");
-	}
-	else if (extension == "pdb"){
-		_plotter->plotSilo(pixMap, "segments");
-	}
-
+	_plotter->plot(pixMap, "segments");
 	_plotter->generateFsrMap();
 
 	return;

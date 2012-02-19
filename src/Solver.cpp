@@ -15,13 +15,14 @@
  * @param geom pointer to the geometry
  * @param track_generator pointer to the trackgenerator
  */
-Solver::Solver(Geometry* geom, TrackGenerator* track_generator) {
+Solver::Solver(Geometry* geom, TrackGenerator* track_generator, Plotter* plotter) {
 	_geom = geom;
 	_quad = new Quadrature(TABUCHI);
 	_num_FSRs = geom->getNumFSRs();
 	_tracks = track_generator->getTracks();
 	_num_tracks = track_generator->getNumTracks();
 	_num_azim = track_generator->getNumAzim();
+	_plotter = plotter;
 
 	try{
 		_flat_source_regions = new FlatSourceRegion[_num_FSRs];
@@ -566,5 +567,37 @@ double Solver::computeKeff(int max_iterations) {
 
 	log_printf(WARNING, "Unable to converge the source after %d iterations", max_iterations);
 
+	plotVariable(_flat_source_regions, "flux");
+
 	return _k_eff;
 }
+
+
+// only plots flux
+void Solver::plotVariable(FlatSourceRegion* variable, std::string type){
+
+	int bitLengthX = _plotter->getBitLengthX();
+	int bitLengthY = _plotter->getBitLengthY();
+
+	double* pixMap = new double[bitLengthX*bitLengthY];
+
+	int* fsrMap = _plotter->getPixMap("fsr");
+
+	for (int i = 0; i < _num_FSRs; i++){
+		for (int y=0;y<bitLengthY; y++){
+			for (int x = 0; x < bitLengthX; x++){
+				if (fsrMap[y * bitLengthX + x] == i){
+					pixMap[y * bitLengthX + x] = variable[i].getFlux()[0];
+				}
+			}
+		}
+	}
+
+	_plotter->plot(pixMap, type);
+
+	delete [] pixMap;
+}
+
+
+
+

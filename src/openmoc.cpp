@@ -81,7 +81,7 @@ int main(int argc, const char **argv) {
 	timer.stop();
 	timer.recordSplit("Segmenting tracks");
 
-	Solver solver(&geometry, &track_generator);
+	Solver solver(&geometry, &track_generator, &plotter);
 	double k_eff = solver.computeKeff(3);
 	log_printf(RESULT, "k_eff = %f", k_eff);
 
