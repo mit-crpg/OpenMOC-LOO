@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<materials>
+
+  <!-- Definition of materials from paul's homework -->
+  <!-- material 1: UO2 fuel -->
+  <material id="1" energy="1"
+			sigma_a="0.069389522"
+			sigma_t="0.452648699" 
+			nu_sigma_f="0.0994076580"
+			chi="1.0"
+			sigma_s="0.383259177"/>
+</materials>

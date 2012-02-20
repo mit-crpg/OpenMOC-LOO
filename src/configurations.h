@@ -55,10 +55,10 @@
 
 /* Convergence threshold for scalar flux in each region during fixed source
  * iteration */
-#define FLUX_CONVERGENCE_THRESH 1E-7
+#define FLUX_CONVERGENCE_THRESH 1E-4
 
 /* Convergence threshold for computing k_eff */
-#define KEFF_CONVERG_THRESH 1E-7
+#define KEFF_CONVERG_THRESH 1E-4
 
 
 /******************************************************************************

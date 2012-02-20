@@ -46,6 +46,7 @@ private:
 #endif
 	void precomputeFactors();
 	double computePreFactor(segment* seg, int energy, int angle);
+	void computePreFactorArray();
 	void initializeFSRs();
 public:
 	Solver(Geometry* geom, TrackGenerator* track_generator, Plotter* plotter);

@@ -46,14 +46,14 @@ public:
 			bool plotMaterials, bool plotCells);
 	virtual ~Plotter();
 	void plotMagick(int* pixMap, std::string type);
-//	void plotMagick(double* pixMap, std::string type);
+	void plotMagick(float* pixMap, std::string type);
 	void plotTracksPng();
 	void plotSegmentsBitMap(Track* track, double sin_phi, double cos_phi, int* map_array);
 	void plotSegmentsPng();
 	void LineFct(int x0, int y0, int x1, int y1, int* pixMap, int color = 1);
 	void printPlottingTimers();
 	void plotSilo(int* pixMap, std::string type);
-	void plotSilo(double* pixMap, std::string type);
+	void plotSilo(float* pixMap, std::string type);
 	void plotTracksReflective(Track* track, int numReflect);
 	int* getPixMap(std::string type);
 	void generateFsrMap();
@@ -63,7 +63,7 @@ public:
 	double getXPixel();
 	double getYPixel();
 	void plot(int* pixMap, std::string type);
-	void plot(double* pixMap, std::string type);
+	void plot(float* pixMap, std::string type);
 };
 
 

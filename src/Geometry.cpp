@@ -416,9 +416,9 @@ void Geometry::addCell(Cell* cell) {
 				
 				/* create the inner-most circle surface */
 				Circle *s = new Circle(startId, BOUNDARY_NONE, 0.0, 0.0, r1);
-				//addSurface(s);
+				addSurface(s);
 				log_printf(NORMAL, "Added new %s", s->toString().c_str());
-#if 0
+
 				
                 /* create the inner-most circle cell */
 				CellBasic *c = new CellBasic(startId, cell->getUniverse(), 
@@ -428,12 +428,12 @@ void Geometry::addCell(Cell* cell) {
 				static_cast<Cell*>(c)->addSurface(-1*startId, s);
 
 				log_printf(NORMAL, "Added new %s", c->toString().c_str());
-				#endif
 
+#if 0
 				CellBasic *c;
 				c = static_cast<CellBasic*>(cell)->clone(startId); 
 				static_cast<Cell*>(c)->addSurface(-1*startId, s);
-
+#endif
 
 
 				while (i < t_num_rings) {

@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<materials>
+
+  <!-- Definition of materials from paul's homework problem benchmark -->
+  <!-- material 1: UO2 fuel -->
+  <material id="1" energy="2"
+			sigma_a="0.0038 0.184"
+			sigma_t="0.2208 1.6604"
+			nu_sigma_f="0.0015 0.325"
+			chi="1.0 0.0"	
+			sigma_s="0.1 0.117
+					0.0 1.42"/>
+</materials>

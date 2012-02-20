@@ -134,43 +134,43 @@ void Plotter::plotMagick(int* pixMap, std::string type){
 	image.write(title);
 }
 
-//
-//void Plotter::plotMagick(double* pixMap, std::string type){
-//	log_printf(NORMAL, "Writing Magick bitmap...");
-//
-//	double color_int;
-//
-//	Magick::Image image(Magick::Geometry(_bit_length_x,_bit_length_y), "white");
-//	image.modifyImage();
-//
-//	/* Make pixel cache */
-//	Magick::Pixels pixel_cache(image);
-//	Magick::PixelPacket* pixels;
-//	pixels = pixel_cache.get(0,0,_bit_length_x,_bit_length_y);
-//
-//	/* Convert _pix_map_tracks bitmap array to Magick bitmap pixel array. */
-//	for (int y=0;y<_bit_length_y; y++){
-//		for (int x = 0; x < _bit_length_x; x++){
-//			//color_int = pixMap[y * _bit_length_x + x] % 15;
-//
-//			if (color_int != -1){
-//				*(pixels+(y * _bit_length_x + x)) =
-//						Magick::Color(_color_map.at(color_int));
-//			}
-//		}
-//	}
-//
-//	/* Close pixel viewing/changing */
-//	pixel_cache.sync();
-//
-//	/* Write pixel bitmap to png file */
-//
-//	std::stringstream string;
-//	string << type << "." << _extension;
-//	std::string title = string.str();
-//
-//	image.write(title);
-//}
+
+void Plotter::plotMagick(float* pixMap, std::string type){
+	log_printf(NORMAL, "Writing Magick bitmap...");
+
+	int color_int;
+
+	Magick::Image image(Magick::Geometry(_bit_length_x,_bit_length_y), "white");
+	image.modifyImage();
+
+	/* Make pixel cache */
+	Magick::Pixels pixel_cache(image);
+	Magick::PixelPacket* pixels;
+	pixels = pixel_cache.get(0,0,_bit_length_x,_bit_length_y);
+
+	/* Convert _pix_map_tracks bitmap array to Magick bitmap pixel array. */
+	for (int y=0;y<_bit_length_y; y++){
+		for (int x = 0; x < _bit_length_x; x++){
+			color_int = int(floor(pixMap[y * _bit_length_x + x]*1E8)) % 15;
+
+			if (color_int != -1){
+				*(pixels+(y * _bit_length_x + x)) =
+						Magick::Color(_color_map.at(color_int));
+			}
+		}
+	}
+
+	/* Close pixel viewing/changing */
+	pixel_cache.sync();
+
+	/* Write pixel bitmap to png file */
+
+	std::stringstream string;
+	string << type << "." << _extension;
+	std::string title = string.str();
+
+	image.write(title);
+}
 
 
 
@@ -263,7 +263,7 @@ void Plotter::plotSilo(int* pixMap, std::string type){
     DBClose(pdb_file);
 }
 
-void Plotter::plotSilo(double* pixMap, std::string type){
+void Plotter::plotSilo(float* pixMap, std::string type){
 	log_printf(NORMAL, "plotting silo mesh...");
 
 	/* Create pdb file */
@@ -304,7 +304,7 @@ void Plotter::plotSilo(double* pixMap, std::string type){
 
 	const char* type_char = type.c_str();
 
-	DBPutQuadvar1(pdb_file, type_char, "quadmesh", pixMap, dimsvar, ndims, NULL, 0, DB_INT, DB_ZONECENT, NULL);
+	DBPutQuadvar1(pdb_file, type_char, "quadmesh", pixMap, dimsvar, ndims, NULL, 0, DB_FLOAT, DB_ZONECENT, NULL);
 
 	/* close pdb file */
     DBClose(pdb_file);
@@ -438,6 +438,8 @@ void Plotter::generateFsrMap(){
 			LocalCoords point(x_global,y_global);
 			point.setUniverse(0);
 
+			/* comment out for now because it is apparently unused */
+			_geom->findCell(&point);
 			Cell* curr = _geom->findCell(&point);
 
 			_pix_map_FSR[y * _bit_length_x + x] = _geom->findFSRId(&point);
@@ -451,6 +453,7 @@ void Plotter::generateFsrMap(){
 		}
 	}
 
+	plot(_pix_map_FSR, "fsr");
 
 	if (_plot_materials == true){
 		plot(_pix_map_materials, "materials");
@@ -469,15 +472,14 @@ void Plotter::plot(int* pixMap, std::string type){
 	}
 }
 
-void Plotter::plot(double* pixMap, std::string type){
-//	if (_extension == "png" || _extension == "tiff" || _extension == "jpg"){
-//		plotMagick(pixMap, type);
-//	}
-//	else if (_extension == "pdb"){
-//		plotSilo(pixMap, type);
-//	}
+void Plotter::plot(float* pixMap, std::string type){
+	if (_extension == "png" || _extension == "tiff" || _extension == "jpg"){
+		plotMagick(pixMap, type);
+	}
+	else if (_extension == "pdb"){
+		plotSilo(pixMap, type);
+	}
 
-	plotSilo(pixMap, type);
 }
 
 

@@ -125,14 +125,80 @@ double Solver::computePreFactor(segment* seg, int energy, int angle) {
 	return prefactor;
 }
 
+/**
+ * Function to compute an array of exponential prefactors for the
+ * transport equation for a given segment
+ * @param seg pointer to a segment
+ * @param energy energy group index
+ * @param angle polar angle index
+ * @return the pre-factor
+ */
+void Solver::computePreFactorArray() {
+
+	// find max segment length, max total xs, and tolerance
+	double maxL = _geom->getMaxSegmentLength();
+	double maxEt = _geom->getMaxTotalXS();      // will be about 5
+	double precision = pow(10,-FSR_HASHMAP_PRECISION);
+
+	// set prefactor array upper bounds, lower bounds, and size
+	double lowerBound = precision;
+	double upperBound = exp(-(maxL * maxEt)/_quad->getSinTheta(0)) + precision;
+	int arraySize = maxL*maxEt/ (precision) + 1;
+
+	// allocate prefactor array
+	// NOTE: we need to delete this somewhere
+	double* preFactorArray = new double[arraySize*3];
+
+	// set values in prefactor array
+	for (int i = 0; i <= arraySize; i ++){
+		for (int j = 0; j < NUM_POLAR_ANGLES; j++){
+			preFactorArray[i * NUM_POLAR_ANGLES + j] = exp(-(i * precision)/_quad->getSinTheta(j));
+		}
+	}
+
+
+	Track* track;
+	int num_segments;
+	std::vector<segment*> segments;
+	segment* segment;
+	double* polar_fluxes;
+	double segLength;
+	double* segXSs;
+
+	// give every segment an array (length = NUM_ENERGY_GROUPS) of indexes
+	// into the preFactorArray
+	for (int i = 0; i < _num_azim; i++) {
+		for (int j = 0; j < _num_tracks[i]; j++) {
+			/* Initialize local pointers to important data structures */
+			track = &_tracks[i][j];
+			segments = track->getSegments();
+			num_segments = track->getNumSegments();
+			for (int s = 0; s < num_segments; s++) {
+				segment = segments.at(s);
+				segLength = segment->_length;
+				segXSs = segment->_material->getSigmaT();
+				for (int k = 0; k < NUM_ENERGY_GROUPS; k++){
+					segment->_index[k] = round(segLength*segXSs[k]/ (tol)) * 3;
+				}
+			}
+		}
+	}
+}
+
+
+
+
+
 
 /**
  * Compute the ratio of source / sigma_t for each energy group in each flat
  * source region for efficient fixed source iteration
  */
 void Solver::computeRatios() {
-	for (int i = 0; i < _num_FSRs; i++)
+	for (int i = 0; i < _num_FSRs; i++) {
+//		log_printf(RESULT, "Computing ratios... for i = %d",i);
 		_flat_source_regions[i].computeRatios();
+	}
 	return;
 }
 
@@ -220,11 +286,13 @@ void Solver::zeroTrackFluxes() {
 void Solver::oneFSRFluxes() {
 
 	log_printf(INFO, "Setting all FSR scalar fluxes to unity...");
+	FlatSourceRegion* fsr;
 
 	/* Loop over all FSRs and energy groups */
 	for (int r = 0; r < _num_FSRs; r++) {
+		fsr = &_flat_source_regions[r];
 		for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
-			_flat_source_regions->setFlux(e, 1.0);
+			fsr->setFlux(e, 1.0);
 	}
 
 	return;
@@ -238,11 +306,13 @@ void Solver::oneFSRFluxes() {
 void Solver::zeroFSRFluxes() {
 
 	log_printf(INFO, "Setting all FSR scalar fluxes to zero...");
+	FlatSourceRegion* fsr;
 
 	/* Loop over all FSRs and energy groups */
 	for (int r = 0; r < _num_FSRs; r++) {
+		fsr = &_flat_source_regions[r];
 		for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
-			_flat_source_regions->setFlux(e, 0.0);
+			fsr->setFlux(e, 0.0);
 	}
 
 	return;
@@ -271,13 +341,13 @@ void Solver::updateKeff() {
 		flux = fsr->getFlux();
 
 		for (int e = 0; e < NUM_ENERGY_GROUPS; e++) {
-			log_printf(RESULT, "r = %d, e = %d, sigma_a = %f, flux = %f, volume = %f",r,e,sigma_a[e], flux[e], fsr->getVolume());
+//			log_printf(RESULT, "r = %d, e = %d, sigma_a = %f, flux = %f, volume = %f",r,e,sigma_a[e], flux[e], fsr->getVolume());
 			tot_abs += sigma_a[e] * flux[e] * fsr->getVolume();
 			tot_fission += nu_sigma_f[e] * flux[e] * fsr->getVolume();
 		}
 	}
 
-	log_printf(RESULT, "tot_fission = %f, tot_abs = %f", tot_fission, tot_abs);
+//	log_printf(RESULT, "tot_fission = %f, tot_abs = %f", tot_fission, tot_abs);
 
 	_k_eff = tot_fission/tot_abs;
 	log_printf(INFO, "Computed k_eff = %f", _k_eff);
@@ -333,6 +403,8 @@ void Solver::fixedSourceIteration(int max_iterations) {
 						for (int e = 0; e < NUM_ENERGY_GROUPS; e++) {
 							delta = (polar_fluxes[GRP_TIMES_ANG + p*NUM_ENERGY_GROUPS + e] -
 									ratios[e]) * segment->_prefactors[p][e];
+//							log_printf(RESULT, "p = %d, e = %d, ratios[e] = %f, prefactors[e] = %f, polarflux = %f, delta = %f",
+//									p, e, ratios[e], segment->_prefactors[p][e], polar_fluxes[GRP_TIMES_ANG + p*NUM_ENERGY_GROUPS + e], delta);
 							fsr->incrementFlux(e, delta*weights[p]);
 							polar_fluxes[GRP_TIMES_ANG + p*NUM_ENERGY_GROUPS + e] -= delta;
 						}
@@ -355,6 +427,8 @@ void Solver::fixedSourceIteration(int max_iterations) {
 						for (int e = 0; e < NUM_ENERGY_GROUPS; e++) {
 							delta = (polar_fluxes[p*NUM_ENERGY_GROUPS + e] -
 									ratios[e]) * segment->_prefactors[p][e];
+//							delta = (polar_fluxes[p*NUM_ENERGY_GROUPS + e] -
+//									ratios[e]) * (1 - preFactorArray[segment->_index[e] + p]);
 							fsr->incrementFlux(e, delta*weights[p]);
 							polar_fluxes[p*NUM_ENERGY_GROUPS + e] -= delta;
 						}
@@ -446,6 +520,14 @@ double Solver::computeKeff(int max_iterations) {
 			fsr->setOldSource(e, 1.0);
 	}
 
+//	for (int r = 0; r < _num_FSRs; r++) {
+//		fsr = &_flat_source_regions[r];
+//
+//		for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
+//			log_printf(RESULT, "r = %d, e = %d, scalar_flux[e] = %f", r, e, fsr->getFlux()[e]);
+//	}
+
+
 	// Source iteration loop
 	for (int i = 0; i < max_iterations; i++) {
 
@@ -468,8 +550,10 @@ double Solver::computeKeff(int max_iterations) {
 			scalar_flux = fsr->getFlux();
 			volume = fsr->getVolume();
 
-			for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
+			for (int e = 0; e < NUM_ENERGY_GROUPS; e++) {
 				fission_source += nu_sigma_f[e] * scalar_flux[e] * volume;
+//				log_printf(RESULT, "scalar_flux[e] = %f, nu_sigma_f[e] = %f, fission_source = %f", scalar_flux[e], nu_sigma_f[e], fission_source);
+			}
 		}
 
 		/* Renormalize scalar fluxes in each region */
@@ -520,8 +604,10 @@ double Solver::computeKeff(int max_iterations) {
 			sigma_s = material->getSigmaS();
 
 			/* Compute total fission source for current region */
-			for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
+			for (int e = 0; e < NUM_ENERGY_GROUPS; e++) {
 				fission_source += scalar_flux[e] * nu_sigma_f[e];
+//				log_printf(RESULT, "scalar_flux[e] = %f, nu_sigma_f[e] = %f, fission_source = %f", scalar_flux[e], nu_sigma_f[e], fission_source);
+			}
 
 			/* Compute total scattering source for group G */
 			for (int G = 0; G < NUM_ENERGY_GROUPS; G++) {
@@ -533,6 +619,8 @@ double Solver::computeKeff(int max_iterations) {
 				/* Set the total source for region r in group G */
 				source[G] = ((1.0 / (_k_eff_old)) * fission_source * chi[G] +
 								scatter_source) * ONE_OVER_FOUR_PI;
+//				log_printf(RESULT, "_k_eff_old = %f, fission_source = %f, chi[G] = %f, "
+//						"scatter_source = %f, source[G] = %f", _k_eff_old, fission_source, chi[G], scatter_source, source[G]);
 			}
 		}
 
@@ -550,8 +638,10 @@ double Solver::computeKeff(int max_iterations) {
 		updateKeff();
 
 		/* If k_eff converged, return k_eff */
-		if (fabs(_k_eff_old - _k_eff) < KEFF_CONVERG_THRESH)
+		if (fabs(_k_eff_old - _k_eff) < KEFF_CONVERG_THRESH){
+			plotVariable(_flat_source_regions, "flux");
 			return _k_eff;
+		}
 
 		/* If not converged, old k_eff and sources are updated */
 		_k_eff_old = _k_eff;
@@ -567,8 +657,6 @@ double Solver::computeKeff(int max_iterations) {
 
 	log_printf(WARNING, "Unable to converge the source after %d iterations", max_iterations);
 
-	plotVariable(_flat_source_regions, "flux");
-
 	return _k_eff;
 }
 
@@ -579,7 +667,7 @@ void Solver::plotVariable(FlatSourceRegion* variable, std::string type){
 	int bitLengthX = _plotter->getBitLengthX();
 	int bitLengthY = _plotter->getBitLengthY();
 
-	double* pixMap = new double[bitLengthX*bitLengthY];
+	float* pixMap = new float[bitLengthX*bitLengthY];
 
 	int* fsrMap = _plotter->getPixMap("fsr");
 
@@ -587,7 +675,7 @@ void Solver::plotVariable(FlatSourceRegion* variable, std::string type){
 		for (int y=0;y<bitLengthY; y++){
 			for (int x = 0; x < bitLengthX; x++){
 				if (fsrMap[y * bitLengthX + x] == i){
-					pixMap[y * bitLengthX + x] = variable[i].getFlux()[0];
+					pixMap[y * bitLengthX + x] = float(variable[i].getFlux()[2]);
 				}
 			}
 		}
