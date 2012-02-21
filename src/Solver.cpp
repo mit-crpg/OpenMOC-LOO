@@ -658,6 +658,8 @@ double Solver::computeKeff(int max_iterations) {
 
 		/* If k_eff converged, return k_eff */
 		if (fabs(_k_eff_old - _k_eff) < KEFF_CONVERG_THRESH){
+			/* Converge the scalar flux spatially within geometry to plot */
+			fixedSourceIteration(1000);
 			plotVariable(_flat_source_regions, "flux", 0);
 			return _k_eff;
 		}
@@ -675,6 +677,9 @@ double Solver::computeKeff(int max_iterations) {
 	}
 
 	log_printf(WARNING, "Unable to converge the source after %d iterations", max_iterations);
+
+	/* Converge the scalar flux spatially within geometry to plot */
+	fixedSourceIteration(1000);
 
 	return _k_eff;
 }
