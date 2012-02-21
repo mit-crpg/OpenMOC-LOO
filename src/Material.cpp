@@ -47,7 +47,7 @@ Material::Material(int id,
 	
 	for (int i=0; i<NUM_ENERGY_GROUPS; i++) {
 		for (int j=0; j<NUM_ENERGY_GROUPS; j++) {
-			_sigma_s[i][j] = sigma_s[i+NUM_ENERGY_GROUPS*j];
+			_sigma_s[i][j] = sigma_s[i*NUM_ENERGY_GROUPS+j];
 		}
 	}
 }

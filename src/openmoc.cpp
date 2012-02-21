@@ -23,10 +23,10 @@
 #pragma GCC diagnostic ignored "-Wunused"
 #pragma GCC diagnostic ignored "-Wunused-variable"
 
-// TODO: This is just stubbed out for now
 int main(int argc, const char **argv) {
 	log_printf(NORMAL, "Starting OpenMOC...");
 
+	double k_eff;
 	Timer timer;
 
 	/* Create an options class to parse command line options */
@@ -49,18 +49,12 @@ int main(int argc, const char **argv) {
 	timer.stop();
 	timer.recordSplit("Geomery initialization");
 
-//	/* Print out geometry to console if requested at runtime*/
+	/* Print out geometry to console if requested at runtime*/
 	if (opts.dumpGeometry())
 		geometry.printString();
 
 	Plotter plotter(&geometry, opts.getBitDimension(), opts.getExtension(),
 			opts.plotMaterials(), opts.plotCells());
-
-	/* Adjust the indices for each geometry class to use uids */
-//	geometry.adjustKeys();
-
-	/* Generate the neighbor cells for each surface in geometry */
-//	geometry.buildNeighborsLists();
 
 	/* Initialize the trackgenerator */
 	TrackGenerator track_generator(&geometry, &plotter, opts.getNumAzim(),
@@ -81,8 +75,13 @@ int main(int argc, const char **argv) {
 	timer.stop();
 	timer.recordSplit("Segmenting tracks");
 
+	/* Fixed source iteration to solve for k_eff */
 	Solver solver(&geometry, &track_generator);
-	double k_eff = solver.computeKeff(3000);
+	timer.reset();
+	timer.start();
+	k_eff = solver.computeKeff(3000);
+	timer.stop();
+	timer.recordSplit("Fixed source iteration");
 	log_printf(RESULT, "k_eff = %f", k_eff);
 
 	/* Print timer splits to console */
