@@ -658,7 +658,7 @@ double Solver::computeKeff(int max_iterations) {
 
 		/* If k_eff converged, return k_eff */
 		if (fabs(_k_eff_old - _k_eff) < KEFF_CONVERG_THRESH){
-			plotVariable(_flat_source_regions, "flux", 0);
+			plotVariable(_flat_source_regions, "flux", 6);
 			return _k_eff;
 		}
 
