@@ -77,7 +77,7 @@ int main(int argc, const char **argv) {
 
 
 	/* Fixed source iteration to solve for k_eff */
-	Solver solver(&geometry, &track_generator);
+	Solver solver(&geometry, &track_generator, &plotter);
 	timer.reset();
 	timer.start();
 	k_eff = solver.computeKeff(3000);

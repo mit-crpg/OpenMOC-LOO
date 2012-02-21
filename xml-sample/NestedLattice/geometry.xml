@@ -1,19 +1,25 @@
 <?xml version="1.0"?>
 
-<!-- simple nested lattice with three differently sized pin cells -->
-<!-- geometry is identical to sample input 2 but is nested -->
+<!-- 2x2 nested lattice of 2x2 lattices, each with three types of pin cells. 
+	 Each lattice cell is 1cm x 1cm and the pins have diameters of 0.2cm, 
+     0.3cm and 0.4cm. This geometry is identical to 'Lattice' but uses
+     a nested structure instead.
+-->
 
 <geometry>
 
+<!-- Definition of Cells -->
   <cell id="1" fill="6" surfaces="1 -2 3 -4" />
   <cell id="2" universe="5" fill="4" surfaces="1 -2 3 -4" />
-  <cell id="101" universe="1" material="2" surfaces="-5"/>
-  <cell id="102" universe="1" material="1" surfaces="5" />
-  <cell id="201" universe="2" material="2" surfaces="-6" />
-  <cell id="202" universe="2" material="1" surfaces="6" />
-  <cell id="301" universe="3" material="2" surfaces="-7" />
-  <cell id="302" universe="3" material="1" surfaces="7" />
+  <cell id="101" universe="1" material="1" surfaces="-5"/>
+  <cell id="102" universe="1" material="2" surfaces="5" />
+  <cell id="201" universe="2" material="1" surfaces="-6" />
+  <cell id="202" universe="2" material="2" surfaces="6" />
+  <cell id="301" universe="3" material="1" surfaces="-7" />
+  <cell id="302" universe="3" material="2" surfaces="7" />
 
+
+<!-- Definition of Lattices -->
   <!-- 4 x 4 assembly -->
   <lattice id="4">
     <type>rectangular</type>
@@ -36,6 +42,8 @@
     </universes>
   </lattice>
 
+
+<!-- Definition of Surfaces -->
   <surface id="1" type="x-plane" coeffs="-2.0" boundary="reflective" />
   <surface id="2" type="x-plane" coeffs="2.0" boundary="reflective" />
   <surface id="3" type="y-plane" coeffs="-2.0" boundary="reflective" />

@@ -1,29 +1,18 @@
 <?xml version="1.0"?>
-<!-- lower half of hoogenboom-martin core adapted from OpenMC input specifications !-->
+
+<!-- This geometry is the lower half of the Hoogenboom-Martin benchmark problem
+     adapted from the OpenMC input specifications. It contains one type of 
+     fuel assembly with fuel pins and instrumentation guide tubes, surrounded
+     by water.
+-->
+
 <geometry>
 
-<!-- Surface definitions -->
-  <!-- Core outer boundaries -->
-  <surface id="1" type="x-plane" coeffs="-267.75" boundary="reflective" />
-  <surface id="2" type="x-plane" coeffs="267.75" boundary="reflective" />
-  <surface id="3" type="y-plane" coeffs="-267.75" boundary="reflective" />
-  <surface id="4" type="y-plane" coeffs="267.75" boundary="reflective"/>
-
-  <!-- Fuel and cladding -->
-  <surface id="5" type="circle" coeffs="0.0 0.0 0.41" />
-  <surface id="6" type="circle" coeffs="0.0 0.0 0.475" />
-
-  <!-- Instrumentation guide tube -->
-  <surface id="7" type="circle" coeffs="0.0 0.0 0.56" />
-  <surface id="8" type="circle" coeffs="0.0 0.0 0.62" />
-
-
-<!-- Cell definitions -->
+<!-- Definition of Cells -->
   <!-- All geometry on base universe -->
   <cell id="1" fill="5" surfaces="1 -2 3 -4" />
   <cell id="2" universe="21" fill="4" surfaces="" />
   <cell id="3" universe="22" fill="3" surfaces="" />
-
 
   <!-- Fuel pin, cladding, water -->
   <cell id="101" universe="1" material="1" surfaces="-5" />
@@ -39,7 +28,7 @@
   <cell id="301" universe="3" material="3" surfaces=""/>
 
 
-<!-- Lattice definitions -->
+<!-- Definition of Lattices -->
   <!-- 17 x 17 fuel assembly -->
   <lattice id="4">
     <type>rectangular</type>
@@ -96,5 +85,21 @@
       22 22 22 22 22 22 22 22 22 22 22 22 22 22 22 22 22 22 22 22 22
   </universes>
   </lattice>
+
+
+<!-- Definition of Surfaces -->
+  <!-- Core outer boundaries -->
+  <surface id="1" type="x-plane" coeffs="-267.75" boundary="reflective" />
+  <surface id="2" type="x-plane" coeffs="267.75" boundary="reflective" />
+  <surface id="3" type="y-plane" coeffs="-267.75" boundary="reflective" />
+  <surface id="4" type="y-plane" coeffs="267.75" boundary="reflective"/>
+
+  <!-- Fuel and cladding -->
+  <surface id="5" type="circle" coeffs="0.0 0.0 0.41" />
+  <surface id="6" type="circle" coeffs="0.0 0.0 0.475" />
+
+  <!-- Instrumentation guide tube -->
+  <surface id="7" type="circle" coeffs="0.0 0.0 0.56" />
+  <surface id="8" type="circle" coeffs="0.0 0.0 0.62" />
 
 </geometry>
