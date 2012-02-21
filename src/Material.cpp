@@ -45,9 +45,15 @@ Material::Material(int id,
 	if (sigma_s_cnt != NUM_ENERGY_GROUPS*NUM_ENERGY_GROUPS)
 		log_printf(ERROR, "Wrong number of sigma_s");
 	
+	/* Set the material's scattering matrix. This assumes that the scattering
+	 * matrix passed in has the standard notation: the ij element is for scattering
+	 * from group i to j. For efficient caching of the elements of this matrix
+	 * during fixed source iteration, the matrix transpose is what is actually
+	 * stored in the material
+     */
 	for (int i=0; i<NUM_ENERGY_GROUPS; i++) {
 		for (int j=0; j<NUM_ENERGY_GROUPS; j++) {
-			_sigma_s[i][j] = sigma_s[i+NUM_ENERGY_GROUPS*j];
+			_sigma_s[i][j] = sigma_s[j*NUM_ENERGY_GROUPS+i];
 		}
 	}
 }
@@ -143,13 +149,17 @@ void Material::setNuSigmaF(double nu_sigma_f[NUM_ENERGY_GROUPS]) {
 
 
 /**
- * Set the material's scattering matrix
+ * Set the material's scattering matrix. This assumes that the scattering
+ * matrix passed in has the standard notation: the ij element is for scattering
+ * from group i to j. For efficient caching of the elements of this matrix
+ * during fixed source iteration, the matrix transpose is what is actually
+ * stored in the material
  * @param sigma_s the material's scattering matrix
  */
 void Material::setSigmaS(double sigma_s[NUM_ENERGY_GROUPS][NUM_ENERGY_GROUPS]) {
 	for (int i=0; i < NUM_ENERGY_GROUPS; i++) {
 		for (int j=0; i < NUM_ENERGY_GROUPS; i++)
-			_sigma_s[i][j] = sigma_s[i][j];
+			_sigma_s[i][j] = sigma_s[j][i];
 	}
 }
 
