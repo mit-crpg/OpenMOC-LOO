@@ -11,10 +11,10 @@
   <cell id="101" material="1 " surfaces="1 2 -3 4 -5" />
 
 <!-- Defition of Surfaces -->
-  <surface id="1" type="circle" coeffs="0 0 0.4" />
-  <surface id="2" type="x-plane" coeffs="-0.63" boundary="reflective" />
-  <surface id="3" type="x-plane" coeffs="0.63" boundary="reflective" />
-  <surface id="4" type="y-plane" coeffs="-0.63" boundary="reflective" />
-  <surface id="5" type="y-plane" coeffs="0.63" boundary="reflective" />
+  <surface id="1" type="circle" coeffs="0 0 50.0" />
+  <surface id="2" type="x-plane" coeffs="-100.0" boundary="reflective" />
+  <surface id="3" type="x-plane" coeffs="100.0" boundary="reflective" />
+  <surface id="4" type="y-plane" coeffs="-100.0" boundary="reflective" />
+  <surface id="5" type="y-plane" coeffs="100.0" boundary="reflective" />
     
 </geometry>
