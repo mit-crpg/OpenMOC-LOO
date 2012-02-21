@@ -75,7 +75,6 @@ int main(int argc, const char **argv) {
 	timer.stop();
 	timer.recordSplit("Segmenting tracks");
 
-
 	/* Fixed source iteration to solve for k_eff */
 	Solver solver(&geometry, &track_generator, &plotter);
 	timer.reset();
