@@ -22,10 +22,10 @@
 #define STORE_PREFACTORS true
 
 /* Max number of regions for precomputing pre-factors in solver */
-#define FSR_HASHMAP_THRESH 10000
+#define FSR_HASHMAP_THRESH 100000
 
 /* Number of significant digits for computing hashmap exponential prefactors */
-#define FSR_HASHMAP_PRECISION 5
+#define FSR_HASHMAP_PRECISION 3
 
 
 /******************************************************************************

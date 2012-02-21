@@ -1325,16 +1325,17 @@ void Geometry::segmentize(Track* track) {
 		/* Find the segment length between the segments start and end points */
 		segment_length = segment_end.getPoint()->distance(segment_start.getPoint());
 
+		/* Create a new segment */
+		segment* new_segment = new segment;
+		new_segment->_length = segment_length;
+		new_segment->_material = _materials.at(static_cast<CellBasic*>(prev)->getMaterial());
+
 		/* Update the max and min segment lengths */
 		if (segment_length > _max_seg_length)
 			_max_seg_length = segment_length;
 		if (segment_length < _min_seg_length)
 			_min_seg_length = segment_length;
 
-		/* Create a new segment */
-		segment* new_segment = new segment;
-		new_segment->_length = segment_length;
-		new_segment->_material = _materials.at(static_cast<CellBasic*>(prev)->getMaterial());
 
 		new_segment->_region_id = findFSRId(&segment_start);
 //		new_segment->_region_id = prev->getUid();
@@ -1505,6 +1506,7 @@ void Geometry::generateCSG(){
     /* close pdb file */
     DBClose(dbfile);
 }
+
 
 
 /*

@@ -35,18 +35,21 @@ private:
 	double _k_eff_old;
 	Plotter* _plotter;
 #if !STORE_PREFACTORS
-	struct prefactor_hash {
-		size_t operator()(const double length) const {
-			log_printf(ERROR, "The hash for the pre-factors table has not "
-								"yet been implemented");
-			return 0;
-		}
-	};
-	std::unordered_map<double, double, prefactor_hash> _prefactors_map;
+	// set prefactor array upper bounds, lower bounds, and size
+	double* _pre_Factor_Array;
+
+	//	struct prefactor_hash {
+//		size_t operator()(const double length) const {
+//			log_printf(ERROR, "The hash for the pre-factors table has not "
+//								"yet been implemented");
+//			return 0;
+//		}
+//	};
+//	std::unordered_map<double, double, prefactor_hash> _prefactors_map;
 #endif
 	void precomputeFactors();
 	double computePreFactor(segment* seg, int energy, int angle);
-	void computePreFactorArray();
+	int computePreFactorArray(double segLength, double segXS, double precision, double cscTheta, int arraySize);
 	void initializeFSRs();
 public:
 	Solver(Geometry* geom, TrackGenerator* track_generator, Plotter* plotter);
@@ -58,7 +61,7 @@ public:
 	void updateKeff();
 	void fixedSourceIteration(int max_iterations);
 	double computeKeff(int max_iterations);
-	void plotVariable(FlatSourceRegion* variable, std::string type);
+	void plotVariable(FlatSourceRegion* variable, std::string type, int energyGroup);
 };
 
 #endif /* SOLVER_H_ */

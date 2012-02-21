@@ -33,7 +33,11 @@ Solver::Solver(Geometry* geom, TrackGenerator* track_generator, Plotter* plotter
 	}
 
 	/* Pre-compute exponential pre-factors */
+//	Timer timer;
+//	timer.start();
 	precomputeFactors();
+//	timer.stop();
+//	timer.recordSplit("time to compute prefactors");
 	initializeFSRs();
 }
 
@@ -100,9 +104,53 @@ void Solver::precomputeFactors() {
 
 /* Use hash map */
 #else
-	log_printf(ERROR, "Table lookup for exponential pre-factors is not yet"
-			"implemented. Please set STORE_PREFACTORS to TRUE in"
-			" configurations.h");
+
+	log_printf(NORMAL, "Making Prefactor array...");
+
+	double precision = pow(10,-FSR_HASHMAP_PRECISION);
+	int arraySize = 1.0/(precision) + 1;
+
+	log_printf(INFO, "precision = %f,prefactor array size = %d", precision, arraySize);
+
+	_pre_Factor_Array = new double[arraySize];
+
+	// set values in prefactor array
+	for (int i = 0; i < arraySize; i ++){
+		_pre_Factor_Array[i] = exp(-i * precision);
+	}
+
+	Track* track;
+	int num_segments;
+	std::vector<segment*> segments;
+	segment* segment;
+	double segLength;
+	double* segXSs;
+	double sinTheta = _quad->getSinTheta(0);
+	log_printf(DEBUG, "sinTheta = %f", sinTheta);
+
+	// give every segment an array (length = NUM_ENERGY_GROUPS) of indexes
+	// into the preFactorArray
+	for (int i = 0; i < _num_azim; i++) {
+		for (int j = 0; j < _num_tracks[i]; j++) {
+			/* Initialize local pointers to important data structures */
+			track = &_tracks[i][j];
+			segments = track->getSegments();
+			num_segments = track->getNumSegments();
+
+			/* loop over segments in track*/
+			for (int s = 0; s < num_segments; s++) {
+				segment = segments.at(s);
+				segLength = segment->_length;
+				segXSs = segment->_material->getSigmaT();
+				/* loop over energy groups */
+				for (int k = 0; k < NUM_ENERGY_GROUPS; k++){
+					segment->_index[k] = computePreFactorArray(segLength, segXSs[k], precision, sinTheta, arraySize);
+					log_printf(DEBUG, "segment index for group %d is: %d", k, segment->_index[k]);
+				}
+			}
+		}
+	}
+
 #endif
 
 	return;
@@ -133,60 +181,16 @@ double Solver::computePreFactor(segment* seg, int energy, int angle) {
  * @param angle polar angle index
  * @return the pre-factor
  */
-void Solver::computePreFactorArray() {
-
-	// find max segment length, max total xs, and tolerance
-	double maxL = _geom->getMaxSegmentLength();
-	double maxEt = _geom->getMaxTotalXS();      // will be about 5
-	double precision = pow(10,-FSR_HASHMAP_PRECISION);
-
-	// set prefactor array upper bounds, lower bounds, and size
-	double lowerBound = precision;
-	double upperBound = exp(-(maxL * maxEt)/_quad->getSinTheta(0)) + precision;
-	int arraySize = maxL*maxEt/ (precision) + 1;
-
-	// allocate prefactor array
-	// NOTE: we need to delete this somewhere
-	double* preFactorArray = new double[arraySize*3];
-
-	// set values in prefactor array
-	for (int i = 0; i <= arraySize; i ++){
-		for (int j = 0; j < NUM_POLAR_ANGLES; j++){
-			preFactorArray[i * NUM_POLAR_ANGLES + j] = exp(-(i * precision)/_quad->getSinTheta(j));
-		}
+int Solver::computePreFactorArray(double segLength, double segXS, double precision, double sinTheta, int arraySize) {
+	if (segXS > 10){
+		return arraySize - 1;
 	}
-
-
-	Track* track;
-	int num_segments;
-	std::vector<segment*> segments;
-	segment* segment;
-	double* polar_fluxes;
-	double segLength;
-	double* segXSs;
-
-	// give every segment an array (length = NUM_ENERGY_GROUPS) of indexes
-	// into the preFactorArray
-	for (int i = 0; i < _num_azim; i++) {
-		for (int j = 0; j < _num_tracks[i]; j++) {
-			/* Initialize local pointers to important data structures */
-			track = &_tracks[i][j];
-			segments = track->getSegments();
-			num_segments = track->getNumSegments();
-			for (int s = 0; s < num_segments; s++) {
-				segment = segments.at(s);
-				segLength = segment->_length;
-				segXSs = segment->_material->getSigmaT();
-				for (int k = 0; k < NUM_ENERGY_GROUPS; k++){
-					segment->_index[k] = round(segLength*segXSs[k]/ (tol)) * 3;
-				}
-			}
-		}
+	int index = int(round(segLength * segXS/ (precision * sinTheta)));
+	if (index >= arraySize){
+		index = arraySize - 1;
 	}
+	return index;
 }
-
-
-
 
 
 
@@ -371,6 +375,12 @@ void Solver::fixedSourceIteration(int max_iterations) {
 	double* ratios;
 	double delta;
 	double volume;
+	double sinThetaRatio[NUM_POLAR_ANGLES];
+
+	for (int i = 0; i < NUM_POLAR_ANGLES; i++){
+		sinThetaRatio[i] = _quad->getSinTheta(0) / _quad->getSinTheta(i);
+		log_printf(DEBUG, "cscThetaRatio %d = %f...", i, sinThetaRatio[i]);
+	}
 
 	log_printf(INFO, "Fixed source iteration with max_iterations = %d",
 														max_iterations);
@@ -382,6 +392,7 @@ void Solver::fixedSourceIteration(int max_iterations) {
 		zeroFSRFluxes();
 
 		/* Loop over azimuthal angle, track */
+		log_printf(INFO, "looping over azimuthal angles in solver...");
 		for (int i = 0; i < _num_azim; i++) {
 			for (int j = 0; j < _num_tracks[i]; j++) {
 
@@ -398,11 +409,17 @@ void Solver::fixedSourceIteration(int max_iterations) {
 					fsr = &_flat_source_regions[segment->_region_id];
 					ratios = fsr->getRatios();
 
+
 					/* Loop over polar angles, energy groups */
 					for (int p = 0; p < NUM_POLAR_ANGLES; p++) {
 						for (int e = 0; e < NUM_ENERGY_GROUPS; e++) {
+#if !STORE_PREFACTORS
+							delta = (polar_fluxes[GRP_TIMES_ANG + p*NUM_ENERGY_GROUPS + e] -
+									ratios[e]) * (1 - _pre_Factor_Array[int(round(segment->_index[e] * sinThetaRatio[p]))]);
+#else
 							delta = (polar_fluxes[GRP_TIMES_ANG + p*NUM_ENERGY_GROUPS + e] -
 									ratios[e]) * segment->_prefactors[p][e];
+#endif
 //							log_printf(RESULT, "p = %d, e = %d, ratios[e] = %f, prefactors[e] = %f, polarflux = %f, delta = %f",
 //									p, e, ratios[e], segment->_prefactors[p][e], polar_fluxes[GRP_TIMES_ANG + p*NUM_ENERGY_GROUPS + e], delta);
 							fsr->incrementFlux(e, delta*weights[p]);
@@ -413,7 +430,7 @@ void Solver::fixedSourceIteration(int max_iterations) {
 
 				/* Transfer flux to outgoing track */
 				track->getTrackOut()->setPolarFluxes(!track->isReflOut(),
-													GRP_TIMES_ANG, polar_fluxes);
+						GRP_TIMES_ANG, polar_fluxes);
 
 
 				/* Loop over each segment in reverse direction */
@@ -422,13 +439,15 @@ void Solver::fixedSourceIteration(int max_iterations) {
 					fsr = &_flat_source_regions[segment->_region_id];
 					ratios = fsr->getRatios();
 
-					/* Loop over polar angles, energy groups */
 					for (int p = 0; p < NUM_POLAR_ANGLES; p++) {
 						for (int e = 0; e < NUM_ENERGY_GROUPS; e++) {
+#if !STORE_PREFACTORS
+							delta = (polar_fluxes[p*NUM_ENERGY_GROUPS + e] -
+									ratios[e]) * (1 - _pre_Factor_Array[int(round(segment->_index[e] * sinThetaRatio[p]))]);
+#else
 							delta = (polar_fluxes[p*NUM_ENERGY_GROUPS + e] -
 									ratios[e]) * segment->_prefactors[p][e];
-//							delta = (polar_fluxes[p*NUM_ENERGY_GROUPS + e] -
-//									ratios[e]) * (1 - preFactorArray[segment->_index[e] + p]);
+#endif
 							fsr->incrementFlux(e, delta*weights[p]);
 							polar_fluxes[p*NUM_ENERGY_GROUPS + e] -= delta;
 						}
@@ -437,7 +456,7 @@ void Solver::fixedSourceIteration(int max_iterations) {
 
 				/* Transfer flux to incoming track */
 				track->getTrackIn()->setPolarFluxes(!track->isReflIn(),
-													0, polar_fluxes);
+						0, polar_fluxes);
 			}
 		}
 
@@ -639,7 +658,7 @@ double Solver::computeKeff(int max_iterations) {
 
 		/* If k_eff converged, return k_eff */
 		if (fabs(_k_eff_old - _k_eff) < KEFF_CONVERG_THRESH){
-			plotVariable(_flat_source_regions, "flux");
+			plotVariable(_flat_source_regions, "flux", 0);
 			return _k_eff;
 		}
 
@@ -662,7 +681,7 @@ double Solver::computeKeff(int max_iterations) {
 
 
 // only plots flux
-void Solver::plotVariable(FlatSourceRegion* variable, std::string type){
+void Solver::plotVariable(FlatSourceRegion* variable, std::string type, int energyGroup){
 
 	int bitLengthX = _plotter->getBitLengthX();
 	int bitLengthY = _plotter->getBitLengthY();
@@ -675,7 +694,7 @@ void Solver::plotVariable(FlatSourceRegion* variable, std::string type){
 		for (int y=0;y<bitLengthY; y++){
 			for (int x = 0; x < bitLengthX; x++){
 				if (fsrMap[y * bitLengthX + x] == i){
-					pixMap[y * bitLengthX + x] = float(variable[i].getFlux()[2]);
+					pixMap[y * bitLengthX + x] = float(variable[i].getFlux()[energyGroup]);
 				}
 			}
 		}

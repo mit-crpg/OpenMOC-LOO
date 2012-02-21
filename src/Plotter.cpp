@@ -58,13 +58,12 @@ Plotter::Plotter(Geometry* geom, const int bitDim, std::string extension,
 		if (_plot_cells == true){
 			_pix_map_cells = new int[_bit_length_x*_bit_length_y];
 		}
-
-
 	}
 	catch (std::exception &e) {
 		log_printf(ERROR, "Unable to allocate memory needed to generate pixel maps"
 				".Backtrace:\n%s", e.what());
 	}
+
 	for (int i=0;i<_bit_length_x; i++){
 		for (int j = 0; j < _bit_length_y; j++){
 			_pix_map_segments[i * _bit_length_x + j] = -1;
@@ -227,6 +226,13 @@ void Plotter::plotSilo(int* pixMap, std::string type){
 	std::string title_str = string.str();
 	const char* title = title_str.c_str();
 
+	int* pixMapFlip = new int[_bit_length_x * _bit_length_y];
+
+	for (int y=0;y<_bit_length_y; y++){
+		for (int x = 0; x < _bit_length_x; x++){
+			pixMapFlip[(_bit_length_y - 1 - y) * _bit_length_x + x] = pixMap[y * _bit_length_x + x];
+		}
+	}
 
     pdb_file = DBCreate(title, DB_CLOBBER, DB_LOCAL, "structured mesh bitmap", DB_PDB);
 
@@ -257,10 +263,12 @@ void Plotter::plotSilo(int* pixMap, std::string type){
 
 	const char* type_char = type.c_str();
 
-	DBPutQuadvar1(pdb_file, type_char, "quadmesh", pixMap, dimsvar, ndims, NULL, 0, DB_INT, DB_ZONECENT, NULL);
+	DBPutQuadvar1(pdb_file, type_char, "quadmesh", pixMapFlip, dimsvar, ndims, NULL, 0, DB_INT, DB_ZONECENT, NULL);
 
 	/* close pdb file */
     DBClose(pdb_file);
+
+    delete [] pixMapFlip;
 }
 
 void Plotter::plotSilo(float* pixMap, std::string type){
@@ -274,6 +282,13 @@ void Plotter::plotSilo(float* pixMap, std::string type){
 	std::string title_str = string.str();
 	const char* title = title_str.c_str();
 
+	float* pixMapFlip = new float[_bit_length_x * _bit_length_y];
+
+	for (int y=0;y<_bit_length_y; y++){
+		for (int x = 0; x < _bit_length_x; x++){
+			pixMapFlip[(_bit_length_y - 1 - y) * _bit_length_x + x] = pixMap[y * _bit_length_x + x];
+		}
+	}
 
     pdb_file = DBCreate(title, DB_CLOBBER, DB_LOCAL, "structured mesh bitmap", DB_PDB);
 
@@ -304,10 +319,12 @@ void Plotter::plotSilo(float* pixMap, std::string type){
 
 	const char* type_char = type.c_str();
 
-	DBPutQuadvar1(pdb_file, type_char, "quadmesh", pixMap, dimsvar, ndims, NULL, 0, DB_FLOAT, DB_ZONECENT, NULL);
+	DBPutQuadvar1(pdb_file, type_char, "quadmesh", pixMapFlip, dimsvar, ndims, NULL, 0, DB_FLOAT, DB_ZONECENT, NULL);
 
 	/* close pdb file */
     DBClose(pdb_file);
+
+    delete [] pixMapFlip;
 }
 
 
