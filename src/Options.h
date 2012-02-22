@@ -33,6 +33,7 @@ private:
 	bool _dump_geometry;
 	bool _plot_materials;
 	bool _plot_cells;
+	bool _plot_fluxes;
 public:
     Options(int argc, const char **argv);
     ~Options(void);
@@ -49,6 +50,7 @@ public:
     double getSectorOffset() const;
     bool plotMaterials() const;
     bool plotCells() const;
+    bool plotFluxes() const;
 };
 
 #endif

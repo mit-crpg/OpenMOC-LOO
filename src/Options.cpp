@@ -42,7 +42,8 @@ Options::Options(int argc, const char **argv) {
 	_dump_geometry = false;				/* Default will not dump geometry */
 	_extension = "png";				/* Default will plot png */
 	_plot_materials = false;			/* Default will not plot materials */
-	_plot_cells = false;				/* Deafualt will not plot cells */
+	_plot_cells = false;				/* Default will not plot cells */
+	_plot_fluxes = false;				/* Default will not plot fluxes */
 
 	for (int i = 0; i < argc; i++) {
 		if (i > 0) {
@@ -77,6 +78,9 @@ Options::Options(int argc, const char **argv) {
 			else if (strcmp(argv[i], "-pc") == 0 ||
 					strcmp(argv[i], "--plotcells") == 0)
 				_plot_cells = true;
+			else if (strcmp(argv[i], "-pf") == 0 ||
+					strcmp(argv[i], "--plotfluxes") == 0)
+				_plot_fluxes = true;
 		}
 	}
 }
@@ -204,6 +208,15 @@ bool Options::plotMaterials() const {
  */
 bool Options::plotCells() const {
 	return _plot_cells;
+}
+
+/**
+ * Returns a boolean representing whether or not to plot the cells.
+ *  If true, the cells will be plotted in a file of _extension type
+ * @return whether or not to plot materials
+ */
+bool Options::plotFluxes() const {
+	return _plot_fluxes;
 }
 
 

@@ -76,7 +76,7 @@ int main(int argc, const char **argv) {
 	timer.recordSplit("Segmenting tracks");
 
 	/* Fixed source iteration to solve for k_eff */
-	Solver solver(&geometry, &track_generator, &plotter);
+	Solver solver(&geometry, &track_generator, &plotter,opts.plotFluxes());
 	timer.reset();
 	timer.start();
 	k_eff = solver.computeKeff(3000);

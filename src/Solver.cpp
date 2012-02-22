@@ -15,7 +15,7 @@
  * @param geom pointer to the geometry
  * @param track_generator pointer to the trackgenerator
  */
-Solver::Solver(Geometry* geom, TrackGenerator* track_generator, Plotter* plotter) {
+Solver::Solver(Geometry* geom, TrackGenerator* track_generator, Plotter* plotter, bool plotFluxes) {
 	_geom = geom;
 	_quad = new Quadrature(TABUCHI);
 	_num_FSRs = geom->getNumFSRs();
@@ -23,6 +23,8 @@ Solver::Solver(Geometry* geom, TrackGenerator* track_generator, Plotter* plotter
 	_num_tracks = track_generator->getNumTracks();
 	_num_azim = track_generator->getNumAzim();
 	_plotter = plotter;
+	_pix_map_total_flux = new float[_plotter->getBitLengthX()*_plotter->getBitLengthY()];
+	_plot_fluxes = plotFluxes;
 
 	try{
 		_flat_source_regions = new FlatSourceRegion[_num_FSRs];
@@ -658,7 +660,16 @@ double Solver::computeKeff(int max_iterations) {
 
 		/* If k_eff converged, return k_eff */
 		if (fabs(_k_eff_old - _k_eff) < KEFF_CONVERG_THRESH){
-			plotVariable(_flat_source_regions, "flux", 6);
+			/* Converge the scalar flux spatially within geometry to plot */
+			fixedSourceIteration(1000);
+			for (int i = 0; i < NUM_ENERGY_GROUPS; i++){
+
+				std::stringstream string;
+				string << "flux" << i << "a";
+				std::string title_str = string.str();
+
+				plotVariable(_flat_source_regions, title_str, i);
+			}
 			return _k_eff;
 		}
 
@@ -676,12 +687,16 @@ double Solver::computeKeff(int max_iterations) {
 
 	log_printf(WARNING, "Unable to converge the source after %d iterations", max_iterations);
 
+	/* Converge the scalar flux spatially within geometry to plot */
+	fixedSourceIteration(1000);
+
 	return _k_eff;
 }
 
 
 // only plots flux
 void Solver::plotVariable(FlatSourceRegion* variable, std::string type, int energyGroup){
+	log_printf(NORMAL, "Plotting fluxes...");
 
 	int bitLengthX = _plotter->getBitLengthX();
 	int bitLengthY = _plotter->getBitLengthY();
@@ -690,17 +705,27 @@ void Solver::plotVariable(FlatSourceRegion* variable, std::string type, int ener
 
 	int* fsrMap = _plotter->getPixMap("fsr");
 
+	float flux;
+
 	for (int i = 0; i < _num_FSRs; i++){
 		for (int y=0;y<bitLengthY; y++){
 			for (int x = 0; x < bitLengthX; x++){
 				if (fsrMap[y * bitLengthX + x] == i){
-					pixMap[y * bitLengthX + x] = float(variable[i].getFlux()[energyGroup]);
+					flux = float(variable[i].getFlux()[energyGroup]);
+					pixMap[y * bitLengthX + x] = flux;
+					_pix_map_total_flux[y * bitLengthX + x] = _pix_map_total_flux[y * bitLengthX + x] + flux;
 				}
 			}
 		}
 	}
 
-	_plotter->plot(pixMap, type);
+	if (_plot_fluxes == true){
+		_plotter->plot(pixMap, type);
+	}
+
+	if (energyGroup == NUM_ENERGY_GROUPS -1){
+		_plotter->plot(_pix_map_total_flux, "total_flux");
+	}
 
 	delete [] pixMap;
 }

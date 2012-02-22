@@ -14,6 +14,8 @@
 #include <math.h>
 #include <unordered_map>
 #include <limits.h>
+#include <string>
+#include <sstream>
 #include "Geometry.h"
 #include "Quadrature.h"
 #include "Track.h"
@@ -34,6 +36,8 @@ private:
 	double _k_eff;
 	double _k_eff_old;
 	Plotter* _plotter;
+	float* _pix_map_total_flux;
+	bool _plot_fluxes;
 #if !STORE_PREFACTORS
 	// set prefactor array upper bounds, lower bounds, and size
 	double* _pre_Factor_Array;
@@ -52,7 +56,7 @@ private:
 	int computePreFactorArray(double segLength, double segXS, double precision, double cscTheta, int arraySize);
 	void initializeFSRs();
 public:
-	Solver(Geometry* geom, TrackGenerator* track_generator, Plotter* plotter);
+	Solver(Geometry* geom, TrackGenerator* track_generator, Plotter* plotter, bool plotFluxes);
 	virtual ~Solver();
 	void zeroTrackFluxes();
 	void oneFSRFluxes();
