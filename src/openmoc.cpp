@@ -17,6 +17,7 @@
 #include "Solver.h"
 #include "Timer.h"
 #include "log.h"
+#include "configurations.h"
 #include "Plotter.h"
 
 // FIXME: These should be removed when main() is properly implemented
@@ -79,7 +80,7 @@ int main(int argc, const char **argv) {
 	Solver solver(&geometry, &track_generator, &plotter,opts.plotFluxes());
 	timer.reset();
 	timer.start();
-	k_eff = solver.computeKeff(3000);
+	k_eff = solver.computeKeff(MAX_ITERATIONS);
 	timer.stop();
 	timer.recordSplit("Fixed source iteration");
 

@@ -18,6 +18,12 @@
 #define NUM_ENERGY_GROUPS 7
 #define GRP_TIMES_ANG NUM_POLAR_ANGLES*NUM_ENERGY_GROUPS
 
+/* Convergence threshold for computing k_eff */
+#define KEFF_CONVERG_THRESH 1E-4
+
+/** Maximum number of fixed source iterations allowed */
+#define MAX_ITERATIONS 3E+3
+
 /* Precompute and store exponential pre-factors in transport equation */
 #define STORE_PREFACTORS true
 
@@ -56,9 +62,6 @@
 /* Convergence threshold for scalar flux in each region during fixed source
  * iteration */
 #define FLUX_CONVERGENCE_THRESH 1E-4
-
-/* Convergence threshold for computing k_eff */
-#define KEFF_CONVERG_THRESH 1E-4
 
 
 /******************************************************************************

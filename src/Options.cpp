@@ -30,14 +30,11 @@ Options::Options(int argc, const char **argv) {
 	else
 		_relative_path = "";
 
-	_geometry_file = _relative_path + "xml-sample/1.1/geometry.xml"; 	 /* Default geometry input file */
-	_material_file = _relative_path + "xml-sample/1.1/material.xml";    /* Default material input file */
+	_geometry_file = _relative_path + "xml-sample/Lattice/geometry.xml"; 	 /* Default geometry input file */
+	_material_file = _relative_path + "xml-sample/Lattice/material.xml";    /* Default material input file */
 	_track_spacing = 0.1;					 /* Default track spacing */
 	_num_azim = 16;					 /* Default number of azimuthal angles */
 	_bit_dimension = 1000;					 /* y dimension of tracks and segments plots */
-	_num_sectors = 0;					 /* Default number of sectors */
-	_num_rings = 0;						 /* Default number of rings */
-	_sector_offset = 0;					 /* Default sector offset */
 	_verbosity = "NORMAL";				 /* Default logging level */
 	_dump_geometry = false;				/* Default will not dump geometry */
 	_extension = "png";				/* Default will plot png */
@@ -59,12 +56,6 @@ Options::Options(int argc, const char **argv) {
 				_num_azim = atoi(argv[i]);
 			else if (LAST("--bitdimension") || LAST("-bd"))
 							_bit_dimension = atoi(argv[i]);
-			else if (LAST("--numrings") || LAST("-nr"))
-				_num_rings = atoi(argv[i]);
-			else if (LAST("--numsectors") || LAST("-ns"))
-				_num_sectors = atoi(argv[i]);
-			else if (LAST("--sectoroffset") || LAST("--so"))
-				_sector_offset = atof(argv[i]);
 			else if (LAST("--verbosity") || LAST("-v"))
 				_verbosity = strdup(argv[i]);
 			else if (strcmp(argv[i], "-dg") == 0 ||
