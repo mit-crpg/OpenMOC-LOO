@@ -303,7 +303,6 @@ Surface* Geometry::getSurface(int id) {
 	exit(0);
 }
 
-
 /**
  * Add a cell to the geometry. Checks if the universe the cell is in already
  * exists; if not, it creates one and adds it to the geometry.

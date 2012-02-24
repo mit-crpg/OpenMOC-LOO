@@ -31,6 +31,8 @@ TrackGenerator::TrackGenerator(Geometry* geom, Plotter* plotter,
 		_num_y = new int[_num_azim];
 		_azim_weights = new double[_num_azim];
 		_tracks = new Track*[_num_azim];
+		_pix_map_FSRs = new int[_plotter->getBitLengthX() * _plotter->getBitLengthY()];
+		_plotter->initializePixMap(_pix_map_FSRs);
 	}
 	catch (std::exception &e) {
 		log_printf(ERROR, "Unable to allocate memory for TrackGenerator. "
@@ -118,7 +120,8 @@ void TrackGenerator::generateTracks() {
 	try {
 		log_printf(NORMAL, "Computing azimuthal angles and track spacings...");
 
-		int* pixMap = _plotter->getPixMap("tracks");
+		int* pixMap= new int[_plotter->getBitLengthX() * _plotter->getBitLengthY()];
+		_plotter->initializePixMap(pixMap);
 
 		/* Each element in arrays corresponds to a track angle in phi_eff */
 		/* Track spacing along x,y-axes, and perpendicular to each track */
@@ -233,14 +236,8 @@ void TrackGenerator::generateTracks() {
 				double phi = _tracks[i][j].getPhi();
 				_tracks[i][j].setValues(new_x0, new_y0, new_x1, new_y1, phi);
 
-				/* Add line to _pix_map segments bitmap array */
-
-				_plotter->LineFct(new_x0*_plotter->getXPixel() + _plotter->getBitLengthX()/2,
-						-new_y0*_plotter->getYPixel() + _plotter->getBitLengthY()/2,
-						new_x1*_plotter->getXPixel() + _plotter->getBitLengthX()/2,
-						-new_y1*_plotter->getYPixel() + _plotter->getBitLengthY()/2,
-						pixMap, 1);
-
+				/* Add line to segments bitmap */
+				_plotter->LineFct(new_x0, new_y0, new_x1, new_y1, pixMap, 1);
 			}
 		}
 
@@ -250,6 +247,7 @@ void TrackGenerator::generateTracks() {
 		delete [] dy_eff;
 		delete [] d_eff;
 		delete [] phi_eff;
+		delete [] pixMap;
 
 		return;
 	}
@@ -437,8 +435,6 @@ void TrackGenerator::segmentize() {
 	log_printf(NORMAL, "Segmenting tracks...");
 	double phi, sin_phi, cos_phi;
 
-	int* pixMap = _plotter->getPixMap("segments");
-
 	/* Loop over all tracks */
 	for (int i = 0; i < _num_azim; i++) {
 		phi = _tracks[i][0].getPhi();
@@ -447,15 +443,25 @@ void TrackGenerator::segmentize() {
 		for (int j = 0; j < _num_tracks[i]; j++){
 			_geom->segmentize(&_tracks[i][j]);
 			log_printf(DEBUG, "Segmented track...");
-			_plotter->plotSegmentsBitMap(&_tracks[i][j], sin_phi, cos_phi, pixMap);
+			_plotter->plotSegments(&_tracks[i][j], sin_phi, cos_phi, _pix_map_FSRs);
 		}
 	}
 
 	log_printf(DEBUG, "Done segmenting...");
 
-	_plotter->plot(pixMap, "segments");
-	_plotter->generateFsrMap();
+	_plotter->plot(_pix_map_FSRs, "segments");
+	_plotter->plotFSRs(_pix_map_FSRs);
+
+	// plot materials and cells
+//	_plotter->plotRegion(_pix_map_FSRs, fsrToMaterials, "materials");
+//	_plotter->plotRegion(_pix_map_FSRs, fsrToCells, "cells");
 
 	return;
 }
+
+int* TrackGenerator::getFSRsPixMap(){
+	return _pix_map_FSRs;
+}
+
+
 
