@@ -16,6 +16,5 @@
   <surface id="3" type="x-plane" coeffs="2.0" boundary="reflective" />
   <surface id="4" type="y-plane" coeffs="-2.0" boundary="reflective" />
   <surface id="5" type="y-plane" coeffs="2.0" boundary="reflective" />
-  <surface id="1000" type="circle" coeffs="0 0 0.70711" />
   
 </geometry>
