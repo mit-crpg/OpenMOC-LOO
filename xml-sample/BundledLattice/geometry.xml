@@ -8,17 +8,17 @@
 <geometry>
 
 <!-- Definition of Cells -->
-  <cell id="101" universe="1" material="1" surfaces="-5" />
+  <cell id="101" universe="1" material="1" surfaces="-5" rings="2"/>
   <cell id="102" universe="1" material="2" surfaces="5" />
-  <cell id="201" universe="2" material="1" surfaces="-6" />
+  <cell id="201" universe="2" material="1" surfaces="-6" rings="2"/>
   <cell id="202" universe="2" material="2" surfaces="6" />
-  <cell id="301" universe="3" material="1" surfaces="-7" />
+  <cell id="301" universe="3" material="1" surfaces="-7" rings="2"/>
   <cell id="302" universe="3" material="2" surfaces="7" />
-  <cell id="401" universe="4" material="1" surfaces="-8" />
+  <cell id="401" universe="4" material="1" surfaces="-8" rings="2"/>
   <cell id="402" universe="4" material="2" surfaces="8" />
-  <cell id="501" universe="5" material="1" surfaces="-9" />
+  <cell id="501" universe="5" material="1" surfaces="-9" rings="2"/>
   <cell id="502" universe="5" material="2" surfaces="9" />
-  <cell id="601" universe="6" material="1" surfaces="-10" />
+  <cell id="601" universe="6" material="1" surfaces="-10" rings="2"/>
   <cell id="602" universe="6" material="2" surfaces="10" />
   <cell id="1" universe="10" fill="7" surfaces="" />
   <cell id="2" universe="11" fill="8" surfaces="" />

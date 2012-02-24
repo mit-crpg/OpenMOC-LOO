@@ -552,7 +552,7 @@ double Solver::computeKeff(int max_iterations) {
 	// Source iteration loop
 	for (int i = 0; i < max_iterations; i++) {
 
-		log_printf(NORMAL, "Iteration %d: k_eff = %f", i, _k_eff);
+		log_printf(INFO, "Iteration %d: k_eff = %f", i, _k_eff);
 
 		/*********************************************************************
 		 * Renormalize scalar and boundary fluxes
