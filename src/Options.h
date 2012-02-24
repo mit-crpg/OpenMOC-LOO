@@ -26,9 +26,6 @@ private:
 	double _track_spacing;
 	int _num_azim;
 	int _bit_dimension;
-	int _num_sectors;
-	int _num_rings;
-	double _sector_offset;
 	std::string _verbosity;
 	bool _dump_geometry;
 	bool _plot_materials;
@@ -45,9 +42,6 @@ public:
     double getTrackSpacing() const;
     const char* getVerbosity() const;
     std::string getExtension() const;
-    int getNumRings() const;
-    int getNumSectors() const;
-    double getSectorOffset() const;
     bool plotMaterials() const;
     bool plotCells() const;
     bool plotFluxes() const;

@@ -45,8 +45,7 @@ int main(int argc, const char **argv) {
 	/* Initialize the geometry with surfaces, cells & materials */
 	timer.reset();
 	timer.start();
-	Geometry geometry(opts.getNumSectors(), opts.getNumRings(),
-			  opts.getSectorOffset(), &parser);
+	Geometry geometry(&parser);
 	timer.stop();
 	timer.recordSplit("Geomery initialization");
 

@@ -27,6 +27,9 @@ Solver::Solver(Geometry* geom, TrackGenerator* track_generator, Plotter* plotter
 	_pix_map_FSRs = track_generator->getFSRsPixMap();
 	try{
 		_flat_source_regions = new FlatSourceRegion[_num_FSRs];
+
+		for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
+			_FSRs_to_fluxes[e] = new double[_num_FSRs];
 	}
 	catch(std::exception &e) {
 		log_printf(ERROR, "Could not allocate memory for the solver's flat "
@@ -48,6 +51,10 @@ Solver::Solver(Geometry* geom, TrackGenerator* track_generator, Plotter* plotter
  */
 Solver::~Solver() {
 	delete [] _flat_source_regions;
+
+	for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
+		delete [] _FSRs_to_fluxes[e];
+	delete [] _FSRs_to_fluxes;
 }
 
 
@@ -358,6 +365,16 @@ void Solver::updateKeff() {
 	log_printf(INFO, "Computed k_eff = %f", _k_eff);
 
 	return;
+}
+
+
+/**
+ * Return an array indexed by FSR ids which contains the corresponding
+ * fluxes for each FSR
+ * @return an array map of FSR to fluxes
+ */
+double** Solver::getFSRtoFluxMap() {
+	return _FSRs_to_fluxes;
 }
 
 
@@ -693,10 +710,18 @@ double Solver::computeKeff(int max_iterations) {
 		}
 	}
 
-	log_printf(WARNING, "Unable to converge the source after %d iterations", max_iterations);
+	log_printf(WARNING, "Unable to converge the source after %d iterations",
+															max_iterations);
 
 	/* Converge the scalar flux spatially within geometry to plot */
 	fixedSourceIteration(1000);
+
+	/* Load fluxes into FSR to flux map */
+	for (int r=0; r < _num_FSRs; r++) {
+		double* fluxes = _flat_source_regions[r].getFlux();
+		for (int e=0; e < NUM_ENERGY_GROUPS; e++)
+			_FSRs_to_fluxes[e][r] = fluxes[e];
+	}
 
 	return _k_eff;
 }

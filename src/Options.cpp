@@ -139,33 +139,6 @@ double Options::getTrackSpacing() const {
 
 
 /**
- * Returns the numbe of rings used in subdividing flat source regions
- * @return the number of rings
- */
-int Options::getNumRings() const {
-    return _num_rings;
-}
-
-
-/**
- * Returns the number of sectors used in subdividing flat source regions
- * @return the number of sectors
- */
-int Options::getNumSectors() const {
-    return _num_sectors;
-}
-
-
-/**
- * Returns the angular offset of the sectors used in subdividing the flat
- * source regions
- * @return the angular offset in degrees
- */
-double Options::getSectorOffset() const {
-    return _sector_offset;
-}
-
-/**
  * Returns the verbosity logging level. By default this will return NORMAL if not set
  * at runtime from the console
  * @return the verbosity

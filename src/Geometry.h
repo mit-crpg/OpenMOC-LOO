@@ -34,10 +34,10 @@
 class Geometry {
 private:
 	double _x_min, _y_min, _x_max, _y_max; 		/* the corners */
-	int _num_sectors, _num_rings;
-	double _sector_offset;
 	int _base_universe;
 	int _num_FSRs;
+	int* _FSRs_to_cells;
+	int* _FSRs_to_materials;
 	double _max_seg_length;
 	double _min_seg_length;
 	std::map<int, Material*> _materials;
@@ -54,12 +54,8 @@ private:
 	std::vector<int> _zones;
 
 public:
-	Geometry(int num_sectors, int num_rings, double sector_offset, 
-			Parser* parser);
+	Geometry(Parser* parser);
 	virtual ~Geometry();
-	void setNumRings(int num_rings);
-	void setNumSectors(int num_sectors);
-	void setSectorOffset(double sector_offset);
 	double getWidth() const;
 	double getHeight() const;
 	int getNumRings() const;
@@ -68,6 +64,8 @@ public:
 	int getNumFSRs() const;
 	double getMaxSegmentLength() const;
 	double getMinSegmentLength() const;
+	int* getFSRtoCellMap() const;
+	int* getFSRtoMaterialMap() const;
 
 	void addMaterial(Material* material);
 	Material* getMaterial(int id);

@@ -17,12 +17,8 @@
  * @param sector_offset the angular offset for computing angular sectors
  * @param parser pointer to the parser object
  */
-Geometry::Geometry(int num_sectors, int num_rings, double sector_offset, 
-		   Parser* parser) {
+Geometry::Geometry(Parser* parser) {
 
-	_num_sectors = num_sectors;
-	_num_rings = num_rings;
-	_sector_offset = sector_offset;
 	_max_seg_length = 0;
 	_min_seg_length = INFINITY;
 
@@ -61,9 +57,23 @@ Geometry::Geometry(int num_sectors, int num_rings, double sector_offset,
 				return;
 			});
 
+	/* Generate flat source regions */
 	Universe *univ = _universes.at(0);
 	_num_FSRs = univ->computeFSRMaps();
 	log_printf(NORMAL, "Number of flat source regions computed: %d", _num_FSRs);
+
+	/* Allocate memory for maps between flat source regions ids and cell or
+	 * material ids */
+	_FSRs_to_cells = new int[_num_FSRs];
+	_FSRs_to_materials = new int[_num_FSRs];
+
+	/* Load maps with cell and material ids */
+	for (int r=0; r < _num_FSRs; r++) {
+		CellBasic* curr =  static_cast<CellBasic*>
+						(findCell(_universes.at(0), r));
+		_FSRs_to_cells[r] = curr->getId();
+		_FSRs_to_materials[r] = curr->getMaterial();
+	}
 }
 
 
@@ -78,6 +88,8 @@ Geometry::~Geometry() {
 	std::map<int, Universe*>::iterator iter4;
 	std::map<int, Lattice*>::iterator iter5;
 
+	delete [] _FSRs_to_cells;
+	delete [] _FSRs_to_materials;
 
 	for (iter1 = _materials.begin(); iter1 != _materials.end(); ++iter1)
 		delete iter1->second;
@@ -97,36 +109,6 @@ Geometry::~Geometry() {
 	_lattices.clear();
 }
 
-
-/* Set the number of ring divisions used for making flat source regions
- * @param num_rings the number of rings
- */
-void Geometry::setNumRings(int num_rings) {
-    _num_rings = num_rings;
-}
-
-
-/**
- * Set the number of angular sectors used for making flat source regions
- * @param num_sectors the number of sectors
- */
-void Geometry::setNumSectors(int num_sectors) {//	coords->setLattice(_uid);
-
-    _num_sectors = num_sectors;
-}
-
-
-/**
- * Sets the angular offset (from the positive x-axis) by which angular
- * divisions are computed. Takes the modulo of the input argument with
- * 360 degrees
- * @param angular_offset angular offset of sectors in degrees
- */
-void Geometry::setSectorOffset(double sector_offset) {
-    _sector_offset = fmod(sector_offset, 360);
-}
-
-
 /**
  * Returns the total height of the geometry
  * @param the toal height of the geometry
@@ -144,34 +126,6 @@ double Geometry::getWidth() const {
     return _x_max - _x_min;
 }
 
-
-/**
- * Returns the number of rings used in subdividing flat source regions
- * @return the number of rings
- */
-int Geometry::getNumRings() const{
-    return _num_rings;
-}
-
-
-/**
- * Returns the number of angular sectors for subdividing flat source regions
- * @param the number of angular sectors
- */
-int Geometry::getNumSectors() const {//	coords->setLattice(_uid);
-
-    return _num_sectors;
-}
-
-
-/**
- * Returns the angular offset for the angular divisions used in subdividing
- * flat source regions
- * @return the angular offset in degrees
- */
-double Geometry::getSectorOffset() const {
-    return _sector_offset;
-}
 
 /**
  * Returns the number of flat source regions in the geometry
@@ -242,6 +196,26 @@ Material* Geometry::getMaterial(int id) {
 	}
 	exit(0);
 }
+
+
+/**
+ * Return an array indexed by FSR ids which contains the corresponding cell ids
+ * @return an array map of FSR to cell ids
+ */
+int* Geometry::getFSRtoCellMap() const {
+	return _FSRs_to_cells;
+}
+
+
+/**
+ * Return an array indexed by FSR ids which contains the corresponding
+ * material ids
+ * @return an array map of FSR to material ids
+ */
+int* Geometry::getFSRtoMaterialMap() const {
+	return _FSRs_to_materials;
+}
+
 
 
 /**
