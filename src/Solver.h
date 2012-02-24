@@ -38,6 +38,7 @@ private:
 	Plotter* _plotter;
 	float* _pix_map_total_flux;
 	bool _plot_fluxes;
+	int* _pix_map_FSRs;
 #if !STORE_PREFACTORS
 	// set prefactor array upper bounds, lower bounds, and size
 	double* _pre_Factor_Array;
@@ -65,7 +66,8 @@ public:
 	void updateKeff();
 	void fixedSourceIteration(int max_iterations);
 	double computeKeff(int max_iterations);
-	void plotVariable(FlatSourceRegion* variable, std::string type, int energyGroup);
+	void plotFluxes(FlatSourceRegion* fluxes, float* pixMapGroupFlux,
+			float* pixMapTotalFlux, std::string type, int energyGroup);
 };
 
 #endif /* SOLVER_H_ */

@@ -23,9 +23,8 @@ Solver::Solver(Geometry* geom, TrackGenerator* track_generator, Plotter* plotter
 	_num_tracks = track_generator->getNumTracks();
 	_num_azim = track_generator->getNumAzim();
 	_plotter = plotter;
-	_pix_map_total_flux = new float[_plotter->getBitLengthX()*_plotter->getBitLengthY()];
 	_plot_fluxes = plotFluxes;
-
+	_pix_map_FSRs = track_generator->getFSRsPixMap();
 	try{
 		_flat_source_regions = new FlatSourceRegion[_num_FSRs];
 	}
@@ -662,14 +661,23 @@ double Solver::computeKeff(int max_iterations) {
 		if (fabs(_k_eff_old - _k_eff) < KEFF_CONVERG_THRESH){
 			/* Converge the scalar flux spatially within geometry to plot */
 			fixedSourceIteration(1000);
+			log_printf(NORMAL, "Plotting flux(es)...");
+
+			float* pixMapGroupFlux = new float[_plotter->getBitLengthX() * _plotter->getBitLengthY()];
+			float* pixMapTotalFlux = new float[_plotter->getBitLengthX() * _plotter->getBitLengthY()];
+
 			for (int i = 0; i < NUM_ENERGY_GROUPS; i++){
 
 				std::stringstream string;
 				string << "flux" << i << "a";
 				std::string title_str = string.str();
 
-				plotVariable(_flat_source_regions, title_str, i);
+				plotFluxes(_flat_source_regions, pixMapGroupFlux, pixMapTotalFlux, title_str, i);
 			}
+
+			delete [] pixMapGroupFlux;
+			delete [] pixMapTotalFlux;
+
 			return _k_eff;
 		}
 
@@ -695,39 +703,32 @@ double Solver::computeKeff(int max_iterations) {
 
 
 // only plots flux
-void Solver::plotVariable(FlatSourceRegion* variable, std::string type, int energyGroup){
-	log_printf(NORMAL, "Plotting fluxes...");
+void Solver::plotFluxes(FlatSourceRegion* fluxes, float* pixMapGroupFlux, float* pixMapTotalFlux, std::string group, int energyGroup){
 
 	int bitLengthX = _plotter->getBitLengthX();
 	int bitLengthY = _plotter->getBitLengthY();
 
-	float* pixMap = new float[bitLengthX*bitLengthY];
-
-	int* fsrMap = _plotter->getPixMap("fsr");
-
 	float flux;
 
 	for (int i = 0; i < _num_FSRs; i++){
+		flux = float(fluxes[i].getFlux()[energyGroup]);
 		for (int y=0;y<bitLengthY; y++){
 			for (int x = 0; x < bitLengthX; x++){
-				if (fsrMap[y * bitLengthX + x] == i){
-					flux = float(variable[i].getFlux()[energyGroup]);
-					pixMap[y * bitLengthX + x] = flux;
-					_pix_map_total_flux[y * bitLengthX + x] = _pix_map_total_flux[y * bitLengthX + x] + flux;
+				if (_pix_map_FSRs[y * bitLengthX + x] == i){
+					pixMapGroupFlux[y * bitLengthX + x] = flux;
+					pixMapTotalFlux[y * bitLengthX + x] = pixMapTotalFlux[y * bitLengthX + x] + flux;
 				}
 			}
 		}
 	}
 
 	if (_plot_fluxes == true){
-		_plotter->plot(pixMap, type);
+		_plotter->plot(pixMapGroupFlux, group);
 	}
 
-	if (energyGroup == NUM_ENERGY_GROUPS -1){
-		_plotter->plot(_pix_map_total_flux, "total_flux");
+	if (energyGroup == NUM_ENERGY_GROUPS - 1){
+		_plotter->plot(pixMapTotalFlux, "flux_total");
 	}
-
-	delete [] pixMap;
 }
 
 
