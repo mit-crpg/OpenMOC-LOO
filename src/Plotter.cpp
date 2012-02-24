@@ -606,7 +606,7 @@ void Plotter::plotFSRs(int* pixMap){
 
 				/* find which cell the point is in */
 				_geom->findCell(&point);
-				Cell* curr = _geom->findCell(&point);
+				_geom->findCell(&point);
 
 				/* Store FSR id in pixMap */
 				pixMap[y * _bit_length_x + x] = _geom->findFSRId(&point);
