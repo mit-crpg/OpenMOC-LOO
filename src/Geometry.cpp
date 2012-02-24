@@ -407,7 +407,7 @@ void Geometry::addCell(Cell* cell) {
 				/* create and add the inner-most circle surface */
 				Circle *s = new Circle(startId, BOUNDARY_NONE, 0.0, 0.0, r1);
 				addSurface(s);
-				log_printf(NORMAL, "Added new %s", s->toString().c_str());
+				log_printf(INFO, "Added new %s", s->toString().c_str());
 
                 /* create and add the inner-most circle cell */
 				int tmp = -1 * startId;
@@ -437,7 +437,7 @@ void Geometry::addCell(Cell* cell) {
 						 dynamic_cast<CellBasic*>(cell)->getMaterial(), 
 						 0);
 					addCell(c);
-					log_printf(DEBUG, "Added  %s", c->toString().c_str());	
+					log_printf(INFO, "Added  %s", c->toString().c_str());	
       
 					/* book-keeping */
 					previousId = newId;
@@ -447,7 +447,7 @@ void Geometry::addCell(Cell* cell) {
 
 				/* update the original circle cell to be the outsidemost cell */
 				static_cast<Cell*>(cell)->addSurface(newId, s); 
-				log_printf(NORMAL, "Update original %s",
+				log_printf(INFO, "Update original %s",
 						   cell->toString().c_str());
 
 				//delete c;
@@ -485,7 +485,7 @@ void Geometry::addCell(Cell* cell) {
 					->getRadius();
 				r02=(dynamic_cast<Circle*>(_surfaces.at(outer_surface)))
 					->getRadius();
-				log_printf(DEBUG, "Read a ring with radii %f and %f", r01, r02);
+				log_printf(INFO, "Read a ring with radii %f and %f", r01, r02);
 			
 				/* generate the inner-most radius */
 				r1 =  sqrt( r01*r01 + ((r02*r02 - r01*r01)/t_num_rings) );
@@ -494,7 +494,7 @@ void Geometry::addCell(Cell* cell) {
 				/* create the inner-most circle surface */
 				Surface *s = new Circle(startId, BOUNDARY_NONE, 0, 0, r1);
 				addSurface(s);
-				log_printf(DEBUG, "%s", s->toString().c_str());
+				log_printf(INFO, "%s", s->toString().c_str());
 
 				/* initialize the inner-most circle cell with the inner radius*/
 				int tmp[2] = {inner_surface, -1 * startId};
@@ -503,7 +503,7 @@ void Geometry::addCell(Cell* cell) {
 					(startId, cell->getUniverse(), 2, list_surfaces, 
 					 dynamic_cast<CellBasic*>(cell)->getMaterial(), 0);
 				addCell(c);
-				log_printf(DEBUG, "Added  %s", c->toString().c_str());
+				log_printf(INFO, "Added  %s", c->toString().c_str());
 
 				while (i < t_num_rings) {
 					/* generate id and radius for the next circle */
@@ -524,7 +524,7 @@ void Geometry::addCell(Cell* cell) {
 									  dynamic_cast<CellBasic*>(cell)
 									  ->getMaterial(), 0);
 					addCell(c);
-					log_printf(DEBUG, "Added  %s", c->toString().c_str());	
+					log_printf(INFO, "Added  %s", c->toString().c_str());	
       
 					/* book-keeping */
 					previousId = newId;
@@ -536,7 +536,7 @@ void Geometry::addCell(Cell* cell) {
 				   ring cell */
 				/* FIXME: the old inner surface is kept; may need to remove */
 				static_cast<Cell*>(cell)->addSurface(newId, s); 
-				log_printf(DEBUG, "Update original ring %s",
+				log_printf(INFO, "Update original ring %s",
 						   cell->toString().c_str());
 				
 			}
@@ -877,7 +877,7 @@ void Geometry::adjustKeys() {
 	}
 
 	/* Adjust universes indices to be uids */
-	try {//	coords->setLattice(_uid);
+	try {
 
 		for (iter4 = _universes.begin(); iter4 != _universes.end(); ++iter4) {
 			uid = iter4->second->getUid();
@@ -1207,28 +1207,28 @@ Cell* Geometry::findNextCell(LocalCoords* coords, double angle) {
 			 * reached the edge of the geometry
 			 */
 			while (curr->getUniverse() != 0) {
-
+				
 				/* If the lowest level localcoords is inside a lattice, find
 				 * the next lattice cell */
 				if (curr->getType() == LAT) {
-
+					
 					int lattice_id = curr->getLattice();
 					Lattice* lattice = _lattices.at(lattice_id);
-
+					
 					cell = lattice->findNextLatticeCell(curr, angle,
-															_universes);
-
+														_universes);
+					
 					/* If the cell returned is NULL, the localcoords are outside
 					 * of the current lattice, so move to a higher level lattice
 					 * if there is one */
 					if (cell == NULL) {
-
+						
 						/* Delete current lattice */
 						curr->getPrev()->prune();
-
+						
 						/* Get the lowest level localcoords in the linked list */
 						curr = coords->getLowestLevel();
-
+						
 						/* Retrace linkedlist from lowest level */
 						while (curr != NULL && curr->getUniverse() != 0) {
 							curr = curr->getPrev();
