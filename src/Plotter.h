@@ -20,7 +20,6 @@
 #include "silo.h"
 #include "LocalCoords.h"
 #include "Cell.h"
-#include <visit_writer.h>
 
 
 

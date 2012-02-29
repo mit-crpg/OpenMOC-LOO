@@ -193,7 +193,12 @@ void Plotter::plotSilo(int* pixMap, std::string type){
 	const char* title = title_str.c_str();
 
 	/* Create pdb file */
-    pdb_file = DBCreate(title, DB_CLOBBER, DB_LOCAL, "structured mesh bitmap", DB_PDB);
+	if (_extension == "pdb"){
+		pdb_file = DBCreate(title, DB_CLOBBER, DB_LOCAL, "structured mesh bitmap", DB_PDB);
+	}
+	else{
+		pdb_file = DBCreate(title, DB_CLOBBER, DB_LOCAL, "structured mesh bitmap", DB_HDF5);
+	}
 
     /* create mesh point arrays */
 	double mesh_x[_bit_length_x + 1];
@@ -247,7 +252,13 @@ void Plotter::plotSilo(float* pixMap, std::string type){
 	const char* title = title_str.c_str();
 
 	/* Create pdb file */
-    pdb_file = DBCreate(title, DB_CLOBBER, DB_LOCAL, "structured mesh bitmap", DB_PDB);
+    //pdb_file = DBCreate(title, DB_CLOBBER, DB_LOCAL, "structured mesh bitmap", DB_PDB);
+	if (_extension == "pdb"){
+		pdb_file = DBCreate(title, DB_CLOBBER, DB_LOCAL, "structured mesh bitmap", DB_PDB);
+	}
+	else{
+		pdb_file = DBCreate(title, DB_CLOBBER, DB_LOCAL, "structured mesh bitmap", DB_HDF5);
+	}
 
     /* create mesh point arrays */
 	double mesh_x[_bit_length_x + 1];
@@ -301,7 +312,7 @@ void Plotter::plot(int* pixMap, std::string type){
 	if (_extension == "png" || _extension == "tiff" || _extension == "jpg"){
 		plotMagick(pixMap, type);
 	}
-	else if (_extension == "pdb"){
+	else if (_extension == "pdb" || _extension == "h5"){
 		plotSilo(pixMap, type);
 	}
 }
@@ -313,7 +324,7 @@ void Plotter::plot(float* pixMap, std::string type){
 	if (_extension == "png" || _extension == "tiff" || _extension == "jpg"){
 		plotMagick(pixMap, type);
 	}
-	else if (_extension == "pdb"){
+	else if (_extension == "pdb" || _extension == "h5"){
 		plotSilo(pixMap, type);
 	}
 }
