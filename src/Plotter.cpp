@@ -559,7 +559,7 @@ void Plotter::LineFct(double xIn, double yIn, double xOut, double yOut, int* pix
  */
 void Plotter::plotRegion(int* pixMap, int* regionMap, std::string regionName){
 
-	int regionNumber;
+	int regionValue;
 
 	/* allocate memory for pixMapRegion array */
 	int* pixMapRegion = new int[_bit_length_x * _bit_length_y];
@@ -567,8 +567,8 @@ void Plotter::plotRegion(int* pixMap, int* regionMap, std::string regionName){
 	/* translate FSR id's stored in pixMap to pixMapRegion using regionMap */
 	for (int y=0;y< _bit_length_y; y++){
 		for (int x = 0; x < _bit_length_x; x++){
-			regionNumber = regionMap[pixMap[y * _bit_length_x + x]];
-			pixMapRegion[y * _bit_length_x + x] = regionNumber;
+			regionValue = regionMap[pixMap[y * _bit_length_x + x]];
+			pixMapRegion[y * _bit_length_x + x] = regionValue;
 		}
 	}
 
@@ -578,6 +578,35 @@ void Plotter::plotRegion(int* pixMap, int* regionMap, std::string regionName){
 	/* release memory */
 	delete [] pixMapRegion;
 }
+
+/**
+ * Takes in a FSR pixMap array, a map (regionMap) that translates
+ * a FSR id to a region id (cell, material, etc), and a description of the region
+ * (regionName). Plots the resulting region pixMap (pixMapRegion).
+ */
+void Plotter::plotRegion(int* pixMap, double* regionMap, std::string regionName){
+
+	float regionValue;
+
+	/* allocate memory for pixMapRegion array */
+	float* pixMapRegion = new float[_bit_length_x * _bit_length_y];
+
+	/* translate FSR id's stored in pixMap to pixMapRegion using regionMap */
+	for (int y=0;y< _bit_length_y; y++){
+		for (int x = 0; x < _bit_length_x; x++){
+			regionValue = float(regionMap[pixMap[y * _bit_length_x + x]]);
+			pixMapRegion[y * _bit_length_x + x] = regionValue;
+		}
+	}
+
+	/* plot pixMapRegion array */
+	plot(pixMapRegion, regionName);
+
+	/* release memory */
+	delete [] pixMapRegion;
+}
+
+
 
 /**
  * Loops over pixels in pixMap array and finds the corresponding

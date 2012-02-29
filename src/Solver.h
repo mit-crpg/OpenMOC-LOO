@@ -33,7 +33,7 @@ private:
 	int* _num_tracks;
 	int _num_azim;
 	int _num_FSRs;
-	double* _FSRs_to_fluxes[NUM_ENERGY_GROUPS];
+	double* _FSRs_to_fluxes[NUM_ENERGY_GROUPS + 1];
 	double _k_eff;
 	double _k_eff_old;
 	Plotter* _plotter;
@@ -68,8 +68,7 @@ public:
 	double** getFSRtoFluxMap();
 	void fixedSourceIteration(int max_iterations);
 	double computeKeff(int max_iterations);
-	void plotFluxes(FlatSourceRegion* fluxes, float* pixMapGroupFlux,
-			float* pixMapTotalFlux, std::string type, int energyGroup);
+	void plotFluxes();
 };
 
 #endif /* SOLVER_H_ */

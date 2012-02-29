@@ -451,6 +451,9 @@ void TrackGenerator::segmentize() {
 
 	_plotter->plot(_pix_map_FSRs, "segments");
 	_plotter->plotFSRs(_pix_map_FSRs);
+	_plotter->plotRegion(_pix_map_FSRs, _geom->getFSRtoCellMap(), "cells");
+	_plotter->plotRegion(_pix_map_FSRs, _geom->getFSRtoMaterialMap(), "materials");
+
 
 	// plot materials and cells
 //	_plotter->plotRegion(_pix_map_FSRs, fsrToMaterials, "materials");

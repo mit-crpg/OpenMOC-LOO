@@ -20,6 +20,7 @@
 #include "silo.h"
 #include "LocalCoords.h"
 #include "Cell.h"
+#include <visit_writer.h>
 
 
 
@@ -56,6 +57,7 @@ public:
 	int convertToBitmapX(double x);
 	int convertToBitmapY(double y);
 	void plotRegion(int* pixMap, int* regionMap, std::string regionName);
+	void plotRegion(int* pixMap, double* regionMap, std::string regionName);
 	void initializePixMap(int* pixMap);
 	void initializePixMap(float* pixMap);
 	double convertToGeometryX(int x);
