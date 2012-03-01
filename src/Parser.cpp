@@ -21,13 +21,13 @@
  * still declared them up here though, as at least they can be made private!
  */
 void XMLCALL Parser_XMLCallback_Start(void *context,
-				      const XML_Char *name,
-				      const XML_Char **atts);
+									  const XML_Char *name,
+									  const XML_Char **atts);
 void XMLCALL Parser_XMLCallback_End(void *context,
-				    const XML_Char *name);
+									const XML_Char *name);
 void XMLCALL Parser_XMLCallback_CData(void *context,
-				      const XML_Char *s,
-				      int len);
+									  const XML_Char *s,
+									  int len);
 /**
  * Frame to keep track of all nodes in parser
  */
@@ -80,6 +80,9 @@ struct frame_cell {
 
 	bool has_rings;
 	int rings;
+
+	bool has_sectors;
+	int sectors;
 
 	int surfaces_count;
 	int *surfaces;
@@ -250,7 +253,7 @@ Parser::Parser (const Options *opts) {
 	geofile = fopen(opts->getGeometryFile(), "r");
 	if (geofile == NULL) {
 		log_printf(ERROR, "Given geometry file %s does not exist",
-			   opts->getGeometryFile());
+				   opts->getGeometryFile());
 	}
 
 	/* Passes single characters to the parser, which is quite slow but
@@ -441,6 +444,12 @@ void XMLCALL Parser_XMLCallback_Start(void *context,
 
 				f->cell.has_rings = true;
 				f->cell.rings = atoi(value);
+			} else if (strcmp(key, "sectors") == 0) {
+				if (f->cell.has_sectors == true)
+					log_printf(ERROR, "Cell has 2 sector def");
+
+				f->cell.has_sectors = true;
+				f->cell.sectors = atoi(value);
 			} else if (strcmp(key, "material") == 0) {
 				if (f->cell.has_fill == true)
 					log_printf(ERROR, "Has 2 material");
@@ -622,7 +631,8 @@ void XMLCALL Parser_XMLCallback_End(void *context,
 									 f->cell.surfaces_count,
 									 f->cell.surfaces,
 									 f->cell.material,
-									 f->cell.rings);
+									 f->cell.rings,
+									 f->cell.sectors);
 			}
 			else {
 				cell = new CellBasic(f->cell.id, 
@@ -630,7 +640,7 @@ void XMLCALL Parser_XMLCallback_End(void *context,
 									 f->cell.surfaces_count,
 									 f->cell.surfaces,
 									 f->cell.material,
-									 0);		     
+									 0, 0);		     
 			}
 		} else {
 			log_printf(ERROR, "Cell without material or fill");
@@ -1032,6 +1042,7 @@ struct frame *stack_push(struct stack *s, enum frame_type type) {
 		f->cell.has_id = false;
 		f->cell.has_fill = false;
 		f->cell.has_rings = false;
+		f->cell.has_sectors = false;
 		f->cell.has_material = false;
 		f->cell.has_universe = false;
 		f->cell.surfaces = NULL;
@@ -1148,6 +1159,8 @@ void stack_print_help(struct frame *f) {
 			fprintf(stderr, " fill=\"%d\"", f->cell.fill);
 		if (f->cell.has_rings)
 			fprintf(stderr, " rings=\"%d\"", f->cell.rings);
+		if (f->cell.has_sectors)
+			fprintf(stderr, " sectors=\"%d\"", f->cell.sectors);
 		if (f->cell.has_universe)
 			fprintf(stderr, " universe=\"%d\"", f->cell.universe);
 		if (f->cell.surfaces != NULL) {

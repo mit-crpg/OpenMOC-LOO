@@ -51,13 +51,13 @@ private:
 	 * Expat) so they need to be friend'd.
 	 */
 	friend void XMLCALL Parser_XMLCallback_Start(void *context,
-						     const XML_Char *name,
-						     const XML_Char **atts);
+												 const XML_Char *name,
+												 const XML_Char **atts);
 	friend void XMLCALL Parser_XMLCallback_End(void *context,
-						   const XML_Char *name);
+											   const XML_Char *name);
 	friend void XMLCALL Parser_XMLCallback_CData(void *context,
-						     const XML_Char *s,
-						     int len);
+												 const XML_Char *s,
+												 int len);
 };
 
 #endif /* POINT_H_ */

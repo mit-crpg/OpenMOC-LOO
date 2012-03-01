@@ -79,10 +79,12 @@ class CellBasic: public Cell {
 private: 
 	int _material;
 	int _num_rings;
+	int _num_sectors;
 public:
-	CellBasic(int id, int universe, int num_surfaces, 
-		  int *surfaces, int material, int num_rings);
-	CellBasic(int id, int universe, int material, int num_rings);
+	CellBasic(int id, int universe, int num_surfaces, int *surfaces, 
+			  int material, int num_rings, int num_sectors);
+	CellBasic(int id, int universe, 
+			  int material, int num_rings, int num_sectors);
 	CellBasic(int id, int universe, int material);
 	int getMaterial() const;
 	void setMaterial(int material);
@@ -92,6 +94,7 @@ public:
 	int getNumFSRs();
 	CellBasic* clone(int new_id);
 	int getNumRings();
+	int getNumSectors();
 };
 
 

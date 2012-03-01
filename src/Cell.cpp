@@ -247,11 +247,12 @@ double Cell::minSurfaceDist(Point* point, double angle,
  *  @param material id of the material filling this cell
  */
 
-CellBasic::CellBasic(int id, int universe, int num_surfaces, 
-		     int* surfaces, int material, int num_rings):
+CellBasic::CellBasic(int id, int universe, int num_surfaces, int* surfaces, 
+					 int material, int num_rings, int num_sectors):
 	Cell(id, MATERIAL, universe, num_surfaces, surfaces) {
 	_material = material;
 	_num_rings = num_rings;
+	_num_sectors = num_sectors;
 }
 
 
@@ -261,11 +262,13 @@ CellBasic::CellBasic(int id, int universe, int num_surfaces,
  * @param universe the id of the universe this cell is in
  * @param num_surfaces the number of surfaces inside this cell
  */
-CellBasic::CellBasic(int id, int universe, int material, int num_rings) {
+CellBasic::CellBasic(int id, int universe, int material, 
+					 int num_rings, int num_sectors) {
 	_id = id;
 	_universe = universe;
 	_material = material;
 	_num_rings = num_rings;
+	_num_sectors = num_sectors;
 }
 
 CellBasic::CellBasic(int id, int universe, int material) {
@@ -367,6 +370,14 @@ CellBasic* CellBasic::clone(int new_id) {
  */
 int CellBasic::getNumRings() {
 	return this->_num_rings;
+}
+
+/**
+ * Return the number of sectors in the cell
+ * @return the number of sectors
+ */
+int CellBasic::getNumSectors() {
+	return this->_num_sectors;
 }
 
 /**

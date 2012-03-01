@@ -386,7 +386,9 @@ void Geometry::addCell(Cell* cell) {
 				CellBasic *c = new CellBasic(id, cell->getUniverse(),
 											 1, list_surfaces,
 											 dynamic_cast<CellBasic*>(cell)
-											 ->getMaterial(), 0);
+											 ->getMaterial(), 0,
+											 dynamic_cast<CellBasic*>(cell)
+											 ->getNumSectors());
 				addCell(c);
 				log_printf(INFO, "Added new %s", c->toString().c_str());
 				id++;
@@ -405,7 +407,8 @@ void Geometry::addCell(Cell* cell) {
 						(id, cell->getUniverse(),
 						 2, list_surfaces,
 						 dynamic_cast<CellBasic*>(cell)->getMaterial(), 
-						 0);
+						 0, dynamic_cast<CellBasic*>(cell)
+						 ->getNumSectors());
 					addCell(c);
 					log_printf(INFO, "Added  %s", c->toString().c_str());	
       
@@ -463,7 +466,8 @@ void Geometry::addCell(Cell* cell) {
 				int *list_surfaces = &tmp[0];
 				CellBasic *c = new CellBasic
 					(id, cell->getUniverse(), 2, list_surfaces, 
-					 dynamic_cast<CellBasic*>(cell)->getMaterial(), 0);
+					 dynamic_cast<CellBasic*>(cell)->getMaterial(), 0 ,
+					 dynamic_cast<CellBasic*>(cell)->getNumSectors());
 				addCell(c);
 				log_printf(INFO, "Added  %s", c->toString().c_str());
 				id++;
@@ -483,7 +487,9 @@ void Geometry::addCell(Cell* cell) {
 					c = new CellBasic(id, cell->getUniverse(), 
 									  2, list_s,
 									  dynamic_cast<CellBasic*>(cell)
-									  ->getMaterial(), 0);
+									  ->getMaterial(), 0,
+									  dynamic_cast<CellBasic*>(cell)
+									  ->getNumSectors());
 					addCell(c);
 					log_printf(INFO, "Added  %s", c->toString().c_str());	
       
