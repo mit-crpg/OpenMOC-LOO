@@ -221,9 +221,9 @@ double Surface::getMinDistance(Point* point, double angle,
  * Plane constructor
  * @param id the surface id
  * @param boundary this surface's boundary type
- * @param A the first coefficient
- * @param B the second coefficient
- * @param C the third coefficient
+ * @param A the first coefficient in A * x + B * y + C = 0;
+ * @param B the second coefficient in A * x + B * y + C = 0;
+ * @param C the third coefficient in A * x + B * y + C = 0;
  */
 Plane::Plane(const int id, const boundaryType boundary,
 	     const double A, const double B,
