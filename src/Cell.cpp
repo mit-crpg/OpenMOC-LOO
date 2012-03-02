@@ -120,7 +120,6 @@ int Cell::getId() const {
 
 /**
  * Return the cell type (FILL or MATERIAL)	Cell();
- *
  * @return the cell type
  */
 cellType Cell::getType() const {
@@ -247,11 +246,12 @@ double Cell::minSurfaceDist(Point* point, double angle,
  *  @param material id of the material filling this cell
  */
 
-CellBasic::CellBasic(int id, int universe, int num_surfaces, 
-		     int* surfaces, int material, int num_rings):
+CellBasic::CellBasic(int id, int universe, int num_surfaces, int* surfaces, 
+					 int material, int num_rings, int num_sectors):
 	Cell(id, MATERIAL, universe, num_surfaces, surfaces) {
 	_material = material;
 	_num_rings = num_rings;
+	_num_sectors = num_sectors;
 }
 
 
@@ -261,26 +261,35 @@ CellBasic::CellBasic(int id, int universe, int num_surfaces,
  * @param universe the id of the universe this cell is in
  * @param num_surfaces the number of surfaces inside this cell
  */
-CellBasic::CellBasic(int id, int universe, int material, int num_rings) {
+CellBasic::CellBasic(int id, int universe, int material, 
+					 int num_rings, int num_sectors){
 	_id = id;
 	_universe = universe;
 	_material = material;
 	_num_rings = num_rings;
+	_num_sectors = num_sectors;
 }
 
-CellBasic::CellBasic(int id, int universe, int material) {
+CellBasic::CellBasic(int id, int universe, int material){ 
 	_id = id;
 	_universe = universe;
 	_material = material;
 }
 /**
  * Return the material in the cell	int getUniverseFillId() const;
-	Universe* getUniverseFill() const;
- *
  * @return the material's id
  */
 int CellBasic::getMaterial() const {
 	return _material;
+}
+
+/**
+ * Insert the a surface into this cell's container
+ * @param surface_id the surface id (positiv/negative for surface side)
+ * @param surface surface pointer
+ */
+void CellBasic::addSurface(int surface_id, Surface* surface) {
+	_surfaces.insert(std::pair<int, Surface*>(surface_id, surface));
 }
 
 
@@ -336,11 +345,15 @@ std::string CellBasic::toString() {
 
 	std::stringstream string;
 
-	string << "Cell id = " << _id << ", type = MATERIAL, material id = " <<
-			_material << ", universe = " << _universe << ", num_surfaces = "
-	       << getNumSurfaces() << ", surface ids = ";
+	string << "Cell id = " << _id 
+		   << ", type = MATERIAL, material id = " << _material 
+		   << ", universe = " << _universe  
+		   << ", num_surfaces = " << getNumSurfaces() 
+		   << ", num of rings = " << _num_rings 
+		   << ", num of sectors = " << _num_sectors;
 
 	std::map<int, Surface*>::iterator iter;
+	string << ", surface ids = ";
 	for (iter = _surfaces.begin(); iter != _surfaces.end(); ++iter)
 		string << iter->first << ", ";
 
@@ -348,16 +361,15 @@ std::string CellBasic::toString() {
 }
 
 
-CellBasic* CellBasic::clone(int new_id) {
+CellBasic* CellBasic::clone(int new_id, int num_rings, int num_sectors) {
 
-	CellBasic* new_cell = new CellBasic(new_id, _universe, _material);
-
+	CellBasic* new_cell = new CellBasic(new_id, _universe, _material, 
+										num_rings, num_sectors);
 
 	/* Loop over all of this cell's surfaces and add them to the clone */
 	std::map<int, Surface*>::iterator iter;
 	for (iter = _surfaces.begin(); iter != _surfaces.end(); ++iter)
-		static_cast<Cell*>(new_cell)->addSurface(iter->first, iter->second);
-
+		new_cell->addSurface(iter->first, iter->second);
 	return new_cell;
 }
 
@@ -367,6 +379,21 @@ CellBasic* CellBasic::clone(int new_id) {
  */
 int CellBasic::getNumRings() {
 	return this->_num_rings;
+}
+
+/**
+ * Return the number of sectors in the cell
+ * @return the number of sectors
+ */
+int CellBasic::getNumSectors() {
+	return this->_num_sectors;
+}
+
+/**
+ * set the cell's number of sectors 
+ */
+void CellBasic::setNumSectors(int num) {
+	_num_sectors = num;
 }
 
 /**
