@@ -625,7 +625,23 @@ void XMLCALL Parser_XMLCallback_End(void *context,
 								f->cell.surfaces,
 								f->cell.fill);
 		} else if (f->cell.has_material) {
-			if (f->cell.has_rings) {
+			if ( (f->cell.has_rings) && !(f->cell.has_sectors)){
+				cell = new CellBasic(f->cell.id,
+									 f->cell.universe,
+									 f->cell.surfaces_count,
+									 f->cell.surfaces,
+									 f->cell.material,
+									 f->cell.rings,
+									 0);
+			} else if (f->cell.has_sectors && !(f->cell.has_rings)){
+				cell = new CellBasic(f->cell.id,
+									 f->cell.universe,
+									 f->cell.surfaces_count,
+									 f->cell.surfaces,
+									 f->cell.material,
+									 0,
+									 f->cell.sectors);
+			} else if (f->cell.has_rings && f->cell.has_sectors) {
 				cell = new CellBasic(f->cell.id, 
 									 f->cell.universe,
 									 f->cell.surfaces_count,
@@ -633,24 +649,23 @@ void XMLCALL Parser_XMLCallback_End(void *context,
 									 f->cell.material,
 									 f->cell.rings,
 									 f->cell.sectors);
-			}
-			else {
+			} else {
 				cell = new CellBasic(f->cell.id, 
 									 f->cell.universe,
 									 f->cell.surfaces_count,
 									 f->cell.surfaces,
 									 f->cell.material,
 									 0, 0);		     
-			}
+			} 
 		} else {
 			log_printf(ERROR, "Cell without material or fill");
 		}
-
+		
 		if (cell != NULL)
 			s->parser->cells.push_back(cell);
 		else
 			log_printf(ERROR, "Unknown cell type");
-
+		
 		if (f->cell.surfaces != NULL)
 			free(f->cell.surfaces);
 		break;

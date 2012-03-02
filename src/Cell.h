@@ -83,18 +83,18 @@ private:
 public:
 	CellBasic(int id, int universe, int num_surfaces, int *surfaces, 
 			  int material, int num_rings, int num_sectors);
-	CellBasic(int id, int universe, 
-			  int material, int num_rings, int num_sectors);
+	CellBasic(int id, int universe, int material, 
+			  int num_rings, int num_sectors);
 	CellBasic(int id, int universe, int material);
 	int getMaterial() const;
-	void setMaterial(int material);
 	void addSurface(int surface_id, Surface* surface);
 	void adjustKeys(int universe, int material);
 	std::string toString();
 	int getNumFSRs();
-	CellBasic* clone(int new_id);
+	CellBasic* clone(int new_id, int num_rings, int num_sectors);
 	int getNumRings();
 	int getNumSectors();
+	void setNumSectors(int num);
 };
 
 
