@@ -165,6 +165,9 @@ void Geometry::addMaterial(Material* material) {
 
 	else {
 		try {
+			/* Check that the sum of the material's absorption and scattering
+			 * cross-sections equals its total cross-section */
+			material->checkSigmaT();
 			_materials.insert(std::pair<int, Material*>(material->getId(),
 					material));
 			log_printf(INFO, "Added material with id = %d to geometry",
