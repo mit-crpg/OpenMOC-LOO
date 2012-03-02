@@ -31,7 +31,7 @@
 #define FSR_HASHMAP_THRESH 100000
 
 /* Number of significant digits for computing hashmap exponential prefactors */
-#define FSR_HASHMAP_PRECISION 3
+#define FSR_HASHMAP_PRECISION 2
 
 
 /******************************************************************************

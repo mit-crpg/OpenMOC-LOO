@@ -183,8 +183,8 @@ void Plotter::plotMagick(float* pixMap, std::string type){
 void Plotter::plotSilo(int* pixMap, std::string type){
 	log_printf(NORMAL, "plotting silo mesh...");
 
-	/* Create pdb file */
-    DBfile *pdb_file;
+	/* Create file pointer */
+    DBfile *file;
 
     /* create filename with correct extension */
 	std::stringstream string;
@@ -193,11 +193,11 @@ void Plotter::plotSilo(int* pixMap, std::string type){
 	const char* title = title_str.c_str();
 
 	/* Create pdb file */
-	if (_extension == "pdb"){
-		pdb_file = DBCreate(title, DB_CLOBBER, DB_LOCAL, "structured mesh bitmap", DB_PDB);
+	if (_extension == "h5"){
+		file = DBCreate(title, DB_CLOBBER, DB_LOCAL, "structured mesh bitmap", DB_HDF5);
 	}
 	else{
-		pdb_file = DBCreate(title, DB_CLOBBER, DB_LOCAL, "structured mesh bitmap", DB_HDF5);
+		file = DBCreate(title, DB_CLOBBER, DB_LOCAL, "structured mesh bitmap", DB_PDB);
 	}
 
     /* create mesh point arrays */
@@ -218,7 +218,7 @@ void Plotter::plotSilo(int* pixMap, std::string type){
 	int ndims = 2;
 
 	/* Write structured mesh to pdb file */
-	DBPutQuadmesh(pdb_file, "quadmesh", NULL, coords, dims, ndims, DB_DOUBLE, DB_COLLINEAR, NULL);
+	DBPutQuadmesh(file, "quadmesh", NULL, coords, dims, ndims, DB_DOUBLE, DB_COLLINEAR, NULL);
 
 	/* dimensions of mesh */
 	int dimsvar[] = {_bit_length_x, _bit_length_y};
@@ -230,20 +230,21 @@ void Plotter::plotSilo(int* pixMap, std::string type){
 	FlipBitmap(pixMap);
 
 	/* write pixMap data to pdb file */
-	DBPutQuadvar1(pdb_file, type_char, "quadmesh", pixMap, dimsvar, ndims, NULL, 0, DB_INT, DB_ZONECENT, NULL);
+	DBPutQuadvar1(file, type_char, "quadmesh", pixMap, dimsvar, ndims, NULL, 0, DB_INT, DB_ZONECENT, NULL);
 
 	/* flip pixMap from cartesian coordinates back to Bitmap coordinates */
 	FlipBitmap(pixMap);
 
 	/* close pdb file */
-    DBClose(pdb_file);
+    DBClose(file);
+	log_printf(NORMAL, "done plotting silo mesh...");
 }
 
 void Plotter::plotSilo(float* pixMap, std::string type){
 	log_printf(NORMAL, "plotting silo mesh...");
 
-	/* Create pdb file */
-    DBfile *pdb_file;
+	/* Create file pointer */
+    DBfile *file;
 
     /* create filename with correct extension */
 	std::stringstream string;
@@ -251,13 +252,13 @@ void Plotter::plotSilo(float* pixMap, std::string type){
 	std::string title_str = string.str();
 	const char* title = title_str.c_str();
 
-	/* Create pdb file */
+	/* Create file */
     //pdb_file = DBCreate(title, DB_CLOBBER, DB_LOCAL, "structured mesh bitmap", DB_PDB);
-	if (_extension == "pdb"){
-		pdb_file = DBCreate(title, DB_CLOBBER, DB_LOCAL, "structured mesh bitmap", DB_PDB);
+	if (_extension == "h5"){
+		file = DBCreate(title, DB_CLOBBER, DB_LOCAL, "structured mesh bitmap", DB_HDF5);
 	}
 	else{
-		pdb_file = DBCreate(title, DB_CLOBBER, DB_LOCAL, "structured mesh bitmap", DB_HDF5);
+		file = DBCreate(title, DB_CLOBBER, DB_LOCAL, "structured mesh bitmap", DB_PDB);
 	}
 
     /* create mesh point arrays */
@@ -278,7 +279,7 @@ void Plotter::plotSilo(float* pixMap, std::string type){
 	int ndims = 2;
 
 	/* Write structured mesh to pdb file */
-	DBPutQuadmesh(pdb_file, "quadmesh", NULL, coords, dims, ndims, DB_DOUBLE, DB_COLLINEAR, NULL);
+	DBPutQuadmesh(file, "quadmesh", NULL, coords, dims, ndims, DB_DOUBLE, DB_COLLINEAR, NULL);
 
 	/* dimensions of mesh */
 	int dimsvar[] = {_bit_length_x, _bit_length_y};
@@ -290,13 +291,14 @@ void Plotter::plotSilo(float* pixMap, std::string type){
 	FlipBitmap(pixMap);
 
 	/* write pixMap data to pdb file */
-	DBPutQuadvar1(pdb_file, type_char, "quadmesh", pixMap, dimsvar, ndims, NULL, 0, DB_FLOAT, DB_ZONECENT, NULL);
+	DBPutQuadvar1(file, type_char, "quadmesh", pixMap, dimsvar, ndims, NULL, 0, DB_FLOAT, DB_ZONECENT, NULL);
 
 	/* flip pixMap from cartesian coordinates back to Bitmap coordinates */
 	FlipBitmap(pixMap);
 
 	/* close pdb file */
-    DBClose(pdb_file);
+    DBClose(file);
+	log_printf(NORMAL, "done plotting silo mesh...");
 }
 
 

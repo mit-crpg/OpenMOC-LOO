@@ -115,50 +115,23 @@ void Solver::precomputeFactors() {
 
 	log_printf(NORMAL, "Making Prefactor array...");
 
-	double precision = pow(10,-FSR_HASHMAP_PRECISION);
-	int arraySize = 1.0/(precision) + 1;
+	_precision = pow(10,-FSR_HASHMAP_PRECISION);
 
-	log_printf(INFO, "precision = %f,prefactor array size = %d", precision, arraySize);
+	/* set size of prefactor array */
+	_array_size = NUM_POLAR_ANGLES*(10.0/_precision + 1);
 
-	_pre_Factor_Array = new double[arraySize];
+	log_printf(INFO, "precision = %f,prefactor array size = %d", _precision, _array_size);
 
-	// set values in prefactor array
-	for (int i = 0; i < arraySize; i ++){
-		_pre_Factor_Array[i] = exp(-i * precision);
-	}
+	/* allocate prefactor array */
+	_pre_Factor_Array = new double[_array_size];
 
-	Track* track;
-	int num_segments;
-	std::vector<segment*> segments;
-	segment* segment;
-	double segLength;
-	double* segXSs;
-	double sinTheta = _quad->getSinTheta(0);
-	log_printf(DEBUG, "sinTheta = %f", sinTheta);
-
-	// give every segment an array (length = NUM_ENERGY_GROUPS) of indexes
-	// into the preFactorArray
-	for (int i = 0; i < _num_azim; i++) {
-		for (int j = 0; j < _num_tracks[i]; j++) {
-			/* Initialize local pointers to important data structures */
-			track = &_tracks[i][j];
-			segments = track->getSegments();
-			num_segments = track->getNumSegments();
-
-			/* loop over segments in track*/
-			for (int s = 0; s < num_segments; s++) {
-				segment = segments.at(s);
-				segLength = segment->_length;
-				segXSs = segment->_material->getSigmaT();
-				/* loop over energy groups */
-				for (int k = 0; k < NUM_ENERGY_GROUPS; k++){
-					segment->_index[k] = computePreFactorArray(segLength, segXSs[k], precision, sinTheta, arraySize);
-					log_printf(DEBUG, "segment index for group %d is: %d", k, segment->_index[k]);
-				}
-			}
+	/* Create prefactor array */
+	for (int i = 0; i < _array_size/NUM_POLAR_ANGLES; i ++){
+		for (int j = 0; j < NUM_POLAR_ANGLES; j++){
+			_pre_Factor_Array[NUM_POLAR_ANGLES * i + j] = exp(-i * _precision / _quad->getSinTheta(j));
+			log_printf(NORMAL, "prefactor %i, %i: %f", i, j, _pre_Factor_Array[NUM_POLAR_ANGLES * i + j]);
 		}
 	}
-
 #endif
 
 	return;
@@ -180,26 +153,6 @@ double Solver::computePreFactor(segment* seg, int energy, int angle) {
 						/ _quad->getSinTheta(angle));
 	return prefactor;
 }
-
-/**
- * Function to compute an array of exponential prefactors for the
- * transport equation for a given segment
- * @param seg pointer to a segment
- * @param energy energy group index
- * @param angle polar angle index
- * @return the pre-factor
- */
-int Solver::computePreFactorArray(double segLength, double segXS, double precision, double sinTheta, int arraySize) {
-	if (segXS > 10){
-		return arraySize - 1;
-	}
-	int index = int(round(segLength * segXS/ (precision * sinTheta)));
-	if (index >= arraySize){
-		index = arraySize - 1;
-	}
-	return index;
-}
-
 
 
 /**
@@ -393,11 +346,6 @@ void Solver::fixedSourceIteration(int max_iterations) {
 	double* ratios;
 	double delta;
 	double volume;
-	double sinThetaRatio[NUM_POLAR_ANGLES];
-
-	for (int i = 0; i < NUM_POLAR_ANGLES; i++){
-		sinThetaRatio[i] = _quad->getSinTheta(0) / _quad->getSinTheta(i);
-	}
 
 	log_printf(INFO, "Fixed source iteration with max_iterations = %d",
 														max_iterations);
@@ -426,21 +374,37 @@ void Solver::fixedSourceIteration(int max_iterations) {
 					fsr = &_flat_source_regions[segment->_region_id];
 					ratios = fsr->getRatios();
 
-
-					/* Loop over polar angles, energy groups */
-					for (int p = 0; p < NUM_POLAR_ANGLES; p++) {
-						for (int e = 0; e < NUM_ENERGY_GROUPS; e++) {
 #if !STORE_PREFACTORS
-							delta = (polar_fluxes[GRP_TIMES_ANG + p*NUM_ENERGY_GROUPS + e] -
-									ratios[e]) * (1 - _pre_Factor_Array[int(round(segment->_index[e] * sinThetaRatio[p]))]);
-#else
-							delta = (polar_fluxes[GRP_TIMES_ANG + p*NUM_ENERGY_GROUPS + e] -
-									ratios[e]) * segment->_prefactors[p][e];
-#endif
+					sigma_t = segment->_material->getSigmaT();
+					/* Loop over energy groups, polar angles */
+					for (int e = 0; e < NUM_ENERGY_GROUPS; e++) {
+						/* determine index into prefactor array */
+						int index = round(segment->_length * sigma_t[e]/_precision);
+						for (int p = 0; p < NUM_POLAR_ANGLES; p++){
+							if (index < _array_size){
+								delta = (polar_fluxes[GRP_TIMES_ANG + p*NUM_ENERGY_GROUPS + e] - ratios[e]) *
+										(1 - _pre_Factor_Array[index + p]);
+							}
+							else{
+								delta = (polar_fluxes[GRP_TIMES_ANG + p*NUM_ENERGY_GROUPS + e] - ratios[e]) *
+										(1 - _pre_Factor_Array[_array_size - NUM_ENERGY_GROUPS + p]);
+								log_printf(NORMAL, "index > _array_size...");
+							}
 							fsr->incrementFlux(e, delta*weights[p]);
 							polar_fluxes[GRP_TIMES_ANG + p*NUM_ENERGY_GROUPS + e] -= delta;
 						}
 					}
+#else
+					for (int e = 0; e < NUM_ENERGY_GROUPS; e++) {
+						for (int p = 0; p < NUM_POLAR_ANGLES; p++) {
+							delta = (polar_fluxes[GRP_TIMES_ANG + p*NUM_ENERGY_GROUPS + e] -
+									ratios[e]) * segment->_prefactors[p][e];
+
+							fsr->incrementFlux(e, delta*weights[p]);
+							polar_fluxes[GRP_TIMES_ANG + p*NUM_ENERGY_GROUPS + e] -= delta;
+						}
+					}
+#endif
 				}
 
 				/* Transfer flux to outgoing track */
@@ -454,19 +418,37 @@ void Solver::fixedSourceIteration(int max_iterations) {
 					fsr = &_flat_source_regions[segment->_region_id];
 					ratios = fsr->getRatios();
 
-					for (int p = 0; p < NUM_POLAR_ANGLES; p++) {
-						for (int e = 0; e < NUM_ENERGY_GROUPS; e++) {
 #if !STORE_PREFACTORS
-							delta = (polar_fluxes[p*NUM_ENERGY_GROUPS + e] -
-									ratios[e]) * (1 - _pre_Factor_Array[int(round(segment->_index[e] * sinThetaRatio[p]))]);
-#else
-							delta = (polar_fluxes[p*NUM_ENERGY_GROUPS + e] -
-									ratios[e]) * segment->_prefactors[p][e];
-#endif
+					sigma_t = segment->_material->getSigmaT();
+					/* Loop over energy groups, polar angles */
+					for (int e = 0; e < NUM_ENERGY_GROUPS; e++) {
+						/* determine index into prefactor array */
+						int index = round(segment->_length * sigma_t[e]/_precision);
+						for (int p = 0; p < NUM_POLAR_ANGLES; p++) {
+							if (index < _array_size){
+								delta = (polar_fluxes[GRP_TIMES_ANG + p*NUM_ENERGY_GROUPS + e] - ratios[e]) *
+										(1 - _pre_Factor_Array[index + p]);
+							}
+							else{
+								delta = (polar_fluxes[GRP_TIMES_ANG + p*NUM_ENERGY_GROUPS + e] - ratios[e]) *
+										(1 - _pre_Factor_Array[_array_size - NUM_ENERGY_GROUPS + p]);
+								log_printf(NORMAL, "index > _array_size...");
+							}
 							fsr->incrementFlux(e, delta*weights[p]);
 							polar_fluxes[p*NUM_ENERGY_GROUPS + e] -= delta;
 						}
 					}
+#else
+					for (int e = 0; e < NUM_ENERGY_GROUPS; e++) {
+						for (int p = 0; p < NUM_POLAR_ANGLES; p++) {
+							delta = (polar_fluxes[p*NUM_ENERGY_GROUPS + e] -
+									ratios[e]) * segment->_prefactors[p][e];
+
+							fsr->incrementFlux(e, delta*weights[p]);
+							polar_fluxes[p*NUM_ENERGY_GROUPS + e] -= delta;
+						}
+					}
+#endif
 				}
 
 				/* Transfer flux to incoming track */
@@ -663,6 +645,19 @@ double Solver::computeKeff(int max_iterations) {
 			/* Converge the scalar flux spatially within geometry to plot */
 			fixedSourceIteration(1000);
 
+			if (_plot_fluxes == true){
+				/* Load fluxes into FSR to flux map */
+				for (int r=0; r < _num_FSRs; r++) {
+					double* fluxes = _flat_source_regions[r].getFlux();
+					for (int e=0; e < NUM_ENERGY_GROUPS; e++){
+						_FSRs_to_fluxes[e][r] = fluxes[e];
+						_FSRs_to_fluxes[NUM_ENERGY_GROUPS][r] =
+								_FSRs_to_fluxes[NUM_ENERGY_GROUPS][r] + fluxes[e];
+					}
+				}
+				plotFluxes();
+			}
+
 			return _k_eff;
 		}
 
@@ -681,23 +676,24 @@ double Solver::computeKeff(int max_iterations) {
 	log_printf(WARNING, "Unable to converge the source after %d iterations",
 															max_iterations);
 
+	log_printf(NORMAL, "Plotting fluxes...");
+
 	/* Converge the scalar flux spatially within geometry to plot */
 	fixedSourceIteration(1000);
 
-	log_printf(NORMAL, "Plotting fluxes...");
 
-	/* Load fluxes into FSR to flux map */
-	for (int r=0; r < _num_FSRs; r++) {
-		double* fluxes = _flat_source_regions[r].getFlux();
-		for (int e=0; e < NUM_ENERGY_GROUPS; e++){
-			_FSRs_to_fluxes[e][r] = fluxes[e];
-			_FSRs_to_fluxes[NUM_ENERGY_GROUPS][r] =
-					_FSRs_to_fluxes[NUM_ENERGY_GROUPS][r] + fluxes[e];
+	if (_plot_fluxes == true){
+		/* Load fluxes into FSR to flux map */
+		for (int r=0; r < _num_FSRs; r++) {
+			double* fluxes = _flat_source_regions[r].getFlux();
+			for (int e=0; e < NUM_ENERGY_GROUPS; e++){
+				_FSRs_to_fluxes[e][r] = fluxes[e];
+				_FSRs_to_fluxes[NUM_ENERGY_GROUPS][r] =
+						_FSRs_to_fluxes[NUM_ENERGY_GROUPS][r] + fluxes[e];
+			}
 		}
-
+		plotFluxes();
 	}
-
-	plotFluxes();
 
 	return _k_eff;
 }

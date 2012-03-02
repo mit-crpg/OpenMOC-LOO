@@ -26,9 +26,6 @@ struct segment {
 #if STORE_PREFACTORS
 	double _prefactors[NUM_POLAR_ANGLES][NUM_ENERGY_GROUPS];
 #endif
-#if !STORE_PREFACTORS
-	int _index[NUM_ENERGY_GROUPS];
-#endif
 
 
 };
