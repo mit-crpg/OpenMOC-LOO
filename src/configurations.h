@@ -19,7 +19,7 @@
 #define GRP_TIMES_ANG NUM_POLAR_ANGLES*NUM_ENERGY_GROUPS
 
 /* Convergence threshold for computing k_eff */
-#define KEFF_CONVERG_THRESH 1E-4
+#define KEFF_CONVERG_THRESH 1E-5
 
 /** Maximum number of fixed source iterations allowed */
 #define MAX_ITERATIONS 3E+3
@@ -46,6 +46,10 @@
 /******************************************************************************
  *************************** ERROR THRESHOLDS *********************************
  *****************************************************************************/
+
+/* Error threshold for determining how close the sum of sigma_a and sigma_s
+ * must match that of sigma_t for each energy group */
+#define SIGMA_T_THRESH 1E-3
 
 /* Error threshold for determining how close a point needs to be to a surface
  * to be considered on it */

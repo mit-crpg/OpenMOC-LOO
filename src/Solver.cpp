@@ -54,7 +54,6 @@ Solver::~Solver() {
 
 	for (int e = 0; e <= NUM_ENERGY_GROUPS; e++)
 		delete [] _FSRs_to_fluxes[e];
-//	delete [] _FSRs_to_fluxes;
 }
 
 
@@ -81,7 +80,7 @@ void Solver::precomputeFactors() {
 			azim_weight = curr_track->getAzimuthalWeight();
 
 			for (int p = 0; p < NUM_POLAR_ANGLES; p++)
-				curr_track->setPolarWeight(p, azim_weight*_quad->getMultiple(p));
+				curr_track->setPolarWeight(p, azim_weight*_quad->getMultiple(p) * FOUR_PI);
 		}
 	}
 
@@ -194,7 +193,7 @@ void Solver::initializeFSRs() {
 			for (int s = 0; s < track->getNumSegments(); s++) {
 				seg = track->getSegment(s);
 				fsr =&_flat_source_regions[seg->_region_id];
-				fsr->incrementVolume(seg->_length);
+				fsr->incrementVolume(seg->_length * track->getAzimuthalWeight());
 			}
 		}
 	}
@@ -235,10 +234,8 @@ void Solver::zeroTrackFluxes() {
 		for (int j = 0; j < _num_tracks[i]; j++) {
 			polar_fluxes = _tracks[i][j].getPolarFluxes();
 
-			for (int i = 0; i < GRP_TIMES_ANG * 2; i++) {
+			for (int i = 0; i < GRP_TIMES_ANG * 2; i++)
 				polar_fluxes[i] = 0.0;
-				polar_fluxes[i] = 0.0;
-			}
 		}
 	}
 }
@@ -306,13 +303,10 @@ void Solver::updateKeff() {
 		flux = fsr->getFlux();
 
 		for (int e = 0; e < NUM_ENERGY_GROUPS; e++) {
-//			log_printf(RESULT, "r = %d, e = %d, sigma_a = %f, flux = %f, volume = %f",r,e,sigma_a[e], flux[e], fsr->getVolume());
 			tot_abs += sigma_a[e] * flux[e] * fsr->getVolume();
 			tot_fission += nu_sigma_f[e] * flux[e] * fsr->getVolume();
 		}
 	}
-
-//	log_printf(RESULT, "tot_fission = %f, tot_abs = %f", tot_fission, tot_abs);
 
 	_k_eff = tot_fission/tot_abs;
 	log_printf(INFO, "Computed k_eff = %f", _k_eff);
@@ -357,7 +351,6 @@ void Solver::fixedSourceIteration(int max_iterations) {
 		zeroFSRFluxes();
 
 		/* Loop over azimuthal angle, track */
-		log_printf(INFO, "looping over azimuthal angles in solver...");
 		for (int i = 0; i < _num_azim; i++) {
 			for (int j = 0; j < _num_tracks[i]; j++) {
 
@@ -483,7 +476,7 @@ void Solver::fixedSourceIteration(int max_iterations) {
 				old_scalar_flux = fsr->getOldFlux();
 
 				for (int e = 0; e < NUM_ENERGY_GROUPS; e++) {
-					if (fabs(scalar_flux[e] - old_scalar_flux[e] /
+					if (fabs((scalar_flux[e] - old_scalar_flux[e]) /
 							old_scalar_flux[e]) > FLUX_CONVERGENCE_THRESH )
 						converged = false;
 
@@ -494,6 +487,17 @@ void Solver::fixedSourceIteration(int max_iterations) {
 
 			if (converged)
 				return;
+		}
+
+		/* Update the old scalar flux for each region, energy group */
+		for (int r = 0; r < _num_FSRs; r++) {
+			fsr = &_flat_source_regions[r];
+			scalar_flux = fsr->getFlux();
+			old_scalar_flux = fsr->getOldFlux();
+
+			/* Update old scalar flux */
+			for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
+				old_scalar_flux[e] = scalar_flux[e];
 		}
 	}
 
@@ -524,7 +528,7 @@ double Solver::computeKeff(int max_iterations) {
 	/* Initial guess */
 	_k_eff_old = 1.0;
 
-	/* Set scalar flux to unit for each region */
+	/* Set scalar flux to unity for each region */
 	oneFSRFluxes();
 	zeroTrackFluxes();
 
@@ -535,7 +539,6 @@ double Solver::computeKeff(int max_iterations) {
 		for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
 			fsr->setOldSource(e, 1.0);
 	}
-
 
 	// Source iteration loop
 	for (int i = 0; i < max_iterations; i++) {
@@ -565,7 +568,6 @@ double Solver::computeKeff(int max_iterations) {
 
 		/* Renormalize scalar fluxes in each region */
 		renorm_factor = 1.0 / fission_source;
-		log_printf(INFO, "Renormalization factor = %f", renorm_factor);
 
 		for (int r = 0; r < _num_FSRs; r++) {
 			fsr = &_flat_source_regions[r];
@@ -634,11 +636,19 @@ double Solver::computeKeff(int max_iterations) {
 		/* Update pre-computed source / sigma_t ratios */
 		computeRatios();
 
+		for (int r = 0; r < _num_FSRs; r++) {
+			for (int e = 0; e < NUM_ENERGY_GROUPS; e++) {
+				fsr = &_flat_source_regions[r];
+				double ratios = fsr->getRatios()[e];
+			}
+		}
+
 		/* Iteration the flux with the new source */
 		fixedSourceIteration(1);
 
 		/* Update k_eff */
 		updateKeff();
+
 
 		/* If k_eff converged, return k_eff */
 		if (fabs(_k_eff_old - _k_eff) < KEFF_CONVERG_THRESH){

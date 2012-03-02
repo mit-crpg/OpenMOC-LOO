@@ -234,7 +234,6 @@ void FlatSourceRegion::computeRatios() {
 
 	for (int e = 0; e < NUM_ENERGY_GROUPS; e++) {
 		_ratios[e] = _source[e]/sigma_t[e];
-//		log_printf(RESULT, "id = %d, e = %d, source[e] = %f, sigma_t[e] = %f, ratios[e] = %f", _id, e, _source[e], sigma_t[e], _ratios[e]);
 	}
 
 	return;

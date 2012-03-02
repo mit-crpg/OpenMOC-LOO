@@ -185,6 +185,38 @@ void Material::setSigmaA(double sigma_a[NUM_ENERGY_GROUPS]) {
 
 
 /**
+ * Checks if the total cross-section for this material is equal to the
+ * absorption plus scattering cross-sections for all energy groups
+ */
+void Material::checkSigmaT() {
+
+	double calc_sigma_t;
+
+	/* Loop over all energy groups */
+	for (int i=0; i < NUM_ENERGY_GROUPS; i++) {
+
+		/* Initialize the calculated total xs to the absorption xs */
+		calc_sigma_t = _sigma_a[i];
+
+		/* Increment calculated total xs by scatter xs for each energy group */
+		for (int j=0; j < NUM_ENERGY_GROUPS; j++)
+			calc_sigma_t += _sigma_s[j][i];
+
+		/* Check if the calculated and total match up to certain threshold */
+		if (fabs(calc_sigma_t - _sigma_t[i]) > SIGMA_T_THRESH) {
+			log_printf(ERROR, "Material id = %d has a different total "
+					"cross-section than the sum of its scattering and "
+					"absorption cross-sections for group %d: "
+					"sigma_t = %f, calc_sigma_t = %f", _id, i, _sigma_t[i],
+					   calc_sigma_t);
+		}
+	}
+
+	return;
+}
+
+
+/**
  * Converts this material's attributes to a character array representation
  * @param a character array of this member's attributes
  */
