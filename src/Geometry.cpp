@@ -574,7 +574,6 @@ void Geometry::addCell(Cell* cell) {
 					iter++;
 					surface_2 = iter->first;
 					log_printf(INFO, "surface_2 = %d", surface_2);
-//					tmp2 = {surface_1, surface_2};
 					tmp2[0] = surface_1;
 					tmp2[1] = surface_2;
 					list = &tmp2[0];
@@ -589,7 +588,6 @@ void Geometry::addCell(Cell* cell) {
 					log_printf(INFO, "surface_2 = %d", surface_2);
 					iter++;
 					surface_3 = iter->first;
-//					tmp3 = {surface_1, surface_2, surface_3};
 					tmp3[0] = surface_1;
 					tmp3[1] = surface_2;
 					tmp3[2] = surface_3;
