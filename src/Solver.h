@@ -41,9 +41,10 @@ private:
 	bool _plot_fluxes;
 	int* _pix_map_FSRs;
 #if !STORE_PREFACTORS
-	double* _pre_Factor_Array;
-	int _array_size;
-	double _precision;
+	double* _pre_factor_array;
+	int _pre_factor_array_size;
+	int _pre_factor_max_index;
+	int _inverse_precision;
 #endif
 	void precomputeFactors();
 	double computePreFactor(segment* seg, int energy, int angle);

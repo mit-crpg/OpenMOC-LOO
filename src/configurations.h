@@ -19,7 +19,7 @@
 #define GRP_TIMES_ANG NUM_POLAR_ANGLES*NUM_ENERGY_GROUPS
 
 /* Convergence threshold for computing k_eff */
-#define KEFF_CONVERG_THRESH 1E-5
+#define KEFF_CONVERG_THRESH 1E-4
 
 /** Maximum number of fixed source iterations allowed */
 #define MAX_ITERATIONS 3E+3
