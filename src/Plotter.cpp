@@ -521,7 +521,6 @@ void Plotter::plotTracksReflective(Track* track, int numReflect){
  * http://en.wikipedia.org/wiki/Bresenham%27s_line_algorithm
 */
 void Plotter::LineFct(double xIn, double yIn, double xOut, double yOut, int* pixMap, int color){
-	log_printf(DEBUG, "Drawing segment...");
 
 	/* initialize variables */
 	int x0, y0, x1,y1;

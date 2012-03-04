@@ -25,13 +25,13 @@
 #define MAX_ITERATIONS 3E+3
 
 /* Precompute and store exponential pre-factors in transport equation */
-#define STORE_PREFACTORS true
+#define STORE_PREFACTORS false
 
 /* Max number of regions for precomputing pre-factors in solver */
 #define FSR_HASHMAP_THRESH 100000
 
 /* Number of significant digits for computing hashmap exponential prefactors */
-#define FSR_HASHMAP_PRECISION 2
+#define FSR_HASHMAP_PRECISION 4
 
 
 /******************************************************************************

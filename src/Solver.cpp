@@ -112,29 +112,79 @@ void Solver::precomputeFactors() {
 /* Use hash map */
 #else
 
+	/* make pre factor array based on table look up with linear interpolation */
+
 	log_printf(NORMAL, "Making Prefactor array...");
 	_inverse_precision = pow(10,FSR_HASHMAP_PRECISION);
 
 	/* set size of prefactor array */
-	_pre_factor_array_size = NUM_POLAR_ANGLES * 3 * _inverse_precision;
-	_pre_factor_max_index = _pre_factor_array_size - NUM_POLAR_ANGLES - 1;
+	int stride = 10 * sqrt(_inverse_precision / 8);
+	_pre_factor_spacing = 10.0 / stride;
+	_pre_factor_array_size = 2 * NUM_POLAR_ANGLES * stride;
+	_pre_factor_max_index = _pre_factor_array_size - 2*NUM_POLAR_ANGLES - 1;
 
-	log_printf(INFO, "precision = %f,prefactor array size = %d", 1/_inverse_precision, _pre_factor_array_size);
+	log_printf(DEBUG, "prefactor array size: %i, max index: %i", _pre_factor_array_size, _pre_factor_max_index);
 
-	/* allocate prefactor array */
+	/* allocate arrays */
 	_pre_factor_array = new double[_pre_factor_array_size];
 
+	double expon;
+	double intercept;
+	double prefactor;
+	double slope;
+
 	/* Create prefactor array */
-	for (int i = 0; i < _pre_factor_array_size/NUM_POLAR_ANGLES; i ++){
+	for (int i = 0; i < stride; i ++){
 		for (int j = 0; j < NUM_POLAR_ANGLES; j++){
-			_pre_factor_array[NUM_POLAR_ANGLES * i + j] = 1 - exp(-i / (_inverse_precision * _quad->getSinTheta(j)));
-			log_printf(NORMAL, "prefactor %i, %i: %f", i, j, _pre_factor_array[NUM_POLAR_ANGLES * i + j]);
+			expon = exp(- (i * _pre_factor_spacing) / _quad->getSinTheta(j));
+			slope = - expon / _quad->getSinTheta(j);
+			intercept = expon * (1 + (i * _pre_factor_spacing) / _quad->getSinTheta(j));
+			_pre_factor_array[2 * NUM_POLAR_ANGLES * i + 2 * j] = slope;
+			_pre_factor_array[2 * NUM_POLAR_ANGLES * i + 2 * j + 1] = intercept;
+
+			prefactor =  1 - (slope*(i + _pre_factor_spacing) + intercept);
+
+			log_printf(DEBUG, "prefactor max appx: %1.12f, actual: %1.12f", prefactor, 1 - expon);
+
+
 		}
 	}
+
 #endif
 
 	return;
 }
+
+//#if !STORE_PREFACTORS
+//void Solver::setTrackPrefactors(Track* track){
+//
+//	std::vector<segment*> segments;
+//	segments = track->getSegments();
+//	double* sigma_t;
+//	segment* segment;
+//	int num_segs = track->getNumSegments();
+//
+//	log_printf(DEBUG, "looping over segments");
+//
+//	for (int s = 0; s < num_segs; s++) {
+//		segment = segments.at(s);
+//		sigma_t = segment->_material->getSigmaT();
+//		_track_fsr_ids[s] = &_flat_source_regions[segment->_region_id];
+//
+//		for (int e = 0; e < NUM_ENERGY_GROUPS; e++) {
+//			double sigma_t_curr = std::min(1e1, sigma_t[e]);
+//			int index = segment->_length * sigma_t_curr * _inverse_precision;
+//			index = NUM_POLAR_ANGLES * index;
+//
+//			index = std::min(index,_pre_factor_max_index);
+//
+//			for (int p = 0; p < NUM_POLAR_ANGLES; p++){
+//				_track_pre_factors[s * GRP_TIMES_ANG + p * NUM_ENERGY_GROUPS + e] = _pre_factor_array[index + p];
+//			}
+//		}
+//	}
+//}
+//#endif
 
 
 
@@ -362,6 +412,7 @@ void Solver::fixedSourceIteration(int max_iterations) {
 				polar_fluxes = track->getPolarFluxes();
 
 				/* Loop over each segment in forward direction */
+				log_printf(DEBUG, "looping over segments...");
 				for (int s = 0; s < num_segments; s++) {
 					segment = segments.at(s);
 					fsr = &_flat_source_regions[segment->_region_id];
@@ -369,19 +420,29 @@ void Solver::fixedSourceIteration(int max_iterations) {
 
 #if !STORE_PREFACTORS
 					sigma_t = segment->_material->getSigmaT();
-					/* Loop over energy groups, polar angles */
+
+//					log_printf(DEBUG, "looping over energy groups...");
 					for (int e = 0; e < NUM_ENERGY_GROUPS; e++) {
-						/* determine index into prefactor array */
-						int index = NUM_POLAR_ANGLES * segment->_length * sigma_t[e] * _inverse_precision;
-						index = std::min(index,_pre_factor_max_index);
+						double sigma_t_l = sigma_t[e] * segment->_length;
+						int index = sigma_t_l / _pre_factor_spacing;
+						index = std::min(index * 2 * NUM_POLAR_ANGLES, _pre_factor_max_index);
+//						log_printf(DEBUG, "index is: %i", index);
 						for (int p = 0; p < NUM_POLAR_ANGLES; p++){
+//							log_printf(DEBUG, "computing delta...");
+//							log_printf(DEBUG, "m: %f, sigma_t_l: %f, b: %f, spacing: %f, sigma_t_l actual: %f", _pre_factor_array[index + 2 * p], sigma_t_l, _pre_factor_array[index + 2 * p + 1], _pre_factor_spacing,
+//									segment->_length * sigma_t[e]);
 							delta = (polar_fluxes[GRP_TIMES_ANG + p*NUM_ENERGY_GROUPS + e] - ratios[e]) *
-									_pre_factor_array[index + p];
+									(1 - (_pre_factor_array[index + 2 * p] * sigma_t_l + _pre_factor_array[index + 2 * p + 1]));
+
+//							log_printf(DEBUG, "prefactor appx: %f, actual: %f",
+//									(1 - (_pre_factor_array[index + 2 * p] * sigma_t_l + _pre_factor_array[index + 2 * p + 1])),
+//									computePreFactor(segment, e, p));
 
 							fsr->incrementFlux(e, delta*weights[p]);
 							polar_fluxes[GRP_TIMES_ANG + p*NUM_ENERGY_GROUPS + e] -= delta;
 						}
 					}
+
 #else
 
 					for (int p = 0; p < NUM_POLAR_ANGLES; p++) {
@@ -396,10 +457,11 @@ void Solver::fixedSourceIteration(int max_iterations) {
 #endif
 				}
 
+
+				log_printf(DEBUG, "getting track...");
 				/* Transfer flux to outgoing track */
 				track->getTrackOut()->setPolarFluxes(!track->isReflOut(),
 						GRP_TIMES_ANG, polar_fluxes);
-
 
 				/* Loop over each segment in reverse direction */
 				for (int s = num_segments-1; s > -1; s--) {
@@ -409,20 +471,25 @@ void Solver::fixedSourceIteration(int max_iterations) {
 
 #if !STORE_PREFACTORS
 					sigma_t = segment->_material->getSigmaT();
-					/* Loop over energy groups, polar angles */
+
 					for (int e = 0; e < NUM_ENERGY_GROUPS; e++) {
-						/* determine index into prefactor array */
-						int index = NUM_POLAR_ANGLES * segment->_length * sigma_t[e] * _inverse_precision;
-						index = std::min(index,_pre_factor_max_index);
+
+						double sigma_t_l = sigma_t[e] * segment->_length;
+						int index = sigma_t_l / _pre_factor_spacing;
+						index = std::min(index * 2 * NUM_POLAR_ANGLES, _pre_factor_max_index);
+
 						for (int p = 0; p < NUM_POLAR_ANGLES; p++){
-							delta = (polar_fluxes[GRP_TIMES_ANG + p*NUM_ENERGY_GROUPS + e] - ratios[e]) *
-									_pre_factor_array[index + p];
+							delta = (polar_fluxes[p*NUM_ENERGY_GROUPS + e] - ratios[e]) *
+									(1 - (_pre_factor_array[index + 2 * p] * sigma_t_l + _pre_factor_array[index + 2 * p + 1]));
 
 							fsr->incrementFlux(e, delta*weights[p]);
-							polar_fluxes[GRP_TIMES_ANG + p*NUM_ENERGY_GROUPS + e] -= delta;
+							polar_fluxes[p*NUM_ENERGY_GROUPS + e] -= delta;
 						}
 					}
+
+
 #else
+
 					for (int p = 0; p < NUM_POLAR_ANGLES; p++) {
 						for (int e = 0; e < NUM_ENERGY_GROUPS; e++) {
 							delta = (polar_fluxes[p*NUM_ENERGY_GROUPS + e] -
