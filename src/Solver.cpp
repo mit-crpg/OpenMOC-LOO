@@ -115,12 +115,11 @@ void Solver::precomputeFactors() {
 	/* make pre factor array based on table look up with linear interpolation */
 
 	log_printf(NORMAL, "Making Prefactor array...");
-	_inverse_precision = pow(10,FSR_HASHMAP_PRECISION);
 
 	/* set size of prefactor array */
-	int stride = 10 * sqrt(_inverse_precision / 8);
-	_pre_factor_spacing = 10.0 / stride;
-	_pre_factor_array_size = 2 * NUM_POLAR_ANGLES * stride;
+	int num_array_values = 10 * sqrt(1 / (8 * KEFF_CONVERG_THRESH));
+	_pre_factor_spacing = 10.0 / num_array_values;
+	_pre_factor_array_size = 2 * NUM_POLAR_ANGLES * num_array_values;
 	_pre_factor_max_index = _pre_factor_array_size - 2*NUM_POLAR_ANGLES - 1;
 
 	log_printf(DEBUG, "prefactor array size: %i, max index: %i", _pre_factor_array_size, _pre_factor_max_index);
@@ -134,7 +133,7 @@ void Solver::precomputeFactors() {
 	double slope;
 
 	/* Create prefactor array */
-	for (int i = 0; i < stride; i ++){
+	for (int i = 0; i < num_array_values; i ++){
 		for (int j = 0; j < NUM_POLAR_ANGLES; j++){
 			expon = exp(- (i * _pre_factor_spacing) / _quad->getSinTheta(j));
 			slope = - expon / _quad->getSinTheta(j);

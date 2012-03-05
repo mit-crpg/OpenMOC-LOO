@@ -41,11 +41,9 @@ private:
 	bool _plot_fluxes;
 	int* _pix_map_FSRs;
 #if !STORE_PREFACTORS
-//	double* _track_pre_factors;
 	double* _pre_factor_array;
 	int _pre_factor_array_size;
 	int _pre_factor_max_index;
-	int _inverse_precision;
 	double _pre_factor_spacing;
 #endif
 	void precomputeFactors();
