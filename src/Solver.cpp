@@ -425,6 +425,7 @@ void Solver::fixedSourceIteration(int max_iterations) {
 							delta = (polar_fluxes[GRP_TIMES_ANG + p*NUM_ENERGY_GROUPS + e] -
 									ratios[e]) * segment->_prefactors[p][e];
 #endif
+							//log_printf(RESULT, "delta = %1.12f, prefactor = %f, polar_flux = %f, ratio = %f", delta, segment->_prefactors[p][e], polar_fluxes[GRP_TIMES_ANG + p*NUM_ENERGY_GROUPS + e], ratios[e]);
 							fsr->incrementFlux(e, delta*weights[p]);
 							polar_fluxes[GRP_TIMES_ANG + p*NUM_ENERGY_GROUPS + e] -= delta;
 						}
