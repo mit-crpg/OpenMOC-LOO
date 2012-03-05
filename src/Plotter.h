@@ -62,7 +62,7 @@ public:
 	void initializePixMap(float* pixMap);
 	double convertToGeometryX(int x);
 	double convertToGeometryY(int y);
-	double* makeScaledMap(double* regionMap, int* pixMap, double* pixMapRegion);
+	double* makeScaledMap(double* regionMap, int* pixMap, double* pixMapRegionRGB);
 	double* getScaledColors(double value, double min, double max, double* colors);
 };
 

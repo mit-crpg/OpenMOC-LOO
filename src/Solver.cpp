@@ -411,7 +411,6 @@ void Solver::fixedSourceIteration(int max_iterations) {
 				polar_fluxes = track->getPolarFluxes();
 
 				/* Loop over each segment in forward direction */
-				log_printf(DEBUG, "looping over segments...");
 				for (int s = 0; s < num_segments; s++) {
 					segment = segments.at(s);
 					fsr = &_flat_source_regions[segment->_region_id];
@@ -420,22 +419,14 @@ void Solver::fixedSourceIteration(int max_iterations) {
 #if !STORE_PREFACTORS
 					sigma_t = segment->_material->getSigmaT();
 
-//					log_printf(DEBUG, "looping over energy groups...");
 					for (int e = 0; e < NUM_ENERGY_GROUPS; e++) {
 						double sigma_t_l = sigma_t[e] * segment->_length;
 						int index = sigma_t_l / _pre_factor_spacing;
 						index = std::min(index * 2 * NUM_POLAR_ANGLES, _pre_factor_max_index);
-//						log_printf(DEBUG, "index is: %i", index);
+
 						for (int p = 0; p < NUM_POLAR_ANGLES; p++){
-//							log_printf(DEBUG, "computing delta...");
-//							log_printf(DEBUG, "m: %f, sigma_t_l: %f, b: %f, spacing: %f, sigma_t_l actual: %f", _pre_factor_array[index + 2 * p], sigma_t_l, _pre_factor_array[index + 2 * p + 1], _pre_factor_spacing,
-//									segment->_length * sigma_t[e]);
 							delta = (polar_fluxes[GRP_TIMES_ANG + p*NUM_ENERGY_GROUPS + e] - ratios[e]) *
 									(1 - (_pre_factor_array[index + 2 * p] * sigma_t_l + _pre_factor_array[index + 2 * p + 1]));
-
-//							log_printf(DEBUG, "prefactor appx: %f, actual: %f",
-//									(1 - (_pre_factor_array[index + 2 * p] * sigma_t_l + _pre_factor_array[index + 2 * p + 1])),
-//									computePreFactor(segment, e, p));
 
 							fsr->incrementFlux(e, delta*weights[p]);
 							polar_fluxes[GRP_TIMES_ANG + p*NUM_ENERGY_GROUPS + e] -= delta;
@@ -456,8 +447,6 @@ void Solver::fixedSourceIteration(int max_iterations) {
 #endif
 				}
 
-
-				log_printf(DEBUG, "getting track...");
 				/* Transfer flux to outgoing track */
 				track->getTrackOut()->setPolarFluxes(!track->isReflOut(),
 						GRP_TIMES_ANG, polar_fluxes);
