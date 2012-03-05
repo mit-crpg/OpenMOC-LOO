@@ -19,19 +19,19 @@
 #define GRP_TIMES_ANG NUM_POLAR_ANGLES*NUM_ENERGY_GROUPS
 
 /* Convergence threshold for computing k_eff */
-#define KEFF_CONVERG_THRESH 1E-4
+#define KEFF_CONVERG_THRESH 1E-5
 
 /** Maximum number of fixed source iterations allowed */
 #define MAX_ITERATIONS 3E+3
 
 /* Precompute and store exponential pre-factors in transport equation */
-#define STORE_PREFACTORS false
+#define STORE_PREFACTORS true
 
 /* Max number of regions for precomputing pre-factors in solver */
 #define FSR_HASHMAP_THRESH 100000
 
 /* Number of significant digits for computing hashmap exponential prefactors */
-#define FSR_HASHMAP_PRECISION 4
+#define FSR_HASHMAP_PRECISION 5
 
 
 /******************************************************************************

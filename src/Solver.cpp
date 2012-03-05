@@ -129,7 +129,6 @@ void Solver::precomputeFactors() {
 
 	double expon;
 	double intercept;
-	double prefactor;
 	double slope;
 
 	/* Create prefactor array */
@@ -383,6 +382,7 @@ void Solver::fixedSourceIteration(int max_iterations) {
 
 					for (int e = 0; e < NUM_ENERGY_GROUPS; e++) {
 						double sigma_t_l = sigma_t[e] * segment->_length;
+						sigma_t_l = std::min(sigma_t_l,10.0);
 						int index = sigma_t_l / _pre_factor_spacing;
 						index = std::min(index * 2 * NUM_POLAR_ANGLES, _pre_factor_max_index);
 
@@ -424,6 +424,7 @@ void Solver::fixedSourceIteration(int max_iterations) {
 					for (int e = 0; e < NUM_ENERGY_GROUPS; e++) {
 
 						double sigma_t_l = sigma_t[e] * segment->_length;
+						sigma_t_l = std::min(sigma_t_l,10.0);
 						int index = sigma_t_l / _pre_factor_spacing;
 						index = std::min(index * 2 * NUM_POLAR_ANGLES, _pre_factor_max_index);
 

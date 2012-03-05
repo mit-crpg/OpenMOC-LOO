@@ -209,9 +209,9 @@ void Plotter::plotMagickScaled(double* pixMapRGB, std::string type){
 	double* colors = new double[3];
 	double value;
 	/* pixel coordinates for color bar */
-	int x_start = 10;
+	int x_start = _bit_length_x - 40;
 	int y_start = 10;
-	int x_end = 30;
+	int x_end = _bit_length_x - 20;
 	int y_end = 90;
 
 	/* draw color bar on pixel map */
@@ -330,7 +330,6 @@ void Plotter::plotSilo(float* pixMap, std::string type){
 	const char* title = title_str.c_str();
 
 	/* Create file */
-    //pdb_file = DBCreate(title, DB_CLOBBER, DB_LOCAL, "structured mesh bitmap", DB_PDB);
 	if (_extension == "h5"){
 		file = DBCreate(title, DB_CLOBBER, DB_LOCAL, "structured mesh bitmap", DB_HDF5);
 	}
