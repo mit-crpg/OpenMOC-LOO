@@ -60,7 +60,7 @@ Geometry::Geometry(Parser* parser) {
 	/* Generate flat source regions */
 	Universe *univ = _universes.at(0);
 	_num_FSRs = univ->computeFSRMaps();
-	log_printf(INFO, "Number of flat source regions computed: %d", _num_FSRs);
+	log_printf(NORMAL, "Number of flat source regions computed: %d", _num_FSRs);
 
 	/* Allocate memory for maps between flat source regions ids and cell or
 	 * material ids */
@@ -1122,6 +1122,17 @@ Cell* Geometry::findCell(LocalCoords* coords) {
 	int universe_id = coords->getUniverse();
 	Universe* univ = _universes.at(universe_id);
 	return univ->findCell(coords, _universes);
+}
+
+
+/**
+ * Find the cell for an fsr_id. This function calls the recursive function
+ * findCell with a pointer to the base level universe 0
+ * @param fsr_id a flat source region id
+ * @return a pointer to the cell that this fsr is in
+ */
+Cell* Geometry::findCell(int fsr_id) {
+	return findCell(_universes.at(0), fsr_id);
 }
 
 

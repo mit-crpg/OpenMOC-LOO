@@ -335,6 +335,55 @@ double** Solver::getFSRtoFluxMap() {
 }
 
 
+/**
+ * Checks that each flat source region has at least one segment within it
+ * and if not, exits the program with an error message
+ */
+void Solver::checkTrackSpacing() {
+
+	log_printf(RESULT, "num_fsrs = %d", _num_FSRs);
+	int* FSR_segment_tallies = new int[_num_FSRs];
+	Track* track;
+	std::vector<segment*> segments;
+	segment* segment;
+	int num_segments;
+
+	/* Set each tally to zero to begin with */
+	for (int i=0; i < _num_FSRs; i++)
+		FSR_segment_tallies[i] = 0;
+
+	/* Iterate over all azimuthal angles, all tracks, and all segments
+	 * and tally each segment in the corresponding FSR */
+	for (int i = 0; i < _num_azim; i++) {
+		for (int j = 0; j < _num_tracks[i]; j++) {
+			track = &_tracks[i][j];
+			segments = track->getSegments();
+			num_segments = track->getNumSegments();
+
+			for (int s = 0; s < num_segments; s++) {
+				segment = segments.at(s);
+				FSR_segment_tallies[segment->_region_id]++;
+			}
+		}
+	}
+
+	/* Loop over all FSRs and if one FSR does not have tracks in it, print
+	 * error message to the screen and exit program */
+	for (int i=0; i < _num_FSRs; i++) {
+		if (FSR_segment_tallies[i] == 0) {
+			Cell* cell = _geom->findCell(i);
+			log_printf(ERROR, "No tracks were tallied inside FSR id = %d which "
+					"is cell id = %d. Please reduce your track spacing,"
+					" increase the number of azimuthal angles, or increase the"
+					" size of the flat source regions", i, cell->getId());
+		}
+	}
+
+	delete [] FSR_segment_tallies;
+}
+
+
+
 void Solver::fixedSourceIteration(int max_iterations) {
 
 	Track* track;
@@ -532,6 +581,9 @@ double Solver::computeKeff(int max_iterations) {
 	Material* material;
 
 	log_printf(NORMAL, "Computing k_eff...");
+
+	/* Check that each FSR has at least one segment crossing it */
+	checkTrackSpacing();
 
 	/* Initial guess */
 	_old_k_effs.push(1.0);

@@ -62,6 +62,8 @@ public:
 	void fixedSourceIteration(int max_iterations);
 	double computeKeff(int max_iterations);
 	void plotFluxes();
+	void checkTrackSpacing();
+
 //#if !STORE_PREFACTORS
 //	void setTrackPrefactors(Track* track);
 //#endif

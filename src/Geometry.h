@@ -83,6 +83,7 @@ public:
 	void adjustKeys();
 	void buildNeighborsLists();
 	Cell* findCell(LocalCoords* coords);
+	Cell* findCell(int fsr_id);
 	Cell* findCell(Universe* univ, int fsr_id);
 	Cell* findNextCell(LocalCoords* coords, double angle);
 	int findFSRId(LocalCoords* coords);
