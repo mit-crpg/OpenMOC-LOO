@@ -534,7 +534,7 @@ double Solver::computeKeff(int max_iterations) {
 	log_printf(NORMAL, "Computing k_eff...");
 
 	/* Initial guess */
-	_k_eff_old = 1.0;
+	_old_k_effs.push(1.0);
 
 	/* Set scalar flux to unity for each region */
 	oneFSRFluxes();
@@ -632,7 +632,7 @@ double Solver::computeKeff(int max_iterations) {
 					scatter_source += sigma_s[G*NUM_ENERGY_GROUPS + g] * scalar_flux[g];
 
 				/* Set the total source for region r in group G */
-				source[G] = ((1.0 / (_k_eff_old)) * fission_source * chi[G] +
+				source[G] = ((1.0 / (_old_k_effs.front())) * fission_source * chi[G] +
 								scatter_source) * ONE_OVER_FOUR_PI;
 			}
 		}
@@ -644,13 +644,6 @@ double Solver::computeKeff(int max_iterations) {
 		/* Update pre-computed source / sigma_t ratios */
 		computeRatios();
 
-		for (int r = 0; r < _num_FSRs; r++) {
-			for (int e = 0; e < NUM_ENERGY_GROUPS; e++) {
-				fsr = &_flat_source_regions[r];
-				double ratios = fsr->getRatios()[e];
-			}
-		}
-
 		/* Iteration the flux with the new source */
 		fixedSourceIteration(1);
 
@@ -659,7 +652,7 @@ double Solver::computeKeff(int max_iterations) {
 
 
 		/* If k_eff converged, return k_eff */
-		if (fabs(_k_eff_old - _k_eff) < KEFF_CONVERG_THRESH){
+		if (fabs(_old_k_effs.back() - _k_eff) < KEFF_CONVERG_THRESH){
 			/* Converge the scalar flux spatially within geometry to plot */
 			fixedSourceIteration(1000);
 
@@ -679,8 +672,13 @@ double Solver::computeKeff(int max_iterations) {
 			return _k_eff;
 		}
 
-		/* If not converged, old k_eff and sources are updated */
-		_k_eff_old = _k_eff;
+		/* If not converged, save old k_eff and pop off old_keff from
+		 *  previous iteration */
+		_old_k_effs.push(_k_eff);
+		if (_old_k_effs.size() == NUM_KEFFS_TRACKED)
+			_old_k_effs.pop();
+
+		/* Update sources in each FSR */
 		for (int r = 0; r < _num_FSRs; r++) {
 			fsr = &_flat_source_regions[r];
 			source = fsr->getSource();

@@ -88,7 +88,6 @@ public:
 	int findFSRId(LocalCoords* coords);
 	void segmentize(Track* track);
 	void generateCSG();
-//	void generateCSGLists(Universe* univ, Point* point);
 
 	template <class K, class V>
 	bool mapContainsKey(std::map<K, V> map, K key);

@@ -16,6 +16,7 @@
 #include <limits.h>
 #include <string>
 #include <sstream>
+#include <queue>
 #include "Geometry.h"
 #include "Quadrature.h"
 #include "Track.h"
@@ -35,7 +36,7 @@ private:
 	int _num_FSRs;
 	double* _FSRs_to_fluxes[NUM_ENERGY_GROUPS + 1];
 	double _k_eff;
-	double _k_eff_old;
+	std::queue<double> _old_k_effs;
 	Plotter* _plotter;
 	float* _pix_map_total_flux;
 	bool _plot_fluxes;
