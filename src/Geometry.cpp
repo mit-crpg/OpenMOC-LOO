@@ -549,16 +549,27 @@ void Geometry::addCell(Cell* cell) {
 		if (t_num_sectors > 0) {
 			log_printf(INFO, "Cell %d has multiple sectors.", cell->getId());
 			
-			int tmp1, tmp2[2], tmp3[3];
 			int *list;
-			int surface1, surface2, surface_1, surface_2, surface_3;
+			int surface1, surface2;
 			int num;
 			Surface *s1, *s2; 
 			CellBasic *c1, *c2, *c3;
 			/* adding in 4 sectors */
 			if (t_num_sectors == 4){
 				std::map<int, Surface*> cells_surfaces = cell->getSurfaces();
-
+#if 1
+				int i = 0;
+				num = cell->getNumSurfaces();
+				int *tmp = new int[num];
+				for (iter = cells_surfaces.begin(); 
+					 iter != cells_surfaces.end(); iter++) {
+					tmp[i] = iter->first;
+					i++;
+				}
+				list = &tmp[0];
+#else
+				int tmp1, tmp2[2], tmp3[3];
+				int surface_1, surface_2, surface_3;
 				if (cell->getNumSurfaces() == 1) {
 					num = 1;
 					iter = cells_surfaces.begin();
@@ -593,14 +604,17 @@ void Geometry::addCell(Cell* cell) {
 					tmp3[2] = surface_3;
 					list = &tmp3[0];
 				}
+#endif
 				/* generate 2 surfaces */
 				surface1 = id;
+				log_printf(INFO, "%d", surface1);
 				s1 = new Plane(id, BOUNDARY_NONE, 1.0, 1.0, 0);
 				addSurface(s1);
 				log_printf(INFO, "Added sector surface: %s", s1->toString().c_str());
 				id++;
 
 				surface2 = id;
+				log_printf(INFO, "%d", surface2);
 				s2 = new Plane(id, BOUNDARY_NONE, 1.0, -1.0, 0);
 				addSurface(s2);
 				log_printf(INFO, "Added sector surface: %s", s2->toString().c_str());
@@ -614,7 +628,7 @@ void Geometry::addCell(Cell* cell) {
 				addCell(c1);
 				c1->addSurface(surface1, s1);
 				c1->addSurface(surface2, s2);
-				log_printf(NORMAL, "Added sector: %s", c1->toString().c_str());
+				log_printf(INFO, "Added sector: %s", c1->toString().c_str());
 				id++;
 				
 				//c2 = dynamic_cast<CellBasic*>(cell)->clone(id, 0, 0);
@@ -624,7 +638,7 @@ void Geometry::addCell(Cell* cell) {
 				addCell(c2);
 				c2->addSurface(-1*surface1, s1);
 				c2->addSurface(-1*surface2, s2);
-				log_printf(NORMAL, "Added sector: %s", c2->toString().c_str());
+				log_printf(INFO, "Added sector: %s", c2->toString().c_str());
 				id++;
 				
 				
@@ -635,15 +649,18 @@ void Geometry::addCell(Cell* cell) {
 				addCell(c3);
 				c3->addSurface(-1*surface1, s1);
 				c3->addSurface(surface2, s2);
-				log_printf(NORMAL, "Added sector: %s", c3->toString().c_str());
+				log_printf(INFO, "Added sector: %s", c3->toString().c_str());
 				id++;
 				
+				/* update original cell */
 				dynamic_cast<CellBasic*>(cell)->setNumSectors(0);				
 				cell->addSurface(surface1, s1);
 				cell->addSurface(-1*surface2, s2);
-				log_printf(NORMAL, "original cell is updated to %s",
+				log_printf(INFO, "original cell is updated to %s",
 				cell->toString().c_str()); 
 				
+				/* clean-up */
+				//delete [] tmp2;
 			} /* end of # sectors = 4 */
 			/* other number of sectors */
 			else {
