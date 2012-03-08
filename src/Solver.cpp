@@ -659,7 +659,7 @@ double Solver::computeKeff(int max_iterations) {
 
 
 		/* If k_eff converged, return k_eff */
-		if (fabs(_k_eff_old - _k_eff) < KEFF_CONVERG_THRESH){
+		if (fabs(_k_eff_old - _k_eff) < KEFF_CONVERG_THRESH && _k_eff > 1){
 			/* Converge the scalar flux spatially within geometry to plot */
 			fixedSourceIteration(1000);
 
