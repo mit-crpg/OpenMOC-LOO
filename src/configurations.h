@@ -21,6 +21,11 @@
 /* Convergence threshold for computing k_eff */
 #define KEFF_CONVERG_THRESH 1E-5
 
+/* The number of old k_eff values which will be stored. Keeping track of more
+ * than just the most recent k_eff is intended to prevent from prematurely
+ * exiting fixed source iteration at a local minimum or maximum */
+#define NUM_KEFFS_TRACKED 3
+
 /** Maximum number of fixed source iterations allowed */
 #define MAX_ITERATIONS 3E+3
 

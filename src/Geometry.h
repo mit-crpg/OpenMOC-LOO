@@ -83,12 +83,12 @@ public:
 	void adjustKeys();
 	void buildNeighborsLists();
 	Cell* findCell(LocalCoords* coords);
+	Cell* findCell(int fsr_id);
 	Cell* findCell(Universe* univ, int fsr_id);
 	Cell* findNextCell(LocalCoords* coords, double angle);
 	int findFSRId(LocalCoords* coords);
 	void segmentize(Track* track);
 	void generateCSG();
-//	void generateCSGLists(Universe* univ, Point* point);
 
 	template <class K, class V>
 	bool mapContainsKey(std::map<K, V> map, K key);
