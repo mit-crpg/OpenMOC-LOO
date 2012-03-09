@@ -1281,23 +1281,62 @@ Cell* Geometry::findNextCell(LocalCoords* coords, double angle) {
 		/* If the distance returned is not INFINITY, the trajectory will
 		 * intersect a surface in the cell */
 		if (dist != INFINITY) {
+			LocalCoords test(0,0);
+
 			/* Move LocalCoords just to the next surface in the cell plus an
 			 * additional small bit into the next cell */
-			coords->updateMostLocal(&surf_intersection);
 			double delta_x = cos(angle) * TINY_MOVE;
 			double delta_y = sin(angle) * TINY_MOVE;
+
+			coords->copyCoords(&test);
+			coords->updateMostLocal(&surf_intersection);
 			coords->adjustCoords(delta_x, delta_y);
 
 			/* Find new cell and return it */
 			cell = findCell(coords);
-			return cell;
+
+			/* Check if cell is null - this means that intersection point
+			 * is outside the bounds of the geometry and the old coords
+			 * should be restored so that we can look for the next
+			 * lattice cell */
+			bool lattice_check = true;
+			LocalCoords* test_curr = test.getLowestLevel();
+			LocalCoords* coords_curr = coords->getLowestLevel();
+
+			while (test_curr != NULL && test_curr->getUniverse() != 0 &&
+					coords_curr != NULL && coords_curr->getUniverse() !=0){
+				if (test_curr->getType() == LAT) {
+					/* Check if it is the same lattice as */
+					if (coords_curr->getType() == LAT && test_curr->getType() == LAT) {
+						if (coords_curr->getLatticeX() != test_curr->getLatticeX() ||
+								coords_curr->getLatticeY() != test_curr->getLatticeY())
+							dist = INFINITY;
+							lattice_check = false;
+							break;
+					}
+				}
+
+				test_curr = test_curr->getPrev();
+				coords_curr = coords_curr->getPrev();
+			}
+
+
+			if (cell == NULL) {
+				dist = INFINITY;
+				test.copyCoords(coords);
+			}
+
+			if (dist != INFINITY)
+				return cell;
+			else
+				test.copyCoords(coords);
 		}
 
 		/* If the distance returned is infinity, the trajectory will not
 		 * intersect a surface in the cell. We thus need to readjust to
 		 * the localcoord to the base universe and check whether we need
 		 * to move to a new lattice cell */
-		else if (dist == INFINITY) {
+		if (dist == INFINITY) {
 
 			/* Get the lowest level localcoords in the linked list */
 			LocalCoords* curr = coords->getLowestLevel();
@@ -1435,6 +1474,10 @@ void Geometry::segmentize(Track* track) {
 			_max_seg_length = segment_length;
 		if (segment_length < _min_seg_length)
 			_min_seg_length = segment_length;
+
+		log_printf(DEBUG, "segment start x = %f, y = %f, segment end x = %f, y = %f",
+				segment_start.getX(), segment_start.getY(), segment_end.getX(),
+				segment_end.getY());
 
 
 		new_segment->_region_id = findFSRId(&segment_start);
