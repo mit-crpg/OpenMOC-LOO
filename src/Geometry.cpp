@@ -1142,6 +1142,27 @@ Cell* Geometry::findCell(LocalCoords* coords) {
 }
 
 
+/* Find the first cell of a segment with a starting point that is represented
+ * by this localcoords object is in. This method assumes that
+* the localcoord has coordinates and a universe id. This method will move the
+* initial starting point by a small amount along the direction of the track
+* in order to ensure that the track starts inside of a distinct FSR rather than
+* on the boundary between two of them. The method will recursively find the
+* localcoord by building a linked list of localcoords from the localcoord
+* passed in as an argument down to the lowest level cell found. In the process
+* it will set the local coordinates for each localcoord
+* in the linked list for the lattice or universe that it is in.
+* @param coords pointer to a localcoords object
+* @return returns a pointer to a cell if found, NULL if no cell found
+*/
+Cell* Geometry::findFirstCell(LocalCoords* coords, double angle) {
+	double delta_x = cos(angle) * TINY_MOVE;
+	double delta_y = sin(angle) * TINY_MOVE;
+	coords->adjustCoords(delta_x, delta_y);
+	return findCell(coords);
+}
+
+
 /**
  * Find the cell for an fsr_id. This function calls the recursive function
  * findCell with a pointer to the base level universe 0
@@ -1305,6 +1326,7 @@ Cell* Geometry::findNextCell(LocalCoords* coords, double angle) {
 			double delta_x = cos(angle) * TINY_MOVE;
 			double delta_y = sin(angle) * TINY_MOVE;
 
+
 			coords->copyCoords(&test);
 			coords->updateMostLocal(&surf_intersection);
 			coords->adjustCoords(delta_x, delta_y);
@@ -1316,21 +1338,19 @@ Cell* Geometry::findNextCell(LocalCoords* coords, double angle) {
 			 * is outside the bounds of the geometry and the old coords
 			 * should be restored so that we can look for the next
 			 * lattice cell */
-			bool lattice_check = true;
 			LocalCoords* test_curr = test.getLowestLevel();
 			LocalCoords* coords_curr = coords->getLowestLevel();
 
 			while (test_curr != NULL && test_curr->getUniverse() != 0 &&
 					coords_curr != NULL && coords_curr->getUniverse() !=0){
-				if (test_curr->getType() == LAT) {
-					/* Check if it is the same lattice as */
-					if (coords_curr->getType() == LAT && test_curr->getType() == LAT) {
-						if (coords_curr->getLatticeX() != test_curr->getLatticeX() ||
-								coords_curr->getLatticeY() != test_curr->getLatticeY())
-							dist = INFINITY;
-							lattice_check = false;
-							break;
-					}
+					/* Check if the next cell found is in the same lattice cell
+					 * as the previous cell */
+				if (coords_curr->getType() == LAT &&
+						test_curr->getType() == LAT) {
+					if (coords_curr->getLatticeX() != test_curr->getLatticeX() ||
+							coords_curr->getLatticeY() != test_curr->getLatticeY())
+						dist = INFINITY;
+						break;
 				}
 
 				test_curr = test_curr->getPrev();
@@ -1338,13 +1358,21 @@ Cell* Geometry::findNextCell(LocalCoords* coords, double angle) {
 			}
 
 
+			/* If the cell is null then we should reset and find the next lattice cell
+			 * rather than return this cell */
 			if (cell == NULL) {
 				dist = INFINITY;
 				test.copyCoords(coords);
 			}
 
+			/* If the distance is not INFINITY then the new cell found is the one
+			 * to return
+			 */
 			if (dist != INFINITY)
 				return cell;
+
+			/* If the distance is not INFINITY then the new cell found is not
+			 * the one to return and we should move to a new lattice cell */
 			else
 				test.copyCoords(coords);
 		}
@@ -1460,7 +1488,7 @@ void Geometry::segmentize(Track* track) {
 	segment_end.setUniverse(0);
 
 	/* Find the cell for the track starting point */
-	Cell* curr = findCell(&segment_end);
+	Cell* curr = findFirstCell(&segment_end, phi);
 	Cell* prev;
 
 	/* If starting point was outside the bounds of the geometry */
@@ -1495,7 +1523,6 @@ void Geometry::segmentize(Track* track) {
 		log_printf(DEBUG, "segment start x = %f, y = %f, segment end x = %f, y = %f",
 				segment_start.getX(), segment_start.getY(), segment_end.getX(),
 				segment_end.getY());
-
 
 		new_segment->_region_id = findFSRId(&segment_start);
 //		new_segment->_region_id = prev->getUid();
