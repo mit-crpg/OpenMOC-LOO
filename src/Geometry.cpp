@@ -1326,7 +1326,9 @@ Cell* Geometry::findNextCell(LocalCoords* coords, double angle) {
 			double delta_x = cos(angle) * TINY_MOVE;
 			double delta_y = sin(angle) * TINY_MOVE;
 
-
+			/* Copy coords to the test coords before moving it by delta and
+			 * finding the new cell it is in - do this for testing purposes
+			 * in case the new cell found is NULL or is in a new lattice cell*/
 			coords->copyCoords(&test);
 			coords->updateMostLocal(&surf_intersection);
 			coords->adjustCoords(delta_x, delta_y);
@@ -1347,8 +1349,8 @@ Cell* Geometry::findNextCell(LocalCoords* coords, double angle) {
 					 * as the previous cell */
 				if (coords_curr->getType() == LAT &&
 						test_curr->getType() == LAT) {
-					if (coords_curr->getLatticeX() != test_curr->getLatticeX() ||
-							coords_curr->getLatticeY() != test_curr->getLatticeY())
+					if (coords_curr->getLatticeX() != test_curr->getLatticeX()
+					|| coords_curr->getLatticeY() != test_curr->getLatticeY())
 						dist = INFINITY;
 						break;
 				}
@@ -1357,13 +1359,10 @@ Cell* Geometry::findNextCell(LocalCoords* coords, double angle) {
 				coords_curr = coords_curr->getPrev();
 			}
 
-
-			/* If the cell is null then we should reset and find the next lattice cell
-			 * rather than return this cell */
-			if (cell == NULL) {
+			/* If the cell is null then we should reset and find the next lattice
+			 * cell rather than return this cell */
+			if (cell == NULL)
 				dist = INFINITY;
-				test.copyCoords(coords);
-			}
 
 			/* If the distance is not INFINITY then the new cell found is the one
 			 * to return
