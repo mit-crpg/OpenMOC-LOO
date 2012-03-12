@@ -23,6 +23,7 @@ private:
 	int _id;
 	double _sigma_t[NUM_ENERGY_GROUPS];
 	double _sigma_a[NUM_ENERGY_GROUPS];
+	double _sigma_f[NUM_ENERGY_GROUPS];
 	double _nu_sigma_f[NUM_ENERGY_GROUPS];
 	double _chi[NUM_ENERGY_GROUPS];
 	/* first index is row number; second index is column number */
@@ -31,18 +32,21 @@ public:
 	Material(int id,
 			 double *sigma_a, int sigma_a_cnt,
 			 double *sigma_t, int sigma_t_cnt,
+			 double *sigma_f, int sigma_f_cnt,
 			 double *nu_sigma_f, int nu_sigma_f_cnt,
 			 double *chi, int chi_cnt,
 			 double *sigma_s, int sigma_s_cnt);
 	virtual ~Material();
 	int getUid() const;
 	int getId() const;
+	double* getSigmaF();
 	double* getNuSigmaF();
 	double* getSigmaS();
 	double* getSigmaT();
 	double* getSigmaA();
 	double* getChi();
 	void setChi(double chi[NUM_ENERGY_GROUPS]);
+	void setSigmaF(double sigma_f[NUM_ENERGY_GROUPS]);
 	void setNuSigmaF(double nu_sigma_f[NUM_ENERGY_GROUPS]);
 	void setSigmaS(double sigma_s[NUM_ENERGY_GROUPS][NUM_ENERGY_GROUPS]);
 	void setSigmaT(double sigma_t[NUM_ENERGY_GROUPS]);

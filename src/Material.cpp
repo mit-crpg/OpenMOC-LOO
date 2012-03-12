@@ -19,6 +19,7 @@ int Material::_n = 0;
 Material::Material(int id,
 				   double *sigma_a, int sigma_a_cnt,
 				   double *sigma_t, int sigma_t_cnt,
+				   double *sigma_f, int sigma_f_cnt,
 				   double *nu_sigma_f, int nu_sigma_f_cnt,
 				   double *chi, int chi_cnt,
 				   double *sigma_s, int sigma_s_cnt) {
@@ -33,6 +34,10 @@ Material::Material(int id,
 	if (sigma_t_cnt != NUM_ENERGY_GROUPS)
 		log_printf(ERROR, "Wrong number of sigma_t");
 	memcpy(_sigma_t, sigma_t, NUM_ENERGY_GROUPS*sizeof(*_sigma_t));
+
+	if (nu_sigma_f_cnt != NUM_ENERGY_GROUPS)
+		log_printf(ERROR, "Wrong number of sigma_f");
+	memcpy(_sigma_f, sigma_f, NUM_ENERGY_GROUPS*sizeof(*_sigma_f));
 
 	if (nu_sigma_f_cnt != NUM_ENERGY_GROUPS)
 		log_printf(ERROR, "Wrong number of nu_sigma_f");
@@ -92,6 +97,16 @@ int Material::getId() const {
 }
 
 
+
+/**
+ * Return the material's fission cross-section array
+ * @return the material's fission cross-section array
+ */
+double* Material::getSigmaF() {
+    return _sigma_f;
+}
+
+
 /**
  * Return the material's nu*sigma_f array
  * @return the material's nu*sigma_f array
@@ -135,6 +150,16 @@ double* Material::getSigmaA() {
 void Material::setChi(double chi[NUM_ENERGY_GROUPS]) {
 	for (int i=0; i < NUM_ENERGY_GROUPS; i++)
 		_chi[i] = chi[i];
+}
+
+
+/**
+ * Set the material's fission cross-section array
+ * @param nu_sigma_f the fission cross-section array
+ */
+void Material::setSigmaF(double sigma_f[NUM_ENERGY_GROUPS]) {
+	for (int i=0; i < NUM_ENERGY_GROUPS; i++)
+		_sigma_f[i] = sigma_f[i];
 }
 
 

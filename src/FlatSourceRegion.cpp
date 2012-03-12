@@ -238,3 +238,25 @@ void FlatSourceRegion::computeRatios() {
 
 	return;
 }
+
+
+/**
+ * Compute the volumetric fission rate in this flat source region by adding
+ * up the fission rates in each energy group. This mehtod assumes that fixed
+ * source iteration has already been run since it uses the flux stored in
+ * this region
+ */
+double FlatSourceRegion::computeFissionRate() {
+
+	double power = 0.0;
+	double* sigma_f = _material->getSigmaF();
+
+	/* Add the fission rates from each energy group */
+	for (int e=0; e < NUM_ENERGY_GROUPS; e++)
+		power += sigma_f[e] * _flux[e];
+
+	/* Multiply by volume of FSR */
+	power *= _volume;
+
+	return power;
+}
