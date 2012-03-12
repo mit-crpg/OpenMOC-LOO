@@ -89,6 +89,11 @@ public:
 	Cell* findNextCell(LocalCoords* coords, double angle);
 	int findFSRId(LocalCoords* coords);
 	void segmentize(Track* track);
+
+	void computePinPowers(double* FSRs_to_powers, double* FSRs_to_pin_powers);
+	double computePinPowers(Universe* univ, char* output_file_prefix,
+			int FSR_id, double* FSRs_to_powers, double* FSRs_to_pin_powers);
+
 	void generateCSG();
 
 	template <class K, class V>

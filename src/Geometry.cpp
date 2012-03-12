@@ -1524,8 +1524,6 @@ void Geometry::segmentize(Track* track) {
 				segment_end.getY());
 
 		new_segment->_region_id = findFSRId(&segment_start);
-//		new_segment->_region_id = prev->getUid();
-//		new_segment->_region_id = static_cast<CellBasic*>(_cells.at(prev->getId()))->getMaterial();
 
 		/* Checks to make sure that new segment does not have the same start
 		 * and end points */
@@ -1572,6 +1570,118 @@ int Geometry::findFSRId(LocalCoords* coords) {
 
 	return fsr_id;
 }
+
+
+void Geometry::computePinPowers(double* FSRs_to_powers,
+								double* FSRs_to_pin_powers) {
+
+	Universe* univ = _universes.at(0);
+
+	computePinPowers(univ, "universe0", 0, FSRs_to_powers, FSRs_to_pin_powers);
+
+	return;
+}
+
+
+double Geometry::computePinPowers(Universe* univ, char* output_file_prefix,
+		int FSR_id, double* FSRs_to_powers, double* FSRs_to_pin_powers) {
+
+	double power = 0;
+
+	/* If the universe is a SIMPLE type universe */
+	if (univ->getType() == SIMPLE) {
+		std::map<int, Cell*> cells = univ->getCells();
+		std::map<int, int> _region_map;
+		std::vector<int> fsr_ids;
+		int num_cells = univ->getNumCells();
+		Cell* curr;
+
+		/* For each of the cells inside the lattice, check if it is
+		 * material or fill type */
+		std::map<int, Cell*>::iterator iter1;
+		for (iter1 = cells.begin(); iter1 != cells.end(); ++iter1) {
+			curr = iter1->second;
+
+			/* If the current cell is a MATERIAL type cell, pull its
+			 * FSR id from the fsr map and increment the power by the
+			 * power for that FSR
+			 */
+			if (curr->getType() == MATERIAL) {
+				int fsr_id = univ->getFSR(curr->getId()) + FSR_id;
+				fsr_ids.push_back(fsr_id);
+				power += FSRs_to_powers[fsr_id];
+			}
+
+			/* If the current cell is a FILL type cell, pull its
+			 * FSR id from the fsr map
+			 */
+			else {
+				CellFill* fill_cell = static_cast<CellFill*>(curr);
+				Universe* univ_fill = fill_cell->getUniverseFill();
+				int fsr_id = univ->getFSR(curr->getId()) + FSR_id;
+
+				/* Create an output filename for this cell's power */
+				power += computePinPowers(univ, output_file_prefix, fsr_id,
+										FSRs_to_powers, FSRs_to_pin_powers);
+			}
+		}
+
+		/* Loop over all of the FSR ids stored for MATERIAL type cells
+		 * and save their pin powers in the FSRs_to_pin_powers map */
+		std::vector<int>::iterator iter2;
+		for (iter2 = fsr_ids.begin(); iter2 != fsr_ids.end(); ++iter2)
+			FSRs_to_pin_powers[iter2] = power;
+	}
+
+	/* If the universe is a LATTICE type universe */
+	else {
+		Lattice* lattice = static_cast<Lattice*>(univ);
+		Universe* curr;
+		int num_x = lattice->getNumX();
+		int num_y = lattice->getNumY();
+		int fsr_id;
+		double cell_power = 0;
+
+		/* Create an output file to write this lattice's pin powers to */
+		std::stringstream output_file_name;
+		output_file_name << output_file_prefix << ".txt";
+		FILE* output_file = fopen(output_file_name.str().c_str(), "w");
+
+		/* Loop over all lattice cells in this lattice */
+		for (int i=0; i < num_x; i++) {
+			for (int j=0; j < num_y; j++) {
+
+				/* Get a pointer to the current lattice cell */
+				curr = lattice->getUniverse(i, j);
+
+				/* Get the FSR id prefix for this lattice cell */
+				fsr_id = lattice->getFSR(i, j) + FSR_id;
+
+				/* Create an output filename for this cell's power */
+				std::stringstream file_prefix;
+				file_prefix << output_file_prefix << "_lattice" <<
+						lattice->getId() << "_latx" << i << "_laty" << j;
+
+				/* Find this lattice cell's power */
+				cell_power = computePinPowers(curr,
+								(char*)file_prefix.str().c_str(),
+								fsr_id, FSRs_to_powers, FSRs_to_pin_powers);
+
+				/* Write this lattice cell's power to the output file */
+				fprintf(output_file, "%f, ", cell_power);
+			}
+			/* Move to the next line in the output file */
+			fprintf(output_file, "\n");
+		}
+
+		fclose(output_file);
+	}
+
+	return power;
+
+}
+
+
 
 /**
  * generate CSG of geometry

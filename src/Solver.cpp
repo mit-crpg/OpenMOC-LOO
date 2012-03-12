@@ -383,6 +383,25 @@ void Solver::checkTrackSpacing() {
 }
 
 
+/**
+ * Compute the fission rates in each FSR and save them in a map of
+ * FSR ids to fission rates
+ */
+void Solver::computeFSRPowers() {
+
+	FlatSourceRegion* fsr;
+
+	/* Loop over all FSRs */
+	for (int i=0; i < _num_FSRs; i++) {
+		fsr = &_flat_source_regions[i];
+		_FSRs_to_powers[i] = fsr->computeFissionRate();
+	}
+
+	return;
+}
+
+
+
 
 void Solver::fixedSourceIteration(int max_iterations) {
 
