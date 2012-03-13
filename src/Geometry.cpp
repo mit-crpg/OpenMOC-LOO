@@ -1688,7 +1688,7 @@ double Geometry::computePinPowers(Universe* univ, char* output_file_prefix,
 			for (int j = 0; j < num_x; j++) {
 
 				/* Get a pointer to the current lattice cell */
-				curr = lattice->getUniverse(i, j);
+				curr = lattice->getUniverse(j, i);
 
 				/* Get the FSR id prefix for this lattice cell */
 				fsr_id = lattice->getFSR(j, i) + FSR_id;
@@ -1716,7 +1716,6 @@ double Geometry::computePinPowers(Universe* univ, char* output_file_prefix,
 	}
 
 	return power;
-
 }
 
 
