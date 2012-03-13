@@ -180,7 +180,7 @@ void Plotter::plotMagick(float* pixMap, std::string type){
  * Generic function for plotting double inline RGB pixMap in png, tiff, or jpg file
  * using Magick++
  */
-void Plotter::plotMagickScaled(double* pixMapRGB, std::string type){
+void Plotter::plotMagickScaled(double* pixMapRGB, double min, double max, std::string type){
 	log_printf(NORMAL, "Writing Magick bitmap...");
 
 	/* declare variables */
@@ -239,8 +239,10 @@ void Plotter::plotMagickScaled(double* pixMapRGB, std::string type){
 	drawList.push_back(Magick::DrawableLine(x_start,y_start,x_start,y_end));  // left
 	drawList.push_back(Magick::DrawableLine(x_end,y_start,x_end,y_end));      // right
 
+
 	/* draw box on image */
 	image.draw(drawList);
+
 
 	/* create filename with correct extension */
 	std::stringstream string;
@@ -686,9 +688,12 @@ void Plotter::plotRegion(int* pixMap, double* regionMap, std::string regionName)
 		/* allocate memory for pixMapRegion array */
 		double* pixMapRegionRGB = new double[9 * _bit_length_x * _bit_length_y];
 
-		pixMapRegionRGB = makeScaledMap(regionMap, pixMap, pixMapRegionRGB);
+		double min = getMin(regionMap, pixMap);
+		double max = getMax(regionMap, pixMap);
 
-		plotMagickScaled(pixMapRegionRGB, regionName);
+		pixMapRegionRGB = makeScaledMap(regionMap, pixMap, pixMapRegionRGB, min, max);
+
+		plotMagickScaled(pixMapRegionRGB, min, max, regionName);
 
 		delete [] pixMapRegionRGB;
 	}
@@ -716,25 +721,42 @@ void Plotter::plotRegion(int* pixMap, double* regionMap, std::string regionName)
 	}
 }
 
+double Plotter::getMin(double* regionMap, int* pixMap){
+
+	double min = regionMap[pixMap[0]];
+
+	/* find min and max values in regionMap */
+	for (int y=0;y< _bit_length_y; y++){
+		for (int x = 0; x < _bit_length_x; x++){
+			min = std::min(min, regionMap[pixMap[y * _bit_length_x + x]]);
+		}
+	}
+
+	return min;
+}
+
+double Plotter::getMax(double* regionMap, int* pixMap){
+
+	double max = regionMap[pixMap[0]];
+
+	/* find min and max values in regionMap */
+	for (int y=0;y< _bit_length_y; y++){
+		for (int x = 0; x < _bit_length_x; x++){
+			max = std::max(max, regionMap[pixMap[y * _bit_length_x + x]]);
+		}
+	}
+
+	return max;
+}
+
+
 /**
  * Takes in a FSR pixMap array (pixMap), a map (regionMap) that translates
  * a FSR id to a region id (cell, material, etc), and a new blank pixMap (pixMapRegion).
  * Writes RGB color data to pixMapRegion based on the intensity of the variable
  * being plotted.
  */
-double* Plotter::makeScaledMap(double* regionMap, int* pixMap, double* pixMapRegionRGB){
-
-	/* find max, min and range of regionMap */
-	double max = regionMap[pixMap[0]];
-	double min = regionMap[pixMap[0]];
-
-	/* find min and max values in regionMap */
-	for (int y=0;y< _bit_length_y; y++){
-		for (int x = 0; x < _bit_length_x; x++){
-			max = std::max(max, regionMap[pixMap[y * _bit_length_x + x]]);
-			min = std::min(min, regionMap[pixMap[y * _bit_length_x + x]]);
-		}
-	}
+double* Plotter::makeScaledMap(double* regionMap, int* pixMap, double* pixMapRegionRGB, double min, double max){
 
 	log_printf(DEBUG, "pixel map min: %f, max: %f", min, max);
 

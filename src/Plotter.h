@@ -39,7 +39,7 @@ public:
 	virtual ~Plotter();
 	void plotMagick(int* pixMap, std::string type);
 	void plotMagick(float* pixMap, std::string type);
-	void plotMagickScaled(double* pixMap, std::string type);
+	void plotMagickScaled(double* pixMap, double min, double max, std::string type);
 	void plotSegments(Track* track, double sin_phi, double cos_phi, int* pixMap);
 	void LineFct(double x0, double y0, double x1, double y1, int* pixMap, int color = 1);
 	void plotSilo(int* pixMap, std::string type);
@@ -62,8 +62,10 @@ public:
 	void initializePixMap(float* pixMap);
 	double convertToGeometryX(int x);
 	double convertToGeometryY(int y);
-	double* makeScaledMap(double* regionMap, int* pixMap, double* pixMapRegionRGB);
+	double* makeScaledMap(double* regionMap, int* pixMap, double* pixMapRegionRGB, double min, double max);
 	double* getScaledColors(double value, double min, double max, double* colors);
+	double getMin(double* regionMap, int* pixMap);
+	double getMax(double* regionMap, int* pixMap);
 };
 
 

@@ -443,7 +443,7 @@ void TrackGenerator::segmentize() {
 		for (int j = 0; j < _num_tracks[i]; j++){
 			_geom->segmentize(&_tracks[i][j]);
 			log_printf(DEBUG, "Segmented track phi: %f...", phi);
-			//_plotter->plotSegments(&_tracks[i][j], sin_phi, cos_phi, _pix_map_FSRs);
+			_plotter->plotSegments(&_tracks[i][j], sin_phi, cos_phi, _pix_map_FSRs);
 		}
 	}
 
@@ -454,10 +454,6 @@ void TrackGenerator::segmentize() {
 	_plotter->plotRegion(_pix_map_FSRs, _geom->getFSRtoCellMap(), "cells");
 	_plotter->plotRegion(_pix_map_FSRs, _geom->getFSRtoMaterialMap(), "materials");
 
-
-	// plot materials and cells
-//	_plotter->plotRegion(_pix_map_FSRs, fsrToMaterials, "materials");
-//	_plotter->plotRegion(_pix_map_FSRs, fsrToCells, "cells");
 
 	return;
 }
