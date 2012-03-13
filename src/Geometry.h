@@ -17,6 +17,8 @@
 #include <math.h>
 #include <limits.h>
 #include <vector>
+#include <sys/types.h>
+#include <sys/stat.h>
 #include "Parser.h"
 #include "Material.h"
 #include "Surface.h"

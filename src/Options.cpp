@@ -41,6 +41,8 @@ Options::Options(int argc, const char **argv) {
 	_plot_materials = false;			/* Default will not plot materials */
 	_plot_cells = false;				/* Default will not plot cells */
 	_plot_fluxes = false;				/* Default will not plot fluxes */
+	_compute_pin_powers = false;		/* Default will not compute pin powers */
+
 
 	for (int i = 0; i < argc; i++) {
 		if (i > 0) {
@@ -72,6 +74,9 @@ Options::Options(int argc, const char **argv) {
 			else if (strcmp(argv[i], "-pf") == 0 ||
 					strcmp(argv[i], "--plotfluxes") == 0)
 				_plot_fluxes = true;
+			else if (strcmp(argv[i], "-cp") == 0 ||
+					strcmp(argv[i], "--computepowers") == 0)
+				_compute_pin_powers = true;
 		}
 	}
 }
@@ -184,11 +189,12 @@ bool Options::plotFluxes() const {
 }
 
 
-
-
-
-
-
-
-
-
+/**
+ * Returns a boolean representing whether or not to compute the powers
+ * in each pin. If true, txt files with the pin powers will be created
+ * in a new directory called "PinPowers"
+ * @return whether or not to compute the pin powers
+ */
+bool Options::computePinPowers() const {
+	return _compute_pin_powers;
+}

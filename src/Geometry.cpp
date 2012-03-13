@@ -1552,6 +1552,11 @@ void Geometry::segmentize(Track* track) {
 }
 
 
+/**
+ * Find and return the id of the flat source region that this localcoords
+ * object is inside of
+ * @param coords a localcoords object returned from the findCell method
+ */
 int Geometry::findFSRId(LocalCoords* coords) {
 	int fsr_id = 0;
 	LocalCoords* curr = coords;
@@ -1572,20 +1577,49 @@ int Geometry::findFSRId(LocalCoords* coords) {
 }
 
 
+/**
+ * This method is called from the Solver after fixed source iteration
+ * to compute the powers (fission rates) for each lattice cell (ie, the pin
+ * and assembly powers for most geometries). The method stores the pin powers
+ * mapped by FSR id in the second parameter, FSRs_to_pin_powers
+ * @param FSRs_to_powers an array of the fission rate inside a given FSR
+ * @param FSRs_to_pin_powers an array of the fission rate of the lattice cell
+ * this FSR is within
+ */
 void Geometry::computePinPowers(double* FSRs_to_powers,
 								double* FSRs_to_pin_powers) {
 
+	/* Get the base universe */
 	Universe* univ = _universes.at(0);
 
-	computePinPowers(univ, "universe0", 0, FSRs_to_powers, FSRs_to_pin_powers);
+	/* Create a file prefix for the output files to store all the pin powers */
+	std::string file_prefix = "PinPowers/universe0";
+
+	/* Make call to recursive function to compute powers at each
+	 * level of lattice */
+	computePinPowers(univ, (char*)file_prefix.c_str(), 0, FSRs_to_powers,
+														FSRs_to_pin_powers);
 
 	return;
 }
 
 
+/**
+ * This is a recursive function which computes the powers of all of the FSRs
+ * inside a given universe. This function handles both lattices and regular
+ * type universes and saves the powers computed for each lattice cell in a
+ * file.
+ * @param univ a pointer to the universe of interest
+ * @param output_file_prefix the prefix for the output file to save the powers
+ * @param FSR_id the FSR id prefix from the previous level's FSR map
+ * @param FSRs_to_powers array of the fission rates for each FSR
+ * @param FSRs_to_pin_powers array of the fission rates for the lattice cell
+ * that each FSR is within
+ */
 double Geometry::computePinPowers(Universe* univ, char* output_file_prefix,
 		int FSR_id, double* FSRs_to_powers, double* FSRs_to_pin_powers) {
 
+	/* Power starts at 0 and is incremented for each FSR in this universe */
 	double power = 0;
 
 	/* If the universe is a SIMPLE type universe */
@@ -1593,14 +1627,13 @@ double Geometry::computePinPowers(Universe* univ, char* output_file_prefix,
 		std::map<int, Cell*> cells = univ->getCells();
 		std::map<int, int> _region_map;
 		std::vector<int> fsr_ids;
-		int num_cells = univ->getNumCells();
 		Cell* curr;
 
 		/* For each of the cells inside the lattice, check if it is
 		 * material or fill type */
-		std::map<int, Cell*>::iterator iter1;
-		for (iter1 = cells.begin(); iter1 != cells.end(); ++iter1) {
-			curr = iter1->second;
+		std::map<int, Cell*>::iterator iter;
+		for (iter = cells.begin(); iter != cells.end(); ++iter) {
+			curr = iter->second;
 
 			/* If the current cell is a MATERIAL type cell, pull its
 			 * FSR id from the fsr map and increment the power by the
@@ -1617,20 +1650,20 @@ double Geometry::computePinPowers(Universe* univ, char* output_file_prefix,
 			 */
 			else {
 				CellFill* fill_cell = static_cast<CellFill*>(curr);
-				Universe* univ_fill = fill_cell->getUniverseFill();
+				Universe* universe_fill = fill_cell->getUniverseFill();
 				int fsr_id = univ->getFSR(curr->getId()) + FSR_id;
 
-				/* Create an output filename for this cell's power */
-				power += computePinPowers(univ, output_file_prefix, fsr_id,
+				power += computePinPowers(universe_fill, output_file_prefix, fsr_id,
 										FSRs_to_powers, FSRs_to_pin_powers);
 			}
 		}
 
 		/* Loop over all of the FSR ids stored for MATERIAL type cells
 		 * and save their pin powers in the FSRs_to_pin_powers map */
-		std::vector<int>::iterator iter2;
-		for (iter2 = fsr_ids.begin(); iter2 != fsr_ids.end(); ++iter2)
-			FSRs_to_pin_powers[iter2] = power;
+		for (int i=0; i < (int)fsr_ids.size(); i++) {
+			int fsr_id = fsr_ids.at(i);
+			FSRs_to_pin_powers[fsr_id] = power;
+		}
 	}
 
 	/* If the universe is a LATTICE type universe */
@@ -1642,25 +1675,28 @@ double Geometry::computePinPowers(Universe* univ, char* output_file_prefix,
 		int fsr_id;
 		double cell_power = 0;
 
-		/* Create an output file to write this lattice's pin powers to */
+		/* Create an output file to write this lattice's pin powers to within
+		 * a new directory called PinPowers */
+		mkdir("PinPowers", S_IRWXU);
 		std::stringstream output_file_name;
-		output_file_name << output_file_prefix << ".txt";
+		output_file_name << output_file_prefix <<
+				"_lattice" << lattice->getId() << "_power.txt";
 		FILE* output_file = fopen(output_file_name.str().c_str(), "w");
 
 		/* Loop over all lattice cells in this lattice */
-		for (int i=0; i < num_x; i++) {
-			for (int j=0; j < num_y; j++) {
+		for (int i = num_y-1; i > -1; i--) {
+			for (int j = 0; j < num_x; j++) {
 
 				/* Get a pointer to the current lattice cell */
 				curr = lattice->getUniverse(i, j);
 
 				/* Get the FSR id prefix for this lattice cell */
-				fsr_id = lattice->getFSR(i, j) + FSR_id;
+				fsr_id = lattice->getFSR(j, i) + FSR_id;
 
 				/* Create an output filename for this cell's power */
 				std::stringstream file_prefix;
 				file_prefix << output_file_prefix << "_lattice" <<
-						lattice->getId() << "_latx" << i << "_laty" << j;
+						lattice->getId() << "_x" << j << "_y" << i;
 
 				/* Find this lattice cell's power */
 				cell_power = computePinPowers(curr,
@@ -1669,6 +1705,8 @@ double Geometry::computePinPowers(Universe* univ, char* output_file_prefix,
 
 				/* Write this lattice cell's power to the output file */
 				fprintf(output_file, "%f, ", cell_power);
+
+				power += cell_power;
 			}
 			/* Move to the next line in the output file */
 			fprintf(output_file, "\n");

@@ -8,8 +8,8 @@
 
 <!-- Definition of Cells -->
   <cell id="1" fill="2" surfaces="2 -3 4 -5" />
-  <cell id="100" universe="1" material="1" surfaces="-1" sectors="4"/>
-  <cell id="101" universe="1" material="2" surfaces="1" sectors="4"/>
+  <cell id="100" universe="1" material="1" surfaces="-1"/>
+  <cell id="101" universe="1" material="2" surfaces="1"/>
 
 
 <!-- Definition of Lattices -->

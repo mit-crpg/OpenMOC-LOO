@@ -9,7 +9,7 @@
   <material id="1" energy="1"
 			sigma_a="0.069389522"
 			sigma_t="0.452648699"
-			nu_sigma_f="0.0414198575"
+			sigma_f="0.0414198575"
 			nu_sigma_f="0.0994076580"
 			chi="1.0"
 			sigma_s="0.383259177"
