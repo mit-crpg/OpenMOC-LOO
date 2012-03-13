@@ -60,7 +60,7 @@ Geometry::Geometry(Parser* parser) {
 	/* Generate flat source regions */
 	Universe *univ = _universes.at(0);
 	_num_FSRs = univ->computeFSRMaps();
-	log_printf(NORMAL, "Number of flat source regions computed: %d", _num_FSRs);
+	log_printf(INFO, "Number of flat source regions computed: %d", _num_FSRs);
 
 	/* Allocate memory for maps between flat source regions ids and cell or
 	 * material ids */
@@ -547,10 +547,12 @@ void Geometry::addCell(Cell* cell) {
 	
 		if (t_num_sectors > 0) {
 			int *list;
-			int surface1, surface2, surface3, surface4;
 			int num;
-			Surface *s1, *s2, *s3, *s4; 
+			int surface1, surface2, surface3, surface4;
+			int surface5, surface6, surface7, surface8;
+			Surface *s1, *s2, *s3, *s4, *s5, *s6, *s7, *s8; 
 			CellBasic *c1, *c2, *c3, *c4, *c5, *c6, *c7;
+			CellBasic *c8, *c9, *c10, *c11, *c12, *c13, *c14, *c15;
 
 			/* generate a list of the current cells */
 			std::map<int, Surface*> cells_surfaces = cell->getSurfaces();
@@ -648,7 +650,7 @@ void Geometry::addCell(Cell* cell) {
 				c1->addSurface(surface1, s1);
 				c1->addSurface(-1 * surface2, s2);
 				id++;
-				log_printf(NORMAL, "add cell %s", c1->toString().c_str());
+				log_printf(INFO, "add cell %s", c1->toString().c_str());
 				
 				c2 = new CellBasic
 					(id, cell->getUniverse(), num, list,
@@ -657,7 +659,7 @@ void Geometry::addCell(Cell* cell) {
 				c2->addSurface(surface2, s2);
 				c2->addSurface(-1 * surface1, s1);
 				id++;
-				log_printf(NORMAL, "add cell %s", c2->toString().c_str());
+				log_printf(INFO, "add cell %s", c2->toString().c_str());
 				
 				
 				c3 = new CellBasic
@@ -667,7 +669,7 @@ void Geometry::addCell(Cell* cell) {
 				c3->addSurface(surface2, s2);
 				c3->addSurface(-1 * surface3, s3);
 				id++;
-				log_printf(NORMAL, "add cell %s", c3->toString().c_str());
+				log_printf(INFO, "add cell %s", c3->toString().c_str());
 				
 				c4 = new CellBasic
 					(id, cell->getUniverse(), num, list,
@@ -676,7 +678,7 @@ void Geometry::addCell(Cell* cell) {
 				c4->addSurface(surface3, s3);
 				c4->addSurface(-1 * surface2, s2);
 				id++;
-				log_printf(NORMAL, "add cell %s", c4->toString().c_str());
+				log_printf(INFO, "add cell %s", c4->toString().c_str());
 
 				c5 = new CellBasic
 					(id, cell->getUniverse(), num, list,
@@ -684,7 +686,7 @@ void Geometry::addCell(Cell* cell) {
 				addCell(c5);
 				c5->addSurface(surface3, s3);
 				c5->addSurface(surface4, s4);
-				log_printf(NORMAL, "add cell %s", c5->toString().c_str());
+				log_printf(INFO, "add cell %s", c5->toString().c_str());
 				id++;
 
 				c6 = new CellBasic
@@ -693,7 +695,7 @@ void Geometry::addCell(Cell* cell) {
 				addCell(c6);
 				c6->addSurface(-1 * surface4, s4);
 				c6->addSurface(-1 * surface3, s3);
-				log_printf(NORMAL, "add cell %s", c6->toString().c_str());
+				log_printf(INFO, "add cell %s", c6->toString().c_str());
 				id++;
 
 				c7 = new CellBasic
@@ -702,7 +704,7 @@ void Geometry::addCell(Cell* cell) {
 				addCell(c7);
 				c7->addSurface(surface4, s4);
 				c7->addSurface(-1 * surface1, s1);
-				log_printf(NORMAL, "add cell %s", c7->toString().c_str());
+				log_printf(INFO, "add cell %s", c7->toString().c_str());
 				id++;
 
 
@@ -710,10 +712,196 @@ void Geometry::addCell(Cell* cell) {
 				dynamic_cast<CellBasic*>(cell)->setNumSectors(0);				
 				cell->addSurface(surface1, s1);
 				cell->addSurface(-1 * surface4, s4);
-				log_printf(NORMAL, "original cell is updated to %s",
+				log_printf(INFO, "original cell is updated to %s",
 				cell->toString().c_str()); 
 				
 			} /* end of # sectors = 8 */
+			else if (t_num_sectors == 16){ /* add in # sectors = 16 */
+				double pi = 4 * atan(1); 
+				double angle = 22.50 / (2 * pi);
+				double len = tan(angle);
+
+				/* generate 8 surfaces */
+				surface1 = id;
+				s1 = new Plane(id, BOUNDARY_NONE, 1.0, 0.0, 0);
+				addSurface(s1);
+				id++;
+
+				surface2 = id;
+				s2 = new Plane(id, BOUNDARY_NONE, 1.0, -len, 0);
+				addSurface(s2);
+				id++;
+
+				surface3 = id;
+				s3 = new Plane(id, BOUNDARY_NONE, 1.0, -1.0, 0);
+				addSurface(s3);
+				id++;
+
+				surface4 = id;
+				s4 = new Plane(id, BOUNDARY_NONE, len, -1.0, 0);
+				addSurface(s4);
+				id++;
+
+				surface5 = id;
+				s5 = new Plane(id, BOUNDARY_NONE, 0, 1.0, 0);
+				addSurface(s5);
+				id++;
+
+				surface6 = id;
+				s6 = new Plane(id, BOUNDARY_NONE, len, 1.0, 0);
+				addSurface(s6);
+				id++;
+
+				surface7 = id;
+				s7 = new Plane(id, BOUNDARY_NONE, 1.0, 1.0, 0);
+				addSurface(s7);
+				id++;
+
+				surface8 = id;
+				s8 = new Plane(id, BOUNDARY_NONE, 1.0, len, 0);
+				addSurface(s8);
+				id++;
+
+				/* generate 15 additional cells */
+				c1 = new CellBasic
+					(id, cell->getUniverse(), num, list,
+					 dynamic_cast<CellBasic*>(cell)->getMaterial(), 0, 0);
+				addCell(c1);
+				c1->addSurface(surface1, s1);
+				c1->addSurface(-1 * surface2, s2);
+				id++;
+				log_printf(INFO, "add cell %s", c1->toString().c_str());
+				
+				c2 = new CellBasic
+					(id, cell->getUniverse(), num, list,
+					 dynamic_cast<CellBasic*>(cell)->getMaterial(), 0, 0);
+				addCell(c2);
+				c2->addSurface(surface2, s2);
+				c2->addSurface(-1 * surface1, s1);
+				id++;
+				log_printf(INFO, "add cell %s", c2->toString().c_str());
+				
+				
+				c3 = new CellBasic
+					(id, cell->getUniverse(), num, list,
+					 dynamic_cast<CellBasic*>(cell)->getMaterial(), 0, 0);
+				addCell(c3);
+				c3->addSurface(surface2, s2);
+				c3->addSurface(-1 * surface3, s3);
+				id++;
+				log_printf(INFO, "add cell %s", c3->toString().c_str());
+				
+				c4 = new CellBasic
+					(id, cell->getUniverse(), num, list,
+					 dynamic_cast<CellBasic*>(cell)->getMaterial(), 0, 0);
+				addCell(c4);
+				c4->addSurface(surface3, s3);
+				c4->addSurface(-1 * surface2, s2);
+				id++;
+				log_printf(INFO, "add cell %s", c4->toString().c_str());
+
+				c5 = new CellBasic
+					(id, cell->getUniverse(), num, list,
+					 dynamic_cast<CellBasic*>(cell)->getMaterial(), 0, 0);
+				addCell(c5);
+				c5->addSurface(surface3, s3);
+				c5->addSurface(-1 * surface4, s4);
+				log_printf(INFO, "add cell %s", c5->toString().c_str());
+				id++;
+
+				c6 = new CellBasic
+					(id, cell->getUniverse(), num, list,
+					 dynamic_cast<CellBasic*>(cell)->getMaterial(), 0, 0);
+				addCell(c6);
+				c6->addSurface(surface4, s4);
+				c6->addSurface(-1 * surface3, s3);
+				log_printf(INFO, "add cell %s", c6->toString().c_str());
+				id++;
+
+				c7 = new CellBasic
+					(id, cell->getUniverse(), num, list,
+					 dynamic_cast<CellBasic*>(cell)->getMaterial(), 0, 0);
+				addCell(c7);
+				c7->addSurface(surface4, s4);
+				c7->addSurface(surface5, s5);
+				log_printf(INFO, "add cell %s", c7->toString().c_str());
+				id++;
+
+
+				c8 = new CellBasic
+					(id, cell->getUniverse(), num, list,
+					 dynamic_cast<CellBasic*>(cell)->getMaterial(), 0, 0);
+				addCell(c8);
+				c8->addSurface(-1 * surface5, s5);
+				c8->addSurface(-1 * surface4, s4);
+				id++;
+
+				c9 = new CellBasic
+					(id, cell->getUniverse(), num, list,
+					 dynamic_cast<CellBasic*>(cell)->getMaterial(), 0, 0);
+				addCell(c9);
+				c9->addSurface(surface5, s5);
+				c9->addSurface(-1 * surface6, s6);
+				id++;
+
+				c10 = new CellBasic
+					(id, cell->getUniverse(), num, list,
+					 dynamic_cast<CellBasic*>(cell)->getMaterial(), 0, 0);
+				addCell(c10);
+				c10->addSurface(surface6, s6);
+				c10->addSurface(-1 * surface5, s5);
+				id++;
+
+
+				c11 = new CellBasic
+					(id, cell->getUniverse(), num, list,
+					 dynamic_cast<CellBasic*>(cell)->getMaterial(), 0, 0);
+				addCell(c11);
+				c11->addSurface(surface6, s6);
+				c11->addSurface(-1 * surface7, s7);
+				id++;
+
+				c12 = new CellBasic
+					(id, cell->getUniverse(), num, list,
+					 dynamic_cast<CellBasic*>(cell)->getMaterial(), 0, 0);
+				addCell(c12);
+				c12->addSurface(surface7, s7);
+				c12->addSurface(-1 * surface6, s6);
+				id++;
+
+
+				c13 = new CellBasic
+					(id, cell->getUniverse(), num, list,
+					 dynamic_cast<CellBasic*>(cell)->getMaterial(), 0, 0);
+				addCell(c13);
+				c13->addSurface(surface7, s7);
+				c13->addSurface(-1 * surface8, s8);
+				id++;
+
+				c14 = new CellBasic
+					(id, cell->getUniverse(), num, list,
+					 dynamic_cast<CellBasic*>(cell)->getMaterial(), 0, 0);
+				addCell(c14);
+				c14->addSurface(surface8, s8);
+				c14->addSurface(-1 * surface7, s7);
+				id++;
+
+				c15 = new CellBasic
+					(id, cell->getUniverse(), num, list,
+					 dynamic_cast<CellBasic*>(cell)->getMaterial(), 0, 0);
+				addCell(c15);
+				c15->addSurface(surface8, s8);
+				c15->addSurface(-1 * surface1, s1);
+				id++;
+
+				/* update original cell */
+				dynamic_cast<CellBasic*>(cell)->setNumSectors(0);				
+				cell->addSurface(surface1, s1);
+				cell->addSurface(-1 * surface8, s8);
+				log_printf(INFO, "original cell is updated to %s",
+				cell->toString().c_str()); 
+				
+			} /* end of # sectors = 16 */
 			/* other number of sectors */
 			else {
 				log_printf(ERROR,
