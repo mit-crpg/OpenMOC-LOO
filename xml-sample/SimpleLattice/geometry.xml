@@ -7,8 +7,8 @@
 <geometry>
 
 <!-- Definition of Cells -->
-  <cell id="1" fill="5" surfaces="1 -2 3 -4" />
-  <cell id="101" universe="1" material="1" surfaces="-5" rings="2" sectors="4"/>
+  <cell id="100" universe="0" fill="5" surfaces="1 -2 3 -4" />
+  <cell id="101" universe="1" material="1" surfaces="-5" rings="2" sectors="8"/>
   <cell id="102" universe="1" material="2" surfaces="5" sectors="4"/>
   <cell id="201" universe="2" material="1" surfaces="-6" rings="2" sectors="4"/>
   <cell id="202" universe="2" material="2" surfaces="6" sectors="4"/>
