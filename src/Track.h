@@ -18,6 +18,10 @@
 #include "log.h"
 #include "configurations.h"
 
+#if USE_OPENMP
+	#include <omp.h>
+#endif
+
 /* Represent a segment along a given track */
 struct segment {
 	double _length;
@@ -41,6 +45,9 @@ private:
 	std::vector<segment*> _segments;
 	Track *_track_in, *_track_out;
 	bool _refl_in, _refl_out;
+#if USE_OPENMP
+	omp_lock_t _flux_lock;
+#endif
 public:
 	Track();
 	virtual ~Track();

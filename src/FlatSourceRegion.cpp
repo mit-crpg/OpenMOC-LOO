@@ -24,13 +24,21 @@ FlatSourceRegion::FlatSourceRegion() {
 		_source[e] = 0.0;
 		_old_source[e] = 0.0;
 	}
+
+#if USE_OPENMP
+	omp_init_lock(&_flux_lock);
+#endif
 }
 
 
 /**
  * Default destructor
  */
-FlatSourceRegion::~FlatSourceRegion() { }
+FlatSourceRegion::~FlatSourceRegion() {
+#if USE_OPENMP
+	omp_destroy_lock(&_flux_lock);
+#endif
+}
 
 /**
  * Returns this region's id. This id must correspond to the id computed
@@ -167,13 +175,40 @@ void FlatSourceRegion::setFlux(int energy, double flux) {
  * @param flux the scalar flux
  */
 void FlatSourceRegion::incrementFlux(int energy, double flux) {
+#if USE_OPENMP
+	omp_set_lock(&_flux_lock);
+#endif
+
 	if (energy < -1 || energy >= NUM_ENERGY_GROUPS)
 		log_printf(ERROR, "Attempted to increment the scalar flux for FSR id = "
 				"%d in an energy group which does not exist: %d", _id, energy);
 
-//	log_printf(RESULT, "Region id = %d, energy = %d, Incrementing flux by flux = %f", _id, energy, flux);
-
 	_flux[energy] += flux;
+
+#if USE_OPENMP
+	omp_unset_lock(&_flux_lock);
+#endif
+
+	return;
+}
+
+
+/**
+ * Increment the scalar flux for all energy groups inside this FSR
+ * @param flux the scalar flux for all energy groups
+ */
+void FlatSourceRegion::incrementFlux(double* flux) {
+#if USE_OPENMP
+	omp_set_lock(&_flux_lock);
+#endif
+
+	for (int e=0; e < NUM_ENERGY_GROUPS; e++)
+		_flux[e] += flux[e];
+
+#if USE_OPENMP
+	omp_unset_lock(&_flux_lock);
+#endif
+
 	return;
 }
 

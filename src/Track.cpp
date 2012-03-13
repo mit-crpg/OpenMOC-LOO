@@ -22,6 +22,9 @@ Track::Track() { }
  */
 Track::~Track() {
 	clearSegments();
+#if USE_OPENMP
+	omp_destroy_lock(&_flux_lock);
+#endif
 }
 
 
@@ -39,6 +42,10 @@ void Track::setValues(const double start_x, const double start_y,
 	_start.setCoords(start_x, start_y);
 	_end.setCoords(end_x, end_y);
 	_phi = phi;
+
+#if USE_OPENMP
+	omp_init_lock(&_flux_lock);
+#endif
 }
 
 
@@ -68,6 +75,9 @@ void Track::setPolarWeight(const int angle, double polar_weight) {
  */
 void Track::setPolarFluxes(bool direction, int start_index,
 							double* polar_fluxes) {
+#if USE_OPENMP
+	omp_set_lock(&_flux_lock);
+#endif
 
 	int start = direction * GRP_TIMES_ANG;
 
@@ -77,6 +87,10 @@ void Track::setPolarFluxes(bool direction, int start_index,
 
 	for (int i = 0; i < GRP_TIMES_ANG; i++)
 		_polar_fluxes[start + i] = polar_fluxes[i+start_index];
+
+#if USE_OPENMP
+	omp_unset_lock(&_flux_lock);
+#endif
 
 	return;
 }

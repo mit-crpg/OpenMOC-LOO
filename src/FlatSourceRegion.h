@@ -14,6 +14,10 @@
 #include "configurations.h"
 #include "log.h"
 
+#if USE_OPENMP
+	#include <omp.h>
+#endif
+
 class FlatSourceRegion {
 private:
 	int _id;
@@ -25,6 +29,9 @@ private:
 	double _old_source[NUM_ENERGY_GROUPS];
 	/* Pre-computed Ratio of source / sigma_t */
 	double _ratios[NUM_ENERGY_GROUPS];
+#if USE_OPENMP
+	omp_lock_t _flux_lock;
+#endif
 public:
 	FlatSourceRegion();
 	virtual ~FlatSourceRegion();
@@ -42,6 +49,7 @@ public:
     void incrementVolume(double volume);
     void setFlux(int energy, double flux);
     void incrementFlux(int energy, double flux);
+    void incrementFlux(double* flux);
     void setOldFlux(int energy, double old_flux);
     void setSource(int energy, double source);
     void setOldSource(int energy, double old_source);

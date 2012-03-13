@@ -25,6 +25,9 @@
 #include "configurations.h"
 #include "log.h"
 
+#include <omp.h>
+
+
 class Solver {
 private:
 	Geometry* _geom;

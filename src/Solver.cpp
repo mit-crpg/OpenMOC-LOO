@@ -39,11 +39,7 @@ Solver::Solver(Geometry* geom, TrackGenerator* track_generator, Plotter* plotter
 	}
 
 	/* Pre-compute exponential pre-factors */
-//	Timer timer;
-//	timer.start();
 	precomputeFactors();
-//	timer.stop();
-//	timer.recordSplit("time to compute prefactors");
 	initializeFSRs();
 }
 
@@ -78,6 +74,11 @@ void Solver::precomputeFactors() {
 	double azim_weight;
 
 	/* Precompute the total azimuthal weight for tracks at each polar angle */
+#if USE_OPENMP
+#pragma omp parallel
+{
+	#pragma omp for firstprivate(curr_track, azim_weight)
+	#endif
 	for (int i = 0; i < _num_azim; i++) {
 		for (int j = 0; j < _num_tracks[i]; j++) {
 			curr_track = &_tracks[i][j];
@@ -87,6 +88,10 @@ void Solver::precomputeFactors() {
 				curr_track->setPolarWeight(p, azim_weight*_quad->getMultiple(p) * FOUR_PI);
 		}
 	}
+#if USE_OPENMP
+}
+#endif
+
 
 /*Store pre-factors inside each segment */
 #if STORE_PREFACTORS
@@ -96,6 +101,11 @@ void Solver::precomputeFactors() {
 	segment* curr_seg;
 
 	/* Loop over azimuthal angle, track, segment, polar angle, energy group */
+#if USE_OPENMP
+#pragma omp parallel
+{
+	#pragma omp for firstprivate(curr_track, curr_seg)
+	#endif
 	for (int i = 0; i < _num_azim; i++) {
 		for (int j = 0; j < _num_tracks[i]; j++) {
 			curr_track = &_tracks[i][j];
@@ -111,6 +121,10 @@ void Solver::precomputeFactors() {
 			}
 		}
 	}
+#if USE_OPENMP
+}
+#endif
+
 
 
 /* Use hash map */
@@ -173,10 +187,18 @@ double Solver::computePreFactor(segment* seg, int energy, int angle) {
  * source region for efficient fixed source iteration
  */
 void Solver::computeRatios() {
-	for (int i = 0; i < _num_FSRs; i++) {
-//		log_printf(RESULT, "Computing ratios... for i = %d",i);
+
+#if USE_OPENMP
+#pragma omp parallel
+{
+	#pragma omp for
+	#endif
+	for (int i = 0; i < _num_FSRs; i++)
 		_flat_source_regions[i].computeRatios();
-	}
+#if USE_OPENMP
+}
+#endif
+
 	return;
 }
 
@@ -213,6 +235,11 @@ void Solver::initializeFSRs() {
 	}
 
 	/* Loop over all FSRs */
+#if USE_OPENMP
+#pragma omp parallel
+{
+	#pragma omp for firstprivate(cell, material)
+	#endif
 	for (int r = 0; r < _num_FSRs; r++) {
 		/* Set the id */
 		_flat_source_regions[r].setId(r);
@@ -228,6 +255,10 @@ void Solver::initializeFSRs() {
 				"and volume = %f", r, cell->getId(), material->getId(),
 				_flat_source_regions[r].getVolume());
 	}
+#if USE_OPENMP
+}
+#endif
+
 
 	return;
 }
@@ -244,6 +275,11 @@ void Solver::zeroTrackFluxes() {
 
 	/* Loop over azimuthal angle, track, polar angle, energy group
 	 * and set each track's incoming and outgoing flux to zero */
+#if USE_OPENMP
+#pragma omp parallel
+{
+	#pragma omp for firstprivate(polar_fluxes)
+	#endif
 	for (int i = 0; i < _num_azim; i++) {
 		for (int j = 0; j < _num_tracks[i]; j++) {
 			polar_fluxes = _tracks[i][j].getPolarFluxes();
@@ -252,6 +288,10 @@ void Solver::zeroTrackFluxes() {
 				polar_fluxes[i] = 0.0;
 		}
 	}
+#if USE_OPENMP
+}
+#endif
+
 }
 
 
@@ -265,11 +305,19 @@ void Solver::oneFSRFluxes() {
 	FlatSourceRegion* fsr;
 
 	/* Loop over all FSRs and energy groups */
+#if USE_OPENMP
+#pragma omp parallel
+{
+	#pragma omp for firstprivate(fsr)
+	#endif
 	for (int r = 0; r < _num_FSRs; r++) {
 		fsr = &_flat_source_regions[r];
 		for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
 			fsr->setFlux(e, 1.0);
 	}
+#if USE_OPENMP
+}
+#endif
 
 	return;
 }
@@ -285,11 +333,20 @@ void Solver::zeroFSRFluxes() {
 	FlatSourceRegion* fsr;
 
 	/* Loop over all FSRs and energy groups */
+#if USE_OPENMP
+#pragma omp parallel
+{
+	#pragma omp for firstprivate(fsr)
+	#endif
 	for (int r = 0; r < _num_FSRs; r++) {
 		fsr = &_flat_source_regions[r];
 		for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
 			fsr->setFlux(e, 0.0);
 	}
+#if USE_OPENMP
+}
+#endif
+
 
 	return;
 }
@@ -303,13 +360,22 @@ void Solver::updateKeff() {
 
 	double tot_abs = 0.0;
 	double tot_fission = 0.0;
+	double abs = 0;
+	double fission;
 	double* sigma_a;
 	double* nu_sigma_f;
 	double* flux;
 	Material* material;
 	FlatSourceRegion* fsr;
 
+#if USE_OPENMP
+#pragma omp parallel shared(tot_abs, tot_fission)
+{
+	#pragma omp for firstprivate(fsr, material, sigma_a, nu_sigma_f, flux, abs, fission)
+	#endif
 	for (int r = 0; r < _num_FSRs; r++) {
+		abs = 0;
+		fission = 0;
 		fsr = &_flat_source_regions[r];
 		material = fsr->getMaterial();
 		sigma_a = material->getSigmaA();
@@ -317,10 +383,20 @@ void Solver::updateKeff() {
 		flux = fsr->getFlux();
 
 		for (int e = 0; e < NUM_ENERGY_GROUPS; e++) {
-			tot_abs += sigma_a[e] * flux[e] * fsr->getVolume();
-			tot_fission += nu_sigma_f[e] * flux[e] * fsr->getVolume();
+			abs += sigma_a[e] * flux[e] * fsr->getVolume();
+			fission += nu_sigma_f[e] * flux[e] * fsr->getVolume();
+		}
+
+		#pragma omp critical
+		{
+			tot_abs += abs;
+			tot_fission += fission;
 		}
 	}
+#if USE_OPENMP
+}
+#endif
+
 
 	_k_eff = tot_fission/tot_abs;
 	log_printf(INFO, "Computed k_eff = %f", _k_eff);
@@ -350,13 +426,28 @@ void Solver::checkTrackSpacing() {
 	std::vector<segment*> segments;
 	segment* segment;
 	int num_segments;
+	Cell* cell;
 
 	/* Set each tally to zero to begin with */
+#if USE_OPENMP
+#pragma omp parallel shared(FSR_segment_tallies)
+{
+	#pragma omp for
+	#endif
 	for (int i=0; i < _num_FSRs; i++)
 		FSR_segment_tallies[i] = 0;
+#if USE_OPENMP
+}
+#endif
+
 
 	/* Iterate over all azimuthal angles, all tracks, and all segments
 	 * and tally each segment in the corresponding FSR */
+#if USE_OPENMP
+#pragma omp parallel shared(FSR_segment_tallies)
+{
+	#pragma omp for firstprivate(track, segments, num_segments, segment)
+	#endif
 	for (int i = 0; i < _num_azim; i++) {
 		for (int j = 0; j < _num_tracks[i]; j++) {
 			track = &_tracks[i][j];
@@ -369,18 +460,30 @@ void Solver::checkTrackSpacing() {
 			}
 		}
 	}
+#if USE_OPENMP
+}
+#endif
+
 
 	/* Loop over all FSRs and if one FSR does not have tracks in it, print
 	 * error message to the screen and exit program */
+#if USE_OPENMP
+#pragma omp parallel
+{
+	#pragma omp for firstprivate(cell)
+	#endif
 	for (int i=0; i < _num_FSRs; i++) {
 		if (FSR_segment_tallies[i] == 0) {
-			Cell* cell = _geom->findCell(i);
+			cell = _geom->findCell(i);
 			log_printf(ERROR, "No tracks were tallied inside FSR id = %d which "
 					"is cell id = %d. Please reduce your track spacing,"
 					" increase the number of azimuthal angles, or increase the"
 					" size of the flat source regions", i, cell->getId());
 		}
 	}
+#if USE_OPENMP
+}
+#endif
 
 	delete [] FSR_segment_tallies;
 }
@@ -436,6 +539,8 @@ void Solver::computePinPowers() {
 		_FSRs_to_pin_powers[i] /= avg_pin_power;
 	}
 
+
+
 	return;
 }
 
@@ -453,9 +558,13 @@ void Solver::fixedSourceIteration(int max_iterations) {
 	double* old_scalar_flux;
 	double* sigma_t;
 	FlatSourceRegion* fsr;
+	double fsr_flux[NUM_ENERGY_GROUPS];
 	double* ratios;
 	double delta;
 	double volume;
+	int t, i, j, s, p, e;
+	int num_threads = _num_azim / 2;
+	int num_azim_thread = _num_azim / num_threads;
 
 	log_printf(INFO, "Fixed source iteration with max_iterations = %d",
 														max_iterations);
@@ -467,8 +576,26 @@ void Solver::fixedSourceIteration(int max_iterations) {
 		zeroFSRFluxes();
 
 		/* Loop over azimuthal angle, track */
-		for (int i = 0; i < _num_azim; i++) {
-			for (int j = 0; j < _num_tracks[i]; j++) {
+	#if USE_OPENMP
+//	#pragma omp parallel
+	{
+		#pragma omp parallel for private(t, j, i, s, p, e, track, segments, num_segments, weights, polar_fluxes, segment, fsr, ratios, delta, fsr_flux)
+		#endif
+
+//		for (int i = 0; i < _num_azim; i++) {
+//			log_printf(RESULT, "i = %d", i);
+		for (t=0; t < num_threads; t++) {
+			for (i=t*num_azim_thread; i < (t+1)*num_azim_thread; i++) {
+//				log_printf(RESULT, "num_threads = %d, t = %d, i = %d", num_threads, t, i);
+//#pragma omp critical
+//			{
+
+//		#if USE_OPENMP
+//		#pragma omp parallel num_threads(4)
+//		{
+//			#pragma omp for firstprivate(s, p, e, track, segments, num_segments, weights, polar_fluxes, segment, fsr, ratios, delta, fsr_flux)
+//			#endif
+			for (j = 0; j < _num_tracks[i]; j++) {
 
 				/* Initialize local pointers to important data structures */
 				track = &_tracks[i][j];
@@ -477,8 +604,10 @@ void Solver::fixedSourceIteration(int max_iterations) {
 				weights = track->getPolarWeights();
 				polar_fluxes = track->getPolarFluxes();
 
+//				#pragma omp critical
+//				{
 				/* Loop over each segment in forward direction */
-				for (int s = 0; s < num_segments; s++) {
+				for (s = 0; s < num_segments; s++) {
 					segment = segments.at(s);
 					fsr = &_flat_source_regions[segment->_region_id];
 					ratios = fsr->getRatios();
@@ -502,24 +631,32 @@ void Solver::fixedSourceIteration(int max_iterations) {
 					}
 
 #else
-					for (int p = 0; p < NUM_POLAR_ANGLES; p++) {
-						for (int e = 0; e < NUM_ENERGY_GROUPS; e++) {
+					for (e = 0; e < NUM_ENERGY_GROUPS; e++) {
+						fsr_flux[e] = 0;
+						for (p = 0; p < NUM_POLAR_ANGLES; p++) {
 							delta = (polar_fluxes[GRP_TIMES_ANG + p*NUM_ENERGY_GROUPS + e] -
 									ratios[e]) * segment->_prefactors[p][e];
-
-							fsr->incrementFlux(e, delta*weights[p]);
+							fsr_flux[e] += delta * weights[p];
 							polar_fluxes[GRP_TIMES_ANG + p*NUM_ENERGY_GROUPS + e] -= delta;
 						}
 					}
+						fsr->incrementFlux(fsr_flux);
+//					}
+
 #endif
 				}
 
 				/* Transfer flux to outgoing track */
+//				#pragma omp critical
+//				{
 				track->getTrackOut()->setPolarFluxes(!track->isReflOut(),
 						GRP_TIMES_ANG, polar_fluxes);
+//				}
 
+//				#pragma omp critical
+//				{
 				/* Loop over each segment in reverse direction */
-				for (int s = num_segments-1; s > -1; s--) {
+				for (s = num_segments-1; s > -1; s--) {
 					segment = segments.at(s);
 					fsr = &_flat_source_regions[segment->_region_id];
 					ratios = fsr->getRatios();
@@ -546,23 +683,35 @@ void Solver::fixedSourceIteration(int max_iterations) {
 
 #else
 
-					for (int p = 0; p < NUM_POLAR_ANGLES; p++) {
-						for (int e = 0; e < NUM_ENERGY_GROUPS; e++) {
+					for (e = 0; e < NUM_ENERGY_GROUPS; e++) {
+						fsr_flux[e] = 0;
+						for (p = 0; p < NUM_POLAR_ANGLES; p++) {
 							delta = (polar_fluxes[p*NUM_ENERGY_GROUPS + e] -
 									ratios[e]) * segment->_prefactors[p][e];
-
-							fsr->incrementFlux(e, delta*weights[p]);
+							fsr_flux[e] += delta * weights[p];
 							polar_fluxes[p*NUM_ENERGY_GROUPS + e] -= delta;
 						}
 					}
+						fsr->incrementFlux(fsr_flux);
+//					}
 #endif
 				}
 
 				/* Transfer flux to incoming track */
+//				#pragma omp critical
+//				{
 				track->getTrackIn()->setPolarFluxes(!track->isReflIn(),
 						0, polar_fluxes);
+//				}
+//			}
+			}
 			}
 		}
+
+			#if USE_OPENMP
+			}
+			#endif
+
 
 		/* Add in source term and normalize flux to volume for each region */
 		/* Loop over flat source regions, energy groups */
