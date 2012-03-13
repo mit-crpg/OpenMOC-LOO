@@ -655,7 +655,7 @@ void Geometry::addCell(Cell* cell) {
 					 dynamic_cast<CellBasic*>(cell)->getMaterial(), 0, 0);
 				addCell(c2);
 				c2->addSurface(surface2, s2);
-				c2->addSurface(-1 * surface3, s3);
+				c2->addSurface(-1 * surface1, s1);
 				id++;
 				log_printf(NORMAL, "add cell %s", c2->toString().c_str());
 				
@@ -664,8 +664,8 @@ void Geometry::addCell(Cell* cell) {
 					(id, cell->getUniverse(), num, list,
 					 dynamic_cast<CellBasic*>(cell)->getMaterial(), 0, 0);
 				addCell(c3);
-				c3->addSurface(surface3, s3);
-				c3->addSurface(-1 * surface4, s4);
+				c3->addSurface(surface2, s2);
+				c3->addSurface(-1 * surface3, s3);
 				id++;
 				log_printf(NORMAL, "add cell %s", c3->toString().c_str());
 				
@@ -673,8 +673,8 @@ void Geometry::addCell(Cell* cell) {
 					(id, cell->getUniverse(), num, list,
 					 dynamic_cast<CellBasic*>(cell)->getMaterial(), 0, 0);
 				addCell(c4);
-				c4->addSurface(surface4, s4);
-				c4->addSurface(-1 * surface1, s1);
+				c4->addSurface(surface3, s3);
+				c4->addSurface(-1 * surface2, s2);
 				id++;
 				log_printf(NORMAL, "add cell %s", c4->toString().c_str());
 
@@ -682,8 +682,8 @@ void Geometry::addCell(Cell* cell) {
 					(id, cell->getUniverse(), num, list,
 					 dynamic_cast<CellBasic*>(cell)->getMaterial(), 0, 0);
 				addCell(c5);
-				c5->addSurface(-1 * surface1, s1);
-				c5->addSurface(surface2, s2);
+				c5->addSurface(surface3, s3);
+				c5->addSurface(-1 * surface4, s4);
 				log_printf(NORMAL, "add cell %s", c5->toString().c_str());
 				id++;
 
@@ -691,8 +691,8 @@ void Geometry::addCell(Cell* cell) {
 					(id, cell->getUniverse(), num, list,
 					 dynamic_cast<CellBasic*>(cell)->getMaterial(), 0, 0);
 				addCell(c6);
-				c6->addSurface(-1 * surface2, s2);
-				c6->addSurface(surface3, s3);
+				c6->addSurface(surface4, s4);
+				c6->addSurface(-1 * surface3, s3);
 				log_printf(NORMAL, "add cell %s", c6->toString().c_str());
 				id++;
 
@@ -700,8 +700,8 @@ void Geometry::addCell(Cell* cell) {
 					(id, cell->getUniverse(), num, list,
 					 dynamic_cast<CellBasic*>(cell)->getMaterial(), 0, 0);
 				addCell(c7);
-				c7->addSurface(-1 * surface3, s3);
 				c7->addSurface(surface4, s4);
+				c7->addSurface(-1 * surface1, s1);
 				log_printf(NORMAL, "add cell %s", c7->toString().c_str());
 				id++;
 
