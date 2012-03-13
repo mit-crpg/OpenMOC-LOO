@@ -683,7 +683,7 @@ void Geometry::addCell(Cell* cell) {
 					 dynamic_cast<CellBasic*>(cell)->getMaterial(), 0, 0);
 				addCell(c5);
 				c5->addSurface(surface3, s3);
-				c5->addSurface(-1 * surface4, s4);
+				c5->addSurface(surface4, s4);
 				log_printf(NORMAL, "add cell %s", c5->toString().c_str());
 				id++;
 
@@ -691,7 +691,7 @@ void Geometry::addCell(Cell* cell) {
 					(id, cell->getUniverse(), num, list,
 					 dynamic_cast<CellBasic*>(cell)->getMaterial(), 0, 0);
 				addCell(c6);
-				c6->addSurface(surface4, s4);
+				c6->addSurface(-1 * surface4, s4);
 				c6->addSurface(-1 * surface3, s3);
 				log_printf(NORMAL, "add cell %s", c6->toString().c_str());
 				id++;
@@ -708,8 +708,8 @@ void Geometry::addCell(Cell* cell) {
 
 				/* update original cell */
 				dynamic_cast<CellBasic*>(cell)->setNumSectors(0);				
-				cell->addSurface(-1 * surface4, s4);
 				cell->addSurface(surface1, s1);
+				cell->addSurface(-1 * surface4, s4);
 				log_printf(NORMAL, "original cell is updated to %s",
 				cell->toString().c_str()); 
 				
@@ -717,7 +717,7 @@ void Geometry::addCell(Cell* cell) {
 			/* other number of sectors */
 			else {
 				log_printf(ERROR,
-						   "OpenMOC only supports #sectors = 4, 8, 16."
+						   "OpenMOC only supports #sectors = 4, 8, 16.\n"
 						   "You entered #sectors = %d", t_num_sectors);
 			}
 		} /* end of adding in sections */
