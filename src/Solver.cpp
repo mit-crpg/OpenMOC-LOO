@@ -436,6 +436,8 @@ void Solver::computePinPowers() {
 		_FSRs_to_pin_powers[i] /= avg_pin_power;
 	}
 
+	_plotter->plotRegion(_pix_map_FSRs, _FSRs_to_pin_powers, "pin_powers");
+
 	return;
 }
 
