@@ -46,6 +46,7 @@ public:
     void setSource(int energy, double source);
     void setOldSource(int energy, double old_source);
     void computeRatios();
+    double computeFissionRate();
 };
 
 

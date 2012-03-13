@@ -303,7 +303,7 @@ int Plane::intersection(Point* point, double angle, Point* points) {
 		double m = sin(angle) / cos(angle);
 
 		/* The plane and track are parallel, no intersections */
-		if (fabs((fabs(m) - fabs(_A))) < 1e-5 && _B != 0)
+		if (fabs(-_A/_B - m) < 1e-11 && _B != 0)
 			return 0;
 
 		else {
@@ -315,6 +315,7 @@ int Plane::intersection(Point* point, double angle, Point* points) {
 				num++;
 			else if (angle > M_PI && ycurr < y0)
 				num++;
+
 			return num;
 		}
 	}
@@ -358,7 +359,7 @@ int Plane::intersection(Track* track, Point* points) const {
 		double m = sin(track->getPhi()) / cos(track->getPhi());
 
 		/* The plane and track are parallel, no intersections */
-		if (fabs((fabs(m) - fabs(_A))) < 1e-5 && _B != 0)
+		if (fabs(-_A/_B - m) < 1e-5 && _B != 0)
 			return 0;
 
 		else {

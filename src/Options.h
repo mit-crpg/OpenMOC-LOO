@@ -31,6 +31,7 @@ private:
 	bool _plot_materials;
 	bool _plot_cells;
 	bool _plot_fluxes;
+	bool _compute_pin_powers;
 public:
     Options(int argc, const char **argv);
     ~Options(void);
@@ -45,6 +46,7 @@ public:
     bool plotMaterials() const;
     bool plotCells() const;
     bool plotFluxes() const;
+    bool computePinPowers() const;
 };
 
 #endif

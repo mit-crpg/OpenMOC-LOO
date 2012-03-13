@@ -174,6 +174,9 @@ struct frame_material {
 	double *sigma_t;
 	int sigma_t_cnt;
 	
+	double *sigma_f;
+	int sigma_f_cnt;
+
 	double *nu_sigma_f;
 	int nu_sigma_f_cnt;
 
@@ -518,6 +521,13 @@ void XMLCALL Parser_XMLCallback_Start(void *context,
 				f->material.sigma_t =
 					strtok_double(value,
 						      &f->material.sigma_t_cnt);
+			} else if (strcmp(key, "sigma_f") == 0) {
+				if (f->material.sigma_f != NULL)
+					log_printf(ERROR, "Has 2 sigma_f");
+
+				f->material.sigma_f =
+					strtok_double(value,
+						      &f->material.sigma_f_cnt);
 			} else if (strcmp(key, "sigma_a") == 0) {
 				if (f->material.sigma_a != NULL)
 					log_printf(ERROR, "Has 2 sigma_a");
@@ -904,17 +914,19 @@ void XMLCALL Parser_XMLCallback_End(void *context,
 		Material *material;
 
 		material = new Material(f->material.id,
-					f->material.sigma_a,
-					f->material.sigma_a_cnt,
-					f->material.sigma_t,
-					f->material.sigma_t_cnt,
-					f->material.nu_sigma_f,
-					f->material.nu_sigma_f_cnt,
-					f->material.chi,
-					f->material.chi_cnt,
-					f->material.sigma_s,
-					f->material.sigma_s_cnt);
-
+								f->material.sigma_a,
+								f->material.sigma_a_cnt,
+								f->material.sigma_t,
+								f->material.sigma_t_cnt,
+								f->material.sigma_f,
+								f->material.sigma_f_cnt,
+								f->material.nu_sigma_f,
+								f->material.nu_sigma_f_cnt,
+								f->material.chi,
+								f->material.chi_cnt,
+								f->material.sigma_s,
+								f->material.sigma_s_cnt);
+		
 		if (material != NULL)
 			s->parser->materials.push_back(material);
 		else {
@@ -924,6 +936,8 @@ void XMLCALL Parser_XMLCallback_End(void *context,
 			free(f->material.sigma_a);
 		if (f->material.sigma_t != NULL)
 			free(f->material.sigma_t);
+		if (f->material.sigma_f != NULL)
+			free(f->material.sigma_f);
 		if (f->material.nu_sigma_f != NULL)
 			free(f->material.nu_sigma_f);
 		if (f->material.chi != NULL)
@@ -1100,6 +1114,7 @@ struct frame *stack_push(struct stack *s, enum frame_type type) {
 		f->material.has_id = false;
 		f->material.sigma_a = NULL;
 		f->material.sigma_t = NULL;
+		f->material.sigma_f = NULL;
 		f->material.nu_sigma_f = NULL;
 		f->material.chi = NULL;
 		f->material.sigma_s = NULL;
@@ -1284,6 +1299,16 @@ void stack_print_help(struct frame *f) {
 			for (i = 0; i < f->material.sigma_t_cnt; i++) {
 				fprintf(stderr, " %f",
 					f->material.sigma_t[i]);
+			}
+			fprintf(stderr, "\"");
+		}
+		if (f->material.sigma_f != NULL) {
+			int i;
+
+			fprintf(stderr, " sigma_f=\"");
+			for (i = 0; i < f->material.sigma_f_cnt; i++) {
+				fprintf(stderr, " %f",
+					f->material.sigma_f[i]);
 			}
 			fprintf(stderr, "\"");
 		}

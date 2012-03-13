@@ -27,6 +27,8 @@ Solver::Solver(Geometry* geom, TrackGenerator* track_generator, Plotter* plotter
 	_pix_map_FSRs = track_generator->getFSRsPixMap();
 	try{
 		_flat_source_regions = new FlatSourceRegion[_num_FSRs];
+		_FSRs_to_powers = new double[_num_FSRs];
+		_FSRs_to_pin_powers = new double[_num_FSRs];
 
 		for (int e = 0; e <= NUM_ENERGY_GROUPS; e++)
 			_FSRs_to_fluxes[e] = new double[_num_FSRs];
@@ -51,6 +53,8 @@ Solver::Solver(Geometry* geom, TrackGenerator* track_generator, Plotter* plotter
  */
 Solver::~Solver() {
 	delete [] _flat_source_regions;
+	delete [] _FSRs_to_powers;
+	delete [] _FSRs_to_pin_powers;
 
 	for (int e = 0; e <= NUM_ENERGY_GROUPS; e++)
 		delete [] _FSRs_to_fluxes[e];
@@ -341,7 +345,6 @@ double** Solver::getFSRtoFluxMap() {
  */
 void Solver::checkTrackSpacing() {
 
-	log_printf(RESULT, "num_fsrs = %d", _num_FSRs);
 	int* FSR_segment_tallies = new int[_num_FSRs];
 	Track* track;
 	std::vector<segment*> segments;
@@ -380,6 +383,60 @@ void Solver::checkTrackSpacing() {
 	}
 
 	delete [] FSR_segment_tallies;
+}
+
+
+/**
+ * Compute the fission rates in each FSR and save them in a map of
+ * FSR ids to fission rates
+ */
+void Solver::computePinPowers() {
+
+	log_printf(NORMAL, "Computing pin powers...");
+
+	FlatSourceRegion* fsr;
+	double tot_pin_power = 0;
+	double avg_pin_power = 0;
+	double num_nonzero_pins = 0;
+	double curr_pin_power = 0;
+	double prev_pin_power = 0;
+
+	/* Loop over all FSRs and comput the fision rate*/
+	for (int i=0; i < _num_FSRs; i++) {
+		fsr = &_flat_source_regions[i];
+		_FSRs_to_powers[i] = fsr->computeFissionRate();
+	}
+
+	/* Compute the pin powers by adding up the powers of FSRs in each
+	 * lattice cell, saving lattice cell powers to files, and saving the
+	 * pin power corresponding to each FSR id in FSR_to_pin_powers */
+	_geom->computePinPowers(_FSRs_to_powers, _FSRs_to_pin_powers);
+
+
+	/* Compute the total power based by accumulating the power of each unique
+	 * pin with a nonzero power */
+	for (int i=0; i < _num_FSRs; i++) {
+		curr_pin_power = _FSRs_to_pin_powers[i];
+
+		/* If this pin power is unique and nozero (doesn't match the previous
+		 * pin's power), then tally it
+		 */
+		if (curr_pin_power > 0 && curr_pin_power != prev_pin_power) {
+			tot_pin_power += curr_pin_power;
+			num_nonzero_pins++;
+			prev_pin_power = curr_pin_power;
+		}
+	}
+
+	/* Compute the average pin power */
+	avg_pin_power = tot_pin_power / num_nonzero_pins;
+
+	/* Normalize each pin power to the average non-zero pin power */
+	for (int i=0; i < _num_FSRs; i++) {
+		_FSRs_to_pin_powers[i] /= avg_pin_power;
+	}
+
+	return;
 }
 
 

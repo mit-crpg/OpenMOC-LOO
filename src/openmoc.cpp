@@ -82,6 +82,10 @@ int main(int argc, const char **argv) {
 	timer.stop();
 	timer.recordSplit("Fixed source iteration");
 
+	/* Compute pin powers if requested at run time */
+	if (opts.computePinPowers())
+		solver.computePinPowers();
+
 	log_printf(RESULT, "k_eff = %f", k_eff);
 
 	/* Print timer splits to console */

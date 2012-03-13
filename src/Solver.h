@@ -35,6 +35,8 @@ private:
 	int _num_azim;
 	int _num_FSRs;
 	double* _FSRs_to_fluxes[NUM_ENERGY_GROUPS + 1];
+	double* _FSRs_to_powers;
+	double* _FSRs_to_pin_powers;
 	double _k_eff;
 	std::queue<double> _old_k_effs;
 	Plotter* _plotter;
@@ -63,6 +65,7 @@ public:
 	double computeKeff(int max_iterations);
 	void plotFluxes();
 	void checkTrackSpacing();
+	void computePinPowers();
 
 //#if !STORE_PREFACTORS
 //	void setTrackPrefactors(Track* track);

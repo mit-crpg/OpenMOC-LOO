@@ -17,6 +17,8 @@
 #include <math.h>
 #include <limits.h>
 #include <vector>
+#include <sys/types.h>
+#include <sys/stat.h>
 #include "Parser.h"
 #include "Material.h"
 #include "Surface.h"
@@ -83,11 +85,17 @@ public:
 	void adjustKeys();
 	void buildNeighborsLists();
 	Cell* findCell(LocalCoords* coords);
+	Cell* findFirstCell(LocalCoords* coords, double angle);
 	Cell* findCell(int fsr_id);
 	Cell* findCell(Universe* univ, int fsr_id);
 	Cell* findNextCell(LocalCoords* coords, double angle);
 	int findFSRId(LocalCoords* coords);
 	void segmentize(Track* track);
+
+	void computePinPowers(double* FSRs_to_powers, double* FSRs_to_pin_powers);
+	double computePinPowers(Universe* univ, char* output_file_prefix,
+			int FSR_id, double* FSRs_to_powers, double* FSRs_to_pin_powers);
+
 	void generateCSG();
 
 	template <class K, class V>

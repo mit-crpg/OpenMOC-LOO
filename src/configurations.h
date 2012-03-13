@@ -66,11 +66,11 @@
 
 /* Distance a point is moved to cross over a surface into a new cell during
  * track segmentation */
-#define TINY_MOVE 1E-8
+#define TINY_MOVE 1E-10
 
 /* Convergence threshold for scalar flux in each region during fixed source
  * iteration */
-#define FLUX_CONVERGENCE_THRESH 1E-4
+#define FLUX_CONVERGENCE_THRESH 1E-6
 
 
 /******************************************************************************

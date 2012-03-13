@@ -549,16 +549,27 @@ void Geometry::addCell(Cell* cell) {
 		if (t_num_sectors > 0) {
 			log_printf(INFO, "Cell %d has multiple sectors.", cell->getId());
 			
-			int tmp1, tmp2[2], tmp3[3];
 			int *list;
-			int surface1, surface2, surface_1, surface_2, surface_3;
+			int surface1, surface2;
 			int num;
 			Surface *s1, *s2; 
 			CellBasic *c1, *c2, *c3;
 			/* adding in 4 sectors */
 			if (t_num_sectors == 4){
 				std::map<int, Surface*> cells_surfaces = cell->getSurfaces();
-
+#if 1
+				int i = 0;
+				num = cell->getNumSurfaces();
+				int *tmp = new int[num];
+				for (iter = cells_surfaces.begin(); 
+					 iter != cells_surfaces.end(); iter++) {
+					tmp[i] = iter->first;
+					i++;
+				}
+				list = &tmp[0];
+#else
+				int tmp1, tmp2[2], tmp3[3];
+				int surface_1, surface_2, surface_3;
 				if (cell->getNumSurfaces() == 1) {
 					num = 1;
 					iter = cells_surfaces.begin();
@@ -593,14 +604,17 @@ void Geometry::addCell(Cell* cell) {
 					tmp3[2] = surface_3;
 					list = &tmp3[0];
 				}
+#endif
 				/* generate 2 surfaces */
 				surface1 = id;
+				log_printf(INFO, "%d", surface1);
 				s1 = new Plane(id, BOUNDARY_NONE, 1.0, 1.0, 0);
 				addSurface(s1);
 				log_printf(INFO, "Added sector surface: %s", s1->toString().c_str());
 				id++;
 
 				surface2 = id;
+				log_printf(INFO, "%d", surface2);
 				s2 = new Plane(id, BOUNDARY_NONE, 1.0, -1.0, 0);
 				addSurface(s2);
 				log_printf(INFO, "Added sector surface: %s", s2->toString().c_str());
@@ -614,7 +628,7 @@ void Geometry::addCell(Cell* cell) {
 				addCell(c1);
 				c1->addSurface(surface1, s1);
 				c1->addSurface(surface2, s2);
-				log_printf(NORMAL, "Added sector: %s", c1->toString().c_str());
+				log_printf(INFO, "Added sector: %s", c1->toString().c_str());
 				id++;
 				
 				//c2 = dynamic_cast<CellBasic*>(cell)->clone(id, 0, 0);
@@ -624,7 +638,7 @@ void Geometry::addCell(Cell* cell) {
 				addCell(c2);
 				c2->addSurface(-1*surface1, s1);
 				c2->addSurface(-1*surface2, s2);
-				log_printf(NORMAL, "Added sector: %s", c2->toString().c_str());
+				log_printf(INFO, "Added sector: %s", c2->toString().c_str());
 				id++;
 				
 				
@@ -635,15 +649,18 @@ void Geometry::addCell(Cell* cell) {
 				addCell(c3);
 				c3->addSurface(-1*surface1, s1);
 				c3->addSurface(surface2, s2);
-				log_printf(NORMAL, "Added sector: %s", c3->toString().c_str());
+				log_printf(INFO, "Added sector: %s", c3->toString().c_str());
 				id++;
 				
+				/* update original cell */
 				dynamic_cast<CellBasic*>(cell)->setNumSectors(0);				
 				cell->addSurface(surface1, s1);
 				cell->addSurface(-1*surface2, s2);
-				log_printf(NORMAL, "original cell is updated to %s",
+				log_printf(INFO, "original cell is updated to %s",
 				cell->toString().c_str()); 
 				
+				/* clean-up */
+				//delete [] tmp2;
 			} /* end of # sectors = 4 */
 			/* other number of sectors */
 			else {
@@ -1125,6 +1142,27 @@ Cell* Geometry::findCell(LocalCoords* coords) {
 }
 
 
+/* Find the first cell of a segment with a starting point that is represented
+ * by this localcoords object is in. This method assumes that
+* the localcoord has coordinates and a universe id. This method will move the
+* initial starting point by a small amount along the direction of the track
+* in order to ensure that the track starts inside of a distinct FSR rather than
+* on the boundary between two of them. The method will recursively find the
+* localcoord by building a linked list of localcoords from the localcoord
+* passed in as an argument down to the lowest level cell found. In the process
+* it will set the local coordinates for each localcoord
+* in the linked list for the lattice or universe that it is in.
+* @param coords pointer to a localcoords object
+* @return returns a pointer to a cell if found, NULL if no cell found
+*/
+Cell* Geometry::findFirstCell(LocalCoords* coords, double angle) {
+	double delta_x = cos(angle) * TINY_MOVE;
+	double delta_y = sin(angle) * TINY_MOVE;
+	coords->adjustCoords(delta_x, delta_y);
+	return findCell(coords);
+}
+
+
 /**
  * Find the cell for an fsr_id. This function calls the recursive function
  * findCell with a pointer to the base level universe 0
@@ -1281,23 +1319,68 @@ Cell* Geometry::findNextCell(LocalCoords* coords, double angle) {
 		/* If the distance returned is not INFINITY, the trajectory will
 		 * intersect a surface in the cell */
 		if (dist != INFINITY) {
+			LocalCoords test(0,0);
+
 			/* Move LocalCoords just to the next surface in the cell plus an
 			 * additional small bit into the next cell */
-			coords->updateMostLocal(&surf_intersection);
 			double delta_x = cos(angle) * TINY_MOVE;
 			double delta_y = sin(angle) * TINY_MOVE;
+
+			/* Copy coords to the test coords before moving it by delta and
+			 * finding the new cell it is in - do this for testing purposes
+			 * in case the new cell found is NULL or is in a new lattice cell*/
+			coords->copyCoords(&test);
+			coords->updateMostLocal(&surf_intersection);
 			coords->adjustCoords(delta_x, delta_y);
 
 			/* Find new cell and return it */
 			cell = findCell(coords);
-			return cell;
+
+			/* Check if cell is null - this means that intersection point
+			 * is outside the bounds of the geometry and the old coords
+			 * should be restored so that we can look for the next
+			 * lattice cell */
+			LocalCoords* test_curr = test.getLowestLevel();
+			LocalCoords* coords_curr = coords->getLowestLevel();
+
+			while (test_curr != NULL && test_curr->getUniverse() != 0 &&
+					coords_curr != NULL && coords_curr->getUniverse() !=0){
+					/* Check if the next cell found is in the same lattice cell
+					 * as the previous cell */
+				if (coords_curr->getType() == LAT &&
+						test_curr->getType() == LAT) {
+					if (coords_curr->getLatticeX() != test_curr->getLatticeX()
+					|| coords_curr->getLatticeY() != test_curr->getLatticeY())
+						dist = INFINITY;
+						break;
+				}
+
+				test_curr = test_curr->getPrev();
+				coords_curr = coords_curr->getPrev();
+			}
+
+			/* If the cell is null then we should reset and find the next lattice
+			 * cell rather than return this cell */
+			if (cell == NULL)
+				dist = INFINITY;
+
+			/* If the distance is not INFINITY then the new cell found is the one
+			 * to return
+			 */
+			if (dist != INFINITY)
+				return cell;
+
+			/* If the distance is not INFINITY then the new cell found is not
+			 * the one to return and we should move to a new lattice cell */
+			else
+				test.copyCoords(coords);
 		}
 
 		/* If the distance returned is infinity, the trajectory will not
 		 * intersect a surface in the cell. We thus need to readjust to
 		 * the localcoord to the base universe and check whether we need
 		 * to move to a new lattice cell */
-		else if (dist == INFINITY) {
+		if (dist == INFINITY) {
 
 			/* Get the lowest level localcoords in the linked list */
 			LocalCoords* curr = coords->getLowestLevel();
@@ -1404,7 +1487,7 @@ void Geometry::segmentize(Track* track) {
 	segment_end.setUniverse(0);
 
 	/* Find the cell for the track starting point */
-	Cell* curr = findCell(&segment_end);
+	Cell* curr = findFirstCell(&segment_end, phi);
 	Cell* prev;
 
 	/* If starting point was outside the bounds of the geometry */
@@ -1455,10 +1538,11 @@ void Geometry::segmentize(Track* track) {
 		if (segment_length < _min_seg_length)
 			_min_seg_length = segment_length;
 
+		log_printf(DEBUG, "segment start x = %f, y = %f, segment end x = %f, y = %f",
+				segment_start.getX(), segment_start.getY(), segment_end.getX(),
+				segment_end.getY());
 
 		new_segment->_region_id = findFSRId(&segment_start);
-//		new_segment->_region_id = prev->getUid();
-//		new_segment->_region_id = static_cast<CellBasic*>(_cells.at(prev->getId()))->getMaterial();
 
 		/* Checks to make sure that new segment does not have the same start
 		 * and end points */
@@ -1487,6 +1571,11 @@ void Geometry::segmentize(Track* track) {
 }
 
 
+/**
+ * Find and return the id of the flat source region that this localcoords
+ * object is inside of
+ * @param coords a localcoords object returned from the findCell method
+ */
 int Geometry::findFSRId(LocalCoords* coords) {
 	int fsr_id = 0;
 	LocalCoords* curr = coords;
@@ -1505,6 +1594,150 @@ int Geometry::findFSRId(LocalCoords* coords) {
 
 	return fsr_id;
 }
+
+
+/**
+ * This method is called from the Solver after fixed source iteration
+ * to compute the powers (fission rates) for each lattice cell (ie, the pin
+ * and assembly powers for most geometries). The method stores the pin powers
+ * mapped by FSR id in the second parameter, FSRs_to_pin_powers
+ * @param FSRs_to_powers an array of the fission rate inside a given FSR
+ * @param FSRs_to_pin_powers an array of the fission rate of the lattice cell
+ * this FSR is within
+ */
+void Geometry::computePinPowers(double* FSRs_to_powers,
+								double* FSRs_to_pin_powers) {
+
+	/* Get the base universe */
+	Universe* univ = _universes.at(0);
+
+	/* Create a file prefix for the output files to store all the pin powers */
+	std::string file_prefix = "PinPowers/universe0";
+
+	/* Make call to recursive function to compute powers at each
+	 * level of lattice */
+	computePinPowers(univ, (char*)file_prefix.c_str(), 0, FSRs_to_powers,
+														FSRs_to_pin_powers);
+
+	return;
+}
+
+
+/**
+ * This is a recursive function which computes the powers of all of the FSRs
+ * inside a given universe. This function handles both lattices and regular
+ * type universes and saves the powers computed for each lattice cell in a
+ * file.
+ * @param univ a pointer to the universe of interest
+ * @param output_file_prefix the prefix for the output file to save the powers
+ * @param FSR_id the FSR id prefix from the previous level's FSR map
+ * @param FSRs_to_powers array of the fission rates for each FSR
+ * @param FSRs_to_pin_powers array of the fission rates for the lattice cell
+ * that each FSR is within
+ */
+double Geometry::computePinPowers(Universe* univ, char* output_file_prefix,
+		int FSR_id, double* FSRs_to_powers, double* FSRs_to_pin_powers) {
+
+	/* Power starts at 0 and is incremented for each FSR in this universe */
+	double power = 0;
+
+	/* If the universe is a SIMPLE type universe */
+	if (univ->getType() == SIMPLE) {
+		std::map<int, Cell*> cells = univ->getCells();
+		std::map<int, int> _region_map;
+		std::vector<int> fsr_ids;
+		Cell* curr;
+
+		/* For each of the cells inside the lattice, check if it is
+		 * material or fill type */
+		std::map<int, Cell*>::iterator iter;
+		for (iter = cells.begin(); iter != cells.end(); ++iter) {
+			curr = iter->second;
+
+			/* If the current cell is a MATERIAL type cell, pull its
+			 * FSR id from the fsr map and increment the power by the
+			 * power for that FSR
+			 */
+			if (curr->getType() == MATERIAL) {
+				int fsr_id = univ->getFSR(curr->getId()) + FSR_id;
+				fsr_ids.push_back(fsr_id);
+				power += FSRs_to_powers[fsr_id];
+			}
+
+			/* If the current cell is a FILL type cell, pull its
+			 * FSR id from the fsr map
+			 */
+			else {
+				CellFill* fill_cell = static_cast<CellFill*>(curr);
+				Universe* universe_fill = fill_cell->getUniverseFill();
+				int fsr_id = univ->getFSR(curr->getId()) + FSR_id;
+
+				power += computePinPowers(universe_fill, output_file_prefix, fsr_id,
+										FSRs_to_powers, FSRs_to_pin_powers);
+			}
+		}
+
+		/* Loop over all of the FSR ids stored for MATERIAL type cells
+		 * and save their pin powers in the FSRs_to_pin_powers map */
+		for (int i=0; i < (int)fsr_ids.size(); i++) {
+			int fsr_id = fsr_ids.at(i);
+			FSRs_to_pin_powers[fsr_id] = power;
+		}
+	}
+
+	/* If the universe is a LATTICE type universe */
+	else {
+		Lattice* lattice = static_cast<Lattice*>(univ);
+		Universe* curr;
+		int num_x = lattice->getNumX();
+		int num_y = lattice->getNumY();
+		int fsr_id;
+		double cell_power = 0;
+
+		/* Create an output file to write this lattice's pin powers to within
+		 * a new directory called PinPowers */
+		mkdir("PinPowers", S_IRWXU);
+		std::stringstream output_file_name;
+		output_file_name << output_file_prefix <<
+				"_lattice" << lattice->getId() << "_power.txt";
+		FILE* output_file = fopen(output_file_name.str().c_str(), "w");
+
+		/* Loop over all lattice cells in this lattice */
+		for (int i = num_y-1; i > -1; i--) {
+			for (int j = 0; j < num_x; j++) {
+
+				/* Get a pointer to the current lattice cell */
+				curr = lattice->getUniverse(j, i);
+
+				/* Get the FSR id prefix for this lattice cell */
+				fsr_id = lattice->getFSR(j, i) + FSR_id;
+
+				/* Create an output filename for this cell's power */
+				std::stringstream file_prefix;
+				file_prefix << output_file_prefix << "_lattice" <<
+						lattice->getId() << "_x" << j << "_y" << i;
+
+				/* Find this lattice cell's power */
+				cell_power = computePinPowers(curr,
+								(char*)file_prefix.str().c_str(),
+								fsr_id, FSRs_to_powers, FSRs_to_pin_powers);
+
+				/* Write this lattice cell's power to the output file */
+				fprintf(output_file, "%f, ", cell_power);
+
+				power += cell_power;
+			}
+			/* Move to the next line in the output file */
+			fprintf(output_file, "\n");
+		}
+
+		fclose(output_file);
+	}
+
+	return power;
+}
+
+
 
 /**
  * generate CSG of geometry

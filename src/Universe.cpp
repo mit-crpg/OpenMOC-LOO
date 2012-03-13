@@ -104,7 +104,7 @@ Point* Universe::getOrigin() {
 int Universe::getFSR(int cell_id) {
 
 	if (_cells.find(cell_id) == _cells.end())
-		log_printf(ERROR, "Tried to find FSR id for cell with id = %d was found"
+		log_printf(ERROR, "Tried to find FSR id for cell with id = %d"
 				" in universe with id = %d but no cell exists", cell_id, _id);
 
 	return _region_map.at(cell_id);
@@ -213,6 +213,7 @@ std::string Universe::toString() {
 	return string.str();
 }
 
+
 /*
  * Compute the FSR Maps for this universe
  */
@@ -230,16 +231,10 @@ int Universe::computeFSRMaps() {
 	return count;
 }
 
+
 void Universe::generateCSGLists(std::vector<int>* surf_flags, std::vector<double>* surf_coeffs,
 		std::vector<int>* oper_flags, std::vector<int>* left_ids, std::vector<int>* right_ids,
 		std::vector<int>* zones, Point* current_origin){
-
-//	std::map<int, Cell*>::iterator iter;
-//
-//	/* Loop over all of this universes cells */
-//	for (iter = _cells.begin(); iter != _cells.end(); ++iter){
-//		Cell* cell = iter->second;
-
 
 	Cell* cell = _cells.begin()->second;
 
@@ -256,7 +251,6 @@ void Universe::generateCSGLists(std::vector<int>* surf_flags, std::vector<double
 	else {
 		log_printf(ERROR, "Parent Universe must be FILL type");
 	}
-//	}
 }
 
 
