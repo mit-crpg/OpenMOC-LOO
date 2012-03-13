@@ -539,7 +539,7 @@ void Solver::computePinPowers() {
 		_FSRs_to_pin_powers[i] /= avg_pin_power;
 	}
 
-
+	_plotter->plotRegion(_pix_map_FSRs, _FSRs_to_pin_powers, "pin_powers");
 
 	return;
 }
@@ -565,6 +565,7 @@ void Solver::fixedSourceIteration(int max_iterations) {
 	int t, i, j, s, p, e;
 	int num_threads = _num_azim / 2;
 	int num_azim_thread = _num_azim / num_threads;
+	int tid;
 
 	log_printf(INFO, "Fixed source iteration with max_iterations = %d",
 														max_iterations);
@@ -579,13 +580,17 @@ void Solver::fixedSourceIteration(int max_iterations) {
 	#if USE_OPENMP
 //	#pragma omp parallel
 	{
-		#pragma omp parallel for private(t, j, i, s, p, e, track, segments, num_segments, weights, polar_fluxes, segment, fsr, ratios, delta, fsr_flux)
+		#pragma omp parallel for num_threads(num_threads) private(t, j, i, s, p, e, track, segments, \
+				num_segments, weights, polar_fluxes, segment, fsr, ratios, delta, fsr_flux, tid)
 		#endif
 
 //		for (int i = 0; i < _num_azim; i++) {
 //			log_printf(RESULT, "i = %d", i);
 		for (t=0; t < num_threads; t++) {
 			for (i=t*num_azim_thread; i < (t+1)*num_azim_thread; i++) {
+				/* Obtain and print thread id */
+				  tid = omp_get_thread_num();
+				  log_printf(RESULT, "t = %d, i = %d, thread = %d\n", t, i, tid);
 //				log_printf(RESULT, "num_threads = %d, t = %d, i = %d", num_threads, t, i);
 //#pragma omp critical
 //			{
@@ -910,7 +915,9 @@ double Solver::computeKeff(int max_iterations) {
 
 
 		/* If k_eff converged, return k_eff */
+
 		if (fabs(_old_k_effs.back() - _k_eff) < KEFF_CONVERG_THRESH){
+
 			/* Converge the scalar flux spatially within geometry to plot */
 			fixedSourceIteration(1000);
 

@@ -442,8 +442,8 @@ void TrackGenerator::segmentize() {
 		cos_phi = cos(phi);
 		for (int j = 0; j < _num_tracks[i]; j++){
 			_geom->segmentize(&_tracks[i][j]);
-			log_printf(DEBUG, "Segmented track...");
-			_plotter->plotSegments(&_tracks[i][j], sin_phi, cos_phi, _pix_map_FSRs);
+			log_printf(DEBUG, "Segmented track phi: %f...", phi);
+			//_plotter->plotSegments(&_tracks[i][j], sin_phi, cos_phi, _pix_map_FSRs);
 		}
 	}
 

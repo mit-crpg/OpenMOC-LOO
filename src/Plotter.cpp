@@ -526,13 +526,16 @@ void Plotter::plotSegments(Track* track, double sin_phi,
 	y0 = track->getStart()->getY();
 	num_segments = track->getNumSegments();
 
+	log_printf(DEBUG, "looping over segments in plotter endy: %f...", track->getEnd()->getY());
 	/* loop over segments and write to pixMap array */
 	for (int k=0; k < num_segments; k++){
 		x1 = x0 + cos_phi*track->getSegment(k)->_length;
 		y1 = y0 + sin_phi*track->getSegment(k)->_length;
 
 		/* "draw" segment on pixMap array */
+		log_printf(DEBUG, "calling linefct x0: %f, y0: %f, x1: %f, y1: %f,length: %f, sin_phi: %f ...", x0, y0, x1, y1, track->getSegment(k)->_region_id, track->getSegment(k)->_length, sin_phi);
 		LineFct(x0, y0, x1, y1, pixMap, track->getSegment(k)->_region_id);
+		log_printf(DEBUG, "done calling linefct...");
 
 		x0 = x1;
 		y0 = y1;
@@ -606,6 +609,8 @@ void Plotter::LineFct(double xIn, double yIn, double xOut, double yOut, int* pix
 	y0 = convertToBitmapY(yIn);
 	x1 = convertToBitmapX(xOut);
 	y1 = convertToBitmapY(yOut);
+
+	log_printf(DEBUG, "linefct bitmap x0: %i, y0: %i, x1: %i, y1: %i", x0, y0, x1, y1);
 
 	/* "draw" line on pixMap array */
 	int dx = abs(x1-x0);
