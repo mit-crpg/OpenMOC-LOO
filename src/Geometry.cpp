@@ -1425,6 +1425,25 @@ void Geometry::segmentize(Track* track) {
 		/* Find the segment length between the segments start and end points */
 		segment_length = segment_end.getPoint()->distance(segment_start.getPoint());
 
+//		log_printf(DEBUG, "geom segmentize - length: %f, x0: %f, y0: %f, x1: %f, y1: %f", segment_length,
+//				segment_start.getPoint()->getX(),segment_start.getPoint()->getY(),
+//				segment_end.getPoint()->getX(), segment_end.getPoint()->getY());
+
+		if (abs(segment_start.getPoint()->getX()) > 2.0){
+			log_printf(DEBUG, "X0 VALUE OUTSIDE GEOMETRY: %f", segment_start.getPoint()->getX());
+		}
+		if (abs(segment_start.getPoint()->getY()) > 2.0){
+			log_printf(DEBUG, "Y0 VALUE OUTSIDE GEOMETRY: %f", segment_start.getPoint()->getY());
+		}
+		if (abs(segment_end.getPoint()->getX()) > 2.0){
+			log_printf(DEBUG, "X1 VALUE OUTSIDE GEOMETRY: %f", segment_end.getPoint()->getX());
+		}
+		if (abs(segment_end.getPoint()->getY()) > 2.0){
+			log_printf(DEBUG, "Y1 VALUE OUTSIDE GEOMETRY: %f", segment_end.getPoint()->getY());
+		}
+
+
+
 		/* Create a new segment */
 		segment* new_segment = new segment;
 		new_segment->_length = segment_length;
