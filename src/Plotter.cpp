@@ -239,10 +239,8 @@ void Plotter::plotMagickScaled(double* pixMapRGB, double min, double max, std::s
 	drawList.push_back(Magick::DrawableLine(x_start,y_start,x_start,y_end));  // left
 	drawList.push_back(Magick::DrawableLine(x_end,y_start,x_end,y_end));      // right
 
-
 	/* draw box on image */
 	image.draw(drawList);
-
 
 	/* create filename with correct extension */
 	std::stringstream string;
@@ -838,13 +836,15 @@ void Plotter::plotFSRs(int* pixMap){
 				x_global = convertToGeometryX(x);
 				y_global = convertToGeometryY(y);
 
+				log_printf(DEBUG, "finding cell for bit x: %i, bit y: %i, global x: %f, global %f", x, y, x_global, y_global);
+
 				/* create point located in universe 0 */
 				LocalCoords point(x_global,y_global);
 				point.setUniverse(0);
 
 				/* find which cell the point is in */
 				_geom->findCell(&point);
-				_geom->findCell(&point);
+				//_geom->findCell(&point);
 
 				/* Store FSR id in pixMap */
 				pixMap[y * _bit_length_x + x] = _geom->findFSRId(&point);
