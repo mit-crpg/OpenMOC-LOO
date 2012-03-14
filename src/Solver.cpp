@@ -568,10 +568,10 @@ void Solver::fixedSourceIteration(int max_iterations) {
 					}
 
 #else
-					#if USE_OPENMP
-					#pragma omp parallel for num_threads(NUM_ENERGY_GROUPS) private(e, p, delta) \
-					shared(fsr_flux, weights, ratios, polar_fluxes, segment)
-					#endif
+//					#if USE_OPENMP
+//					#pragma omp parallel for num_threads(NUM_ENERGY_GROUPS) private(e, p, delta) \
+//					shared(fsr_flux, weights, ratios, polar_fluxes, segment)
+//					#endif
 					for (e = 0; e < NUM_ENERGY_GROUPS; e++) {
 						fsr_flux[e] = 0;
 						for (p = 0; p < NUM_POLAR_ANGLES; p++) {
@@ -618,10 +618,10 @@ void Solver::fixedSourceIteration(int max_iterations) {
 
 #else
 
-					#if USE_OPENMP
-					#pragma omp parallel for num_threads(NUM_ENERGY_GROUPS) private(e, p, delta) \
-					shared(fsr_flux, weights, ratios, polar_fluxes, segment)
-					#endif
+//					#if USE_OPENMP
+//					#pragma omp parallel for num_threads(NUM_ENERGY_GROUPS) private(e, p, delta) \
+//					shared(fsr_flux, weights, ratios, polar_fluxes, segment)
+//					#endif
 					for (e = 0; e < NUM_ENERGY_GROUPS; e++) {
 						fsr_flux[e] = 0;
 						for (p = 0; p < NUM_POLAR_ANGLES; p++) {

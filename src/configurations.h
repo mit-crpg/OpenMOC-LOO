@@ -39,7 +39,7 @@
 #define FSR_HASHMAP_PRECISION 5
 
 /* If this machine has OpenMP installed, define as true for parallel speedup */
-#define USE_OPENMP false
+#define USE_OPENMP true
 
 
 /******************************************************************************
