@@ -15,7 +15,8 @@
  * @param geom pointer to the geometry
  * @param track_generator pointer to the trackgenerator
  */
-Solver::Solver(Geometry* geom, TrackGenerator* track_generator, Plotter* plotter, bool plotFluxes) {
+Solver::Solver(Geometry* geom, TrackGenerator* track_generator,
+								Plotter* plotter, bool plotFluxes) {
 	_geom = geom;
 	_quad = new Quadrature(TABUCHI);
 	_num_FSRs = geom->getNumFSRs();
@@ -106,9 +107,9 @@ void Solver::precomputeFactors() {
 			for (int s = 0; s < curr_track->getNumSegments(); s++) {
 				curr_seg = curr_track->getSegment(s);
 
-				for (int p = 0; p < NUM_POLAR_ANGLES; p++) {
-					for (int e = 0; e < NUM_ENERGY_GROUPS; e++) {
-						curr_seg->_prefactors[p][e] = computePreFactor(curr_seg, e, p);
+				for (int e = 0; e < NUM_ENERGY_GROUPS; e++) {
+					for (int p = 0; p < NUM_POLAR_ANGLES; p++) {
+						curr_seg->_prefactors[e][p] = computePreFactor(curr_seg, e, p);
 					}
 				}
 			}
@@ -506,6 +507,10 @@ void Solver::fixedSourceIteration(int max_iterations) {
 	double volume;
 	int t, j, k, s, p, e;
 	int num_threads = _num_azim / 2;
+#if !STORE_PREFACTORS
+	double sigma_t_l;
+	int index;
+#endif
 
 	log_printf(INFO, "Fixed source iteration with max_iterations = %d and "
 			"# threads = %d", max_iterations, num_threads);
@@ -524,7 +529,8 @@ void Solver::fixedSourceIteration(int max_iterations) {
 		#pragma omp parallel for num_threads(num_threads) \
 				private(t, k, j, i, s, p, e, track, segments, \
 						num_segments, weights, polar_fluxes,\
-						segment, fsr, ratios, delta, fsr_flux)
+						segment, fsr, ratios, delta, fsr_flux,\
+						sigma_t_l, index)
 		#endif
 		/* Loop over each thread */
 		for (t=0; t < num_threads; t++) {
@@ -552,31 +558,28 @@ void Solver::fixedSourceIteration(int max_iterations) {
 #if !STORE_PREFACTORS
 					sigma_t = segment->_material->getSigmaT();
 
-					for (int e = 0; e < NUM_ENERGY_GROUPS; e++) {
-						double sigma_t_l = sigma_t[e] * segment->_length;
+					for (e = 0; e < NUM_ENERGY_GROUPS; e++) {
+						fsr_flux[e] = 0;
+						sigma_t_l = sigma_t[e] * segment->_length;
 						sigma_t_l = std::min(sigma_t_l,10.0);
-						int index = sigma_t_l / _pre_factor_spacing;
+						index = sigma_t_l / _pre_factor_spacing;
 						index = std::min(index * 2 * NUM_POLAR_ANGLES, _pre_factor_max_index);
 
-						for (int p = 0; p < NUM_POLAR_ANGLES; p++){
+						for (p = 0; p < NUM_POLAR_ANGLES; p++){
 							delta = (polar_fluxes[GRP_TIMES_ANG + p*NUM_ENERGY_GROUPS + e] - ratios[e]) *
 									(1 - (_pre_factor_array[index + 2 * p] * sigma_t_l + _pre_factor_array[index + 2 * p + 1]));
-
-							fsr->incrementFlux(e, delta*weights[p]);
+							fsr_flux[e] += delta * weights[p];
 							polar_fluxes[GRP_TIMES_ANG + p*NUM_ENERGY_GROUPS + e] -= delta;
 						}
 					}
+					fsr->incrementFlux(fsr_flux);
 
 #else
-//					#if USE_OPENMP
-//					#pragma omp parallel for num_threads(NUM_ENERGY_GROUPS) private(e, p, delta) \
-//					shared(fsr_flux, weights, ratios, polar_fluxes, segment)
-//					#endif
 					for (e = 0; e < NUM_ENERGY_GROUPS; e++) {
 						fsr_flux[e] = 0;
 						for (p = 0; p < NUM_POLAR_ANGLES; p++) {
 							delta = (polar_fluxes[GRP_TIMES_ANG + p*NUM_ENERGY_GROUPS + e] -
-									ratios[e]) * segment->_prefactors[p][e];
+									ratios[e]) * segment->_prefactors[e][p];
 							fsr_flux[e] += delta * weights[p];
 							polar_fluxes[GRP_TIMES_ANG + p*NUM_ENERGY_GROUPS + e] -= delta;
 						}
@@ -599,34 +602,30 @@ void Solver::fixedSourceIteration(int max_iterations) {
 #if !STORE_PREFACTORS
 					sigma_t = segment->_material->getSigmaT();
 
-					for (int e = 0; e < NUM_ENERGY_GROUPS; e++) {
+					for (e = 0; e < NUM_ENERGY_GROUPS; e++) {
 
-						double sigma_t_l = sigma_t[e] * segment->_length;
+						fsr_flux[e] = 0;
+						sigma_t_l = sigma_t[e] * segment->_length;
 						sigma_t_l = std::min(sigma_t_l,10.0);
-						int index = sigma_t_l / _pre_factor_spacing;
+						index = sigma_t_l / _pre_factor_spacing;
 						index = std::min(index * 2 * NUM_POLAR_ANGLES, _pre_factor_max_index);
 
-						for (int p = 0; p < NUM_POLAR_ANGLES; p++){
+						for (p = 0; p < NUM_POLAR_ANGLES; p++){
 							delta = (polar_fluxes[p*NUM_ENERGY_GROUPS + e] - ratios[e]) *
 									(1 - (_pre_factor_array[index + 2 * p] * sigma_t_l + _pre_factor_array[index + 2 * p + 1]));
-
-							fsr->incrementFlux(e, delta*weights[p]);
+							fsr_flux[e] += delta * weights[p];
 							polar_fluxes[p*NUM_ENERGY_GROUPS + e] -= delta;
 						}
 					}
+					fsr->incrementFlux(fsr_flux);
 
 
 #else
-
-//					#if USE_OPENMP
-//					#pragma omp parallel for num_threads(NUM_ENERGY_GROUPS) private(e, p, delta) \
-//					shared(fsr_flux, weights, ratios, polar_fluxes, segment)
-//					#endif
 					for (e = 0; e < NUM_ENERGY_GROUPS; e++) {
 						fsr_flux[e] = 0;
 						for (p = 0; p < NUM_POLAR_ANGLES; p++) {
 							delta = (polar_fluxes[p*NUM_ENERGY_GROUPS + e] -
-									ratios[e]) * segment->_prefactors[p][e];
+									ratios[e]) * segment->_prefactors[e][p];
 							fsr_flux[e] += delta * weights[p];
 							polar_fluxes[p*NUM_ENERGY_GROUPS + e] -= delta;
 						}
@@ -729,7 +728,7 @@ double Solver::computeKeff(int max_iterations) {
 	double* nu_sigma_f;
 	double* sigma_s;
 	double* chi;
-	double* polar_flux;
+//	double* polar_flux;
 	double* scalar_flux;
 	double* source;
 	double* old_source;
@@ -789,31 +788,33 @@ double Solver::computeKeff(int max_iterations) {
 		renorm_factor = 1.0 / fission_source;
 
 		#if USE_OPENMP
-		#pragma omp parallel for private(fsr, scalar_flux)
+		#pragma omp parallel for //private(fsr, scalar_flux)
 		#endif
 		for (int r = 0; r < _num_FSRs; r++) {
-			fsr = &_flat_source_regions[r];
-			scalar_flux = fsr->getFlux();
-
-			for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
-				fsr->setFlux(e, scalar_flux[e]*renorm_factor);
+			_flat_source_regions[r].normalizeFluxes(renorm_factor);
+//			fsr = &_flat_source_regions[r];
+//			scalar_flux = fsr->getFlux();
+//
+//			for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
+//				fsr->setFlux(e, scalar_flux[e]*renorm_factor);
 		}
 
 		/* Renormalization angular boundary fluxes for each track */
 		#if USE_OPENMP
-		#pragma omp parallel for private(polar_flux)
+		#pragma omp parallel for //private(polar_flux)
 		#endif
 		for (int i = 0; i < _num_azim; i++) {
 			for (int j = 0; j < _num_tracks[i]; j++) {
-				Track* track = &_tracks[i][j];
-				polar_flux = track->getPolarFluxes();
-
-				for (int p = 0; p < NUM_POLAR_ANGLES; p++) {
-					for (int e = 0; e < NUM_ENERGY_GROUPS; e++) {
-						polar_flux[GRP_TIMES_ANG + p*NUM_ENERGY_GROUPS + e] *= renorm_factor;
-						polar_flux[p*NUM_ENERGY_GROUPS + e] *= renorm_factor;
-					}
-				}
+				_tracks[i][j].normalizeFluxes(renorm_factor);
+//				Track* track = &_tracks[i][j];
+//				polar_flux = track->getPolarFluxes();
+//
+//				for (int p = 0; p < NUM_POLAR_ANGLES; p++) {
+//					for (int e = 0; e < NUM_ENERGY_GROUPS; e++) {
+//						polar_flux[GRP_TIMES_ANG + p*NUM_ENERGY_GROUPS + e] *= renorm_factor;
+//						polar_flux[p*NUM_ENERGY_GROUPS + e] *= renorm_factor;
+//					}
+//				}
 			}
 		}
 
@@ -882,7 +883,7 @@ double Solver::computeKeff(int max_iterations) {
 					for (int e=0; e < NUM_ENERGY_GROUPS; e++){
 						_FSRs_to_fluxes[e][r] = fluxes[e];
 						_FSRs_to_fluxes[NUM_ENERGY_GROUPS][r] =
-								_FSRs_to_fluxes[NUM_ENERGY_GROUPS][r] + fluxes[e];
+							_FSRs_to_fluxes[NUM_ENERGY_GROUPS][r] + fluxes[e];
 					}
 				}
 				plotFluxes();

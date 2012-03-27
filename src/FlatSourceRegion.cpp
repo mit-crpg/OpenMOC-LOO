@@ -261,6 +261,20 @@ void FlatSourceRegion::setOldSource(int energy, double old_source) {
 
 
 /**
+ * Normalizes all of the scalar flux values by dividing by a factor
+ * @param factor the factor to scale the flux by
+ */
+void FlatSourceRegion::normalizeFluxes(double factor) {
+
+	/* Loop over all energy groups */
+	for (int e=0; e < NUM_ENERGY_GROUPS; e++)
+		_flux[e] *= factor;
+
+	return;
+}
+
+
+/**
  * Compute source / sigma_t for each energy group
  */
 void FlatSourceRegion::computeRatios() {

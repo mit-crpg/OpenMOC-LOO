@@ -291,6 +291,28 @@ int Track::getNumSegments() {
 
 
 /**
+ * Normalizes all of the polar flux values by dividing by a factor
+ * @param factor the factor to scale the flux by
+ */
+void Track::normalizeFluxes(double factor)  {
+
+#if USE_OPENMP
+	omp_set_lock(&_flux_lock);
+#endif
+
+	/* Loop over all polar fluxes */
+	for (int i = 0; i < 2*GRP_TIMES_ANG; i++)
+		_polar_fluxes[i] *= factor;
+
+#if USE_OPENMP
+	omp_unset_lock(&_flux_lock);
+#endif
+
+	return;
+}
+
+
+/**
  * Checks whether a point is contained along this track
  * @param a pointer to the point of interest
  * @return true if the point is on the track, false otherwise

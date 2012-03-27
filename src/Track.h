@@ -28,10 +28,8 @@ struct segment {
 	Material* _material;
 	int _region_id;
 #if STORE_PREFACTORS
-	double _prefactors[NUM_POLAR_ANGLES][NUM_ENERGY_GROUPS];
+	double _prefactors[NUM_ENERGY_GROUPS][NUM_POLAR_ANGLES];
 #endif
-
-
 };
 
 class Track {
@@ -61,6 +59,7 @@ public:
     void setReflOut(const bool refl_out);
     void setTrackIn(Track *track_in);
     void setTrackOut(Track *track_out);
+
     Point* getEnd();
     Point* getStart();
     double getPhi() const;
@@ -74,7 +73,9 @@ public:
     Track *getTrackOut() const;
     bool isReflIn() const;
     bool isReflOut() const;
-	bool contains(Point* point);
+
+    void normalizeFluxes(double factor);
+    bool contains(Point* point);
 	void addSegment(segment* segment);
 	void clearSegments();
 	std::string toString();

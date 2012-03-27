@@ -53,6 +53,7 @@ public:
     void setOldFlux(int energy, double old_flux);
     void setSource(int energy, double source);
     void setOldSource(int energy, double old_source);
+    void normalizeFluxes(double factor);
     void computeRatios();
     double computeFissionRate();
 };
