@@ -291,7 +291,7 @@ int Track::getNumSegments() {
 
 
 /**
- * Normalizes all of the polar flux values by dividing by a factor
+ * Normalizes all of the polar flux values by multiplying by a factor
  * @param factor the factor to scale the flux by
  */
 void Track::normalizeFluxes(double factor)  {

@@ -261,7 +261,7 @@ void FlatSourceRegion::setOldSource(int energy, double old_source) {
 
 
 /**
- * Normalizes all of the scalar flux values by dividing by a factor
+ * Normalizes all of the scalar flux values by multiplying by a factor
  * @param factor the factor to scale the flux by
  */
 void FlatSourceRegion::normalizeFluxes(double factor) {
