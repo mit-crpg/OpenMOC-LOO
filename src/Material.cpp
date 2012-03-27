@@ -61,6 +61,27 @@ Material::Material(int id,
 			_sigma_s[i][j] = sigma_s[j*NUM_ENERGY_GROUPS+i];
 		}
 	}
+
+	/* Uncompressed indices for the start and end of nonzero elements */
+	_sigma_t_start = 0;
+	_sigma_t_end = NUM_ENERGY_GROUPS;
+	_sigma_a_start = 0;
+	_sigma_a_end = NUM_ENERGY_GROUPS;
+	_sigma_f_start = 0;
+	_sigma_f_end = NUM_ENERGY_GROUPS;
+	_nu_sigma_f_start = 0;
+	_nu_sigma_f_end = NUM_ENERGY_GROUPS;
+	_chi_start = 0;
+	_chi_end = NUM_ENERGY_GROUPS;
+
+	for (int e=0; e < NUM_ENERGY_GROUPS; e++) {
+		_sigma_s_start[e] = 0;
+		_sigma_s_end[e] = NUM_ENERGY_GROUPS;
+	}
+
+
+	//FIXME
+	compressCrossSections();
 }
 
 /**
@@ -144,6 +165,148 @@ double* Material::getSigmaA() {
 
 
 /**
+ * Return the index of the first non-zero total cross-section in the array
+ * of total cross-sections if the cross-sections have been compressed.
+ * Otherwise, returns 0.
+ * @param starting index for total cross-sections
+ */
+int Material::getSigmaTStart() {
+	return _sigma_t_start;
+}
+
+
+/**
+ * Return the index of the final non-zero total cross-section in the array
+ * of total cross-sections if the cross-sections have been compressed.
+ * Otherwise, returns 0.
+ * @param ending index for total cross-sections
+ */
+int Material::getSigmaTEnd() {
+	return _sigma_t_end;
+}
+
+
+/**
+ * Return the index of the first non-zero absorption cross-section in the array
+ * of absorption cross-sections if the cross-sections have been compressed.
+ * Otherwise, returns 0.
+ * @param starting index for absorption cross-sections
+ */
+int Material::getSigmaAStart() {
+	return _sigma_a_start;
+}
+
+
+/**
+ * Return the index of the final non-zero absorption cross-section in the array
+ * of total cross-sections if the cross-sections have been compressed.
+ * Otherwise, returns 0.
+ * @param ending index for absorption cross-sections
+ */
+int Material::getSigmaAEnd() {
+	return _sigma_a_end;
+}
+
+
+/**
+ * Return the index of the first non-zero fission cross-section in the array
+ * of fission cross-sections if the cross-sections have been compressed.
+ * Otherwise, returns 0.
+ * @param starting index for fission cross-sections
+ */
+int Material::getSigmaFStart() {
+	return _sigma_f_start;
+}
+
+
+/**
+ * Return the index of the final non-zero fission cross-section in the array
+ * of total cross-sections if the cross-sections have been compressed.
+ * Otherwise, returns 0.
+ * @param ending index for fission cross-sections
+ */
+int Material::getSigmaFEnd() {
+	return _sigma_f_end;
+}
+
+
+/**
+ * Return the index of the first non-zero nu times fission cross-section in
+ * the array of fission cross-sections if the cross-sections have been
+ * compressed. Otherwise, returns 0.
+ * @param starting index for num times fission cross-sections
+ */
+int Material::getNuSigmaFStart() {
+	return _nu_sigma_f_start;
+}
+
+
+
+/**
+ * Return the index of the final non-zero num times fission cross-section
+ * in the array of total cross-sections if the cross-sections have been
+ * compressed. Otherwise, returns 0.
+ * @param ending index for nu times fission cross-sections
+ */
+int Material::getNuSigmaFEnd() {
+	return _nu_sigma_f_end;
+}
+
+
+/**
+ * Return the index of the first non-zero value of chi in the array
+ * of chi if the cross-sections have been compressed. Otherwise, returns 0.
+ * @param starting index for chi
+ */
+int Material::getChiStart() {
+	return _chi_start;
+}
+
+
+/**
+ * Return the index of the final non-zero value of chi in the array
+ * of chi if the cross-sections have been compressed. Otherwise, returns 0.
+ * @param ending index for chi
+ */
+int Material::getChiEnd() {
+	return _chi_end;
+}
+
+
+/**
+ * Return the index of the first non-zero scattering cross-section in the
+ * scattering matrix for an energy group (row) if the cross-sections
+ * have been compressed. Otherwise, returns 0.
+ * @param starting index for a row of scattering cross-sections
+ */
+int Material::getSigmaSStart(int group) {
+
+	if (group < 0 || group >= NUM_ENERGY_GROUPS)
+		log_printf(ERROR, "Unable to return the starting index for sigma_s "
+				"start for group %d since it is out of the energy group "
+				"bounds", group);
+
+	return _sigma_s_start[group];
+}
+
+
+/**
+ * Return the index of the final non-zero scattering cross-section in the
+ * scattering matrix for an energy group (row) if the cross-sections
+ * have been compressed. Otherwise, returns 0.
+ * @param ending index for a row of scattering cross-sections
+ */
+int Material::getSigmaSEnd(int group) {
+
+	if (group < 0 || group >= NUM_ENERGY_GROUPS)
+		log_printf(ERROR, "Unable to return the ending index for sigma_s for "
+				"group %d since it is out of the energy group bounds", group);
+
+	return _sigma_s_end[group];
+}
+
+
+/**
  * Set the material's chi array
  * @param chi the chi array
  */
@@ -183,7 +346,7 @@ void Material::setNuSigmaF(double nu_sigma_f[NUM_ENERGY_GROUPS]) {
  */
 void Material::setSigmaS(double sigma_s[NUM_ENERGY_GROUPS][NUM_ENERGY_GROUPS]) {
 	for (int i=0; i < NUM_ENERGY_GROUPS; i++) {
-		for (int j=0; i < NUM_ENERGY_GROUPS; i++)
+			for (int j=0; j < NUM_ENERGY_GROUPS; j++)
 			_sigma_s[i][j] = sigma_s[j][i];
 	}
 }
@@ -275,3 +438,127 @@ std::string Material::toString() {
 
 	return string.str();
 }
+
+
+
+
+void Material::compressCrossSections() {
+
+	log_printf(INFO, "Compressing cross-sections for material id = %d", _id);
+
+	bool total_set = false;
+	bool absorb_set = false;
+	bool nu_fission_set = false;
+	bool fission_set = false;
+	bool chi_set = false;
+	bool scatter_set = false;
+
+	/* Initialize completely compressed indices */
+	_sigma_t_start = 0;
+	_sigma_t_end = 0;
+	_sigma_a_start = 0;
+	_sigma_a_end = 0;
+	_sigma_f_start = 0;
+	_sigma_f_end = 0;
+	_nu_sigma_f_start = 0;
+	_nu_sigma_f_end = 0;
+	_chi_start = 0;
+	_chi_end = 0;
+
+
+	/* Find the indices of the first non-zero cross-section values */
+	for (int i=0; i < NUM_ENERGY_GROUPS; i++) {
+		if (!total_set && _sigma_t[i] != 0) {
+			_sigma_t_start = i;
+			total_set = true;
+		}
+		if (!absorb_set && _sigma_a[i] != 0) {
+			_sigma_a_start = i;
+			absorb_set = true;
+		}
+		if (!nu_fission_set && _nu_sigma_f[i] != 0) {
+			_nu_sigma_f_start = i;
+			nu_fission_set = true;
+		}
+		if (!fission_set && _sigma_f[i] != 0) {
+			_sigma_f_start = i;
+			fission_set = true;
+		}
+		if (!chi_set && _chi[i] != 0) {
+			_chi_start = i;
+			chi_set = true;
+		}
+	}
+
+//	log_printf(NORMAL, "sigma_t_start = %d, sigma_a_start = %d, "
+//			"nu_sigma_f_start = %d, sigma_f_start = %d, chi_start = %d",
+//			_sigma_t_start, _sigma_a_start, _nu_sigma_f_start, _sigma_f_start,
+//			_chi_start);
+
+	total_set = false;
+	absorb_set = false;
+	nu_fission_set = false;
+	fission_set = false;
+	chi_set = false;
+
+	/* Find the indices of the final non-zero cross-section values */
+	for (int i=NUM_ENERGY_GROUPS-1; i > -1; i--) {
+		if (!total_set && _sigma_t[i] != 0) {
+			_sigma_t_end = i+1;
+			total_set = true;
+		}
+		if (!absorb_set && _sigma_a[i] != 0) {
+			_sigma_a_end = i+1;
+			absorb_set = true;
+		}
+		if (!nu_fission_set && _nu_sigma_f[i] != 0) {
+			_nu_sigma_f_end = i+1;
+			nu_fission_set = true;
+		}
+		if (!fission_set && _sigma_f[i] != 0) {
+			_sigma_f_end = i+1;
+			fission_set = true;
+		}
+		if (!chi_set && _chi[i] != 0) {
+			_chi_end = i+1;
+			chi_set = true;
+		}
+	}
+
+//	log_printf(NORMAL, "sigma_t_end = %d, sigma_a_end = %d, "
+//			"nu_sigma_f_end = %d, sigma_f_end = %d, chi_end = %d",
+//			_sigma_t_end, _sigma_a_end, _nu_sigma_f_end, _sigma_f_end,
+//			_chi_end);
+
+	/* Scattering cross-section matrix starting indices */
+	for (int i=0; i < NUM_ENERGY_GROUPS; i++) {
+
+		_sigma_s_start[i] = 0;
+		_sigma_s_end[i] = 0;
+		scatter_set = false;
+
+		for (int j=0; j < NUM_ENERGY_GROUPS; j++) {
+			if (!scatter_set && _sigma_s[i][j] != 0) {
+				_sigma_s_start[i] = j;
+				scatter_set = true;
+				break;
+			}
+		}
+
+		scatter_set = false;
+
+		for (int j=NUM_ENERGY_GROUPS-1; j > -1; j--) {
+			if (!scatter_set && _sigma_s[i][j] != 0) {
+				_sigma_s_end[i] = j+1;
+				scatter_set = true;
+				break;
+			}
+		}
+
+//		log_printf(NORMAL, "i = %d, sigma_s_start = %d, sigma_s_end = %d",
+//								i, _sigma_s_start[i], _sigma_s_end[i]);
+	}
+
+	return;
+}
+

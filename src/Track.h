@@ -29,7 +29,6 @@ struct segment {
 	int _region_id;
 #if STORE_PREFACTORS
 	double _prefactors[NUM_ENERGY_GROUPS][NUM_POLAR_ANGLES];
-//	double _prefactors[NUM_POLAR_ANGLES][NUM_ENERGY_GROUPS];
 #endif
 };
 

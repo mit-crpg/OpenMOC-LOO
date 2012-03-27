@@ -32,6 +32,7 @@ private:
 	bool _plot_cells;
 	bool _plot_fluxes;
 	bool _compute_pin_powers;
+	bool _compress_cross_sections;
 public:
     Options(int argc, const char **argv);
     ~Options(void);
@@ -47,6 +48,7 @@ public:
     bool plotCells() const;
     bool plotFluxes() const;
     bool computePinPowers() const;
+    bool compressCrossSections() const;
 };
 
 #endif

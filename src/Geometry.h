@@ -92,6 +92,7 @@ public:
 	int findFSRId(LocalCoords* coords);
 	void segmentize(Track* track);
 
+	void compressCrossSections();
 	void computePinPowers(double* FSRs_to_powers, double* FSRs_to_pin_powers);
 	double computePinPowers(Universe* univ, char* output_file_prefix,
 			int FSR_id, double* FSRs_to_powers, double* FSRs_to_pin_powers);

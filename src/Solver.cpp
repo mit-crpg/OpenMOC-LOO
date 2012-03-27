@@ -763,6 +763,8 @@ double Solver::computeKeff(int max_iterations) {
 	double* old_source;
 	FlatSourceRegion* fsr;
 	Material* material;
+	int start_index, end_index;
+
 
 	log_printf(NORMAL, "Computing k_eff...");
 
@@ -809,7 +811,11 @@ double Solver::computeKeff(int max_iterations) {
 			scalar_flux = fsr->getFlux();
 			volume = fsr->getVolume();
 
-			for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
+			start_index = fsr->getMaterial()->getNuSigmaFStart();
+			end_index = fsr->getMaterial()->getNuSigmaFEnd();
+
+//			for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
+			for (int e = start_index; e < end_index; e++)
 				fission_source += nu_sigma_f[e] * scalar_flux[e] * volume;
 		}
 
@@ -851,20 +857,29 @@ double Solver::computeKeff(int max_iterations) {
 			chi = material->getChi();
 			sigma_s = material->getSigmaS();
 
+			start_index = material->getNuSigmaFStart();
+			end_index = material->getNuSigmaFEnd();
+
 			/* Compute total fission source for current region */
-			for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
+//			for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
+			for (int e = start_index; e < end_index; e++)
 				fission_source += scalar_flux[e] * nu_sigma_f[e];
 
 			/* Compute total scattering source for group G */
 			for (int G = 0; G < NUM_ENERGY_GROUPS; G++) {
 				scatter_source = 0;
 
-				for (int g = 0; g < NUM_ENERGY_GROUPS; g++)
-					scatter_source += sigma_s[G*NUM_ENERGY_GROUPS + g] * scalar_flux[g];
+				start_index = material->getSigmaSStart(G);
+				end_index = material->getSigmaSEnd(G);
+
+//				for (int g = 0; g < NUM_ENERGY_GROUPS; g++)
+				for (int g = start_index; g < end_index; g++)
+					scatter_source += sigma_s[G*NUM_ENERGY_GROUPS + g]
+					                          * scalar_flux[g];
 
 				/* Set the total source for region r in group G */
-				source[G] = ((1.0 / (_old_k_effs.front())) * fission_source * chi[G] +
-								scatter_source) * ONE_OVER_FOUR_PI;
+				source[G] = ((1.0 / (_old_k_effs.front())) * fission_source *
+								chi[G] + scatter_source) * ONE_OVER_FOUR_PI;
 			}
 		}
 

@@ -42,6 +42,7 @@ Options::Options(int argc, const char **argv) {
 	_plot_cells = false;				/* Default will not plot cells */
 	_plot_fluxes = false;				/* Default will not plot fluxes */
 	_compute_pin_powers = false;		/* Default will not compute pin powers */
+	_compress_cross_sections = false;	/* Default will not compress cross-sections */
 
 
 	for (int i = 0; i < argc; i++) {
@@ -77,6 +78,9 @@ Options::Options(int argc, const char **argv) {
 			else if (strcmp(argv[i], "-cp") == 0 ||
 					strcmp(argv[i], "--computepowers") == 0)
 				_compute_pin_powers = true;
+			else if (strcmp(argv[i], "-cxs") == 0 ||
+					strcmp(argv[i], "--compressxs") == 0)
+				_compress_cross_sections = true;
 		}
 	}
 }
@@ -197,4 +201,18 @@ bool Options::plotFluxes() const {
  */
 bool Options::computePinPowers() const {
 	return _compute_pin_powers;
+}
+
+
+/**
+ * Returns a boolean representing whether or not to compress the
+ * cross-sections for each material. If true, the starting and ending
+ * index for the non-zero cross-section values will be computed to
+ * help speed up fixed source iteraiton. Note: this will only speed
+ * up fixed source iteration for materials with many zeroes in their
+ * cross-section values
+ * @return whether or not to compute the pin powers
+ */
+bool Options::compressCrossSections() const {
+	return _compress_cross_sections;
 }

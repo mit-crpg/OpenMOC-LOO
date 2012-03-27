@@ -1837,6 +1837,26 @@ int Geometry::findFSRId(LocalCoords* coords) {
 
 
 /**
+ * This function calls the compress cross-sections method for each
+ * Material in the Geometry. These methods will find the minimum
+ * and maximum indices for the non-zero elements of each cross-section
+ * so that fixed source iteration does not waste time on these elements.
+ */
+void Geometry::compressCrossSections() {
+
+	log_printf(NORMAL, "Compressing cross-sections...");
+
+	std::map<int, Material*>::iterator iter;
+
+	/* Loop over materials */
+	for (iter = _materials.begin(); iter != _materials.end(); ++iter)
+		iter->second->compressCrossSections();
+
+	return;
+}
+
+
+/**
  * This method is called from the Solver after fixed source iteration
  * to compute the powers (fission rates) for each lattice cell (ie, the pin
  * and assembly powers for most geometries). The method stores the pin powers

@@ -53,6 +53,10 @@ int main(int argc, const char **argv) {
 	if (opts.dumpGeometry())
 		geometry.printString();
 
+	/* Compress cross-sections if requested at runtime */
+	if (opts.compressCrossSections())
+		geometry.compressCrossSections();
+
 	Plotter plotter(&geometry, opts.getBitDimension(), opts.getExtension());
 
 	/* Initialize the trackgenerator */
