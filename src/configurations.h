@@ -19,7 +19,7 @@
 #define GRP_TIMES_ANG NUM_POLAR_ANGLES*NUM_ENERGY_GROUPS
 
 /* Convergence threshold for computing k_eff */
-#define KEFF_CONVERG_THRESH 1E-5
+#define KEFF_CONVERG_THRESH 1E-7
 
 /* The number of old k_eff values which will be stored. Keeping track of more
  * than just the most recent k_eff is intended to prevent from prematurely
@@ -30,16 +30,13 @@
 #define MAX_ITERATIONS 3E+3
 
 /* Precompute and store exponential pre-factors in transport equation */
-#define STORE_PREFACTORS true
-
-/* Max number of regions for precomputing pre-factors in solver */
-#define FSR_HASHMAP_THRESH 100000
+#define STORE_PREFACTORS false
 
 /* Number of significant digits for computing hashmap exponential prefactors */
 #define FSR_HASHMAP_PRECISION 5
 
 /* If this machine has OpenMP installed, define as true for parallel speedup */
-#define USE_OPENMP false
+#define USE_OPENMP true
 
 
 /******************************************************************************
@@ -75,11 +72,5 @@
  * iteration */
 #define FLUX_CONVERGENCE_THRESH 1E-6
 
-
-/******************************************************************************
- ************************ HELPFUL MACROS **************************************
- *****************************************************************************/
-
-#define FLUX_INDEX(d,p,e) d*GRP_TIMES_ANG + p*NUM_ENERGY_GROUPS + e
 
 #endif /* CONFIGURATIONS_H_ */
