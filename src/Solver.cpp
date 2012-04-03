@@ -526,7 +526,7 @@ void Solver::fixedSourceIteration(int max_iterations) {
 		 * for each pair of reflecting azimuthal angles - angles which
 		 * wrap into cycles on each other */
 		#if USE_OPENMP && STORE_PREFACTORS
-		#pragma omp parallel for num_threads(4) \
+		#pragma omp parallel for num_threads(num_threads) \
 				private(t, k, j, i, s, p, e, pe, track, segments, \
 						num_segments, weights, polar_fluxes,\
 						segment, fsr, ratios, delta, fsr_flux)
