@@ -1901,6 +1901,8 @@ double Geometry::computePinPowers(Universe* univ, char* output_file_prefix,
 	/* Power starts at 0 and is incremented for each FSR in this universe */
 	double power = 0;
 
+	bool non_zero_power;
+
 	/* If the universe is a SIMPLE type universe */
 	if (univ->getType() == SIMPLE) {
 		std::map<int, Cell*> cells = univ->getCells();
@@ -1962,6 +1964,8 @@ double Geometry::computePinPowers(Universe* univ, char* output_file_prefix,
 				"_lattice" << lattice->getId() << "_power.txt";
 		FILE* output_file = fopen(output_file_name.str().c_str(), "w");
 
+		non_zero_power = false;
+
 		/* Loop over all lattice cells in this lattice */
 		for (int i = num_y-1; i > -1; i--) {
 			for (int j = 0; j < num_x; j++) {
@@ -1986,12 +1990,21 @@ double Geometry::computePinPowers(Universe* univ, char* output_file_prefix,
 				fprintf(output_file, "%f, ", cell_power);
 
 				power += cell_power;
+
+				/* Check if a nonzero power has been computed */
+				if (power > 0.0)
+					non_zero_power = true;
 			}
 			/* Move to the next line in the output file */
 			fprintf(output_file, "\n");
 		}
 
 		fclose(output_file);
+
+		/* Delete this output file if none of the powers were nonzero */
+		if (!non_zero_power)
+			remove(output_file_name.str().c_str());
+
 	}
 
 	return power;
