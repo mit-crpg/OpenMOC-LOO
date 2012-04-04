@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 
-<!-- 4x4 lattice with three types of pin cells. Each lattice cell is 1cm x 1cm 
-	 and the pins have diameters of 0.2cm, 0.3cm and 0.4cm. 
--->
+<!-- 4x4 lattice of 1cm x 1cm
+     with three types of pin cells (diameters 0.2cm, 0.3cm, 0.4cm). -->
+
 
 <geometry>
 
@@ -28,14 +28,13 @@
     </universes>
   </lattice>
 
-
 <!-- Definition of Surfaces -->
   <surface id="1" type="x-plane" coeffs="-2.0" boundary="reflective"/>
-  <surface id="2" type="x-plane" coeffs="2.0" boundary="reflective"/>
+  <surface id="2" type="x-plane" coeffs="2.0"  boundary="reflective"/>
   <surface id="3" type="y-plane" coeffs="-2.0" boundary="reflective" />
-  <surface id="4" type="y-plane" coeffs="2.0" boundary="reflective"/>
-  <surface id="5" type="circle" coeffs="0.0 0.0 0.4" />
-  <surface id="6" type="circle" coeffs="0.0 0.0 0.3" />
-  <surface id="7" type="circle" coeffs="0.0 0.0 0.2" />
+  <surface id="4" type="y-plane" coeffs="2.0"  boundary="reflective"/>
+  <surface id="5" type="circle"  coeffs="0.0 0.0 0.4" />
+  <surface id="6" type="circle"  coeffs="0.0 0.0 0.3" />
+  <surface id="7" type="circle"  coeffs="0.0 0.0 0.2" />
 
 </geometry>
