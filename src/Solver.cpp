@@ -49,12 +49,19 @@ Solver::Solver(Geometry* geom, TrackGenerator* track_generator,
  * Solver destructor deletes flat source regions array
  */
 Solver::~Solver() {
+
 	delete [] _flat_source_regions;
 	delete [] _FSRs_to_powers;
 	delete [] _FSRs_to_pin_powers;
+	delete _quad;
 
 	for (int e = 0; e <= NUM_ENERGY_GROUPS; e++)
 		delete [] _FSRs_to_fluxes[e];
+
+#if !STORE_PREFACTORS
+	delete [] _pre_factor_array;
+#endif
+
 }
 
 
