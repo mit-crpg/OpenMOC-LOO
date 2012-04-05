@@ -255,7 +255,7 @@ void Plotter::plotMagickScaled(double* pixMapRGB, double min, double max, std::s
 
 /**
  * Generic function for plotting pixMap array on a structured mesh array
- * in a pdb file using silo I/O library
+ * in a pdb or hdf5 file using silo I/O library
  */
 void Plotter::plotSilo(int* pixMap, std::string type){
 	log_printf(NORMAL, "plotting silo mesh...");
@@ -286,7 +286,7 @@ void Plotter::plotSilo(int* pixMap, std::string type){
 		mesh_x[i] = (double(i) - double(_bit_length_x)/2.0 + 1.0) * (_width/double(_bit_length_x));
 	}
 	for (int i = 0; i < (_bit_length_y + 1); i++){
-		mesh_y[i] = (double(i) - double(_bit_length_y)/2.0) * (_height/double(_bit_length_y));
+		mesh_y[i] = (double(_bit_length_y)/2.0 - double(i)) * (_height/double(_bit_length_y));
 	}
 
 	/* descriptions of mesh */
@@ -303,14 +303,8 @@ void Plotter::plotSilo(int* pixMap, std::string type){
 	/* description of what is being plotted */
 	const char* type_char = type.c_str();
 
-	/* flip pixMap from Bitmap coordinates to cartesian coordinates */
-	FlipBitmap(pixMap);
-
 	/* write pixMap data to pdb file */
 	DBPutQuadvar1(file, type_char, "quadmesh", pixMap, dimsvar, ndims, NULL, 0, DB_INT, DB_ZONECENT, NULL);
-
-	/* flip pixMap from cartesian coordinates back to Bitmap coordinates */
-	FlipBitmap(pixMap);
 
 	/* close pdb file */
     DBClose(file);
@@ -346,7 +340,7 @@ void Plotter::plotSilo(float* pixMap, std::string type){
 		mesh_x[i] = (double(i) - double(_bit_length_x)/2.0 + 1.0) * (_width/double(_bit_length_x));
 	}
 	for (int i = 0; i < (_bit_length_y + 1); i++){
-		mesh_y[i] = (double(i) - double(_bit_length_y)/2.0) * (_height/double(_bit_length_y));
+		mesh_y[i] = (double(_bit_length_y)/2.0 - double(i)) * (_height/double(_bit_length_y));
 	}
 
 	/* generate structured mesh */
@@ -363,14 +357,8 @@ void Plotter::plotSilo(float* pixMap, std::string type){
 	/* description of what is being plotted */
 	const char* type_char = type.c_str();
 
-	/* flip pixMap from Bitmap coordinates to cartesian coordinates */
-	FlipBitmap(pixMap);
-
 	/* write pixMap data to pdb file */
 	DBPutQuadvar1(file, type_char, "quadmesh", pixMap, dimsvar, ndims, NULL, 0, DB_FLOAT, DB_ZONECENT, NULL);
-
-	/* flip pixMap from cartesian coordinates back to Bitmap coordinates */
-	FlipBitmap(pixMap);
 
 	/* close pdb file */
     DBClose(file);
@@ -408,32 +396,6 @@ void Plotter::plot(float* pixMap, std::string type){
 }
 
 /**
- * Vertically flip in int pixMap array
- */
-void Plotter::FlipBitmap(int* pixMap){
-
-	/* allocate temporary array */
-	int* pixMapTemp = new int[_bit_length_x * _bit_length_y];
-
-	/* Invert pixMap and store in pixMapTemp */
-	for (int y=0;y<_bit_length_y; y++){
-		for (int x = 0; x < _bit_length_x; x++){
-			pixMapTemp[(_bit_length_y - 1 - y) * _bit_length_x + x] = pixMap[y * _bit_length_x + x];
-		}
-	}
-
-	/* Write pixMapTemp to pixMap */
-	for (int y=0;y<_bit_length_y; y++){
-		for (int x = 0; x < _bit_length_x; x++){
-			pixMap[y * _bit_length_x + x] = pixMapTemp[y * _bit_length_x + x];
-		}
-	}
-
-	/* release memory */
-	delete [] pixMapTemp;
-}
-
-/**
  * Convert an x value our from geometry coordinates to Bitmap coordinates.
  */
 int Plotter::convertToBitmapX(double x){
@@ -459,32 +421,6 @@ double Plotter::convertToGeometryX(int x){
  */
 double Plotter::convertToGeometryY(int y){
 	return double(-(y - _bit_length_y/2.0) / _y_pixel);
-}
-
-/**
- * Vertically flip in float pixMap array
- */
-void Plotter::FlipBitmap(float* pixMap){
-
-	/* allocate temporary array */
-	float* pixMapTemp = new float[_bit_length_x * _bit_length_y];
-
-	/* Invert pixMap and store in pixMapTemp */
-	for (int y=0;y<_bit_length_y; y++){
-		for (int x = 0; x < _bit_length_x; x++){
-			pixMapTemp[(_bit_length_y - 1 - y) * _bit_length_x + x] = pixMap[y * _bit_length_x + x];
-		}
-	}
-
-	/* Write pixMapTemp to pixMap */
-	for (int y=0;y<_bit_length_y; y++){
-		for (int x = 0; x < _bit_length_x; x++){
-			pixMap[y * _bit_length_x + x] = pixMapTemp[y * _bit_length_x + x];
-		}
-	}
-
-	/* release memory */
-	delete [] pixMapTemp;
 }
 
 /**
@@ -787,23 +723,21 @@ double* Plotter::getScaledColors(double value, double min, double max, double* c
 	double red;
 	double green;
 	double blue;
-	double range = max - min;
-	double mid = range / 2.0;
 
-	/* assign a value to red */
-	red = (value - mid) / range;
-
-	/* if value is above mid => red-green */
-	if (red > 0.0){
-		blue = 0.0;
-		green = 1.0 - 2 * red;
-		red = 2 * red;
-	    }
-	/* if value is below mid => blue-green */
-	else {
-		blue = -2 * red;
-		green = 1.0 + 2 * red;
+	if (value < .333){
 		red = 0.0;
+		green = 3.0 * value;
+		blue = 1.0;
+	}
+	else if (value < .666){
+		red = 3.0 * value - 1.0;
+		green = 1.0;
+		blue = -3.0 * value + 1.0;
+	}
+	else {
+		red = 1.0;
+		green = -3.0 * value + 3.0;
+		blue = 0.0;
 	}
 
 	/* write color data to colors array */

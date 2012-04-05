@@ -52,8 +52,6 @@ public:
 	double getYPixel();
 	void plot(int* pixMap, std::string type);
 	void plot(float* pixMap, std::string type);
-	void FlipBitmap(int* pixMap);
-	void FlipBitmap(float* pixMap);
 	int convertToBitmapX(double x);
 	int convertToBitmapY(double y);
 	void plotRegion(int* pixMap, int* regionMap, std::string regionName);

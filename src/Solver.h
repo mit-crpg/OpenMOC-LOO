@@ -25,8 +25,9 @@
 #include "configurations.h"
 #include "log.h"
 
-#include <omp.h>
-
+#if USE_OPENMP == true
+	#include <omp.h>
+#endif
 
 class Solver {
 private:
