@@ -295,6 +295,7 @@ void LocalCoords::copyCoords(LocalCoords* coords) {
 
 	LocalCoords* curr1 = this;
 	LocalCoords* curr2 = coords;
+	curr2->prune();
 
 	while (curr1 != NULL) {
 		curr2->setX(curr1->getX());

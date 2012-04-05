@@ -612,8 +612,8 @@ void Geometry::addCell(Cell* cell) {
 				cell->addSurface(surface1, s1);
 				cell->addSurface(-1*surface2, s2);
 				log_printf(INFO, "original cell is updated to %s",
-				cell->toString().c_str()); 
-				
+				cell->toString().c_str());
+
 			} /* end of # sectors = 4 */
 			/* adding in 8 sectors */
 			else if (t_num_sectors == 8){
@@ -908,6 +908,9 @@ void Geometry::addCell(Cell* cell) {
 						   "OpenMOC only supports #sectors = 4, 8, 16.\n"
 						   "You entered #sectors = %d", t_num_sectors);
 			}
+
+			delete [] tmp;
+
 		} /* end of adding in sections */
 		  
 	} /* end of material type cell loop */
@@ -1607,13 +1610,17 @@ Cell* Geometry::findNextCell(LocalCoords* coords, double angle) {
 			/* If the distance is not INFINITY then the new cell found is the one
 			 * to return
 			 */
-			if (dist != INFINITY)
+			if (dist != INFINITY) {
+				test.prune();
 				return cell;
+			}
 
 			/* If the distance is not INFINITY then the new cell found is not
 			 * the one to return and we should move to a new lattice cell */
 			else
 				test.copyCoords(coords);
+
+			test.prune();
 		}
 
 		/* If the distance returned is infinity, the trajectory will not
@@ -1747,25 +1754,6 @@ void Geometry::segmentize(Track* track) {
 
 		/* Find the segment length between the segments start and end points */
 		segment_length = segment_end.getPoint()->distance(segment_start.getPoint());
-
-//		log_printf(DEBUG, "geom segmentize - length: %f, x0: %f, y0: %f, x1: %f, y1: %f", segment_length,
-//				segment_start.getPoint()->getX(),segment_start.getPoint()->getY(),
-//				segment_end.getPoint()->getX(), segment_end.getPoint()->getY());
-
-		if (abs(segment_start.getPoint()->getX()) > 2.0){
-			log_printf(DEBUG, "X0 VALUE OUTSIDE GEOMETRY: %f", segment_start.getPoint()->getX());
-		}
-		if (abs(segment_start.getPoint()->getY()) > 2.0){
-			log_printf(DEBUG, "Y0 VALUE OUTSIDE GEOMETRY: %f", segment_start.getPoint()->getY());
-		}
-		if (abs(segment_end.getPoint()->getX()) > 2.0){
-			log_printf(DEBUG, "X1 VALUE OUTSIDE GEOMETRY: %f", segment_end.getPoint()->getX());
-		}
-		if (abs(segment_end.getPoint()->getY()) > 2.0){
-			log_printf(DEBUG, "Y1 VALUE OUTSIDE GEOMETRY: %f", segment_end.getPoint()->getY());
-		}
-
-
 
 		/* Create a new segment */
 		segment* new_segment = new segment;
@@ -1901,6 +1889,8 @@ double Geometry::computePinPowers(Universe* univ, char* output_file_prefix,
 	/* Power starts at 0 and is incremented for each FSR in this universe */
 	double power = 0;
 
+	bool non_zero_power;
+
 	/* If the universe is a SIMPLE type universe */
 	if (univ->getType() == SIMPLE) {
 		std::map<int, Cell*> cells = univ->getCells();
@@ -1962,6 +1952,8 @@ double Geometry::computePinPowers(Universe* univ, char* output_file_prefix,
 				"_lattice" << lattice->getId() << "_power.txt";
 		FILE* output_file = fopen(output_file_name.str().c_str(), "w");
 
+		non_zero_power = false;
+
 		/* Loop over all lattice cells in this lattice */
 		for (int i = num_y-1; i > -1; i--) {
 			for (int j = 0; j < num_x; j++) {
@@ -1986,12 +1978,21 @@ double Geometry::computePinPowers(Universe* univ, char* output_file_prefix,
 				fprintf(output_file, "%f, ", cell_power);
 
 				power += cell_power;
+
+				/* Check if a nonzero power has been computed */
+				if (power > 0.0)
+					non_zero_power = true;
 			}
 			/* Move to the next line in the output file */
 			fprintf(output_file, "\n");
 		}
 
 		fclose(output_file);
+
+		/* Delete this output file if none of the powers were nonzero */
+		if (!non_zero_power)
+			remove(output_file_name.str().c_str());
+
 	}
 
 	return power;

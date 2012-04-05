@@ -21,6 +21,10 @@
 /* Convergence threshold for computing k_eff */
 #define KEFF_CONVERG_THRESH 1E-5
 
+/* Convergence threshold for scalar flux in each region during fixed source
+ * iteration */
+#define FLUX_CONVERGENCE_THRESH 1E-6
+
 /* The number of old k_eff values which will be stored. Keeping track of more
  * than just the most recent k_eff is intended to prevent from prematurely
  * exiting fixed source iteration at a local minimum or maximum */
@@ -31,9 +35,6 @@
 
 /* Precompute and store exponential pre-factors in transport equation */
 #define STORE_PREFACTORS true
-
-/* Max number of regions for precomputing pre-factors in solver */
-#define FSR_HASHMAP_THRESH 100000
 
 /* Number of significant digits for computing hashmap exponential prefactors */
 #define FSR_HASHMAP_PRECISION 5
@@ -71,15 +72,5 @@
  * track segmentation */
 #define TINY_MOVE 1E-10
 
-/* Convergence threshold for scalar flux in each region during fixed source
- * iteration */
-#define FLUX_CONVERGENCE_THRESH 1E-6
-
-
-/******************************************************************************
- ************************ HELPFUL MACROS **************************************
- *****************************************************************************/
-
-#define FLUX_INDEX(d,p,e) d*GRP_TIMES_ANG + p*NUM_ENERGY_GROUPS + e
 
 #endif /* CONFIGURATIONS_H_ */

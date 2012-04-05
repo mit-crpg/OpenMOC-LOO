@@ -2,6 +2,7 @@ LANGUAGES   += c++
 COMPILEOPTS += -Wall
 COMPILEOPTS += -Werror
 COMPILEOPTS += -std=gnu++0x
+COMPILEOPTS += -fopenmp
 
 BINARIES    += openmoc
 LINKOPTS    += -lexpat

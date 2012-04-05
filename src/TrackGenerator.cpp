@@ -49,6 +49,7 @@ TrackGenerator::~TrackGenerator() {
 	delete [] _num_x;
 	delete [] _num_y;
 	delete [] _azim_weights;
+	delete [] _pix_map_FSRs;
 
 	for (int i = 0; i < _num_azim; i++)
 		delete [] _tracks[i];

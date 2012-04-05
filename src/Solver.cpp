@@ -49,12 +49,19 @@ Solver::Solver(Geometry* geom, TrackGenerator* track_generator,
  * Solver destructor deletes flat source regions array
  */
 Solver::~Solver() {
+
 	delete [] _flat_source_regions;
 	delete [] _FSRs_to_powers;
 	delete [] _FSRs_to_pin_powers;
+	delete _quad;
 
 	for (int e = 0; e <= NUM_ENERGY_GROUPS; e++)
 		delete [] _FSRs_to_fluxes[e];
+
+#if !STORE_PREFACTORS
+	delete [] _pre_factor_array;
+#endif
+
 }
 
 
@@ -814,7 +821,6 @@ double Solver::computeKeff(int max_iterations) {
 			start_index = fsr->getMaterial()->getNuSigmaFStart();
 			end_index = fsr->getMaterial()->getNuSigmaFEnd();
 
-//			for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
 			for (int e = start_index; e < end_index; e++)
 				fission_source += nu_sigma_f[e] * scalar_flux[e] * volume;
 		}
@@ -861,7 +867,6 @@ double Solver::computeKeff(int max_iterations) {
 			end_index = material->getNuSigmaFEnd();
 
 			/* Compute total fission source for current region */
-//			for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
 			for (int e = start_index; e < end_index; e++)
 				fission_source += scalar_flux[e] * nu_sigma_f[e];
 
@@ -872,7 +877,6 @@ double Solver::computeKeff(int max_iterations) {
 				start_index = material->getSigmaSStart(G);
 				end_index = material->getSigmaSEnd(G);
 
-//				for (int g = 0; g < NUM_ENERGY_GROUPS; g++)
 				for (int g = start_index; g < end_index; g++)
 					scatter_source += sigma_s[G*NUM_ENERGY_GROUPS + g]
 					                          * scalar_flux[g];

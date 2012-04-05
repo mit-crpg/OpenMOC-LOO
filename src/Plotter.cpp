@@ -249,6 +249,8 @@ void Plotter::plotMagickScaled(double* pixMapRGB, double min, double max, std::s
 
 	/* write Magick image to file */
 	image.write(title);
+
+	drawList.erase(drawList.begin(), drawList.end());
 }
 
 
@@ -770,7 +772,8 @@ void Plotter::plotFSRs(int* pixMap){
 				x_global = convertToGeometryX(x);
 				y_global = convertToGeometryY(y);
 
-				log_printf(DEBUG, "finding cell for bit x: %i, bit y: %i, global x: %f, global %f", x, y, x_global, y_global);
+				log_printf(DEBUG, "finding cell for bit x: %i, bit y: %i, "
+						"global x: %f, global %f", x, y, x_global, y_global);
 
 				/* create point located in universe 0 */
 				LocalCoords point(x_global,y_global);
@@ -783,6 +786,8 @@ void Plotter::plotFSRs(int* pixMap){
 				/* Store FSR id in pixMap */
 				pixMap[y * _bit_length_x + x] = _geom->findFSRId(&point);
 
+				/* Remove all allocated localcoords */
+				point.prune();
 			}
 		}
 	}
