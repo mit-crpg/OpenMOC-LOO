@@ -20,6 +20,7 @@
 #include "silo.h"
 #include "LocalCoords.h"
 #include "Cell.h"
+#include "PlotterNew.h"
 
 
 
@@ -37,21 +38,17 @@ private:
 public:
 	Plotter(Geometry* geom, const int bit_dim, std::string extension);
 	virtual ~Plotter();
-	void plotMagick(int* pixMap, std::string type);
-	void plotMagick(float* pixMap, std::string type);
 	void plotMagickScaled(double* pixMap, double min, double max, std::string type);
 	void plotSegments(Track* track, double sin_phi, double cos_phi, int* pixMap);
 	void LineFct(double x0, double y0, double x1, double y1, int* pixMap, int color = 1);
-	void plotSilo(int* pixMap, std::string type);
-	void plotSilo(float* pixMap, std::string type);
 	void plotTracksReflective(Track* track, int numReflect);
 	void plotFSRs(int* pixMap);
 	int getBitLengthX();
 	int getBitLengthY();
 	double getXPixel();
 	double getYPixel();
-	void plot(int* pixMap, std::string type);
-	void plot(float* pixMap, std::string type);
+	void plot(int* pixMap, std::string name);
+	void plot(float* pixMap, std::string name);
 	int convertToBitmapX(double x);
 	int convertToBitmapY(double y);
 	void plotRegion(int* pixMap, int* regionMap, std::string regionName);

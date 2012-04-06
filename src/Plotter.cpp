@@ -92,90 +92,6 @@ double Plotter::getYPixel(){
 /* GENERIC PLOTTING FUNCTIONS */
 /* These functions write pixMap array data to image files */
 
-
-/**
- * Generic function for plotting int pixMap in png, tiff, or jpg file
- * using Magick++
- */
-void Plotter::plotMagick(int* pixMap, std::string type){
-	log_printf(NORMAL, "Writing Magick bitmap...");
-
-	/* pixel color */
-	int color_int;
-
-	/* create image and open for modification */
-	Magick::Image image(Magick::Geometry(_bit_length_x,_bit_length_y), "white");
-	image.modifyImage();
-
-	/* Make pixel cache */
-	Magick::Pixels pixel_cache(image);
-	Magick::PixelPacket* pixels;
-	pixels = pixel_cache.get(0,0,_bit_length_x,_bit_length_y);
-
-	/* Write pixMap array to Magick cache */
-	for (int y=0;y<_bit_length_y; y++){
-		for (int x = 0; x < _bit_length_x; x++){
-			if (pixMap[y * _bit_length_x + x] != -1){
-				color_int = pixMap[y * _bit_length_x + x] % 15;
-				*(pixels+(y * _bit_length_x + x)) =
-						Magick::Color(_color_map.at(color_int));
-			}
-		}
-	}
-
-	/* Sync pixel cache with Magick image */
-	pixel_cache.sync();
-
-	/* create filename with correct extension */
-	std::stringstream string;
-	string << type << "." << _extension;
-	std::string title = string.str();
-
-	/* write Magick image to file */
-	image.write(title);
-}
-
-/**
- * Generic function for plotting float pixMap in png, tiff, or jpg file
- * using Magick++
- */
-void Plotter::plotMagick(float* pixMap, std::string type){
-	log_printf(NORMAL, "Writing Magick bitmap...");
-
-	/* pixel color */
-	int color_int;
-
-	/* create image and open for modification */
-	Magick::Image image(Magick::Geometry(_bit_length_x,_bit_length_y), "white");
-	image.modifyImage();
-
-	/* Make pixel cache */
-	Magick::Pixels pixel_cache(image);
-	Magick::PixelPacket* pixels;
-	pixels = pixel_cache.get(0,0,_bit_length_x,_bit_length_y);
-
-	/* Write pixMap array to Magick cache */
-	for (int y=0;y<_bit_length_y; y++){
-		for (int x = 0; x < _bit_length_x; x++){
-			if (pixMap[y * _bit_length_x + x] != -1){
-				color_int = int(floor(pixMap[y * _bit_length_x + x]*1E8)) % 15;
-				*(pixels+(y * _bit_length_x + x)) = Magick::Color(_color_map.at(color_int));
-			}
-		}
-	}
-
-	/* Sync pixel cache with Magick image */
-	pixel_cache.sync();
-
-	/* create filename with correct extension */
-	std::stringstream string;
-	string << type << "." << _extension;
-	std::string title = string.str();
-
-	/* write Magick image to file */
-	image.write(title);
-}
-
 /**
  * Generic function for plotting double inline RGB pixMap in png, tiff, or jpg file
  * using Magick++
@@ -254,120 +170,6 @@ void Plotter::plotMagickScaled(double* pixMapRGB, double min, double max, std::s
 }
 
 
-
-/**
- * Generic function for plotting pixMap array on a structured mesh array
- * in a pdb or hdf5 file using silo I/O library
- */
-void Plotter::plotSilo(int* pixMap, std::string type){
-	log_printf(NORMAL, "plotting silo mesh...");
-
-	/* Create file pointer */
-    DBfile *file;
-
-    /* create filename with correct extension */
-	std::stringstream string;
-	string << type << "." << _extension;
-	std::string title_str = string.str();
-	const char* title = title_str.c_str();
-
-	/* Create pdb file */
-	if (_extension == "h5"){
-		file = DBCreate(title, DB_CLOBBER, DB_LOCAL, "structured mesh bitmap", DB_HDF5);
-	}
-	else{
-		file = DBCreate(title, DB_CLOBBER, DB_LOCAL, "structured mesh bitmap", DB_PDB);
-	}
-
-    /* create mesh point arrays */
-	double mesh_x[_bit_length_x + 1];
-	double mesh_y[_bit_length_y + 1];
-
-	/* generate structured mesh */
-	for (int i = 0; i < (_bit_length_x + 1); i++){
-		mesh_x[i] = (double(i) - double(_bit_length_x)/2.0 + 1.0) * (_width/double(_bit_length_x));
-	}
-	for (int i = 0; i < (_bit_length_y + 1); i++){
-		mesh_y[i] = (double(_bit_length_y)/2.0 - double(i)) * (_height/double(_bit_length_y));
-	}
-
-	/* descriptions of mesh */
-	double *coords[] = {mesh_x, mesh_y};
-	int dims[] = {_bit_length_x + 1, _bit_length_y + 1};
-	int ndims = 2;
-
-	/* Write structured mesh to pdb file */
-	DBPutQuadmesh(file, "quadmesh", NULL, coords, dims, ndims, DB_DOUBLE, DB_COLLINEAR, NULL);
-
-	/* dimensions of mesh */
-	int dimsvar[] = {_bit_length_x, _bit_length_y};
-
-	/* description of what is being plotted */
-	const char* type_char = type.c_str();
-
-	/* write pixMap data to pdb file */
-	DBPutQuadvar1(file, type_char, "quadmesh", pixMap, dimsvar, ndims, NULL, 0, DB_INT, DB_ZONECENT, NULL);
-
-	/* close pdb file */
-    DBClose(file);
-	log_printf(NORMAL, "done plotting silo mesh...");
-}
-
-void Plotter::plotSilo(float* pixMap, std::string type){
-	log_printf(NORMAL, "plotting silo mesh...");
-
-	/* Create file pointer */
-    DBfile *file;
-
-    /* create filename with correct extension */
-	std::stringstream string;
-	string << type << "." << _extension;
-	std::string title_str = string.str();
-	const char* title = title_str.c_str();
-
-	/* Create file */
-	if (_extension == "h5"){
-		file = DBCreate(title, DB_CLOBBER, DB_LOCAL, "structured mesh bitmap", DB_HDF5);
-	}
-	else{
-		file = DBCreate(title, DB_CLOBBER, DB_LOCAL, "structured mesh bitmap", DB_PDB);
-	}
-
-    /* create mesh point arrays */
-	double mesh_x[_bit_length_x + 1];
-	double mesh_y[_bit_length_y + 1];
-
-	/* create pixmap mesh */
-	for (int i = 0; i < (_bit_length_x + 1); i++){
-		mesh_x[i] = (double(i) - double(_bit_length_x)/2.0 + 1.0) * (_width/double(_bit_length_x));
-	}
-	for (int i = 0; i < (_bit_length_y + 1); i++){
-		mesh_y[i] = (double(_bit_length_y)/2.0 - double(i)) * (_height/double(_bit_length_y));
-	}
-
-	/* generate structured mesh */
-	double *coords[] = {mesh_x, mesh_y};
-	int dims[] = {_bit_length_x + 1, _bit_length_y + 1};
-	int ndims = 2;
-
-	/* Write structured mesh to pdb file */
-	DBPutQuadmesh(file, "quadmesh", NULL, coords, dims, ndims, DB_DOUBLE, DB_COLLINEAR, NULL);
-
-	/* dimensions of mesh */
-	int dimsvar[] = {_bit_length_x, _bit_length_y};
-
-	/* description of what is being plotted */
-	const char* type_char = type.c_str();
-
-	/* write pixMap data to pdb file */
-	DBPutQuadvar1(file, type_char, "quadmesh", pixMap, dimsvar, ndims, NULL, 0, DB_FLOAT, DB_ZONECENT, NULL);
-
-	/* close pdb file */
-    DBClose(file);
-	log_printf(NORMAL, "done plotting silo mesh...");
-}
-
-
 /* PLOTTING HELPER FUNCTIONS */
 /* These functions manipulate data and call the generic plotting functions
  */
@@ -376,25 +178,62 @@ void Plotter::plotSilo(float* pixMap, std::string type){
 /**
  * Based on user specified file extension, choose function to plot int pixMap
  */
-void Plotter::plot(int* pixMap, std::string type){
+void Plotter::plot(int* pixMap, std::string name){
+	// make BitMap
+
+	BitMap* bitMap = new BitMap;
+	bitMap->pixel_x = _bit_length_x;
+	bitMap->pixel_y = _bit_length_y;
+	bitMap->geom_x = width;
+	bitMap->geom_y = heigth;
+	bitMap->color_type = SCALED;
+	bitMap->pixel_type = INTEGER;
+	bitMap->pixels = new int[_bit_length_x * _bit_length_y];
+	for (int y=0;y<bitMap->pixel_y; y++){
+		for (int x = 0; x < bitMap->pixel_x; x++){
+			bitMap->pixels[y * bitMap->pixel_x + x] = pixMap[y * bitMap->pixel_x + x];
+		}
+	}
+
 	if (_extension == "png" || _extension == "tiff" || _extension == "jpg"){
-		plotMagick(pixMap, type);
+		plotMagick(bitMap, name, _extension);
 	}
 	else if (_extension == "pdb" || _extension == "h5"){
-		plotSilo(pixMap, type);
+		plotSilo(bitMap, name, _extension);
 	}
+
+	delete [] bitMap->pixels;
+	delete bitMap;
 }
 
 /**
  * Based on user specified file extension, choose function to plot float pixMap
  */
 void Plotter::plot(float* pixMap, std::string type){
+	// make BitMap
+	BitMap* bitMap = new BitMap;
+	bitMap->pixel_x = _bit_length_x;
+	bitMap->pixel_y = _bit_length_y;
+	bitMap->geom_x = width;
+	bitMap->geom_y = heigth;
+	bitMap->color_type = SCALED;
+	bitMap->pixel_type = FLOAT;
+	bitMap->pixels = new int[_bit_length_x * _bit_length_y];
+	for (int y=0;y<bitMap->pixel_y; y++){
+		for (int x = 0; x < bitMap->pixel_x; x++){
+			bitMap->pixels[y * bitMap->pixel_x + x] = pixMap[y * bitMap->pixel_x + x];
+		}
+	}
+
 	if (_extension == "png" || _extension == "tiff" || _extension == "jpg"){
-		plotMagick(pixMap, type);
+		plotMagick(bitMap, name, _extension);
 	}
 	else if (_extension == "pdb" || _extension == "h5"){
-		plotSilo(pixMap, type);
+		plotSilo(bitMap, name, _extension);
 	}
+
+	delete [] bitMap->pixels;
+	delete bitMap;
 }
 
 /**
