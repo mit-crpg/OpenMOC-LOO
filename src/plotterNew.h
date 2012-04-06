@@ -230,6 +230,9 @@ void normalize(BitMap<U,T>* bitMap, float* pixMap){
 	/* copy bitMap to bitMapRGB and normalize */
 	for (int y=0;y< bitMap->pixel_y; y++){
 		for (int x=0;x< bitMap->pixel_x; x++){
+			if (pixMap[y * bitMap->pixel_x + x] == -1){
+				pixMap[y * bitMap->pixel_x + x] = bounds[0];
+			}
 			pixMap[y * bitMap->pixel_x + x] = (pixMap[y * bitMap->pixel_x + x] - bounds[0]) /  (bounds[1] - bounds[0]);
 		}
 	}
@@ -251,7 +254,8 @@ void getBounds(BitMap<U,T>* bitMap, float* pixMap, float* bounds){
 		}
 	}
 
-	bounds[0] = bounds[1];
+	bounds[0] = bounds[1] - 1e-10;
+
 	/* find min */
 	for (int y=0;y< bitMap->pixel_y; y++){
 		for (int x = 0; x < bitMap->pixel_x; x++){
@@ -260,7 +264,6 @@ void getBounds(BitMap<U,T>* bitMap, float* pixMap, float* bounds){
 			}
 		}
 	}
-
 }
 
 /* write RGB triplet to color using HOT color scheme */
@@ -289,18 +292,18 @@ template <typename U, typename T>
 void randomize(BitMap<U,T>* bitMap, float* pixMap){
 
 	/* make array to store random numbers */
-	float* myRandoms = new float[97];
+	float* myRandoms = new float[95];
 
 	/* make random numbers */
 	srand(1);
-	for (int i=0;i< 99; i++){
+	for (int i=0;i< 95; i++){
 		myRandoms[i] = rand() / float(RAND_MAX);
 	}
 
 	/* randomize bitMapRGB */
 	for (int y=0;y< bitMap->pixel_y; y++){
 		for (int x = 0; x < bitMap->pixel_x; x++){
-			pixMap[y * bitMap->pixel_x + x] = myRandoms[abs(int(pixMap[y * bitMap->pixel_x + x] / 1e-8)) % 97];
+			pixMap[y * bitMap->pixel_x + x] = myRandoms[abs(int(pixMap[y * bitMap->pixel_x + x] / 1e-8)) % 95];
 		}
 	}
 
