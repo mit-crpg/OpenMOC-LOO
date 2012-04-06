@@ -22,6 +22,9 @@ private:
 	std::string _relative_path;
 	std::string _geometry_file;
 	std::string _material_file;
+
+	std::string _track_input_file;
+
 	std::string _extension;
 	double _track_spacing;
 	int _num_azim;

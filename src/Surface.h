@@ -75,8 +75,6 @@ public:
 	boundaryType getBoundary();
 	virtual double evaluate(const Point* point) const =0;
 	virtual int intersection(Point* point, double angle, Point* points) =0;
-	virtual int intersection(Track* track, Point* points) const =0;
-	virtual int intersection(Plane* plane, Point* points) const =0;
 	virtual std::string toString() =0;
 	virtual double getXMin() =0;
 	virtual double getXMax() =0;
@@ -100,8 +98,6 @@ public:
 	Plane(const int id, const boundaryType boundary, const double A, const double B, const double C);
 	double evaluate(const Point* point) const;
 	int intersection(Point* point, double angle, Point* points);
-	int intersection(Track* track, Point* points) const;
-	int intersection(Plane* plane, Point* points) const;
 	std::string toString();
 	virtual double getXMin();
 	virtual double getXMax();
@@ -153,8 +149,6 @@ public:
 				const double y, const double radius);
 	double evaluate(const Point* point) const;
 	int intersection(Point* point, double angle, Point* points);
-	int intersection(Track* track, Point* points) const;
-	int intersection(Plane* plane, Point* points) const;
 	std::string toString();
 	virtual double getXMin();
 	virtual double getXMax();
