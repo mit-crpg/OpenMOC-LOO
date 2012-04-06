@@ -29,7 +29,6 @@ private:
 	Track** _tracks;
 	Geometry* _geom;
 	Plotter* _plotter;
-	int* _pix_map_FSRs;
 public:
 	TrackGenerator(Geometry* geom, Plotter* plotter,
 			const int num_azim,const double spacing);
@@ -44,7 +43,6 @@ public:
 			const double width, const double height);
 	void makeReflective();
 	void segmentize();
-	int* getFSRsPixMap();
 	void printTrackingTimers();
 };
 

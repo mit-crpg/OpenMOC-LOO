@@ -38,8 +38,7 @@ Options::Options(int argc, const char **argv) {
 	_verbosity = "NORMAL";				 /* Default logging level */
 	_dump_geometry = false;				/* Default will not dump geometry */
 	_extension = "png";				/* Default will plot png */
-	_plot_materials = false;			/* Default will not plot materials */
-	_plot_cells = false;				/* Default will not plot cells */
+	_plot_specs = false;			    /* Default will not plot materials, cells, FSRs, tracks, or segments */
 	_plot_fluxes = false;				/* Default will not plot fluxes */
 	_compute_pin_powers = false;		/* Default will not compute pin powers */
 	_compress_cross_sections = false;	/* Default will not compress cross-sections */
@@ -66,12 +65,9 @@ Options::Options(int argc, const char **argv) {
 				_dump_geometry = true;
 			else if (LAST("--extension") || LAST("-ex"))
 							_extension = argv[i];
-			else if (strcmp(argv[i], "-pm") == 0 ||
-					strcmp(argv[i], "--plotmaterials") == 0)
-				_plot_materials = true;
-			else if (strcmp(argv[i], "-pc") == 0 ||
-					strcmp(argv[i], "--plotcells") == 0)
-				_plot_cells = true;
+			else if (strcmp(argv[i], "-ps") == 0 ||
+					strcmp(argv[i], "--plotspecs") == 0)
+				_plot_specs = true;
 			else if (strcmp(argv[i], "-pf") == 0 ||
 					strcmp(argv[i], "--plotfluxes") == 0)
 				_plot_fluxes = true;
@@ -166,21 +162,12 @@ std::string Options::getExtension() const {
 }
 
 /**
- * Returns a boolean representing whether or not to plot the materials.
- *  If true, the materials will be plotted in a file of _extension type
+ * Returns a boolean representing whether or not to plot the specs.
+ *  If true, the specs will be plotted in a file of _extension type
  * @return whether or not to plot materials
  */
-bool Options::plotMaterials() const {
-	return _plot_materials;
-}
-
-/**
- * Returns a boolean representing whether or not to plot the cells.
- *  If true, the cells will be plotted in a file of _extension type
- * @return whether or not to plot materials
- */
-bool Options::plotCells() const {
-	return _plot_cells;
+bool Options::plotSpecs() const {
+	return _plot_specs;
 }
 
 /**

@@ -12,11 +12,13 @@
  * Plotting constructor
  * @param geom a pointer to a geometry object
  */
-Plotter::Plotter(Geometry* geom, const int bitDim, std::string extension) {
+Plotter::Plotter(Geometry* geom, const int bitDim, std::string extension, bool specs, bool fluxes) {
 
 	/* extension for plotting files */
 	_extension = extension;
 	_geom = geom;
+	_specs = specs;
+	_fluxes = fluxes;
 
 	_width = _geom->getWidth();
 	_height = _geom->getHeight();
@@ -31,23 +33,6 @@ Plotter::Plotter(Geometry* geom, const int bitDim, std::string extension) {
 	 */
 	_x_pixel = double(_bit_length_x)/_width;
 	_y_pixel = double(_bit_length_y)/_height;
-
-	/* make _color_map for plotting */
-	_color_map.insert(std::pair<int, std::string>(0,"indigo"));
-	_color_map.insert(std::pair<int, std::string>(1,"black"));
-	_color_map.insert(std::pair<int, std::string>(2,"blue"));
-	_color_map.insert(std::pair<int, std::string>(3,"green"));
-	_color_map.insert(std::pair<int, std::string>(4,"magenta"));
-	_color_map.insert(std::pair<int, std::string>(5,"orange"));
-	_color_map.insert(std::pair<int, std::string>(6,"maroon"));
-	_color_map.insert(std::pair<int, std::string>(7,"orchid"));
-	_color_map.insert(std::pair<int, std::string>(8,"blue violet"));
-	_color_map.insert(std::pair<int, std::string>(9,"crimson"));
-	_color_map.insert(std::pair<int, std::string>(10,"salmon"));
-	_color_map.insert(std::pair<int, std::string>(11,"gold"));
-	_color_map.insert(std::pair<int, std::string>(12, "DarkSlateGray"));
-	_color_map.insert(std::pair<int, std::string>(13,"orange red"));
-	_color_map.insert(std::pair<int, std::string>(14,"red"));
 }
 
 /**
@@ -88,153 +73,33 @@ double Plotter::getYPixel(){
 	return _y_pixel;
 }
 
-
-/* GENERIC PLOTTING FUNCTIONS */
-/* These functions write pixMap array data to image files */
-
 /**
- * Generic function for plotting double inline RGB pixMap in png, tiff, or jpg file
- * using Magick++
+ * Return the plotting extension
+ * @return the plotting extension
  */
-void Plotter::plotMagickScaled(double* pixMapRGB, double min, double max, std::string type){
-	log_printf(NORMAL, "Writing Magick bitmap...");
-
-	/* declare variables */
-	double red, green, blue;
-
-	/* create image and open for modification */
-	Magick::Image image(Magick::Geometry(_bit_length_x,_bit_length_y), "white");
-	image.modifyImage();
-
-	/* Make pixel cache */
-	Magick::Pixels pixel_cache(image);
-	Magick::PixelPacket* pixels;
-	pixels = pixel_cache.get(0,0,_bit_length_x,_bit_length_y);
-
-	/* Write pixMapRGB array to Magick pixel_cache */
-	for (int y=0;y<_bit_length_y; y++){
-		for (int x = 0; x < _bit_length_x; x++){
-			red = pixMapRGB[3 * y * _bit_length_x + 3 * x];
-			green = pixMapRGB[3 * y * _bit_length_x + 3 * x + 1];
-			blue = pixMapRGB[3 * y * _bit_length_x + 3 * x + 2];
-			*(pixels+(y * _bit_length_x + x)) = Magick::ColorRGB(red, green, blue);
-		}
-	}
-
-	/* make color bar */
-	double* colors = new double[3];
-	double value;
-	/* pixel coordinates for color bar */
-	int x_start = _bit_length_x - 40;
-	int y_start = 10;
-	int x_end = _bit_length_x - 20;
-	int y_end = 90;
-
-	/* draw color bar on pixel map */
-	for (int y = y_start;y < y_end; y++){
-		value = (double(y_end) - y)/(y_end - y_start);
-		colors = getScaledColors(value, 0.0, 1.0, colors);
-		for (int x = x_start; x < x_end; x++){
-			*(pixels+(y * _bit_length_x + x)) = Magick::ColorRGB(colors[0], colors[1], colors[2]);
-		}
-	}
-
-	delete [] colors;
-
-	/* Sync pixel cache with Magick image */
-	pixel_cache.sync();
-
-	/* Draw black box around color bar */
-	std::list<Magick::Drawable> drawList;
-	drawList.push_back(Magick::DrawableStrokeColor("black"));    // Outline color
-	drawList.push_back(Magick::DrawableStrokeWidth(2)); 		 // Stroke width
-	drawList.push_back(Magick::DrawableStrokeAntialias(false));  // Don't antialias
-
-	drawList.push_back(Magick::DrawableLine(x_start,y_start,x_end,y_start));  // top
-	drawList.push_back(Magick::DrawableLine(x_start,y_end,x_end,y_end));      // bottom
-	drawList.push_back(Magick::DrawableLine(x_start,y_start,x_start,y_end));  // left
-	drawList.push_back(Magick::DrawableLine(x_end,y_start,x_end,y_end));      // right
-
-	/* draw box on image */
-	image.draw(drawList);
-
-	/* create filename with correct extension */
-	std::stringstream string;
-	string << type << "." << _extension;
-	std::string title = string.str();
-
-	/* write Magick image to file */
-	image.write(title);
-
-	drawList.erase(drawList.begin(), drawList.end());
+std::string Plotter::getExtension(){
+	return _extension;
 }
 
+/**
+ * Return boolean to decide whether to plot specs
+ * @return boolean to decide whether to plot specs
+ */
+bool Plotter::plotSpecs(){
+	return _specs;
+}
+
+/**
+ * Return boolean to decide whether to plot fluxes
+ * @return boolean to decide whether to plot fluxes
+ */
+bool Plotter::plotFlux(){
+	return _fluxes;
+}
 
 /* PLOTTING HELPER FUNCTIONS */
 /* These functions manipulate data and call the generic plotting functions
  */
-
-
-/**
- * Based on user specified file extension, choose function to plot int pixMap
- */
-void Plotter::plot(int* pixMap, std::string name){
-	// make BitMap
-
-	BitMap* bitMap = new BitMap;
-	bitMap->pixel_x = _bit_length_x;
-	bitMap->pixel_y = _bit_length_y;
-	bitMap->geom_x = width;
-	bitMap->geom_y = heigth;
-	bitMap->color_type = SCALED;
-	bitMap->pixel_type = INTEGER;
-	bitMap->pixels = new int[_bit_length_x * _bit_length_y];
-	for (int y=0;y<bitMap->pixel_y; y++){
-		for (int x = 0; x < bitMap->pixel_x; x++){
-			bitMap->pixels[y * bitMap->pixel_x + x] = pixMap[y * bitMap->pixel_x + x];
-		}
-	}
-
-	if (_extension == "png" || _extension == "tiff" || _extension == "jpg"){
-		plotMagick(bitMap, name, _extension);
-	}
-	else if (_extension == "pdb" || _extension == "h5"){
-		plotSilo(bitMap, name, _extension);
-	}
-
-	delete [] bitMap->pixels;
-	delete bitMap;
-}
-
-/**
- * Based on user specified file extension, choose function to plot float pixMap
- */
-void Plotter::plot(float* pixMap, std::string type){
-	// make BitMap
-	BitMap* bitMap = new BitMap;
-	bitMap->pixel_x = _bit_length_x;
-	bitMap->pixel_y = _bit_length_y;
-	bitMap->geom_x = width;
-	bitMap->geom_y = heigth;
-	bitMap->color_type = SCALED;
-	bitMap->pixel_type = FLOAT;
-	bitMap->pixels = new int[_bit_length_x * _bit_length_y];
-	for (int y=0;y<bitMap->pixel_y; y++){
-		for (int x = 0; x < bitMap->pixel_x; x++){
-			bitMap->pixels[y * bitMap->pixel_x + x] = pixMap[y * bitMap->pixel_x + x];
-		}
-	}
-
-	if (_extension == "png" || _extension == "tiff" || _extension == "jpg"){
-		plotMagick(bitMap, name, _extension);
-	}
-	else if (_extension == "pdb" || _extension == "h5"){
-		plotSilo(bitMap, name, _extension);
-	}
-
-	delete [] bitMap->pixels;
-	delete bitMap;
-}
 
 /**
  * Convert an x value our from geometry coordinates to Bitmap coordinates.
@@ -262,30 +127,6 @@ double Plotter::convertToGeometryX(int x){
  */
 double Plotter::convertToGeometryY(int y){
 	return double(-(y - _bit_length_y/2.0) / _y_pixel);
-}
-
-/**
- * Initialize pixMap to -1. This allows us to see which array values
- * have not been edited.
- */
-void Plotter::initializePixMap(int* pixMap){
-	for (int y=0;y< _bit_length_y; y++){
-		for (int x = 0; x < _bit_length_x; x++){
-			pixMap[y * _bit_length_x + x] = -1;
-		}
-	}
-}
-
-/**
- * Initialize pixMap to -1. This allows us to see which array values
- * have not been edited.
- */
-void Plotter::initializePixMap(float* pixMap){
-	for (int y=0;y< _bit_length_y; y++){
-		for (int x = 0; x < _bit_length_x; x++){
-			pixMap[y * _bit_length_x + x] = -1;
-		}
-	}
 }
 
 /**
@@ -325,13 +166,21 @@ void Plotter::plotSegments(Track* track, double sin_phi,
 void Plotter::plotTracksReflective(Track* track, int numReflect){
 	log_printf(NORMAL, "Writing tracks reflect bitmap...");
 
-	/* allocate pixMap array */
-	int* pixMap = new int[_bit_length_x*_bit_length_y];
-
 	/* initialize variables */
 	double sin_phi, cos_phi, phi;
 	Track *track2;
 	bool get_out = TRUE;
+
+	/* create BitMap for plotting */
+	BitMap<int, double>* bitMap = new BitMap<int, double>;
+	bitMap->pixel_x = _bit_length_x;
+	bitMap->pixel_y = _bit_length_y;
+	bitMap->geom_x = _geom->getWidth();
+	bitMap->geom_y = _geom->getHeight();
+	bitMap->color_type = RANDOM;
+	bitMap->pixel_type = INTEGER;
+	bitMap->pixels = new int[bitMap->pixel_x * bitMap->pixel_y];
+	initialize(bitMap);
 
 	/* loop through tracks and write to pixMap array */
 	for (int i = 0; i < (numReflect + 1); i++){
@@ -342,7 +191,7 @@ void Plotter::plotTracksReflective(Track* track, int numReflect){
 		phi = track->getPhi();
 		sin_phi = sin(phi);
 		cos_phi = cos(phi);
-		plotSegments(track, sin_phi, cos_phi, pixMap);
+		plotSegments(track, sin_phi, cos_phi, bitMap->pixels);
 
 		/* Get next track */
 		track2 = track;
@@ -363,10 +212,11 @@ void Plotter::plotTracksReflective(Track* track, int numReflect){
 	}
 
 	/* plot pixMap array */
-	plot(pixMap, "reflect");
+	plot(bitMap, "reflect", _extension);
 
 	/* release memory */
-	delete [] pixMap;
+	delete [] bitMap->pixels;
+	delete bitMap;
 }
 
 /**
@@ -425,29 +275,18 @@ void Plotter::LineFct(double xIn, double yIn, double xOut, double yOut, int* pix
 /**
  * Takes in a FSR pixMap array, a map (regionMap) that translates
  * a FSR id to a region id (cell, material, etc), and a description of the region
- * (regionName). Plots the resulting region pixMap (pixMapRegion).
+ * (regionName). Plots the resulting region pixMap (pixMapRegion) in either a
+ * scaled Magick Plot or a silo plot.
  */
-void Plotter::plotRegion(int* pixMap, int* regionMap, std::string regionName){
+void Plotter::makeRegionMap(int* pixMapFSR, int* pixMap, int* regionMap){
 
-	int regionValue;
-
-	/* allocate memory for pixMapRegion array */
-	int* pixMapRegion = new int[_bit_length_x * _bit_length_y];
-
-	/* translate FSR id's stored in pixMap to pixMapRegion using regionMap */
 	for (int y=0;y< _bit_length_y; y++){
 		for (int x = 0; x < _bit_length_x; x++){
-			regionValue = regionMap[pixMap[y * _bit_length_x + x]];
-			pixMapRegion[y * _bit_length_x + x] = regionValue;
+			pixMap[y * _bit_length_x + x] = (int)regionMap[pixMapFSR[y * _bit_length_x + x]];
 		}
 	}
-
-	/* plot pixMapRegion array */
-	plot(pixMapRegion, regionName);
-
-	/* release memory */
-	delete [] pixMapRegion;
 }
+
 
 /**
  * Takes in a FSR pixMap array, a map (regionMap) that translates
@@ -455,138 +294,13 @@ void Plotter::plotRegion(int* pixMap, int* regionMap, std::string regionName){
  * (regionName). Plots the resulting region pixMap (pixMapRegion) in either a
  * scaled Magick Plot or a silo plot.
  */
-void Plotter::plotRegion(int* pixMap, double* regionMap, std::string regionName){
+void Plotter::makeRegionMap(int* pixMapFSR, float* pixMap, double* regionMap){
 
-	/* determine whethere color map will be scaled */
-	if (_extension == "png" || _extension == "jpg" || _extension == "tiff"){
-
-		/* allocate memory for pixMapRegion array */
-		double* pixMapRegionRGB = new double[9 * _bit_length_x * _bit_length_y];
-
-		double min = getMin(regionMap, pixMap);
-		double max = getMax(regionMap, pixMap);
-
-		pixMapRegionRGB = makeScaledMap(regionMap, pixMap, pixMapRegionRGB, min, max);
-
-		plotMagickScaled(pixMapRegionRGB, min, max, regionName);
-
-		delete [] pixMapRegionRGB;
-	}
-	else{
-
-		float regionValue;
-
-		/* allocate memory for pixMapRegion array */
-		float* pixMapRegion = new float[_bit_length_x * _bit_length_y];
-
-		/* translate FSR id's stored in pixMap to pixMapRegion using regionMap */
-		for (int y=0;y< _bit_length_y; y++){
-			for (int x = 0; x < _bit_length_x; x++){
-				regionValue = regionMap[pixMap[y * _bit_length_x + x]];
-				pixMapRegion[y * _bit_length_x + x] = regionValue;
-			}
-		}
-
-		/* plot pixMapRegion array */
-		plot(pixMapRegion, regionName);
-
-		/* release memory */
-		delete [] pixMapRegion;
-
-	}
-}
-
-double Plotter::getMin(double* regionMap, int* pixMap){
-
-	double min = regionMap[pixMap[0]];
-
-	/* find min and max values in regionMap */
 	for (int y=0;y< _bit_length_y; y++){
 		for (int x = 0; x < _bit_length_x; x++){
-			min = std::min(min, regionMap[pixMap[y * _bit_length_x + x]]);
+			pixMap[y * _bit_length_x + x] = (float)regionMap[pixMapFSR[y * _bit_length_x + x]];
 		}
 	}
-
-	return min;
-}
-
-double Plotter::getMax(double* regionMap, int* pixMap){
-
-	double max = regionMap[pixMap[0]];
-
-	/* find min and max values in regionMap */
-	for (int y=0;y< _bit_length_y; y++){
-		for (int x = 0; x < _bit_length_x; x++){
-			max = std::max(max, regionMap[pixMap[y * _bit_length_x + x]]);
-		}
-	}
-
-	return max;
-}
-
-
-/**
- * Takes in a FSR pixMap array (pixMap), a map (regionMap) that translates
- * a FSR id to a region id (cell, material, etc), and a new blank pixMap (pixMapRegion).
- * Writes RGB color data to pixMapRegion based on the intensity of the variable
- * being plotted.
- */
-double* Plotter::makeScaledMap(double* regionMap, int* pixMap, double* pixMapRegionRGB, double min, double max){
-
-	log_printf(DEBUG, "pixel map min: %f, max: %f", min, max);
-
-	/* allocate memory for RGB array */
-	double* colors = new double[3];
-
-	/* translate FSR id's stored in pixMap to pixMapRegion (RGB using regionMap */
-	for (int y=0;y< _bit_length_y; y++){
-		for (int x = 0; x < _bit_length_x; x++){
-			colors = getScaledColors(regionMap[pixMap[y * _bit_length_x + x]], min, max, colors);
-			pixMapRegionRGB[3 * y * _bit_length_x + 3 * x] = colors[0];
-			pixMapRegionRGB[3 * y * _bit_length_x + 3 * x + 1] = colors[1];
-			pixMapRegionRGB[3 * y * _bit_length_x + 3 * x + 2] = colors[2];
-		}
-	}
-
-	delete [] colors;
-
-	return pixMapRegionRGB;
-}
-
-
-/**
- * Assigns a RGB color array (colors) to a pixel based on the value to be plotted
- * and the min and max of the variable being plotted (e.g. flux).
- */
-double* Plotter::getScaledColors(double value, double min, double max, double* colors){
-
-	/* initialize variables */
-	double red;
-	double green;
-	double blue;
-
-	if (value < .333){
-		red = 0.0;
-		green = 3.0 * value;
-		blue = 1.0;
-	}
-	else if (value < .666){
-		red = 3.0 * value - 1.0;
-		green = 1.0;
-		blue = -3.0 * value + 1.0;
-	}
-	else {
-		red = 1.0;
-		green = -3.0 * value + 3.0;
-		blue = 0.0;
-	}
-
-	/* write color data to colors array */
-	colors[0] = red;
-	colors[1] = green;
-	colors[2] = blue;
-
-	return colors;
 }
 
 
@@ -594,7 +308,7 @@ double* Plotter::getScaledColors(double value, double min, double max, double* c
  * Loops over pixels in pixMap array and finds the corresponding
  * FSR in geometry.
  */
-void Plotter::plotFSRs(int* pixMap){
+void Plotter::makeFSRMap(int* pixMap){
 	log_printf(NORMAL, "Generating FSR maps...");
 
 	/* initialize variables */
@@ -604,33 +318,24 @@ void Plotter::plotFSRs(int* pixMap){
 	/* loop over pixels */
 	for (int y=0;y< _bit_length_y; y++){
 		for (int x = 0; x < _bit_length_x; x++){
+			x_global = convertToGeometryX(x);
+			y_global = convertToGeometryY(y);
 
-			/* If pixel is blank, find what FSR it is in */
-			if (pixMap[y * _bit_length_x + x] == -1){
+			log_printf(DEBUG, "finding cell for bit x: %i, bit y: %i, "
+					"global x: %f, global %f", x, y, x_global, y_global);
 
-				x_global = convertToGeometryX(x);
-				y_global = convertToGeometryY(y);
+			/* create point located in universe 0 */
+			LocalCoords point(x_global,y_global);
+			point.setUniverse(0);
 
-				log_printf(DEBUG, "finding cell for bit x: %i, bit y: %i, "
-						"global x: %f, global %f", x, y, x_global, y_global);
+			/* find which cell the point is in */
+			_geom->findCell(&point);
 
-				/* create point located in universe 0 */
-				LocalCoords point(x_global,y_global);
-				point.setUniverse(0);
+			/* Store FSR id in pixMap */
+			pixMap[y * _bit_length_x + x] = _geom->findFSRId(&point);
 
-				/* find which cell the point is in */
-				_geom->findCell(&point);
-				//_geom->findCell(&point);
-
-				/* Store FSR id in pixMap */
-				pixMap[y * _bit_length_x + x] = _geom->findFSRId(&point);
-
-				/* Remove all allocated localcoords */
-				point.prune();
-			}
+			/* Remove all allocated localcoords */
+			point.prune();
 		}
 	}
-
-	/* plot pixMap array */
-	plot(pixMap, "FSRs");
 }

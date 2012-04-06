@@ -28,8 +28,7 @@ private:
 	int _bit_dimension;
 	std::string _verbosity;
 	bool _dump_geometry;
-	bool _plot_materials;
-	bool _plot_cells;
+	bool _plot_specs;
 	bool _plot_fluxes;
 	bool _compute_pin_powers;
 	bool _compress_cross_sections;
@@ -44,8 +43,7 @@ public:
     double getTrackSpacing() const;
     const char* getVerbosity() const;
     std::string getExtension() const;
-    bool plotMaterials() const;
-    bool plotCells() const;
+    bool plotSpecs() const;
     bool plotFluxes() const;
     bool computePinPowers() const;
     bool compressCrossSections() const;

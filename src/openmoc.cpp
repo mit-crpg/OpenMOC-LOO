@@ -57,7 +57,8 @@ int main(int argc, const char **argv) {
 	if (opts.compressCrossSections())
 		geometry.compressCrossSections();
 
-	Plotter plotter(&geometry, opts.getBitDimension(), opts.getExtension());
+	Plotter plotter(&geometry, opts.getBitDimension(), opts.getExtension(),
+			opts.plotSpecs(), opts.plotFluxes());
 
 	/* Initialize the trackgenerator */
 	TrackGenerator track_generator(&geometry, &plotter, opts.getNumAzim(),
@@ -79,7 +80,7 @@ int main(int argc, const char **argv) {
 	timer.recordSplit("Segmenting tracks");
 
 	/* Fixed source iteration to solve for k_eff */
-	Solver solver(&geometry, &track_generator, &plotter, opts.plotFluxes());
+	Solver solver(&geometry, &track_generator, &plotter);
 	timer.reset();
 	timer.start();
 	k_eff = solver.computeKeff(MAX_ITERATIONS);

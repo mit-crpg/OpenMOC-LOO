@@ -24,6 +24,7 @@
 #include "FlatSourceRegion.h"
 #include "configurations.h"
 #include "log.h"
+#include "plotterNew.h"
 
 #if USE_OPENMP == true
 	#include <omp.h>
@@ -45,8 +46,6 @@ private:
 	std::queue<double> _old_k_effs;
 	Plotter* _plotter;
 	float* _pix_map_total_flux;
-	bool _plot_fluxes;
-	int* _pix_map_FSRs;
 #if !STORE_PREFACTORS
 	double* _pre_factor_array;
 	int _pre_factor_array_size;
@@ -57,7 +56,7 @@ private:
 	double computePreFactor(segment* seg, int energy, int angle);
 	void initializeFSRs();
 public:
-	Solver(Geometry* geom, TrackGenerator* track_generator, Plotter* plotter, bool plotFluxes);
+	Solver(Geometry* geom, TrackGenerator* track_generator, Plotter* plotter);
 	virtual ~Solver();
 	void zeroTrackFluxes();
 	void oneFSRFluxes();
