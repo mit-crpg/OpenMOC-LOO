@@ -461,9 +461,7 @@ void Solver::computePinPowers() {
 	bitMap->geom_x = _geom->getWidth();
 	bitMap->geom_y = _geom->getHeight();
 	bitMapFSR->color_type = RANDOM;
-	bitMapFSR->pixel_type = INTEGER;
 	bitMap->color_type = SCALED;
-	bitMap->pixel_type = FLOAT;
 	bitMapFSR->pixels = new int[bitMapFSR->pixel_x * bitMapFSR->pixel_y];
 	bitMap->pixels = new float[bitMap->pixel_x * bitMap->pixel_y];
 	initialize(bitMap);
@@ -1008,9 +1006,7 @@ void Solver::plotFluxes(){
 	bitMap->geom_x = _geom->getWidth();
 	bitMap->geom_y = _geom->getHeight();
 	bitMapFSR->color_type = RANDOM;
-	bitMapFSR->pixel_type = INTEGER;
 	bitMap->color_type = SCALED;
-	bitMap->pixel_type = FLOAT;
 	bitMapFSR->pixels = new int[bitMapFSR->pixel_x * bitMapFSR->pixel_y];
 	bitMap->pixels = new float[bitMap->pixel_x * bitMap->pixel_y];
 	initialize(bitMap);

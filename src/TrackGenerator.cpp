@@ -139,7 +139,6 @@ void TrackGenerator::generateTracks() {
 		bitMap->geom_x = width;
 		bitMap->geom_y = height;
 		bitMap->color_type = BLACKWHITE;
-		bitMap->pixel_type = INTEGER;
 		bitMap->pixels = new int[bitMap->pixel_x * bitMap->pixel_y];
 		initialize(bitMap);
 
@@ -458,9 +457,7 @@ void TrackGenerator::segmentize() {
 	bitMap->geom_x = _geom->getWidth();
 	bitMap->geom_y = _geom->getHeight();
 	bitMapFSR->color_type = RANDOM;
-	bitMapFSR->pixel_type = INTEGER;
 	bitMap->color_type = RANDOM;
-	bitMap->pixel_type = INTEGER;
 	bitMapFSR->pixels = new int[bitMapFSR->pixel_x * bitMapFSR->pixel_y];
 	bitMap->pixels = new int[bitMap->pixel_x * bitMap->pixel_y];
 	initialize(bitMap);

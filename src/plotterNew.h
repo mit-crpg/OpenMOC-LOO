@@ -18,12 +18,6 @@
 #include "Magick++.h"
 #include "silo.h"
 
-typedef enum datatypes {
-	INTEGER,
-	FLOAT,
-	DOUBLE
-}datatype;
-
 typedef enum colortypes {
 	SCALED,
 	RANDOM,
@@ -34,7 +28,6 @@ typedef enum colortypes {
 template <typename U, typename T>
 struct BitMap {
 	U* pixels;
-	datatype pixel_type;
 	colortype color_type;
 	int pixel_x;
 	int pixel_y;
@@ -58,7 +51,7 @@ void normalize(BitMap<U,T>* bitMap, float* pixMap);
 template <typename U, typename T>
 void getBounds(BitMap<U,T>* bitMap, float* pixMap, float* bounds);
 template <typename U, typename T>
-void getColorRGB(BitMap<U,T>* bitMap, float value, float* color);
+void getColor(BitMap<U,T>* bitMap, float value, float* color);
 template <typename U, typename T>
 void randomize(BitMap<U,T>* bitMap, float* pixMap);
 template <typename U, typename T>
@@ -160,7 +153,7 @@ void plotMagick(BitMap<U,T>* bitMap, float* pixMap, std::string name, std::strin
 	/* declare variables */
 	float* color = new float[3];
 
-	/* copy bitMap to bitMapRGB and normalize */
+	/* normalize pixMap*/
 	normalize(bitMap, pixMap);
 
 	/* if color_type is RANDOM, randomize numbers */
@@ -180,13 +173,14 @@ void plotMagick(BitMap<U,T>* bitMap, float* pixMap, std::string name, std::strin
 	/* Write pixMapRGB array to Magick pixel_cache */
 	for (int y=0;y<bitMap->pixel_y; y++){
 		for (int x = 0; x < bitMap->pixel_x; x++){
+			/* if pixel is not blank, color pixel */
 			if (bitMap->pixels[y * bitMap->pixel_x + x] != -1){
 
 				if (bitMap->color_type == BLACKWHITE){
 					*(pixels+(y * bitMap->pixel_x + x)) = Magick::ColorRGB(0, 0, 0);
 				}
 				else{
-					getColorRGB(bitMap, pixMap[y * bitMap->pixel_x + x], color);
+					getColor(bitMap, pixMap[y * bitMap->pixel_x + x], color);
 					*(pixels+(y * bitMap->pixel_x + x)) = Magick::ColorRGB(color[0], color[1], color[2]);
 				}
 			}
@@ -268,22 +262,29 @@ void getBounds(BitMap<U,T>* bitMap, float* pixMap, float* bounds){
 
 /* write RGB triplet to color using HOT color scheme */
 template <typename U, typename T>
-void getColorRGB(BitMap<U,T>* bitMap, float value, float* color){
+void getColor(BitMap<U,T>* bitMap, float value, float* color){
 
-	if (value < 1.0/3.0){
-		color[0] = 0.0;
-		color[1] = 3.0 * value;
-		color[2] = 1.0;
+	if (bitMap->color_type == SCALED){
+		if (value < 1.0/3.0){
+			color[0] = 0.0;
+			color[1] = 3.0 * value;
+			color[2] = 1.0;
+		}
+		else if (value < 2.0/3.0){
+			color[0] = 3.0 * value - 1.0;
+			color[1] = 1.0;
+			color[2] = -3.0 * value + 1.0;
+		}
+		else {
+			color[0] = 1.0;
+			color[1] = -3.0 * value + 3.0;
+			color[2] = 0.0;
+		}
 	}
-	else if (value < 2.0/3.0){
-		color[0] = 3.0 * value - 1.0;
-		color[1] = 1.0;
-		color[2] = -3.0 * value + 1.0;
-	}
-	else {
-		color[0] = 1.0;
-		color[1] = -3.0 * value + 3.0;
-		color[2] = 0.0;
+	else{
+		color[0] = int(value * 100)     % 100 / 100.0;
+		color[1] = int(value * 10000)   % 100 / 100.0;
+		color[2] = int(value * 1000000) % 100 / 100.0;
 	}
 }
 
@@ -292,18 +293,18 @@ template <typename U, typename T>
 void randomize(BitMap<U,T>* bitMap, float* pixMap){
 
 	/* make array to store random numbers */
-	float* myRandoms = new float[95];
+	float* myRandoms = new float[131];
 
 	/* make random numbers */
 	srand(1);
-	for (int i=0;i< 95; i++){
+	for (int i=0;i< 131; i++){
 		myRandoms[i] = rand() / float(RAND_MAX);
 	}
 
 	/* randomize bitMapRGB */
 	for (int y=0;y< bitMap->pixel_y; y++){
 		for (int x = 0; x < bitMap->pixel_x; x++){
-			pixMap[y * bitMap->pixel_x + x] = myRandoms[abs(int(pixMap[y * bitMap->pixel_x + x] / 1e-8)) % 95];
+			pixMap[y * bitMap->pixel_x + x] = myRandoms[abs(int(pixMap[y * bitMap->pixel_x + x] / 1e-6)) % 131];
 		}
 	}
 

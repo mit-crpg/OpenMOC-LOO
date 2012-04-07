@@ -175,10 +175,9 @@ void Plotter::plotTracksReflective(Track* track, int numReflect){
 	BitMap<int, double>* bitMap = new BitMap<int, double>;
 	bitMap->pixel_x = _bit_length_x;
 	bitMap->pixel_y = _bit_length_y;
-	bitMap->geom_x = _geom->getWidth();
-	bitMap->geom_y = _geom->getHeight();
+	bitMap->geom_x = _width;
+	bitMap->geom_y = _height;
 	bitMap->color_type = RANDOM;
-	bitMap->pixel_type = INTEGER;
 	bitMap->pixels = new int[bitMap->pixel_x * bitMap->pixel_y];
 	initialize(bitMap);
 

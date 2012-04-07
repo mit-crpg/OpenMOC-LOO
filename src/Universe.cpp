@@ -184,6 +184,7 @@ Cell* Universe::findCell(LocalCoords* coords,
 				coords->setNext(next_coords);
 				next_coords->setPrev(coords);
 				return univ->findCell(next_coords, universes);
+
 			}
 		}
 	}
