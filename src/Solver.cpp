@@ -16,7 +16,7 @@
  * @param track_generator pointer to the trackgenerator
  */
 Solver::Solver(Geometry* geom, TrackGenerator* track_generator,
-								Plotter* plotter, bool plotFluxes) {
+								Plotter* plotter) {
 	_geom = geom;
 	_quad = new Quadrature(TABUCHI);
 	_num_FSRs = geom->getNumFSRs();
@@ -24,8 +24,6 @@ Solver::Solver(Geometry* geom, TrackGenerator* track_generator,
 	_num_tracks = track_generator->getNumTracks();
 	_num_azim = track_generator->getNumAzim();
 	_plotter = plotter;
-	_plot_fluxes = plotFluxes;
-	_pix_map_FSRs = track_generator->getFSRsPixMap();
 	try{
 		_flat_source_regions = new FlatSourceRegion[_num_FSRs];
 		_FSRs_to_powers = new double[_num_FSRs];
@@ -453,7 +451,26 @@ void Solver::computePinPowers() {
 	double curr_pin_power = 0;
 	double prev_pin_power = 0;
 
-	/* Loop over all FSRs and comput the fision rate*/
+	/* create BitMaps for plotting */
+	BitMap<int, double>* bitMapFSR = new BitMap<int, double>;
+	BitMap<float, double>* bitMap = new BitMap<float, double>;
+	bitMapFSR->pixel_x = _plotter->getBitLengthX();
+	bitMapFSR->pixel_y = _plotter->getBitLengthY();
+	bitMap->pixel_x = _plotter->getBitLengthX();
+	bitMap->pixel_y = _plotter->getBitLengthY();
+	bitMap->geom_x = _geom->getWidth();
+	bitMap->geom_y = _geom->getHeight();
+	bitMapFSR->color_type = RANDOM;
+	bitMap->color_type = SCALED;
+	bitMapFSR->pixels = new int[bitMapFSR->pixel_x * bitMapFSR->pixel_y];
+	bitMap->pixels = new float[bitMap->pixel_x * bitMap->pixel_y];
+	initialize(bitMap);
+	initialize(bitMapFSR);
+
+	/* make FSR BitMap */
+	_plotter->makeFSRMap(bitMapFSR->pixels);
+
+	/* Loop over all FSRs and compute the fission rate*/
 	for (int i=0; i < _num_FSRs; i++) {
 		fsr = &_flat_source_regions[i];
 		_FSRs_to_powers[i] = fsr->computeFissionRate();
@@ -488,7 +505,16 @@ void Solver::computePinPowers() {
 		_FSRs_to_pin_powers[i] /= avg_pin_power;
 	}
 
-	_plotter->plotRegion(_pix_map_FSRs, _FSRs_to_pin_powers, "pin_powers");
+
+	log_printf(NORMAL, "Plotting pin powers...");
+	_plotter->makeRegionMap(bitMapFSR->pixels, bitMap->pixels, _FSRs_to_pin_powers);
+	plot(bitMap, "pin_powers", _plotter->getExtension());
+
+	/* delete bitMaps */
+	delete [] bitMapFSR->pixels;
+	delete [] bitMap->pixels;
+	delete bitMapFSR;
+	delete bitMap;
 
 	return;
 }
@@ -908,7 +934,7 @@ double Solver::computeKeff(int max_iterations) {
 			/* Converge the scalar flux spatially within geometry to plot */
 			fixedSourceIteration(1000);
 
-			if (_plot_fluxes == true){
+			if (_plotter->plotFlux() == true){
 				/* Load fluxes into FSR to flux map */
 				for (int r=0; r < _num_FSRs; r++) {
 					double* fluxes = _flat_source_regions[r].getFlux();
@@ -950,7 +976,7 @@ double Solver::computeKeff(int max_iterations) {
 	fixedSourceIteration(1000);
 
 
-	if (_plot_fluxes == true){
+	if (_plotter->plotFlux() == true){
 		/* Load fluxes into FSR to flux map */
 		for (int r=0; r < _num_FSRs; r++) {
 			double* fluxes = _flat_source_regions[r].getFlux();
@@ -970,17 +996,43 @@ double Solver::computeKeff(int max_iterations) {
 // only plots flux
 void Solver::plotFluxes(){
 
+	/* create BitMaps for plotting */
+	BitMap<int, double>* bitMapFSR = new BitMap<int, double>;
+	BitMap<float, double>* bitMap = new BitMap<float, double>;
+	bitMapFSR->pixel_x = _plotter->getBitLengthX();
+	bitMapFSR->pixel_y = _plotter->getBitLengthX();
+	bitMap->pixel_x = _plotter->getBitLengthX();
+	bitMap->pixel_y = _plotter->getBitLengthY();
+	bitMap->geom_x = _geom->getWidth();
+	bitMap->geom_y = _geom->getHeight();
+	bitMapFSR->color_type = RANDOM;
+	bitMap->color_type = SCALED;
+	bitMapFSR->pixels = new int[bitMapFSR->pixel_x * bitMapFSR->pixel_y];
+	bitMap->pixels = new float[bitMap->pixel_x * bitMap->pixel_y];
+	initialize(bitMap);
+	initialize(bitMapFSR);
+
+	/* make FSR BitMap */
+	_plotter->makeFSRMap(bitMapFSR->pixels);
+
 	for (int i = 0; i < NUM_ENERGY_GROUPS; i++){
 
 		std::stringstream string;
-		string << "flux" << i << "a";
+		string << "flux" << i + 1 << "group";
 		std::string title_str = string.str();
 
-		log_printf(NORMAL, "Plotting group %d flux...", i);
-		_plotter->plotRegion(_pix_map_FSRs, _FSRs_to_fluxes[i], title_str);
+		log_printf(NORMAL, "Plotting group %d flux...", (i+1));
+		_plotter->makeRegionMap(bitMapFSR->pixels, bitMap->pixels, _FSRs_to_fluxes[i]);
+		plot(bitMap, title_str, _plotter->getExtension());
 	}
 
 	log_printf(NORMAL, "Plotting total flux...");
-	_plotter->plotRegion(_pix_map_FSRs, _FSRs_to_fluxes[NUM_ENERGY_GROUPS], "flux_total");
+	_plotter->makeRegionMap(bitMapFSR->pixels, bitMap->pixels, _FSRs_to_fluxes[NUM_ENERGY_GROUPS]);
+	plot(bitMap, "flux_total", _plotter->getExtension());
 
+	/* delete bitMaps */
+	delete [] bitMapFSR->pixels;
+	delete [] bitMap->pixels;
+	delete bitMapFSR;
+	delete bitMap;
 }

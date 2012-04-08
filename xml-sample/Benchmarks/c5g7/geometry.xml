@@ -1,9 +1,9 @@
 <?xml version="1.0"?>
 
 <!-- C5G7 benchmark using 2x2 array of fuel bundles bordered by water on the 
-     left and bottom  Vacuum boundary conditions on the left and bottom are 
-     simulated by a large neutron absorber. 
--->
+ left and bottom  Vacuum boundary conditions on the left and bottom are 
+ simulated by a large neutron absorber. 
+ -->
 
 <geometry>
 

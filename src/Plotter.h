@@ -13,6 +13,7 @@
 #include <string>
 #include <map>
 #include <utility>
+#include <sstream>
 #include "Point.h"
 #include "Track.h"
 #include "Geometry.h"
@@ -20,6 +21,7 @@
 #include "silo.h"
 #include "LocalCoords.h"
 #include "Cell.h"
+#include "plotterNew.h"
 
 
 
@@ -33,39 +35,28 @@ private:
 	int _bit_length_y;
 	double _x_pixel;
 	double _y_pixel;
-	std::map<int, std::string> _color_map;
+	bool _specs;
+	bool _fluxes;
 public:
-	Plotter(Geometry* geom, const int bit_dim, std::string extension);
+	Plotter(Geometry* geom, const int bit_dim, std::string extension, bool specs, bool fluxes);
 	virtual ~Plotter();
-	void plotMagick(int* pixMap, std::string type);
-	void plotMagick(float* pixMap, std::string type);
-	void plotMagickScaled(double* pixMap, double min, double max, std::string type);
 	void plotSegments(Track* track, double sin_phi, double cos_phi, int* pixMap);
 	void LineFct(double x0, double y0, double x1, double y1, int* pixMap, int color = 1);
-	void plotSilo(int* pixMap, std::string type);
-	void plotSilo(float* pixMap, std::string type);
 	void plotTracksReflective(Track* track, int numReflect);
-	void plotFSRs(int* pixMap);
+	void makeFSRMap(int* pixMap);
 	int getBitLengthX();
 	int getBitLengthY();
 	double getXPixel();
 	double getYPixel();
-	void plot(int* pixMap, std::string type);
-	void plot(float* pixMap, std::string type);
-	void FlipBitmap(int* pixMap);
-	void FlipBitmap(float* pixMap);
+	bool plotSpecs();
+	bool plotFlux();
+	std::string getExtension();
 	int convertToBitmapX(double x);
 	int convertToBitmapY(double y);
-	void plotRegion(int* pixMap, int* regionMap, std::string regionName);
-	void plotRegion(int* pixMap, double* regionMap, std::string regionName);
-	void initializePixMap(int* pixMap);
-	void initializePixMap(float* pixMap);
+	void makeRegionMap(int* pixMapFSR, int* pixMap, int* regionMap);
+	void makeRegionMap(int* pixMapFSR, float* pixMap, double* regionMap);
 	double convertToGeometryX(int x);
 	double convertToGeometryY(int y);
-	double* makeScaledMap(double* regionMap, int* pixMap, double* pixMapRegionRGB, double min, double max);
-	double* getScaledColors(double value, double min, double max, double* colors);
-	double getMin(double* regionMap, int* pixMap);
-	double getMax(double* regionMap, int* pixMap);
 };
 
 
