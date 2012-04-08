@@ -26,13 +26,13 @@ gcc src/*.cpp -o bin/openmoc $CFLAGS $LDFLAGS
 if [ "$1" == "--profile" ]
 then
     rm gmon.out || true
-    ./spectrum > /dev/null
-    gprof ./spectrum
+    ./bin/openmoc > /dev/null
+    gprof ./bin/openmoc
     rm gmon.out || true
 elif [ "$1" == "--gprofile" ]
 then
     export CPUPROFILE_FREQUENCY=1000
     export CPUPROFILE=gprofile.prof
-    ./spectrum > /dev/null
-    pprof --gv ./spectrum gprofile.prof
+    ./bin/openmoc > /dev/null
+    pprof --gv ./bin/openmoc gprofile.prof
 fi
