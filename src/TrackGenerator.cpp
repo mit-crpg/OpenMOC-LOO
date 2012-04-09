@@ -243,7 +243,7 @@ void TrackGenerator::generateTracks() {
 
 				/* Add line to segments bitmap */
 				if (_plotter->plotSpecs() == true){
-				_plotter->LineFct(new_x0, new_y0, new_x1, new_y1, bitMap->pixels, 1);
+					drawLine(new_x0, new_y0, new_x1, new_y1, bitMap, 1);
 				}
 			}
 		}
@@ -444,6 +444,9 @@ void TrackGenerator::segmentize() {
 
 	log_printf(NORMAL, "Segmenting tracks...");
 	double phi, sin_phi, cos_phi;
+	double x0, y0, x1, y1;
+	int num_segments;
+	Track* track;
 
 	/* create BitMaps for plotting */
 	BitMap<int, double>* bitMapFSR = new BitMap<int, double>;
@@ -463,16 +466,31 @@ void TrackGenerator::segmentize() {
 	initialize(bitMap);
 	initialize(bitMapFSR);
 
+
 	/* Loop over all tracks */
 	for (int i = 0; i < _num_azim; i++) {
 		phi = _tracks[i][0].getPhi();
 		sin_phi = sin(phi);
 		cos_phi = cos(phi);
 		for (int j = 0; j < _num_tracks[i]; j++){
-			_geom->segmentize(&_tracks[i][j]);
+			track = &_tracks[i][j];
+
+			_geom->segmentize(track);
 			log_printf(DEBUG, "Segmented track phi: %f...", phi);
+
+			/* plot segments */
 			if (_plotter->plotSpecs() == true){
-				_plotter->plotSegments(&_tracks[i][j], sin_phi, cos_phi, bitMap->pixels);
+				x0 = track->getStart()->getX();
+				y0 = track->getStart()->getY();
+				num_segments = track->getNumSegments();
+				for (int k=0; k < num_segments; k++){
+					log_printf(DEBUG, "Segmented segment: %f...", num_segments);
+					x1 = x0 + cos_phi * track->getSegment(k)->_length;
+					y1 = y0 + sin_phi * track->getSegment(k)->_length;
+					drawLine(x0, y0, x1, y1, bitMap, track->getSegment(k)->_region_id);
+					x0 = x1;
+					y0 = y1;
+				}
 			}
 		}
 	}

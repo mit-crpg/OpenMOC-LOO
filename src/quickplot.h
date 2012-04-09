@@ -1,12 +1,12 @@
 /*
- * plotterNew.h
+ * quickplot.h
  *
  *  Created on: Apr 5, 2012
  *      Author: samuelshaner
  */
 
-#ifndef PLOTTERNEW_H_
-#define PLOTTERNEW_H_
+#ifndef QUICKPLOT_H_
+#define QUICKPLOT_H_
 
 #define _USE_MATH_DEFINES
 #include <math.h>
@@ -33,6 +33,8 @@ struct BitMap {
 	int pixel_y;
 	T geom_x;
 	T geom_y;
+	T origin_x;
+	T origin_y;
 };
 
 /*
@@ -56,6 +58,12 @@ template <typename U, typename T>
 void randomize(BitMap<U,T>* bitMap, float* pixMap);
 template <typename U, typename T>
 void initialize(BitMap<U,T>* bitMap);
+template <typename U, typename T, typename V>
+void drawLine(V xIn, V yIn, V xOut, V yOut, BitMap<U,T>* bitMap, U color);
+template <typename U, typename T, typename V>
+int convertToBitmapY(BitMap<U,T>* bitMap, V y);
+template <typename U, typename T, typename V>
+int convertToBitmapX(BitMap<U,T>* bitMap, V x);
 
 
 /*
@@ -311,6 +319,7 @@ void randomize(BitMap<U,T>* bitMap, float* pixMap){
 	delete [] myRandoms;
 }
 
+
 /* initialize values to -1 */
 template <typename U, typename T>
 void initialize(BitMap<U,T>* bitMap){
@@ -321,4 +330,81 @@ void initialize(BitMap<U,T>* bitMap){
 	}
 }
 
-#endif /* PLOTTERNEW_H_ */
+
+/**
+ * Bresenham's line drawing algorithm. Takes in the start and end coordinates
+ * of line (in geometry coordinates), pointer to pixMap array, and line color.
+ * "Draws" the line on pixMap array.
+ * Taken from "Simplificaiton" code at link below
+ * http://en.wikipedia.org/wiki/Bresenham%27s_line_algorithm
+*/
+template <typename U, typename T, typename V>
+void drawLine(V xIn, V yIn, V xOut, V yOut, BitMap<U,T>* bitMap, U color){
+
+	/* initialize variables */
+	int x0, y0, x1,y1;
+
+	/* convert geometry coordinates to bitmap coordinates */
+	x0 = convertToBitmapX(bitMap, xIn);
+	y0 = convertToBitmapY(bitMap, yIn);
+	x1 = convertToBitmapX(bitMap, xOut);
+	y1 = convertToBitmapY(bitMap, yOut);
+
+	log_printf(DEBUG, "drawLine start_x: %i, start_y: %i, end_x: %i, end_y: %i", x0, y0, x1, y1);
+	log_printf(DEBUG, "number of pixels: %i x %i", bitMap->pixel_x, bitMap->pixel_y);
+
+	/* "draw" line on pixMap array */
+	int dx = abs(x1-x0);
+	int dy = abs(y1-y0);
+	int sx, sy;
+	if (x0 < x1){
+		sx = 1;
+	}
+	else{
+		sx = -1;
+	}
+	if (y0 < y1){
+		sy = 1;
+	}
+	else{
+		sy = -1;
+	}
+	int error = dx - dy;
+	bitMap->pixels[y0 * bitMap->pixel_x + x0] = color;
+	bitMap->pixels[y1 * bitMap->pixel_x + x1] = color;
+	while (x0 != x1 && y0 != y1){
+		bitMap->pixels[y0 * bitMap->pixel_x + x0] = color;
+		int e2 = 2 * error;
+		if (e2 > -dy){
+			error = error - dy;
+			x0 = x0 + sx;
+		}
+		if (e2 < dx){
+			error = error + dx;
+			y0 = y0 + sy;
+		}
+	}
+
+	log_printf(DEBUG, "finished drawing line");
+
+}
+
+/**
+ * Convert an x value our from geometry coordinates to Bitmap coordinates.
+ */
+template <typename U, typename T, typename V>
+int convertToBitmapX(BitMap<U,T>* bitMap, V x){
+	return int(double(x) * (bitMap->pixel_x - 1) / bitMap->geom_x + (bitMap->pixel_x - 1) / 2.0);
+}
+
+/**
+ * Convert an y value our from geometry coordinates to Bitmap coordinates.
+ */
+template <typename U, typename T, typename V>
+int convertToBitmapY(BitMap<U,T>* bitMap, V y){
+	return int(-double(y) * (bitMap->pixel_y - 1) / bitMap->geom_x + (bitMap->pixel_y - 1) / 2.0);
+}
+
+
+
+#endif /* QUICKPLOT_H_ */

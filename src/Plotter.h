@@ -21,7 +21,7 @@
 #include "silo.h"
 #include "LocalCoords.h"
 #include "Cell.h"
-#include "plotterNew.h"
+#include "quickplot.h"
 
 
 
@@ -40,8 +40,6 @@ private:
 public:
 	Plotter(Geometry* geom, const int bit_dim, std::string extension, bool specs, bool fluxes);
 	virtual ~Plotter();
-	void plotSegments(Track* track, double sin_phi, double cos_phi, int* pixMap);
-	void LineFct(double x0, double y0, double x1, double y1, int* pixMap, int color = 1);
 	void plotTracksReflective(Track* track, int numReflect);
 	void makeFSRMap(int* pixMap);
 	int getBitLengthX();
@@ -51,8 +49,6 @@ public:
 	bool plotSpecs();
 	bool plotFlux();
 	std::string getExtension();
-	int convertToBitmapX(double x);
-	int convertToBitmapY(double y);
 	void makeRegionMap(int* pixMapFSR, int* pixMap, int* regionMap);
 	void makeRegionMap(int* pixMapFSR, float* pixMap, double* regionMap);
 	double convertToGeometryX(int x);

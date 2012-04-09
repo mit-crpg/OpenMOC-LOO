@@ -24,7 +24,7 @@
 #include "FlatSourceRegion.h"
 #include "configurations.h"
 #include "log.h"
-#include "plotterNew.h"
+#include "quickplot.h"
 
 #if USE_OPENMP == true
 	#include <omp.h>

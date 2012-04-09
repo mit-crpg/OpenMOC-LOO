@@ -25,8 +25,8 @@ Plotter::Plotter(Geometry* geom, const int bitDim, std::string extension, bool s
 	double ratio = _width/_height;
 
 	/* set pixel dimensions of plots */
-	_bit_length_x = int (bitDim*ratio) + 1;
-	_bit_length_y = bitDim + 1;
+	_bit_length_x = int (bitDim*ratio);
+	_bit_length_y = bitDim;
 
 	/* make multiplier for translating geometry coordinates
 	 * to bitmap coordinates.
@@ -97,23 +97,10 @@ bool Plotter::plotFlux(){
 	return _fluxes;
 }
 
+
 /* PLOTTING HELPER FUNCTIONS */
 /* These functions manipulate data and call the generic plotting functions
  */
-
-/**
- * Convert an x value our from geometry coordinates to Bitmap coordinates.
- */
-int Plotter::convertToBitmapX(double x){
-	return int(x*_x_pixel + _bit_length_x/2);
-}
-
-/**
- * Convert an y value our from geometry coordinates to Bitmap coordinates.
- */
-int Plotter::convertToBitmapY(double y){
-	return int(-y*_y_pixel + _bit_length_y/2);
-}
 
 /**
  * Convert an x value our from geometry coordinates to Bitmap coordinates.
@@ -130,37 +117,6 @@ double Plotter::convertToGeometryY(int y){
 }
 
 /**
- * Plots track segments in a pixMap array
- */
-void Plotter::plotSegments(Track* track, double sin_phi,
-		double cos_phi, int* pixMap){
-
-	/* Initialize variables */
-	double x0, y0, x1, y1;
-	int num_segments;
-
-	/* Set first segment start point and get the number of tracks*/
-	x0 = track->getStart()->getX();
-	y0 = track->getStart()->getY();
-	num_segments = track->getNumSegments();
-
-	log_printf(DEBUG, "looping over segments in plotter endy: %f...", track->getEnd()->getY());
-	/* loop over segments and write to pixMap array */
-	for (int k=0; k < num_segments; k++){
-		x1 = x0 + cos_phi*track->getSegment(k)->_length;
-		y1 = y0 + sin_phi*track->getSegment(k)->_length;
-
-		/* "draw" segment on pixMap array */
-		log_printf(DEBUG, "calling linefct x0: %f, y0: %f, x1: %f, y1: %f,length: %f, sin_phi: %f ...", x0, y0, x1, y1, track->getSegment(k)->_region_id, track->getSegment(k)->_length, sin_phi);
-		LineFct(x0, y0, x1, y1, pixMap, track->getSegment(k)->_region_id);
-		log_printf(DEBUG, "done calling linefct...");
-
-		x0 = x1;
-		y0 = y1;
-	}
-}
-
-/**
  * plot given track and numReflect reflected tracks
  */
 void Plotter::plotTracksReflective(Track* track, int numReflect){
@@ -170,6 +126,8 @@ void Plotter::plotTracksReflective(Track* track, int numReflect){
 	double sin_phi, cos_phi, phi;
 	Track *track2;
 	bool get_out = TRUE;
+	double x0, y0, x1, y1;
+	int num_segments;
 
 	/* create BitMap for plotting */
 	BitMap<int, double>* bitMap = new BitMap<int, double>;
@@ -190,7 +148,16 @@ void Plotter::plotTracksReflective(Track* track, int numReflect){
 		phi = track->getPhi();
 		sin_phi = sin(phi);
 		cos_phi = cos(phi);
-		plotSegments(track, sin_phi, cos_phi, bitMap->pixels);
+		x0 = track->getStart()->getX();
+		y0 = track->getStart()->getY();
+		num_segments = track->getNumSegments();
+		for (int k=0; k < num_segments; k++){
+			x1 = x0 + cos_phi*track->getSegment(k)->_length;
+			y1 = y0 + sin_phi*track->getSegment(k)->_length;
+			drawLine(x0, y0, x1, y1, bitMap, track->getSegment(k)->_region_id);
+			x0 = x1;
+			y0 = y1;
+		}
 
 		/* Get next track */
 		track2 = track;
@@ -216,59 +183,6 @@ void Plotter::plotTracksReflective(Track* track, int numReflect){
 	/* release memory */
 	delete [] bitMap->pixels;
 	delete bitMap;
-}
-
-/**
- * Bresenham's line drawing algorithm. Takes in the start and end coordinates
- * of line (in geometry coordinates), pointer to pixMap array, and line color.
- * "Draws" the line on pixMap array.
- * Taken from "Simplificaiton" code at link below
- * http://en.wikipedia.org/wiki/Bresenham%27s_line_algorithm
-*/
-void Plotter::LineFct(double xIn, double yIn, double xOut, double yOut, int* pixMap, int color){
-
-	/* initialize variables */
-	int x0, y0, x1,y1;
-
-	/* convert geometry coordinates to bitmap coordinates */
-	x0 = convertToBitmapX(xIn);
-	y0 = convertToBitmapY(yIn);
-	x1 = convertToBitmapX(xOut);
-	y1 = convertToBitmapY(yOut);
-
-	log_printf(DEBUG, "linefct bitmap x0: %i, y0: %i, x1: %i, y1: %i", x0, y0, x1, y1);
-
-	/* "draw" line on pixMap array */
-	int dx = abs(x1-x0);
-	int dy = abs(y1-y0);
-	int sx, sy;
-	if (x0 < x1){
-		sx = 1;
-	}
-	else{
-		sx = -1;
-	}
-	if (y0 < y1){
-		sy = 1;
-	}
-	else{
-		sy = -1;
-	}
-	int error = dx - dy;
-	pixMap[y0 * _bit_length_x + x0] = color;
-	pixMap[y1 * _bit_length_x + x1] = color;
-	while (x0 != x1 && y0 != y1){
-		pixMap[y0 * _bit_length_x + x0] = color;
-		int e2 = 2 * error;
-		if (e2 > -dy){
-			error = error - dy;
-			x0 = x0 + sx;
-		}
-		if (e2 < dx){
-			error = error + dx;
-			y0 = y0 + sy;
-		}
-	}
 }
 
 /**
