@@ -452,20 +452,18 @@ void Solver::computePinPowers() {
 	double prev_pin_power = 0;
 
 	/* create BitMaps for plotting */
-	BitMap<int, double>* bitMapFSR = new BitMap<int, double>;
-	BitMap<float, double>* bitMap = new BitMap<float, double>;
+	BitMap<int>* bitMapFSR = new BitMap<int>;
+	BitMap<float>* bitMap = new BitMap<float>;
 	bitMapFSR->pixel_x = _plotter->getBitLengthX();
 	bitMapFSR->pixel_y = _plotter->getBitLengthY();
 	bitMap->pixel_x = _plotter->getBitLengthX();
 	bitMap->pixel_y = _plotter->getBitLengthY();
+	initialize(bitMapFSR);
+	initialize(bitMap);
 	bitMap->geom_x = _geom->getWidth();
 	bitMap->geom_y = _geom->getHeight();
 	bitMapFSR->color_type = RANDOM;
 	bitMap->color_type = SCALED;
-	bitMapFSR->pixels = new int[bitMapFSR->pixel_x * bitMapFSR->pixel_y];
-	bitMap->pixels = new float[bitMap->pixel_x * bitMap->pixel_y];
-	initialize(bitMap);
-	initialize(bitMapFSR);
 
 	/* make FSR BitMap */
 	_plotter->makeFSRMap(bitMapFSR->pixels);
@@ -511,10 +509,8 @@ void Solver::computePinPowers() {
 	plot(bitMap, "pin_powers", _plotter->getExtension());
 
 	/* delete bitMaps */
-	delete [] bitMapFSR->pixels;
-	delete [] bitMap->pixels;
-	delete bitMapFSR;
-	delete bitMap;
+	deleteBitMap(bitMapFSR);
+	deleteBitMap(bitMap);
 
 	return;
 }
@@ -997,20 +993,20 @@ double Solver::computeKeff(int max_iterations) {
 void Solver::plotFluxes(){
 
 	/* create BitMaps for plotting */
-	BitMap<int, double>* bitMapFSR = new BitMap<int, double>;
-	BitMap<float, double>* bitMap = new BitMap<float, double>;
+	BitMap<int>* bitMapFSR = new BitMap<int>;
+	BitMap<float>* bitMap = new BitMap<float>;
 	bitMapFSR->pixel_x = _plotter->getBitLengthX();
 	bitMapFSR->pixel_y = _plotter->getBitLengthX();
 	bitMap->pixel_x = _plotter->getBitLengthX();
 	bitMap->pixel_y = _plotter->getBitLengthY();
+	initialize(bitMapFSR);
+	initialize(bitMap);
 	bitMap->geom_x = _geom->getWidth();
 	bitMap->geom_y = _geom->getHeight();
 	bitMapFSR->color_type = RANDOM;
 	bitMap->color_type = SCALED;
-	bitMapFSR->pixels = new int[bitMapFSR->pixel_x * bitMapFSR->pixel_y];
-	bitMap->pixels = new float[bitMap->pixel_x * bitMap->pixel_y];
-	initialize(bitMap);
-	initialize(bitMapFSR);
+
+
 
 	/* make FSR BitMap */
 	_plotter->makeFSRMap(bitMapFSR->pixels);
@@ -1031,8 +1027,6 @@ void Solver::plotFluxes(){
 	plot(bitMap, "flux_total", _plotter->getExtension());
 
 	/* delete bitMaps */
-	delete [] bitMapFSR->pixels;
-	delete [] bitMap->pixels;
-	delete bitMapFSR;
-	delete bitMap;
+	deleteBitMap(bitMapFSR);
+	deleteBitMap(bitMap);
 }

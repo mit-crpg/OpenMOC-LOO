@@ -130,14 +130,14 @@ void Plotter::plotTracksReflective(Track* track, int numReflect){
 	int num_segments;
 
 	/* create BitMap for plotting */
-	BitMap<int, double>* bitMap = new BitMap<int, double>;
+	BitMap<int>* bitMap = new BitMap<int>;
 	bitMap->pixel_x = _bit_length_x;
 	bitMap->pixel_y = _bit_length_y;
+	initialize(bitMap);
 	bitMap->geom_x = _width;
 	bitMap->geom_y = _height;
 	bitMap->color_type = RANDOM;
-	bitMap->pixels = new int[bitMap->pixel_x * bitMap->pixel_y];
-	initialize(bitMap);
+
 
 	/* loop through tracks and write to pixMap array */
 	for (int i = 0; i < (numReflect + 1); i++){
@@ -154,7 +154,7 @@ void Plotter::plotTracksReflective(Track* track, int numReflect){
 		for (int k=0; k < num_segments; k++){
 			x1 = x0 + cos_phi*track->getSegment(k)->_length;
 			y1 = y0 + sin_phi*track->getSegment(k)->_length;
-			drawLine(x0, y0, x1, y1, bitMap, track->getSegment(k)->_region_id);
+			drawLine(bitMap, x0, y0, x1, y1, track->getSegment(k)->_region_id);
 			x0 = x1;
 			y0 = y1;
 		}
@@ -181,8 +181,7 @@ void Plotter::plotTracksReflective(Track* track, int numReflect){
 	plot(bitMap, "reflect", _extension);
 
 	/* release memory */
-	delete [] bitMap->pixels;
-	delete bitMap;
+	deleteBitMap(bitMap);
 }
 
 /**

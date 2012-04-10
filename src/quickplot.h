@@ -25,45 +25,47 @@ typedef enum colortypes {
 }colortype;
 
 /* define BitMap struct */
-template <typename U, typename T>
+template <typename U>
 struct BitMap {
 	U* pixels;
 	colortype color_type;
 	int pixel_x;
 	int pixel_y;
-	T geom_x;
-	T geom_y;
-	T origin_x;
-	T origin_y;
+	double geom_x;
+	double geom_y;
+	double center_x;
+	double center_y;
 };
 
 /*
  *  function definitions
  */
-template <typename U, typename T>
-void plot(BitMap<U,T>* bitMap, std::string name, std::string extension);
-template <typename U, typename T>
-void plotSilo(BitMap<U,T>* bitMap, float* pixMap, std::string type, std::string extension);
-template <typename U, typename T>
-void plotMagick(BitMap<U,T>* bitMap, float* pixMap, std::string type, std::string extension);
-template <typename U, typename T>
-void copyBitMap(BitMap<U,T>* bitMap, float* pixMap);
-template <typename U, typename T>
-void normalize(BitMap<U,T>* bitMap, float* pixMap);
-template <typename U, typename T>
-void getBounds(BitMap<U,T>* bitMap, float* pixMap, float* bounds);
-template <typename U, typename T>
-void getColor(BitMap<U,T>* bitMap, float value, float* color);
-template <typename U, typename T>
-void randomize(BitMap<U,T>* bitMap, float* pixMap);
-template <typename U, typename T>
-void initialize(BitMap<U,T>* bitMap);
-template <typename U, typename T, typename V>
-void drawLine(V xIn, V yIn, V xOut, V yOut, BitMap<U,T>* bitMap, U color);
-template <typename U, typename T, typename V>
-int convertToBitmapY(BitMap<U,T>* bitMap, V y);
-template <typename U, typename T, typename V>
-int convertToBitmapX(BitMap<U,T>* bitMap, V x);
+template <typename U>
+void plot(BitMap<U>* bitMap, std::string name, std::string extension);
+template <typename U>
+void plotSilo(BitMap<U>* bitMap, float* pixMap, std::string type, std::string extension);
+template <typename U>
+void plotMagick(BitMap<U>* bitMap, float* pixMap, std::string type, std::string extension);
+template <typename U>
+void copyBitMap(BitMap<U>* bitMap, float* pixMap);
+template <typename U>
+void normalize(BitMap<U>* bitMap, float* pixMap);
+template <typename U>
+void getBounds(BitMap<U>* bitMap, float* pixMap, float* bounds);
+template <typename U>
+void getColor(BitMap<U>* bitMap, float value, float* color);
+template <typename U>
+void randomize(BitMap<U>* bitMap, float* pixMap);
+template <typename U>
+void initialize(BitMap<U>* bitMap);
+template <typename U, typename V>
+void drawLine(BitMap<U>* bitMap, V xIn, V yIn, V xOut, V yOut, U color);
+template <typename U, typename V>
+int convertToBitmapY(BitMap<U>* bitMap, V y);
+template <typename U, typename V>
+int convertToBitmapX(BitMap<U>* bitMap, V x);
+template <typename U>
+void deleteBitMap(BitMap<U>* bitMap);
 
 
 /*
@@ -71,8 +73,8 @@ int convertToBitmapX(BitMap<U,T>* bitMap, V x);
  */
 
 /* templated general plot function */
-template <typename U, typename T>
-void plot(BitMap<U,T>* bitMap, std::string name, std::string extension){
+template <typename U>
+void plot(BitMap<U>* bitMap, std::string name, std::string extension){
 
 	/* create array to store color values */
 	float* pixMap = new float[bitMap->pixel_x * bitMap->pixel_y];
@@ -89,8 +91,8 @@ void plot(BitMap<U,T>* bitMap, std::string name, std::string extension){
 	delete [] pixMap;
 }
 
-template <typename U, typename T>
-void plotSilo(BitMap<U,T>* bitMap, float* pixMap, std::string name, std::string extension){
+template <typename U>
+void plotSilo(BitMap<U>* bitMap, float* pixMap, std::string name, std::string extension){
 	printf("plotting silo mesh...\n");
 
 	/* Create file pointer */
@@ -154,8 +156,8 @@ void plotSilo(BitMap<U,T>* bitMap, float* pixMap, std::string name, std::string 
  * Generic function for plotting pixMap in png, tiff, or jpg file
  * using Magick++
  */
-template <typename U, typename T>
-void plotMagick(BitMap<U,T>* bitMap, float* pixMap, std::string name, std::string extension){
+template <typename U>
+void plotMagick(BitMap<U>* bitMap, float* pixMap, std::string name, std::string extension){
 	printf("Writing Magick bitmap...\n");
 
 	/* declare variables */
@@ -210,8 +212,8 @@ void plotMagick(BitMap<U,T>* bitMap, float* pixMap, std::string name, std::strin
 }
 
 /* copy elements in bitMap to bitMapRGB */
-template <typename U, typename T>
-void copyBitMap(BitMap<U,T>* bitMap, float* pixMap){
+template <typename U>
+void copyBitMap(BitMap<U>* bitMap, float* pixMap){
 
 	/* copy bitMap to bitMapRGB */
 	for (int y=0;y<bitMap->pixel_y; y++){
@@ -223,8 +225,8 @@ void copyBitMap(BitMap<U,T>* bitMap, float* pixMap){
 }
 
 /* normalize bitMapRGB to numbers between 0 and 1 */
-template <typename U, typename T>
-void normalize(BitMap<U,T>* bitMap, float* pixMap){
+template <typename U>
+void normalize(BitMap<U>* bitMap, float* pixMap){
 
 	float* bounds = new float[2];
 	getBounds(bitMap, pixMap, bounds);
@@ -243,8 +245,8 @@ void normalize(BitMap<U,T>* bitMap, float* pixMap){
 }
 
 /* get min and max bounds of bitMapRGB */
-template <typename U, typename T>
-void getBounds(BitMap<U,T>* bitMap, float* pixMap, float* bounds){
+template <typename U>
+void getBounds(BitMap<U>* bitMap, float* pixMap, float* bounds){
 
 	bounds[0] = pixMap[0];
 	bounds[1] = pixMap[0];
@@ -269,8 +271,8 @@ void getBounds(BitMap<U,T>* bitMap, float* pixMap, float* bounds){
 }
 
 /* write RGB triplet to color using HOT color scheme */
-template <typename U, typename T>
-void getColor(BitMap<U,T>* bitMap, float value, float* color){
+template <typename U>
+void getColor(BitMap<U>* bitMap, float value, float* color){
 
 	if (bitMap->color_type == SCALED){
 		if (value < 1.0/3.0){
@@ -297,8 +299,8 @@ void getColor(BitMap<U,T>* bitMap, float value, float* color){
 }
 
 /* pseudorandomize bitMapRGB with number between 0 and 1 */
-template <typename U, typename T>
-void randomize(BitMap<U,T>* bitMap, float* pixMap){
+template <typename U>
+void randomize(BitMap<U>* bitMap, float* pixMap){
 
 	/* make array to store random numbers */
 	float* myRandoms = new float[131];
@@ -321,13 +323,28 @@ void randomize(BitMap<U,T>* bitMap, float* pixMap){
 
 
 /* initialize values to -1 */
-template <typename U, typename T>
-void initialize(BitMap<U,T>* bitMap){
+template <typename U>
+void initialize(BitMap<U>* bitMap){
+
+	try{
+		bitMap->pixels = new U[bitMap->pixel_x * bitMap->pixel_y];
+	}
+	catch (std::exception &e){
+		printf("Could not allocate memory for BitMap pixels. "
+				"Backtrace:\n%s", e.what());
+	}
+
+	/* initialize pixMap to -1 */
 	for (int y=0;y< bitMap->pixel_y; y++){
 		for (int x = 0; x < bitMap->pixel_x; x++){
 			bitMap->pixels[y * bitMap->pixel_x + x] = -1;
 		}
 	}
+
+	/* initialize parameters to default values */
+	bitMap->center_x = 0;
+	bitMap->center_y = 0;
+	bitMap->color_type = RANDOM;
 }
 
 
@@ -338,8 +355,8 @@ void initialize(BitMap<U,T>* bitMap){
  * Taken from "Simplificaiton" code at link below
  * http://en.wikipedia.org/wiki/Bresenham%27s_line_algorithm
 */
-template <typename U, typename T, typename V>
-void drawLine(V xIn, V yIn, V xOut, V yOut, BitMap<U,T>* bitMap, U color){
+template <typename U, typename V>
+void drawLine(BitMap<U>* bitMap, V xIn, V yIn, V xOut, V yOut, U color){
 
 	/* initialize variables */
 	int x0, y0, x1,y1;
@@ -392,19 +409,27 @@ void drawLine(V xIn, V yIn, V xOut, V yOut, BitMap<U,T>* bitMap, U color){
 /**
  * Convert an x value our from geometry coordinates to Bitmap coordinates.
  */
-template <typename U, typename T, typename V>
-int convertToBitmapX(BitMap<U,T>* bitMap, V x){
-	return int(double(x) * (bitMap->pixel_x - 1) / bitMap->geom_x + (bitMap->pixel_x - 1) / 2.0);
+template <typename U, typename V>
+int convertToBitmapX(BitMap<U>* bitMap, V x){
+	return int((x - bitMap->center_x) * (bitMap->pixel_x - 1) / bitMap->geom_x + (bitMap->pixel_x - 1) / 2.0);
 }
 
 /**
  * Convert an y value our from geometry coordinates to Bitmap coordinates.
  */
-template <typename U, typename T, typename V>
-int convertToBitmapY(BitMap<U,T>* bitMap, V y){
-	return int(-double(y) * (bitMap->pixel_y - 1) / bitMap->geom_x + (bitMap->pixel_y - 1) / 2.0);
+template <typename U, typename V>
+int convertToBitmapY(BitMap<U>* bitMap, V y){
+	return int(-(y - bitMap->center_y) * (bitMap->pixel_y - 1) / bitMap->geom_x + (bitMap->pixel_y - 1) / 2.0);
 }
 
+/**
+ * delete BitMap
+ */
+template <typename U>
+void deleteBitMap(BitMap<U>* bitMap){
+	delete [] bitMap->pixels;
+	delete bitMap;
+}
 
 
 #endif /* QUICKPLOT_H_ */
