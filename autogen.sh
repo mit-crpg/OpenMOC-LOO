@@ -1,4 +1,4 @@
-#!/bin/sh -ex
+#!/bin/bash -ex
 
 rm -r \
 	autom4te.cache aclocal.m4 configure config.h config.log config.status \
