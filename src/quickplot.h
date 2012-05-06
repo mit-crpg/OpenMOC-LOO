@@ -367,9 +367,6 @@ void drawLine(BitMap<U>* bitMap, V xIn, V yIn, V xOut, V yOut, U color){
 	x1 = convertToBitmapX(bitMap, xOut);
 	y1 = convertToBitmapY(bitMap, yOut);
 
-	log_printf(DEBUG, "drawLine start_x: %i, start_y: %i, end_x: %i, end_y: %i", x0, y0, x1, y1);
-	log_printf(DEBUG, "number of pixels: %i x %i", bitMap->pixel_x, bitMap->pixel_y);
-
 	/* "draw" line on pixMap array */
 	int dx = abs(x1-x0);
 	int dy = abs(y1-y0);
@@ -401,8 +398,6 @@ void drawLine(BitMap<U>* bitMap, V xIn, V yIn, V xOut, V yOut, U color){
 			y0 = y0 + sy;
 		}
 	}
-
-	log_printf(DEBUG, "finished drawing line");
 
 }
 
