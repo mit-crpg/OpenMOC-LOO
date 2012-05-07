@@ -2140,3 +2140,358 @@ bool Geometry::mapContainsKey(std::map<K, V> map, K key) {
 	/* If no exception is thrown, element does exist */
 	return true;
 }
+
+/* make CMFD Mesh */
+void Geometry::makeCMFDMesh(){
+	log_printf(NORMAL, "Making CMFD mesh...");
+
+	/* Get the base universe */
+	Universe* univ = _universes.at(0);
+
+	/* find the maximum depth of the lattice */
+	int numLattices = -1;			// the number of nested lattices
+	findNumLattices(univ, &numLattices);
+	int latticeCMFD = numLattices - CMFD_LEVEL;
+
+	log_printf(NORMAL, "max lattice depth: %i", numLattices);
+
+	/* find width and height at CMFD_LEVEL lattice */
+	int width = 0;
+	int height = 0;
+	findMeshWidth(univ, &width, latticeCMFD);
+	findMeshHeight(univ, &height, latticeCMFD);
+
+	/* make a Mesh object and fill with MeshCells */
+	Mesh mesh(width, height);
+
+	log_printf(NORMAL, "mesh width: %i", mesh.getWidth());
+	log_printf(NORMAL, "mesh height: %i", mesh.getHeight());
+
+	/* make a list of FSR ids in each mesh cell */
+	int meshCellNum = 0;
+	int fsr_id = 0;
+	defineMesh(&mesh, univ, latticeCMFD, meshCellNum, 0, true, fsr_id);
+
+	std::list<int> fsrs;
+	int fsr;
+	for (int i = 0; i < mesh.getHeight(); i++){
+		for (int j = 0; j< mesh.getWidth(); j++){
+			fsrs = mesh.getCells()[i * mesh.getWidth() + j].getFSRs();
+			//log_printf(NORMAL, "fsrs in mesh: %i", (int) mesh.getCells()[i * mesh.getWidth() + j].getFSRs().size());
+			std::list<int>::iterator iter;
+			for (iter = fsrs.begin(); iter != fsrs.end(); ++iter){
+				fsr = (int) *iter;
+				//log_printf(NORMAL, "mesh cell: %i fsr: %i", i * mesh.getWidth() + j, fsr);
+			}
+
+		}
+	}
+
+	return;
+}
+
+/* find all the FSRs in a lattice type universe and store in linked list */
+void Geometry::findFSRs(Universe* univ, MeshCell meshCell, int *fsr_id){
+
+	/* If the universe is a SIMPLE type universe */
+	if (univ->getType() == SIMPLE) {
+		std::map<int, Cell*> cells = univ->getCells();
+		Cell* curr;
+
+		/* For each of the cells inside the lattice, check if it is
+		 * material or fill type */
+		std::map<int, Cell*>::iterator iter;
+		for (iter = cells.begin(); iter != cells.end(); ++iter) {
+			curr = iter->second;
+
+			/* If the current cell is a MATERIAL type cell, store its fsr_id */
+			if (curr->getType() == MATERIAL) {
+				log_printf(NORMAL, "pushing back fsr id: %i", *fsr_id);
+				meshCell.addFSR(*fsr_id);
+				*fsr_id += 1;
+			}
+
+			/* If the current cell is a FILL type cell recursively call findFSRs */
+			else {
+				CellFill* fill_cell = static_cast<CellFill*>(curr);
+				Universe* universe_fill = fill_cell->getUniverseFill();
+				findFSRs(universe_fill, meshCell, fsr_id);
+			}
+		}
+	}
+
+	/* If the universe is a LATTICE type universe recursively call findFSRs */
+	else {
+		Lattice* lattice = static_cast<Lattice*>(univ);
+		Universe* curr;
+		int num_x = lattice->getNumX();
+		int num_y = lattice->getNumY();
+		int baseFSR = *fsr_id;
+		/* Loop over all lattice cells in this lattice */
+		for (int i = num_y-1; i > -1; i--) {
+			for (int j = 0; j < num_x; j++) {
+
+				/* Get a pointer to the current lattice cell */
+				curr = lattice->getUniverse(j, i);
+				log_printf(NORMAL, "getting lattice fsr: %i", lattice->getFSR(j,i));
+				*fsr_id = baseFSR + lattice->getFSR(j,i);
+
+				findFSRs(curr, meshCell, fsr_id);
+			}
+		}
+	}
+}
+
+/* define the MeshCell objects (_width, _height, and _FRSs)  */
+void Geometry::defineMesh(Mesh* mesh, Universe* univ, int depth, int meshCellNum, int row, bool base, int fsr_id){
+
+	/* If the universe is a SIMPLE type universe */
+	if (univ->getType() == SIMPLE){
+		std::map<int, Cell*> cells = univ->getCells();
+		Cell* curr;
+		std::map<int, Cell*>::iterator iter;
+		for (iter = cells.begin(); iter != cells.end(); ++iter) {
+			curr = iter->second;CellFill* fill_cell = static_cast<CellFill*>(curr);
+			Universe* universe_fill = fill_cell->getUniverseFill();
+			defineMesh(mesh, universe_fill, depth, meshCellNum, row, base, fsr_id);
+		}
+	}
+
+	/* If the universe is a LATTICE type universe */
+	else {
+
+		Lattice* lattice = static_cast<Lattice*>(univ);
+		Universe* curr;
+		int num_x = lattice->getNumX();
+		int num_y = lattice->getNumY();
+		log_printf(NORMAL, "numx: %i numy: %i", num_x, num_y);
+
+		if (depth == 1){
+			if (base == true){
+				for (int i = num_y-1; i > -1; i--) {
+					for (int j = 0; j < num_x; j++) {
+						curr = lattice->getUniverse(j, i);
+						fsr_id = lattice->getFSR(j,i);
+						log_printf(NORMAL, "added FSR id to counter -> fsr id: %i", fsr_id);
+						findFSRs(curr, mesh->getCells()[meshCellNum], &fsr_id);
+						mesh->getCells()[meshCellNum].setWidth(lattice->getWidthX());
+						mesh->getCells()[meshCellNum].setHeight(lattice->getWidthY());
+						log_printf(NORMAL, "mesh cell: %i, width: %f, height: %f", meshCellNum, mesh->getCells()[meshCellNum].getWidth(),mesh->getCells()[meshCellNum].getHeight());
+						meshCellNum = meshCellNum + 1;
+					}
+				}
+			}
+			else{
+				int baseFSR = fsr_id;
+				for (int j = 0; j < num_x; j++) {
+					curr = lattice->getUniverse(j, row);
+					fsr_id = baseFSR + lattice->getFSR(j,row);
+					log_printf(NORMAL, "set fsr id to: %i", fsr_id);
+					findFSRs(curr, mesh->getCells()[meshCellNum], &fsr_id);
+					mesh->getCells()[meshCellNum].setWidth(lattice->getWidthX());
+					mesh->getCells()[meshCellNum].setHeight(lattice->getWidthY());
+					log_printf(NORMAL, "mesh cell num: %i, width: %f, height: %f", meshCellNum, mesh->getCells()[meshCellNum].getWidth(),mesh->getCells()[meshCellNum].getHeight());
+					meshCellNum = meshCellNum + 1;
+				}
+			}
+		}
+		else {
+			base = false;
+			for (int i = num_y-1; i > -1; i--) {
+				curr = lattice->getUniverse(0, 0);
+				int nextHeight = nextLatticeHeight(curr);
+				for (int k = nextHeight-1; k > -1; k--) {
+					for (int j = 0; j < num_x; j++) {
+						/* Get a pointer to the current lattice cell */
+						//log_printf(NORMAL, "calling lattice universe: %i, %i", j, i);
+						curr = lattice->getUniverse(j, i);
+						fsr_id = lattice->getFSR(j,i);
+						defineMesh(mesh, curr, depth - 1, meshCellNum, k, base, fsr_id);
+					}
+				}
+			}
+		}
+	}
+
+	return;
+}
+
+
+/* find the height of the next lattice */
+int Geometry::nextLatticeHeight(Universe* univ){
+
+	int height = 1;
+
+	/* If the universe is a SIMPLE type universe */
+	if (univ->getType() == SIMPLE){
+		std::map<int, Cell*> cells = univ->getCells();
+		Cell* curr;
+		std::map<int, Cell*>::iterator iter;
+		iter = cells.begin();
+		curr = iter->second;
+		/* Check to see if cell fill*/
+		if (curr->getType() == FILL){
+			CellFill* fill_cell = static_cast<CellFill*>(curr);
+			Universe* universe_fill = fill_cell->getUniverseFill();
+			height = nextLatticeHeight(universe_fill);
+		}
+	}
+
+	/* If the universe is a LATTICE type universe */
+	else {
+		Lattice* lattice = static_cast<Lattice*>(univ);
+		height = lattice->getNumY();
+	}
+
+	return height;
+}
+
+
+
+/* find the height of the mesh */
+void Geometry::findMeshHeight(Universe* univ, int* height, int depth){
+
+	/* If the universe is a SIMPLE type universe */
+	if (univ->getType() == SIMPLE){
+		std::map<int, Cell*> cells = univ->getCells();
+		Cell* curr;
+		std::map<int, Cell*>::iterator iter;
+		for (iter = cells.begin(); iter != cells.end(); ++iter) {
+			curr = iter->second;
+			/* Check to see if cell fill*/
+			if (curr->getType() == FILL){
+				CellFill* fill_cell = static_cast<CellFill*>(curr);
+				Universe* universe_fill = fill_cell->getUniverseFill();
+				findMeshWidth(universe_fill, height, depth);
+			}
+		}
+	}
+
+	/* If the universe is a LATTICE type universe */
+	else {
+		if (depth > 0){
+
+			Lattice* lattice = static_cast<Lattice*>(univ);
+			Universe* curr;
+			int num_y = lattice->getNumY();
+			if (depth == 1){
+				*height = *height + num_y;
+			}
+			else{
+				for (int i = num_y-1; i > -1; i--) {
+
+					/* Get a pointer to the current lattice cell */
+					curr = lattice->getUniverse(0, i);
+					findMeshWidth(curr, height, depth);
+				}
+				depth = depth - 1;
+			}
+		}
+	}
+
+	return;
+}
+
+
+/* find the width of the mesh */
+void Geometry::findMeshWidth(Universe* univ, int* width, int depth){
+
+	/* If the universe is a SIMPLE type universe */
+	if (univ->getType() == SIMPLE){
+		std::map<int, Cell*> cells = univ->getCells();
+		Cell* curr;
+		std::map<int, Cell*>::iterator iter;
+		for (iter = cells.begin(); iter != cells.end(); ++iter) {
+			curr = iter->second;
+			/* Check to see if cell fill*/
+			if (curr->getType() == FILL){
+				CellFill* fill_cell = static_cast<CellFill*>(curr);
+				Universe* universe_fill = fill_cell->getUniverseFill();
+				findMeshWidth(universe_fill, width, depth);
+			}
+		}
+	}
+
+	/* If the universe is a LATTICE type universe */
+	else {
+		if (depth > 0){
+
+			Lattice* lattice = static_cast<Lattice*>(univ);
+			Universe* curr;
+			int num_x = lattice->getNumX();
+			int num_y = lattice->getNumY();
+			int i = num_y-1;
+			if (depth == 1){
+				*width = *width + num_x;
+			}
+			else{
+				depth = depth - 1;
+				for (int j = 0; j < num_x; j++) {
+
+					/* Get a pointer to the current lattice cell */
+					curr = lattice->getUniverse(j, i);
+					findMeshWidth(curr, width, depth);
+				}
+			}
+		}
+	}
+
+	return;
+}
+
+
+
+/* find the number of Lattice Levels */
+void Geometry::findNumLattices(Universe* univ, int* numLattices) {
+
+
+
+	/* If the universe is a SIMPLE type universe */
+	if (univ->getType() == SIMPLE) {
+		std::map<int, Cell*> cells = univ->getCells();
+		Cell* curr;
+		std::map<int, Cell*>::iterator iter;
+		for (iter = cells.begin(); iter != cells.end(); ++iter) {
+			curr = iter->second;
+			/* Check to see if cell fill*/
+			if (curr->getType() == FILL){
+				CellFill* fill_cell = static_cast<CellFill*>(curr);
+				Universe* universe_fill = fill_cell->getUniverseFill();
+				findNumLattices(universe_fill, numLattices);
+			}
+		}
+	}
+
+	/* If the universe is a LATTICE type universe */
+	else {
+		Lattice* lattice = static_cast<Lattice*>(univ);
+		Universe* curr;
+		int num_x = lattice->getNumX();
+		int num_y = lattice->getNumY();
+		int maxDepth = 1;
+		*numLattices = *numLattices + 1;
+		for (int i = num_y-1; i > -1; i--) {
+			for (int j = 0; j < num_x; j++) {
+
+				/* Get a pointer to the current lattice cell */
+				curr = lattice->getUniverse(j, i);
+				int depth = 0;
+				findNumLattices(curr, &depth);
+				maxDepth = std::max(depth,maxDepth);
+			}
+		}
+		*numLattices = *numLattices + maxDepth;
+
+	}
+
+	return;
+}
+
+
+
+
+
+
+
+
+

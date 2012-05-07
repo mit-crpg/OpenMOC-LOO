@@ -42,6 +42,10 @@
 /* If this machine has OpenMP installed, define as true for parallel speedup */
 #define USE_OPENMP true
 
+/* Perform CMFD acceleration in the solver on a lattice level */
+#define CMFD_ACCEL true
+#define CMFD_LEVEL 1
+
 
 /******************************************************************************
  *********************** PHYSICAL CONSTANTS ***********************************

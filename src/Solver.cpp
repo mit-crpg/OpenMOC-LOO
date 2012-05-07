@@ -794,6 +794,12 @@ double Solver::computeKeff(int max_iterations) {
 	Material* material;
 	int start_index, end_index;
 
+	//////////////////////////////////////////////
+	/* Make CMFD Mesh */
+	_geom->makeCMFDMesh();
+
+
+	//////////////////////////////////////////////
 
 	log_printf(NORMAL, "Computing k_eff...");
 
