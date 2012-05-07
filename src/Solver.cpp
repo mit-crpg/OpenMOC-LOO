@@ -1030,3 +1030,109 @@ void Solver::plotFluxes(){
 	deleteBitMap(bitMapFSR);
 	deleteBitMap(bitMap);
 }
+
+/* FIXME */
+void Solver::cmfd() {
+	computeNetCurrent();
+	computeCoeffs();
+}
+
+/* FIXME */
+void Solver::computeNetCurrent() {
+	double scatter_source, fission_source, volume;
+	double *nu_sigma_f, *scalar_flux, *sigma_s, *chi, *source;
+	FlatSourceRegion* fsr;
+	Material* material;
+	int start_index, end_index;
+
+	log_printf(NORMAL, "Computing Net Current...");
+
+	/* Check that each FSR has at least one segment crossing it */
+	checkTrackSpacing();
+
+	/* Obtain information from each FSR */
+	for (int r = 0; r < _num_FSRs; r++) {
+
+		/* Get pointers to important coefficients for each FSRs */
+		fsr = &_flat_source_regions[r];
+		material = fsr->getMaterial();
+		nu_sigma_f = material->getNuSigmaF();
+		scalar_flux = fsr->getFlux();
+		volume = fsr->getVolume();
+		source = fsr->getSource();
+		chi = material->getChi();
+		sigma_s = material->getSigmaS();
+
+		/* compute fission source */
+		start_index = fsr->getMaterial()->getNuSigmaFStart();
+		end_index = fsr->getMaterial()->getNuSigmaFEnd();
+		fission_source = 0;
+		for (int e = start_index; e < end_index; e++)
+			fission_source += nu_sigma_f[e] * scalar_flux[e] * volume;
+
+		/* compute scattering source */
+		for (int G = 0; G < NUM_ENERGY_GROUPS; G++) {
+			scatter_source = 0;
+			start_index = material->getSigmaSStart(G);
+			end_index = material->getSigmaSEnd(G);
+			for (int g = start_index; g < end_index; g++)
+				scatter_source += sigma_s[G*NUM_ENERGY_GROUPS + g]
+					* scalar_flux[g];
+			/* Set the total source for region r in group G */
+			source[G] = ((1.0 / (_old_k_effs.front())) * fission_source *
+						 chi[G] + scatter_source) * ONE_OVER_FOUR_PI;
+		}
+
+	}
+}
+
+/* FIXME */
+void Solver::computeCoeffs() {
+	double scatter_source, fission_source, volume;
+	double *nu_sigma_f, *scalar_flux, *sigma_s, *chi, *source;
+	FlatSourceRegion* fsr;
+	Material* material;
+	int start_index, end_index;
+
+	log_printf(NORMAL, "Computing Net Current...");
+
+	/* Check that each FSR has at least one segment crossing it */
+	checkTrackSpacing();
+
+	/* Obtain information from each FSR */
+	for (int r = 0; r < _num_FSRs; r++) {
+
+		/* Get coefficients for each FSRs */
+		fsr = &_flat_source_regions[r];
+		material = fsr->getMaterial();
+		nu_sigma_f = material->getNuSigmaF();
+		scalar_flux = fsr->getFlux();
+		volume = fsr->getVolume();
+		source = fsr->getSource();
+		chi = material->getChi();
+		sigma_s = material->getSigmaS();
+
+		/* compute fission source */
+		start_index = fsr->getMaterial()->getNuSigmaFStart();
+		end_index = fsr->getMaterial()->getNuSigmaFEnd();
+		fission_source = 0;
+		for (int e = start_index; e < end_index; e++)
+			fission_source += nu_sigma_f[e] * scalar_flux[e] * volume;
+
+		/* comptue scattering source */
+		for (int G = 0; G < NUM_ENERGY_GROUPS; G++) {
+			scatter_source = 0;
+			start_index = material->getSigmaSStart(G);
+			end_index = material->getSigmaSEnd(G);
+			for (int g = start_index; g < end_index; g++)
+				scatter_source += sigma_s[G*NUM_ENERGY_GROUPS + g]
+					* scalar_flux[g];
+			/* Set the total source for region r in group G */
+			source[G] = ((1.0 / (_old_k_effs.front())) * fission_source *
+						 chi[G] + scatter_source) * ONE_OVER_FOUR_PI;
+		}
+
+	}
+}
+
+

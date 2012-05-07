@@ -69,10 +69,9 @@ public:
 	void plotFluxes();
 	void checkTrackSpacing();
 	void computePinPowers();
-
-//#if !STORE_PREFACTORS
-//	void setTrackPrefactors(Track* track);
-//#endif
+	void cmfd();
+	void computeNetCurrent();
+	void computeCoeffs();
 };
 
 #endif /* SOLVER_H_ */
