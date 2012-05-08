@@ -29,8 +29,11 @@ Solver::Solver(Geometry* geom, TrackGenerator* track_generator,
 		_FSRs_to_powers = new double[_num_FSRs];
 		_FSRs_to_pin_powers = new double[_num_FSRs];
 
-		for (int e = 0; e <= NUM_ENERGY_GROUPS; e++)
+		for (int e = 0; e <= NUM_ENERGY_GROUPS; e++) {
 			_FSRs_to_fluxes[e] = new double[_num_FSRs];
+			_FSRs_to_absorption[e] = new double[_num_FSRs];
+			_FSRs_to_pin_absorption[e] = new double[_num_FSRs];
+		}
 	}
 	catch(std::exception &e) {
 		log_printf(ERROR, "Could not allocate memory for the solver's flat "
@@ -1033,7 +1036,7 @@ void Solver::plotFluxes(){
 
 /* FIXME */
 void Solver::cmfd() {
-	computeNetCurrent();
+	/* computeNetCurrent(); */
 	computeCoeffs();
 }
 
@@ -1089,12 +1092,12 @@ void Solver::computeNetCurrent() {
 /* FIXME */
 void Solver::computeCoeffs() {
 	double scatter_source, fission_source, volume;
-	double *nu_sigma_f, *scalar_flux, *sigma_s, *chi, *source;
+	double *nu_sigma_f, *scalar_flux, *sigma_s, *chi, *source, *sigma_a;
 	FlatSourceRegion* fsr;
 	Material* material;
 	int start_index, end_index;
 
-	log_printf(NORMAL, "Computing Net Current...");
+	log_printf(NORMAL, "Computing mesh averaged xs...");
 
 	/* Check that each FSR has at least one segment crossing it */
 	checkTrackSpacing();
@@ -1112,27 +1115,61 @@ void Solver::computeCoeffs() {
 		chi = material->getChi();
 		sigma_s = material->getSigmaS();
 
+		/* compute absorption cross section */
+		sigma_a = material->getSigmaA();
+		for (int e = 0; e <= NUM_ENERGY_GROUPS; e++) {
+			_FSRs_to_absorption[e][r] = sigma_a[e];
+		}
+
 		/* compute fission source */
 		start_index = fsr->getMaterial()->getNuSigmaFStart();
 		end_index = fsr->getMaterial()->getNuSigmaFEnd();
 		fission_source = 0;
 		for (int e = start_index; e < end_index; e++)
 			fission_source += nu_sigma_f[e] * scalar_flux[e] * volume;
+		//_FSRs_to_fission_source[r] = fission_source;
 
 		/* comptue scattering source */
 		for (int G = 0; G < NUM_ENERGY_GROUPS; G++) {
 			scatter_source = 0;
 			start_index = material->getSigmaSStart(G);
 			end_index = material->getSigmaSEnd(G);
-			for (int g = start_index; g < end_index; g++)
+			for (int g = start_index; g < end_index; g++) {
 				scatter_source += sigma_s[G*NUM_ENERGY_GROUPS + g]
 					* scalar_flux[g];
-			/* Set the total source for region r in group G */
-			source[G] = ((1.0 / (_old_k_effs.front())) * fission_source *
-						 chi[G] + scatter_source) * ONE_OVER_FOUR_PI;
+			}
+			//_FSRs_to_scatter_source[r] = scatter_source * volume;
+
+			/* source[G] = ((1.0 / (_old_k_effs.front())) * fission_source *
+			   chi[G] + scatter_source) * ONE_OVER_FOUR_PI; */
 		}
 
+		//_FSRs_to_powers[i] = fsr->computeFissionRate();
 	}
+
+	/* Compute the pin powers by adding up the powers of FSRs in each
+	 * lattice cell, saving lattice cell powers to files, and saving the
+	 * pin power corresponding to each FSR id in FSR_to_pin_powers */
+	_geom->computePinAbsorption(_FSRs_to_absorption, _FSRs_to_pin_absorption);
+	log_printf(NORMAL, "Computing mesh averaged absorption xs...");
+
+
+	/* Compute the total power based by accumulating the power of each unique
+	 * pin with a nonzero power */
+	/* for (int i=0; i < _num_FSRs; i++) {
+		curr_pin_power = _FSRs_to_pin_powers[i];
+	*/
+		/* If this pin power is unique and nozero (doesn't match the previous
+		 * pin's power), then tally it
+		 */
+	/*	if (curr_pin_power > 0 && curr_pin_power != prev_pin_power) {
+			tot_pin_power += curr_pin_power;
+			num_nonzero_pins++;
+			prev_pin_power = curr_pin_power;
+		}
+	}*/
+
+
 }
 
 

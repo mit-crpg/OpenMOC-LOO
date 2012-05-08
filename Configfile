@@ -1,0 +1,13 @@
+LANGUAGES   += c++
+COMPILEOPTS += -Wall
+COMPILEOPTS += -Werror
+COMPILEOPTS += -std=gnu++0x
+COMPILEOPTS += -fopenmp
+COMPILEOPTS += -O2
+
+BINARIES    += openmoc
+LINKOPTS    += -lexpat
+LINKOPTS    += -lsilo
+LINKOPTS    += `pkg-config Magick++ --libs`
+COMPILEOPTS += `pkg-config Magick++ --cflags`
+SOURCES     += openmoc.cpp

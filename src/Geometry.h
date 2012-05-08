@@ -96,6 +96,13 @@ public:
 	void computePinPowers(double* FSRs_to_powers, double* FSRs_to_pin_powers);
 	double computePinPowers(Universe* univ, char* output_file_prefix,
 			int FSR_id, double* FSRs_to_powers, double* FSRs_to_pin_powers);
+	void computePinAbsorption
+		(double* FSRs_to_absorption[NUM_ENERGY_GROUPS + 1],
+		 double* FSRs_to_pin_absorption[NUM_ENERGY_GROUPS + 1]);
+	double computePinAbsorption
+		(Universe* univ, char* output_file_prefix, int FSR_id, 
+		 double* FSRs_to_absorption[NUM_ENERGY_GROUPS + 1], 
+		 double* FSRs_to_pin_absorption[NUM_ENERGY_GROUPS + 1]);
 
 	void generateCSG();
 

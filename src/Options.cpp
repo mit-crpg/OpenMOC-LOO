@@ -42,7 +42,7 @@ Options::Options(int argc, const char **argv) {
 	_plot_fluxes = false;			/* Default will not plot fluxes */
 	_compute_pin_powers = false;	/* Default will not compute pin powers */
 	_compress_cross_sections = false;/* Default will not compress cross-sections */
-	_cmfd = false; /* Default will not perform CMFD acceleration */
+	_cmfd = true; /* Default will not perform CMFD acceleration */
 
 
 	for (int i = 0; i < argc; i++) {

@@ -2140,3 +2140,149 @@ bool Geometry::mapContainsKey(std::map<K, V> map, K key) {
 	/* If no exception is thrown, element does exist */
 	return true;
 }
+
+
+/**
+ * This method is called from the Solver after fixed source iteration
+ * to compute the powers (fission rates) for each lattice cell (ie, the pin
+ * and assembly powers for most geometries). The method stores the pin powers
+ * mapped by FSR id in the second parameter, FSRs_to_pin_powers
+ * @param FSRs_to_powers an array of the fission rate inside a given FSR
+ * @param FSRs_to_pin_powers an array of the fission rate of the lattice cell
+ * this FSR is within
+ */
+void Geometry::computePinAbsorption
+(double* FSRs_to_absorption[NUM_ENERGY_GROUPS + 1],
+ double* FSRs_to_pin_absorption[NUM_ENERGY_GROUPS + 1]) {
+
+	/* Get the base universe */
+	Universe* univ = _universes.at(0);
+
+	/* Create a file prefix for the output files to store all the pin powers */
+	std::string file_prefix = "SigmaA/universe0";
+
+	/* Make call to recursive function to compute powers at each
+	 * level of lattice */
+	computePinAbsorption(univ, (char*)file_prefix.c_str(), 0, 
+						 FSRs_to_absorption, FSRs_to_pin_absorption);
+
+	return;
+}
+
+
+/**
+ * This is a recursive function which computes the powers of all of the FSRs
+ * inside a given universe. This function handles both lattices and regular
+ * type universes and saves the powers computed for each lattice cell in a
+ * file.
+ * @param univ a pointer to the universe of interest
+ * @param output_file_prefix the prefix for the output file to save the powers
+ * @param FSR_id the FSR id prefix from the previous level's FSR map
+ * @param FSRs_to_powers array of the fission rates for each FSR
+ * @param FSRs_to_pin_powers array of the fission rates for the lattice cell
+ * that each FSR is within
+ */
+double Geometry::computePinAbsorption
+(Universe* univ, char* output_file_prefix, int FSR_id, 
+ double* FSRs_to_absorption[NUM_ENERGY_GROUPS + 1], 
+ double* FSRs_to_pin_absorption[NUM_ENERGY_GROUPS + 1]) {
+
+	/* Power starts at 0 and is incremented for each FSR in this universe */
+	double sigma_a = 0;
+
+	/* If the universe is a SIMPLE type universe */
+	if (univ->getType() == SIMPLE) {
+		std::map<int, Cell*> cells = univ->getCells();
+		std::map<int, int> _region_map;
+		std::vector<int> fsr_ids;
+		Cell* curr;
+
+		/* For each of the cells inside the lattice, check if it is
+		 * material or fill type */
+		std::map<int, Cell*>::iterator iter;
+		for (iter = cells.begin(); iter != cells.end(); ++iter) {
+			curr = iter->second;
+
+			/* If the current cell is a MATERIAL type cell, pull its
+			 * FSR id from the fsr map and increment the power by the
+			 * power for that FSR
+			 */
+			if (curr->getType() == MATERIAL) {
+				int fsr_id = univ->getFSR(curr->getId()) + FSR_id;
+				fsr_ids.push_back(fsr_id);
+				sigma_a += FSRs_to_absorption[0][fsr_id];
+			}
+
+			/* If the current cell is a FILL type cell, pull its
+			 * FSR id from the fsr map
+			 */
+			else {
+				CellFill* fill_cell = static_cast<CellFill*>(curr);
+				Universe* universe_fill = fill_cell->getUniverseFill();
+				int fsr_id = univ->getFSR(curr->getId()) + FSR_id;
+
+				sigma_a += computePinAbsorption
+					(universe_fill, output_file_prefix, fsr_id,
+					 FSRs_to_absorption, FSRs_to_pin_absorption);
+			}
+		}
+
+		/* Loop over all of the FSR ids stored for MATERIAL type cells
+		 * and save their pin powers in the FSRs_to_pin_powers map */
+		for (int i=0; i < (int)fsr_ids.size(); i++) {
+			int fsr_id = fsr_ids.at(i);
+			FSRs_to_pin_absorption[0][fsr_id] = sigma_a;
+		}
+	}
+
+	/* If the universe is a LATTICE type universe */
+	else {
+		Lattice* lattice = static_cast<Lattice*>(univ);
+		Universe* curr;
+		int num_x = lattice->getNumX();
+		int num_y = lattice->getNumY();
+		int fsr_id;
+		double cell_absorption = 0;
+
+		/* Create an output file to write this lattice's pin powers to within
+		 * a new directory called PinPowers */
+		mkdir("SigmaA", S_IRWXU);
+		std::stringstream output_file_name;
+		output_file_name << output_file_prefix <<
+				"_lattice" << lattice->getId() << "_sigmaA.txt";
+		FILE* output_file = fopen(output_file_name.str().c_str(), "w");
+
+		/* Loop over all lattice cells in this lattice */
+		for (int i = num_y-1; i > -1; i--) {
+			for (int j = 0; j < num_x; j++) {
+
+				/* Get a pointer to the current lattice cell */
+				curr = lattice->getUniverse(j, i);
+
+				/* Get the FSR id prefix for this lattice cell */
+				fsr_id = lattice->getFSR(j, i) + FSR_id;
+
+				/* Create an output filename for this cell's power */
+				std::stringstream file_prefix;
+				file_prefix << output_file_prefix << "_lattice" <<
+						lattice->getId() << "_x" << j << "_y" << i;
+
+				/* Find this lattice cell's power */
+				cell_absorption = computePinAbsorption
+					(curr, (char*)file_prefix.str().c_str(),
+					 fsr_id, FSRs_to_absorption, FSRs_to_pin_absorption);
+
+				/* Write this lattice cell's power to the output file */
+				fprintf(output_file, "%f, ", cell_absorption);
+
+				sigma_a += cell_absorption;
+			}
+			/* Move to the next line in the output file */
+			fprintf(output_file, "\n");
+		}
+
+		fclose(output_file);
+	}
+
+	return sigma_a;
+}
