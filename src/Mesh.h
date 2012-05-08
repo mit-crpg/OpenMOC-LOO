@@ -16,22 +16,30 @@
 #include <utility>
 #include <sstream>
 #include "MeshCell.h"
+#include "log.h"
 
 
 class Mesh {
 private:
 	MeshCell* _cells;
-	int _width;
-	int _height;
+	int _cell_width;
+	int _cell_height;
+	double _width;
+	double _height;
 
 public:
 	Mesh(int width, int height);
 	virtual ~Mesh();
-	int getWidth();
-	int getHeight();
-	void setWidth(int width);
-	void setHeight(int height);
+	double getWidth();
+	double getHeight();
+	void setWidth(double width);
+	void setHeight(double height);
+	int getCellWidth();
+	int getCellHeight();
+	void setCellWidth(int cellWidth);
+	void setCellHeight(int cellHeight);
 	MeshCell* getCells();
+	int findMeshCell(double x, double y);
 
 };
 

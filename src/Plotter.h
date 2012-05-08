@@ -22,6 +22,8 @@
 #include "LocalCoords.h"
 #include "Cell.h"
 #include "quickplot.h"
+#include "Mesh.h"
+#include "MeshCell.h"
 
 
 
@@ -53,6 +55,7 @@ public:
 	void makeRegionMap(int* pixMapFSR, float* pixMap, double* regionMap);
 	double convertToGeometryX(int x);
 	double convertToGeometryY(int y);
+	void plotCMFDMesh(Mesh* mesh);
 };
 
 

@@ -251,3 +251,12 @@ void Plotter::makeFSRMap(int* pixMap){
 		}
 	}
 }
+
+
+
+
+
+
+
+
+

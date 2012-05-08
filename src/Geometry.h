@@ -110,9 +110,10 @@ public:
 	void findNumLattices(Universe* univ,  int* numLattices);
 	void findMeshWidth(Universe* univ, int* width, int depth);
 	void findMeshHeight(Universe* univ, int* height, int depth);
-	void defineMesh(Mesh* mesh, Universe* univ, int depth, int meshCellNum, int row, bool base, int fsr_id);
+	void defineMesh(Mesh* mesh, Universe* univ, int depth, int* meshCellNum, int row, bool base, int fsr_id);
 	void findFSRs(Universe* univ, MeshCell meshCell, int* fsr_id);
 	int nextLatticeHeight(Universe* curr);
+	void plotCMFDMesh(Mesh* mesh);
 
 };
 

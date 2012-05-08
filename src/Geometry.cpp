@@ -2164,31 +2164,58 @@ void Geometry::makeCMFDMesh(){
 	/* make a Mesh object and fill with MeshCells */
 	Mesh mesh(width, height);
 
-	log_printf(NORMAL, "mesh width: %i", mesh.getWidth());
-	log_printf(NORMAL, "mesh height: %i", mesh.getHeight());
+	mesh.setHeight(getHeight());
+	mesh.setWidth(getWidth());
+
+	log_printf(NORMAL, "mesh cell width: %i", mesh.getCellWidth());
+	log_printf(NORMAL, "mesh cell height: %i", mesh.getCellHeight());
 
 	/* make a list of FSR ids in each mesh cell */
 	int meshCellNum = 0;
-	int fsr_id = 0;
-	defineMesh(&mesh, univ, latticeCMFD, meshCellNum, 0, true, fsr_id);
+	defineMesh(&mesh, univ, latticeCMFD, &meshCellNum, 0, true, 0);
 
-	std::list<int> fsrs;
-	int fsr;
-	for (int i = 0; i < mesh.getHeight(); i++){
-		for (int j = 0; j< mesh.getWidth(); j++){
-			fsrs = mesh.getCells()[i * mesh.getWidth() + j].getFSRs();
-			//log_printf(NORMAL, "fsrs in mesh: %i", (int) mesh.getCells()[i * mesh.getWidth() + j].getFSRs().size());
-			std::list<int>::iterator iter;
-			for (iter = fsrs.begin(); iter != fsrs.end(); ++iter){
-				fsr = (int) *iter;
-				//log_printf(NORMAL, "mesh cell: %i fsr: %i", i * mesh.getWidth() + j, fsr);
-			}
-
-		}
-	}
+	/* plot mesh */
+	plotCMFDMesh(&mesh);
 
 	return;
 }
+
+/* plot CMFD mesh */
+void Geometry::plotCMFDMesh(Mesh* mesh){
+	log_printf(NORMAL, "plotting CMFD mesh...");
+
+	int pixelSize = 1000;
+
+	/* set up bitMap */
+	BitMap<int>* bitMap = new BitMap<int>;
+	bitMap->pixel_x = pixelSize;
+	bitMap->pixel_y = pixelSize;
+	initialize(bitMap);
+	bitMap->geom_x = getWidth();
+	bitMap->geom_y = getHeight();
+	bitMap->color_type = SCALED;
+
+	double xPixel = pixelSize / getWidth();
+	double yPixel = pixelSize / getHeight();
+
+	log_printf(NORMAL, "mesh height: %f mesh width: %f", mesh->getHeight(), mesh->getWidth());
+
+	/* find meshCell for each pixel */
+	for (int y=0;y< pixelSize; y++){
+		for (int x = 0; x < pixelSize; x++){
+			double x_global = ((x - pixelSize/2.0) / xPixel);
+			double y_global = (-(y - pixelSize/2.0) / yPixel);
+			//log_printf(NORMAL, "point x: %f y: %f in cell: %i", x_global, y_global, mesh->findMeshCell(x_global, y_global));
+			bitMap->pixels[y * pixelSize + x] = mesh->findMeshCell(x_global, y_global);
+		}
+	}
+
+	plot(bitMap, "cmfd", "png");
+	deleteBitMap(bitMap);
+}
+
+
+
 
 /* find all the FSRs in a lattice type universe and store in linked list */
 void Geometry::findFSRs(Universe* univ, MeshCell meshCell, int *fsr_id){
@@ -2206,7 +2233,7 @@ void Geometry::findFSRs(Universe* univ, MeshCell meshCell, int *fsr_id){
 
 			/* If the current cell is a MATERIAL type cell, store its fsr_id */
 			if (curr->getType() == MATERIAL) {
-				log_printf(NORMAL, "pushing back fsr id: %i", *fsr_id);
+				log_printf(DEBUG, "pushing back fsr id: %i", *fsr_id);
 				meshCell.addFSR(*fsr_id);
 				*fsr_id += 1;
 			}
@@ -2233,7 +2260,7 @@ void Geometry::findFSRs(Universe* univ, MeshCell meshCell, int *fsr_id){
 
 				/* Get a pointer to the current lattice cell */
 				curr = lattice->getUniverse(j, i);
-				log_printf(NORMAL, "getting lattice fsr: %i", lattice->getFSR(j,i));
+				log_printf(DEBUG, "getting lattice fsr: %i", lattice->getFSR(j,i));
 				*fsr_id = baseFSR + lattice->getFSR(j,i);
 
 				findFSRs(curr, meshCell, fsr_id);
@@ -2243,7 +2270,7 @@ void Geometry::findFSRs(Universe* univ, MeshCell meshCell, int *fsr_id){
 }
 
 /* define the MeshCell objects (_width, _height, and _FRSs)  */
-void Geometry::defineMesh(Mesh* mesh, Universe* univ, int depth, int meshCellNum, int row, bool base, int fsr_id){
+void Geometry::defineMesh(Mesh* mesh, Universe* univ, int depth, int* meshCellNum, int row, bool base, int fsr_id){
 
 	/* If the universe is a SIMPLE type universe */
 	if (univ->getType() == SIMPLE){
@@ -2264,7 +2291,7 @@ void Geometry::defineMesh(Mesh* mesh, Universe* univ, int depth, int meshCellNum
 		Universe* curr;
 		int num_x = lattice->getNumX();
 		int num_y = lattice->getNumY();
-		log_printf(NORMAL, "numx: %i numy: %i", num_x, num_y);
+		log_printf(DEBUG, "numx: %i numy: %i", num_x, num_y);
 
 		if (depth == 1){
 			if (base == true){
@@ -2272,12 +2299,12 @@ void Geometry::defineMesh(Mesh* mesh, Universe* univ, int depth, int meshCellNum
 					for (int j = 0; j < num_x; j++) {
 						curr = lattice->getUniverse(j, i);
 						fsr_id = lattice->getFSR(j,i);
-						log_printf(NORMAL, "added FSR id to counter -> fsr id: %i", fsr_id);
-						findFSRs(curr, mesh->getCells()[meshCellNum], &fsr_id);
-						mesh->getCells()[meshCellNum].setWidth(lattice->getWidthX());
-						mesh->getCells()[meshCellNum].setHeight(lattice->getWidthY());
-						log_printf(NORMAL, "mesh cell: %i, width: %f, height: %f", meshCellNum, mesh->getCells()[meshCellNum].getWidth(),mesh->getCells()[meshCellNum].getHeight());
-						meshCellNum = meshCellNum + 1;
+						log_printf(DEBUG, "added FSR id to counter -> fsr id: %i", fsr_id);
+						findFSRs(curr, mesh->getCells()[*meshCellNum], &fsr_id);
+						mesh->getCells()[*meshCellNum].setWidth(lattice->getWidthX());
+						mesh->getCells()[*meshCellNum].setHeight(lattice->getWidthY());
+						log_printf(NORMAL, "mesh cell: %i, width: %f, height: %f", *meshCellNum, mesh->getCells()[*meshCellNum].getWidth(),mesh->getCells()[*meshCellNum].getHeight());
+						*meshCellNum = *meshCellNum + 1;
 					}
 				}
 			}
@@ -2286,12 +2313,12 @@ void Geometry::defineMesh(Mesh* mesh, Universe* univ, int depth, int meshCellNum
 				for (int j = 0; j < num_x; j++) {
 					curr = lattice->getUniverse(j, row);
 					fsr_id = baseFSR + lattice->getFSR(j,row);
-					log_printf(NORMAL, "set fsr id to: %i", fsr_id);
-					findFSRs(curr, mesh->getCells()[meshCellNum], &fsr_id);
-					mesh->getCells()[meshCellNum].setWidth(lattice->getWidthX());
-					mesh->getCells()[meshCellNum].setHeight(lattice->getWidthY());
-					log_printf(NORMAL, "mesh cell num: %i, width: %f, height: %f", meshCellNum, mesh->getCells()[meshCellNum].getWidth(),mesh->getCells()[meshCellNum].getHeight());
-					meshCellNum = meshCellNum + 1;
+					log_printf(DEBUG, "set fsr id to: %i", fsr_id);
+					findFSRs(curr, mesh->getCells()[*meshCellNum], &fsr_id);
+					mesh->getCells()[*meshCellNum].setWidth(lattice->getWidthX());
+					mesh->getCells()[*meshCellNum].setHeight(lattice->getWidthY());
+					log_printf(NORMAL, "mesh cell num: %i, width: %f, height: %f", *meshCellNum, mesh->getCells()[*meshCellNum].getWidth(),mesh->getCells()[*meshCellNum].getHeight());
+					*meshCellNum = *meshCellNum + 1;
 				}
 			}
 		}
@@ -2302,8 +2329,6 @@ void Geometry::defineMesh(Mesh* mesh, Universe* univ, int depth, int meshCellNum
 				int nextHeight = nextLatticeHeight(curr);
 				for (int k = nextHeight-1; k > -1; k--) {
 					for (int j = 0; j < num_x; j++) {
-						/* Get a pointer to the current lattice cell */
-						//log_printf(NORMAL, "calling lattice universe: %i, %i", j, i);
 						curr = lattice->getUniverse(j, i);
 						fsr_id = lattice->getFSR(j,i);
 						defineMesh(mesh, curr, depth - 1, meshCellNum, k, base, fsr_id);

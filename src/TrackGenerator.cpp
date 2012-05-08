@@ -458,7 +458,7 @@ void TrackGenerator::segmentize() {
 	bitMapFSR->geom_y = _geom->getHeight();
 	bitMap->geom_x = _geom->getWidth();
 	bitMap->geom_y = _geom->getHeight();
-	bitMapFSR->color_type = SCALED;
+	bitMapFSR->color_type = RANDOM;
 	bitMap->color_type = RANDOM;
 
 	/* Loop over all tracks */
