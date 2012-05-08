@@ -41,9 +41,13 @@ private:
 	int* _num_tracks;
 	int _num_azim;
 	int _num_FSRs;
-	double* _FSRs_to_fluxes[NUM_ENERGY_GROUPS + 1];
-	double* _FSRs_to_powers;
-	double* _FSRs_to_pin_powers;
+	double *_FSRs_to_fluxes[NUM_ENERGY_GROUPS + 1];
+	double *_FSRs_to_powers;
+	double *_FSRs_to_pin_powers;
+	double *_FSRs_to_fission_source;
+	double *_FSRs_to_scatter_source;
+	double *_FSRs_to_absorption[NUM_ENERGY_GROUPS + 1];
+	double *_FSRs_to_pin_absorption[NUM_ENERGY_GROUPS + 1];
 	double _k_eff;
 	std::queue<double> _old_k_effs;
 	Plotter* _plotter;
@@ -71,10 +75,9 @@ public:
 	void plotFluxes();
 	void checkTrackSpacing();
 	void computePinPowers();
-
-//#if !STORE_PREFACTORS
-//	void setTrackPrefactors(Track* track);
-//#endif
+	void cmfd();
+	void computeNetCurrent();
+	void computeCoeffs();
 };
 
 #endif /* SOLVER_H_ */

@@ -32,16 +32,17 @@ Options::Options(int argc, const char **argv) {
 
 	_geometry_file = _relative_path + "xml-sample/SimpleLattice/geometry.xml"; 	 /* Default geometry input file */
 	_material_file = _relative_path + "xml-sample/SimpleLattice/material.xml";    /* Default material input file */
-	_track_spacing = 0.1;					 /* Default track spacing */
-	_num_azim = 16;					 /* Default number of azimuthal angles */
-	_bit_dimension = 1000;					 /* y dimension of tracks and segments plots */
-	_verbosity = "NORMAL";				 /* Default logging level */
-	_dump_geometry = false;				/* Default will not dump geometry */
+	_track_spacing = 0.1;			/* Default track spacing */
+	_num_azim = 16;					/* Default number of azimuthal angles */
+	_bit_dimension = 1000;			/* y dimension of tracks and segments plots */
+	_verbosity = "NORMAL";			/* Default logging level */
+	_dump_geometry = false;			/* Default will not dump geometry */
 	_extension = "png";				/* Default will plot png */
-	_plot_specs = false;			    /* Default will not plot materials, cells, FSRs, tracks, or segments */
-	_plot_fluxes = false;				/* Default will not plot fluxes */
-	_compute_pin_powers = false;		/* Default will not compute pin powers */
-	_compress_cross_sections = false;	/* Default will not compress cross-sections */
+	_plot_specs = false;            /* Default will not plot materials, cells, FSRs, tracks, or segments */
+	_plot_fluxes = false;			/* Default will not plot fluxes */
+	_compute_pin_powers = false;	/* Default will not compute pin powers */
+	_compress_cross_sections = false;/* Default will not compress cross-sections */
+	_cmfd = true; /* Default will not perform CMFD acceleration */
 
 
 	for (int i = 0; i < argc; i++) {
@@ -202,4 +203,12 @@ bool Options::computePinPowers() const {
  */
 bool Options::compressCrossSections() const {
 	return _compress_cross_sections;
+}
+
+/**
+ * Returns a boolean representing whether or not to perform CMFD acceleration
+ * @return whether or not to perform CMFD acceleration
+ */
+bool Options::cmfd() const {
+	return _cmfd;
 }
