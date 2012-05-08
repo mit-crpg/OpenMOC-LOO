@@ -28,7 +28,7 @@ private:
 	double _height;
 
 public:
-	Mesh(int width, int height);
+	Mesh();
 	virtual ~Mesh();
 	double getWidth();
 	double getHeight();
@@ -38,6 +38,7 @@ public:
 	int getCellHeight();
 	void setCellWidth(int cellWidth);
 	void setCellHeight(int cellHeight);
+	void makeMeshCells();
 	MeshCell* getCells();
 	int findMeshCell(double x, double y);
 

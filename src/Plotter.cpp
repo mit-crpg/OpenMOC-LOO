@@ -252,7 +252,34 @@ void Plotter::makeFSRMap(int* pixMap){
 	}
 }
 
+/* plot CMFD mesh */
+void Plotter::plotCMFDMesh(Mesh* mesh){
+	log_printf(NORMAL, "plotting CMFD mesh...");
 
+	/* set up bitMap */
+	BitMap<int>* bitMap = new BitMap<int>;
+	bitMap->pixel_x = _bit_length_x;
+	bitMap->pixel_y = _bit_length_y;
+	initialize(bitMap);
+	bitMap->geom_x = _width;
+	bitMap->geom_y = _height;
+	bitMap->color_type = RANDOM;
+
+	double x_global;
+	double y_global;
+
+	/* find meshCell for each pixel */
+	for (int y=0;y < _bit_length_y; y++){
+		for (int x = 0; x < _bit_length_x; x++){
+			x_global = convertToGeometryX(x);
+			y_global = convertToGeometryY(y);
+			bitMap->pixels[y * _bit_length_x + x] = mesh->findMeshCell(x_global, y_global);
+		}
+	}
+
+	plot(bitMap, "cmfd", _extension);
+	deleteBitMap(bitMap);
+}
 
 
 

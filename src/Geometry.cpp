@@ -2142,80 +2142,32 @@ bool Geometry::mapContainsKey(std::map<K, V> map, K key) {
 }
 
 /* make CMFD Mesh */
-void Geometry::makeCMFDMesh(){
+void Geometry::makeCMFDMesh(Mesh* mesh){
 	log_printf(NORMAL, "Making CMFD mesh...");
 
-	/* Get the base universe */
-	Universe* univ = _universes.at(0);
-
-	/* find the maximum depth of the lattice */
-	int numLattices = -1;			// the number of nested lattices
-	findNumLattices(univ, &numLattices);
-	int latticeCMFD = numLattices - CMFD_LEVEL;
-
-	log_printf(NORMAL, "max lattice depth: %i", numLattices);
-
 	/* find width and height at CMFD_LEVEL lattice */
+	Universe* univ = _universes.at(0);
 	int width = 0;
 	int height = 0;
-	findMeshWidth(univ, &width, latticeCMFD);
-	findMeshHeight(univ, &height, latticeCMFD);
+	findMeshWidth(univ, &width, CMFD_LEVEL);
+	findMeshHeight(univ, &height, CMFD_LEVEL);
 
-	/* make a Mesh object and fill with MeshCells */
-	Mesh mesh(width, height);
+	mesh->setCellHeight(height);
+	mesh->setCellWidth(width);
+	mesh->setHeight(getHeight());
+	mesh->setWidth(getWidth());
+	mesh->makeMeshCells();
 
-	mesh.setHeight(getHeight());
-	mesh.setWidth(getWidth());
-
-	log_printf(NORMAL, "mesh cell width: %i", mesh.getCellWidth());
-	log_printf(NORMAL, "mesh cell height: %i", mesh.getCellHeight());
+	log_printf(NORMAL, "mesh cell width: %i", mesh->getCellWidth());
+	log_printf(NORMAL, "mesh cell height: %i", mesh->getCellHeight());
 
 	/* make a list of FSR ids in each mesh cell */
 	int meshCellNum = 0;
-	defineMesh(&mesh, univ, latticeCMFD, &meshCellNum, 0, true, 0);
-
-	/* plot mesh */
-	plotCMFDMesh(&mesh);
+	log_printf(NORMAL, "defining mesh...");
+	defineMesh(mesh, univ, CMFD_LEVEL, &meshCellNum, 0, true, 0);
 
 	return;
 }
-
-/* plot CMFD mesh */
-void Geometry::plotCMFDMesh(Mesh* mesh){
-	log_printf(NORMAL, "plotting CMFD mesh...");
-
-	int pixelSize = 1000;
-
-	/* set up bitMap */
-	BitMap<int>* bitMap = new BitMap<int>;
-	bitMap->pixel_x = pixelSize;
-	bitMap->pixel_y = pixelSize;
-	initialize(bitMap);
-	bitMap->geom_x = getWidth();
-	bitMap->geom_y = getHeight();
-	bitMap->color_type = SCALED;
-
-	double xPixel = pixelSize / getWidth();
-	double yPixel = pixelSize / getHeight();
-
-	log_printf(NORMAL, "mesh height: %f mesh width: %f", mesh->getHeight(), mesh->getWidth());
-
-	/* find meshCell for each pixel */
-	for (int y=0;y< pixelSize; y++){
-		for (int x = 0; x < pixelSize; x++){
-			double x_global = ((x - pixelSize/2.0) / xPixel);
-			double y_global = (-(y - pixelSize/2.0) / yPixel);
-			//log_printf(NORMAL, "point x: %f y: %f in cell: %i", x_global, y_global, mesh->findMeshCell(x_global, y_global));
-			bitMap->pixels[y * pixelSize + x] = mesh->findMeshCell(x_global, y_global);
-		}
-	}
-
-	plot(bitMap, "cmfd", "png");
-	deleteBitMap(bitMap);
-}
-
-
-
 
 /* find all the FSRs in a lattice type universe and store in linked list */
 void Geometry::findFSRs(Universe* univ, MeshCell meshCell, int *fsr_id){
@@ -2303,7 +2255,7 @@ void Geometry::defineMesh(Mesh* mesh, Universe* univ, int depth, int* meshCellNu
 						findFSRs(curr, mesh->getCells()[*meshCellNum], &fsr_id);
 						mesh->getCells()[*meshCellNum].setWidth(lattice->getWidthX());
 						mesh->getCells()[*meshCellNum].setHeight(lattice->getWidthY());
-						log_printf(NORMAL, "mesh cell: %i, width: %f, height: %f", *meshCellNum, mesh->getCells()[*meshCellNum].getWidth(),mesh->getCells()[*meshCellNum].getHeight());
+						log_printf(DEBUG, "mesh cell: %i, width: %f, height: %f", *meshCellNum, mesh->getCells()[*meshCellNum].getWidth(),mesh->getCells()[*meshCellNum].getHeight());
 						*meshCellNum = *meshCellNum + 1;
 					}
 				}
@@ -2317,7 +2269,7 @@ void Geometry::defineMesh(Mesh* mesh, Universe* univ, int depth, int* meshCellNu
 					findFSRs(curr, mesh->getCells()[*meshCellNum], &fsr_id);
 					mesh->getCells()[*meshCellNum].setWidth(lattice->getWidthX());
 					mesh->getCells()[*meshCellNum].setHeight(lattice->getWidthY());
-					log_printf(NORMAL, "mesh cell num: %i, width: %f, height: %f", *meshCellNum, mesh->getCells()[*meshCellNum].getWidth(),mesh->getCells()[*meshCellNum].getHeight());
+					log_printf(DEBUG, "mesh cell num: %i, width: %f, height: %f", *meshCellNum, mesh->getCells()[*meshCellNum].getWidth(),mesh->getCells()[*meshCellNum].getHeight());
 					*meshCellNum = *meshCellNum + 1;
 				}
 			}

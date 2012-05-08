@@ -7,11 +7,7 @@
 
 #include "Mesh.h"
 
-Mesh::Mesh(int cellWidth, int cellHeight){
-	_cell_width  = cellWidth;
-	_cell_height = cellHeight;
-	_cells = new MeshCell[cellWidth * cellHeight];
-}
+Mesh::Mesh(){}
 
 Mesh::~Mesh(){
 	delete [] _cells;
@@ -37,28 +33,32 @@ MeshCell* Mesh::getCells(){
 	return _cells;
 }
 
+void Mesh::makeMeshCells(){
+	_cells = new MeshCell[_cell_width * _cell_height];
+}
+
 int Mesh::findMeshCell(double pointX, double pointY){
 
 	double left;
 	double top = _height / 2.0;
 	bool flag = false;
 	int cell = 0;
-	//log_printf(NORMAL, "left: %f top: %f", - _width / 2.0, top);
 
 	for (int y = 0; y < _cell_height; y++){
 		left = - _width / 2.0;
-		for (int x = 0; x < _cell_width; x++){
-			cell = y * _cell_width + x;
-			//log_printf(NORMAL, "cell width: %f, cell height: %f",getCells()[cell].getWidth(), getCells()[cell].getHeight());
-			if (pointX >= left && pointX <= left + getCells()[cell].getWidth()
-					&& pointY <= top && pointY >= top - getCells()[cell].getHeight()){
-				flag = true;
+		cell = y * _cell_width;
+		if (pointY <= top && pointY >= top - getCells()[cell].getHeight()){
+			for (int x = 0; x < _cell_width; x++){
+				cell = y * _cell_width + x;
+				if (pointX >= left && pointX <= left + getCells()[cell].getWidth()){
+					flag = true;
+					break;
+				}
+				left = left + getCells()[cell].getWidth();
+			}
+			if (flag == true){
 				break;
 			}
-			left = left + getCells()[cell].getWidth();
-		}
-		if (flag == true){
-			break;
 		}
 		top = top - getCells()[cell].getHeight();
 	}

@@ -25,6 +25,8 @@
 #include "configurations.h"
 #include "log.h"
 #include "quickplot.h"
+#include "Mesh.h"
+#include "MeshCell.h"
 
 #if USE_OPENMP == true
 	#include <omp.h>
