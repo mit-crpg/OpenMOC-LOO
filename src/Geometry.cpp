@@ -2184,10 +2184,10 @@ void Geometry::defineMesh(Universe* univ, int depth, int* meshCellNum, int row, 
 						log_printf(DEBUG, "added FSR id to counter -> fsr id: %i", fsr_id);
 
 						/* store the fsr_ids of the FSRs in this LATTICE in a MeshCell object */
-						findFSRs(curr, &_mesh->getCells()[*meshCellNum], &fsr_id);
-						_mesh->getCells()[*meshCellNum].setWidth(lattice->getWidthX());
-						_mesh->getCells()[*meshCellNum].setHeight(lattice->getWidthY());
-						log_printf(DEBUG, "mesh cell: %i, width: %f, height: %f", *meshCellNum, _mesh->getCells()[*meshCellNum].getWidth(),_mesh->getCells()[*meshCellNum].getHeight());
+						findFSRs(curr, _mesh->getCells(*meshCellNum), &fsr_id);
+						_mesh->getCells(*meshCellNum)->setWidth(lattice->getWidthX());
+						_mesh->getCells(*meshCellNum)->setHeight(lattice->getWidthY());
+						log_printf(DEBUG, "mesh cell: %i, width: %f, height: %f", *meshCellNum, _mesh->getCells(*meshCellNum)->getWidth(),_mesh->getCells(*meshCellNum)->getHeight());
 						*meshCellNum = *meshCellNum + 1;
 					}
 				}
@@ -2201,10 +2201,10 @@ void Geometry::defineMesh(Universe* univ, int depth, int* meshCellNum, int row, 
 					log_printf(DEBUG, "set fsr id to: %i", fsr_id);
 
 					/* store the fsr_ids of the FSRs in this LATTICE in a MeshCell object */
-					findFSRs(curr, &_mesh->getCells()[*meshCellNum], &fsr_id);
-					_mesh->getCells()[*meshCellNum].setWidth(lattice->getWidthX());
-					_mesh->getCells()[*meshCellNum].setHeight(lattice->getWidthY());
-					log_printf(DEBUG, "mesh cell num: %i, width: %f, height: %f", *meshCellNum, _mesh->getCells()[*meshCellNum].getWidth(),_mesh->getCells()[*meshCellNum].getHeight());
+					findFSRs(curr, _mesh->getCells(*meshCellNum), &fsr_id);
+					_mesh->getCells(*meshCellNum)->setWidth(lattice->getWidthX());
+					_mesh->getCells(*meshCellNum)->setHeight(lattice->getWidthY());
+					log_printf(DEBUG, "mesh cell num: %i, width: %f, height: %f", *meshCellNum, _mesh->getCells(*meshCellNum)->getWidth(),_mesh->getCells(*meshCellNum)->getHeight());
 					*meshCellNum = *meshCellNum + 1;
 				}
 			}

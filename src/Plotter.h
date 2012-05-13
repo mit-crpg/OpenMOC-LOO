@@ -39,8 +39,9 @@ private:
 	double _y_pixel;
 	bool _specs;
 	bool _fluxes;
+	bool _net_current;
 public:
-	Plotter(Geometry* geom, const int bit_dim, std::string extension, bool specs, bool fluxes);
+	Plotter(Geometry* geom, const int bit_dim, std::string extension, bool specs, bool fluxes, bool netCurrent);
 	virtual ~Plotter();
 	void plotTracksReflective(Track* track, int numReflect);
 	void makeFSRMap(int* pixMap);
@@ -56,6 +57,11 @@ public:
 	double convertToGeometryX(int x);
 	double convertToGeometryY(int y);
 	void plotCMFDMesh(Mesh* mesh);
+	int convertToPixelX(double x);
+	int convertToPixelY(double y);
+	void getCurrentColor(float value, float* color);
+	void plotNetCurrents(Mesh* mesh);
+	bool plotCurrent();
 };
 
 

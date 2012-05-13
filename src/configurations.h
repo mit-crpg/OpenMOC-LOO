@@ -44,7 +44,7 @@
 
 /* Perform CMFD acceleration in the solver on a lattice level */
 #define CMFD_ACCEL true
-#define CMFD_LEVEL 2
+#define CMFD_LEVEL 1
 
 
 /******************************************************************************

@@ -18,23 +18,27 @@
 #include <list>
 #include "log.h"
 #include <vector>
-#include <map>
+#include "configurations.h"
 
 enum meshSurfaceType{
-	SIDE,
+	SIDEX,
+	SIDEY,
 	CORNER
 };
 
 class MeshSurface {
 private:
 	meshSurfaceType _type;
-	double _current;
+	double* _current;
 
 public:
 	MeshSurface();
 	virtual ~MeshSurface();
 	meshSurfaceType getType();
 	void setType(meshSurfaceType type);
+	void setCurrent(double current, int group);
+	double getCurrent(int group);
+	void incrementCurrent(double current, int group);
 };
 
 

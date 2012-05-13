@@ -520,7 +520,7 @@ void Solver::computePinPowers() {
 
 
 
-void Solver::fixedSourceIteration(int max_iterations) {
+void Solver::fixedSourceIteration(int max_iterations, bool cmfd = false) {
 
 	Track* track;
 	int num_segments;
@@ -635,6 +635,23 @@ void Solver::fixedSourceIteration(int max_iterations) {
 
 #endif
 
+#if CMFD_ACCEL
+					if (cmfd == true){
+						if (segment->_mesh_surface_fwd != NULL){
+							pe = 0;
+
+							for (e = 0; e < NUM_ENERGY_GROUPS; e++) {
+								for (p = 0; p < NUM_POLAR_ANGLES; p++){
+									/* increment current (polar and azimuthal weighted flux, group)*/
+									segment->_mesh_surface_fwd->incrementCurrent(polar_fluxes[pe] * weights[p] * track->getAzimuthalWeight(), e);
+									pe++;
+								}
+							}
+						}
+					}
+#endif
+
+
 					/* Increment the scalar flux for this FSR */
 					fsr->incrementFlux(fsr_flux);
 				}
@@ -688,6 +705,22 @@ void Solver::fixedSourceIteration(int max_iterations) {
 							fsr_flux[e] += delta * weights[p];
 							polar_fluxes[pe] -= delta;
 							pe++;
+						}
+					}
+#endif
+
+#if CMFD_ACCEL
+					if (cmfd == true){
+						if (segment->_mesh_surface_bwd != NULL){
+							pe = 0;
+
+							for (e = 0; e < NUM_ENERGY_GROUPS; e++) {
+								for (p = 0; p < NUM_POLAR_ANGLES; p++){
+									/* increment current (polar and azimuthal weighted flux, group)*/
+									segment->_mesh_surface_bwd->incrementCurrent(polar_fluxes[pe] * weights[p] * track->getAzimuthalWeight(), e);
+									pe++;
+								}
+							}
 						}
 					}
 #endif
@@ -933,6 +966,17 @@ double Solver::computeKeff(int max_iterations) {
 			/* Converge the scalar flux spatially within geometry to plot */
 			fixedSourceIteration(1000);
 
+			#if CMFD_ACCEL
+			/* Compute the net currents */
+			fixedSourceIteration(1, true);
+			_geom->getMesh()->splitCorners();
+			_geom->getMesh()->printCurrents();
+			if (_plotter->plotCurrent()){
+				_plotter->plotNetCurrents(_geom->getMesh());
+			}
+
+			#endif
+
 			if (_plotter->plotFlux() == true){
 				/* Load fluxes into FSR to flux map */
 				for (int r=0; r < _num_FSRs; r++) {
@@ -970,13 +1014,11 @@ double Solver::computeKeff(int max_iterations) {
 	log_printf(WARNING, "Unable to converge the source after %d iterations",
 															max_iterations);
 
-	log_printf(NORMAL, "Plotting fluxes...");
-
 	/* Converge the scalar flux spatially within geometry to plot */
 	fixedSourceIteration(1000);
 
-
 	if (_plotter->plotFlux() == true){
+		log_printf(NORMAL, "Plotting fluxes...");
 		/* Load fluxes into FSR to flux map */
 		for (int r=0; r < _num_FSRs; r++) {
 			double* fluxes = _flat_source_regions[r].getFlux();
@@ -1194,7 +1236,7 @@ void Solver::computeXS(Mesh* mesh){
 
 	// loop over mesh cells
 	for (int i = 0; i < mesh->getCellWidth() * mesh->getCellHeight(); i++){
-		meshCell = &mesh->getCells()[i];
+		meshCell = mesh->getCells(i);
 		xs_tally = 0;
 		vol_tally = 0;
 

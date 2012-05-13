@@ -12,9 +12,25 @@ MeshCell::MeshCell(){
 	_abs_rate = 0;
 	_mesh_surfaces = new MeshSurface[8];
 	_bounds = new double[4];
+
+	makeSurfaces();
 }
 
 MeshCell::~MeshCell(){}
+
+void MeshCell::makeSurfaces(){
+
+	/* set sides */
+	_mesh_surfaces[0].setType(SIDEX);
+	_mesh_surfaces[1].setType(SIDEY);
+	_mesh_surfaces[2].setType(SIDEX);
+	_mesh_surfaces[3].setType(SIDEY);
+	_mesh_surfaces[4].setType(CORNER);
+	_mesh_surfaces[5].setType(CORNER);
+	_mesh_surfaces[6].setType(CORNER);
+	_mesh_surfaces[7].setType(CORNER);
+
+}
 
 double MeshCell::getWidth(){
 	return _width;
@@ -134,5 +150,13 @@ MeshSurface* MeshCell::findSurface(LocalCoords* coord){
 
 	return meshSurface;
 }
+
+MeshSurface* MeshCell::getMeshSurfaces(int surface){
+	return &_mesh_surfaces[surface];
+}
+
+
+
+
 
 

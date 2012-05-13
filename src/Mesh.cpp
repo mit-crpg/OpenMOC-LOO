@@ -29,8 +29,8 @@ void Mesh::setCellHeight(int cellHeight){
 	_cell_height = cellHeight;
 }
 
-MeshCell* Mesh::getCells(){
-	return _cells;
+MeshCell* Mesh::getCells(int cell){
+	return &_cells[cell];
 }
 
 void Mesh::makeMeshCells(){
@@ -47,20 +47,20 @@ int Mesh::findMeshCell(double pointX, double pointY){
 	for (int y = 0; y < _cell_height; y++){
 		left = - _width / 2.0;
 		cell = y * _cell_width;
-		if (pointY <= top && pointY >= top - getCells()[cell].getHeight()){
+		if (pointY <= top && pointY >= top - getCells(cell)->getHeight()){
 			for (int x = 0; x < _cell_width; x++){
 				cell = y * _cell_width + x;
-				if (pointX >= left && pointX <= left + getCells()[cell].getWidth()){
+				if (pointX >= left && pointX <= left + getCells(cell)->getWidth()){
 					flag = true;
 					break;
 				}
-				left = left + getCells()[cell].getWidth();
+				left = left + getCells(cell)->getWidth();
 			}
 			if (flag == true){
 				break;
 			}
 		}
-		top = top - getCells()[cell].getHeight();
+		top = top - getCells(cell)->getHeight();
 	}
 
 	return cell;
@@ -148,6 +148,82 @@ void Mesh::printBounds(){
 	}
 
 }
+
+
+void Mesh::printCurrents(){
+
+	double current;
+
+	for (int i = 0; i < _cell_width * _cell_height; i++){
+		for (int surface = 0; surface < 8; surface++){
+			for (int group = 0; group < NUM_ENERGY_GROUPS; group++){
+				current = _cells[i].getMeshSurfaces(surface)->getCurrent(group);
+				log_printf(NORMAL, "cell: %i, surface: %i, group: %i, current: %f", i, surface, group, current);
+			}
+		}
+	}
+}
+
+
+void Mesh::splitCorners(){
+
+	MeshSurface* surfaceSide;
+	MeshSurface* surfaceCorner1;
+	MeshSurface* surfaceCorner2;
+
+	for (int i = 0; i < _cell_width * _cell_height; i++){
+
+		/* side 0 */
+		surfaceSide = _cells[i].getMeshSurfaces(0);
+		surfaceCorner1 = _cells[i].getMeshSurfaces(4);
+		surfaceCorner2 = _cells[i].getMeshSurfaces(7);
+
+		for (int group = 0; group < NUM_ENERGY_GROUPS; group++){
+			surfaceSide->incrementCurrent(0.5 * surfaceCorner1->getCurrent(group), group);
+			surfaceSide->incrementCurrent(0.5 * surfaceCorner2->getCurrent(group), group);
+		}
+
+		/* side 1 */
+		surfaceSide = _cells[i].getMeshSurfaces(1);
+		surfaceCorner2 = _cells[i].getMeshSurfaces(5);
+
+		for (int group = 0; group < NUM_ENERGY_GROUPS; group++){
+			surfaceSide->incrementCurrent(0.5 * surfaceCorner1->getCurrent(group), group);
+			surfaceSide->incrementCurrent(0.5 * surfaceCorner2->getCurrent(group), group);
+		}
+
+		/* side 2 */
+		surfaceSide = _cells[i].getMeshSurfaces(2);
+		surfaceCorner1 = _cells[i].getMeshSurfaces(6);
+
+		for (int group = 0; group < NUM_ENERGY_GROUPS; group++){
+			surfaceSide->incrementCurrent(0.5 * surfaceCorner1->getCurrent(group), group);
+			surfaceSide->incrementCurrent(0.5 * surfaceCorner2->getCurrent(group), group);
+		}
+
+		/* side 3 */
+		surfaceSide = _cells[i].getMeshSurfaces(3);
+		surfaceCorner2 = _cells[i].getMeshSurfaces(7);
+
+		for (int group = 0; group < NUM_ENERGY_GROUPS; group++){
+			surfaceSide->incrementCurrent(0.5 * surfaceCorner1->getCurrent(group), group);
+			surfaceSide->incrementCurrent(0.5 * surfaceCorner2->getCurrent(group), group);
+		}
+
+		/* zero corner currents */
+		for (int side = 4; side < 8; side++){
+			surfaceCorner1 = _cells[i].getMeshSurfaces(side);
+			for (int group = 0; group < NUM_ENERGY_GROUPS; group++){
+				surfaceCorner1->setCurrent(0, group);
+			}
+		}
+	}
+}
+
+
+
+
+
 
 
 

@@ -50,7 +50,8 @@ public:
 	int getFSREnd();
 	void setFSRStart(int fsr);
 	void setFSREnd(int fsr);
-
+	void makeSurfaces();
+	MeshSurface* getMeshSurfaces(int surface);
 };
 
 

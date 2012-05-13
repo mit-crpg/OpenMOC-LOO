@@ -43,6 +43,7 @@ Options::Options(int argc, const char **argv) {
 	_compute_pin_powers = false;	/* Default will not compute pin powers */
 	_compress_cross_sections = false;/* Default will not compress cross-sections */
 	_cmfd = true; /* Default will not perform CMFD acceleration */
+	_plot_current = false;			/* Default will not plot net current */
 
 
 	for (int i = 0; i < argc; i++) {
@@ -78,6 +79,9 @@ Options::Options(int argc, const char **argv) {
 			else if (strcmp(argv[i], "-cxs") == 0 ||
 					strcmp(argv[i], "--compressxs") == 0)
 				_compress_cross_sections = true;
+			else if (strcmp(argv[i], "-pc") == 0 ||
+					strcmp(argv[i], "--plotcurrent") == 0)
+				_plot_current = true;
 		}
 	}
 }
@@ -212,3 +216,13 @@ bool Options::compressCrossSections() const {
 bool Options::cmfd() const {
 	return _cmfd;
 }
+
+/**
+ * Returns a boolean representing whether or not to plot the net current.
+ *  If true, the net current will be plotted in a file of _extension type
+ * @return whether or not to plot net current
+ */
+bool Options::plotCurrent() const {
+	return _plot_current;
+}
+

@@ -58,7 +58,7 @@ int main(int argc, const char **argv) {
 		geometry.compressCrossSections();
 
 	Plotter plotter(&geometry, opts.getBitDimension(), opts.getExtension(),
-			opts.plotSpecs(), opts.plotFluxes());
+			opts.plotSpecs(), opts.plotFluxes(), opts.plotCurrent());
 
 	/* Initialize the trackgenerator */
 	TrackGenerator track_generator(&geometry, &plotter, opts.getNumAzim(),

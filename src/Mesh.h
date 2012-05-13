@@ -19,6 +19,7 @@
 #include "log.h"
 #include "LocalCoords.h"
 #include "MeshSurface.h"
+#include "configurations.h"
 
 
 class Mesh {
@@ -41,12 +42,14 @@ public:
 	void setCellWidth(int cellWidth);
 	void setCellHeight(int cellHeight);
 	void makeMeshCells();
-	MeshCell* getCells();
+	MeshCell* getCells(int cell);
 	void setCellBounds();
 	void setFSRBounds();
 	int findMeshCell(double x, double y);
 	MeshSurface* findMeshSurface(int fsr_id, LocalCoords* coord);
 	void printBounds();
+	void printCurrents();
+	void splitCorners();
 
 };
 
