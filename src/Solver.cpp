@@ -970,8 +970,8 @@ double Solver::computeKeff(int max_iterations) {
 			/* Compute the net currents */
 			fixedSourceIteration(1, true);
 			_geom->getMesh()->splitCorners();
-			_geom->getMesh()->printCurrents();
 			if (_plotter->plotCurrent()){
+				_geom->getMesh()->printCurrents();
 				_plotter->plotNetCurrents(_geom->getMesh());
 			}
 

@@ -418,7 +418,7 @@ void Plotter::plotNetCurrents(Mesh* mesh){
 				string << meshCell->getMeshSurfaces(1)->getCurrent(group);
 				title = string.str();
 				string.str("");
-				drawList.push_back(Magick::DrawableText(x_mid, y_mid + 10 * (NUM_ENERGY_GROUPS - group + 1), title));
+				drawList.push_back(Magick::DrawableText(x_mid - 20, y_mid + 10 * (NUM_ENERGY_GROUPS - group + 1), title));
 				title.clear();
 
 				/* side 2 */
@@ -441,7 +441,7 @@ void Plotter::plotNetCurrents(Mesh* mesh){
 				string << meshCell->getMeshSurfaces(3)->getCurrent(group);
 				title = string.str();
 				string.str("");
-				drawList.push_back(Magick::DrawableText(x_mid, y_mid - 10 * (group + 1), title));
+				drawList.push_back(Magick::DrawableText(x_mid - 20, y_mid - 10 * (group + 1), title));
 				title.clear();
 			}
 
