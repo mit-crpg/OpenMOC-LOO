@@ -145,7 +145,7 @@ MeshSurface* MeshCell::findSurface(LocalCoords* coord){
 	}
 
 	if (surface != -1){
-		log_printf(NORMAL, "coord (%f, %f) on surface: %i -> bounds[%f,%f,%f,%f]", x, y, surface, _bounds[0],_bounds[1],_bounds[2],_bounds[3]);
+		log_printf(DEBUG, "coord (%f, %f) on surface: %i -> bounds[%f,%f,%f,%f]", x, y, surface, _bounds[0],_bounds[1],_bounds[2],_bounds[3]);
 	}
 
 	return meshSurface;

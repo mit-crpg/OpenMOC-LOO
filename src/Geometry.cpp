@@ -2064,7 +2064,7 @@ void Geometry::makeCMFDMesh(){
 	defineMesh(univ, CMFD_LEVEL, &meshCellNum, 0, true, 0);
 	_mesh->setCellBounds();
 	_mesh->setFSRBounds();
-	_mesh->printBounds();
+	//_mesh->printBounds();
 	return;
 }
 
