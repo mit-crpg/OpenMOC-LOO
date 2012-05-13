@@ -43,7 +43,7 @@
 #define USE_OPENMP true
 
 /* Perform CMFD acceleration in the solver on a lattice level */
-#define CMFD_ACCEL true
+#define CMFD_ACCEL false
 #define CMFD_LEVEL 1
 
 
