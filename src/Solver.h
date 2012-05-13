@@ -27,6 +27,7 @@
 #include "quickplot.h"
 #include "Mesh.h"
 #include "MeshCell.h"
+#include "Material.h"
 
 #if USE_OPENMP == true
 	#include <omp.h>
@@ -78,6 +79,7 @@ public:
 	void cmfd();
 	void computeNetCurrent();
 	void computeCoeffs();
+	void computeXS(Mesh* mesh);
 };
 
 #endif /* SOLVER_H_ */

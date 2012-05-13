@@ -797,14 +797,6 @@ double Solver::computeKeff(int max_iterations) {
 	Material* material;
 	int start_index, end_index;
 
-	/* make CMFD mesh */
-	if (CMFD_ACCEL == true){
-		Mesh* mesh = new Mesh;
-		_geom->makeCMFDMesh(mesh);
-		if (_plotter->plotSpecs() == true){
-			_plotter->plotCMFDMesh(mesh);
-		}
-	}
 
 	log_printf(NORMAL, "Computing k_eff...");
 
@@ -954,6 +946,7 @@ double Solver::computeKeff(int max_iterations) {
 				plotFluxes();
 			}
 
+
 			return _k_eff;
 		}
 
@@ -995,6 +988,11 @@ double Solver::computeKeff(int max_iterations) {
 		}
 		plotFluxes();
 	}
+
+
+
+
+
 
 	return _k_eff;
 }
@@ -1179,5 +1177,51 @@ void Solver::computeCoeffs() {
 
 
 }
+
+/* compute the xs for all MeshCells in the Mesh */
+void Solver::computeXS(Mesh* mesh){
+
+	// tallies for fsr_vol * group_avg_xs and fsr_vol
+	double xs_tally = 0;
+	double vol_tally = 0;
+	MeshCell* meshCell;
+	FlatSourceRegion* fsr;
+	Material* material;
+	double volume = 0;
+	double flux;
+	double xs;
+
+
+	// loop over mesh cells
+	for (int i = 0; i < mesh->getCellWidth() * mesh->getCellHeight(); i++){
+		meshCell = &mesh->getCells()[i];
+		xs_tally = 0;
+		vol_tally = 0;
+
+		std::vector<int>::iterator iter;
+		for (iter = meshCell->getFSRs()->begin(); iter != meshCell->getFSRs()->end(); ++iter) {
+			fsr = &_flat_source_regions[*iter];
+			material = fsr->getMaterial();
+			volume = fsr->getVolume();
+			double xs_tally_fsr = 0;
+
+			for (int e = 0; e < NUM_ENERGY_GROUPS; e++){
+				flux = fsr->getFlux()[e];
+				xs = material->getSigmaA()[e];
+				xs_tally_fsr += xs * flux;
+			}
+
+			xs_tally += xs_tally_fsr * volume;
+			vol_tally += volume;
+		}
+
+		meshCell->setAbsRate(xs_tally / volume);
+
+		log_printf(NORMAL, "meshCell: %i abs rate: %f", i, xs_tally / volume);
+	}
+}
+
+
+
 
 

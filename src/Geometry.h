@@ -34,6 +34,7 @@
 #include "silo.h"
 #include "Mesh.h"
 #include "MeshCell.h"
+#include "MeshSurface.h"
 
 
 class Geometry {
@@ -51,12 +52,9 @@ private:
 	std::map<int, Universe*> _universes;
 	std::map<int, Lattice*> _lattices;
 
-	std::vector<int> _surf_flags;
-	std::vector<double> _surf_coeffs;
-	std::vector<int> _oper_flags;
-	std::vector<int> _left_ids;
-	std::vector<int> _right_ids;
-	std::vector<int> _zones;
+#if CMFD_ACCEL
+	Mesh* _mesh;
+#endif
 
 public:
 	Geometry(Parser* parser);
@@ -107,18 +105,16 @@ public:
 		 double* FSRs_to_absorption[NUM_ENERGY_GROUPS + 1], 
 		 double* FSRs_to_pin_absorption[NUM_ENERGY_GROUPS + 1]);
 
-	void generateCSG();
-
 	template <class K, class V>
 	bool mapContainsKey(std::map<K, V> map, K key);
 
-	void makeCMFDMesh(Mesh* mesh);
-	void findNumLattices(Universe* univ,  int* numLattices);
+	void makeCMFDMesh();
 	void findMeshWidth(Universe* univ, int* width, int depth);
 	void findMeshHeight(Universe* univ, int* height, int depth);
-	void defineMesh(Mesh* mesh, Universe* univ, int depth, int* meshCellNum, int row, bool base, int fsr_id);
-	void findFSRs(Universe* univ, MeshCell meshCell, int* fsr_id);
+	void defineMesh(Universe* univ, int depth, int* meshCellNum, int row, bool base, int fsr_id);
+	void findFSRs(Universe* univ, MeshCell* meshCell, int* fsr_id);
 	int nextLatticeHeight(Universe* curr);
+	Mesh* getMesh();
 
 };
 

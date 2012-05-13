@@ -17,6 +17,8 @@
 #include <sstream>
 #include "MeshCell.h"
 #include "log.h"
+#include "LocalCoords.h"
+#include "MeshSurface.h"
 
 
 class Mesh {
@@ -40,7 +42,11 @@ public:
 	void setCellHeight(int cellHeight);
 	void makeMeshCells();
 	MeshCell* getCells();
+	void setCellBounds();
+	void setFSRBounds();
 	int findMeshCell(double x, double y);
+	MeshSurface* findMeshSurface(int fsr_id, LocalCoords* coord);
+	void printBounds();
 
 };
 

@@ -64,6 +64,14 @@ int main(int argc, const char **argv) {
 	TrackGenerator track_generator(&geometry, &plotter, opts.getNumAzim(),
 				       opts.getTrackSpacing());
 
+	/* create CMFD Mesh */
+#if CMFD_ACCEL
+		geometry.makeCMFDMesh();
+		if (opts.plotSpecs()){
+			plotter.plotCMFDMesh(geometry.getMesh());
+		}
+#endif
+
 	/* Generate tracks */
 	timer.reset();
 	timer.start();

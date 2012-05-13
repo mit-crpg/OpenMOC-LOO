@@ -17,6 +17,7 @@
 #include "Material.h"
 #include "log.h"
 #include "configurations.h"
+#include "MeshSurface.h"
 
 #if USE_OPENMP
 	#include <omp.h>
@@ -29,6 +30,10 @@ struct segment {
 	int _region_id;
 #if STORE_PREFACTORS
 	double _prefactors[NUM_ENERGY_GROUPS][NUM_POLAR_ANGLES];
+#endif
+#if CMFD_ACCEL
+	MeshSurface* _mesh_surface_fwd;
+	MeshSurface* _mesh_surface_bwd;
 #endif
 };
 

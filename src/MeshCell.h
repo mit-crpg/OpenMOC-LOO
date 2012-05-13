@@ -16,12 +16,21 @@
 #include <utility>
 #include <sstream>
 #include <list>
+#include "log.h"
+#include <vector>
+#include "LocalCoords.h"
+#include "MeshSurface.h"
 
 class MeshCell {
 private:
 	double _width;
 	double _height;
-	std::list<int> _FSRs;
+	std::vector<int> _FSRs;
+	double _abs_rate;
+	MeshSurface* _mesh_surfaces;
+	double* _bounds;
+	int _fsr_start;
+	int _fsr_end;
 
 public:
 	MeshCell();
@@ -30,8 +39,17 @@ public:
 	double getHeight();
 	void setWidth(double width);
 	void setHeight(double height);
-	std::list<int>& getFSRs();
+	std::vector<int>* getFSRs();
 	void addFSR(int fsr);
+	void setAbsRate(double absRate);
+	double getAbsRate();
+	MeshSurface* findSurface(LocalCoords* coord);
+	void setBounds(double x, double y);
+	double* getBounds();
+	int getFSRStart();
+	int getFSREnd();
+	void setFSRStart(int fsr);
+	void setFSREnd(int fsr);
 
 };
 

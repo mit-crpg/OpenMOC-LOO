@@ -74,6 +74,10 @@ Geometry::Geometry(Parser* parser) {
 		_FSRs_to_cells[r] = curr->getId();
 		_FSRs_to_materials[r] = curr->getMaterial();
 	}
+
+#if CMFD_ACCEL
+	_mesh = new Mesh;
+#endif
 }
 
 
@@ -1771,6 +1775,10 @@ void Geometry::segmentize(Track* track) {
 				segment_end.getY());
 
 		new_segment->_region_id = findFSRId(&segment_start);
+#if CMFD_ACCEL
+		new_segment->_mesh_surface_fwd = _mesh->findMeshSurface(new_segment->_region_id, &segment_end);
+		new_segment->_mesh_surface_bwd = _mesh->findMeshSurface(new_segment->_region_id, &segment_start);
+#endif
 
 		/* Checks to make sure that new segment does not have the same start
 		 * and end points */
@@ -2000,128 +2008,6 @@ double Geometry::computePinPowers(Universe* univ, char* output_file_prefix,
 
 
 
-/**
- * generate CSG of geometry
- */
-void Geometry::generateCSG(){
-
-	/* Initialize vectors for all quantities that SILO needs */
-	std::vector<int> _surf_flags;
-	std::vector<double> _surf_coeffs;
-	std::vector<int> _oper_flags;
-	std::vector<int> _left_ids;
-	std::vector<int> _right_ids;
-	std::vector<int> _zones;
-
-	/* Create a point that represents the origin of current_universe */
-	Point current_origin;
-	current_origin.setCoords(0,0);
-
-	/* Get a pointer to universe zero from the geometry�s map of universes */
-	Universe* universe_zero = _universes.at(0);
-
-	/* recursively generate csg zones for geometry */
-	universe_zero->generateCSGLists(&_surf_flags, &_surf_coeffs, &_oper_flags, &_left_ids, &_right_ids, &_zones, &current_origin);
-
-	log_printf(DEBUG, "size of _surf_flags vector: %d", _surf_flags.size());
-	log_printf(DEBUG, "size of _surf_coeffs vector: %d", _surf_coeffs.size());
-
-	/* Convert vectors to arrays by first getting a pointer to the first element in each vector*/
-	int* surf_flags_arr = new int[_surf_flags.size()];
-	double* surf_coeffs_arr = new double[_surf_coeffs.size()];
-	int* oper_flags_arr = new int[_oper_flags.size()];
-	int* left_ids_arr = new int[_left_ids.size()];
-	int* right_ids_arr = new int[_right_ids.size()];
-	int* zones_arr = new int[_zones.size()];
-
-	/* write vectors to arrays */
-	surf_flags_arr = &_surf_flags[0];
-	surf_coeffs_arr = &_surf_coeffs[0];
-	oper_flags_arr = &_oper_flags[0];
-	left_ids_arr = &_left_ids[0];
-	right_ids_arr = &_right_ids[0];
-	zones_arr = &_zones[0];
-
-	/* Call appropriate SILO functions */
-
-	/* create pdb file */
-    DBfile *dbfile;
-    dbfile = DBCreate("csg.pdb", DB_CLOBBER, DB_LOCAL, "csg test file", DB_PDB);
-
-    /* build and output the csg mesh (boundaries) */
-
-    /* number of boundaries and corresponding coefficients */
-    int nbounds = _surf_flags.size();
-    int lcoeffs = _surf_coeffs.size();
-
-    /* size of geometry */
-	double extents[] = {-getWidth()/2.0, -getHeight()/2.0, 0.0, getWidth()/2.0, getHeight()/2.0, 0.0};
-
-	log_printf(DEBUG, "extents: %f, %f, %f, %f", -getWidth()/2.0, -getHeight()/2.0, getWidth()/2.0, getHeight()/2.0);
-
-	/* print surface data if debugging */
-	log_printf(DEBUG, "nbounds: %d, lcoeffs: %d", nbounds, lcoeffs);
-	for (int i = 0; i < nbounds; i++){
-		log_printf(DEBUG, "surf flag arr [%d]: %d", i, surf_flags_arr[i]);
-	}
-
-	for (int i = 0; i < lcoeffs; i++){
-		log_printf(DEBUG, "surf coeffs arr [%d]: %f", i, surf_coeffs_arr[i]);
-	}
-
-	/* write surface data to pdb file */
-	DBPutCsgmesh(dbfile, "csg_geometry", 2, nbounds, surf_flags_arr, NULL, surf_coeffs_arr, lcoeffs, DB_DOUBLE, extents, "csgzl", NULL);
-
-    /* build and output the csg zonelist */
-
-	/* get the number of regions and zones */
-	int nregs = _oper_flags.size();
-    int nzones = _zones.size();
-
-    log_printf(DEBUG, "inner: %d, outer: %d, intersect: %d", DBCSG_INNER, DBCSG_OUTER, DBCSG_INTERSECT);
-
-    /* print region and zone data if debugging */
-    for (int i = 0; i < nregs; i++){
-    	log_printf(DEBUG, "oper flags arr [%d]: %d", i, oper_flags_arr[i]);
-    }
-
-    for (int i = 0; i < nzones; i++){
-    	log_printf(DEBUG, "zones [%d]: %d", i, zones_arr[i]);
-    }
-
-
-	log_printf(DEBUG,"nregs: %d, nzones: %d", nregs, nzones);
-
-	/* write region and zone data to csg file */
-	DBPutCSGZonelist(dbfile, "csgzl", nregs, oper_flags_arr, left_ids_arr, right_ids_arr,
-			NULL, 0, DB_INT, nzones, zones_arr, NULL);
-
-	/* output a csg variable */
-    void *pv[1];
-    double flux_data[nzones];
-
-    for (int i = 0; i < nzones; i++){
-    	flux_data[i] = (double)((i * 3) % 7);
-    }
-
-    char *pname[1];
-    char name1[] = "flux";
-
-    pv[0] = (void*) flux_data;
-    pname[0] = name1;
-
-    /* write data to the zones */
-    DBPutCsgvar(dbfile, "flux", "csg_geometry", 1, pname, pv, nzones, DB_DOUBLE,
-    		DB_ZONECENT, NULL);
-
-//    DBGetCsgvar(dbfile, "flux");
-
-    /* close pdb file */
-    DBClose(dbfile);
-}
-
-
-
 /*
  * Function to determine whether a key already exists in a templated map
  * container
@@ -2141,36 +2027,57 @@ bool Geometry::mapContainsKey(std::map<K, V> map, K key) {
 	return true;
 }
 
-/* make CMFD Mesh */
-void Geometry::makeCMFDMesh(Mesh* mesh){
+
+/**
+ * This is a recursive function which makes a mesh for solving the
+ * Course Mesh Finite Difference (CMFD) diffusion equations. The CMFD mesh must
+ * be a structured mesh and defined as a certain lattice level (counting from
+ * the top). This function takes in a pointer to a Mesh object and defines
+ * the cell dimensions (cellWidth and CellHeight) and geometric dimensions
+ * (width and height) of the mesh. This function adds new MeshCell objects
+ * to the Mesh and defines the values in each MeshCell.
+ * @param mesh a pointer to the Mesh object
+ */
+void Geometry::makeCMFDMesh(){
 	log_printf(NORMAL, "Making CMFD mesh...");
 
-	/* find width and height at CMFD_LEVEL lattice */
+	/* find cell width and height at CMFD_LEVEL lattice */
 	Universe* univ = _universes.at(0);
 	int width = 0;
 	int height = 0;
 	findMeshWidth(univ, &width, CMFD_LEVEL);
 	findMeshHeight(univ, &height, CMFD_LEVEL);
 
-	mesh->setCellHeight(height);
-	mesh->setCellWidth(width);
-	mesh->setHeight(getHeight());
-	mesh->setWidth(getWidth());
-	mesh->makeMeshCells();
+	/* set the cell and geometric width and heigth of mesh */
+	_mesh->setCellHeight(height);
+	_mesh->setCellWidth(width);
+	_mesh->setHeight(getHeight());
+	_mesh->setWidth(getWidth());
+	_mesh->makeMeshCells();
 
-	log_printf(NORMAL, "mesh cell width: %i", mesh->getCellWidth());
-	log_printf(NORMAL, "mesh cell height: %i", mesh->getCellHeight());
+	log_printf(DEBUG, "mesh cell width: %i", _mesh->getCellWidth());
+	log_printf(DEBUG, "mesh cell height: %i", _mesh->getCellHeight());
 
-	/* make a list of FSR ids in each mesh cell */
+	/* make a vector of FSR ids in each mesh cell */
 	int meshCellNum = 0;
-	log_printf(NORMAL, "defining mesh...");
-	defineMesh(mesh, univ, CMFD_LEVEL, &meshCellNum, 0, true, 0);
-
+	log_printf(DEBUG, "defining mesh...");
+	defineMesh(univ, CMFD_LEVEL, &meshCellNum, 0, true, 0);
+	_mesh->setCellBounds();
+	_mesh->setFSRBounds();
+	_mesh->printBounds();
 	return;
 }
 
-/* find all the FSRs in a lattice type universe and store in linked list */
-void Geometry::findFSRs(Universe* univ, MeshCell meshCell, int *fsr_id){
+
+/**
+ * This is a recursive function which stores the fsr_id's of all flat source regions
+ * located in a MeshCell object in a vector. The vector is owned by the MeshCell object.
+ * @param univ a pointer to a the universe that contains the MeshCell
+ * @param meshCell a pointer to the MeshCell object
+ * @param fsr_id a pointer to an integer that is set to first fsr_id in this
+ * universe
+ */
+void Geometry::findFSRs(Universe* univ, MeshCell* meshCell, int *fsr_id){
 
 	/* If the universe is a SIMPLE type universe */
 	if (univ->getType() == SIMPLE) {
@@ -2186,7 +2093,8 @@ void Geometry::findFSRs(Universe* univ, MeshCell meshCell, int *fsr_id){
 			/* If the current cell is a MATERIAL type cell, store its fsr_id */
 			if (curr->getType() == MATERIAL) {
 				log_printf(DEBUG, "pushing back fsr id: %i", *fsr_id);
-				meshCell.addFSR(*fsr_id);
+				meshCell->addFSR(*fsr_id);
+				log_printf(DEBUG, "size of fsr list: %i", meshCell->getFSRs()->size());
 				*fsr_id += 1;
 			}
 
@@ -2206,6 +2114,7 @@ void Geometry::findFSRs(Universe* univ, MeshCell meshCell, int *fsr_id){
 		int num_x = lattice->getNumX();
 		int num_y = lattice->getNumY();
 		int baseFSR = *fsr_id;
+
 		/* Loop over all lattice cells in this lattice */
 		for (int i = num_y-1; i > -1; i--) {
 			for (int j = 0; j < num_x; j++) {
@@ -2215,24 +2124,43 @@ void Geometry::findFSRs(Universe* univ, MeshCell meshCell, int *fsr_id){
 				log_printf(DEBUG, "getting lattice fsr: %i", lattice->getFSR(j,i));
 				*fsr_id = baseFSR + lattice->getFSR(j,i);
 
+				/* find all FSRs in this lattice */
 				findFSRs(curr, meshCell, fsr_id);
 			}
 		}
 	}
 }
 
+/**
+ * This is a recursive function which defines all the parameters of the MeshCell objects
+ * in a Mesh. This function takes in the base universe (universe 0) and descends until
+ * it reaches the universe level of the CMFD mesh. Then, the function loops over all
+ * the cells in Lattice and defines the corresponding MeshCell object for each Lattice
+ * Cell.
+ * @param univ a pointer to a the base universe (universe 0)
+ * @param depth the number of lattices that must be descended to reach the CMFD mesh level.
+ * @param meshCellNum a pointer to an integer used to store the index of the current
+ * MeshCell object.
+ * @param row the current row of the parent lattice
+ * @param base bool indicating whether the current lattice is the highest level lattice
+ * @param fsr_id a pointer to an integer that is set to first fsr_id in this
+ * universe
+ */
 /* define the MeshCell objects (_width, _height, and _FRSs)  */
-void Geometry::defineMesh(Mesh* mesh, Universe* univ, int depth, int* meshCellNum, int row, bool base, int fsr_id){
+void Geometry::defineMesh(Universe* univ, int depth, int* meshCellNum, int row, bool base, int fsr_id){
 
 	/* If the universe is a SIMPLE type universe */
 	if (univ->getType() == SIMPLE){
 		std::map<int, Cell*> cells = univ->getCells();
 		Cell* curr;
+
+		/* For each of the cells inside the lattice, check if it is
+		 * material or fill type */
 		std::map<int, Cell*>::iterator iter;
 		for (iter = cells.begin(); iter != cells.end(); ++iter) {
 			curr = iter->second;CellFill* fill_cell = static_cast<CellFill*>(curr);
 			Universe* universe_fill = fill_cell->getUniverseFill();
-			defineMesh(mesh, universe_fill, depth, meshCellNum, row, base, fsr_id);
+			defineMesh(universe_fill, depth, meshCellNum, row, base, fsr_id);
 		}
 	}
 
@@ -2245,35 +2173,44 @@ void Geometry::defineMesh(Mesh* mesh, Universe* univ, int depth, int* meshCellNu
 		int num_y = lattice->getNumY();
 		log_printf(DEBUG, "numx: %i numy: %i", num_x, num_y);
 
+		/* if the current LATTICE is the CMFD mesh lattice */
 		if (depth == 1){
+			/* if the current LATTICE is the base lattice */
 			if (base == true){
 				for (int i = num_y-1; i > -1; i--) {
 					for (int j = 0; j < num_x; j++) {
 						curr = lattice->getUniverse(j, i);
 						fsr_id = lattice->getFSR(j,i);
 						log_printf(DEBUG, "added FSR id to counter -> fsr id: %i", fsr_id);
-						findFSRs(curr, mesh->getCells()[*meshCellNum], &fsr_id);
-						mesh->getCells()[*meshCellNum].setWidth(lattice->getWidthX());
-						mesh->getCells()[*meshCellNum].setHeight(lattice->getWidthY());
-						log_printf(DEBUG, "mesh cell: %i, width: %f, height: %f", *meshCellNum, mesh->getCells()[*meshCellNum].getWidth(),mesh->getCells()[*meshCellNum].getHeight());
+
+						/* store the fsr_ids of the FSRs in this LATTICE in a MeshCell object */
+						findFSRs(curr, &_mesh->getCells()[*meshCellNum], &fsr_id);
+						_mesh->getCells()[*meshCellNum].setWidth(lattice->getWidthX());
+						_mesh->getCells()[*meshCellNum].setHeight(lattice->getWidthY());
+						log_printf(DEBUG, "mesh cell: %i, width: %f, height: %f", *meshCellNum, _mesh->getCells()[*meshCellNum].getWidth(),_mesh->getCells()[*meshCellNum].getHeight());
 						*meshCellNum = *meshCellNum + 1;
 					}
 				}
 			}
+			/* if the current LATTICE is not the base lattice */
 			else{
 				int baseFSR = fsr_id;
 				for (int j = 0; j < num_x; j++) {
 					curr = lattice->getUniverse(j, row);
 					fsr_id = baseFSR + lattice->getFSR(j,row);
 					log_printf(DEBUG, "set fsr id to: %i", fsr_id);
-					findFSRs(curr, mesh->getCells()[*meshCellNum], &fsr_id);
-					mesh->getCells()[*meshCellNum].setWidth(lattice->getWidthX());
-					mesh->getCells()[*meshCellNum].setHeight(lattice->getWidthY());
-					log_printf(DEBUG, "mesh cell num: %i, width: %f, height: %f", *meshCellNum, mesh->getCells()[*meshCellNum].getWidth(),mesh->getCells()[*meshCellNum].getHeight());
+
+					/* store the fsr_ids of the FSRs in this LATTICE in a MeshCell object */
+					findFSRs(curr, &_mesh->getCells()[*meshCellNum], &fsr_id);
+					_mesh->getCells()[*meshCellNum].setWidth(lattice->getWidthX());
+					_mesh->getCells()[*meshCellNum].setHeight(lattice->getWidthY());
+					log_printf(DEBUG, "mesh cell num: %i, width: %f, height: %f", *meshCellNum, _mesh->getCells()[*meshCellNum].getWidth(),_mesh->getCells()[*meshCellNum].getHeight());
 					*meshCellNum = *meshCellNum + 1;
 				}
 			}
 		}
+
+		/* if the current LATTICE is not the CMFD mesh lattice */
 		else {
 			base = false;
 			for (int i = num_y-1; i > -1; i--) {
@@ -2283,7 +2220,9 @@ void Geometry::defineMesh(Mesh* mesh, Universe* univ, int depth, int* meshCellNu
 					for (int j = 0; j < num_x; j++) {
 						curr = lattice->getUniverse(j, i);
 						fsr_id = lattice->getFSR(j,i);
-						defineMesh(mesh, curr, depth - 1, meshCellNum, k, base, fsr_id);
+
+						/* recursively call defineMesh until LATTICE leve of CMFD mesh is reached */
+						defineMesh(curr, depth - 1, meshCellNum, k, base, fsr_id);
 					}
 				}
 			}
@@ -2294,7 +2233,11 @@ void Geometry::defineMesh(Mesh* mesh, Universe* univ, int depth, int* meshCellNu
 }
 
 
-/* find the height of the next lattice */
+/**
+ * This is a recursive function that finds the cellHeight of the next lowest LATTICE in the
+ * given universe.
+ * @param univ a pointer to a the current universe
+ */
 int Geometry::nextLatticeHeight(Universe* univ){
 
 	int height = 1;
@@ -2306,7 +2249,8 @@ int Geometry::nextLatticeHeight(Universe* univ){
 		std::map<int, Cell*>::iterator iter;
 		iter = cells.begin();
 		curr = iter->second;
-		/* Check to see if cell fill*/
+
+		/* IF the cell is FILL type recursively call nextLatticeHeight */
 		if (curr->getType() == FILL){
 			CellFill* fill_cell = static_cast<CellFill*>(curr);
 			Universe* universe_fill = fill_cell->getUniverseFill();
@@ -2314,7 +2258,7 @@ int Geometry::nextLatticeHeight(Universe* univ){
 		}
 	}
 
-	/* If the universe is a LATTICE type universe */
+	/* If the universe is a LATTICE type universe return the height */
 	else {
 		Lattice* lattice = static_cast<Lattice*>(univ);
 		height = lattice->getNumY();
@@ -2325,7 +2269,13 @@ int Geometry::nextLatticeHeight(Universe* univ){
 
 
 
-/* find the height of the mesh */
+/**
+ * This is a recursive function that finds the cellHeight of the LATTICE at
+ * the CMFD mesh level
+ * @param univ a pointer to a the base universe (universe 0)
+ * @param height a pointer to the accumulator for the Mesh height
+ * @param depth the number of lattices that must be descended to reach the CMFD mesh level.
+ */
 void Geometry::findMeshHeight(Universe* univ, int* height, int depth){
 
 	/* If the universe is a SIMPLE type universe */
@@ -2335,7 +2285,8 @@ void Geometry::findMeshHeight(Universe* univ, int* height, int depth){
 		std::map<int, Cell*>::iterator iter;
 		for (iter = cells.begin(); iter != cells.end(); ++iter) {
 			curr = iter->second;
-			/* Check to see if cell fill*/
+
+			/* IF the cell is FILL type recursively call findMeshHeight */
 			if (curr->getType() == FILL){
 				CellFill* fill_cell = static_cast<CellFill*>(curr);
 				Universe* universe_fill = fill_cell->getUniverseFill();
@@ -2346,19 +2297,22 @@ void Geometry::findMeshHeight(Universe* univ, int* height, int depth){
 
 	/* If the universe is a LATTICE type universe */
 	else {
+		/* check to see if CMFD mesh lattice depth has been reached */
 		if (depth > 0){
 
 			Lattice* lattice = static_cast<Lattice*>(univ);
 			Universe* curr;
 			int num_y = lattice->getNumY();
+
+			/* if the current LATTICE is the CMFD mesh lattice add its numY to height accumulator */
 			if (depth == 1){
 				*height = *height + num_y;
 			}
 			else{
 				for (int i = num_y-1; i > -1; i--) {
-
-					/* Get a pointer to the current lattice cell */
 					curr = lattice->getUniverse(0, i);
+
+					/* find the width of the current universe */
 					findMeshWidth(curr, height, depth);
 				}
 				depth = depth - 1;
@@ -2370,7 +2324,13 @@ void Geometry::findMeshHeight(Universe* univ, int* height, int depth){
 }
 
 
-/* find the width of the mesh */
+/**
+ * This is a recursive function that finds the cellWidth of the LATTICE at
+ * the CMFD mesh level.
+ * @param univ a pointer to a the base universe (universe 0)
+ * @param width a pointer to the accumulator for the Mesh width
+ * @param depth the number of lattices that must be descended to reach the CMFD mesh level.
+ */
 void Geometry::findMeshWidth(Universe* univ, int* width, int depth){
 
 	/* If the universe is a SIMPLE type universe */
@@ -2380,7 +2340,8 @@ void Geometry::findMeshWidth(Universe* univ, int* width, int depth){
 		std::map<int, Cell*>::iterator iter;
 		for (iter = cells.begin(); iter != cells.end(); ++iter) {
 			curr = iter->second;
-			/* Check to see if cell fill*/
+
+			/* IF the cell is FILL type recursively call findMeshWidth */
 			if (curr->getType() == FILL){
 				CellFill* fill_cell = static_cast<CellFill*>(curr);
 				Universe* universe_fill = fill_cell->getUniverseFill();
@@ -2391,6 +2352,7 @@ void Geometry::findMeshWidth(Universe* univ, int* width, int depth){
 
 	/* If the universe is a LATTICE type universe */
 	else {
+		/* check to see if CMFD mesh lattice depth has been reached */
 		if (depth > 0){
 
 			Lattice* lattice = static_cast<Lattice*>(univ);
@@ -2398,15 +2360,17 @@ void Geometry::findMeshWidth(Universe* univ, int* width, int depth){
 			int num_x = lattice->getNumX();
 			int num_y = lattice->getNumY();
 			int i = num_y-1;
+
+			/* if the current LATTICE is the CMFD mesh lattice add its numX to width accumulator */
 			if (depth == 1){
 				*width = *width + num_x;
 			}
 			else{
 				depth = depth - 1;
 				for (int j = 0; j < num_x; j++) {
-
-					/* Get a pointer to the current lattice cell */
 					curr = lattice->getUniverse(j, i);
+
+					/* find the width of the current universe */
 					findMeshWidth(curr, width, depth);
 				}
 			}
@@ -2417,52 +2381,10 @@ void Geometry::findMeshWidth(Universe* univ, int* width, int depth){
 }
 
 
-
-/* find the number of Lattice Levels */
-void Geometry::findNumLattices(Universe* univ, int* numLattices) {
-
-
-
-	/* If the universe is a SIMPLE type universe */
-	if (univ->getType() == SIMPLE) {
-		std::map<int, Cell*> cells = univ->getCells();
-		Cell* curr;
-		std::map<int, Cell*>::iterator iter;
-		for (iter = cells.begin(); iter != cells.end(); ++iter) {
-			curr = iter->second;
-			/* Check to see if cell fill*/
-			if (curr->getType() == FILL){
-				CellFill* fill_cell = static_cast<CellFill*>(curr);
-				Universe* universe_fill = fill_cell->getUniverseFill();
-				findNumLattices(universe_fill, numLattices);
-			}
-		}
-	}
-
-	/* If the universe is a LATTICE type universe */
-	else {
-		Lattice* lattice = static_cast<Lattice*>(univ);
-		Universe* curr;
-		int num_x = lattice->getNumX();
-		int num_y = lattice->getNumY();
-		int maxDepth = 1;
-		*numLattices = *numLattices + 1;
-		for (int i = num_y-1; i > -1; i--) {
-			for (int j = 0; j < num_x; j++) {
-
-				/* Get a pointer to the current lattice cell */
-				curr = lattice->getUniverse(j, i);
-				int depth = 0;
-				findNumLattices(curr, &depth);
-				maxDepth = std::max(depth,maxDepth);
-			}
-		}
-		*numLattices = *numLattices + maxDepth;
-
-	}
-
-	return;
+Mesh* Geometry::getMesh(){
+	return _mesh;
 }
+
 
 /**
  * This method is called from the Solver after fixed source iteration
