@@ -407,7 +407,7 @@ void Plotter::plotNetCurrents(Mesh* mesh){
 				string << meshCell->getMeshSurfaces(0)->getCurrent(group);
 				title = string.str();
 				string.str("");
-				drawList.push_back(Magick::DrawableText(x_mid + 20, y_mid + 10 * (group - NUM_ENERGY_GROUPS / 2.0), title));
+				drawList.push_back(Magick::DrawableText(x_mid + 20, y_mid + 10 * (NUM_ENERGY_GROUPS / 2.0 - group), title));
 				title.clear();
 
 				/* side 1 */
@@ -429,7 +429,7 @@ void Plotter::plotNetCurrents(Mesh* mesh){
 				string << meshCell->getMeshSurfaces(2)->getCurrent(group);
 				title = string.str();
 				string.str("");
-				drawList.push_back(Magick::DrawableText(x_mid - 80, y_mid + 10 * (group - NUM_ENERGY_GROUPS / 2.0), title));
+				drawList.push_back(Magick::DrawableText(x_mid - 80, y_mid + 10 * (NUM_ENERGY_GROUPS / 2.0 - group), title));
 				title.clear();
 
 				/* side 3 */
@@ -451,7 +451,11 @@ void Plotter::plotNetCurrents(Mesh* mesh){
 	/* create filename with correct extension */
 	std::stringstream titleString;
 	std::string imageTitle;
-	titleString << "cmfd_current." << _extension;
+	if (_extension == "tiff" || _extension == "jpg" || _extension == "png")
+		titleString << "cmfd_current." << _extension;
+	else
+		titleString << "cmfd_current.png";
+
 	imageTitle = titleString.str();
 
 	/* write Magick image to file */
