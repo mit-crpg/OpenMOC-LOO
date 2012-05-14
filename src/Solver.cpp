@@ -553,6 +553,21 @@ void Solver::fixedSourceIteration(int max_iterations, bool cmfd = false) {
 		/* Initialize flux in each region to zero */
 		zeroFSRFluxes();
 
+
+#if CMFD_ACCEL
+		if (cmfd == true){
+			/* zero surface currents */
+			Mesh* mesh = _geom->getMesh();
+			for (int cell = 0; cell < mesh->getCellHeight()*mesh->getCellWidth(); cell++){
+				for (int surface = 0; surface < 8; surface++){
+					for (int group = 0; group < NUM_ENERGY_GROUPS; group++){
+						mesh->getCells(cell)->getMeshSurfaces(surface)->setCurrent(0, group);
+					}
+				}
+			}
+		}
+#endif
+
 		/* Loop over azimuthal each thread and azimuthal angle*
 		 * If we are using OpenMP then we create a separate thread
 		 * for each pair of reflecting azimuthal angles - angles which
@@ -968,7 +983,7 @@ double Solver::computeKeff(int max_iterations) {
 
 			#if CMFD_ACCEL
 			/* Compute the net currents */
-			fixedSourceIteration(1, true);
+			fixedSourceIteration(1000, true);
 			_geom->getMesh()->splitCorners();
 			if (_plotter->plotCurrent()){
 				_geom->getMesh()->printCurrents();

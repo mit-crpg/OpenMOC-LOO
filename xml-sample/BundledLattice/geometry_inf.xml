@@ -9,7 +9,7 @@
 
 <!-- Definition of Cells -->
   <cell id="101" universe="1" material="1" surfaces="-5" />
-  <cell id="102" universe="1" material="2" surfaces="5" />
+  <cell id="102" universe="1" material="1" surfaces="5" />
   <cell id="1" universe="10" fill="7" surfaces="" />
   <cell id="3" universe="0" fill="9" surfaces="" />
 
@@ -44,25 +44,21 @@
   <!-- 4 x 4 core -->
   <lattice id="9">
     <type>rectangular</type>
-    <dimension>7 7</dimension>
+    <dimension>3 3</dimension>
     <width>17.0 17.0</width>
     <universes>
-      10 10 10 10 10 10 10
-      10 10 10 10 10 10 10 
-      10 10 10 10 10 10 10
-      10 10 10 10 10 10 10
-      10 10 10 10 10 10 10
-      10 10 10 10 10 10 10
-      10 10 10 10 10 10 10
+      10 10 10
+      10 10 10 
+      10 10 10
   </universes>
   </lattice>
 
 
 <!-- Definition of Surfaces -->
-  <surface id="1" type="x-plane" coeffs="-59.5" boundary="reflective" />
-  <surface id="2" type="x-plane" coeffs="59.5" boundary="reflective" />
-  <surface id="3" type="y-plane" coeffs="-59.5" boundary="reflective" />
-  <surface id="4" type="y-plane" coeffs="59.5" boundary="reflective"/>
+  <surface id="1" type="x-plane" coeffs="-25.5" boundary="reflective" />
+  <surface id="2" type="x-plane" coeffs="25.5" boundary="reflective" />
+  <surface id="3" type="y-plane" coeffs="-25.5" boundary="reflective" />
+  <surface id="4" type="y-plane" coeffs="25.5" boundary="reflective"/>
   <surface id="5" type="circle" coeffs="0.0 0.0 0.3" />
 
 </geometry>
