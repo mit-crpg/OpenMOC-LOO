@@ -30,6 +30,8 @@ class MeshSurface {
 private:
 	meshSurfaceType _type;
 	double* _current;
+	double* _flux;
+	double _normal;
 
 public:
 	MeshSurface();
@@ -38,7 +40,12 @@ public:
 	void setType(meshSurfaceType type);
 	void setCurrent(double current, int group);
 	double getCurrent(int group);
-	void incrementCurrent(double current, int group);
+	void incrementCurrent(double current, double phi, int group);
+	void setNormal(double normal);
+	double getNormal();
+	void setFlux(double flux, int group);
+	double getFlux(int group);
+	void incrementFlux(double flux, int group);
 };
 
 

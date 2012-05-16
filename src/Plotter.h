@@ -59,8 +59,8 @@ public:
 	void plotCMFDMesh(Mesh* mesh);
 	int convertToPixelX(double x);
 	int convertToPixelY(double y);
-	void getCurrentColor(float value, float* color);
 	void plotNetCurrents(Mesh* mesh);
+	void plotSurfaceFlux(Mesh* mesh);
 	bool plotCurrent();
 };
 

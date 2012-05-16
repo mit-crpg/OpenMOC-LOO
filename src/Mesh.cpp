@@ -179,8 +179,10 @@ void Mesh::splitCorners(){
 		surfaceCorner2 = _cells[i].getMeshSurfaces(7);
 
 		for (int group = 0; group < NUM_ENERGY_GROUPS; group++){
-			surfaceSide->incrementCurrent(0.5 * surfaceCorner1->getCurrent(group), group);
-			surfaceSide->incrementCurrent(0.5 * surfaceCorner2->getCurrent(group), group);
+			surfaceSide->incrementCurrent(0.5 * surfaceCorner1->getCurrent(group), surfaceSide->getNormal(), group);
+			surfaceSide->incrementCurrent(0.5 * surfaceCorner2->getCurrent(group), surfaceSide->getNormal(), group);
+			surfaceSide->incrementFlux(0.5 * surfaceCorner1->getFlux(group), group);
+			surfaceSide->incrementFlux(0.5 * surfaceCorner2->getFlux(group), group);
 		}
 
 		/* side 1 */
@@ -188,8 +190,10 @@ void Mesh::splitCorners(){
 		surfaceCorner2 = _cells[i].getMeshSurfaces(5);
 
 		for (int group = 0; group < NUM_ENERGY_GROUPS; group++){
-			surfaceSide->incrementCurrent(0.5 * surfaceCorner1->getCurrent(group), group);
-			surfaceSide->incrementCurrent(0.5 * surfaceCorner2->getCurrent(group), group);
+			surfaceSide->incrementCurrent(0.5 * surfaceCorner1->getCurrent(group), surfaceSide->getNormal(), group);
+			surfaceSide->incrementCurrent(0.5 * surfaceCorner2->getCurrent(group), surfaceSide->getNormal(), group);
+			surfaceSide->incrementFlux(0.5 * surfaceCorner1->getFlux(group), group);
+			surfaceSide->incrementFlux(0.5 * surfaceCorner2->getFlux(group), group);
 		}
 
 		/* side 2 */
@@ -197,8 +201,10 @@ void Mesh::splitCorners(){
 		surfaceCorner1 = _cells[i].getMeshSurfaces(6);
 
 		for (int group = 0; group < NUM_ENERGY_GROUPS; group++){
-			surfaceSide->incrementCurrent(0.5 * surfaceCorner1->getCurrent(group), group);
-			surfaceSide->incrementCurrent(0.5 * surfaceCorner2->getCurrent(group), group);
+			surfaceSide->incrementCurrent(0.5 * surfaceCorner1->getCurrent(group), surfaceSide->getNormal(), group);
+			surfaceSide->incrementCurrent(0.5 * surfaceCorner2->getCurrent(group), surfaceSide->getNormal(), group);
+			surfaceSide->incrementFlux(0.5 * surfaceCorner1->getFlux(group), group);
+			surfaceSide->incrementFlux(0.5 * surfaceCorner2->getFlux(group), group);
 		}
 
 		/* side 3 */
@@ -206,15 +212,18 @@ void Mesh::splitCorners(){
 		surfaceCorner2 = _cells[i].getMeshSurfaces(7);
 
 		for (int group = 0; group < NUM_ENERGY_GROUPS; group++){
-			surfaceSide->incrementCurrent(0.5 * surfaceCorner1->getCurrent(group), group);
-			surfaceSide->incrementCurrent(0.5 * surfaceCorner2->getCurrent(group), group);
+			surfaceSide->incrementCurrent(0.5 * surfaceCorner1->getCurrent(group), surfaceSide->getNormal(), group);
+			surfaceSide->incrementCurrent(0.5 * surfaceCorner2->getCurrent(group), surfaceSide->getNormal(), group);
+			surfaceSide->incrementFlux(0.5 * surfaceCorner1->getFlux(group), group);
+			surfaceSide->incrementFlux(0.5 * surfaceCorner2->getFlux(group), group);
 		}
 
-		/* zero corner currents */
+		/* zero corner currents and surface fluxes */
 		for (int side = 4; side < 8; side++){
 			surfaceCorner1 = _cells[i].getMeshSurfaces(side);
 			for (int group = 0; group < NUM_ENERGY_GROUPS; group++){
 				surfaceCorner1->setCurrent(0, group);
+				surfaceCorner1->setFlux(0, group);
 			}
 		}
 	}

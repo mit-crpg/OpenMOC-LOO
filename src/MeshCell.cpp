@@ -30,6 +30,15 @@ void MeshCell::makeSurfaces(){
 	_mesh_surfaces[6].setType(CORNER);
 	_mesh_surfaces[7].setType(CORNER);
 
+	/* set normals to sides */
+	_mesh_surfaces[0].setNormal(PI);
+	_mesh_surfaces[1].setNormal(3.0 * PI / 2.0);
+	_mesh_surfaces[2].setNormal(0.0);
+	_mesh_surfaces[3].setNormal(PI / 2.0);
+	_mesh_surfaces[4].setNormal(PI);
+	_mesh_surfaces[5].setNormal(3.0 * PI / 2.0);
+	_mesh_surfaces[6].setNormal(0.0);
+	_mesh_surfaces[7].setNormal(PI / 2.0);
 }
 
 double MeshCell::getWidth(){

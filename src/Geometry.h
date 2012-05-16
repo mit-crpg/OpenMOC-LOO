@@ -52,9 +52,8 @@ private:
 	std::map<int, Universe*> _universes;
 	std::map<int, Lattice*> _lattices;
 
-#if CMFD_ACCEL
 	Mesh* _mesh;
-#endif
+
 
 public:
 	Geometry(Parser* parser);

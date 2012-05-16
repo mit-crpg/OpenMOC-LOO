@@ -75,9 +75,7 @@ Geometry::Geometry(Parser* parser) {
 		_FSRs_to_materials[r] = curr->getMaterial();
 	}
 
-#if CMFD_ACCEL
 	_mesh = new Mesh;
-#endif
 }
 
 

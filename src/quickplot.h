@@ -35,6 +35,7 @@ struct BitMap {
 	double geom_y;
 	double center_x;
 	double center_y;
+	std::list<Magick::Drawable> drawList;
 };
 
 /*
@@ -66,6 +67,8 @@ template <typename U, typename V>
 int convertToBitmapX(BitMap<U>* bitMap, V x);
 template <typename U>
 void deleteBitMap(BitMap<U>* bitMap);
+template <typename U>
+void drawText(BitMap<U>* bitMap, std::string text, int x, int y);
 
 
 /*
@@ -199,6 +202,9 @@ void plotMagick(BitMap<U>* bitMap, float* pixMap, std::string name, std::string 
 
 	/* Sync pixel cache with Magick image */
 	pixel_cache.sync();
+
+	/* Draw items in drawList */
+	image.draw(bitMap->drawList);
 
 	/* create filename with correct extension */
 	std::stringstream string;
@@ -402,7 +408,7 @@ void drawLine(BitMap<U>* bitMap, V xIn, V yIn, V xOut, V yOut, U color){
 }
 
 /**
- * Convert an x value our from geometry coordinates to Bitmap coordinates.
+ * Convert a x value our from geometry coordinates to Bitmap coordinates.
  */
 template <typename U, typename V>
 int convertToBitmapX(BitMap<U>* bitMap, V x){
@@ -410,7 +416,7 @@ int convertToBitmapX(BitMap<U>* bitMap, V x){
 }
 
 /**
- * Convert an y value our from geometry coordinates to Bitmap coordinates.
+ * Convert a y value our from geometry coordinates to Bitmap coordinates.
  */
 template <typename U, typename V>
 int convertToBitmapY(BitMap<U>* bitMap, V y){
@@ -425,6 +431,22 @@ void deleteBitMap(BitMap<U>* bitMap){
 	delete [] bitMap->pixels;
 	delete bitMap;
 }
+
+/**
+ * Write text on BitMap
+ */
+template <typename U>
+void drawText(BitMap<U>* bitMap, std::string text, int x, int y){
+
+	/* add item to drawlist	 */
+	bitMap->drawList.push_back(Magick::DrawableText(x, y, text));
+}
+
+
+
+
+
+
 
 
 #endif /* QUICKPLOT_H_ */
