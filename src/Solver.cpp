@@ -991,11 +991,14 @@ double Solver::computeKeff(int max_iterations) {
 			/* Compute the net currents */
 			fixedSourceIteration(1000, true);
 			_geom->getMesh()->splitCorners();
+			computeXS(_geom->getMesh());
 			if (_plotter->plotCurrent()){
 				//_geom->getMesh()->printCurrents();
 				_plotter->plotNetCurrents(_geom->getMesh());
 				_plotter->plotSurfaceFlux(_geom->getMesh());
+				_plotter->plotXS(_geom->getMesh());
 			}
+
 
 			#endif
 
@@ -1244,44 +1247,70 @@ void Solver::computeCoeffs() {
 
 /* compute the xs for all MeshCells in the Mesh */
 void Solver::computeXS(Mesh* mesh){
+	log_printf(NORMAL, "Computing CMFD mesh cross sections...");
 
 	// tallies for fsr_vol * group_avg_xs and fsr_vol
-	double xs_tally = 0;
-	double vol_tally = 0;
+	double abs_tally, vol_tally, flux_tally, tot_tally, fis_tally, nu_fis_tally;
 	MeshCell* meshCell;
 	FlatSourceRegion* fsr;
 	Material* material;
 	double volume = 0;
-	double flux;
-	double xs;
-
+	double flux, abs, tot, fis, nu_fis;
+	double abs_tally_fsr, flux_tally_fsr, tot_tally_fsr, fis_tally_fsr, nu_fis_tally_fsr;
 
 	// loop over mesh cells
 	for (int i = 0; i < mesh->getCellWidth() * mesh->getCellHeight(); i++){
 		meshCell = mesh->getCells(i);
-		xs_tally = 0;
+		abs_tally = 0;
 		vol_tally = 0;
+		flux_tally = 0;
+		tot_tally = 0;
+		fis_tally = 0;
+		nu_fis_tally = 0;
 
 		std::vector<int>::iterator iter;
 		for (iter = meshCell->getFSRs()->begin(); iter != meshCell->getFSRs()->end(); ++iter) {
 			fsr = &_flat_source_regions[*iter];
 			material = fsr->getMaterial();
 			volume = fsr->getVolume();
-			double xs_tally_fsr = 0;
+			abs_tally_fsr = 0;
+			flux_tally_fsr = 0;
+			tot_tally_fsr = 0;
+			fis_tally_fsr = 0;
+			nu_fis_tally_fsr = 0;
 
 			for (int e = 0; e < NUM_ENERGY_GROUPS; e++){
 				flux = fsr->getFlux()[e];
-				xs = material->getSigmaA()[e];
-				xs_tally_fsr += xs * flux;
+				abs = material->getSigmaA()[e];
+				tot = material->getSigmaT()[e];
+				fis = material->getSigmaF()[e];
+				nu_fis = material->getNuSigmaF()[e];
+				abs_tally_fsr += abs * flux;
+				tot_tally_fsr += tot * flux;
+				fis_tally_fsr += fis * flux;
+				nu_fis_tally_fsr += nu_fis * flux;
+				flux_tally_fsr += flux;
 			}
 
-			xs_tally += xs_tally_fsr * volume;
+			abs_tally += abs_tally_fsr * volume;
+			tot_tally += tot_tally_fsr * volume;
+			fis_tally += fis_tally_fsr * volume;
+			nu_fis_tally += nu_fis_tally_fsr * volume;
 			vol_tally += volume;
+			flux_tally += flux_tally_fsr * volume;
 		}
 
-		meshCell->setAbsRate(xs_tally / volume);
+		meshCell->setAbsRate(abs_tally / volume);
+		meshCell->setSigmaA(abs_tally / flux_tally);
+		meshCell->setSigmaT(tot_tally / flux_tally);
+		meshCell->setSigmaF(fis_tally / flux_tally);
+		meshCell->setNuSigmaF(nu_fis_tally / flux_tally);
 
-		log_printf(NORMAL, "meshCell: %i abs rate: %f", i, xs_tally / volume);
+		log_printf(NORMAL, "meshCell: %i sigmaT: %f", i, tot_tally / flux_tally);
+		log_printf(NORMAL, "meshCell: %i sigmaA: %f", i, abs_tally / flux_tally);
+		log_printf(NORMAL, "meshCell: %i sigmaF: %f", i, fis_tally / flux_tally);
+		log_printf(NORMAL, "meshCell: %i NuSigmaF: %f", i, nu_fis_tally / flux_tally);
+
 	}
 }
 

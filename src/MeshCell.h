@@ -31,6 +31,10 @@ private:
 	double* _bounds;
 	int _fsr_start;
 	int _fsr_end;
+	double _sigma_a;
+	double _sigma_t;
+	double _sigma_f;
+	double _nu_sigma_f;
 
 public:
 	MeshCell();
@@ -43,6 +47,14 @@ public:
 	void addFSR(int fsr);
 	void setAbsRate(double absRate);
 	double getAbsRate();
+	void setSigmaA(double sigmaA);
+	double getSigmaA();
+	void setSigmaT(double sigmaT);
+	double getSigmaT();
+	void setSigmaF(double sigmaF);
+	double getSigmaF();
+	void setNuSigmaF(double nuSigmaF);
+	double getNuSigmaF();
 	MeshSurface* findSurface(LocalCoords* coord);
 	void setBounds(double x, double y);
 	double* getBounds();

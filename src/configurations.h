@@ -19,11 +19,11 @@
 #define GRP_TIMES_ANG NUM_POLAR_ANGLES*NUM_ENERGY_GROUPS
 
 /* Convergence threshold for computing k_eff */
-#define KEFF_CONVERG_THRESH 1E-8
+#define KEFF_CONVERG_THRESH 1E-6
 
 /* Convergence threshold for scalar flux in each region during fixed source
  * iteration */
-#define FLUX_CONVERGENCE_THRESH 1E-5
+#define FLUX_CONVERGENCE_THRESH 1E-6
 
 /* The number of old k_eff values which will be stored. Keeping track of more
  * than just the most recent k_eff is intended to prevent from prematurely

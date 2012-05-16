@@ -164,8 +164,36 @@ MeshSurface* MeshCell::getMeshSurfaces(int surface){
 	return &_mesh_surfaces[surface];
 }
 
+void MeshCell::setSigmaA(double sigmaA){
+	_sigma_a = sigmaA;
+}
 
+double MeshCell::getSigmaA(){
+	return _sigma_a;
+}
 
+void MeshCell::setSigmaT(double sigmaT){
+	_sigma_t = sigmaT;
+}
 
+double MeshCell::getSigmaT(){
+	return _sigma_t;
+}
+
+double MeshCell::getSigmaF(){
+	return _sigma_f;
+}
+
+void MeshCell::setSigmaF(double sigmaF){
+	_sigma_f = sigmaF;
+}
+
+double MeshCell::getNuSigmaF(){
+	return _nu_sigma_f;
+}
+
+void MeshCell::setNuSigmaF(double nuSigmaF){
+	_nu_sigma_f = nuSigmaF;
+}
 
 

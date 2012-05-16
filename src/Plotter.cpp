@@ -507,6 +507,87 @@ void Plotter::plotSurfaceFlux(Mesh* mesh){
 	deleteBitMap(bitMap);
 }
 
+void Plotter::plotXS(Mesh* mesh){
+	log_printf(NORMAL, "plotting cross sections...");
+
+	/* set up bitMap */
+	BitMap<int>* bitMap = new BitMap<int>;
+	bitMap->pixel_x = _bit_length_x;
+	bitMap->pixel_y = _bit_length_y;
+	initialize(bitMap);
+	bitMap->geom_x = _width;
+	bitMap->geom_y = _height;
+	bitMap->color_type = SCALED;
+
+	double x_global;
+	double y_global;
+
+	/* find meshCell for each pixel */
+	for (int y=0;y < _bit_length_y; y++){
+		for (int x = 0; x < _bit_length_x; x++){
+			x_global = convertToGeometryX(x);
+			y_global = convertToGeometryY(y);
+			bitMap->pixels[y * _bit_length_x + x] = mesh->findMeshCell(x_global, y_global);
+		}
+	}
+
+	double x_mid, y_mid;
+	MeshCell* meshCell;
+	std::stringstream text_stream;
+	std::string text;
+
+	/* plot mesh currents next to surface */
+	for (int cellY = 0; cellY < mesh->getCellHeight(); cellY++){
+		for (int cellX = 0; cellX < mesh->getCellWidth(); cellX++){
+			meshCell = mesh->getCells(cellY * mesh->getCellWidth() + cellX);
+
+			/* find middle of cell */
+			x_mid = convertToPixelY((meshCell->getBounds()[0] + meshCell->getBounds()[2]) / 2.0);
+			y_mid = convertToPixelY((meshCell->getBounds()[1] + meshCell->getBounds()[3]) / 2.0);
+
+			/* Sigma A */
+			text_stream << "SigmaA: " << meshCell->getSigmaA();
+			text = text_stream.str();
+			text_stream.str("");
+			drawText(bitMap, text, x_mid - 50, y_mid + 30);
+			text.clear();
+
+			/* Sigma F */
+			text_stream << "SigmaF: " << meshCell->getSigmaF();
+			text = text_stream.str();
+			text_stream.str("");
+			drawText(bitMap, text, x_mid - 50, y_mid + 15);
+			text.clear();
+
+			/* Nu Sigma F */
+			text_stream << "NuSigmaF: " << meshCell->getNuSigmaF();
+			text = text_stream.str();
+			text_stream.str("");
+			drawText(bitMap, text, x_mid - 50, y_mid);
+			text.clear();
+
+			/* Sigma T */
+			text_stream << "Sigma T: " << meshCell->getSigmaT();
+			text = text_stream.str();
+			text_stream.str("");
+			drawText(bitMap, text, x_mid - 50, y_mid - 15);
+			text.clear();
+		}
+	}
+
+
+	/* create filename with correct extension */
+	if (_extension == "tiff" || _extension == "jpg" || _extension == "png"){
+		plot(bitMap, "cmfd_xs", _extension);
+	}
+	else{
+		log_printf(WARNING, "Cross sections can only be plotted in tiff, jpg, and png. Plotting CMFD flux as png...");
+		plot(bitMap, "cmfd_xs", "png");
+	}
+
+	deleteBitMap(bitMap);
+}
+
 
 
 
