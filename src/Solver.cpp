@@ -1310,6 +1310,8 @@ void Solver::computeXS(Mesh* mesh){
 		log_printf(NORMAL, "meshCell: %i sigmaA: %f", i, abs_tally / flux_tally);
 		log_printf(NORMAL, "meshCell: %i sigmaF: %f", i, fis_tally / flux_tally);
 		log_printf(NORMAL, "meshCell: %i NuSigmaF: %f", i, nu_fis_tally / flux_tally);
+		log_printf(NORMAL, "meshCell: %i flux: %f", i, flux_tally);
+
 
 	}
 }

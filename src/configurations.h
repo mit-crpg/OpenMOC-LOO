@@ -15,7 +15,7 @@
  *****************************************************************************/
 
 #define NUM_POLAR_ANGLES 3
-#define NUM_ENERGY_GROUPS 7
+#define NUM_ENERGY_GROUPS 33
 #define GRP_TIMES_ANG NUM_POLAR_ANGLES*NUM_ENERGY_GROUPS
 
 /* Convergence threshold for computing k_eff */
@@ -43,7 +43,7 @@
 #define USE_OPENMP true
 
 /* Perform CMFD acceleration in the solver on a lattice level */
-#define CMFD_ACCEL true
+#define CMFD_ACCEL false
 #define CMFD_LEVEL 1
 
 

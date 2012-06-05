@@ -69,6 +69,9 @@ template <typename U>
 void deleteBitMap(BitMap<U>* bitMap);
 template <typename U>
 void drawText(BitMap<U>* bitMap, std::string text, int x, int y);
+template <typename U>
+void addScalebar(BitMap<U>* bitMap, float* pixMap, std::list<Magick::Drawable>* drawList);
+
 
 
 /*
@@ -165,6 +168,12 @@ void plotMagick(BitMap<U>* bitMap, float* pixMap, std::string name, std::string 
 
 	/* declare variables */
 	float* color = new float[3];
+	std::list<Magick::Drawable> drawList;
+
+	/* add scale bar to SCALED bitMaps */
+	if (bitMap->color_type == SCALED){
+		addScalebar(bitMap, pixMap, &drawList);
+	}
 
 	/* normalize pixMap*/
 	normalize(bitMap, pixMap);
@@ -205,6 +214,11 @@ void plotMagick(BitMap<U>* bitMap, float* pixMap, std::string name, std::string 
 
 	/* Draw items in drawList */
 	image.draw(bitMap->drawList);
+
+	if (bitMap->color_type == SCALED){
+		image.draw(drawList);
+	}
+
 
 	/* create filename with correct extension */
 	std::stringstream string;
@@ -440,6 +454,51 @@ void drawText(BitMap<U>* bitMap, std::string text, int x, int y){
 
 	/* add item to drawlist	 */
 	bitMap->drawList.push_back(Magick::DrawableText(x, y, text));
+}
+
+/**
+ * add Scalebar to bitMap
+ */
+template <typename U>
+void addScalebar(BitMap<U>* bitMap, float* pixMap, std::list<Magick::Drawable>* drawList){
+
+	drawList->push_back(Magick::DrawableStrokeWidth(0));
+	drawList->push_back(Magick::DrawablePointSize(20));
+	float* color = new float[3];
+	std::stringstream text_stream;
+	text_stream.width(9);
+	std::string text;
+
+	/* make box */
+	drawList->push_back(Magick::DrawableStrokeColor("black"));
+	drawList->push_back(Magick::DrawableRectangle(bitMap->pixel_x - 35, 18, bitMap->pixel_x - 10, 122));
+
+	/* make scaled bar */
+	for (int y = 20; y < 121; y++){
+		getColor(bitMap, 1.0 - (y - 20) / 100.0, color);
+		drawList->push_back(Magick::DrawableStrokeColor(Magick::ColorRGB(color[0], color[1], color[2])));
+		drawList->push_back(Magick::DrawableLine(bitMap->pixel_x - 33, y, bitMap->pixel_x - 12, y));
+	}
+
+	float* bounds = new float[2];
+	getBounds(bitMap, pixMap, bounds);
+	drawList->push_back(Magick::DrawableStrokeColor("black"));
+
+	/* draw text for max and min */
+
+	text_stream << bounds[1];
+	text = text_stream.str();
+	text_stream.str("");
+	drawList->push_back(Magick::DrawableText(bitMap->pixel_x - 145, 26, text));
+	text.clear();
+
+	if (bounds[0] > 1E-15)
+		text_stream << bounds[0];
+	else
+		text_stream << 0;
+	text = text_stream.str();
+	drawList->push_back(Magick::DrawableText(bitMap->pixel_x - 145, 126, text));
+
 }
 
 

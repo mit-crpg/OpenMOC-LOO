@@ -334,12 +334,21 @@ void Plotter::plotNetCurrents(Mesh* mesh){
 	MeshCell* meshCell;
 	std::stringstream text_stream;
 	std::string text;
+	double current0, current1, current2, current3;
 
 	/* plot mesh currents next to surface */
 	for (int cellY = 0; cellY < mesh->getCellHeight(); cellY++){
 		for (int cellX = 0; cellX < mesh->getCellWidth(); cellX++){
 			meshCell = mesh->getCells(cellY * mesh->getCellWidth() + cellX);
+			current0 = 0;
+			current1 = 0;
+			current2 = 0;
+			current3 = 0;
 			for (int group = 0; group < NUM_ENERGY_GROUPS; group++){
+				current0 += meshCell->getMeshSurfaces(0)->getCurrent(group);
+				current1 += meshCell->getMeshSurfaces(1)->getCurrent(group);
+				current2 += meshCell->getMeshSurfaces(2)->getCurrent(group);
+				current3 += meshCell->getMeshSurfaces(3)->getCurrent(group);
 
 				/* SIDE 0 */
 				/* get midpoint of mesh surface */
@@ -390,6 +399,10 @@ void Plotter::plotNetCurrents(Mesh* mesh){
 				text.clear();
 			}
 
+			log_printf(NORMAL, "cell: %i, surface 0, net current: %f", cellY * mesh->getCellWidth() + cellX, current0);
+			log_printf(NORMAL, "cell: %i, surface 1, net current: %f", cellY * mesh->getCellWidth() + cellX, current1);
+			log_printf(NORMAL, "cell: %i, surface 2, net current: %f", cellY * mesh->getCellWidth() + cellX, current2);
+			log_printf(NORMAL, "cell: %i, surface 3, net current: %f", cellY * mesh->getCellWidth() + cellX, current3);
 		}
 	}
 
