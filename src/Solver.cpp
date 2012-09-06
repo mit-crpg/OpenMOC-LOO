@@ -974,8 +974,11 @@ double Solver::computeKeff(int max_iterations) {
 		computeRatios();
 
 		/* Iteration the flux with the new source */
+		#if CMFD_ACCEL
+		fixedSourceIteration(1, true);
+		#else
 		fixedSourceIteration(1);
-
+		#endif
 		/* Update k_eff */
 		updateKeff();
 
@@ -988,18 +991,19 @@ double Solver::computeKeff(int max_iterations) {
 			fixedSourceIteration(1000);
 
 			#if CMFD_ACCEL
-			/* Compute the net currents */
-			fixedSourceIteration(1000, true);
-			_geom->getMesh()->splitCorners();
-			computeXS(_geom->getMesh());
+			/* Plot net current, surface flux, xs, and d_hats for mesh */
 			if (_plotter->plotCurrent()){
-				//_geom->getMesh()->printCurrents();
+				fixedSourceIteration(1, true);
+				_geom->getMesh()->splitCorners();
+				computeXS(_geom->getMesh());
+				computeDs(_geom->getMesh());
+				computeCMFDFlux(_geom->getMesh());
+//				checkNeutBal(_geom->getMesh());
 				_plotter->plotNetCurrents(_geom->getMesh());
 				_plotter->plotSurfaceFlux(_geom->getMesh());
 				_plotter->plotXS(_geom->getMesh());
+				_plotter->plotDHats(_geom->getMesh());
 			}
-
-
 			#endif
 
 			if (_plotter->plotFlux() == true){
@@ -1019,6 +1023,7 @@ double Solver::computeKeff(int max_iterations) {
 			return _k_eff;
 		}
 
+
 		/* If not converged, save old k_eff and pop off old_keff from
 		 *  previous iteration */
 		_old_k_effs.push(_k_eff);
@@ -1034,6 +1039,16 @@ double Solver::computeKeff(int max_iterations) {
 			for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
 				old_source[e] = source[e];
 		}
+
+		#if CMFD_ACCEL
+		/* Do CMFD solve and update fluxes */
+		_geom->getMesh()->splitCorners();
+		computeXS(_geom->getMesh());
+		computeDs(_geom->getMesh());
+		computeCMFDFlux(_geom->getMesh());
+		updateMOCFlux(_geom->getMesh());
+		#endif
+
 	}
 
 	log_printf(WARNING, "Unable to converge the source after %d iterations",
@@ -1107,156 +1122,18 @@ void Solver::plotFluxes(){
 	deleteBitMap(bitMap);
 }
 
-/* FIXME */
-void Solver::cmfd() {
-	/* computeNetCurrent(); */
-	computeCoeffs();
-}
-
-/* FIXME */
-void Solver::computeNetCurrent() {
-	double scatter_source, fission_source, volume;
-	double *nu_sigma_f, *scalar_flux, *sigma_s, *chi, *source;
-	FlatSourceRegion* fsr;
-	Material* material;
-	int start_index, end_index;
-
-	log_printf(NORMAL, "Computing Net Current...");
-
-	/* Check that each FSR has at least one segment crossing it */
-	checkTrackSpacing();
-
-	/* Obtain information from each FSR */
-	for (int r = 0; r < _num_FSRs; r++) {
-
-		/* Get pointers to important coefficients for each FSRs */
-		fsr = &_flat_source_regions[r];
-		material = fsr->getMaterial();
-		nu_sigma_f = material->getNuSigmaF();
-		scalar_flux = fsr->getFlux();
-		volume = fsr->getVolume();
-		source = fsr->getSource();
-		chi = material->getChi();
-		sigma_s = material->getSigmaS();
-
-		/* compute fission source */
-		start_index = fsr->getMaterial()->getNuSigmaFStart();
-		end_index = fsr->getMaterial()->getNuSigmaFEnd();
-		fission_source = 0;
-		for (int e = start_index; e < end_index; e++)
-			fission_source += nu_sigma_f[e] * scalar_flux[e] * volume;
-
-		/* compute scattering source */
-		for (int G = 0; G < NUM_ENERGY_GROUPS; G++) {
-			scatter_source = 0;
-			start_index = material->getSigmaSStart(G);
-			end_index = material->getSigmaSEnd(G);
-			for (int g = start_index; g < end_index; g++)
-				scatter_source += sigma_s[G*NUM_ENERGY_GROUPS + g]
-					* scalar_flux[g];
-			/* Set the total source for region r in group G */
-			source[G] = ((1.0 / (_old_k_effs.front())) * fission_source *
-						 chi[G] + scatter_source) * ONE_OVER_FOUR_PI;
-		}
-
-	}
-}
-
-/* FIXME */
-void Solver::computeCoeffs() {
-	double scatter_source, fission_source, volume;
-	double *nu_sigma_f, *scalar_flux, *sigma_s, *chi, *source, *sigma_a;
-	FlatSourceRegion* fsr;
-	Material* material;
-	int start_index, end_index;
-
-	log_printf(NORMAL, "Computing mesh averaged xs...");
-
-	/* Check that each FSR has at least one segment crossing it */
-	checkTrackSpacing();
-
-	/* Obtain information from each FSR */
-	for (int r = 0; r < _num_FSRs; r++) {
-
-		/* Get coefficients for each FSRs */
-		fsr = &_flat_source_regions[r];
-		material = fsr->getMaterial();
-		nu_sigma_f = material->getNuSigmaF();
-		scalar_flux = fsr->getFlux();
-		volume = fsr->getVolume();
-		source = fsr->getSource();
-		chi = material->getChi();
-		sigma_s = material->getSigmaS();
-
-		/* compute absorption cross section */
-		sigma_a = material->getSigmaA();
-		for (int e = 0; e <= NUM_ENERGY_GROUPS; e++) {
-			_FSRs_to_absorption[e][r] = sigma_a[e];
-		}
-
-		/* compute fission source */
-		start_index = fsr->getMaterial()->getNuSigmaFStart();
-		end_index = fsr->getMaterial()->getNuSigmaFEnd();
-		fission_source = 0;
-		for (int e = start_index; e < end_index; e++)
-			fission_source += nu_sigma_f[e] * scalar_flux[e] * volume;
-		//_FSRs_to_fission_source[r] = fission_source;
-
-		/* comptue scattering source */
-		for (int G = 0; G < NUM_ENERGY_GROUPS; G++) {
-			scatter_source = 0;
-			start_index = material->getSigmaSStart(G);
-			end_index = material->getSigmaSEnd(G);
-			for (int g = start_index; g < end_index; g++) {
-				scatter_source += sigma_s[G*NUM_ENERGY_GROUPS + g]
-					* scalar_flux[g];
-			}
-			//_FSRs_to_scatter_source[r] = scatter_source * volume;
-
-			/* source[G] = ((1.0 / (_old_k_effs.front())) * fission_source *
-			   chi[G] + scatter_source) * ONE_OVER_FOUR_PI; */
-		}
-
-		//_FSRs_to_powers[i] = fsr->computeFissionRate();
-	}
-
-	/* Compute the pin powers by adding up the powers of FSRs in each
-	 * lattice cell, saving lattice cell powers to files, and saving the
-	 * pin power corresponding to each FSR id in FSR_to_pin_powers */
-	_geom->computePinAbsorption(_FSRs_to_absorption, _FSRs_to_pin_absorption);
-	log_printf(NORMAL, "Computing mesh averaged absorption xs...");
-
-
-	/* Compute the total power based by accumulating the power of each unique
-	 * pin with a nonzero power */
-	/* for (int i=0; i < _num_FSRs; i++) {
-		curr_pin_power = _FSRs_to_pin_powers[i];
-	*/
-		/* If this pin power is unique and nozero (doesn't match the previous
-		 * pin's power), then tally it
-		 */
-	/*	if (curr_pin_power > 0 && curr_pin_power != prev_pin_power) {
-			tot_pin_power += curr_pin_power;
-			num_nonzero_pins++;
-			prev_pin_power = curr_pin_power;
-		}
-	}*/
-
-
-}
 
 /* compute the xs for all MeshCells in the Mesh */
 void Solver::computeXS(Mesh* mesh){
-	log_printf(NORMAL, "Computing CMFD mesh cross sections...");
 
 	// tallies for fsr_vol * group_avg_xs and fsr_vol
-	double abs_tally, vol_tally, flux_tally, tot_tally, fis_tally, nu_fis_tally;
+	double abs_tally, vol_tally, flux_tally, tot_tally, fis_tally, nu_fis_tally, dif_tally;
 	MeshCell* meshCell;
 	FlatSourceRegion* fsr;
 	Material* material;
 	double volume = 0;
 	double flux, abs, tot, fis, nu_fis;
-	double abs_tally_fsr, flux_tally_fsr, tot_tally_fsr, fis_tally_fsr, nu_fis_tally_fsr;
+	double abs_tally_fsr, flux_tally_fsr, tot_tally_fsr, fis_tally_fsr, nu_fis_tally_fsr, dif_tally_fsr;
 
 	// loop over mesh cells
 	for (int i = 0; i < mesh->getCellWidth() * mesh->getCellHeight(); i++){
@@ -1267,6 +1144,7 @@ void Solver::computeXS(Mesh* mesh){
 		tot_tally = 0;
 		fis_tally = 0;
 		nu_fis_tally = 0;
+		dif_tally = 0;
 
 		std::vector<int>::iterator iter;
 		for (iter = meshCell->getFSRs()->begin(); iter != meshCell->getFSRs()->end(); ++iter) {
@@ -1278,6 +1156,7 @@ void Solver::computeXS(Mesh* mesh){
 			tot_tally_fsr = 0;
 			fis_tally_fsr = 0;
 			nu_fis_tally_fsr = 0;
+			dif_tally_fsr = 0;
 
 			for (int e = 0; e < NUM_ENERGY_GROUPS; e++){
 				flux = fsr->getFlux()[e];
@@ -1290,31 +1169,315 @@ void Solver::computeXS(Mesh* mesh){
 				fis_tally_fsr += fis * flux;
 				nu_fis_tally_fsr += nu_fis * flux;
 				flux_tally_fsr += flux;
+				dif_tally_fsr += 1.0 / (3.0 * (tot - 2.0/3.0 * (tot - abs))) * flux;
 			}
 
-			abs_tally += abs_tally_fsr * volume;
-			tot_tally += tot_tally_fsr * volume;
-			fis_tally += fis_tally_fsr * volume;
-			nu_fis_tally += nu_fis_tally_fsr * volume;
+			abs_tally += abs_tally_fsr * volume / flux_tally_fsr;
+			tot_tally += tot_tally_fsr * volume / flux_tally_fsr;
+			fis_tally += fis_tally_fsr * volume / flux_tally_fsr;
+			nu_fis_tally += nu_fis_tally_fsr * volume / flux_tally_fsr;
 			vol_tally += volume;
 			flux_tally += flux_tally_fsr * volume;
+			dif_tally += dif_tally_fsr * volume / flux_tally_fsr;
 		}
 
 		meshCell->setAbsRate(abs_tally / volume);
-		meshCell->setSigmaA(abs_tally / flux_tally);
-		meshCell->setSigmaT(tot_tally / flux_tally);
-		meshCell->setSigmaF(fis_tally / flux_tally);
-		meshCell->setNuSigmaF(nu_fis_tally / flux_tally);
-
-		log_printf(NORMAL, "meshCell: %i sigmaT: %f", i, tot_tally / flux_tally);
-		log_printf(NORMAL, "meshCell: %i sigmaA: %f", i, abs_tally / flux_tally);
-		log_printf(NORMAL, "meshCell: %i sigmaF: %f", i, fis_tally / flux_tally);
-		log_printf(NORMAL, "meshCell: %i NuSigmaF: %f", i, nu_fis_tally / flux_tally);
-		log_printf(NORMAL, "meshCell: %i flux: %f", i, flux_tally);
-
+		meshCell->setSigmaA(abs_tally / vol_tally);
+		meshCell->setSigmaT(tot_tally / vol_tally);
+		meshCell->setSigmaF(fis_tally / vol_tally);
+		meshCell->setSigmaS((meshCell->getSigmaT() - meshCell->getSigmaA()) / vol_tally);
+		meshCell->setNuSigmaF(nu_fis_tally / vol_tally);
+		meshCell->setDiffusivity(dif_tally / vol_tally);
+		meshCell->setOldFlux(flux_tally);
 
 	}
 }
+
+/* compute the xs for all MeshCells in the Mesh */
+void Solver::computeDs(Mesh* mesh){
+
+	double d, d_next, d_hat, d_tilde, current, flux, flux_next;
+	int cell_height, cell_width;
+	MeshCell* meshCell;
+	MeshCell* meshCellNext;
+
+	cell_height = mesh->getCellHeight();
+	cell_width = mesh->getCellWidth();
+
+	// loop over mesh cells in y direction
+	for (int y = 0; y < cell_height; y++){
+
+		// loop over mesh cells in x direction
+		for (int x = 0; x < cell_width; x++){
+
+			meshCell = mesh->getCells(y*cell_height + x);
+			d = meshCell->getDiffusivity();
+
+			// compute D Hat and D Tilde for left surface
+			if (x == 0){
+				d_hat = 0.0;
+				d_tilde = 0.0;
+			}
+			else{
+				meshCellNext = mesh->getCells(y*cell_height + x - 1);
+				d_next = meshCellNext->getDiffusivity();
+				d_hat = 2.0 * d * d_next / (meshCell->getWidth() * (d + d_next));
+				flux = meshCell->getOldFlux();
+				flux_next = meshCellNext->getOldFlux();
+				current = 0.0;
+				for (int e = 0; e < NUM_ENERGY_GROUPS; e++){
+					current += meshCell->getMeshSurfaces(0)->getCurrent(e);
+				}
+				d_tilde = (-d_hat * (flux_next - flux) - current) / (flux_next + flux);
+			}
+			meshCell->getMeshSurfaces(0)->setDHat(d_hat);
+			meshCell->getMeshSurfaces(0)->setDTilde(d_tilde);
+
+			// compute D Hat for bottom surface
+			if (y == cell_height - 1){
+				d_hat = 0.0;
+				d_tilde = 0.0;
+			}
+			else{
+				meshCellNext = mesh->getCells((y+1)*cell_height + x);
+				d_next = meshCellNext->getDiffusivity();
+				d_hat = 2.0 * d * d_next / (meshCell->getHeight() * (d + d_next));
+				flux = meshCell->getOldFlux();
+				flux_next = meshCellNext->getOldFlux();
+				current = 0.0;
+				for (int e = 0; e < NUM_ENERGY_GROUPS; e++){
+					current += meshCell->getMeshSurfaces(1)->getCurrent(e);
+				}
+				d_tilde = (-d_hat * (flux_next - flux) - current) / (flux_next + flux);
+			}
+			meshCell->getMeshSurfaces(1)->setDHat(d_hat);
+			meshCell->getMeshSurfaces(1)->setDTilde(d_tilde);
+
+			// compute D Hat for right surface
+			if (x == cell_width - 1){
+				d_hat = 0.0;
+				d_tilde = 0.0;
+			}
+			else{
+				meshCellNext = mesh->getCells(y*cell_height + x + 1);
+				d_next = meshCellNext->getDiffusivity();
+				d_hat = 2.0 * d * d_next / (meshCell->getWidth() * (d + d_next));
+				flux = meshCell->getOldFlux();
+				flux_next = meshCellNext->getOldFlux();
+				current = 0.0;
+				for (int e = 0; e < NUM_ENERGY_GROUPS; e++){
+					current += meshCell->getMeshSurfaces(2)->getCurrent(e);
+				}
+				d_tilde = (-d_hat * (flux_next - flux) - current) / (flux_next + flux);
+			}
+			meshCell->getMeshSurfaces(2)->setDHat(d_hat);
+			meshCell->getMeshSurfaces(2)->setDTilde(d_tilde);
+
+			// compute D Hat for top surface
+			if (y == 0){
+				d_hat = 0.0;
+				d_tilde = 0.0;
+			}
+			else{
+				meshCellNext = mesh->getCells((y-1)*cell_height + x);
+				d_next = meshCellNext->getDiffusivity();
+				d_hat = 2.0 * d * d_next / (meshCell->getHeight() * (d + d_next));
+				flux = meshCell->getOldFlux();
+				flux_next = meshCellNext->getOldFlux();
+				current = 0.0;
+				for (int e = 0; e < NUM_ENERGY_GROUPS; e++){
+					current += meshCell->getMeshSurfaces(3)->getCurrent(e);
+				}
+				d_tilde = (-d_hat * (flux_next - flux) - current) / (flux_next + flux);
+			}
+			meshCell->getMeshSurfaces(3)->setDHat(d_hat);
+			meshCell->getMeshSurfaces(3)->setDTilde(d_tilde);
+		}
+	}
+}
+
+
+void Solver::computeCMFDFlux(Mesh* mesh){
+
+	using namespace arma;
+
+	MeshCell* meshCell;
+	int cell_height, cell_width;
+
+	cell_height = mesh->getCellHeight();
+	cell_width = mesh->getCellWidth();
+
+	mat A = zeros(cell_height*cell_width, cell_height*cell_width);
+	mat M = zeros(cell_height*cell_width, cell_height*cell_width);
+	colvec phi = ones(cell_height*cell_width, 1);
+	colvec sold = zeros(cell_height*cell_width, 1);
+	colvec snew = zeros(cell_height*cell_width, 1);
+	colvec phi_old = zeros(cell_height*cell_width, 1);
+
+	for (int y = 0; y < cell_height; y++){
+		for (int x = 0; x < cell_width; x++){
+			phi(y*cell_width+x,0) = mesh->getCells(y*cell_width+x)->getOldFlux();
+		}
+	}
+
+	/* construct A and M matrix and flux vector */
+	// loop over mesh cells in y direction
+	for (int y = 0; y < cell_height; y++){
+
+		// loop over mesh cells in x direction
+		for (int x = 0; x < cell_width; x++){
+
+			meshCell = mesh->getCells(y*cell_width + x);
+
+			// D
+			A(y*cell_width + x,y*cell_width + x) = (meshCell->getMeshSurfaces(0)->getDHat() + meshCell->getMeshSurfaces(0)->getDTilde()) * meshCell->getHeight()
+					+ (meshCell->getMeshSurfaces(1)->getDHat() - meshCell->getMeshSurfaces(1)->getDTilde()) * meshCell->getWidth()
+					+ (meshCell->getMeshSurfaces(2)->getDHat() - meshCell->getMeshSurfaces(2)->getDTilde()) * meshCell->getHeight()
+					+ (meshCell->getMeshSurfaces(3)->getDHat() + meshCell->getMeshSurfaces(3)->getDTilde()) * meshCell->getWidth()
+					+ meshCell->getSigmaA()*(meshCell->getHeight() * meshCell->getWidth());
+			M(y*cell_width + x,y*cell_width + x) = meshCell->getNuSigmaF() * (meshCell->getHeight() * meshCell->getWidth());
+
+			// U
+			if (x != cell_width - 1){
+				A(y*cell_width + x,y*cell_width + x + 1) = - (meshCell->getMeshSurfaces(2)->getDHat() - meshCell->getMeshSurfaces(2)->getDTilde()) * meshCell->getHeight();
+			}
+
+			// L
+			if (x != 0){
+				A(y*cell_width + x,y*cell_width + x - 1) = - (meshCell->getMeshSurfaces(0)->getDHat() + meshCell->getMeshSurfaces(0)->getDTilde()) * meshCell->getHeight();
+			}
+
+			// below
+			if (y != cell_height - 1){
+				A(y*cell_width + x,(y+1)*cell_width + x) = - (meshCell->getMeshSurfaces(1)->getDHat() - meshCell->getMeshSurfaces(1)->getDTilde()) * meshCell->getWidth();
+			}
+
+			// above
+			if (y != 0){
+				A(y*cell_width + x,(y-1)*cell_width + x) = - (meshCell->getMeshSurfaces(3)->getDHat() + meshCell->getMeshSurfaces(3)->getDTilde()) * meshCell->getWidth();
+			}
+		}
+	}
+
+	log_printf(NORMAL, "Running CMFD Diffusion Solver using power iteration...");
+
+	int max_outer = 1000;
+	double eps = 0.0;
+	double keff;
+	sold = M * phi;
+	double sumold, sumnew;
+	sumold = sum(sold);
+	sold = sold/(sumold/(cell_width * cell_height));
+	sumold = cell_width * cell_height;
+	double criteria = 1e-8;
+
+	for (int iter = 0; iter < max_outer; iter++){
+		phi = inv(A) * sold;
+		snew = M * phi;
+		sumnew = sum(snew);
+		keff = sumnew / sumold;
+		eps = 0.0;
+		for (int np = 0; np < cell_width * cell_height; np++){
+			if (snew(np,0) > 0){
+				eps += pow((sold(np,0) * keff) / snew(np,0) - 1, 2);
+			}
+		}
+		eps = pow(eps/(cell_width*cell_height), 0.5);
+		sold = snew / (sumnew / (cell_width * cell_height));
+
+		if (iter > 5 && eps < criteria){
+			/* update flux in each MeshCell */
+			for (int y = 0; y < cell_height; y++){
+				for (int x = 0; x < cell_width; x++){
+					meshCell = mesh->getCells(y * cell_width + x);
+					meshCell->setNewFlux(phi(y*cell_width + x, 0));
+				}
+			}
+			break;
+		}
+	}
+
+}
+
+/* update the MOC flux in each FSR */
+void Solver::updateMOCFlux(Mesh* mesh){
+
+	// tallies for fsr_vol * group_avg_xs and fsr_vol
+	MeshCell* meshCell;
+	FlatSourceRegion* fsr;
+	double old_flux, new_flux, fsr_new_flux;
+	double* flux;
+
+	// loop over mesh cells
+	for (int i = 0; i < mesh->getCellWidth() * mesh->getCellHeight(); i++){
+		meshCell = mesh->getCells(i);
+		old_flux = meshCell->getOldFlux();
+		new_flux = meshCell->getNewFlux();
+
+		std::vector<int>::iterator iter;
+		for (iter = meshCell->getFSRs()->begin(); iter != meshCell->getFSRs()->end(); ++iter) {
+			fsr = &_flat_source_regions[*iter];
+			flux = fsr->getFlux();
+
+			for (int e = 0; e < NUM_ENERGY_GROUPS; e++){
+				fsr_new_flux = new_flux / old_flux * flux[e];
+				fsr->setFlux(e, fsr_new_flux);
+			}
+		}
+	}
+
+}
+
+///* check to make sure the neutron balance equation
+// * is satisfied with the currents from the CMFD solver
+// */
+//void Solver::checkNeutBal(Mesh* mesh){
+//
+//	MeshCell* meshCell;
+//	MeshCell* meshCellNext;
+//	int cell_height, cell_width;
+//	double current_left, current_right, current_up, current_down;
+//
+//	cell_height = mesh->getCellHeight();
+//	cell_width = mesh->getCellWidth();
+//
+//	// loop over mesh cells in y direction
+//	for (int y = 0; y < cell_height; y++){
+//
+//		// loop over mesh cells in x direction
+//		for (int x = 0; x < cell_width; x++){
+//			meshCell = mesh->getCells(y * cell_width + x);
+//
+//			// compute currents, J
+//			// left
+//			if (x != 0){
+//				meshCellNext = mesh->getCells(y*cell_width + x - 1);
+//				current_left = - meshCellNext->getDiffusivity() * (meshCell->getOldFlux() - meshCellNext->getOldFlux())
+//						-
+//			}
+//			else{
+//
+//			}
+//
+//			// down
+//			// right
+//			// up
+//
+//			// check neutron balance
+//
+//		}
+//	}
+//
+//
+//
+//}
+
+
+
+
+
+
+
 
 
 

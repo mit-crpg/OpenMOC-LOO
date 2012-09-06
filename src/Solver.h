@@ -17,6 +17,7 @@
 #include <string>
 #include <sstream>
 #include <queue>
+#include <armadillo>
 #include "Geometry.h"
 #include "Quadrature.h"
 #include "Track.h"
@@ -76,10 +77,11 @@ public:
 	void plotFluxes();
 	void checkTrackSpacing();
 	void computePinPowers();
-	void cmfd();
-	void computeNetCurrent();
-	void computeCoeffs();
 	void computeXS(Mesh* mesh);
+	void computeDs(Mesh* mesh);
+	void computeCMFDFlux(Mesh* mesh);
+	void updateMOCFlux(Mesh* mesh);
+//	void checkNeutBal(Mesh* mesh);
 };
 
 #endif /* SOLVER_H_ */

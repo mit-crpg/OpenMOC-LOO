@@ -32,6 +32,8 @@ private:
 	double* _current;
 	double* _flux;
 	double _normal;
+	double _d_hat;
+	double _d_tilde;
 
 public:
 	MeshSurface();
@@ -46,7 +48,12 @@ public:
 	void setFlux(double flux, int group);
 	double getFlux(int group);
 	void incrementFlux(double flux, int group);
+	void setDHat(double dHat);
+	double getDHat();
+	void setDTilde(double dTilde);
+	double getDTilde();
 };
+
 
 
 #endif /* MESHSURFACE_H_ */

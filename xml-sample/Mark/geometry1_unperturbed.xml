@@ -15,7 +15,7 @@
   
   <cell id="1" universe="0" fill="8" surfaces="1 -2 3 -4" />
 
-<!-- Definition of Lattices -->
+<!-- Core -->
   <lattice id="8">
     <type>rectangular</type>
     <dimension>18 18</dimension>

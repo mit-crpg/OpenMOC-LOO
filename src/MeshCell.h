@@ -34,7 +34,11 @@ private:
 	double _sigma_a;
 	double _sigma_t;
 	double _sigma_f;
+	double _sigma_s;
 	double _nu_sigma_f;
+	double _diffusivity;
+	double _old_flux;
+	double _new_flux;
 
 public:
 	MeshCell();
@@ -53,8 +57,12 @@ public:
 	double getSigmaT();
 	void setSigmaF(double sigmaF);
 	double getSigmaF();
+	void setSigmaS(double sigmaS);
+	double getSigmaS();
 	void setNuSigmaF(double nuSigmaF);
 	double getNuSigmaF();
+	void setDiffusivity(double diffusivity);
+	double getDiffusivity();
 	MeshSurface* findSurface(LocalCoords* coord);
 	void setBounds(double x, double y);
 	double* getBounds();
@@ -64,6 +72,10 @@ public:
 	void setFSREnd(int fsr);
 	void makeSurfaces();
 	MeshSurface* getMeshSurfaces(int surface);
+	void setNewFlux(double flux);
+	double getNewFlux();
+	void setOldFlux(double flux);
+	double getOldFlux();
 };
 
 

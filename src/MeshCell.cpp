@@ -21,16 +21,17 @@ MeshCell::~MeshCell(){}
 void MeshCell::makeSurfaces(){
 
 	/* set sides */
-	_mesh_surfaces[0].setType(SIDEX);
-	_mesh_surfaces[1].setType(SIDEY);
-	_mesh_surfaces[2].setType(SIDEX);
-	_mesh_surfaces[3].setType(SIDEY);
-	_mesh_surfaces[4].setType(CORNER);
-	_mesh_surfaces[5].setType(CORNER);
-	_mesh_surfaces[6].setType(CORNER);
-	_mesh_surfaces[7].setType(CORNER);
+	_mesh_surfaces[0].setType(SIDEX);		/* left */
+	_mesh_surfaces[1].setType(SIDEY);		/* bottom */
+	_mesh_surfaces[2].setType(SIDEX);		/* right */
+	_mesh_surfaces[3].setType(SIDEY);		/* top */
+	_mesh_surfaces[4].setType(CORNER);		/* bottom left */
+	_mesh_surfaces[5].setType(CORNER);		/* bottome right */
+	_mesh_surfaces[6].setType(CORNER);		/* top right */
+	_mesh_surfaces[7].setType(CORNER);		/* top left */
 
-	/* set normals to sides */
+	/* set outward normals to sides */
+	/* for corners, normal is set to the normal of surface - 4 */
 	_mesh_surfaces[0].setNormal(PI);
 	_mesh_surfaces[1].setNormal(3.0 * PI / 2.0);
 	_mesh_surfaces[2].setNormal(0.0);
@@ -188,6 +189,14 @@ void MeshCell::setSigmaF(double sigmaF){
 	_sigma_f = sigmaF;
 }
 
+double MeshCell::getSigmaS(){
+	return _sigma_s;
+}
+
+void MeshCell::setSigmaS(double sigmaS){
+	_sigma_s = sigmaS;
+}
+
 double MeshCell::getNuSigmaF(){
 	return _nu_sigma_f;
 }
@@ -196,4 +205,27 @@ void MeshCell::setNuSigmaF(double nuSigmaF){
 	_nu_sigma_f = nuSigmaF;
 }
 
+double MeshCell::getDiffusivity(){
+	return _diffusivity;
+}
+
+void MeshCell::setDiffusivity(double diffusivity){
+	_diffusivity = diffusivity;
+}
+
+double MeshCell::getOldFlux(){
+	return _old_flux;
+}
+
+void MeshCell::setOldFlux(double flux){
+	_old_flux = flux;
+}
+
+double MeshCell::getNewFlux(){
+	return _new_flux;
+}
+
+void MeshCell::setNewFlux(double flux){
+	_new_flux = flux;
+}
 

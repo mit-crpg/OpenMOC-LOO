@@ -99,8 +99,8 @@ int main(int argc, const char **argv) {
 	if (opts.computePinPowers())
 		solver.computePinPowers();
 
-	if (opts.cmfd())
-		solver.cmfd();
+//	if (opts.cmfd())
+//		solver.cmfd();
 
 	log_printf(RESULT, "k_eff = %f", k_eff);
 

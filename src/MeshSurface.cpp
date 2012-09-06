@@ -58,3 +58,21 @@ double MeshSurface::getFlux(int group){
 void MeshSurface::incrementFlux(double flux, int group){
 	_flux[group] += flux;
 }
+
+void MeshSurface::setDHat(double dHat){
+	_d_hat = dHat;
+}
+
+double MeshSurface::getDHat(){
+	return _d_hat;
+}
+
+void MeshSurface::setDTilde(double dTilde){
+	_d_tilde = dTilde;
+}
+
+double MeshSurface::getDTilde(){
+	return _d_tilde;
+}
+
+
