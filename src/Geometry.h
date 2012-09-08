@@ -114,6 +114,7 @@ public:
 	void findFSRs(Universe* univ, MeshCell* meshCell, int* fsr_id);
 	int nextLatticeHeight(Universe* curr);
 	Mesh* getMesh();
+	int findMeshDepth(Universe* univ, int cmfd_level);
 
 };
 

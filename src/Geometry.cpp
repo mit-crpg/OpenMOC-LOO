@@ -2039,14 +2039,28 @@ bool Geometry::mapContainsKey(std::map<K, V> map, K key) {
 void Geometry::makeCMFDMesh(){
 	log_printf(NORMAL, "Making CMFD mesh...");
 
-	/* find cell width and height at CMFD_LEVEL lattice */
+	int max_cmfd_level = 0;
+	int cmfd_level = CMFD_LEVEL;
 	Universe* univ = _universes.at(0);
+
+	/* find the mesh depth of the geometry */
+	max_cmfd_level = findMeshDepth(univ, max_cmfd_level);
+	log_printf(INFO, "Maximum cmfd mesh depth is: %i level(s)", max_cmfd_level);
+
+	/* if cmfd_level > CMFD_LEVEL throw errror message */
+	if (cmfd_level > max_cmfd_level){
+		log_printf(ERROR, "Specified CMFD LEVEL (%i) is greater than the "
+				"minimum mesh depth (%i). Please reset CMFD_LEVEL to be <= %i.",
+				cmfd_level, max_cmfd_level, max_cmfd_level);
+	}
+
+	/* find cell width and height at CMFD_LEVEL lattice */
 	int width = 0;
 	int height = 0;
 	findMeshWidth(univ, &width, CMFD_LEVEL);
 	findMeshHeight(univ, &height, CMFD_LEVEL);
 
-	/* set the cell and geometric width and heigth of mesh */
+	/* set the cell and geometric width and height of mesh */
 	_mesh->setCellHeight(height);
 	_mesh->setCellWidth(width);
 	_mesh->setHeight(getHeight());
@@ -2062,7 +2076,6 @@ void Geometry::makeCMFDMesh(){
 	defineMesh(univ, CMFD_LEVEL, &meshCellNum, 0, true, 0);
 	_mesh->setCellBounds();
 	_mesh->setFSRBounds();
-	//_mesh->printBounds();
 	return;
 }
 
@@ -2376,6 +2389,68 @@ void Geometry::findMeshWidth(Universe* univ, int* width, int depth){
 	}
 
 	return;
+}
+
+/**
+ * This is a recursive function that finds the depth of the geometry mesh.
+ * @param univ a pointer to a the base universe (universe 0)
+ * @param cmfd_level a pointer to the accumulator for the Mesh level
+ */
+int Geometry::findMeshDepth(Universe* univ, int cmfd_level){
+
+	/* If the universe is a SIMPLE type universe */
+	if (univ->getType() == SIMPLE){
+		std::map<int, Cell*> cells = univ->getCells();
+		Cell* curr;
+		std::map<int, Cell*>::iterator iter;
+
+		for (iter = cells.begin(); iter != cells.end(); ++iter) {
+			curr = iter->second;
+
+			/* IF the cell is FILL type recursively call findMeshWidth */
+			if (curr->getType() == FILL){
+				CellFill* fill_cell = static_cast<CellFill*>(curr);
+				Universe* universe_fill = fill_cell->getUniverseFill();
+				cmfd_level = findMeshDepth(universe_fill, cmfd_level);
+			}
+		}
+	}
+
+	/* If the universe is a LATTICE type universe */
+	else {
+		Lattice* lattice = static_cast<Lattice*>(univ);
+		Universe* curr;
+		int num_x = lattice->getNumX();
+		int num_y = lattice->getNumY();
+		cmfd_level++;
+		int i = num_y-1;
+		int j = num_x-1;
+		int min = 0;
+		int levels = 0;
+
+		/* loop through lattice cells and recursively call  */
+		for (int x = 0; x < j; x++){
+			for (int y = 0; y < i; y++){
+
+				curr = lattice->getUniverse(j, i);
+
+				/* find the width of the current universe */
+				levels = findMeshDepth(curr, cmfd_level);
+
+				if (x == 0 && y == 0){
+					min = levels;
+				}
+				else{
+					min = std::min(min, levels);
+				}
+
+			}
+		}
+
+		cmfd_level = min;
+	}
+
+	return cmfd_level;
 }
 
 
