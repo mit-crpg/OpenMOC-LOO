@@ -8,6 +8,7 @@ COMPILEOPTS += -O2
 BINARIES    += openmoc
 LINKOPTS    += -lexpat
 LINKOPTS    += -lsilo
+LINKOPTS	+= -larmadillo
 LINKOPTS    += `pkg-config Magick++ --libs`
 COMPILEOPTS += `pkg-config Magick++ --cflags`
 SOURCES     += openmoc.cpp
