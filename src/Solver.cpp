@@ -1124,6 +1124,7 @@ void Solver::plotFluxes(){
 
 
 /* compute the xs for all MeshCells in the Mesh */
+/* FIXME: double check whether flux include volume already */
 void Solver::computeXS(Mesh* mesh){
 
 	// tallies for fsr_vol * group_avg_xs and fsr_vol
@@ -1147,10 +1148,7 @@ void Solver::computeXS(Mesh* mesh){
 		dif_tally = 0;
 
 		std::vector<int>::iterator iter;
-		for (iter = meshCell->getFSRs()->begin(); iter != meshCell->getFSRs()->end(); ++iter) {
-			fsr = &_flat_source_regions[*iter];
-			material = fsr->getMaterial();
-			volume = fsr->getVolume();
+		for (int e = 0; e < NUM_ENERGY_GROUPS; e++) {
 			abs_tally_fsr = 0;
 			flux_tally_fsr = 0;
 			tot_tally_fsr = 0;
@@ -1158,36 +1156,46 @@ void Solver::computeXS(Mesh* mesh){
 			nu_fis_tally_fsr = 0;
 			dif_tally_fsr = 0;
 
-			for (int e = 0; e < NUM_ENERGY_GROUPS; e++){
+			for (iter = meshCell->getFSRs()->begin(); iter != meshCell->getFSRs()->end(); ++iter){
+				/* Gets FSR specific data. */
+				fsr = &_flat_source_regions[*iter];
+				material = fsr->getMaterial();
+				volume = fsr->getVolume();
 				flux = fsr->getFlux()[e];
 				abs = material->getSigmaA()[e];
+				/* Per our material file, the total xs has trans xs's data. */
 				tot = material->getSigmaT()[e];
 				fis = material->getSigmaF()[e];
 				nu_fis = material->getNuSigmaF()[e];
+
+				/* Tally reaction rates. */
 				abs_tally_fsr += abs * flux;
 				tot_tally_fsr += tot * flux;
 				fis_tally_fsr += fis * flux;
 				nu_fis_tally_fsr += nu_fis * flux;
 				flux_tally_fsr += flux;
-				dif_tally_fsr += 1.0 / (3.0 * (tot - 2.0/3.0 * (tot - abs))) * flux;
+				dif_tally_fsr += flux / (3.0 * tot);
+
+				vol_tally += volume;
 			}
 
-			abs_tally += abs_tally_fsr * volume / flux_tally_fsr;
-			tot_tally += tot_tally_fsr * volume / flux_tally_fsr;
-			fis_tally += fis_tally_fsr * volume / flux_tally_fsr;
-			nu_fis_tally += nu_fis_tally_fsr * volume / flux_tally_fsr;
-			vol_tally += volume;
-			flux_tally += flux_tally_fsr * volume;
-			dif_tally += dif_tally_fsr * volume / flux_tally_fsr;
+			abs_tally += abs_tally_fsr / flux_tally_fsr;
+			tot_tally += tot_tally_fsr / flux_tally_fsr;
+			fis_tally += fis_tally_fsr / flux_tally_fsr;
+			nu_fis_tally += nu_fis_tally_fsr / flux_tally_fsr;
+			dif_tally += dif_tally_fsr / flux_tally_fsr;
+
+			flux_tally += flux_tally_fsr;
 		}
 
-		meshCell->setAbsRate(abs_tally / volume);
-		meshCell->setSigmaA(abs_tally / vol_tally);
-		meshCell->setSigmaT(tot_tally / vol_tally);
-		meshCell->setSigmaF(fis_tally / vol_tally);
-		meshCell->setSigmaS((meshCell->getSigmaT() - meshCell->getSigmaA()) / vol_tally);
-		meshCell->setNuSigmaF(nu_fis_tally / vol_tally);
-		meshCell->setDiffusivity(dif_tally / vol_tally);
+		/* FIXME: what is AbsRate used for? Is divided by volume correct? */
+		meshCell->setAbsRate(abs_tally/flux_tally);
+		meshCell->setSigmaA(abs_tally/flux_tally);
+		meshCell->setSigmaT(tot_tally/flux_tally);
+		meshCell->setSigmaF(fis_tally/flux_tally);
+		meshCell->setSigmaS((meshCell->getSigmaT() - meshCell->getSigmaA()) / flux_tally);
+		meshCell->setNuSigmaF(nu_fis_tally / flux_tally);
+		meshCell->setDiffusivity(dif_tally / flux_tally);
 		meshCell->setOldFlux(flux_tally);
 
 	}

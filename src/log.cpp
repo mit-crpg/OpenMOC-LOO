@@ -13,7 +13,7 @@
 
 
 /* Default logging level is the lowest (most verbose) level */
-logLevel log_level = NORMAL;
+logLevel log_level = DEBUG;
 
 
 /**
