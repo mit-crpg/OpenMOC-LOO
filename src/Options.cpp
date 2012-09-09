@@ -43,6 +43,7 @@ Options::Options(int argc, const char **argv) {
 	_compute_pin_powers = false;	/* Default will not compute pin powers */
 	_compress_cross_sections = false;/* Default will not compress cross-sections */
 	_cmfd = true; /* Default will not perform CMFD acceleration */
+	_update_flux = false;  /* Default will not use CMFD to update flux */
 	_plot_current = false;			/* Default will not plot net current */
 
 
@@ -79,6 +80,9 @@ Options::Options(int argc, const char **argv) {
 			else if (strcmp(argv[i], "-cxs") == 0 ||
 					strcmp(argv[i], "--compressxs") == 0)
 				_compress_cross_sections = true;
+			else if (strcmp(argv[i], "-uf") == 0 ||
+					strcmp(argv[i], "--updateflux") == 0)
+				_update_flux = true;
 			else if (strcmp(argv[i], "-pc") == 0 ||
 					strcmp(argv[i], "--plotcurrent") == 0)
 				_plot_current = true;
@@ -225,4 +229,13 @@ bool Options::cmfd() const {
 bool Options::plotCurrent() const {
 	return _plot_current;
 }
+
+/**
+ * Returns a boolean representing whether or not to use CMFD to update flux
+ * @return whether or not to use CMFD to update flux
+ */
+bool Options::updateFlux() const {
+	return _update_flux;
+}
+
 

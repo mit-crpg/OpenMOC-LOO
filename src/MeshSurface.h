@@ -34,6 +34,8 @@ private:
 	double _normal;
 	double _d_hat;
 	double _d_tilde;
+	int _mesh_cell;
+	int _surface_num;
 
 public:
 	MeshSurface();
@@ -52,7 +54,12 @@ public:
 	double getDHat();
 	void setDTilde(double dTilde);
 	double getDTilde();
+	void setMeshCell(int meshCell);
+	int getMeshCell();
+	void setSurfaceNum(int surfaceNum);
+	int getSurfaceNum();
 };
+
 
 
 

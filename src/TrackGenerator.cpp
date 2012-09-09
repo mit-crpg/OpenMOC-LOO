@@ -478,7 +478,7 @@ void TrackGenerator::segmentize() {
 				y0 = track->getStart()->getY();
 				num_segments = track->getNumSegments();
 				for (int k=0; k < num_segments; k++){
-					log_printf(DEBUG, "Segmented segment: %f...", num_segments);
+					log_printf(DEBUG, "Segmented segment: %i...", k);
 					x1 = x0 + cos_phi * track->getSegment(k)->_length;
 					y1 = y0 + sin_phi * track->getSegment(k)->_length;
 					drawLine(bitMap, x0, y0, x1, y1, track->getSegment(k)->_region_id);

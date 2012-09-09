@@ -35,6 +35,16 @@ MeshCell* Mesh::getCells(int cell){
 
 void Mesh::makeMeshCells(){
 	_cells = new MeshCell[_cell_width * _cell_height];
+
+	/* give each surface an ID to its MeshCell */
+	for (int y = 0; y < _cell_height; y++){
+		for (int x = 0; x < _cell_width; x++){
+			for (int s = 0; s < 8; s++){
+				_cells[y*_cell_width + x].getMeshSurfaces(s)->setMeshCell(y*_cell_width + x);
+				_cells[y*_cell_width + x].getMeshSurfaces(s)->setSurfaceNum(s);
+			}
+		}
+	}
 }
 
 int Mesh::findMeshCell(double pointX, double pointY){

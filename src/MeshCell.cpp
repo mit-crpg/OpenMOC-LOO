@@ -26,7 +26,7 @@ void MeshCell::makeSurfaces(){
 	_mesh_surfaces[2].setType(SIDEX);		/* right */
 	_mesh_surfaces[3].setType(SIDEY);		/* top */
 	_mesh_surfaces[4].setType(CORNER);		/* bottom left */
-	_mesh_surfaces[5].setType(CORNER);		/* bottome right */
+	_mesh_surfaces[5].setType(CORNER);		/* bottom right */
 	_mesh_surfaces[6].setType(CORNER);		/* top right */
 	_mesh_surfaces[7].setType(CORNER);		/* top left */
 
@@ -40,6 +40,7 @@ void MeshCell::makeSurfaces(){
 	_mesh_surfaces[5].setNormal(3.0 * PI / 2.0);
 	_mesh_surfaces[6].setNormal(0.0);
 	_mesh_surfaces[7].setNormal(PI / 2.0);
+
 }
 
 double MeshCell::getWidth(){
@@ -228,4 +229,6 @@ double MeshCell::getNewFlux(){
 void MeshCell::setNewFlux(double flux){
 	_new_flux = flux;
 }
+
+
 

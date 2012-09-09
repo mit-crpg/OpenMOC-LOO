@@ -37,6 +37,7 @@ private:
 	bool _compress_cross_sections;
 	bool _cmfd;
 	bool _plot_current;
+	bool _update_flux;
 public:
     Options(int argc, const char **argv);
     ~Options(void);
@@ -54,6 +55,7 @@ public:
     bool compressCrossSections() const;
 	bool cmfd() const;
 	bool plotCurrent() const;
+	bool updateFlux() const;
 };
 
 #endif

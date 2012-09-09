@@ -59,12 +59,13 @@ private:
 	int _pre_factor_array_size;
 	int _pre_factor_max_index;
 	double _pre_factor_spacing;
+	bool _update_flux;
 #endif
 	void precomputeFactors();
 	double computePreFactor(segment* seg, int energy, int angle);
 	void initializeFSRs();
 public:
-	Solver(Geometry* geom, TrackGenerator* track_generator, Plotter* plotter);
+	Solver(Geometry* geom, TrackGenerator* track_generator, Plotter* plotter, bool _update_flux);
 	virtual ~Solver();
 	void zeroTrackFluxes();
 	void oneFSRFluxes();
@@ -79,7 +80,7 @@ public:
 	void computePinPowers();
 	void computeXS(Mesh* mesh);
 	void computeDs(Mesh* mesh);
-	void computeCMFDFlux(Mesh* mesh);
+	double computeCMFDFlux(Mesh* mesh);
 	void updateMOCFlux(Mesh* mesh);
 //	void checkNeutBal(Mesh* mesh);
 };

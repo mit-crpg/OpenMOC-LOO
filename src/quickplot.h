@@ -68,7 +68,7 @@ int convertToBitmapX(BitMap<U>* bitMap, V x);
 template <typename U>
 void deleteBitMap(BitMap<U>* bitMap);
 template <typename U>
-void drawText(BitMap<U>* bitMap, std::string text, int x, int y);
+void drawText(BitMap<U>* bitMap, std::string text, double x, double y);
 template <typename U>
 void addScalebar(BitMap<U>* bitMap, float* pixMap, std::list<Magick::Drawable>* drawList);
 
@@ -450,7 +450,7 @@ void deleteBitMap(BitMap<U>* bitMap){
  * Write text on BitMap
  */
 template <typename U>
-void drawText(BitMap<U>* bitMap, std::string text, int x, int y){
+void drawText(BitMap<U>* bitMap, std::string text, double x, double y){
 
 	/* add item to drawlist	 */
 	bitMap->drawList.push_back(Magick::DrawableText(x, y, text));

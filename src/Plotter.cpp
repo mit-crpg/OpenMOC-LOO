@@ -136,7 +136,7 @@ int Plotter::convertToPixelX(double x){
  * Convert an y value our from geometry coordinates to Bitmap coordinates.
  */
 int Plotter::convertToPixelY(double y){
-	return int(((y + _height / 2.0) / _height) * _bit_length_y);
+	return int((1.0 - (y + _height / 2.0) / _height) * _bit_length_y);
 }
 
 
@@ -258,9 +258,6 @@ void Plotter::makeFSRMap(int* pixMap){
 			x_global = convertToGeometryX(x);
 			y_global = convertToGeometryY(y);
 
-			log_printf(DEBUG, "finding cell for bit x: %i, bit y: %i, "
-					"global x: %f, global %f", x, y, x_global, y_global);
-
 			/* create point located in universe 0 */
 			LocalCoords point(x_global,y_global);
 			point.setUniverse(0);
@@ -369,7 +366,7 @@ void Plotter::plotNetCurrents(Mesh* mesh){
 				text_stream << meshCell->getMeshSurfaces(0)->getCurrent(group);
 				text = text_stream.str();
 				text_stream.str("");
-				drawText(bitMap, text, x_mid + 20, y_mid + 10 * (NUM_ENERGY_GROUPS / 2.0 - group));
+				drawText(bitMap, text, x_mid + 20, y_mid - 10 * (NUM_ENERGY_GROUPS / 2.0 - group));
 				text.clear();
 
 				/* SIDE 1 */
@@ -381,7 +378,7 @@ void Plotter::plotNetCurrents(Mesh* mesh){
 				text_stream << meshCell->getMeshSurfaces(1)->getCurrent(group);
 				text = text_stream.str();
 				text_stream.str("");
-				drawText(bitMap, text, x_mid - 20, y_mid + 10 * (NUM_ENERGY_GROUPS - group + 1));
+				drawText(bitMap, text, x_mid - 20, y_mid - 10 * (NUM_ENERGY_GROUPS - group));
 				text.clear();
 
 				/* SIDE 2 */
@@ -393,7 +390,7 @@ void Plotter::plotNetCurrents(Mesh* mesh){
 				text_stream << meshCell->getMeshSurfaces(2)->getCurrent(group);
 				text = text_stream.str();
 				text_stream.str("");
-				drawText(bitMap, text, x_mid - 80, y_mid + 10 * (NUM_ENERGY_GROUPS / 2.0 - group));
+				drawText(bitMap, text, x_mid - 80, y_mid - 10 * (NUM_ENERGY_GROUPS / 2.0 - group));
 				text.clear();
 
 				/* SIDE 3 */
@@ -405,7 +402,7 @@ void Plotter::plotNetCurrents(Mesh* mesh){
 				text_stream << meshCell->getMeshSurfaces(3)->getCurrent(group);
 				text = text_stream.str();
 				text_stream.str("");
-				drawText(bitMap, text, x_mid - 20, y_mid - 10 * (group + 1));
+				drawText(bitMap, text, x_mid - 20, y_mid + 10 * (group + 1.5));
 				text.clear();
 			}
 
@@ -430,7 +427,7 @@ void Plotter::plotNetCurrents(Mesh* mesh){
 			text_stream << "tally: " << current1;
 			text = text_stream.str();
 			text_stream.str("");
-			drawText(bitMap2, text, x_mid - 20, y_mid + 20);
+			drawText(bitMap2, text, x_mid - 20, y_mid - 10);
 			text.clear();
 
 			/* SIDE 2 */
@@ -454,7 +451,7 @@ void Plotter::plotNetCurrents(Mesh* mesh){
 			text_stream << "tally: " << current3;
 			text = text_stream.str();
 			text_stream.str("");
-			drawText(bitMap2, text, x_mid - 20, y_mid - 10);
+			drawText(bitMap2, text, x_mid - 20, y_mid + 15);
 			text.clear();
 
 
@@ -623,7 +620,7 @@ void Plotter::plotDHats(Mesh* mesh){
 			y_mid = convertToPixelY((meshCell->getBounds()[1] + meshCell->getBounds()[3]) / 2.0);
 
 			/* create string and draw on bitMap */
-			text_stream << "DHat: " << meshCell->getMeshSurfaces(0)->getDHat();
+			text_stream << "DHat0: " << meshCell->getMeshSurfaces(0)->getDHat();
 			text = text_stream.str();
 			text_stream.str("");
 			drawText(bitMap, text, x_mid + 20, y_mid);
@@ -631,7 +628,7 @@ void Plotter::plotDHats(Mesh* mesh){
 			text_stream << "DTilde: " << meshCell->getMeshSurfaces(0)->getDTilde();
 			text = text_stream.str();
 			text_stream.str("");
-			drawText(bitMap, text, x_mid + 20, y_mid - 15);
+			drawText(bitMap, text, x_mid + 20, y_mid - 15.0);
 			text.clear();
 
 
@@ -641,15 +638,15 @@ void Plotter::plotDHats(Mesh* mesh){
 			y_mid = convertToPixelY(meshCell->getBounds()[1]);
 
 			/* create string and draw on bitMap */
-			text_stream << "DHat: " << meshCell->getMeshSurfaces(1)->getDHat();
+			text_stream << "DHat1: " << meshCell->getMeshSurfaces(1)->getDHat();
 			text = text_stream.str();
 			text_stream.str("");
-			drawText(bitMap, text, x_mid - 20, y_mid + 20);
+			drawText(bitMap, text, x_mid - 20, y_mid - 20.0);
 			text.clear();
 			text_stream << "DTilde: " << meshCell->getMeshSurfaces(1)->getDTilde();
 			text = text_stream.str();
 			text_stream.str("");
-			drawText(bitMap, text, x_mid - 20, y_mid + 35);
+			drawText(bitMap, text, x_mid - 20, y_mid - 35.0);
 			text.clear();
 
 			/* SIDE 2 */
@@ -658,7 +655,7 @@ void Plotter::plotDHats(Mesh* mesh){
 			y_mid = convertToPixelY((meshCell->getBounds()[1] + meshCell->getBounds()[3]) / 2.0);
 
 			/* create string and draw on bitMap */
-			text_stream << "DHat: " << meshCell->getMeshSurfaces(2)->getDHat();
+			text_stream << "DHat2: " << meshCell->getMeshSurfaces(2)->getDHat();
 			text = text_stream.str();
 			text_stream.str("");
 			drawText(bitMap, text, x_mid - 80, y_mid);
@@ -666,7 +663,7 @@ void Plotter::plotDHats(Mesh* mesh){
 			text_stream << "DTilde: " << meshCell->getMeshSurfaces(2)->getDTilde();
 			text = text_stream.str();
 			text_stream.str("");
-			drawText(bitMap, text, x_mid - 80, y_mid - 15);
+			drawText(bitMap, text, x_mid - 80, y_mid - 15.0);
 			text.clear();
 
 			/* SIDE 3 */
@@ -675,15 +672,15 @@ void Plotter::plotDHats(Mesh* mesh){
 			y_mid = convertToPixelY(meshCell->getBounds()[3]);
 
 			/* create string and draw on bitMap */
-			text_stream << "DHat: " << meshCell->getMeshSurfaces(3)->getDHat();
+			text_stream << "DHat3: " << meshCell->getMeshSurfaces(3)->getDHat();
 			text = text_stream.str();
 			text_stream.str("");
-			drawText(bitMap, text, x_mid - 20, y_mid - 10);
+			drawText(bitMap, text, x_mid - 20, y_mid + 35.0);
 			text.clear();
 			text_stream << "DTilde: " << meshCell->getMeshSurfaces(3)->getDTilde();
 			text = text_stream.str();
 			text_stream.str("");
-			drawText(bitMap, text, x_mid - 20, y_mid - 25);
+			drawText(bitMap, text, x_mid - 20, y_mid + 20.0);
 			text.clear();
 		}
 	}

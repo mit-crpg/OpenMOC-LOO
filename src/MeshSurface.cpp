@@ -35,8 +35,8 @@ double MeshSurface::getCurrent(int group){
 	return _current[group];
 }
 
-void MeshSurface::incrementCurrent(double current, double phi, int group){
-	_current[group] += current * fabs(cos(_normal - phi));
+void MeshSurface::incrementCurrent(double flux, double phi, int group){
+	_current[group] += flux * fabs(cos(_normal - phi));
 }
 
 void MeshSurface::setNormal(double normal){
@@ -74,5 +74,28 @@ void MeshSurface::setDTilde(double dTilde){
 double MeshSurface::getDTilde(){
 	return _d_tilde;
 }
+
+void MeshSurface::setMeshCell(int meshCell){
+	_mesh_cell = meshCell;
+}
+
+int MeshSurface::getMeshCell(){
+	return _mesh_cell;
+}
+
+void MeshSurface::setSurfaceNum(int surfaceNum){
+	_surface_num = surfaceNum;
+}
+
+int MeshSurface::getSurfaceNum(){
+	return _surface_num;
+}
+
+
+
+
+
+
+
 
 

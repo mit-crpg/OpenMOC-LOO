@@ -40,11 +40,11 @@
 #define FSR_HASHMAP_PRECISION 5
 
 /* If this machine has OpenMP installed, define as true for parallel speedup */
-#define USE_OPENMP true
+#define USE_OPENMP false
 
 /* Perform CMFD acceleration in the solver on a lattice level */
 #define CMFD_ACCEL true
-#define CMFD_LEVEL 2
+#define CMFD_LEVEL 1
 
 
 /******************************************************************************
