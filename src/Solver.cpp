@@ -1056,9 +1056,9 @@ double Solver::computeKeff(int max_iterations) {
 		/* Do CMFD solve and update fluxes */
 		_geom->getMesh()->splitCorners();
 		computeXS(_geom->getMesh());
-		checkNeutBal(_geom->getMesh(), _k_eff);
 		computeDs(_geom->getMesh());
-//		cmfd_keff = computeCMFDFlux(_geom->getMesh());
+		checkNeutBal(_geom->getMesh(), _k_eff);
+		cmfd_keff = computeCMFDFlux(_geom->getMesh());
 		if (_update_flux == true){
 			updateMOCFlux(_geom->getMesh());
 		}
@@ -1243,9 +1243,10 @@ void Solver::computeDs(Mesh* mesh){
 				flux_next = meshCellNext->getOldFlux();
 				current = 0.0;
 				for (int e = 0; e < NUM_ENERGY_GROUPS; e++){
-					current += meshCell->getMeshSurfaces(0)->getCurrent(e);
+					current -= meshCell->getMeshSurfaces(0)->getCurrent(e);
+					current += meshCellNext->getMeshSurfaces(2)->getCurrent(e);
 				}
-				d_tilde = (-d_hat * (flux - flux_next) + current) / (flux_next + flux);
+				d_tilde = (-d_hat * (flux - flux_next) - current) / (flux_next + flux);
 			}
 			meshCell->getMeshSurfaces(0)->setDHat(d_hat);
 			meshCell->getMeshSurfaces(0)->setDTilde(d_tilde);
@@ -1264,6 +1265,7 @@ void Solver::computeDs(Mesh* mesh){
 				current = 0.0;
 				for (int e = 0; e < NUM_ENERGY_GROUPS; e++){
 					current += meshCell->getMeshSurfaces(1)->getCurrent(e);
+					current -= meshCellNext->getMeshSurfaces(3)->getCurrent(e);
 				}
 				d_tilde = (-d_hat * (flux_next - flux) - current) / (flux_next + flux);
 			}
@@ -1284,6 +1286,7 @@ void Solver::computeDs(Mesh* mesh){
 				current = 0.0;
 				for (int e = 0; e < NUM_ENERGY_GROUPS; e++){
 					current += meshCell->getMeshSurfaces(2)->getCurrent(e);
+					current -= meshCellNext->getMeshSurfaces(0)->getCurrent(e);
 				}
 				d_tilde = (-d_hat * (flux_next - flux) - current) / (flux_next + flux);
 			}
@@ -1303,9 +1306,10 @@ void Solver::computeDs(Mesh* mesh){
 				flux_next = meshCellNext->getOldFlux();
 				current = 0.0;
 				for (int e = 0; e < NUM_ENERGY_GROUPS; e++){
-					current += meshCell->getMeshSurfaces(3)->getCurrent(e);
+					current -= meshCell->getMeshSurfaces(3)->getCurrent(e);
+					current += meshCellNext->getMeshSurfaces(1)->getCurrent(e);
 				}
-				d_tilde = (-d_hat * (flux - flux_next) + current) / (flux_next + flux);
+				d_tilde = (-d_hat * (flux - flux_next) - current) / (flux_next + flux);
 			}
 			meshCell->getMeshSurfaces(3)->setDHat(d_hat);
 			meshCell->getMeshSurfaces(3)->setDTilde(d_tilde);
@@ -1339,7 +1343,6 @@ double Solver::computeCMFDFlux(Mesh* mesh){
 			phi(y*cell_width+x,0) = mesh->getCells(y*cell_width+x)->getOldFlux();
 		}
 	}
-
 
 	/* construct A and M matrix and flux vector */
 	// loop over mesh cells in y direction
@@ -1380,8 +1383,7 @@ double Solver::computeCMFDFlux(Mesh* mesh){
 		}
 	}
 
-
-
+	sources.col(0) = A * phi;
 
 	log_printf(NORMAL, "Running CMFD Diffusion Solver using power iteration...");
 
@@ -1392,13 +1394,6 @@ double Solver::computeCMFDFlux(Mesh* mesh){
 	double sumold, sumnew;
 	sumold = sum(sold);
 	sold = sold/(sumold/(cell_width * cell_height));
-	phi = inv(A) * sold;
-	for (int y = 0; y < cell_height; y++){
-		for (int x = 0; x < cell_width; x++){
-			mesh->getCells(y*cell_width+x)->setOldFlux(phi(y*cell_width+x,0));
-		}
-	}
-	sources.col(0) = A * phi;
 	sumold = cell_width * cell_height;
 	double criteria = 1e-12;
 	int iter;
@@ -1429,6 +1424,7 @@ double Solver::computeCMFDFlux(Mesh* mesh){
 			break;
 		}
 	}
+
 	log_printf(NORMAL, "CMFD keff: %f, iterations: %i", keff, iter);
 
 	sources.col(1) = A * phi;
@@ -1486,6 +1482,7 @@ void Solver::checkNeutBal(Mesh* mesh, double keff){
 	double leak, absorb, fis, res;
 
 	MeshCell* meshCell;
+	MeshCell* meshCellNext;
 	int cell_height, cell_width;
 
 	cell_height = mesh->getCellHeight();
@@ -1504,11 +1501,62 @@ void Solver::checkNeutBal(Mesh* mesh, double keff){
 			res = 0.0;
 
 			for (int group = 0; group < NUM_ENERGY_GROUPS; group++){
-				leak -= meshCell->getMeshSurfaces(0)->getCurrent(group)*meshCell->getHeight();
+				leak += meshCell->getMeshSurfaces(0)->getCurrent(group)*meshCell->getHeight();
 				leak += meshCell->getMeshSurfaces(1)->getCurrent(group)*meshCell->getWidth();
 				leak += meshCell->getMeshSurfaces(2)->getCurrent(group)*meshCell->getHeight();
-				leak -= meshCell->getMeshSurfaces(3)->getCurrent(group)*meshCell->getWidth();
+				leak += meshCell->getMeshSurfaces(3)->getCurrent(group)*meshCell->getWidth();
+			}
 
+			/* left */
+			if (x != 0){
+				meshCellNext = mesh->getCells(y*cell_width + x - 1);
+				for (int group = 0; group < NUM_ENERGY_GROUPS; group++){
+					leak -= meshCellNext->getMeshSurfaces(2)->getCurrent(group)*meshCell->getHeight();
+				}
+			}
+			else{
+				for (int group = 0; group < NUM_ENERGY_GROUPS; group++){
+					leak -= meshCell->getMeshSurfaces(0)->getCurrent(group)*meshCell->getHeight();
+				}
+			}
+
+			/* right */
+			if (x != cell_width - 1){
+				meshCellNext = mesh->getCells(y*cell_width + x + 1);
+				for (int group = 0; group < NUM_ENERGY_GROUPS; group++){
+					leak -= meshCellNext->getMeshSurfaces(0)->getCurrent(group)*meshCell->getHeight();
+				}
+			}
+			else{
+				for (int group = 0; group < NUM_ENERGY_GROUPS; group++){
+					leak -= meshCell->getMeshSurfaces(2)->getCurrent(group)*meshCell->getHeight();
+				}
+			}
+
+			/* above */
+			if (y != 0){
+				meshCellNext = mesh->getCells((y-1)*cell_width + x);
+				for (int group = 0; group < NUM_ENERGY_GROUPS; group++){
+					leak -= meshCellNext->getMeshSurfaces(1)->getCurrent(group)*meshCell->getWidth();
+				}
+			}
+			else{
+				for (int group = 0; group < NUM_ENERGY_GROUPS; group++){
+					leak -= meshCell->getMeshSurfaces(3)->getCurrent(group)*meshCell->getWidth();
+				}
+			}
+
+			/* below */
+			if (y != cell_height - 1){
+				meshCellNext = mesh->getCells((y+1)*cell_width + x);
+				for (int group = 0; group < NUM_ENERGY_GROUPS; group++){
+					leak -= meshCellNext->getMeshSurfaces(3)->getCurrent(group)*meshCell->getWidth();
+				}
+			}
+			else{
+				for (int group = 0; group < NUM_ENERGY_GROUPS; group++){
+					leak -= meshCell->getMeshSurfaces(1)->getCurrent(group)*meshCell->getWidth();
+				}
 			}
 
 			absorb = meshCell->getSigmaA()*meshCell->getWidth()*meshCell->getHeight()*meshCell->getOldFlux();
