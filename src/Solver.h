@@ -82,7 +82,7 @@ public:
 	void computeDs(Mesh* mesh);
 	double computeCMFDFlux(Mesh* mesh);
 	void updateMOCFlux(Mesh* mesh);
-//	void checkNeutBal(Mesh* mesh);
+ 	void checkNeutBal(Mesh* mesh, double keff);
 };
 
 #endif /* SOLVER_H_ */

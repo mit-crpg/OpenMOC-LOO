@@ -1010,7 +1010,7 @@ double Solver::computeKeff(int max_iterations) {
 				computeDs(_geom->getMesh());
 				cmfd_keff = computeCMFDFlux(_geom->getMesh());
 				log_printf(NORMAL, "final CMFD k_eff: %f", cmfd_keff);
-//				checkNeutBal(_geom->getMesh());
+				checkNeutBal(_geom->getMesh(), cmfd_keff);
 				_plotter->plotNetCurrents(_geom->getMesh());
 				_plotter->plotSurfaceFlux(_geom->getMesh());
 				_plotter->plotXS(_geom->getMesh());
@@ -1056,11 +1056,14 @@ double Solver::computeKeff(int max_iterations) {
 		/* Do CMFD solve and update fluxes */
 		_geom->getMesh()->splitCorners();
 		computeXS(_geom->getMesh());
+		checkNeutBal(_geom->getMesh(), _k_eff);
 		computeDs(_geom->getMesh());
-		cmfd_keff = computeCMFDFlux(_geom->getMesh());
+//		cmfd_keff = computeCMFDFlux(_geom->getMesh());
 		if (_update_flux == true){
 			updateMOCFlux(_geom->getMesh());
 		}
+//		checkNeutBal(_geom->getMesh(), cmfd_keff);
+//		checkNeutBal(_geom->getMesh(), _k_eff);
 		#endif
 
 	}
@@ -1235,14 +1238,14 @@ void Solver::computeDs(Mesh* mesh){
 			else{
 				meshCellNext = mesh->getCells(y*cell_width + x - 1);
 				d_next = meshCellNext->getDiffusivity();
-				d_hat = 2.0 * d * d_next / (meshCell->getWidth() * (d + d_next));
+				d_hat = 2.0 * d * d_next / (meshCell->getWidth() * d + meshCellNext->getWidth() * d_next);
 				flux = meshCell->getOldFlux();
 				flux_next = meshCellNext->getOldFlux();
 				current = 0.0;
 				for (int e = 0; e < NUM_ENERGY_GROUPS; e++){
 					current += meshCell->getMeshSurfaces(0)->getCurrent(e);
 				}
-				d_tilde = (-d_hat * (flux - flux_next) - current) / (flux_next + flux);
+				d_tilde = (-d_hat * (flux - flux_next) + current) / (flux_next + flux);
 			}
 			meshCell->getMeshSurfaces(0)->setDHat(d_hat);
 			meshCell->getMeshSurfaces(0)->setDTilde(d_tilde);
@@ -1255,7 +1258,7 @@ void Solver::computeDs(Mesh* mesh){
 			else{
 				meshCellNext = mesh->getCells((y+1)*cell_width + x);
 				d_next = meshCellNext->getDiffusivity();
-				d_hat = 2.0 * d * d_next / (meshCell->getHeight() * (d + d_next));
+				d_hat = 2.0 * d * d_next / (meshCell->getHeight() * d + meshCellNext->getHeight() * d_next);
 				flux = meshCell->getOldFlux();
 				flux_next = meshCellNext->getOldFlux();
 				current = 0.0;
@@ -1275,7 +1278,7 @@ void Solver::computeDs(Mesh* mesh){
 			else{
 				meshCellNext = mesh->getCells(y*cell_width + x + 1);
 				d_next = meshCellNext->getDiffusivity();
-				d_hat = 2.0 * d * d_next / (meshCell->getWidth() * (d + d_next));
+				d_hat = 2.0 * d * d_next / (meshCell->getWidth() * d + meshCellNext->getWidth() * d_next);
 				flux = meshCell->getOldFlux();
 				flux_next = meshCellNext->getOldFlux();
 				current = 0.0;
@@ -1295,14 +1298,14 @@ void Solver::computeDs(Mesh* mesh){
 			else{
 				meshCellNext = mesh->getCells((y-1)*cell_width + x);
 				d_next = meshCellNext->getDiffusivity();
-				d_hat = 2.0 * d * d_next / (meshCell->getHeight() * (d + d_next));
+				d_hat = 2.0 * d * d_next / (meshCell->getHeight() * d + meshCellNext->getHeight() * d_next);
 				flux = meshCell->getOldFlux();
 				flux_next = meshCellNext->getOldFlux();
 				current = 0.0;
 				for (int e = 0; e < NUM_ENERGY_GROUPS; e++){
 					current += meshCell->getMeshSurfaces(3)->getCurrent(e);
 				}
-				d_tilde = (-d_hat * (flux - flux_next) - current) / (flux_next + flux);
+				d_tilde = (-d_hat * (flux - flux_next) + current) / (flux_next + flux);
 			}
 			meshCell->getMeshSurfaces(3)->setDHat(d_hat);
 			meshCell->getMeshSurfaces(3)->setDTilde(d_tilde);
@@ -1329,11 +1332,14 @@ double Solver::computeCMFDFlux(Mesh* mesh){
 	colvec snew = zeros(cell_height*cell_width, 1);
 	colvec phi_old = zeros(cell_height*cell_width, 1);
 
+	mat sources = zeros(cell_height*cell_width, 3);
+
 	for (int y = 0; y < cell_height; y++){
 		for (int x = 0; x < cell_width; x++){
 			phi(y*cell_width+x,0) = mesh->getCells(y*cell_width+x)->getOldFlux();
 		}
 	}
+
 
 	/* construct A and M matrix and flux vector */
 	// loop over mesh cells in y direction
@@ -1374,16 +1380,25 @@ double Solver::computeCMFDFlux(Mesh* mesh){
 		}
 	}
 
+
+
+
 	log_printf(NORMAL, "Running CMFD Diffusion Solver using power iteration...");
 
 	int max_outer = 1000;
 	double eps = 0.0;
 	double keff;
-	phi = phi / (sum(phi) / (cell_width*cell_height));
 	sold = M * phi;
 	double sumold, sumnew;
 	sumold = sum(sold);
 	sold = sold/(sumold/(cell_width * cell_height));
+	phi = inv(A) * sold;
+	for (int y = 0; y < cell_height; y++){
+		for (int x = 0; x < cell_width; x++){
+			mesh->getCells(y*cell_width+x)->setOldFlux(phi(y*cell_width+x,0));
+		}
+	}
+	sources.col(0) = A * phi;
 	sumold = cell_width * cell_height;
 	double criteria = 1e-12;
 	int iter;
@@ -1402,7 +1417,7 @@ double Solver::computeCMFDFlux(Mesh* mesh){
 		eps = pow(eps/(cell_width*cell_height), 0.5);
 		sold = snew / (sumnew / (cell_width * cell_height));
 
-		if (iter > 2 && eps < criteria){
+		if (iter > 10 && eps < criteria){
 			/* update flux in each MeshCell */
 			for (int y = 0; y < cell_height; y++){
 				for (int x = 0; x < cell_width; x++){
@@ -1414,8 +1429,14 @@ double Solver::computeCMFDFlux(Mesh* mesh){
 			break;
 		}
 	}
-
 	log_printf(NORMAL, "CMFD keff: %f, iterations: %i", keff, iter);
+
+	sources.col(1) = A * phi;
+	sources.col(2) = 1.0 / keff * M * phi;
+
+	std::cout << sources;
+	std::cout << A;
+	std::cout << M;
 
 	return keff;
 
@@ -1453,49 +1474,59 @@ void Solver::updateMOCFlux(Mesh* mesh){
 }
 
 
-///* check to make sure the neutron balance equation
-// * is satisfied with the currents from the CMFD solver
-// */
-//void Solver::checkNeutBal(Mesh* mesh){
-//
-//	MeshCell* meshCell;
-//	MeshCell* meshCellNext;
-//	int cell_height, cell_width;
-//	double current_left, current_right, current_up, current_down;
-//
-//	cell_height = mesh->getCellHeight();
-//	cell_width = mesh->getCellWidth();
-//
-//	// loop over mesh cells in y direction
-//	for (int y = 0; y < cell_height; y++){
-//
-//		// loop over mesh cells in x direction
-//		for (int x = 0; x < cell_width; x++){
-//			meshCell = mesh->getCells(y * cell_width + x);
-//
-//			// compute currents, J
-//			// left
-//			if (x != 0){
-//				meshCellNext = mesh->getCells(y*cell_width + x - 1);
-//				current_left = - meshCellNext->getDiffusivity() * (meshCell->getOldFlux() - meshCellNext->getOldFlux())
-//						-
-//			}
-//			else{
-//
-//			}
-//
-//			// down
-//			// right
-//			// up
-//
-//			// check neutron balance
-//
-//		}
-//	}
-//
-//
-//
-//}
+/* check to make sure the neutron balance equation
+ * is satisfied with the currents from the CMFD solver
+ */
+void Solver::checkNeutBal(Mesh* mesh, double keff){
+
+	log_printf(NORMAL, "Checking neutron balance...");
+
+	/* residual = leakage + absorption - fission */
+
+	double leak, absorb, fis, res;
+
+	MeshCell* meshCell;
+	int cell_height, cell_width;
+
+	cell_height = mesh->getCellHeight();
+	cell_width = mesh->getCellWidth();
+
+	/* construct A and M matrix and flux vector */
+	// loop over mesh cells in y direction
+	for (int y = 0; y < cell_height; y++){
+
+		// loop over mesh cells in x direction
+		for (int x = 0; x < cell_width; x++){
+			meshCell = mesh->getCells(y*cell_width + x);
+			leak = 0.0;
+			absorb = 0.0;
+			fis = 0.0;
+			res = 0.0;
+
+			for (int group = 0; group < NUM_ENERGY_GROUPS; group++){
+				leak -= meshCell->getMeshSurfaces(0)->getCurrent(group)*meshCell->getHeight();
+				leak += meshCell->getMeshSurfaces(1)->getCurrent(group)*meshCell->getWidth();
+				leak += meshCell->getMeshSurfaces(2)->getCurrent(group)*meshCell->getHeight();
+				leak -= meshCell->getMeshSurfaces(3)->getCurrent(group)*meshCell->getWidth();
+
+			}
+
+			absorb = meshCell->getSigmaA()*meshCell->getWidth()*meshCell->getHeight()*meshCell->getOldFlux();
+			fis = 1.0 / keff * meshCell->getNuSigmaF()*meshCell->getWidth()*meshCell->getHeight()*meshCell->getOldFlux();
+
+			res = leak + absorb - fis;
+
+			log_printf(NORMAL, "cell: %i, leak: %f, absorb: %f, fis: %f, res: %f", y*cell_width+x,
+					leak, absorb, fis, res);
+
+		}
+	}
+
+
+
+
+
+}
 
 
 
