@@ -356,6 +356,7 @@ void Mesh::splitCorners(){
 					}
 				}
 
+
 				/* corner 5 */
 				if (x < cell_width - 1 && y < cell_height - 1){
 					meshCell = &_cells[y*cell_width + x];

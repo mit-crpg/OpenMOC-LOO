@@ -1055,6 +1055,7 @@ double Solver::computeKeff(int max_iterations) {
 
 		#if CMFD_ACCEL
 		/* Do CMFD solve and update fluxes */
+
 		_geom->getMesh()->splitCorners();
 		computeXS(_geom->getMesh());
 		computeDs(_geom->getMesh());
@@ -1064,7 +1065,6 @@ double Solver::computeKeff(int max_iterations) {
 			updateMOCFlux(_geom->getMesh());
 		}
 		checkNeutBal(_geom->getMesh(), cmfd_keff);
-//		checkNeutBal(_geom->getMesh(), _k_eff);
 		#endif
 
 	}
@@ -1137,16 +1137,17 @@ void Solver::plotFluxes(){
 /* compute the xs for all MeshCells in the Mesh */
 void Solver::computeXS(Mesh* mesh){
 
-	// tallies for fsr_vol * group_avg_xs and fsr_vol
-	double abs_tally, flux_tally, tot_tally, fis_tally, nu_fis_tally, dif_tally;
+	/* tallies for fsr_vol * group_avg_xs and fsr_vol */
+	double abs_tally, flux_tally, tot_tally, fis_tally, nu_fis_tally, dif_tally, rxn_tally, vol_tally;
 	MeshCell* meshCell;
 	FlatSourceRegion* fsr;
 	Material* material;
 	double volume = 0;
 	double flux, abs, tot, fis, nu_fis;
-	double abs_tally_cell, vol_tally_cell, flux_tally_cell, tot_tally_cell, fis_tally_cell, nu_fis_tally_cell, dif_tally_cell, rxn_tally_cell;
+	double abs_tally_cell, flux_tally_cell, tot_tally_cell, fis_tally_cell, nu_fis_tally_cell, dif_tally_cell, rxn_tally_cell;
 
-	// loop over mesh cells
+
+	/* loop over mesh cells */
 	for (int i = 0; i < mesh->getCellWidth() * mesh->getCellHeight(); i++){
 		meshCell = mesh->getCells(i);
 		abs_tally = 0;
@@ -1155,6 +1156,8 @@ void Solver::computeXS(Mesh* mesh){
 		fis_tally = 0;
 		nu_fis_tally = 0;
 		dif_tally = 0;
+		rxn_tally = 0;
+		vol_tally = 0;
 
 		std::vector<int>::iterator iter;
 		for (int e = 0; e < NUM_ENERGY_GROUPS; e++) {
@@ -1165,7 +1168,6 @@ void Solver::computeXS(Mesh* mesh){
 			nu_fis_tally_cell = 0;
 			dif_tally_cell = 0;
 			rxn_tally_cell = 0;
-			vol_tally_cell = 0;
 
 			for (iter = meshCell->getFSRs()->begin(); iter != meshCell->getFSRs()->end(); ++iter){
 				fsr = &_flat_source_regions[*iter];
@@ -1174,12 +1176,9 @@ void Solver::computeXS(Mesh* mesh){
 				volume = fsr->getVolume();
 				flux = fsr->getFlux()[e];
 				abs = material->getSigmaA()[e];
-				/* Per our material file, the total xs has trans xs's data. */
 				tot = material->getSigmaT()[e];
 				fis = material->getSigmaF()[e];
 				nu_fis = material->getNuSigmaF()[e];
-				log_printf(NORMAL, "tallying xs for cell: %i, fsr: %i, fsr_flux: %f, group: %i", i, fsr->getId(), flux, e);
-
 
 				/* Tally reaction rates. */
 				abs_tally_cell += abs * flux * volume;
@@ -1189,156 +1188,26 @@ void Solver::computeXS(Mesh* mesh){
 				flux_tally_cell += flux;
 				dif_tally_cell += flux * volume / (3.0 * tot);
 				rxn_tally_cell += flux * volume;
-				vol_tally_cell += volume;
+				vol_tally += volume;
 			}
 
-			abs_tally += abs_tally_cell / rxn_tally_cell;
-			tot_tally += tot_tally_cell / rxn_tally_cell;
-			fis_tally += fis_tally_cell / rxn_tally_cell;
-			nu_fis_tally += nu_fis_tally_cell / rxn_tally_cell;
-			dif_tally += dif_tally_cell / rxn_tally_cell;
-			flux_tally += rxn_tally_cell / vol_tally_cell;
-
+			abs_tally += abs_tally_cell;
+			tot_tally += tot_tally_cell;
+			fis_tally += fis_tally_cell;
+			nu_fis_tally += nu_fis_tally_cell;
+			dif_tally += dif_tally_cell;
+			flux_tally += rxn_tally_cell / volume;
+			rxn_tally += rxn_tally_cell;
 		}
 
-		meshCell->setSigmaA(abs_tally);
-		meshCell->setSigmaT(tot_tally);
-		meshCell->setSigmaF(fis_tally);
-		meshCell->setSigmaS((meshCell->getSigmaT() - meshCell->getSigmaA()));
-		meshCell->setNuSigmaF(nu_fis_tally);
-		meshCell->setDiffusivity(dif_tally);
+		meshCell->setSigmaA(abs_tally / flux_tally);
+		meshCell->setSigmaT(tot_tally / flux_tally);
+		meshCell->setSigmaF(fis_tally / flux_tally);
+		meshCell->setSigmaS((meshCell->getSigmaT() - meshCell->getSigmaA()) / flux_tally);
+		meshCell->setNuSigmaF(nu_fis_tally / flux_tally);
+		meshCell->setDiffusivity(dif_tally / flux_tally);
 		meshCell->setOldFlux(flux_tally);
-
 	}
-
-//	for (int i = 0; i < mesh->getCellWidth() * mesh->getCellHeight(); i++){
-//		meshCell = mesh->getCells(i);
-//		abs_tally = 0;
-//		flux_tally = 0;
-//		tot_tally = 0;
-//		fis_tally = 0;
-//		nu_fis_tally = 0;
-//		dif_tally = 0;
-//		vol_tally_cell = 0;
-//
-//		std::vector<int>::iterator iter;
-//		for (iter = meshCell->getFSRs()->begin(); iter != meshCell->getFSRs()->end(); ++iter){
-//			fsr = &_flat_source_regions[*iter];
-//			/* Gets FSR specific data. */
-//			material = fsr->getMaterial();
-//			volume = fsr->getVolume();
-//			abs_tally_cell = 0;
-//			flux_tally_cell = 0;
-//			tot_tally_cell = 0;
-//			fis_tally_cell = 0;
-//			nu_fis_tally_cell = 0;
-//			dif_tally_cell = 0;
-//			rxn_tally_cell = 0;
-//
-//
-//			for (int e = 0; e < NUM_ENERGY_GROUPS; e++) {
-//
-//
-//				flux = fsr->getFlux()[e];
-//				abs = material->getSigmaA()[e];
-//				tot = material->getSigmaT()[e];
-//				fis = material->getSigmaF()[e];
-//				nu_fis = material->getNuSigmaF()[e];
-//
-//				/* Tally reaction rates. */
-//				abs_tally_cell += abs * flux;
-//				tot_tally_cell += tot * flux;
-//				fis_tally_cell += fis * flux;
-//				nu_fis_tally_cell += nu_fis * flux;
-//				flux_tally_cell += flux;
-//				dif_tally_cell += flux / (3.0 * tot);
-//				rxn_tally_cell += flux;
-//
-//			}
-//
-//			abs_tally += abs_tally_cell * volume;
-//			tot_tally += tot_tally_cell * volume;
-//			fis_tally += fis_tally_cell * volume;
-//			nu_fis_tally += nu_fis_tally_cell * volume;
-//			dif_tally += dif_tally_cell * volume;
-//			flux_tally += rxn_tally_cell * volume;
-//			vol_tally_cell += volume;
-//
-//		}
-//
-//		meshCell->setSigmaA(abs_tally / vol_tally_cell);
-//		meshCell->setSigmaT(tot_tally / vol_tally_cell);
-//		meshCell->setSigmaF(fis_tally / vol_tally_cell);
-//		meshCell->setSigmaS((meshCell->getSigmaT() - meshCell->getSigmaA()) / vol_tally_cell);
-//		meshCell->setNuSigmaF(nu_fis_tally / vol_tally_cell);
-//		meshCell->setDiffusivity(dif_tally / vol_tally_cell);
-//		meshCell->setOldFlux(flux_tally / vol_tally_cell);
-//
-//	}
-
-
-
-//	for (int i = 0; i < mesh->getCellWidth() * mesh->getCellHeight(); i++){
-//		meshCell = mesh->getCells(i);
-//		abs_tally = 0;
-//		flux_tally = 0;
-//		tot_tally = 0;
-//		fis_tally = 0;
-//		nu_fis_tally = 0;
-//		dif_tally = 0;
-//
-//		std::vector<int>::iterator iter;
-//		for (int e = 0; e < NUM_ENERGY_GROUPS; e++) {
-//			abs_tally_cell = 0;
-//			flux_tally_cell = 0;
-//			tot_tally_cell = 0;
-//			fis_tally_cell = 0;
-//			nu_fis_tally_cell = 0;
-//			dif_tally_cell = 0;
-//			rxn_tally_cell = 0;
-//			vol_tally = 0;
-//
-//			for (iter = meshCell->getFSRs()->begin(); iter != meshCell->getFSRs()->end(); ++iter){
-//				/* Gets FSR specific data. */
-//				fsr = &_flat_source_regions[*iter];
-//				material = fsr->getMaterial();
-//				volume = fsr->getVolume();
-//				flux = fsr->getFlux()[e];
-//				abs = material->getSigmaA()[e];
-//				/* Per our material file, the total xs has trans xs's data. */
-//				tot = material->getSigmaT()[e];
-//				fis = material->getSigmaF()[e];
-//				nu_fis = material->getNuSigmaF()[e];
-//
-//				/* Tally reaction rates. */
-//				abs_tally_cell += abs * flux;
-//				tot_tally_cell += tot * flux;
-//				fis_tally_cell += fis * flux;
-//				nu_fis_tally_cell += nu_fis * flux;
-//				flux_tally_cell += flux;
-//				dif_tally_cell += flux / (3.0 * tot);
-//				rxn_tally_cell += flux;
-//
-//				vol_tally += volume;
-//			}
-//
-//			abs_tally += abs_tally_cell / rxn_tally_cell * flux_tally_cell / vol_tally;
-//			tot_tally += tot_tally_cell / rxn_tally_cell * flux_tally_cell / vol_tally;
-//			fis_tally += fis_tally_cell / rxn_tally_cell * flux_tally_cell / vol_tally;
-//			nu_fis_tally += nu_fis_tally_cell / rxn_tally_cell * flux_tally_cell / vol_tally;
-//			dif_tally += dif_tally_cell / rxn_tally_cell * flux_tally_cell / vol_tally;
-//			flux_tally += flux_tally_cell / vol_tally;
-//		}
-//
-//		meshCell->setSigmaA(abs_tally/flux_tally);
-//		meshCell->setSigmaT(tot_tally/flux_tally);
-//		meshCell->setSigmaF(fis_tally/flux_tally);
-//		meshCell->setSigmaS((meshCell->getSigmaT() - meshCell->getSigmaA())/flux_tally);
-//		meshCell->setNuSigmaF(nu_fis_tally/flux_tally);
-//		meshCell->setDiffusivity(dif_tally/flux_tally);
-//		meshCell->setOldFlux(flux_tally);
-//	}
-
 }
 
 /* compute the xs for all MeshCells in the Mesh */
@@ -1702,8 +1571,8 @@ void Solver::checkNeutBal(Mesh* mesh, double keff){
 
 			res = leak + absorb - fis;
 
-			log_printf(NORMAL, "cell: %i, leak: %f, absorb: %f, fis: %f, res: %f, keff: %f", y*cell_width+x,
-					leak, absorb, fis, res, meshCell->getNuSigmaF() / meshCell->getSigmaA());
+			log_printf(NORMAL, "cell: %i, leak: %f, absorb: %f, fis: %f, res: %f, flux: %f, keff: %f", y*cell_width+x,
+					leak, absorb, fis, res, meshCell->getOldFlux(), meshCell->getNuSigmaF() / meshCell->getSigmaA());
 
 		}
 	}
