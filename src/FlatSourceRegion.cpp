@@ -291,7 +291,7 @@ void FlatSourceRegion::computeRatios() {
 
 /**
  * Compute the volumetric fission rate in this flat source region by adding
- * up the fission rates in each energy group. This mehtod assumes that fixed
+ * up the fission rates in each energy group. This method assumes that fixed
  * source iteration has already been run since it uses the flux stored in
  * this region
  */

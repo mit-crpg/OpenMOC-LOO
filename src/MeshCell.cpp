@@ -32,14 +32,14 @@ void MeshCell::makeSurfaces(){
 
 	/* set outward normals to sides */
 	/* for corners, normal is set to the normal of surface - 4 */
-	_mesh_surfaces[0].setNormal(PI);
-	_mesh_surfaces[1].setNormal(3.0 * PI / 2.0);
+	_mesh_surfaces[0].setNormal(0.0);
+	_mesh_surfaces[1].setNormal(PI / 2.0);
 	_mesh_surfaces[2].setNormal(0.0);
 	_mesh_surfaces[3].setNormal(PI / 2.0);
 	_mesh_surfaces[4].setNormal(PI);
-	_mesh_surfaces[5].setNormal(3.0 * PI / 2.0);
+	_mesh_surfaces[5].setNormal(PI);
 	_mesh_surfaces[6].setNormal(0.0);
-	_mesh_surfaces[7].setNormal(PI / 2.0);
+	_mesh_surfaces[7].setNormal(0.0);
 
 }
 
