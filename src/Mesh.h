@@ -50,6 +50,7 @@ public:
 	void printBounds();
 	void printCurrents();
 	void splitCorners();
+	void normalizeSurfaces();
 
 };
 

@@ -455,11 +455,6 @@ void Plotter::plotNetCurrents(Mesh* mesh){
 			text.clear();
 
 
-
-//			log_printf(NORMAL, "cell: %i, surface 0, net current: %f", cellY * mesh->getCellWidth() + cellX, current0);
-//			log_printf(NORMAL, "cell: %i, surface 1, net current: %f", cellY * mesh->getCellWidth() + cellX, current1);
-//			log_printf(NORMAL, "cell: %i, surface 2, net current: %f", cellY * mesh->getCellWidth() + cellX, current2);
-//			log_printf(NORMAL, "cell: %i, surface 3, net current: %f", cellY * mesh->getCellWidth() + cellX, current3);
 		}
 	}
 
@@ -524,7 +519,7 @@ void Plotter::plotSurfaceFlux(Mesh* mesh){
 				text_stream << meshCell->getMeshSurfaces(0)->getFlux(group);
 				text = text_stream.str();
 				text_stream.str("");
-				drawText(bitMap, text, x_mid + 20, y_mid + 10 * (NUM_ENERGY_GROUPS / 2.0 - group));
+				drawText(bitMap, text, x_mid + 20, y_mid - 10 * (NUM_ENERGY_GROUPS / 2.0 - group));
 				text.clear();
 
 				/* SIDE 1 */
@@ -536,7 +531,7 @@ void Plotter::plotSurfaceFlux(Mesh* mesh){
 				text_stream << meshCell->getMeshSurfaces(1)->getFlux(group);
 				text = text_stream.str();
 				text_stream.str("");
-				drawText(bitMap, text, x_mid - 20, y_mid + 10 * (NUM_ENERGY_GROUPS - group + 1));
+				drawText(bitMap, text, x_mid - 20, y_mid - 10 * (NUM_ENERGY_GROUPS - group));
 				text.clear();
 
 				/* SIDE 2 */
@@ -548,7 +543,7 @@ void Plotter::plotSurfaceFlux(Mesh* mesh){
 				text_stream << meshCell->getMeshSurfaces(2)->getFlux(group);
 				text = text_stream.str();
 				text_stream.str("");
-				drawText(bitMap, text, x_mid - 80, y_mid + 10 * (NUM_ENERGY_GROUPS / 2.0 - group));
+				drawText(bitMap, text, x_mid - 80, y_mid - 10 * (NUM_ENERGY_GROUPS / 2.0 - group));
 				text.clear();
 
 				/* SIDE 3 */
@@ -560,7 +555,7 @@ void Plotter::plotSurfaceFlux(Mesh* mesh){
 				text_stream << meshCell->getMeshSurfaces(3)->getFlux(group);
 				text = text_stream.str();
 				text_stream.str("");
-				drawText(bitMap, text, x_mid - 20, y_mid - 10 * (group + 1));
+				drawText(bitMap, text, x_mid - 20, y_mid + 10 * (group + 1.5));
 				text.clear();
 			}
 
