@@ -181,7 +181,7 @@ void Mesh::splitCorners(){
 
 	MeshSurface* surfaceSide;
 	MeshSurface* surfaceCorner1;
-	MeshSurface* surfaceCorner2;
+//	MeshSurface* surfaceCorner2;
 
 //	for (int i = 0; i < _cell_width * _cell_height; i++){
 
@@ -324,11 +324,12 @@ void Mesh::splitCorners(){
 //
 //	}
 
+
 	for (int x = 0; x < cell_width; x++){
 		for (int y = 0; y < cell_height; y++){
 
 				/* corner 4 */
-				if (x > 0 && y < cell_height - 1){
+				if (y < cell_height - 1){
 					meshCell = &_cells[y*cell_width + x];
 					surfaceSide = meshCell->getMeshSurfaces(1);
 					surfaceCorner1 = meshCell->getMeshSurfaces(4);
@@ -351,14 +352,14 @@ void Mesh::splitCorners(){
 					for (int group = 0; group < NUM_ENERGY_GROUPS; group++){
 						surfaceSide->incrementCurrent(surfaceCorner1->getCurrent(group), surfaceSide->getNormal(), group);
 						surfaceSide->incrementFlux(surfaceCorner1->getFlux(group), group);
-						surfaceSideNext->incrementCurrent(surfaceCorner1->getCurrent(group), surfaceSideNext->getNormal(), group);
-						surfaceSideNext->incrementFlux(surfaceCorner1->getFlux(group), group);
+						//surfaceSideNext->incrementCurrent(surfaceCorner1->getCurrent(group), surfaceSideNext->getNormal(), group);
+						//surfaceSideNext->incrementFlux(surfaceCorner1->getFlux(group), group);
 					}
 				}
 
 
 				/* corner 5 */
-				if (x < cell_width - 1 && y < cell_height - 1){
+				if (y < cell_height - 1){
 					meshCell = &_cells[y*cell_width + x];
 					surfaceSide = meshCell->getMeshSurfaces(1);
 					surfaceCorner1 = meshCell->getMeshSurfaces(5);
@@ -381,13 +382,13 @@ void Mesh::splitCorners(){
 					for (int group = 0; group < NUM_ENERGY_GROUPS; group++){
 						surfaceSide->incrementCurrent(surfaceCorner1->getCurrent(group), surfaceSide->getNormal(), group);
 						surfaceSide->incrementFlux(surfaceCorner1->getFlux(group), group);
-						surfaceSideNext->incrementCurrent(surfaceCorner1->getCurrent(group), surfaceSideNext->getNormal(), group);
-						surfaceSideNext->incrementFlux(surfaceCorner1->getFlux(group), group);
+						//surfaceSideNext->incrementCurrent(surfaceCorner1->getCurrent(group), surfaceSideNext->getNormal(), group);
+						//surfaceSideNext->incrementFlux(surfaceCorner1->getFlux(group), group);
 					}
 				}
 
 				/* corner 6 */
-				if (x < cell_width - 1 && y > 0){
+				if (x < cell_width - 1){
 					meshCell = &_cells[y*cell_width + x];
 					surfaceSide = meshCell->getMeshSurfaces(2);
 					surfaceCorner1 = meshCell->getMeshSurfaces(6);
@@ -410,15 +411,15 @@ void Mesh::splitCorners(){
 					for (int group = 0; group < NUM_ENERGY_GROUPS; group++){
 						surfaceSide->incrementCurrent(surfaceCorner1->getCurrent(group), surfaceSide->getNormal(), group);
 						surfaceSide->incrementFlux(surfaceCorner1->getFlux(group), group);
-						surfaceSideNext->incrementCurrent(surfaceCorner1->getCurrent(group), surfaceSideNext->getNormal(), group);
-						surfaceSideNext->incrementFlux(surfaceCorner1->getFlux(group), group);
+						//surfaceSideNext->incrementCurrent(surfaceCorner1->getCurrent(group), surfaceSideNext->getNormal(), group);
+						//surfaceSideNext->incrementFlux(surfaceCorner1->getFlux(group), group);
 					}
 				}
 
 
 
 				/* corner 7 */
-				if (x > 0 && y > 0){
+				if (x > 0){
 					meshCell = &_cells[y*cell_width + x];
 					surfaceSide = meshCell->getMeshSurfaces(0);
 					surfaceCorner1 = meshCell->getMeshSurfaces(7);
@@ -441,14 +442,14 @@ void Mesh::splitCorners(){
 					for (int group = 0; group < NUM_ENERGY_GROUPS; group++){
 						surfaceSide->incrementCurrent(surfaceCorner1->getCurrent(group), surfaceSide->getNormal(), group);
 						surfaceSide->incrementFlux(surfaceCorner1->getFlux(group), group);
-						surfaceSideNext->incrementCurrent(surfaceCorner1->getCurrent(group), surfaceSideNext->getNormal(), group);
-						surfaceSideNext->incrementFlux(surfaceCorner1->getFlux(group), group);
+						//surfaceSideNext->incrementCurrent(surfaceCorner1->getCurrent(group), surfaceSideNext->getNormal(), group);
+						//surfaceSideNext->incrementFlux(surfaceCorner1->getFlux(group), group);
 					}
 				}
 		}
 	}
 
-
+	log_printf(NORMAL, "A total of %d tracks cross corner 4 of cell 9.");
 
 
 

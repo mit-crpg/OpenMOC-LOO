@@ -1168,6 +1168,7 @@ void Solver::computeXS(Mesh* mesh){
 			nu_fis_tally_cell = 0;
 			dif_tally_cell = 0;
 			rxn_tally_cell = 0;
+			vol_tally = 0;
 
 			for (iter = meshCell->getFSRs()->begin(); iter != meshCell->getFSRs()->end(); ++iter){
 				fsr = &_flat_source_regions[*iter];
@@ -1196,7 +1197,7 @@ void Solver::computeXS(Mesh* mesh){
 			fis_tally += fis_tally_cell;
 			nu_fis_tally += nu_fis_tally_cell;
 			dif_tally += dif_tally_cell;
-			flux_tally += rxn_tally_cell / volume;
+			flux_tally += rxn_tally_cell / vol_tally;
 			rxn_tally += rxn_tally_cell;
 		}
 
