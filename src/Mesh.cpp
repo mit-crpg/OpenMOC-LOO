@@ -181,91 +181,6 @@ void Mesh::splitCorners(){
 
 	MeshSurface* surfaceSide;
 	MeshSurface* surfaceCorner1;
-	MeshSurface* surfaceCorner2;
-
-//	for (int i = 0; i < _cell_width * _cell_height; i++){
-
-//		/* side 0 */
-//		surfaceSide = _cells[i].getMeshSurfaces(0);
-//		surfaceCorner1 = _cells[i].getMeshSurfaces(4);
-//		surfaceCorner2 = _cells[i].getMeshSurfaces(7);
-//
-//		for (int group = 0; group < NUM_ENERGY_GROUPS; group++){
-//			surfaceSide->incrementCurrent(0.5 * surfaceCorner1->getCurrent(group), surfaceSide->getNormal(), group);
-//			surfaceSide->incrementCurrent(0.5 * surfaceCorner2->getCurrent(group), surfaceSide->getNormal(), group);
-//			surfaceSide->incrementFlux(0.5 * surfaceCorner1->getFlux(group), group);
-//			surfaceSide->incrementFlux(0.5 * surfaceCorner2->getFlux(group), group);
-//		}
-//
-//		/* side 1 */
-//		surfaceSide = _cells[i].getMeshSurfaces(1);
-//		surfaceCorner2 = _cells[i].getMeshSurfaces(5);
-//
-//		for (int group = 0; group < NUM_ENERGY_GROUPS; group++){
-//			surfaceSide->incrementCurrent(0.5 * surfaceCorner1->getCurrent(group), surfaceSide->getNormal(), group);
-//			surfaceSide->incrementCurrent(0.5 * surfaceCorner2->getCurrent(group), surfaceSide->getNormal(), group);
-//			surfaceSide->incrementFlux(0.5 * surfaceCorner1->getFlux(group), group);
-//			surfaceSide->incrementFlux(0.5 * surfaceCorner2->getFlux(group), group);
-//		}
-//
-//		/* side 2 */
-//		surfaceSide = _cells[i].getMeshSurfaces(2);
-//		surfaceCorner1 = _cells[i].getMeshSurfaces(6);
-//
-//		for (int group = 0; group < NUM_ENERGY_GROUPS; group++){
-//			surfaceSide->incrementCurrent(0.5 * surfaceCorner1->getCurrent(group), surfaceSide->getNormal(), group);
-//			surfaceSide->incrementCurrent(0.5 * surfaceCorner2->getCurrent(group), surfaceSide->getNormal(), group);
-//			surfaceSide->incrementFlux(0.5 * surfaceCorner1->getFlux(group), group);
-//			surfaceSide->incrementFlux(0.5 * surfaceCorner2->getFlux(group), group);
-//		}
-//
-//		/* side 3 */
-//		surfaceSide = _cells[i].getMeshSurfaces(3);
-//		surfaceCorner2 = _cells[i].getMeshSurfaces(7);
-//
-//		for (int group = 0; group < NUM_ENERGY_GROUPS; group++){
-//			surfaceSide->incrementCurrent(0.5 * surfaceCorner1->getCurrent(group), surfaceSide->getNormal(), group);
-//			surfaceSide->incrementCurrent(0.5 * surfaceCorner2->getCurrent(group), surfaceSide->getNormal(), group);
-//			surfaceSide->incrementFlux(0.5 * surfaceCorner1->getFlux(group), group);
-//			surfaceSide->incrementFlux(0.5 * surfaceCorner2->getFlux(group), group);
-//		}
-
-//		/* side 0 */
-//		surfaceSide = _cells[i].getMeshSurfaces(0);
-//		surfaceCorner1 = _cells[i].getMeshSurfaces(4);
-//
-//		for (int group = 0; group < NUM_ENERGY_GROUPS; group++){
-//			surfaceSide->incrementCurrent(surfaceCorner1->getCurrent(group), surfaceSide->getNormal(), group);
-//			surfaceSide->incrementFlux(surfaceCorner1->getFlux(group), group);
-//		}
-//
-//		/* side 1 */
-//		surfaceSide = _cells[i].getMeshSurfaces(1);
-//		surfaceCorner1 = _cells[i].getMeshSurfaces(5);
-//
-//		for (int group = 0; group < NUM_ENERGY_GROUPS; group++){
-//			surfaceSide->incrementCurrent(surfaceCorner1->getCurrent(group), surfaceSide->getNormal(), group);
-//			surfaceSide->incrementFlux(surfaceCorner1->getFlux(group), group);
-//		}
-//
-//		/* side 2 */
-//		surfaceSide = _cells[i].getMeshSurfaces(2);
-//		surfaceCorner1 = _cells[i].getMeshSurfaces(6);
-//
-//		for (int group = 0; group < NUM_ENERGY_GROUPS; group++){
-//			surfaceSide->incrementCurrent(surfaceCorner1->getCurrent(group), surfaceSide->getNormal(), group);
-//			surfaceSide->incrementFlux(surfaceCorner1->getFlux(group), group);
-//		}
-//
-//		/* side 3 */
-//		surfaceSide = _cells[i].getMeshSurfaces(3);
-//		surfaceCorner1 = _cells[i].getMeshSurfaces(7);
-//
-//		for (int group = 0; group < NUM_ENERGY_GROUPS; group++){
-//			surfaceSide->incrementCurrent(surfaceCorner1->getCurrent(group), surfaceSide->getNormal(), group);
-//			surfaceSide->incrementFlux(surfaceCorner1->getFlux(group), group);
-//		}
-
 
 	int cell_width = getCellWidth();
 	int cell_height = getCellHeight();
@@ -273,197 +188,345 @@ void Mesh::splitCorners(){
 	MeshCell* meshCellNext;
 	MeshSurface* surfaceSideNext;
 
-
-
-
-//	for (int x = 0; x < cell_width; x++){
-//		for (int y = 0; y < cell_height; y++){
-//
-//				/* corner 4 */
-//
-//			meshCell = &_cells[y*cell_width + x];
-//			surfaceSide = meshCell->getMeshSurfaces(0);
-//			surfaceCorner1 = meshCell->getMeshSurfaces(4);
-//
-//			for (int group = 0; group < NUM_ENERGY_GROUPS; group++){
-//				surfaceSide->incrementCurrent(surfaceCorner1->getCurrent(group), surfaceSide->getNormal(), group);
-//				surfaceSide->incrementFlux(surfaceCorner1->getFlux(group), group);
-//			}
-//
-//				/* corner 5 */
-//			meshCell = &_cells[y*cell_width + x];
-//			surfaceSide = meshCell->getMeshSurfaces(1);
-//			surfaceCorner1 = meshCell->getMeshSurfaces(5);
-//
-//			for (int group = 0; group < NUM_ENERGY_GROUPS; group++){
-//				surfaceSide->incrementCurrent(surfaceCorner1->getCurrent(group), surfaceSide->getNormal(), group);
-//				surfaceSide->incrementFlux(surfaceCorner1->getFlux(group), group);
-//			}
-//
-//				/* corner 6 */
-//			meshCell = &_cells[y*cell_width + x];
-//			surfaceSide = meshCell->getMeshSurfaces(3);
-//			surfaceCorner1 = meshCell->getMeshSurfaces(6);
-//
-//			for (int group = 0; group < NUM_ENERGY_GROUPS; group++){
-//				surfaceSide->incrementCurrent(surfaceCorner1->getCurrent(group), surfaceSide->getNormal(), group);
-//				surfaceSide->incrementFlux(surfaceCorner1->getFlux(group), group);
-//			}
-//
-//
-//				/* corner 7 */
-//			meshCell = &_cells[y*cell_width + x];
-//			surfaceSide = meshCell->getMeshSurfaces(0);
-//			surfaceCorner1 = meshCell->getMeshSurfaces(7);
-//
-//			for (int group = 0; group < NUM_ENERGY_GROUPS; group++){
-//				surfaceSide->incrementCurrent(surfaceCorner1->getCurrent(group), surfaceSide->getNormal(), group);
-//				surfaceSide->incrementFlux(surfaceCorner1->getFlux(group), group);
-//			}
-//		}
-//
-//	}
-
 	for (int x = 0; x < cell_width; x++){
 		for (int y = 0; y < cell_height; y++){
 
-				/* corner 4 */
-				if (x > 0 && y < cell_height - 1){
-					meshCell = &_cells[y*cell_width + x];
-					surfaceSide = meshCell->getMeshSurfaces(1);
-					surfaceCorner1 = meshCell->getMeshSurfaces(4);
-					meshCellNext = &_cells[(y+1)*cell_width + x];
-					surfaceSideNext = meshCellNext->getMeshSurfaces(0);
+			/* corner 4 */
+			if (x > 0 && y < cell_height - 1){
+				meshCell = &_cells[y*cell_width + x];
+				surfaceSide = meshCell->getMeshSurfaces(1);
+				surfaceCorner1 = meshCell->getMeshSurfaces(4);
+				meshCellNext = &_cells[(y+1)*cell_width + x];
+				surfaceSideNext = meshCellNext->getMeshSurfaces(0);
+				surfaceSide->incrementWeight(surfaceCorner1->getWeight());
+				surfaceSide->incrementCurrWeight(surfaceCorner1->getCurrWeight(), surfaceSide->getNormal());
+				surfaceSideNext->incrementWeight(surfaceCorner1->getWeight());
+				surfaceSideNext->incrementCurrWeight(surfaceCorner1->getCurrWeight(), surfaceSideNext->getNormal());
 
-					for (int group = 0; group < NUM_ENERGY_GROUPS; group++){
-						surfaceSide->incrementCurrent(surfaceCorner1->getCurrent(group), surfaceSide->getNormal(), group);
-						surfaceSide->incrementFlux(surfaceCorner1->getFlux(group), group);
-						surfaceSideNext->incrementCurrent(surfaceCorner1->getCurrent(group), surfaceSideNext->getNormal(), group);
-						surfaceSideNext->incrementFlux(surfaceCorner1->getFlux(group), group);
-					}
+				for (int group = 0; group < NUM_ENERGY_GROUPS; group++){
+					surfaceSide->incrementCurrent(surfaceCorner1->getCurrent(group), surfaceSide->getNormal(), group);
+					surfaceSide->incrementFlux(surfaceCorner1->getFlux(group), group);
+					surfaceSide->incrementCrossings(1);
+					surfaceSideNext->incrementCurrent(surfaceCorner1->getCurrent(group), surfaceSideNext->getNormal(), group);
+					surfaceSideNext->incrementFlux(surfaceCorner1->getFlux(group), group);
+					surfaceSideNext->incrementCrossings(1);
 				}
-				else{
-					meshCell = &_cells[y*cell_width + x];
-					surfaceSide = meshCell->getMeshSurfaces(1);
-					surfaceCorner1 = meshCell->getMeshSurfaces(4);
-					surfaceSideNext = meshCell->getMeshSurfaces(0);
+			}
+			else{
+				meshCell = &_cells[y*cell_width + x];
+				surfaceSide = meshCell->getMeshSurfaces(1);
+				surfaceCorner1 = meshCell->getMeshSurfaces(4);
+				surfaceSideNext = meshCell->getMeshSurfaces(0);
+				surfaceSide->incrementWeight(surfaceCorner1->getWeight());
+				surfaceSide->incrementCurrWeight(surfaceCorner1->getCurrWeight(), surfaceSide->getNormal());
+				surfaceSideNext->incrementWeight(surfaceCorner1->getWeight());
+				surfaceSideNext->incrementCurrWeight(surfaceCorner1->getCurrWeight(), surfaceSideNext->getNormal());
 
-					for (int group = 0; group < NUM_ENERGY_GROUPS; group++){
-						surfaceSide->incrementCurrent(surfaceCorner1->getCurrent(group), surfaceSide->getNormal(), group);
-						surfaceSide->incrementFlux(surfaceCorner1->getFlux(group), group);
-						surfaceSideNext->incrementCurrent(surfaceCorner1->getCurrent(group), surfaceSideNext->getNormal(), group);
-						surfaceSideNext->incrementFlux(surfaceCorner1->getFlux(group), group);
-					}
+				for (int group = 0; group < NUM_ENERGY_GROUPS; group++){
+					surfaceSide->incrementCurrent(surfaceCorner1->getCurrent(group), surfaceSide->getNormal(), group);
+					surfaceSide->incrementFlux(surfaceCorner1->getFlux(group), group);
+					surfaceSide->incrementCrossings(1);
+					surfaceSideNext->incrementCurrent(surfaceCorner1->getCurrent(group), surfaceSideNext->getNormal(), group);
+					surfaceSideNext->incrementFlux(surfaceCorner1->getFlux(group), group);
+					surfaceSideNext->incrementCrossings(1);
 				}
+			}
 
 
-				/* corner 5 */
-				if (x < cell_width - 1 && y < cell_height - 1){
-					meshCell = &_cells[y*cell_width + x];
-					surfaceSide = meshCell->getMeshSurfaces(1);
-					surfaceCorner1 = meshCell->getMeshSurfaces(5);
-					meshCellNext = &_cells[(y+1)*cell_width + x];
-					surfaceSideNext = meshCellNext->getMeshSurfaces(2);
+			/* corner 5 */
+			if (x < cell_width - 1 && y < cell_height - 1){
+				meshCell = &_cells[y*cell_width + x];
+				surfaceSide = meshCell->getMeshSurfaces(1);
+				surfaceCorner1 = meshCell->getMeshSurfaces(5);
+				meshCellNext = &_cells[(y+1)*cell_width + x];
+				surfaceSideNext = meshCellNext->getMeshSurfaces(2);
+				surfaceSide->incrementWeight(surfaceCorner1->getWeight());
+				surfaceSide->incrementCurrWeight(surfaceCorner1->getCurrWeight(), surfaceSide->getNormal());
+				surfaceSideNext->incrementWeight(surfaceCorner1->getWeight());
+				surfaceSideNext->incrementCurrWeight(surfaceCorner1->getCurrWeight(), surfaceSideNext->getNormal());
 
-					for (int group = 0; group < NUM_ENERGY_GROUPS; group++){
-						surfaceSide->incrementCurrent(surfaceCorner1->getCurrent(group), surfaceSide->getNormal(), group);
-						surfaceSide->incrementFlux(surfaceCorner1->getFlux(group), group);
-						surfaceSideNext->incrementCurrent(surfaceCorner1->getCurrent(group), surfaceSideNext->getNormal(), group);
-						surfaceSideNext->incrementFlux(surfaceCorner1->getFlux(group), group);
-					}
+				for (int group = 0; group < NUM_ENERGY_GROUPS; group++){
+					surfaceSide->incrementCurrent(surfaceCorner1->getCurrent(group), surfaceSide->getNormal(), group);
+					surfaceSide->incrementFlux(surfaceCorner1->getFlux(group), group);
+					surfaceSide->incrementCrossings(1);
+					surfaceSideNext->incrementCurrent(surfaceCorner1->getCurrent(group), surfaceSideNext->getNormal(), group);
+					surfaceSideNext->incrementFlux(surfaceCorner1->getFlux(group), group);
+					surfaceSideNext->incrementCrossings(1);
 				}
-				else{
-					meshCell = &_cells[y*cell_width + x];
-					surfaceSide = meshCell->getMeshSurfaces(1);
-					surfaceCorner1 = meshCell->getMeshSurfaces(5);
-					surfaceSideNext = meshCell->getMeshSurfaces(2);
+			}
+			else{
+				meshCell = &_cells[y*cell_width + x];
+				surfaceSide = meshCell->getMeshSurfaces(1);
+				surfaceCorner1 = meshCell->getMeshSurfaces(5);
+				surfaceSideNext = meshCell->getMeshSurfaces(2);
+				surfaceSide->incrementWeight(surfaceCorner1->getWeight());
+				surfaceSide->incrementCurrWeight(surfaceCorner1->getCurrWeight(), surfaceSide->getNormal());
+				surfaceSideNext->incrementWeight(surfaceCorner1->getWeight());
+				surfaceSideNext->incrementCurrWeight(surfaceCorner1->getCurrWeight(), surfaceSideNext->getNormal());
 
-					for (int group = 0; group < NUM_ENERGY_GROUPS; group++){
-						surfaceSide->incrementCurrent(surfaceCorner1->getCurrent(group), surfaceSide->getNormal(), group);
-						surfaceSide->incrementFlux(surfaceCorner1->getFlux(group), group);
-						surfaceSideNext->incrementCurrent(surfaceCorner1->getCurrent(group), surfaceSideNext->getNormal(), group);
-						surfaceSideNext->incrementFlux(surfaceCorner1->getFlux(group), group);
-					}
+				for (int group = 0; group < NUM_ENERGY_GROUPS; group++){
+					surfaceSide->incrementCurrent(surfaceCorner1->getCurrent(group), surfaceSide->getNormal(), group);
+					surfaceSide->incrementFlux(surfaceCorner1->getFlux(group), group);
+					surfaceSide->incrementCrossings(1);
+					surfaceSideNext->incrementCurrent(surfaceCorner1->getCurrent(group), surfaceSideNext->getNormal(), group);
+					surfaceSideNext->incrementFlux(surfaceCorner1->getFlux(group), group);
+					surfaceSideNext->incrementCrossings(1);
 				}
+			}
 
-				/* corner 6 */
-				if (x < cell_width - 1 && y > 0){
-					meshCell = &_cells[y*cell_width + x];
-					surfaceSide = meshCell->getMeshSurfaces(2);
-					surfaceCorner1 = meshCell->getMeshSurfaces(6);
-					meshCellNext = &_cells[y*cell_width + x + 1];
-					surfaceSideNext = meshCellNext->getMeshSurfaces(3);
+			/* corner 6 */
+			if (x < cell_width - 1 && y > 0){
+				meshCell = &_cells[y*cell_width + x];
+				surfaceSide = meshCell->getMeshSurfaces(2);
+				surfaceCorner1 = meshCell->getMeshSurfaces(6);
+				meshCellNext = &_cells[y*cell_width + x + 1];
+				surfaceSideNext = meshCellNext->getMeshSurfaces(3);
+				surfaceSide->incrementWeight(surfaceCorner1->getWeight());
+				surfaceSide->incrementCurrWeight(surfaceCorner1->getCurrWeight(), surfaceSide->getNormal());
+				surfaceSideNext->incrementWeight(surfaceCorner1->getWeight());
+				surfaceSideNext->incrementCurrWeight(surfaceCorner1->getCurrWeight(), surfaceSideNext->getNormal());
 
-					for (int group = 0; group < NUM_ENERGY_GROUPS; group++){
-						surfaceSide->incrementCurrent(surfaceCorner1->getCurrent(group), surfaceSide->getNormal(), group);
-						surfaceSide->incrementFlux(surfaceCorner1->getFlux(group), group);
-						surfaceSideNext->incrementCurrent(surfaceCorner1->getCurrent(group), surfaceSideNext->getNormal(), group);
-						surfaceSideNext->incrementFlux(surfaceCorner1->getFlux(group), group);
-					}
+				for (int group = 0; group < NUM_ENERGY_GROUPS; group++){
+					surfaceSide->incrementCurrent(surfaceCorner1->getCurrent(group), surfaceSide->getNormal(), group);
+					surfaceSide->incrementFlux(surfaceCorner1->getFlux(group), group);
+					surfaceSide->incrementCrossings(1);
+					surfaceSideNext->incrementCurrent(surfaceCorner1->getCurrent(group), surfaceSideNext->getNormal(), group);
+					surfaceSideNext->incrementFlux(surfaceCorner1->getFlux(group), group);
+					surfaceSideNext->incrementCrossings(1);
 				}
-				else{
-					meshCell = &_cells[y*cell_width + x];
-					surfaceSide = meshCell->getMeshSurfaces(2);
-					surfaceCorner1 = meshCell->getMeshSurfaces(6);
-					surfaceSideNext = meshCell->getMeshSurfaces(3);
+			}
+			else{
+				meshCell = &_cells[y*cell_width + x];
+				surfaceSide = meshCell->getMeshSurfaces(2);
+				surfaceCorner1 = meshCell->getMeshSurfaces(6);
+				surfaceSideNext = meshCell->getMeshSurfaces(3);
+				surfaceSide->incrementWeight(surfaceCorner1->getWeight());
+				surfaceSide->incrementCurrWeight(surfaceCorner1->getCurrWeight(), surfaceSide->getNormal());
+				surfaceSideNext->incrementWeight(surfaceCorner1->getWeight());
+				surfaceSideNext->incrementCurrWeight(surfaceCorner1->getCurrWeight(), surfaceSideNext->getNormal());
 
-					for (int group = 0; group < NUM_ENERGY_GROUPS; group++){
-						surfaceSide->incrementCurrent(surfaceCorner1->getCurrent(group), surfaceSide->getNormal(), group);
-						surfaceSide->incrementFlux(surfaceCorner1->getFlux(group), group);
-						surfaceSideNext->incrementCurrent(surfaceCorner1->getCurrent(group), surfaceSideNext->getNormal(), group);
-						surfaceSideNext->incrementFlux(surfaceCorner1->getFlux(group), group);
-					}
+				for (int group = 0; group < NUM_ENERGY_GROUPS; group++){
+					surfaceSide->incrementCurrent(surfaceCorner1->getCurrent(group), surfaceSide->getNormal(), group);
+					surfaceSide->incrementFlux(surfaceCorner1->getFlux(group), group);
+					surfaceSide->incrementCrossings(1);
+					surfaceSideNext->incrementCurrent(surfaceCorner1->getCurrent(group), surfaceSideNext->getNormal(), group);
+					surfaceSideNext->incrementFlux(surfaceCorner1->getFlux(group), group);
+					surfaceSideNext->incrementCrossings(1);
 				}
+			}
 
 
 
-				/* corner 7 */
-				if (x > 0 && y > 0){
-					meshCell = &_cells[y*cell_width + x];
-					surfaceSide = meshCell->getMeshSurfaces(0);
-					surfaceCorner1 = meshCell->getMeshSurfaces(7);
-					meshCellNext = &_cells[y*cell_width + x - 1];
-					surfaceSideNext = meshCellNext->getMeshSurfaces(3);
+			/* corner 7 */
+			if (x > 0 && y > 0){
+				meshCell = &_cells[y*cell_width + x];
+				surfaceSide = meshCell->getMeshSurfaces(0);
+				surfaceCorner1 = meshCell->getMeshSurfaces(7);
+				meshCellNext = &_cells[y*cell_width + x - 1];
+				surfaceSideNext = meshCellNext->getMeshSurfaces(3);
+				surfaceSide->incrementWeight(surfaceCorner1->getWeight());
+				surfaceSide->incrementCurrWeight(surfaceCorner1->getCurrWeight(), surfaceSide->getNormal());
+				surfaceSideNext->incrementWeight(surfaceCorner1->getWeight());
+				surfaceSideNext->incrementCurrWeight(surfaceCorner1->getCurrWeight(), surfaceSideNext->getNormal());
 
-					for (int group = 0; group < NUM_ENERGY_GROUPS; group++){
-						surfaceSide->incrementCurrent(surfaceCorner1->getCurrent(group), surfaceSide->getNormal(), group);
-						surfaceSide->incrementFlux(surfaceCorner1->getFlux(group), group);
-						surfaceSideNext->incrementCurrent(surfaceCorner1->getCurrent(group), surfaceSideNext->getNormal(), group);
-						surfaceSideNext->incrementFlux(surfaceCorner1->getFlux(group), group);
-					}
+				for (int group = 0; group < NUM_ENERGY_GROUPS; group++){
+					surfaceSide->incrementCurrent(surfaceCorner1->getCurrent(group), surfaceSide->getNormal(), group);
+					surfaceSide->incrementFlux(surfaceCorner1->getFlux(group), group);
+					surfaceSide->incrementCrossings(1);
+					surfaceSideNext->incrementCurrent(surfaceCorner1->getCurrent(group), surfaceSideNext->getNormal(), group);
+					surfaceSideNext->incrementFlux(surfaceCorner1->getFlux(group), group);
+					surfaceSideNext->incrementCrossings(1);
 				}
-				else{
-					meshCell = &_cells[y*cell_width + x];
-					surfaceSide = meshCell->getMeshSurfaces(0);
-					surfaceCorner1 = meshCell->getMeshSurfaces(7);
-					surfaceSideNext = meshCell->getMeshSurfaces(3);
+			}
+			else{
+				meshCell = &_cells[y*cell_width + x];
+				surfaceSide = meshCell->getMeshSurfaces(0);
+				surfaceCorner1 = meshCell->getMeshSurfaces(7);
+				surfaceSideNext = meshCell->getMeshSurfaces(3);
+				surfaceSide->incrementWeight(surfaceCorner1->getWeight());
+				surfaceSide->incrementCurrWeight(surfaceCorner1->getCurrWeight(), surfaceSide->getNormal());
+				surfaceSideNext->incrementWeight(surfaceCorner1->getWeight());
+				surfaceSideNext->incrementCurrWeight(surfaceCorner1->getCurrWeight(), surfaceSideNext->getNormal());
 
-					for (int group = 0; group < NUM_ENERGY_GROUPS; group++){
-						surfaceSide->incrementCurrent(surfaceCorner1->getCurrent(group), surfaceSide->getNormal(), group);
-						surfaceSide->incrementFlux(surfaceCorner1->getFlux(group), group);
-						surfaceSideNext->incrementCurrent(surfaceCorner1->getCurrent(group), surfaceSideNext->getNormal(), group);
-						surfaceSideNext->incrementFlux(surfaceCorner1->getFlux(group), group);
-					}
+				for (int group = 0; group < NUM_ENERGY_GROUPS; group++){
+					surfaceSide->incrementCurrent(surfaceCorner1->getCurrent(group), surfaceSide->getNormal(), group);
+					surfaceSide->incrementFlux(surfaceCorner1->getFlux(group), group);
+					surfaceSide->incrementCrossings(1);
+					surfaceSideNext->incrementCurrent(surfaceCorner1->getCurrent(group), surfaceSideNext->getNormal(), group);
+					surfaceSideNext->incrementFlux(surfaceCorner1->getFlux(group), group);
+					surfaceSideNext->incrementCrossings(1);
 				}
+			}
+
+//			/* corner 4 */
+//			if (y < cell_height - 1){
+//				meshCell = &_cells[y*cell_width + x];
+//				surfaceSide = meshCell->getMeshSurfaces(1);
+//				surfaceCorner1 = meshCell->getMeshSurfaces(4);
+//				meshCellNext = &_cells[(y+1)*cell_width + x];
+//				surfaceSideNext = meshCellNext->getMeshSurfaces(0);
+//				surfaceSide->incrementWeight(surfaceCorner1->getWeight());
+//				surfaceSide->incrementCurrWeight(surfaceCorner1->getCurrWeight(), surfaceSide->getNormal());
+//				surfaceSideNext->incrementWeight(surfaceCorner1->getWeight());
+//				surfaceSideNext->incrementCurrWeight(surfaceCorner1->getCurrWeight(), surfaceSideNext->getNormal());
+//
+//				for (int group = 0; group < NUM_ENERGY_GROUPS; group++){
+//					surfaceSide->incrementCurrent(surfaceCorner1->getCurrent(group), surfaceSide->getNormal(), group);
+//					surfaceSide->incrementFlux(surfaceCorner1->getFlux(group), group);
+//					surfaceSide->incrementCrossings(1);
+//					surfaceSideNext->incrementCurrent(surfaceCorner1->getCurrent(group), surfaceSideNext->getNormal(), group);
+//					surfaceSideNext->incrementFlux(surfaceCorner1->getFlux(group), group);
+//					surfaceSideNext->incrementCrossings(1);
+//				}
+//			}
+//
+//			/* corner 5 */
+//			if (y < cell_height - 1){
+//				meshCell = &_cells[y*cell_width + x];
+//				surfaceSide = meshCell->getMeshSurfaces(1);
+//				surfaceCorner1 = meshCell->getMeshSurfaces(5);
+//				meshCellNext = &_cells[(y+1)*cell_width + x];
+//				surfaceSideNext = meshCellNext->getMeshSurfaces(2);
+//				surfaceSide->incrementWeight(surfaceCorner1->getWeight());
+//				surfaceSide->incrementCurrWeight(surfaceCorner1->getCurrWeight(), surfaceSide->getNormal());
+//				surfaceSideNext->incrementWeight(surfaceCorner1->getWeight());
+//				surfaceSideNext->incrementCurrWeight(surfaceCorner1->getCurrWeight(), surfaceSideNext->getNormal());
+//
+//				for (int group = 0; group < NUM_ENERGY_GROUPS; group++){
+//					surfaceSide->incrementCurrent(surfaceCorner1->getCurrent(group), surfaceSide->getNormal(), group);
+//					surfaceSide->incrementFlux(surfaceCorner1->getFlux(group), group);
+//					surfaceSide->incrementCrossings(1);
+//					surfaceSideNext->incrementCurrent(surfaceCorner1->getCurrent(group), surfaceSideNext->getNormal(), group);
+//					surfaceSideNext->incrementFlux(surfaceCorner1->getFlux(group), group);
+//					surfaceSideNext->incrementCrossings(1);
+//				}
+//			}
+//
+//			/* corner 6 */
+//			if (x < cell_width - 1){
+//				meshCell = &_cells[y*cell_width + x];
+//				surfaceSide = meshCell->getMeshSurfaces(2);
+//				surfaceCorner1 = meshCell->getMeshSurfaces(6);
+//				meshCellNext = &_cells[y*cell_width + x + 1];
+//				surfaceSideNext = meshCellNext->getMeshSurfaces(3);
+//				surfaceSide->incrementWeight(surfaceCorner1->getWeight());
+//				surfaceSide->incrementCurrWeight(surfaceCorner1->getCurrWeight(), surfaceSide->getNormal());
+//				surfaceSideNext->incrementWeight(surfaceCorner1->getWeight());
+//				surfaceSideNext->incrementCurrWeight(surfaceCorner1->getCurrWeight(), surfaceSideNext->getNormal());
+//
+//				for (int group = 0; group < NUM_ENERGY_GROUPS; group++){
+//					surfaceSide->incrementCurrent(surfaceCorner1->getCurrent(group), surfaceSide->getNormal(), group);
+//					surfaceSide->incrementFlux(surfaceCorner1->getFlux(group), group);
+//					surfaceSide->incrementCrossings(1);
+//					surfaceSideNext->incrementCurrent(surfaceCorner1->getCurrent(group), surfaceSideNext->getNormal(), group);
+//					surfaceSideNext->incrementFlux(surfaceCorner1->getFlux(group), group);
+//					surfaceSideNext->incrementCrossings(1);
+//				}
+//			}
+//
+//			/* corner 7 */
+//			if (x > 0){
+//				meshCell = &_cells[y*cell_width + x];
+//				surfaceSide = meshCell->getMeshSurfaces(0);
+//				surfaceCorner1 = meshCell->getMeshSurfaces(7);
+//				meshCellNext = &_cells[y*cell_width + x - 1];
+//				surfaceSideNext = meshCellNext->getMeshSurfaces(3);
+//				surfaceSide->incrementWeight(surfaceCorner1->getWeight());
+//				surfaceSide->incrementCurrWeight(surfaceCorner1->getCurrWeight(), surfaceSide->getNormal());
+//				surfaceSideNext->incrementWeight(surfaceCorner1->getWeight());
+//				surfaceSideNext->incrementCurrWeight(surfaceCorner1->getCurrWeight(), surfaceSideNext->getNormal());
+//
+//				for (int group = 0; group < NUM_ENERGY_GROUPS; group++){
+//					surfaceSide->incrementCurrent(surfaceCorner1->getCurrent(group), surfaceSide->getNormal(), group);
+//					surfaceSide->incrementFlux(surfaceCorner1->getFlux(group), group);
+//					surfaceSide->incrementCrossings(1);
+//					surfaceSideNext->incrementCurrent(surfaceCorner1->getCurrent(group), surfaceSideNext->getNormal(), group);
+//					surfaceSideNext->incrementFlux(surfaceCorner1->getFlux(group), group);
+//					surfaceSideNext->incrementCrossings(1);
+//				}
+//			}
 		}
 	}
 
 
 
+	/* apply weighting factor to all surface fluxes and currents */
+	for (int i = 0; i < cell_width * cell_height; i++){
+		meshCell = getCells(i);
 
+		for (int s = 0; s < 4; s++){
+			surfaceSide = meshCell->getMeshSurfaces(s);
 
-		/* zero corner currents and surface fluxes */
-	for (int i = 0; i < cell_width*cell_height; i++){
-		for (int side = 4; side < 8; side++){
-			surfaceCorner1 = _cells[i].getMeshSurfaces(side);
-			for (int group = 0; group < NUM_ENERGY_GROUPS; group++){
-				surfaceCorner1->setCurrent(0, group);
-				surfaceCorner1->setFlux(0, group);
+			for (int e = 0; e < NUM_ENERGY_GROUPS; e++){
+				log_printf(NORMAL, "cell: %i, group: %i, surface: %i, current: %f, flux: %f, weight: %f", i, e, s,
+						surfaceSide->getCurrent(e), surfaceSide->getFlux(e), surfaceSide->getWeight());
+
+				if (surfaceSide->getFlux(e) != 0){
+					surfaceSide->setCurrent(surfaceSide->getCurrent(e) / surfaceSide->getCurrWeight(), e);
+					surfaceSide->setFlux(surfaceSide->getFlux(e) / surfaceSide->getWeight(), e);
+					log_printf(NORMAL, "cell: %i, group: %i, surface: %i, current: %f, flux: %f, curr_weight: %f, crossings: %i", i, e, s,
+							surfaceSide->getCurrent(e), surfaceSide->getFlux(e), surfaceSide->getCurrWeight(), surfaceSide->getCrossings());
+
+				}
 			}
 		}
+
+		for (int s = 4; s < 8; s++){
+			surfaceSide = meshCell->getMeshSurfaces(s);
+			for (int e = 0; e < NUM_ENERGY_GROUPS; e++){
+							log_printf(NORMAL, "cell: %i, group: %i, surface: %i, current: %f, flux: %f, curr_weight: %f, crossings: %i", i, e, s,
+									surfaceSide->getCurrent(e), surfaceSide->getFlux(e), surfaceSide->getCurrWeight(), surfaceSide->getCrossings());
+			}
+		}
+
+
+
 	}
 
+//			meshCell = &_cells[y*cell_width + x];
+//			surfaceCorner1 = meshCell->getMeshSurfaces(0);
+//			log_printf(NORMAL, "cell %i corner 0 group 0 crossings: %i, flux: %f", y*cell_width + x, surfaceCorner1->getCrossings(), surfaceCorner1->getCurrent(0));
+//			surfaceCorner1 = meshCell->getMeshSurfaces(1);
+//			log_printf(NORMAL, "cell %i corner 1 group 0 crossings: %i, flux: %f", y*cell_width + x, surfaceCorner1->getCrossings(), surfaceCorner1->getCurrent(0));
+//			surfaceCorner1 = meshCell->getMeshSurfaces(2);
+//			log_printf(NORMAL, "cell %i corner 2 group 0 crossings: %i, flux: %f", y*cell_width + x, surfaceCorner1->getCrossings(), surfaceCorner1->getCurrent(0));
+//			surfaceCorner1 = meshCell->getMeshSurfaces(3);
+//			log_printf(NORMAL, "cell %i corner 3 group 0 crossings: %i, flux: %f", y*cell_width + x, surfaceCorner1->getCrossings(), surfaceCorner1->getCurrent(0));
+//			surfaceCorner1 = meshCell->getMeshSurfaces(4);
+//			log_printf(NORMAL, "cell %i corner 4 group 0 crossings: %i, flux: %f", y*cell_width + x, surfaceCorner1->getCrossings(), surfaceCorner1->getCurrent(0));
+//			surfaceCorner1 = meshCell->getMeshSurfaces(5);
+//			log_printf(NORMAL, "cell %i corner 5 group 0 crossings: %i, flux: %f", y*cell_width + x, surfaceCorner1->getCrossings(), surfaceCorner1->getCurrent(0));
+//			surfaceCorner1 = meshCell->getMeshSurfaces(6);
+//			log_printf(NORMAL, "cell %i corner 6 group 0 crossings: %i, flux: %f", y*cell_width + x, surfaceCorner1->getCrossings(), surfaceCorner1->getCurrent(0));
+//			surfaceCorner1 = meshCell->getMeshSurfaces(7);
+//			log_printf(NORMAL, "cell %i corner 7 group 0 crossings: %i, flux: %f", y*cell_width + x, surfaceCorner1->getCrossings(), surfaceCorner1->getCurrent(0));
 
+
+}
+
+void Mesh::normalizeSurfaces(){
+
+	MeshSurface* meshSurface;
+	MeshCell* meshCell;
+
+	for (int i = 0; i < _cell_width * _cell_height; i++){
+		meshCell = getCells(i);
+		log_printf(NORMAL, "Normalizing surface %i", i);
+		for (int e = 0; e < NUM_ENERGY_GROUPS; e++){
+			meshSurface = meshCell->getMeshSurfaces(0);
+			meshSurface->setCurrent(meshSurface->getCurrent(e) / meshSurface->getCrossings(),e);
+			meshSurface->setFlux(meshSurface->getFlux(e) / meshSurface->getCrossings(),e);
+			meshSurface = meshCell->getMeshSurfaces(1);
+			meshSurface->setCurrent(meshSurface->getCurrent(e) / meshSurface->getCrossings(),e);
+			meshSurface->setFlux(meshSurface->getFlux(e) / meshSurface->getCrossings(),e);
+			meshSurface = meshCell->getMeshSurfaces(2);
+			meshSurface->setCurrent(meshSurface->getCurrent(e) / meshSurface->getCrossings(),e);
+			meshSurface->setFlux(meshSurface->getFlux(e) / meshSurface->getCrossings(),e);
+			meshSurface = meshCell->getMeshSurfaces(3);
+			meshSurface->setCurrent(meshSurface->getCurrent(e) / meshSurface->getCrossings(),e);
+			meshSurface->setFlux(meshSurface->getFlux(e) / meshSurface->getCrossings(),e);
+		}
+	}
 
 }
 

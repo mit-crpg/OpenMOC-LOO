@@ -556,19 +556,23 @@ void Solver::fixedSourceIteration(int max_iterations, bool cmfd = false) {
 
 
 #if CMFD_ACCEL
-		if (cmfd == true){
+//		if (cmfd == true){
 
 			/* zero surface currents */
 			Mesh* mesh = _geom->getMesh();
 			for (int cell = 0; cell < mesh->getCellHeight()*mesh->getCellWidth(); cell++){
 				for (int surface = 0; surface < 8; surface++){
+					mesh->getCells(cell)->getMeshSurfaces(surface)->setCrossings(0);
+					mesh->getCells(cell)->getMeshSurfaces(surface)->setWeight(0);
+					mesh->getCells(cell)->getMeshSurfaces(surface)->setCurrWeight(0);
 					for (int group = 0; group < NUM_ENERGY_GROUPS; group++){
 						mesh->getCells(cell)->getMeshSurfaces(surface)->setCurrent(0, group);
 						mesh->getCells(cell)->getMeshSurfaces(surface)->setFlux(0, group);
 					}
 				}
+
 			}
-		}
+//		}
 #endif
 
 		/* Loop over azimuthal each thread and azimuthal angle*
@@ -658,15 +662,15 @@ void Solver::fixedSourceIteration(int max_iterations, bool cmfd = false) {
 
 						if (segment->_mesh_surface_fwd != NULL){
 							pe = 0;
+							segment->_mesh_surface_fwd->incrementCrossings(1);
+							segment->_mesh_surface_fwd->incrementWeight(track->getAzimuthalWeight());
+							segment->_mesh_surface_fwd->incrementCurrWeight(track->getAzimuthalWeight(), track->getPhi());
 
 							for (e = 0; e < NUM_ENERGY_GROUPS; e++) {
 								for (p = 0; p < NUM_POLAR_ANGLES; p++){
 									/* increment current (polar and azimuthal weighted flux, group)*/
-									segment->_mesh_surface_fwd->incrementCurrent(polar_fluxes[pe] * weights[p], track->getPhi(), e);
-									segment->_mesh_surface_fwd->incrementFlux(polar_fluxes[pe] * weights[p], e);
-//									log_printf(NORMAL, "fwd az: %i, tr: %i, cell: %i, surf: %i, pol: %i, grp: %i, phi: %f, norm: %f, curr inc: %f", j, k,
-//											segment->_mesh_surface_fwd->getMeshCell(), segment->_mesh_surface_fwd->getSurfaceNum(),
-//											p, e, track->getPhi(), segment->_mesh_surface_fwd->getNormal(), polar_fluxes[pe]*weights[p] * fabs(cos(segment->_mesh_surface_fwd->getNormal() - track->getPhi())));
+									segment->_mesh_surface_fwd->incrementCurrent(polar_fluxes[pe] * weights[p] * track->getAzimuthalWeight(), track->getPhi(), e);
+									segment->_mesh_surface_fwd->incrementFlux(polar_fluxes[pe] * weights[p] * track->getAzimuthalWeight(), e);
 
 									pe++;
 								}
@@ -738,16 +742,15 @@ void Solver::fixedSourceIteration(int max_iterations, bool cmfd = false) {
 
 						if (segment->_mesh_surface_bwd != NULL){
 							pe = 0;
+							segment->_mesh_surface_bwd->incrementCrossings(1);
+							segment->_mesh_surface_bwd->incrementWeight(track->getAzimuthalWeight());
+							segment->_mesh_surface_bwd->incrementCurrWeight(track->getAzimuthalWeight(), track->getPhi());
 
 							for (e = 0; e < NUM_ENERGY_GROUPS; e++) {
 								for (p = 0; p < NUM_POLAR_ANGLES; p++){
 									/* increment current (polar and azimuthal weighted flux, group)*/
-									segment->_mesh_surface_bwd->incrementCurrent(polar_fluxes[pe] * weights[p], track->getPhi(), e);
-									segment->_mesh_surface_bwd->incrementFlux(polar_fluxes[pe] * weights[p], e);
-//									log_printf(NORMAL, "bwd azim: %i, track: %i, cell: %i, surface: %i, polar: %i, group: %i, current: %f", j, k,
-//											segment->_mesh_surface_bwd->getMeshCell(), segment->_mesh_surface_bwd->getSurfaceNum(),
-//											p, e, polar_fluxes[pe]*weights[p] * fabs(cos(segment->_mesh_surface_bwd->getNormal() - track->getPhi())));
-
+									segment->_mesh_surface_bwd->incrementCurrent(polar_fluxes[pe] * weights[p] * track->getAzimuthalWeight(), track->getPhi(), e);
+									segment->_mesh_surface_bwd->incrementFlux(polar_fluxes[pe] * weights[p] * track->getAzimuthalWeight(), e);
 
 									pe++;
 								}
@@ -998,13 +1001,12 @@ double Solver::computeKeff(int max_iterations) {
 
 		if (fabs(_old_k_effs.back() - _k_eff) < KEFF_CONVERG_THRESH){
 
-			/* Converge the scalar flux spatially within geometry to plot */
-			fixedSourceIteration(1000);
 
-			#if CMFD_ACCEL
+
 			/* Plot net current, surface flux, xs, and d_hats for mesh */
 			if (_plotter->plotCurrent()){
-				fixedSourceIteration(1, true);
+				#if CMFD_ACCEL
+				fixedSourceIteration(1000, true);
 				_geom->getMesh()->splitCorners();
 				computeXS(_geom->getMesh());
 				computeDs(_geom->getMesh());
@@ -1016,8 +1018,13 @@ double Solver::computeKeff(int max_iterations) {
 				_plotter->plotSurfaceFlux(_geom->getMesh());
 				_plotter->plotXS(_geom->getMesh());
 				_plotter->plotDHats(_geom->getMesh());
+				#endif
 			}
-			#endif
+			else {
+				/* Converge the scalar flux spatially within geometry to plot */
+				fixedSourceIteration(1000);
+			}
+
 
 			if (_plotter->plotFlux() == true){
 				/* Load fluxes into FSR to flux map */
@@ -1055,7 +1062,6 @@ double Solver::computeKeff(int max_iterations) {
 
 		#if CMFD_ACCEL
 		/* Do CMFD solve and update fluxes */
-
 		_geom->getMesh()->splitCorners();
 		computeXS(_geom->getMesh());
 		computeDs(_geom->getMesh());
@@ -1137,6 +1143,8 @@ void Solver::plotFluxes(){
 /* compute the xs for all MeshCells in the Mesh */
 void Solver::computeXS(Mesh* mesh){
 
+	log_printf(NORMAL, "Computing cmfd cross sections...");
+
 	/* tallies for fsr_vol * group_avg_xs and fsr_vol */
 	double abs_tally, flux_tally, tot_tally, fis_tally, nu_fis_tally, dif_tally, rxn_tally, vol_tally;
 	MeshCell* meshCell;
@@ -1157,7 +1165,6 @@ void Solver::computeXS(Mesh* mesh){
 		nu_fis_tally = 0;
 		dif_tally = 0;
 		rxn_tally = 0;
-		vol_tally = 0;
 
 		std::vector<int>::iterator iter;
 		for (int e = 0; e < NUM_ENERGY_GROUPS; e++) {
@@ -1168,6 +1175,7 @@ void Solver::computeXS(Mesh* mesh){
 			nu_fis_tally_cell = 0;
 			dif_tally_cell = 0;
 			rxn_tally_cell = 0;
+			vol_tally = 0;
 
 			for (iter = meshCell->getFSRs()->begin(); iter != meshCell->getFSRs()->end(); ++iter){
 				fsr = &_flat_source_regions[*iter];
@@ -1196,7 +1204,7 @@ void Solver::computeXS(Mesh* mesh){
 			fis_tally += fis_tally_cell;
 			nu_fis_tally += nu_fis_tally_cell;
 			dif_tally += dif_tally_cell;
-			flux_tally += rxn_tally_cell / volume;
+			flux_tally += rxn_tally_cell / vol_tally;
 			rxn_tally += rxn_tally_cell;
 		}
 

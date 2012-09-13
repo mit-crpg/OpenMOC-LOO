@@ -10,6 +10,9 @@
 MeshSurface::MeshSurface(){
 	_current = new double[NUM_ENERGY_GROUPS];
 	_flux = new double[NUM_ENERGY_GROUPS];
+	_crossings = 0;
+	_weight = 0;
+	_curr_weight = 0;
 
 	for (int i = 0; i < NUM_ENERGY_GROUPS; i++){
 		_current[i] = 0;
@@ -91,7 +94,41 @@ int MeshSurface::getSurfaceNum(){
 	return _surface_num;
 }
 
+int MeshSurface::getCrossings(){
+	return _crossings;
+}
 
+void MeshSurface::incrementCrossings(int crossings){
+	_crossings += crossings;
+}
+
+void MeshSurface::setCrossings(int crossings){
+	_crossings = crossings;
+}
+
+double MeshSurface::getWeight(){
+	return _weight;
+}
+
+void MeshSurface::incrementWeight(double weight){
+	_weight += weight;
+}
+
+void MeshSurface::setWeight(double weight){
+	_weight = weight;
+}
+
+double MeshSurface::getCurrWeight(){
+	return _curr_weight;
+}
+
+void MeshSurface::incrementCurrWeight(double weight, double phi){
+	_curr_weight += weight * fabs(cos(_normal - phi));
+}
+
+void MeshSurface::setCurrWeight(double weight){
+	_curr_weight = weight;
+}
 
 
 

@@ -36,6 +36,9 @@ private:
 	double _d_tilde;
 	int _mesh_cell;
 	int _surface_num;
+	int _crossings;
+	double _weight;
+	double _curr_weight;
 
 public:
 	MeshSurface();
@@ -58,6 +61,15 @@ public:
 	int getMeshCell();
 	void setSurfaceNum(int surfaceNum);
 	int getSurfaceNum();
+	int getCrossings();
+	void incrementCrossings(int crossings);
+	void setCrossings(int crossings);
+	double getWeight();
+	void incrementWeight(double weight);
+	void setWeight(double weight);
+	double getCurrWeight();
+	void incrementCurrWeight(double weight, double phi);
+	void setCurrWeight(double weight);
 };
 
 
