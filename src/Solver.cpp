@@ -598,6 +598,7 @@ void Solver::plotFluxes(){
 	deleteBitMap(bitMap);
 }
 
+#if CMFD_ACCEL
 void Solver::CMFDfixedSourceIteration() {
 
 	Track* track;
@@ -705,7 +706,12 @@ void Solver::CMFDfixedSourceIteration() {
 						}
 					}
 				}
+
 			}
+
+			/* Transfer flux to outgoing track */
+			track->getTrackOut()->setPolarFluxes(track->isReflOut(),0, polar_fluxes);
+
 
 			/* Loop over each segment in reverse direction */
 			for (s = num_segments-1; s > -1; s--) {
@@ -780,12 +786,17 @@ void Solver::CMFDfixedSourceIteration() {
 					}
 				}
 			}
+
+			/* Transfer flux to incoming track */
+			track->getTrackIn()->setPolarFluxes(track->isReflIn(),GRP_TIMES_ANG, polar_fluxes);
+
+
 		}
 	}
 
 	return;
 }
-
+#endif
 
 
 void Solver::fixedSourceIteration(int max_iterations) {
@@ -854,6 +865,11 @@ void Solver::fixedSourceIteration(int max_iterations) {
 				weights = track->getPolarWeights();
 				polar_fluxes = track->getPolarFluxes();
 
+//				log_printf(NORMAL, "fwd incoming flux: %f", polar_fluxes[0]);
+				log_printf(NORMAL, "fwd incoming flux: %f, start (%f,%f), end (%f,%f)", polar_fluxes[0], track->getStart()->getX(),
+						track->getStart()->getY(), track->getEnd()->getX(), track->getEnd()->getY());
+
+
 				/* Loop over each segment in forward direction */
 				for (s = 0; s < num_segments; s++) {
 					segment = segments.at(s);
@@ -909,8 +925,21 @@ void Solver::fixedSourceIteration(int max_iterations) {
 				}
 
 				/* Transfer flux to outgoing track */
-				track->getTrackOut()->setPolarFluxes(track->isReflOut(),
-													0, polar_fluxes);
+				track->getTrackOut()->setPolarFluxes(track->isReflOut(),0, polar_fluxes);
+
+				log_printf(NORMAL, "track (%f,%f), (%f,%f) reflects into track (%f,%f), (%f,%f), refl out = %i", track->getStart()->getX(),
+						track->getStart()->getY(), track->getEnd()->getX(),
+						track->getEnd()->getY(),track->getTrackOut()->getStart()->getX(),track->getTrackOut()->getStart()->getY(),
+						track->getTrackOut()->getEnd()->getX(),track->getTrackOut()->getEnd()->getY(), track->isReflOut());
+
+//				log_printf(NORMAL, "fwd outgoing flux: %f", polar_fluxes[0]);
+//				log_printf(NORMAL, "bwd incoming flux: %f", polar_fluxes[GRP_TIMES_ANG]);
+
+				log_printf(NORMAL, "fwd outgoing flux: %f, start (%f,%f), end (%f,%f)", polar_fluxes[0], track->getStart()->getX(),
+						track->getStart()->getY(), track->getEnd()->getX(), track->getEnd()->getY());
+				log_printf(NORMAL, "bwd incoming flux: %f, start (%f,%f), end (%f,%f)", polar_fluxes[GRP_TIMES_ANG], track->getStart()->getX(),
+						track->getStart()->getY(), track->getEnd()->getX(), track->getEnd()->getY());
+
 
 				/* Loop over each segment in reverse direction */
 				for (s = num_segments-1; s > -1; s--) {
@@ -966,8 +995,15 @@ void Solver::fixedSourceIteration(int max_iterations) {
 				}
 
 				/* Transfer flux to incoming track */
-				track->getTrackIn()->setPolarFluxes(track->isReflIn(),
-										GRP_TIMES_ANG, polar_fluxes);
+				track->getTrackIn()->setPolarFluxes(track->isReflIn(),GRP_TIMES_ANG, polar_fluxes);
+
+				log_printf(NORMAL, "track (%f,%f), (%f,%f) reflects into track (%f,%f), (%f,%f), refl in = %i", track->getStart()->getX(),
+						track->getStart()->getY(), track->getEnd()->getX(),
+						track->getEnd()->getY(),track->getTrackIn()->getStart()->getX(),track->getTrackIn()->getStart()->getY(),
+						track->getTrackIn()->getEnd()->getX(),track->getTrackIn()->getEnd()->getY(), track->isReflIn());
+
+				log_printf(NORMAL, "bwd outgoing flux: %f, start (%f,%f), end (%f,%f)", polar_fluxes[GRP_TIMES_ANG], track->getStart()->getX(),
+						track->getStart()->getY(), track->getEnd()->getX(), track->getEnd()->getY());
 			}
 
 			/* Update the azimuthal angle index for this thread
@@ -1107,8 +1143,8 @@ void Solver::initializeSource(){
 	#pragma omp parallel for
 	#endif
 	for (int i = 0; i < _num_azim; i++) {
-		for (int j = 0; j < _num_tracks[i]; j++)
-			_tracks[i][j].normalizeFluxes(renorm_factor);
+//		for (int j = 0; j < _num_tracks[i]; j++)
+//			_tracks[i][j].normalizeFluxes(renorm_factor);
 	}
 
 
@@ -1263,7 +1299,7 @@ double Solver::computeKeff(int max_iterations) {
 			}
 			else {
 				/* Converge the scalar flux spatially within geometry to plot */
-				fixedSourceIteration(1000);
+				fixedSourceIteration(1);
 			}
 
 
@@ -1305,7 +1341,8 @@ double Solver::computeKeff(int max_iterations) {
 															max_iterations);
 
 	/* Converge the scalar flux spatially within geometry to plot */
-	fixedSourceIteration(1000);
+//	fixedSourceIteration(1000);
+	fixedSourceIteration(1);
 
 	if (_plotter->plotFlux() == true){
 		log_printf(NORMAL, "Plotting fluxes...");
@@ -1709,6 +1746,9 @@ double Solver::computeCMFDFlux(Mesh* mesh, double keff_moc){
 			break;
 		}
 	}
+
+	std::cout << phi_old;
+	std::cout << phi_new;
 
 	snew = M*phi_new/keff;
 	sum_snew = sum(snew);
