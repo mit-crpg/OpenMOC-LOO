@@ -439,10 +439,6 @@ void Mesh::splitCorners(int numAzim){
 //				}
 //			}
 
-
-
-
-
 //			meshCell = &_cells[y*cell_width + x];
 //			surfaceCorner1 = meshCell->getMeshSurfaces(0);
 //			log_printf(DEBUG, "cell %i surface 0 group 0 crossings: %i, flux: %f, wt: %f", y*cell_width + x, surfaceCorner1->getCrossings(), surfaceCorner1->getCurrent(0), surfaceCorner1->getWeight());
@@ -460,7 +456,6 @@ void Mesh::splitCorners(int numAzim){
 //			log_printf(DEBUG, "cell %i corner 6 group 0 crossings: %i, flux: %f, wt: %f", y*cell_width + x, surfaceCorner1->getCrossings(), surfaceCorner1->getCurrent(0), surfaceCorner1->getWeight());
 //			surfaceCorner1 = meshCell->getMeshSurfaces(7);
 //			log_printf(DEBUG, "cell %i corner 7 group 0 crossings: %i, flux: %f, wt: %f", y*cell_width + x, surfaceCorner1->getCrossings(), surfaceCorner1->getCurrent(0), surfaceCorner1->getWeight());
-
 
 		}
 	}
