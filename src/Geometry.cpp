@@ -2036,7 +2036,7 @@ bool Geometry::mapContainsKey(std::map<K, V> map, K key) {
  * to the Mesh and defines the values in each MeshCell.
  * @param mesh a pointer to the Mesh object
  */
-void Geometry::makeCMFDMesh(){
+void Geometry::makeCMFDMesh(int numAzim){
 	log_printf(NORMAL, "Making CMFD mesh...");
 
 	int max_cmfd_level = 0;
@@ -2065,7 +2065,8 @@ void Geometry::makeCMFDMesh(){
 	_mesh->setCellWidth(width);
 	_mesh->setHeight(getHeight());
 	_mesh->setWidth(getWidth());
-	_mesh->makeMeshCells();
+	log_printf(DEBUG, "making mesh cells");
+	_mesh->makeMeshCells(numAzim);
 
 	log_printf(DEBUG, "mesh cell width: %i", _mesh->getCellWidth());
 	log_printf(DEBUG, "mesh cell height: %i", _mesh->getCellHeight());

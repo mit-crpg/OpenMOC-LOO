@@ -8,19 +8,24 @@
 #include "MeshSurface.h"
 
 MeshSurface::MeshSurface(){
-	_current = new double[NUM_ENERGY_GROUPS];
-	_flux = new double[NUM_ENERGY_GROUPS];
-	_crossings = 0;
-	_weight = 0;
-	_curr_weight = 0;
 
-	for (int i = 0; i < NUM_ENERGY_GROUPS; i++){
-		_current[i] = 0;
-		_flux[i] = 0;
-	}
+	_crossings = 0;
+	_d_tilde = 0.0;
+	_d_hat = 0.0;
+
 }
 
 MeshSurface::~MeshSurface(){}
+
+
+void MeshSurface::makeCurrents(int numAzim){
+	log_printf(DEBUG, "allocating memory for currents and weights");
+	_current = new double[numAzim*NUM_ENERGY_GROUPS];
+	_current_tot = new double[NUM_ENERGY_GROUPS];
+	_weight = new double[numAzim];
+
+}
+
 
 meshSurfaceType MeshSurface::getType(){
 	return _type;
@@ -30,16 +35,24 @@ void MeshSurface::setType(meshSurfaceType type){
 	_type = type;
 }
 
-void MeshSurface::setCurrent(double current, int group){
-	_current[group] = current;
+void MeshSurface::setCurrent(double current, int group, int azim){
+	_current[azim*NUM_ENERGY_GROUPS + group] = current;
 }
 
-double MeshSurface::getCurrent(int group){
-	return _current[group];
+double MeshSurface::getCurrent(int group, int azim){
+	return _current[azim*NUM_ENERGY_GROUPS + group];
 }
 
-void MeshSurface::incrementCurrent(double flux, double phi, int group){
-	_current[group] += flux * fabs(cos(_normal - phi));
+void MeshSurface::incrementCurrent(double flux, int group, int azim){
+	_current[azim*NUM_ENERGY_GROUPS + group] += flux;
+}
+
+void MeshSurface::setCurrentTot(double current, int group){
+	_current_tot[group] = current;
+}
+
+double MeshSurface::getCurrentTot(int group){
+	return _current_tot[group];
 }
 
 void MeshSurface::setNormal(double normal){
@@ -48,18 +61,6 @@ void MeshSurface::setNormal(double normal){
 
 double MeshSurface::getNormal(){
 	return _normal;
-}
-
-void MeshSurface::setFlux(double flux, int group){
-	_flux[group] = flux;
-}
-
-double MeshSurface::getFlux(int group){
-	return _flux[group];
-}
-
-void MeshSurface::incrementFlux(double flux, int group){
-	_flux[group] += flux;
 }
 
 void MeshSurface::setDHat(double dHat){
@@ -106,30 +107,25 @@ void MeshSurface::setCrossings(int crossings){
 	_crossings = crossings;
 }
 
-double MeshSurface::getWeight(){
-	return _weight;
+double MeshSurface::getWeight(int azim){
+	return _weight[azim];
 }
 
-void MeshSurface::incrementWeight(double weight){
-	_weight += weight;
+void MeshSurface::incrementWeight(double weight, int azim){
+	_weight[azim] += weight;
 }
 
-void MeshSurface::setWeight(double weight){
-	_weight = weight;
+void MeshSurface::setWeight(double weight, int azim){
+	_weight[azim] = weight;
 }
 
-double MeshSurface::getCurrWeight(){
-	return _curr_weight;
+int MeshSurface::getId(){
+	return _id;
 }
 
-void MeshSurface::incrementCurrWeight(double weight, double phi){
-	_curr_weight += weight * fabs(cos(_normal - phi));
+void MeshSurface::setId(int id){
+	_id = id;
 }
-
-void MeshSurface::setCurrWeight(double weight){
-	_curr_weight = weight;
-}
-
 
 
 

@@ -323,7 +323,6 @@ void Plotter::plotNetCurrents(Mesh* mesh){
 	bitMap2->geom_y = _height;
 	bitMap2->color_type = SCALED;
 
-
 	double x_global;
 	double y_global;
 
@@ -352,10 +351,10 @@ void Plotter::plotNetCurrents(Mesh* mesh){
 			current2 = 0;
 			current3 = 0;
 			for (int group = 0; group < NUM_ENERGY_GROUPS; group++){
-				current0 += meshCell->getMeshSurfaces(0)->getCurrent(group);
-				current1 += meshCell->getMeshSurfaces(1)->getCurrent(group);
-				current2 += meshCell->getMeshSurfaces(2)->getCurrent(group);
-				current3 += meshCell->getMeshSurfaces(3)->getCurrent(group);
+				current0 += meshCell->getMeshSurfaces(0)->getCurrentTot(group);
+				current1 += meshCell->getMeshSurfaces(1)->getCurrentTot(group);
+				current2 += meshCell->getMeshSurfaces(2)->getCurrentTot(group);
+				current3 += meshCell->getMeshSurfaces(3)->getCurrentTot(group);
 
 				/* SIDE 0 */
 				/* get midpoint of mesh surface */
@@ -363,7 +362,7 @@ void Plotter::plotNetCurrents(Mesh* mesh){
 				y_mid = convertToPixelY((meshCell->getBounds()[1] + meshCell->getBounds()[3]) / 2.0);
 
 				/* create string and draw on bitMap */
-				text_stream << meshCell->getMeshSurfaces(0)->getCurrent(group);
+				text_stream << meshCell->getMeshSurfaces(0)->getCurrentTot(group);
 				text = text_stream.str();
 				text_stream.str("");
 				drawText(bitMap, text, x_mid + 20, y_mid - 10 * (NUM_ENERGY_GROUPS / 2.0 - group));
@@ -375,7 +374,7 @@ void Plotter::plotNetCurrents(Mesh* mesh){
 				y_mid = convertToPixelY(meshCell->getBounds()[1]);
 
 				/* create string and draw on bitMap */
-				text_stream << meshCell->getMeshSurfaces(1)->getCurrent(group);
+				text_stream << meshCell->getMeshSurfaces(1)->getCurrentTot(group);
 				text = text_stream.str();
 				text_stream.str("");
 				drawText(bitMap, text, x_mid - 20, y_mid - 10 * (NUM_ENERGY_GROUPS - group));
@@ -387,7 +386,7 @@ void Plotter::plotNetCurrents(Mesh* mesh){
 				y_mid = convertToPixelY((meshCell->getBounds()[1] + meshCell->getBounds()[3]) / 2.0);
 
 				/* create string and draw on bitMap */
-				text_stream << meshCell->getMeshSurfaces(2)->getCurrent(group);
+				text_stream << meshCell->getMeshSurfaces(2)->getCurrentTot(group);
 				text = text_stream.str();
 				text_stream.str("");
 				drawText(bitMap, text, x_mid - 80, y_mid - 10 * (NUM_ENERGY_GROUPS / 2.0 - group));
@@ -399,7 +398,7 @@ void Plotter::plotNetCurrents(Mesh* mesh){
 				y_mid = convertToPixelY(meshCell->getBounds()[3]);
 
 				/* create string and draw on bitMap */
-				text_stream << meshCell->getMeshSurfaces(3)->getCurrent(group);
+				text_stream << meshCell->getMeshSurfaces(3)->getCurrentTot(group);
 				text = text_stream.str();
 				text_stream.str("");
 				drawText(bitMap, text, x_mid - 20, y_mid + 10 * (group + 1.5));
@@ -475,105 +474,105 @@ void Plotter::plotNetCurrents(Mesh* mesh){
 }
 
 
-void Plotter::plotSurfaceFlux(Mesh* mesh){
-	log_printf(NORMAL, "plotting surface flux...");
-
-	/* set up bitMap */
-	BitMap<int>* bitMap = new BitMap<int>;
-	bitMap->pixel_x = _bit_length_x;
-	bitMap->pixel_y = _bit_length_y;
-	initialize(bitMap);
-	bitMap->geom_x = _width;
-	bitMap->geom_y = _height;
-	bitMap->color_type = SCALED;
-
-	double x_global;
-	double y_global;
-
-	/* find meshCell for each pixel */
-	for (int y=0;y < _bit_length_y; y++){
-		for (int x = 0; x < _bit_length_x; x++){
-			x_global = convertToGeometryX(x);
-			y_global = convertToGeometryY(y);
-			bitMap->pixels[y * _bit_length_x + x] = mesh->findMeshCell(x_global, y_global);
-		}
-	}
-
-	double x_mid, y_mid;
-	MeshCell* meshCell;
-	std::stringstream text_stream;
-	std::string text;
-
-	/* plot mesh currents next to surface */
-	for (int cellY = 0; cellY < mesh->getCellHeight(); cellY++){
-		for (int cellX = 0; cellX < mesh->getCellWidth(); cellX++){
-			meshCell = mesh->getCells(cellY * mesh->getCellWidth() + cellX);
-			for (int group = 0; group < NUM_ENERGY_GROUPS; group++){
-
-				/* SIDE 0 */
-				/* get midpoint of mesh surface */
-				x_mid = convertToPixelX(meshCell->getBounds()[0]);
-				y_mid = convertToPixelY((meshCell->getBounds()[1] + meshCell->getBounds()[3]) / 2.0);
-
-				/* create string and draw on bitMap */
-				text_stream << meshCell->getMeshSurfaces(0)->getFlux(group);
-				text = text_stream.str();
-				text_stream.str("");
-				drawText(bitMap, text, x_mid + 20, y_mid - 10 * (NUM_ENERGY_GROUPS / 2.0 - group));
-				text.clear();
-
-				/* SIDE 1 */
-				/* get midpoint of mesh surface */
-				x_mid = convertToPixelX((meshCell->getBounds()[0] + meshCell->getBounds()[2]) / 2.0);
-				y_mid = convertToPixelY(meshCell->getBounds()[1]);
-
-				/* create string and draw on bitMap */
-				text_stream << meshCell->getMeshSurfaces(1)->getFlux(group);
-				text = text_stream.str();
-				text_stream.str("");
-				drawText(bitMap, text, x_mid - 20, y_mid - 10 * (NUM_ENERGY_GROUPS - group));
-				text.clear();
-
-				/* SIDE 2 */
-				/* get midpoint of mesh surface */
-				x_mid = convertToPixelX(meshCell->getBounds()[2]);
-				y_mid = convertToPixelY((meshCell->getBounds()[1] + meshCell->getBounds()[3]) / 2.0);
-
-				/* create string and draw on bitMap */
-				text_stream << meshCell->getMeshSurfaces(2)->getFlux(group);
-				text = text_stream.str();
-				text_stream.str("");
-				drawText(bitMap, text, x_mid - 80, y_mid - 10 * (NUM_ENERGY_GROUPS / 2.0 - group));
-				text.clear();
-
-				/* SIDE 3 */
-				/* get midpoint of mesh surface */
-				x_mid = convertToPixelX((meshCell->getBounds()[0] + meshCell->getBounds()[2]) / 2.0);
-				y_mid = convertToPixelY(meshCell->getBounds()[3]);
-
-				/* create string and draw on bitMap */
-				text_stream << meshCell->getMeshSurfaces(3)->getFlux(group);
-				text = text_stream.str();
-				text_stream.str("");
-				drawText(bitMap, text, x_mid - 20, y_mid + 10 * (group + 1.5));
-				text.clear();
-			}
-
-		}
-	}
-
-
-	/* create filename with correct extension */
-	if (_extension == "tiff" || _extension == "jpg" || _extension == "png"){
-		plot(bitMap, "cmfd_flux", _extension);
-	}
-	else{
-		log_printf(WARNING, "Suface fluxes can only be plotted in tiff, jpg, and png. Plotting CMFD flux as png...");
-		plot(bitMap, "cmfd_flux", "png");
-	}
-
-	deleteBitMap(bitMap);
-}
+//void Plotter::plotSurfaceFlux(Mesh* mesh){
+//	log_printf(NORMAL, "plotting surface flux...");
+//
+//	/* set up bitMap */
+//	BitMap<int>* bitMap = new BitMap<int>;
+//	bitMap->pixel_x = _bit_length_x;
+//	bitMap->pixel_y = _bit_length_y;
+//	initialize(bitMap);
+//	bitMap->geom_x = _width;
+//	bitMap->geom_y = _height;
+//	bitMap->color_type = SCALED;
+//
+//	double x_global;
+//	double y_global;
+//
+//	/* find meshCell for each pixel */
+//	for (int y=0;y < _bit_length_y; y++){
+//		for (int x = 0; x < _bit_length_x; x++){
+//			x_global = convertToGeometryX(x);
+//			y_global = convertToGeometryY(y);
+//			bitMap->pixels[y * _bit_length_x + x] = mesh->findMeshCell(x_global, y_global);
+//		}
+//	}
+//
+//	double x_mid, y_mid;
+//	MeshCell* meshCell;
+//	std::stringstream text_stream;
+//	std::string text;
+//
+//	/* plot mesh currents next to surface */
+//	for (int cellY = 0; cellY < mesh->getCellHeight(); cellY++){
+//		for (int cellX = 0; cellX < mesh->getCellWidth(); cellX++){
+//			meshCell = mesh->getCells(cellY * mesh->getCellWidth() + cellX);
+//			for (int group = 0; group < NUM_ENERGY_GROUPS; group++){
+//
+//				/* SIDE 0 */
+//				/* get midpoint of mesh surface */
+//				x_mid = convertToPixelX(meshCell->getBounds()[0]);
+//				y_mid = convertToPixelY((meshCell->getBounds()[1] + meshCell->getBounds()[3]) / 2.0);
+//
+//				/* create string and draw on bitMap */
+//				text_stream << meshCell->getMeshSurfaces(0)->getFlux(group);
+//				text = text_stream.str();
+//				text_stream.str("");
+//				drawText(bitMap, text, x_mid + 20, y_mid - 10 * (NUM_ENERGY_GROUPS / 2.0 - group));
+//				text.clear();
+//
+//				/* SIDE 1 */
+//				/* get midpoint of mesh surface */
+//				x_mid = convertToPixelX((meshCell->getBounds()[0] + meshCell->getBounds()[2]) / 2.0);
+//				y_mid = convertToPixelY(meshCell->getBounds()[1]);
+//
+//				/* create string and draw on bitMap */
+//				text_stream << meshCell->getMeshSurfaces(1)->getFlux(group);
+//				text = text_stream.str();
+//				text_stream.str("");
+//				drawText(bitMap, text, x_mid - 20, y_mid - 10 * (NUM_ENERGY_GROUPS - group));
+//				text.clear();
+//
+//				/* SIDE 2 */
+//				/* get midpoint of mesh surface */
+//				x_mid = convertToPixelX(meshCell->getBounds()[2]);
+//				y_mid = convertToPixelY((meshCell->getBounds()[1] + meshCell->getBounds()[3]) / 2.0);
+//
+//				/* create string and draw on bitMap */
+//				text_stream << meshCell->getMeshSurfaces(2)->getFlux(group);
+//				text = text_stream.str();
+//				text_stream.str("");
+//				drawText(bitMap, text, x_mid - 80, y_mid - 10 * (NUM_ENERGY_GROUPS / 2.0 - group));
+//				text.clear();
+//
+//				/* SIDE 3 */
+//				/* get midpoint of mesh surface */
+//				x_mid = convertToPixelX((meshCell->getBounds()[0] + meshCell->getBounds()[2]) / 2.0);
+//				y_mid = convertToPixelY(meshCell->getBounds()[3]);
+//
+//				/* create string and draw on bitMap */
+//				text_stream << meshCell->getMeshSurfaces(3)->getFlux(group);
+//				text = text_stream.str();
+//				text_stream.str("");
+//				drawText(bitMap, text, x_mid - 20, y_mid + 10 * (group + 1.5));
+//				text.clear();
+//			}
+//
+//		}
+//	}
+//
+//
+//	/* create filename with correct extension */
+//	if (_extension == "tiff" || _extension == "jpg" || _extension == "png"){
+//		plot(bitMap, "cmfd_flux", _extension);
+//	}
+//	else{
+//		log_printf(WARNING, "Suface fluxes can only be plotted in tiff, jpg, and png. Plotting CMFD flux as png...");
+//		plot(bitMap, "cmfd_flux", "png");
+//	}
+//
+//	deleteBitMap(bitMap);
+//}
 
 void Plotter::plotDHats(Mesh* mesh){
 	log_printf(NORMAL, "plotting D Hats...");

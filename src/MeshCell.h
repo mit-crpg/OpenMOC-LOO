@@ -39,10 +39,13 @@ private:
 	double _diffusivity;
 	double _old_flux;
 	double _new_flux;
+	double _volume;
+	int _cell_id;
 
 public:
 	MeshCell();
 	virtual ~MeshCell();
+	void makeSurfaces(int numAzim);
 	double getWidth();
 	double getHeight();
 	void setWidth(double width);
@@ -63,19 +66,20 @@ public:
 	double getNuSigmaF();
 	void setDiffusivity(double diffusivity);
 	double getDiffusivity();
-	MeshSurface* findSurface(LocalCoords* coord);
+	MeshSurface* findSurface(LocalCoords* coord, int i);
 	void setBounds(double x, double y);
 	double* getBounds();
 	int getFSRStart();
 	int getFSREnd();
 	void setFSRStart(int fsr);
 	void setFSREnd(int fsr);
-	void makeSurfaces();
 	MeshSurface* getMeshSurfaces(int surface);
 	void setNewFlux(double flux);
 	double getNewFlux();
 	void setOldFlux(double flux);
 	double getOldFlux();
+	void setVolume(double volume);
+	double getVolume();
 };
 
 

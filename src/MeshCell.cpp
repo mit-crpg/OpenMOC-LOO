@@ -10,17 +10,24 @@
 MeshCell::MeshCell(){
 	std::vector<int> _FSRs;
 	_abs_rate = 0;
-	_mesh_surfaces = new MeshSurface[8];
+	_volume = 0;
 	_bounds = new double[4];
-
-	makeSurfaces();
+	_cell_id = 0;
 }
 
 MeshCell::~MeshCell(){}
 
-void MeshCell::makeSurfaces(){
+void MeshCell::makeSurfaces(int numAzim){
 
-	/* set sides */
+	/* allocate memory for mesh surfaces */
+	_mesh_surfaces = new MeshSurface[8];
+
+	for (int i = 0; i < 8; i++){
+		/* make array of currents */
+		_mesh_surfaces[i].makeCurrents(numAzim);
+	}
+
+	/* set side type */
 	_mesh_surfaces[0].setType(SIDEX);		/* left */
 	_mesh_surfaces[1].setType(SIDEY);		/* bottom */
 	_mesh_surfaces[2].setType(SIDEX);		/* right */
@@ -41,7 +48,19 @@ void MeshCell::makeSurfaces(){
 	_mesh_surfaces[6].setNormal(0.0);
 	_mesh_surfaces[7].setNormal(0.0);
 
+	/* set surface id */
+	_mesh_surfaces[0].setId(0);
+	_mesh_surfaces[1].setId(1);
+	_mesh_surfaces[2].setId(2);
+	_mesh_surfaces[3].setId(3);
+	_mesh_surfaces[4].setId(4);
+	_mesh_surfaces[5].setId(5);
+	_mesh_surfaces[6].setId(6);
+	_mesh_surfaces[7].setId(7);
+
 }
+
+
 
 double MeshCell::getWidth(){
 	return _width;
@@ -105,7 +124,7 @@ double* MeshCell::getBounds(){
 }
 
 
-MeshSurface* MeshCell::findSurface(LocalCoords* coord){
+MeshSurface* MeshCell::findSurface(LocalCoords* coord, int i){
 	MeshSurface* meshSurface = NULL;
 	int surface = -1;
 	double x = coord->getX();
@@ -156,7 +175,7 @@ MeshSurface* MeshCell::findSurface(LocalCoords* coord){
 	}
 
 	if (surface != -1){
-		log_printf(DEBUG, "coord (%f, %f) on surface: %i -> bounds[%f,%f,%f,%f]", x, y, surface, _bounds[0],_bounds[1],_bounds[2],_bounds[3]);
+		log_printf(DEBUG, "coord (%f, %f) on surface: %i, cell: %i -> bounds[%f,%f,%f,%f]", x, y, surface, i, _bounds[0],_bounds[1],_bounds[2],_bounds[3]);
 	}
 
 	return meshSurface;
@@ -230,5 +249,12 @@ void MeshCell::setNewFlux(double flux){
 	_new_flux = flux;
 }
 
+double MeshCell::getVolume(){
+	return _volume;
+}
+
+void MeshCell::setVolume(double volume){
+	_volume = volume;
+}
 
 

@@ -42,6 +42,7 @@ private:
 	Point _start;
 	Point _end;
 	double _phi;
+	double _spacing;
 	double _azim_weight;
 	double _polar_weights[NUM_POLAR_ANGLES];
 	double _polar_fluxes[2 * GRP_TIMES_ANG];
@@ -64,6 +65,8 @@ public:
     void setReflOut(const bool refl_out);
     void setTrackIn(Track *track_in);
     void setTrackOut(Track *track_out);
+    void setSpacing(double spacing);
+    double getSpacing();
 
     Point* getEnd();
     Point* getStart();

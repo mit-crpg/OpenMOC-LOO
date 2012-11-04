@@ -218,9 +218,11 @@ void TrackGenerator::generateTracks() {
 				Point* end = _tracks[i][j].getEnd();
 				computeEndPoint(start, end, phi_eff[i], width, height);
 
-				/* Set the track's azimuthal weight */
+				/* Set the track's azimuthal weight and spacing*/
 				_tracks[i][j].setAzimuthalWeight(_azim_weights[i]);
 				_tracks[i][j].setPhi(phi_eff[i]);
+				_tracks[i][j].setSpacing(d_eff[i]);
+
 			}
 		}
 

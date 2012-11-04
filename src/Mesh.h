@@ -41,7 +41,7 @@ public:
 	int getCellHeight();
 	void setCellWidth(int cellWidth);
 	void setCellHeight(int cellHeight);
-	void makeMeshCells();
+	void makeMeshCells(int numAzim);
 	MeshCell* getCells(int cell);
 	void setCellBounds();
 	void setFSRBounds();
@@ -49,9 +49,8 @@ public:
 	MeshSurface* findMeshSurface(int fsr_id, LocalCoords* coord);
 	void printBounds();
 	void printCurrents();
-	void splitCorners();
-	void normalizeSurfaces();
-
+	void splitCorners(int numAzim);
+	void computeTotCurrents(int _num_azim);
 };
 
 #endif /* MESH_H_ */

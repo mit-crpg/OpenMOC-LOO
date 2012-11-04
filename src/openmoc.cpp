@@ -19,6 +19,7 @@
 #include "log.h"
 #include "configurations.h"
 #include "Plotter.h"
+#include "Cmfd.h"
 
 // FIXME: These should be removed when main() is properly implemented
 #pragma GCC diagnostic ignored "-Wunused"
@@ -47,7 +48,7 @@ int main(int argc, const char **argv) {
 	timer.start();
 	Geometry geometry(&parser);
 	timer.stop();
-	timer.recordSplit("Geomery initialization");
+	timer.recordSplit("Geometry initialization");
 
 	/* Print out geometry to console if requested at runtime*/
 	if (opts.dumpGeometry())
@@ -60,18 +61,21 @@ int main(int argc, const char **argv) {
 	Plotter plotter(&geometry, opts.getBitDimension(), opts.getExtension(),
 			opts.plotSpecs(), opts.plotFluxes(), opts.plotCurrent());
 
+#if !CMFD_ONLY
 	/* Initialize the trackgenerator */
 	TrackGenerator track_generator(&geometry, &plotter, opts.getNumAzim(),
 				       opts.getTrackSpacing());
+#endif
 
 	/* create CMFD Mesh */
 #if CMFD_ACCEL
-		geometry.makeCMFDMesh();
+		geometry.makeCMFDMesh(opts.getNumAzim());
 		if (opts.plotSpecs()){
 			plotter.plotCMFDMesh(geometry.getMesh());
 		}
 #endif
 
+#if !CMFD_ONLY
 	/* Generate tracks */
 	timer.reset();
 	timer.start();
@@ -86,21 +90,26 @@ int main(int argc, const char **argv) {
 	track_generator.segmentize();
 	timer.stop();
 	timer.recordSplit("Segmenting tracks");
+#endif
+
+	/* create CMFD class */
+	Cmfd cmfd(&geometry, &plotter);
 
 	/* Fixed source iteration to solve for k_eff */
-	Solver solver(&geometry, &track_generator, &plotter, opts.updateFlux());
+#if !CMFD_ONLY
+	Solver solver(&geometry, &track_generator, &plotter, &cmfd, opts.updateFlux());
 	timer.reset();
 	timer.start();
 	k_eff = solver.computeKeff(MAX_ITERATIONS);
 	timer.stop();
 	timer.recordSplit("Fixed source iteration");
-
-	/* Compute pin powers if requested at run time */
-	if (opts.computePinPowers())
-		solver.computePinPowers();
-
-//	if (opts.cmfd())
-//		solver.cmfd();
+#else
+	timer.reset();
+	timer.start();
+	k_eff = cmfd.computeKeff(MAX_ITERATIONS);
+	timer.stop();
+	timer.recordSplit("cmfd solve");
+#endif
 
 	log_printf(RESULT, "k_eff = %f", k_eff);
 

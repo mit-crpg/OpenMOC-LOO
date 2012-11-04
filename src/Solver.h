@@ -29,6 +29,7 @@
 #include "Mesh.h"
 #include "MeshCell.h"
 #include "Material.h"
+#include "Cmfd.h"
 
 #if USE_OPENMP == true
 	#include <omp.h>
@@ -54,6 +55,7 @@ private:
 	std::queue<double> _old_k_effs;
 	Plotter* _plotter;
 	float* _pix_map_total_flux;
+	Cmfd* _cmfd;
 #if !STORE_PREFACTORS
 	double* _pre_factor_array;
 	int _pre_factor_array_size;
@@ -65,24 +67,29 @@ private:
 	double computePreFactor(segment* seg, int energy, int angle);
 	void initializeFSRs();
 public:
-	Solver(Geometry* geom, TrackGenerator* track_generator, Plotter* plotter, bool _update_flux);
+	Solver(Geometry* geom, TrackGenerator* track_generator, Plotter* plotter, Cmfd* cmfd, bool _update_flux);
 	virtual ~Solver();
 	void zeroTrackFluxes();
 	void oneFSRFluxes();
 	void zeroFSRFluxes();
+	void zeroMeshCells();
 	void computeRatios();
 	void updateKeff();
 	double** getFSRtoFluxMap();
-	void fixedSourceIteration(int max_iterations, bool cmfd);
+	void fixedSourceIteration(int max_iterations);
 	double computeKeff(int max_iterations);
 	void plotFluxes();
 	void checkTrackSpacing();
 	void computePinPowers();
-	void computeXS(Mesh* mesh);
 	void computeDs(Mesh* mesh);
-	double computeCMFDFlux(Mesh* mesh);
+	double computeCMFDFlux(Mesh* mesh, double keff);
 	void updateMOCFlux(Mesh* mesh);
  	void checkNeutBal(Mesh* mesh, double keff);
+ 	void computeXS(Mesh* mesh);
+ 	void renormCurrents(Mesh* mesh, double keff);
+ 	double getEps(Mesh* mesh, double keff, double renorm_factor);
+ 	void initializeSource();
+ 	void CMFDfixedSourceIteration();
 };
 
 #endif /* SOLVER_H_ */

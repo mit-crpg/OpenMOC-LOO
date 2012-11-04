@@ -161,6 +161,24 @@ void Track::setTrackOut(Track *track_out) {
 
 
 /**
+ * Return the track's spacing
+ * @return the track spacing
+ */
+void Track::setSpacing(double spacing){
+    _spacing = spacing;
+}
+
+
+/**
+ * Return the track's azimuthal angle (with respect to the x-axis)
+ * @return the azimuthal angle
+ */
+double Track::getSpacing(){
+    return _spacing;
+}
+
+
+/**
  * Returns the track's end point
  * @return a pointer to the track's end point
  */
