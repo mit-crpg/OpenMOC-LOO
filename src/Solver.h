@@ -78,7 +78,7 @@ public:
 	double** getFSRtoFluxMap();
 	void fixedSourceIteration(int max_iterations);
 	double computeKeff(int max_iterations);
-	void plotFluxes();
+	void plotFluxes(int iter_num);
 	void checkTrackSpacing();
 	void computePinPowers();
 	void computeDs(Mesh* mesh);
@@ -89,7 +89,6 @@ public:
  	void renormCurrents(Mesh* mesh, double keff);
  	double getEps(Mesh* mesh, double keff, double renorm_factor);
  	void initializeSource();
- 	void CMFDfixedSourceIteration();
 };
 
 #endif /* SOLVER_H_ */

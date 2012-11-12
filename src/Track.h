@@ -46,6 +46,7 @@ private:
 	double _azim_weight;
 	double _polar_weights[NUM_POLAR_ANGLES];
 	double _polar_fluxes[2 * GRP_TIMES_ANG];
+	double _new_polar_fluxes[2 * GRP_TIMES_ANG];
 	std::vector<segment*> _segments;
 	Track *_track_in, *_track_out;
 	bool _refl_in, _refl_out;
@@ -60,6 +61,7 @@ public:
     void setAzimuthalWeight(const double azim_weight);
     void setPolarWeight(const int angle, double polar_weight);
     void setPolarFluxes(bool direction, int start_index, double* polar_fluxes);
+    void setNewPolarFluxes(bool direction, int start_index, double* polar_fluxes);
     void setPhi(const double phi);
     void setReflIn(const bool refl_in);
     void setReflOut(const bool refl_out);
@@ -74,6 +76,7 @@ public:
     double getAzimuthalWeight() const;
     double* getPolarWeights();
     double* getPolarFluxes();
+    double* getNewPolarFluxes();
 	segment* getSegment(int s);
 	std::vector<segment*> getSegments();
 	int getNumSegments();

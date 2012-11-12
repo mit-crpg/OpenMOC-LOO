@@ -574,7 +574,7 @@ void Plotter::plotNetCurrents(Mesh* mesh){
 //	deleteBitMap(bitMap);
 //}
 
-void Plotter::plotDHats(Mesh* mesh){
+void Plotter::plotDHats(Mesh* mesh, int iter_num){
 	log_printf(NORMAL, "plotting D Hats...");
 
 	/* set up bitMap */
@@ -679,20 +679,23 @@ void Plotter::plotDHats(Mesh* mesh){
 		}
 	}
 
+	std::stringstream string;
+	string << "cmfd_dhats_i_" << iter_num;
+	std::string title_str = string.str();
 
 	/* create filename with correct extension */
 	if (_extension == "tiff" || _extension == "jpg" || _extension == "png"){
-		plot(bitMap, "cmfd_dhats", _extension);
+		plot(bitMap, title_str, _extension);
 	}
 	else{
 		log_printf(WARNING, "D Hats can only be plotted in tiff, jpg, and png. Plotting CMFD D Hats as png...");
-		plot(bitMap, "cmfd_dhats", "png");
+		plot(bitMap, title_str, "png");
 	}
 
 	deleteBitMap(bitMap);
 }
 
-void Plotter::plotXS(Mesh* mesh){
+void Plotter::plotXS(Mesh* mesh, int iter_num){
 	log_printf(NORMAL, "plotting cross sections...");
 
 	/* set up bitMap */
@@ -774,19 +777,87 @@ void Plotter::plotXS(Mesh* mesh){
 		}
 	}
 
+	std::stringstream string;
+	string << "cmfd_xs_i_" << iter_num;
+	std::string title_str = string.str();
 
 	/* create filename with correct extension */
 	if (_extension == "tiff" || _extension == "jpg" || _extension == "png"){
-		plot(bitMap, "cmfd_xs", _extension);
+		plot(bitMap, title_str, _extension);
 	}
 	else{
 		log_printf(WARNING, "Cross sections can only be plotted in tiff, jpg, and png. Plotting CMFD flux as png...");
-		plot(bitMap, "cmfd_xs", "png");
+		plot(bitMap, title_str, "png");
 	}
 
 	deleteBitMap(bitMap);
 }
 
 
+void Plotter::plotCMFDflux(Mesh* mesh, int iter_num){
+	log_printf(NORMAL, "plotting CMFD flux...");
 
+	/* set up bitMap */
+	BitMap<double>* bitMap = new BitMap<double>;
+	bitMap->pixel_x = _bit_length_x;
+	bitMap->pixel_y = _bit_length_y;
+	initialize(bitMap);
+	bitMap->geom_x = _width;
+	bitMap->geom_y = _height;
+	bitMap->color_type = SCALED;
+
+	double x_global;
+	double y_global;
+
+	/* PLOT OLD FLUX */
+
+	/* find meshCell for each pixel */
+	for (int y=0;y < _bit_length_y; y++){
+		for (int x = 0; x < _bit_length_x; x++){
+			x_global = convertToGeometryX(x);
+			y_global = convertToGeometryY(y);
+			bitMap->pixels[y * _bit_length_x + x] = mesh->getCells(mesh->findMeshCell(x_global, y_global))->getOldFlux();
+		}
+	}
+
+	std::stringstream string;
+	string << "cf_old_i_" << iter_num;
+	std::string title_str = string.str();
+
+
+	/* create filename with correct extension */
+	if (_extension == "tiff" || _extension == "jpg" || _extension == "png"){
+		plot(bitMap, title_str, _extension);
+	}
+	else{
+		log_printf(WARNING, "CMFD flux can only be plotted in tiff, jpg, and png. Plotting CMFD flux as png...");
+		plot(bitMap, title_str, "png");
+	}
+
+	/* PLOT NEW FLUX */
+
+	/* find meshCell for each pixel */
+	for (int y=0;y < _bit_length_y; y++){
+		for (int x = 0; x < _bit_length_x; x++){
+			x_global = convertToGeometryX(x);
+			y_global = convertToGeometryY(y);
+			bitMap->pixels[y * _bit_length_x + x] = mesh->getCells(mesh->findMeshCell(x_global, y_global))->getNewFlux();
+		}
+	}
+
+	string.str("");
+	string << "cf_new_i_" << iter_num;
+	title_str = string.str();
+
+	/* create filename with correct extension */
+	if (_extension == "tiff" || _extension == "jpg" || _extension == "png"){
+		plot(bitMap, title_str, _extension);
+	}
+	else{
+		log_printf(WARNING, "CMFD flux can only be plotted in tiff, jpg, and png. Plotting CMFD flux as png...");
+		plot(bitMap, title_str, "png");
+	}
+
+	deleteBitMap(bitMap);
+}
 

@@ -61,9 +61,10 @@ public:
 	int convertToPixelY(double y);
 	void plotNetCurrents(Mesh* mesh);
 //	void plotSurfaceFlux(Mesh* mesh);
-	void plotDHats(Mesh* mesh);
-	void plotXS(Mesh* mesh);
+	void plotDHats(Mesh* mesh, int iter_num);
+	void plotXS(Mesh* mesh, int iter_num);
 	bool plotCurrent();
+	void plotCMFDflux(Mesh* mesh, int iter_num);
 };
 
 
