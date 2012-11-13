@@ -10,9 +10,10 @@
 MeshSurface::MeshSurface(){
 
 	_crossings = 0;
-	_d_tilde = 0.0;
-	_d_hat = 0.0;
-
+	for (int e = 0; e < NUM_ENERGY_GROUPS; e++){
+		_d_tilde[e] = 0.0;
+		_d_hat[e] = 0.0;
+	}
 }
 
 MeshSurface::~MeshSurface(){}
@@ -63,19 +64,19 @@ double MeshSurface::getNormal(){
 	return _normal;
 }
 
-void MeshSurface::setDHat(double dHat){
-	_d_hat = dHat;
+void MeshSurface::setDHat(double dHat, int e){
+	_d_hat[e] = dHat;
 }
 
-double MeshSurface::getDHat(){
+double* MeshSurface::getDHat(){
 	return _d_hat;
 }
 
-void MeshSurface::setDTilde(double dTilde){
-	_d_tilde = dTilde;
+void MeshSurface::setDTilde(double dTilde, int e){
+	_d_tilde[e] = dTilde;
 }
 
-double MeshSurface::getDTilde(){
+double* MeshSurface::getDTilde(){
 	return _d_tilde;
 }
 

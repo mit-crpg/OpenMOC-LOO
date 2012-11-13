@@ -9,7 +9,6 @@
 
 MeshCell::MeshCell(){
 	std::vector<int> _FSRs;
-	_abs_rate = 0;
 	_volume = 0;
 	_bounds = new double[4];
 	_cell_id = 0;
@@ -58,6 +57,11 @@ void MeshCell::makeSurfaces(int numAzim){
 	_mesh_surfaces[6].setId(6);
 	_mesh_surfaces[7].setId(7);
 
+
+	for (int e = 0; e < NUM_ENERGY_GROUPS; e++){
+		_chi[e] = 0.0;
+	}
+
 }
 
 
@@ -76,14 +80,6 @@ void MeshCell::setWidth(double width){
 
 void MeshCell::setHeight(double height){
 	_height = height;
-}
-
-void MeshCell::setAbsRate(double absRate){
-	_abs_rate = absRate;
-}
-
-double MeshCell::getAbsRate(){
-	return _abs_rate;
 }
 
 int MeshCell::getFSRStart(){
@@ -185,68 +181,60 @@ MeshSurface* MeshCell::getMeshSurfaces(int surface){
 	return &_mesh_surfaces[surface];
 }
 
-void MeshCell::setSigmaA(double sigmaA){
-	_sigma_a = sigmaA;
+void MeshCell::setChi(double chi, int e){
+	_chi[e] = chi;
 }
 
-double MeshCell::getSigmaA(){
+double* MeshCell::getChi(){
+	return _chi;
+}
+
+void MeshCell::setSigmaA(double sigmaA, int e){
+	_sigma_a[e] = sigmaA;
+}
+
+double* MeshCell::getSigmaA(){
 	return _sigma_a;
 }
 
-void MeshCell::setSigmaT(double sigmaT){
-	_sigma_t = sigmaT;
-}
-
-double MeshCell::getSigmaT(){
-	return _sigma_t;
-}
-
-double MeshCell::getSigmaF(){
-	return _sigma_f;
-}
-
-void MeshCell::setSigmaF(double sigmaF){
-	_sigma_f = sigmaF;
-}
-
-double MeshCell::getSigmaS(){
+double* MeshCell::getSigmaS(){
 	return _sigma_s;
 }
 
-void MeshCell::setSigmaS(double sigmaS){
-	_sigma_s = sigmaS;
+void MeshCell::setSigmaS(double sigmaS, int e, int ep){
+	_sigma_s[e*NUM_ENERGY_GROUPS + ep] = sigmaS;
 }
 
-double MeshCell::getNuSigmaF(){
+double* MeshCell::getNuSigmaF(){
 	return _nu_sigma_f;
 }
 
-void MeshCell::setNuSigmaF(double nuSigmaF){
-	_nu_sigma_f = nuSigmaF;
+void MeshCell::setNuSigmaF(double nuSigmaF, int e){
+	_nu_sigma_f[e] = nuSigmaF;
 }
 
-double MeshCell::getDiffusivity(){
+double* MeshCell::getDiffusivity(){
 	return _diffusivity;
 }
 
-void MeshCell::setDiffusivity(double diffusivity){
-	_diffusivity = diffusivity;
+void MeshCell::setDiffusivity(double diffusivity, int e){
+	_diffusivity[e] = diffusivity;
 }
 
-double MeshCell::getOldFlux(){
+double* MeshCell::getOldFlux(){
 	return _old_flux;
 }
 
-void MeshCell::setOldFlux(double flux){
-	_old_flux = flux;
+void MeshCell::setOldFlux(double flux, int e){
+	_old_flux[e] = flux;
 }
 
-double MeshCell::getNewFlux(){
+double* MeshCell::getNewFlux(){
 	return _new_flux;
 }
 
-void MeshCell::setNewFlux(double flux){
-	_new_flux = flux;
+void MeshCell::setNewFlux(double flux, int e){
+	_new_flux[e] = flux;
 }
 
 double MeshCell::getVolume(){

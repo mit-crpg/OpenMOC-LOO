@@ -33,8 +33,8 @@ private:
 	double* _current_tot;
 	double* _flux;
 	double _normal;
-	double _d_hat;
-	double _d_tilde;
+	double _d_hat[NUM_ENERGY_GROUPS];
+	double _d_tilde[NUM_ENERGY_GROUPS];
 	int _mesh_cell;
 	int _surface_num;
 	int _crossings;
@@ -54,10 +54,10 @@ public:
 	double getCurrentTot(int group);
 	void setNormal(double normal);
 	double getNormal();
-	void setDHat(double dHat);
-	double getDHat();
-	void setDTilde(double dTilde);
-	double getDTilde();
+	void setDHat(double dHat, int e);
+	double* getDHat();
+	void setDTilde(double dTilde, int e);
+	double* getDTilde();
 	void setMeshCell(int meshCell);
 	int getMeshCell();
 	void setSurfaceNum(int surfaceNum);

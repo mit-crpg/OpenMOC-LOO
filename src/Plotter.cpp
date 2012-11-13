@@ -614,12 +614,12 @@ void Plotter::plotDHats(Mesh* mesh, int iter_num){
 			y_mid = convertToPixelY((meshCell->getBounds()[1] + meshCell->getBounds()[3]) / 2.0);
 
 			/* create string and draw on bitMap */
-			text_stream << "DHat0: " << meshCell->getMeshSurfaces(0)->getDHat();
+			text_stream << "DHat0: " << meshCell->getMeshSurfaces(0)->getDHat()[0];
 			text = text_stream.str();
 			text_stream.str("");
 			drawText(bitMap, text, x_mid + 20, y_mid);
 			text.clear();
-			text_stream << "DTilde: " << meshCell->getMeshSurfaces(0)->getDTilde();
+			text_stream << "DTilde: " << meshCell->getMeshSurfaces(0)->getDTilde()[0];
 			text = text_stream.str();
 			text_stream.str("");
 			drawText(bitMap, text, x_mid + 20, y_mid - 15.0);
@@ -632,12 +632,12 @@ void Plotter::plotDHats(Mesh* mesh, int iter_num){
 			y_mid = convertToPixelY(meshCell->getBounds()[1]);
 
 			/* create string and draw on bitMap */
-			text_stream << "DHat1: " << meshCell->getMeshSurfaces(1)->getDHat();
+			text_stream << "DHat1: " << meshCell->getMeshSurfaces(1)->getDHat()[0];
 			text = text_stream.str();
 			text_stream.str("");
 			drawText(bitMap, text, x_mid - 20, y_mid - 20.0);
 			text.clear();
-			text_stream << "DTilde: " << meshCell->getMeshSurfaces(1)->getDTilde();
+			text_stream << "DTilde: " << meshCell->getMeshSurfaces(1)->getDTilde()[0];
 			text = text_stream.str();
 			text_stream.str("");
 			drawText(bitMap, text, x_mid - 20, y_mid - 35.0);
@@ -649,12 +649,12 @@ void Plotter::plotDHats(Mesh* mesh, int iter_num){
 			y_mid = convertToPixelY((meshCell->getBounds()[1] + meshCell->getBounds()[3]) / 2.0);
 
 			/* create string and draw on bitMap */
-			text_stream << "DHat2: " << meshCell->getMeshSurfaces(2)->getDHat();
+			text_stream << "DHat2: " << meshCell->getMeshSurfaces(2)->getDHat()[0];
 			text = text_stream.str();
 			text_stream.str("");
 			drawText(bitMap, text, x_mid - 80, y_mid);
 			text.clear();
-			text_stream << "DTilde: " << meshCell->getMeshSurfaces(2)->getDTilde();
+			text_stream << "DTilde: " << meshCell->getMeshSurfaces(2)->getDTilde()[0];
 			text = text_stream.str();
 			text_stream.str("");
 			drawText(bitMap, text, x_mid - 80, y_mid - 15.0);
@@ -666,12 +666,12 @@ void Plotter::plotDHats(Mesh* mesh, int iter_num){
 			y_mid = convertToPixelY(meshCell->getBounds()[3]);
 
 			/* create string and draw on bitMap */
-			text_stream << "DHat3: " << meshCell->getMeshSurfaces(3)->getDHat();
+			text_stream << "DHat3: " << meshCell->getMeshSurfaces(3)->getDHat()[0];
 			text = text_stream.str();
 			text_stream.str("");
 			drawText(bitMap, text, x_mid - 20, y_mid + 35.0);
 			text.clear();
-			text_stream << "DTilde: " << meshCell->getMeshSurfaces(3)->getDTilde();
+			text_stream << "DTilde: " << meshCell->getMeshSurfaces(3)->getDTilde()[0];
 			text = text_stream.str();
 			text_stream.str("");
 			drawText(bitMap, text, x_mid - 20, y_mid + 20.0);
@@ -734,42 +734,28 @@ void Plotter::plotXS(Mesh* mesh, int iter_num){
 			y_mid = convertToPixelY((meshCell->getBounds()[1] + meshCell->getBounds()[3]) / 2.0);
 
 			/* Sigma A */
-			text_stream << "SigmaA: " << meshCell->getSigmaA();
+			text_stream << "SigmaA: " << meshCell->getSigmaA()[0];
 			text = text_stream.str();
 			text_stream.str("");
 			drawText(bitMap, text, x_mid - 50, y_mid + 45);
 			text.clear();
 
-			/* Sigma F */
-			text_stream << "SigmaF: " << meshCell->getSigmaF();
-			text = text_stream.str();
-			text_stream.str("");
-			drawText(bitMap, text, x_mid - 50, y_mid + 30);
-			text.clear();
-
 			/* Sigma S */
-			text_stream << "SigmaS: " << meshCell->getSigmaS();
+			text_stream << "SigmaS: " << meshCell->getSigmaS()[0];
 			text = text_stream.str();
 			text_stream.str("");
 			drawText(bitMap, text, x_mid - 50, y_mid + 15);
 			text.clear();
 
 			/* Nu Sigma F */
-			text_stream << "NuSigmaF: " << meshCell->getNuSigmaF();
+			text_stream << "NuSigmaF: " << meshCell->getNuSigmaF()[0];
 			text = text_stream.str();
 			text_stream.str("");
 			drawText(bitMap, text, x_mid - 50, y_mid);
 			text.clear();
 
-			/* Sigma T */
-			text_stream << "SigmaT: " << meshCell->getSigmaT();
-			text = text_stream.str();
-			text_stream.str("");
-			drawText(bitMap, text, x_mid - 50, y_mid - 15);
-			text.clear();
-
 			/* Diffusivity */
-			text_stream << "Diffusivity: " << meshCell->getDiffusivity();
+			text_stream << "Diffusivity: " << meshCell->getDiffusivity()[0];
 			text = text_stream.str();
 			text_stream.str("");
 			drawText(bitMap, text, x_mid - 50, y_mid - 30);
@@ -816,7 +802,7 @@ void Plotter::plotCMFDflux(Mesh* mesh, int iter_num){
 		for (int x = 0; x < _bit_length_x; x++){
 			x_global = convertToGeometryX(x);
 			y_global = convertToGeometryY(y);
-			bitMap->pixels[y * _bit_length_x + x] = mesh->getCells(mesh->findMeshCell(x_global, y_global))->getOldFlux();
+			bitMap->pixels[y * _bit_length_x + x] = mesh->getCells(mesh->findMeshCell(x_global, y_global))->getOldFlux()[0];
 		}
 	}
 
@@ -841,7 +827,7 @@ void Plotter::plotCMFDflux(Mesh* mesh, int iter_num){
 		for (int x = 0; x < _bit_length_x; x++){
 			x_global = convertToGeometryX(x);
 			y_global = convertToGeometryY(y);
-			bitMap->pixels[y * _bit_length_x + x] = mesh->getCells(mesh->findMeshCell(x_global, y_global))->getNewFlux();
+			bitMap->pixels[y * _bit_length_x + x] = mesh->getCells(mesh->findMeshCell(x_global, y_global))->getNewFlux()[0];
 		}
 	}
 
