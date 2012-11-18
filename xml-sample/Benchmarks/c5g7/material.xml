@@ -125,8 +125,8 @@
 
   <!-- material 8: high absorber for vacuum boundary conditions -->
   <material id="8" energy="7"
-			sigma_a="1.0E+10 1.0E+10 1.0E+10 1.0E+10 1.0E+10 1.0E+10 1.0E+10"
-			sigma_t="1.0E+10 1.0E+10 1.0E+10 1.0E+10 1.0E+10 1.0E+10 1.0E+10"
+			sigma_a="1.0E+2 1.0E+2 1.0E+2 1.0E+2 1.0E+2 1.0E+2 1.0E+2"
+			sigma_t="1.0E+2 1.0E+2 1.0E+2 1.0E+2 1.0E+2 1.0E+2 1.0E+2"
 			sigma_f="0.0 0.0 0.0 0.0 0.0 0.0 0.0"
 			nu_sigma_f="0.0 0.0 0.0 0.0 0.0 0.0 0.0"
 			chi="0.0 0.0 0.0 0.0 0.0 0.0 0.0"

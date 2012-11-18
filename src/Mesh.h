@@ -29,10 +29,13 @@ private:
 	int _cell_height;
 	double _width;
 	double _height;
+	bool _multigroup;
+	bool _print_matrices;
 
 public:
 	Mesh();
 	virtual ~Mesh();
+	void makeMeshCells();
 	double getWidth();
 	double getHeight();
 	void setWidth(double width);
@@ -41,7 +44,6 @@ public:
 	int getCellHeight();
 	void setCellWidth(int cellWidth);
 	void setCellHeight(int cellHeight);
-	void makeMeshCells(int numAzim);
 	MeshCell* getCells(int cell);
 	void setCellBounds();
 	void setFSRBounds();
@@ -49,8 +51,12 @@ public:
 	MeshSurface* findMeshSurface(int fsr_id, LocalCoords* coord);
 	void printBounds();
 	void printCurrents();
-	void splitCorners(int numAzim);
-	void computeTotCurrents(int _num_azim);
+	void computeTotCurrents();
+	void splitCorners();
+	void setMultigroup(bool multigroup);
+	bool getMultigroup();
+	void setPrintMatrices(bool printMatrices);
+	bool getPrintMatrices();
 };
 
 #endif /* MESH_H_ */

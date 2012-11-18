@@ -32,19 +32,23 @@ Options::Options(int argc, const char **argv) {
 
 	_geometry_file = _relative_path + "xml-sample/SimpleLattice/geometry.xml"; 	 /* Default geometry input file */
 	_material_file = _relative_path + "xml-sample/SimpleLattice/material.xml";    /* Default material input file */
-	_track_spacing = 0.1;			/* Default track spacing */
-	_num_azim = 16;					/* Default number of azimuthal angles */
-	_bit_dimension = 1000;			/* y dimension of tracks and segments plots */
-	_verbosity = "NORMAL";			/* Default logging level */
-	_dump_geometry = false;			/* Default will not dump geometry */
-	_extension = "png";				/* Default will plot png */
-	_plot_specs = false;            /* Default will not plot materials, cells, FSRs, tracks, or segments */
-	_plot_fluxes = false;			/* Default will not plot fluxes */
-	_compute_pin_powers = false;	/* Default will not compute pin powers */
-	_compress_cross_sections = false;/* Default will not compress cross-sections */
-	_cmfd = true; /* Default will not perform CMFD acceleration */
-	_update_flux = false;  /* Default will not use CMFD to update flux */
-	_plot_current = false;			/* Default will not plot net current */
+	_track_spacing = 0.1;				/* Default track spacing */
+	_num_azim = 16;						/* Default number of azimuthal angles */
+	_bit_dimension = 1000;				/* y dimension of tracks and segments plots */
+	_verbosity = "NORMAL";				/* Default logging level */
+	_dump_geometry = false;				/* Default will not dump geometry */
+	_extension = "png";					/* Default will plot png */
+	_plot_specs = false;            	/* Default will not plot materials, cells, FSRs, tracks, or segments */
+	_plot_fluxes = false;				/* Default will not plot fluxes */
+	_compute_pin_powers = false;		/* Default will not compute pin powers */
+	_compress_cross_sections = false;	/* Default will not compress cross-sections */
+	_cmfd = true; 						/* Default will not perform CMFD acceleration */
+	_update_flux = false;  				/* Default will not use CMFD to update flux */
+	_plot_current = false;				/* Default will not plot net current */
+	_keff_conv_thresh = 1e-6;			/* Default will set keff conv thresh to 1e-6 */
+	_multigroup = false;				/* Default sets CMFD to one group structure */
+	_print_matrices = false;			/* Default will not print matrices */
+	_cmfd_level = 1;					/* Default cmfd level is 1 (hightest level) */
 
 
 	for (int i = 0; i < argc; i++) {
@@ -86,6 +90,16 @@ Options::Options(int argc, const char **argv) {
 			else if (strcmp(argv[i], "-pc") == 0 ||
 					strcmp(argv[i], "--plotcurrent") == 0)
 				_plot_current = true;
+			else if (LAST("--keffconv") || LAST("-kc"))
+				_keff_conv_thresh = atof(argv[i]);
+			else if (strcmp(argv[i], "-mg") == 0 ||
+					strcmp(argv[i], "--multigroup") == 0)
+				_multigroup = true;
+			else if (strcmp(argv[i], "-pm") == 0 ||
+					strcmp(argv[i], "--printmatrices") == 0)
+				_print_matrices = true;
+			else if (LAST("--cmfdlevel") || LAST("-cl"))
+				_cmfd_level = atoi(argv[i]);
 		}
 	}
 }
@@ -238,4 +252,32 @@ bool Options::updateFlux() const {
 	return _update_flux;
 }
 
+/**
+ * Returns the keff convergence threshold
+ * @return keff convergence threshold
+ */
+double Options::getKeffConvThresh() {
+	return _keff_conv_thresh;
+}
+
+/**
+ * Returns bool telling us cmfd group structure
+ * @return bool telling us cmfd group structure
+ */
+bool Options::getGroupStructure() {
+	return _multigroup;
+}
+
+
+/**
+ * Returns bool telling us cmfd group structure
+ * @return bool telling us cmfd group structure
+ */
+bool Options::getPrintMatrices() {
+	return _print_matrices;
+}
+
+int Options::getCmfdLevel(){
+	return _cmfd_level;
+}
 

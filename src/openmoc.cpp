@@ -69,7 +69,7 @@ int main(int argc, const char **argv) {
 
 	/* create CMFD Mesh */
 #if CMFD_ACCEL
-		geometry.makeCMFDMesh(opts.getNumAzim());
+		geometry.makeCMFDMesh(opts.getNumAzim(), opts.getGroupStructure(), opts.getPrintMatrices(), opts.getCmfdLevel());
 		if (opts.plotSpecs()){
 			plotter.plotCMFDMesh(geometry.getMesh());
 		}
@@ -96,20 +96,13 @@ int main(int argc, const char **argv) {
 	Cmfd cmfd(&geometry, &plotter);
 
 	/* Fixed source iteration to solve for k_eff */
-#if !CMFD_ONLY
-	Solver solver(&geometry, &track_generator, &plotter, &cmfd, opts.updateFlux());
+	Solver solver(&geometry, &track_generator, &plotter, &cmfd, opts.updateFlux(), opts.getKeffConvThresh());
 	timer.reset();
 	timer.start();
 	k_eff = solver.computeKeff(MAX_ITERATIONS);
 	timer.stop();
 	timer.recordSplit("Fixed source iteration");
-#else
-	timer.reset();
-	timer.start();
-	k_eff = cmfd.computeKeff(MAX_ITERATIONS);
-	timer.stop();
-	timer.recordSplit("cmfd solve");
-#endif
+
 
 	log_printf(RESULT, "k_eff = %f", k_eff);
 

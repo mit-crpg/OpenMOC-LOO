@@ -2036,11 +2036,10 @@ bool Geometry::mapContainsKey(std::map<K, V> map, K key) {
  * to the Mesh and defines the values in each MeshCell.
  * @param mesh a pointer to the Mesh object
  */
-void Geometry::makeCMFDMesh(int numAzim){
-	log_printf(NORMAL, "Making CMFD mesh...");
+void Geometry::makeCMFDMesh(int numAzim, bool multigroup, bool printMatrices, int cmfdLevel){
+	log_printf(NORMAL, "Making CMFD mesh at level %i...", cmfdLevel);
 
 	int max_cmfd_level = 0;
-	int cmfd_level = CMFD_LEVEL;
 	Universe* univ = _universes.at(0);
 
 	/* find the mesh depth of the geometry */
@@ -2048,25 +2047,26 @@ void Geometry::makeCMFDMesh(int numAzim){
 	log_printf(INFO, "Maximum cmfd mesh depth is: %i level(s)", max_cmfd_level);
 
 	/* if cmfd_level > CMFD_LEVEL throw errror message */
-	if (cmfd_level > max_cmfd_level){
+	if (cmfdLevel > max_cmfd_level){
 		log_printf(ERROR, "Specified CMFD LEVEL (%i) is greater than the "
-				"minimum mesh depth (%i). Please reset CMFD_LEVEL to be <= %i.",
-				cmfd_level, max_cmfd_level, max_cmfd_level);
+				"maximum mesh depth (%i). Please reset CMFD_LEVEL to be <= %i.",
+				cmfdLevel, max_cmfd_level, max_cmfd_level);
 	}
 
 	/* find cell width and height at CMFD_LEVEL lattice */
 	int width = 0;
 	int height = 0;
-	findMeshWidth(univ, &width, CMFD_LEVEL);
-	findMeshHeight(univ, &height, CMFD_LEVEL);
+	findMeshWidth(univ, &width, cmfdLevel);
+	findMeshHeight(univ, &height, cmfdLevel);
 
 	/* set the cell and geometric width and height of mesh */
 	_mesh->setCellHeight(height);
 	_mesh->setCellWidth(width);
 	_mesh->setHeight(getHeight());
 	_mesh->setWidth(getWidth());
-	log_printf(DEBUG, "making mesh cells");
-	_mesh->makeMeshCells(numAzim);
+	_mesh->makeMeshCells();
+
+	log_printf(NORMAL, "Made CMFD mesh with %i mesh cells...", height*width);
 
 	log_printf(DEBUG, "mesh cell width: %i", _mesh->getCellWidth());
 	log_printf(DEBUG, "mesh cell height: %i", _mesh->getCellHeight());
@@ -2074,9 +2074,14 @@ void Geometry::makeCMFDMesh(int numAzim){
 	/* make a vector of FSR ids in each mesh cell */
 	int meshCellNum = 0;
 	log_printf(DEBUG, "defining mesh...");
-	defineMesh(univ, CMFD_LEVEL, &meshCellNum, 0, true, 0);
+	defineMesh(univ, cmfdLevel, &meshCellNum, 0, true, 0);
 	_mesh->setCellBounds();
 	_mesh->setFSRBounds();
+
+	log_printf(DEBUG, "Setting multigroup and print flags");
+	_mesh->setMultigroup(multigroup);
+	_mesh->setPrintMatrices(printMatrices);
+
 	return;
 }
 

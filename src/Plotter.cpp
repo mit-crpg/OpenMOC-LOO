@@ -285,7 +285,7 @@ void Plotter::plotCMFDMesh(Mesh* mesh){
 	initialize(bitMap);
 	bitMap->geom_x = _width;
 	bitMap->geom_y = _height;
-	bitMap->color_type = SCALED;
+	bitMap->color_type = RANDOM;
 
 	double x_global;
 	double y_global;
@@ -351,10 +351,10 @@ void Plotter::plotNetCurrents(Mesh* mesh){
 			current2 = 0;
 			current3 = 0;
 			for (int group = 0; group < NUM_ENERGY_GROUPS; group++){
-				current0 += meshCell->getMeshSurfaces(0)->getCurrentTot(group);
-				current1 += meshCell->getMeshSurfaces(1)->getCurrentTot(group);
-				current2 += meshCell->getMeshSurfaces(2)->getCurrentTot(group);
-				current3 += meshCell->getMeshSurfaces(3)->getCurrentTot(group);
+				current0 += meshCell->getMeshSurfaces(0)->getCurrent(group);
+				current1 += meshCell->getMeshSurfaces(1)->getCurrent(group);
+				current2 += meshCell->getMeshSurfaces(2)->getCurrent(group);
+				current3 += meshCell->getMeshSurfaces(3)->getCurrent(group);
 
 				/* SIDE 0 */
 				/* get midpoint of mesh surface */
@@ -362,7 +362,7 @@ void Plotter::plotNetCurrents(Mesh* mesh){
 				y_mid = convertToPixelY((meshCell->getBounds()[1] + meshCell->getBounds()[3]) / 2.0);
 
 				/* create string and draw on bitMap */
-				text_stream << meshCell->getMeshSurfaces(0)->getCurrentTot(group);
+				text_stream << meshCell->getMeshSurfaces(0)->getCurrent(group);
 				text = text_stream.str();
 				text_stream.str("");
 				drawText(bitMap, text, x_mid + 20, y_mid - 10 * (NUM_ENERGY_GROUPS / 2.0 - group));
@@ -374,7 +374,7 @@ void Plotter::plotNetCurrents(Mesh* mesh){
 				y_mid = convertToPixelY(meshCell->getBounds()[1]);
 
 				/* create string and draw on bitMap */
-				text_stream << meshCell->getMeshSurfaces(1)->getCurrentTot(group);
+				text_stream << meshCell->getMeshSurfaces(1)->getCurrent(group);
 				text = text_stream.str();
 				text_stream.str("");
 				drawText(bitMap, text, x_mid - 20, y_mid - 10 * (NUM_ENERGY_GROUPS - group));
@@ -386,7 +386,7 @@ void Plotter::plotNetCurrents(Mesh* mesh){
 				y_mid = convertToPixelY((meshCell->getBounds()[1] + meshCell->getBounds()[3]) / 2.0);
 
 				/* create string and draw on bitMap */
-				text_stream << meshCell->getMeshSurfaces(2)->getCurrentTot(group);
+				text_stream << meshCell->getMeshSurfaces(2)->getCurrent(group);
 				text = text_stream.str();
 				text_stream.str("");
 				drawText(bitMap, text, x_mid - 80, y_mid - 10 * (NUM_ENERGY_GROUPS / 2.0 - group));
@@ -398,7 +398,7 @@ void Plotter::plotNetCurrents(Mesh* mesh){
 				y_mid = convertToPixelY(meshCell->getBounds()[3]);
 
 				/* create string and draw on bitMap */
-				text_stream << meshCell->getMeshSurfaces(3)->getCurrentTot(group);
+				text_stream << meshCell->getMeshSurfaces(3)->getCurrent(group);
 				text = text_stream.str();
 				text_stream.str("");
 				drawText(bitMap, text, x_mid - 20, y_mid + 10 * (group + 1.5));

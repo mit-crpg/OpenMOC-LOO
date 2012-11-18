@@ -43,7 +43,6 @@ private:
 public:
 	MeshCell();
 	virtual ~MeshCell();
-	void makeSurfaces(int numAzim);
 	double getWidth();
 	double getHeight();
 	void setWidth(double width);

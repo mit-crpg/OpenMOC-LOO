@@ -20,59 +20,32 @@
 #include <vector>
 #include "configurations.h"
 
-enum meshSurfaceType{
-	SIDEX,
-	SIDEY,
-	CORNER
-};
 
 class MeshSurface {
 private:
-	meshSurfaceType _type;
-	double* _current;
-	double* _current_tot;
-	double* _flux;
-	double _normal;
+	double _current[NUM_ENERGY_GROUPS];
+	double _flux[NUM_ENERGY_GROUPS];
 	double _d_hat[NUM_ENERGY_GROUPS];
 	double _d_tilde[NUM_ENERGY_GROUPS];
-	int _mesh_cell;
 	int _surface_num;
-	int _crossings;
-	double* _weight;
 	int _id;
 
 public:
 	MeshSurface();
 	virtual ~MeshSurface();
-	void makeCurrents(int numAzim);
-	meshSurfaceType getType();
-	void setType(meshSurfaceType type);
-	void setCurrent(double current, int group, int azim);
-	double getCurrent(int group, int azim);
-	void incrementCurrent(double current, int group, int azim);
-	void setCurrentTot(double current, int group);
-	double getCurrentTot(int group);
-	void setNormal(double normal);
-	double getNormal();
+	void makeCurrents();
+	void setCurrent(double current, int group);
+	double getCurrent(int group);
+	void incrementCurrent(double current, int group);
 	void setDHat(double dHat, int e);
 	double* getDHat();
 	void setDTilde(double dTilde, int e);
 	double* getDTilde();
-	void setMeshCell(int meshCell);
-	int getMeshCell();
 	void setSurfaceNum(int surfaceNum);
 	int getSurfaceNum();
-	int getCrossings();
-	void incrementCrossings(int crossings);
-	void setCrossings(int crossings);
-	double getWeight(int azim);
-	void incrementWeight(double weight, int azim);
-	void setWeight(double weight, int azim);
 	int getId();
 	void setId(int id);
 };
-
-
 
 
 #endif /* MESHSURFACE_H_ */

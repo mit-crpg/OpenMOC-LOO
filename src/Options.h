@@ -38,6 +38,10 @@ private:
 	bool _cmfd;
 	bool _plot_current;
 	bool _update_flux;
+	bool _multigroup;
+	bool _print_matrices;
+	double _keff_conv_thresh;
+	int _cmfd_level;
 public:
     Options(int argc, const char **argv);
     ~Options(void);
@@ -56,6 +60,10 @@ public:
 	bool cmfd() const;
 	bool plotCurrent() const;
 	bool updateFlux() const;
+	double getKeffConvThresh();
+	bool getGroupStructure();
+	bool getPrintMatrices();
+	int getCmfdLevel();
 };
 
 #endif

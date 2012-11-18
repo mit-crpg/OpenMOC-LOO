@@ -95,36 +95,6 @@ void Track::setPolarFluxes(bool direction, int start_index,
 	return;
 }
 
-/**
- * Set this track's polar fluxes for a particular direction (0 or 1)
- * @param direction incoming/outgoing (0/1) flux for forward/reverse directions
- * @param polar_fluxes pointer to an array of fluxes
- */
-void Track::setNewPolarFluxes(bool direction, int start_index,
-							double* polar_fluxes) {
-#if USE_OPENMP
-	omp_set_lock(&_flux_lock);
-#endif
-
-	int start = direction * GRP_TIMES_ANG;
-
-	if (direction != true && direction != false)
-		log_printf(ERROR, "Tried to set this track's polar flux in a direction"
-				"which does not exist: direction = %b", direction);
-
-	for (int i = 0; i < GRP_TIMES_ANG; i++)
-		_new_polar_fluxes[start + i] = polar_fluxes[i+start_index];
-
-#if USE_OPENMP
-	omp_unset_lock(&_flux_lock);
-#endif
-
-	return;
-}
-
-
-
-
 
 /*
  * Set the track azimuthal angle
@@ -259,15 +229,6 @@ double* Track::getPolarWeights() {
  */
 double* Track::getPolarFluxes() {
 	return _polar_fluxes;
-}
-
-
-/**
- * Return a pointer to this track's polar flux array
- * @return a pointer to the polar flux array
- */
-double* Track::getNewPolarFluxes() {
-	return _new_polar_fluxes;
 }
 
 

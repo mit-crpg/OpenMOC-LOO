@@ -46,7 +46,6 @@ private:
 	double _azim_weight;
 	double _polar_weights[NUM_POLAR_ANGLES];
 	double _polar_fluxes[2 * GRP_TIMES_ANG];
-	double _new_polar_fluxes[2 * GRP_TIMES_ANG];
 	std::vector<segment*> _segments;
 	Track *_track_in, *_track_out;
 	bool _refl_in, _refl_out;

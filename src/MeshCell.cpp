@@ -12,58 +12,35 @@ MeshCell::MeshCell(){
 	_volume = 0;
 	_bounds = new double[4];
 	_cell_id = 0;
-}
-
-MeshCell::~MeshCell(){}
-
-void MeshCell::makeSurfaces(int numAzim){
 
 	/* allocate memory for mesh surfaces */
 	_mesh_surfaces = new MeshSurface[8];
 
-	for (int i = 0; i < 8; i++){
-		/* make array of currents */
-		_mesh_surfaces[i].makeCurrents(numAzim);
-	}
-
-	/* set side type */
-	_mesh_surfaces[0].setType(SIDEX);		/* left */
-	_mesh_surfaces[1].setType(SIDEY);		/* bottom */
-	_mesh_surfaces[2].setType(SIDEX);		/* right */
-	_mesh_surfaces[3].setType(SIDEY);		/* top */
-	_mesh_surfaces[4].setType(CORNER);		/* bottom left */
-	_mesh_surfaces[5].setType(CORNER);		/* bottom right */
-	_mesh_surfaces[6].setType(CORNER);		/* top right */
-	_mesh_surfaces[7].setType(CORNER);		/* top left */
-
-	/* set outward normals to sides */
-	/* for corners, normal is set to the normal of surface - 4 */
-	_mesh_surfaces[0].setNormal(0.0);
-	_mesh_surfaces[1].setNormal(PI / 2.0);
-	_mesh_surfaces[2].setNormal(0.0);
-	_mesh_surfaces[3].setNormal(PI / 2.0);
-	_mesh_surfaces[4].setNormal(PI);
-	_mesh_surfaces[5].setNormal(PI);
-	_mesh_surfaces[6].setNormal(0.0);
-	_mesh_surfaces[7].setNormal(0.0);
-
 	/* set surface id */
-	_mesh_surfaces[0].setId(0);
-	_mesh_surfaces[1].setId(1);
-	_mesh_surfaces[2].setId(2);
-	_mesh_surfaces[3].setId(3);
-	_mesh_surfaces[4].setId(4);
-	_mesh_surfaces[5].setId(5);
-	_mesh_surfaces[6].setId(6);
-	_mesh_surfaces[7].setId(7);
+	_mesh_surfaces[0].setId(0);		/* left */
+	_mesh_surfaces[1].setId(1);		/* bottom */
+	_mesh_surfaces[2].setId(2);		/* right */
+	_mesh_surfaces[3].setId(3);		/* top */
+	_mesh_surfaces[4].setId(4);		/* bottom left */
+	_mesh_surfaces[5].setId(5);		/* bottom right */
+	_mesh_surfaces[6].setId(6);		/* top right */
+	_mesh_surfaces[7].setId(7);		/* top left */
 
 
 	for (int e = 0; e < NUM_ENERGY_GROUPS; e++){
-		_chi[e] = 0.0;
+		_chi[e]         = 0.0;
+		_nu_sigma_f[e]  = 0.0;
+		_sigma_a[e]     = 0.0;
+		_diffusivity[e] = 0.0;
+		_old_flux[e]    = 0.0;
+		_new_flux[e]    = 0.0;
+		for (int g = 0; g < NUM_ENERGY_GROUPS; g++){
+			_sigma_s[e*NUM_ENERGY_GROUPS + g] = 0.0;
+		}
 	}
-
 }
 
+MeshCell::~MeshCell(){}
 
 
 double MeshCell::getWidth(){

@@ -62,12 +62,13 @@ private:
 	int _pre_factor_max_index;
 	double _pre_factor_spacing;
 	bool _update_flux;
+	double _keff_conv_thresh;
 #endif
 	void precomputeFactors();
 	double computePreFactor(segment* seg, int energy, int angle);
 	void initializeFSRs();
 public:
-	Solver(Geometry* geom, TrackGenerator* track_generator, Plotter* plotter, Cmfd* cmfd, bool _update_flux);
+	Solver(Geometry* geom, TrackGenerator* track_generator, Plotter* plotter, Cmfd* cmfd, bool _update_flux, double keffConvThresh);
 	virtual ~Solver();
 	void zeroTrackFluxes();
 	void oneFSRFluxes();
@@ -82,13 +83,15 @@ public:
 	void checkTrackSpacing();
 	void computePinPowers();
 	void computeDs(Mesh* mesh);
-	double computeCMFDFlux(Mesh* mesh, double keff);
+	double computeCMFDFlux(Mesh* mesh);
+	double computeCMFDFluxFast(Mesh* mesh);
 	void updateMOCFlux(Mesh* mesh);
  	void checkNeutBal(Mesh* mesh, double keff);
  	void computeXS(Mesh* mesh);
  	void renormCurrents(Mesh* mesh, double keff);
  	double getEps(Mesh* mesh, double keff, double renorm_factor);
  	void initializeSource();
+ 	void condenseXS(Mesh* mesh);
 };
 
 #endif /* SOLVER_H_ */
