@@ -12,7 +12,8 @@
  * Plotting constructor
  * @param geom a pointer to a geometry object
  */
-Plotter::Plotter(Geometry* geom, const int bitDim, std::string extension, bool specs, bool fluxes, bool netCurrent) {
+Plotter::Plotter(Geometry* geom, const int bitDim, std::string extension, bool specs, bool fluxes,
+		bool netCurrent, bool plotDiffusion, bool plotKeff) {
 
 	/* extension for plotting files */
 	_extension = extension;
@@ -20,6 +21,8 @@ Plotter::Plotter(Geometry* geom, const int bitDim, std::string extension, bool s
 	_specs = specs;
 	_fluxes = fluxes;
 	_net_current = netCurrent;
+	_plot_diffusion = plotDiffusion;
+	_plot_keff = plotKeff;
 
 	_width = _geom->getWidth();
 	_height = _geom->getHeight();
@@ -99,13 +102,28 @@ bool Plotter::plotFlux(){
 }
 
 /**
+ * Return boolean to decide whether to plot cmfd flux at each step
+ * @return boolean to decide whether to plot cmfd flux at each step
+ */
+bool Plotter::plotDiffusion(){
+	return _plot_diffusion;
+}
+
+/**
+ * Return boolean to decide whether to plot keff
+ * @return boolean to decide whether to plot keff
+ */
+bool Plotter::plotKeff(){
+	return _plot_keff;
+}
+
+/**
  * Return boolean to decide whether to plot net current
  * @return boolean to decide whether to plot net current
  */
 bool Plotter::plotCurrent(){
 	return _net_current;
 }
-
 
 /* PLOTTING HELPER FUNCTIONS */
 /* These functions manipulate data and call the generic plotting functions
@@ -780,8 +798,8 @@ void Plotter::plotXS(Mesh* mesh, int iter_num){
 }
 
 
-void Plotter::plotCMFDflux(Mesh* mesh, int iter_num){
-	log_printf(NORMAL, "plotting CMFD flux...");
+void Plotter::plotCMFDflux(Mesh* mesh, std::string title1, int iter_num){
+	log_printf(NORMAL, "plotting flux...");
 
 	/* set up bitMap */
 	BitMap<double>* bitMap = new BitMap<double>;
@@ -794,56 +812,185 @@ void Plotter::plotCMFDflux(Mesh* mesh, int iter_num){
 
 	double x_global;
 	double y_global;
+	std::stringstream string;
+	std::string title_str;
+
+	int ng = 1;
+	if (mesh->getMultigroup() == true){
+		ng = NUM_ENERGY_GROUPS;
+	}
 
 	/* PLOT OLD FLUX */
 
-	/* find meshCell for each pixel */
-	for (int y=0;y < _bit_length_y; y++){
-		for (int x = 0; x < _bit_length_x; x++){
-			x_global = convertToGeometryX(x);
-			y_global = convertToGeometryY(y);
-			bitMap->pixels[y * _bit_length_x + x] = mesh->getCells(mesh->findMeshCell(x_global, y_global))->getOldFlux()[0];
+	for (int e = 0; e < ng; e++){
+
+		/* find meshCell for each pixel */
+		for (int y=0;y < _bit_length_y; y++){
+			for (int x = 0; x < _bit_length_x; x++){
+				x_global = convertToGeometryX(x);
+				y_global = convertToGeometryY(y);
+				bitMap->pixels[y * _bit_length_x + x] = mesh->getCells(mesh->findMeshCell(x_global, y_global))->getOldFlux()[e];
+			}
 		}
-	}
 
-	std::stringstream string;
-	string << "cf_old_i_" << iter_num;
-	std::string title_str = string.str();
+		string.str("");
+		string << title1 << "_old_i" << iter_num << "_g_" << e+1;
+		title_str = string.str();
 
 
-	/* create filename with correct extension */
-	if (_extension == "tiff" || _extension == "jpg" || _extension == "png"){
-		plot(bitMap, title_str, _extension);
-	}
-	else{
-		log_printf(WARNING, "CMFD flux can only be plotted in tiff, jpg, and png. Plotting CMFD flux as png...");
-		plot(bitMap, title_str, "png");
+		/* create filename with correct extension */
+		if (_extension == "tiff" || _extension == "jpg" || _extension == "png"){
+			plot(bitMap, title_str, _extension);
+		}
+		else{
+			log_printf(WARNING, "CMFD flux can only be plotted in tiff, jpg, and png. Plotting CMFD flux as png...");
+			plot(bitMap, title_str, "png");
+		}
 	}
 
 	/* PLOT NEW FLUX */
 
-	/* find meshCell for each pixel */
-	for (int y=0;y < _bit_length_y; y++){
-		for (int x = 0; x < _bit_length_x; x++){
-			x_global = convertToGeometryX(x);
-			y_global = convertToGeometryY(y);
-			bitMap->pixels[y * _bit_length_x + x] = mesh->getCells(mesh->findMeshCell(x_global, y_global))->getNewFlux()[0];
+	for (int e = 0; e < ng; e++){
+
+		/* find meshCell for each pixel */
+		for (int y=0;y < _bit_length_y; y++){
+			for (int x = 0; x < _bit_length_x; x++){
+				x_global = convertToGeometryX(x);
+				y_global = convertToGeometryY(y);
+				bitMap->pixels[y * _bit_length_x + x] = mesh->getCells(mesh->findMeshCell(x_global, y_global))->getNewFlux()[e];
+			}
 		}
-	}
 
-	string.str("");
-	string << "cf_new_i_" << iter_num;
-	title_str = string.str();
+		string.str("");
+		string << title1 << "_new_i" << iter_num << "_g_" << e+1;
+		title_str = string.str();
 
-	/* create filename with correct extension */
-	if (_extension == "tiff" || _extension == "jpg" || _extension == "png"){
-		plot(bitMap, title_str, _extension);
-	}
-	else{
-		log_printf(WARNING, "CMFD flux can only be plotted in tiff, jpg, and png. Plotting CMFD flux as png...");
-		plot(bitMap, title_str, "png");
+		/* create filename with correct extension */
+		if (_extension == "tiff" || _extension == "jpg" || _extension == "png"){
+			plot(bitMap, title_str, _extension);
+		}
+		else{
+			log_printf(WARNING, "CMFD flux can only be plotted in tiff, jpg, and png. Plotting CMFD flux as png...");
+			plot(bitMap, title_str, "png");
+		}
+
 	}
 
 	deleteBitMap(bitMap);
 }
+
+void Plotter::plotCMFDKeff(Mesh* mesh, int num_iter){
+	log_printf(NORMAL, "plotting CMFD keff...");
+
+	/* set up bitMap */
+	BitMap<int>* bitMap = new BitMap<int>;
+	bitMap->pixel_x = _bit_length_x;
+	bitMap->pixel_y = _bit_length_y;
+	initialize(bitMap);
+	bitMap->geom_x = _bit_length_x;
+	bitMap->geom_y = _bit_length_y;
+	bitMap->color_type = BLACKWHITE;
+
+	std::stringstream text_stream;
+	std::string text;
+	std::string text2;
+
+	/* draw and label axes */
+	drawLine(bitMap, _bit_length_x / 10, 10, _bit_length_x / 10, _bit_length_y - 10);
+	drawLine(bitMap, 10, 9 * _bit_length_y / 10, _bit_length_x - 10, 9 * _bit_length_y / 10);
+	text = "keff";
+	drawText(bitMap, text, 30, _bit_length_y / 2 - 30);
+	text = "iteration";
+	drawText(bitMap, text, _bit_length_x / 2, _bit_length_y - 30);
+	text_stream << num_iter;
+	text = text_stream.str();
+	text_stream.str("");
+	drawText(bitMap, text, 9.5 * _bit_length_x / 10, 9 * _bit_length_y / 10 + 20);
+
+
+	/* create x axis scale */
+	double keff_max = 0, keff_min = 2;
+	for (int i = 1; i < num_iter; i++){
+		if (mesh->getKeffCMFD(i) > keff_max){
+			keff_max = mesh->getKeffCMFD(i);
+		}
+		if (mesh->getKeffMOC(i) > keff_max){
+			keff_max = mesh->getKeffMOC(i);
+		}
+		if (mesh->getKeffCMFD(i) < keff_min){
+					keff_min = mesh->getKeffCMFD(i);
+		}
+		if (mesh->getKeffMOC(i) < keff_min){
+			keff_min = mesh->getKeffMOC(i);
+		}
+	}
+
+	text_stream << keff_min;
+	text = text_stream.str();
+	text_stream.str("");
+	drawText(bitMap, text, _bit_length_x / 10 - 50, 9 * _bit_length_y / 10 - 10);
+	text_stream << keff_max;
+	text = text_stream.str();
+	text_stream.str("");
+	drawText(bitMap, text, _bit_length_x / 10 - 50, _bit_length_y / 10);
+	double keff_avg = (keff_max - keff_min)/2 + keff_min;
+	double keff_range = keff_max - keff_min;
+	text_stream << keff_avg;
+	text = text_stream.str();
+	text_stream.str("");
+	drawText(bitMap, text, _bit_length_x / 10 - 50, _bit_length_y / 2);
+
+	text = "blue";
+	text2 = "white";
+
+	/* draw CMFD keff */
+	for (int i = 1; i < num_iter; i++){
+
+		drawPoint(bitMap, text, text2, 1, _bit_length_x / 10 + i * (8.5 * _bit_length_x / 10 / num_iter) , _bit_length_y / 2 - (mesh->getKeffCMFD(i) - keff_avg) / (keff_range / 2) * (4 * _bit_length_y / 10), 3);
+
+	}
+
+	drawPoint(bitMap, text, text2, 1, 8 * _bit_length_x / 10, _bit_length_y / 30, 3);
+	text = "CMFD";
+	drawText(bitMap, text, 8 * _bit_length_x / 10 + 20, _bit_length_y / 30 + 5);
+
+
+	text = "black";
+
+	/* draw MOC keff */
+	for (int i = 1; i < num_iter; i++){
+
+		drawPoint(bitMap, text, text2, 1, _bit_length_x / 10 + i * (8.5 * _bit_length_x / 10 / num_iter) , _bit_length_y / 2 - (mesh->getKeffMOC(i) - keff_avg) / (keff_range / 2) * (4 * _bit_length_y / 10), 3);
+
+	}
+
+	drawPoint(bitMap, text, text2, 1, 8 * _bit_length_x / 10, _bit_length_y / 30 + 15, 3);
+	text = "MOC";
+	drawText(bitMap, text, 8 * _bit_length_x / 10 + 20, _bit_length_y / 30 + 20);
+
+
+	text = "cmfd_keff";
+
+	/* create filename with correct extension */
+	if (_extension == "tiff" || _extension == "jpg" || _extension == "png"){
+		plot(bitMap, text, _extension);
+	}
+	else{
+		log_printf(WARNING, "Cross sections can only be plotted in tiff, jpg, and png. Plotting CMFD flux as png...");
+		plot(bitMap, text, "png");
+	}
+
+	deleteBitMap(bitMap);
+
+}
+
+
+
+
+
+
+
+
+
+
 

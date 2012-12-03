@@ -24,6 +24,9 @@ Surface::Surface(const int id, const surfaceType type,
 	_type = type;
 	_n++;
 	_boundary = boundary;
+	for (int e = 0; e < NUM_ENERGY_GROUPS; e++){
+		_leakage[e] = 0.0;
+	}
 }
 
 
@@ -135,7 +138,7 @@ void Surface::setNeighborNeg(int index, Cell* cell) {
 
 /**
  * Returns the surface's boundary type
- * @return the boundary type (REFLECTIVE or BOUNDARY_NONE)
+ * @return the boundary type (REFLECTIVE, VACUUM, or BOUNDARY_NONE)
  */
 boundaryType Surface::getBoundary(){
        return _boundary;
@@ -214,6 +217,27 @@ double Surface::getMinDistance(Point* point, double angle,
 
 	return distance;
 }
+
+
+void Surface::setLeakage(double leakage, int e){
+
+	_leakage[e] = leakage;
+}
+
+
+double* Surface::getLeakage(){
+	return _leakage;
+}
+
+
+void Surface::incrementLeakage(reflectType direction, double leakage, int e){
+
+	if (direction == VAC_TRUE || direction == VAC_FALSE){
+		_leakage[e] += leakage;
+	}
+}
+
+
 
 
 

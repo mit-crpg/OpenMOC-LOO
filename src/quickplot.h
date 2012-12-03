@@ -71,7 +71,10 @@ template <typename U>
 void drawText(BitMap<U>* bitMap, std::string text, double x, double y);
 template <typename U>
 void addScalebar(BitMap<U>* bitMap, float* pixMap, std::list<Magick::Drawable>* drawList);
-
+template <typename U>
+void drawPoint(BitMap<U>* bitMap, std::string color, std::string color2, int stroke, double x, double y, double radius);
+template <typename U>
+void drawLine(BitMap<U>* bitMap, double x_start, double y_start, double x_end, double y_end);
 
 
 /*
@@ -502,9 +505,30 @@ void addScalebar(BitMap<U>* bitMap, float* pixMap, std::list<Magick::Drawable>* 
 }
 
 
+/**
+ * Draw point on BitMap
+ */
+template <typename U>
+void drawPoint(BitMap<U>* bitMap, std::string color, std::string color2,  int stroke, double x, double y, double radius){
 
+	bitMap->drawList.push_back(Magick::DrawableStrokeColor(color));
+	bitMap->drawList.push_back(Magick::DrawableFillColor(color2));
 
+	bitMap->drawList.push_back(Magick::DrawableStrokeWidth(stroke));
 
+	/* add item to drawlist	 */
+	bitMap->drawList.push_back(Magick::DrawableCircle(x, y, x + radius, y));
+}
+
+/**
+ * Draw point on BitMap
+ */
+template <typename U>
+void drawLine(BitMap<U>* bitMap, double x_start, double y_start, double x_end, double y_end){
+
+	/* add item to drawlist	 */
+	bitMap->drawList.push_back(Magick::DrawableLine(x_start, y_start, x_end, y_end));
+}
 
 
 

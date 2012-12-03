@@ -37,6 +37,8 @@ private:
 	bool _compress_cross_sections;
 	bool _cmfd;
 	bool _plot_current;
+	bool _plot_diffusion;
+	bool _plot_keff;
 	bool _update_flux;
 	bool _multigroup;
 	bool _print_matrices;
@@ -59,6 +61,8 @@ public:
     bool compressCrossSections() const;
 	bool cmfd() const;
 	bool plotCurrent() const;
+	bool plotDiffusion() const;
+	bool plotKeff() const;
 	bool updateFlux() const;
 	double getKeffConvThresh();
 	bool getGroupStructure();

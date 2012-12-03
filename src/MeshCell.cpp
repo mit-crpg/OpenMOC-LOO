@@ -31,6 +31,7 @@ MeshCell::MeshCell(){
 		_chi[e]         = 0.0;
 		_nu_sigma_f[e]  = 0.0;
 		_sigma_a[e]     = 0.0;
+		_sigma_t[e]     = 0.0;
 		_diffusivity[e] = 0.0;
 		_old_flux[e]    = 0.0;
 		_new_flux[e]    = 0.0;
@@ -106,25 +107,28 @@ MeshSurface* MeshCell::findSurface(LocalCoords* coord, int i){
 	/* find which surface coord is on */
 	/* left */
 	if (fabs(x - _bounds[0]) < 1e-8){
-		meshSurface = &_mesh_surfaces[0];
-		surface = 0;
-	}
-	/* bottom */
-	if (fabs(y - _bounds[1]) < 1e-8){
-		if (meshSurface == &_mesh_surfaces[0]){
+		if (fabs(y - _bounds[1]) < 1e-8){
 			meshSurface = &_mesh_surfaces[4];
 			surface = 4;
 		}
+		else if (fabs(y - _bounds[3]) < 1e-8){
+			meshSurface = &_mesh_surfaces[7];
+			surface = 7;
+		}
 		else{
-			meshSurface = &_mesh_surfaces[1];
-			surface = 1;
+			meshSurface = &_mesh_surfaces[0];
+			surface = 0;
 		}
 	}
 	/* right */
-	if (fabs(x - _bounds[2]) < 1e-8){
-		if (meshSurface == &_mesh_surfaces[1]){
+	else if (fabs(x - _bounds[2]) < 1e-8){
+		if (fabs(y - _bounds[1]) < 1e-8){
 			meshSurface = &_mesh_surfaces[5];
 			surface = 5;
+		}
+		else if (fabs(y - _bounds[3]) < 1e-8){
+			meshSurface = &_mesh_surfaces[6];
+			surface = 6;
 		}
 		else{
 			meshSurface = &_mesh_surfaces[2];
@@ -132,19 +136,14 @@ MeshSurface* MeshCell::findSurface(LocalCoords* coord, int i){
 		}
 	}
 	/* top */
-	if (fabs(y - _bounds[3]) < 1e-8){
-		if (meshSurface == &_mesh_surfaces[2]){
-			meshSurface = &_mesh_surfaces[6];
-			surface = 6;
-		}
-		else if(meshSurface == &_mesh_surfaces[0]){
-			meshSurface = &_mesh_surfaces[7];
-			surface = 7;
-		}
-		else{
-			meshSurface = &_mesh_surfaces[3];
-			surface = 3;
-		}
+	else if (fabs(y - _bounds[3]) < 1e-8){
+		meshSurface = &_mesh_surfaces[3];
+		surface = 3;
+	}
+	/* bottom */
+	else if (fabs(y - _bounds[1]) < 1e-8){
+		meshSurface = &_mesh_surfaces[1];
+		surface = 1;
 	}
 
 	if (surface != -1){
@@ -172,6 +171,14 @@ void MeshCell::setSigmaA(double sigmaA, int e){
 
 double* MeshCell::getSigmaA(){
 	return _sigma_a;
+}
+
+void MeshCell::setSigmaT(double sigmaT, int e){
+	_sigma_t[e] = sigmaT;
+}
+
+double* MeshCell::getSigmaT(){
+	return _sigma_t;
 }
 
 double* MeshCell::getSigmaS(){

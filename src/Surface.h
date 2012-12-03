@@ -41,7 +41,8 @@ enum surfaceType {
  */
 enum boundaryType {
 	BOUNDARY_NONE,
-	REFLECTIVE
+	REFLECTIVE,
+	VACUUM
 };
 
 
@@ -58,6 +59,7 @@ protected:
 	boundaryType _boundary;
 	std::vector<Cell*> _neighbor_pos;
 	std::vector<Cell*> _neighbor_neg;
+	double _leakage[NUM_ENERGY_GROUPS];
 
 public:
 	Surface(const int id, const surfaceType type, 
@@ -83,6 +85,10 @@ public:
 	bool onSurface(Point* point);
 	bool onSurface(LocalCoords* coord);
 	double getMinDistance(Point* point, double angle, Point* intersection);
+	void setLeakage(double leakage, int e);
+	double* getLeakage();
+	void incrementLeakage(reflectType direction, double current, int e);
+
 };
 
 

@@ -73,20 +73,28 @@ void Track::setPolarWeight(const int angle, double polar_weight) {
  * @param direction incoming/outgoing (0/1) flux for forward/reverse directions
  * @param polar_fluxes pointer to an array of fluxes
  */
-void Track::setPolarFluxes(bool direction, int start_index,
+void Track::setPolarFluxes(reflectType direction, int start_index,
 							double* polar_fluxes) {
 #if USE_OPENMP
 	omp_set_lock(&_flux_lock);
 #endif
 
-	int start = direction * GRP_TIMES_ANG;
-
-	if (direction != true && direction != false)
+	if (direction != REFL_TRUE && direction != REFL_FALSE && direction != VAC_TRUE && direction != VAC_FALSE)
 		log_printf(ERROR, "Tried to set this track's polar flux in a direction"
 				"which does not exist: direction = %b", direction);
 
-	for (int i = 0; i < GRP_TIMES_ANG; i++)
-		_polar_fluxes[start + i] = polar_fluxes[i+start_index];
+	if (direction == REFL_TRUE || direction == REFL_FALSE){
+		int start = direction * GRP_TIMES_ANG;
+		for (int i = 0; i < GRP_TIMES_ANG; i++){
+			_polar_fluxes[start + i] = polar_fluxes[i+start_index];
+		}
+	}
+	else{
+		int start = (direction - 2) * GRP_TIMES_ANG;
+		for (int i = 0; i < GRP_TIMES_ANG; i++){
+				_polar_fluxes[start + i] = 0.0;
+		}
+	}
 
 #if USE_OPENMP
 	omp_unset_lock(&_flux_lock);
@@ -127,7 +135,7 @@ void Track::addSegment(segment* segment) {
  * end (true) of this Track
  * @param relf_in - beginning (false)/end (true)
  */
-void Track::setReflIn(const bool refl_in) {
+void Track::setReflIn(reflectType refl_in) {
     _refl_in = refl_in;
 }
 
@@ -137,7 +145,7 @@ void Track::setReflIn(const bool refl_in) {
  * end (true) of the outgoing Track
  * @param relf_out - beginning (false)/end (true)
  */
-void Track::setReflOut(const bool refl_out) {
+void Track::setReflOut(reflectType refl_out) {
     _refl_out = refl_out;
 }
 
@@ -255,7 +263,7 @@ Track *Track::getTrackOut() const {
  *  (true) of this Track
  *  @return start (false) or end (true)
  */
-bool Track::isReflIn() const {
+reflectType Track::isReflIn() {
     return _refl_in;
 }
 
@@ -265,7 +273,7 @@ bool Track::isReflIn() const {
  * (true) of the outgoing Track
  * @return start (false) or end (true)
  */
-bool Track::isReflOut() const {
+reflectType Track::isReflOut() {
     return _refl_out;
 }
 
@@ -403,3 +411,30 @@ std::string Track::toString() {
 
 	return string.str();
 }
+
+
+void Track::setSurfFwd(int surfFwd){
+	_surf_fwd = surfFwd;
+}
+
+
+int Track::getSurfFwd(){
+	return _surf_fwd;
+}
+
+
+void Track::setSurfBwd(int surfBwd){
+	_surf_bwd = surfBwd;
+}
+
+
+int Track::getSurfBwd(){
+	return _surf_bwd;
+}
+
+
+
+
+
+
+

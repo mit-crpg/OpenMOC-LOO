@@ -30,6 +30,8 @@
 #include "MeshCell.h"
 #include "Material.h"
 #include "Cmfd.h"
+#include "petsc.h"
+#include <petscmat.h>
 
 #if USE_OPENMP == true
 	#include <omp.h>
@@ -63,17 +65,19 @@ private:
 	double _pre_factor_spacing;
 	bool _update_flux;
 	double _keff_conv_thresh;
+	bool _compute_powers;
 #endif
 	void precomputeFactors();
 	double computePreFactor(segment* seg, int energy, int angle);
 	void initializeFSRs();
 public:
-	Solver(Geometry* geom, TrackGenerator* track_generator, Plotter* plotter, Cmfd* cmfd, bool _update_flux, double keffConvThresh);
+	Solver(Geometry* geom, TrackGenerator* track_generator, Plotter* plotter, Cmfd* cmfd, bool _update_flux, double keffConvThresh, bool computePowers);
 	virtual ~Solver();
 	void zeroTrackFluxes();
 	void oneFSRFluxes();
 	void zeroFSRFluxes();
 	void zeroMeshCells();
+	void zeroLeakage();
 	void computeRatios();
 	void updateKeff();
 	double** getFSRtoFluxMap();
@@ -82,16 +86,11 @@ public:
 	void plotFluxes(int iter_num);
 	void checkTrackSpacing();
 	void computePinPowers();
-	void computeDs(Mesh* mesh);
-	double computeCMFDFlux(Mesh* mesh);
-	double computeCMFDFluxFast(Mesh* mesh);
-	void updateMOCFlux(Mesh* mesh);
  	void checkNeutBal(Mesh* mesh, double keff);
- 	void computeXS(Mesh* mesh);
  	void renormCurrents(Mesh* mesh, double keff);
  	double getEps(Mesh* mesh, double keff, double renorm_factor);
  	void initializeSource();
- 	void condenseXS(Mesh* mesh);
+
 };
 
 #endif /* SOLVER_H_ */

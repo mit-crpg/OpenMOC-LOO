@@ -27,8 +27,10 @@ private:
 	double _flux[NUM_ENERGY_GROUPS];
 	double _d_hat[NUM_ENERGY_GROUPS];
 	double _d_tilde[NUM_ENERGY_GROUPS];
+	double _d_dif[NUM_ENERGY_GROUPS];
 	int _surface_num;
 	int _id;
+	int _cell_id;
 
 public:
 	MeshSurface();
@@ -41,10 +43,15 @@ public:
 	double* getDHat();
 	void setDTilde(double dTilde, int e);
 	double* getDTilde();
+	void setDDif(double dTilde, int e);
+	double* getDDif();
 	void setSurfaceNum(int surfaceNum);
 	int getSurfaceNum();
 	int getId();
 	void setId(int id);
+	int getCellId();
+	void setCellId(int id);
+
 };
 
 

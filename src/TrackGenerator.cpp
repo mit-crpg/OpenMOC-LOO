@@ -351,39 +351,96 @@ void TrackGenerator::makeReflective() {
 				if (j < nxi) {
 					curr[j].setTrackIn(&refl[j]);
 					refl[j].setTrackIn(&curr[j]);
-					curr[j].setReflIn(false);
-					refl[j].setReflIn(false);
+					curr[j].setSurfBwd(3);
+					refl[j].setSurfBwd(3);
+
+					if (_geom->getSurface(3)->getBoundary() == REFLECTIVE){
+						curr[j].setReflIn(REFL_FALSE);
+						refl[j].setReflIn(REFL_FALSE);
+					}
+					else{
+						curr[j].setReflIn(VAC_FALSE);
+						refl[j].setReflIn(VAC_FALSE);
+					}
 
 					curr[j].setTrackOut(&refl[2 * nxi - 1 - j]);
 					refl[2 * nxi - 1 - j].setTrackIn(&curr[j]);
-					curr[j].setReflOut(false);
-					refl[2 * nxi - 1 - j].setReflIn(true);
+					curr[j].setSurfFwd(2);
+					refl[2 * nxi - 1 - j].setSurfBwd(2);
+
+					if (_geom->getSurface(2)->getBoundary() == REFLECTIVE){
+						curr[j].setReflOut(REFL_FALSE);
+						refl[2 * nxi - 1 - j].setReflIn(REFL_TRUE);
+					}
+					else{
+						curr[j].setReflOut(VAC_FALSE);
+						refl[2 * nxi - 1 - j].setReflIn(VAC_TRUE);
+					}
 				}
 
 				/* Left hand side to right hand side */
 				else if (j < nyi) {
+
 					curr[j].setTrackIn(&refl[j - nxi]);
 					refl[j - nxi].setTrackOut(&curr[j]);
-					curr[j].setReflIn(true);
-					refl[j - nxi].setReflOut(false);
+					curr[j].setSurfBwd(1);
+					refl[j - nxi].setSurfFwd(1);
+
+					if (_geom->getSurface(1)->getBoundary() == REFLECTIVE){
+						curr[j].setReflIn(REFL_TRUE);
+						refl[j - nxi].setReflOut(REFL_FALSE);
+					}
+					else{
+						curr[j].setReflIn(VAC_TRUE);
+						refl[j - nxi].setReflOut(VAC_FALSE);
+					}
 
 					curr[j].setTrackOut(&refl[j + nxi]);
 					refl[j + nxi].setTrackIn(&curr[j]);
-					curr[j].setReflOut(false);
-					refl[j + nxi].setReflIn(true);
+					curr[j].setSurfFwd(2);
+					refl[j + nxi].setSurfBwd(2);
+
+					if (_geom->getSurface(2)->getBoundary() == REFLECTIVE){
+						curr[j].setReflOut(REFL_FALSE);
+						refl[j + nxi].setReflIn(REFL_TRUE);
+					}
+					else{
+						curr[j].setReflOut(VAC_FALSE);
+						refl[j + nxi].setReflIn(VAC_TRUE);
+					}
 				}
 
 				/* Left hand side to top (j > ny) */
 				else {
+
 					curr[j].setTrackIn(&refl[j - nxi]);
 					refl[j - nxi].setTrackOut(&curr[j]);
-					curr[j].setReflIn(true);
-					refl[j - nxi].setReflOut(false);
+					curr[j].setSurfBwd(1);
+					refl[j - nxi].setSurfFwd(1);
+
+
+					if (_geom->getSurface(1)->getBoundary() == REFLECTIVE){
+						curr[j].setReflIn(REFL_TRUE);
+						refl[j - nxi].setReflOut(REFL_FALSE);
+					}
+					else{
+						curr[j].setReflIn(VAC_TRUE);
+						refl[j - nxi].setReflOut(VAC_FALSE);
+					}
 
 					curr[j].setTrackOut(&refl[2 * nti - nxi - j - 1]);
 					refl[2 * nti - nxi - j - 1].setTrackOut(&curr[j]);
-					curr[j].setReflOut(true);
-					refl[2 * nti - nxi - j - 1].setReflOut(true);
+					curr[j].setSurfFwd(4);
+					refl[2 * nti - nxi - j - 1].setSurfFwd(4);
+
+					if (_geom->getSurface(4)->getBoundary() == REFLECTIVE){
+						curr[j].setReflOut(REFL_TRUE);
+						refl[2 * nti - nxi - j - 1].setReflOut(REFL_TRUE);
+					}
+					else{
+						curr[j].setReflOut(VAC_TRUE);
+						refl[2 * nti - nxi - j - 1].setReflOut(VAC_TRUE);
+					}
 				}
 			}
 
@@ -393,39 +450,93 @@ void TrackGenerator::makeReflective() {
 				if (j < nxi - nyi) {
 					curr[j].setTrackIn(&refl[j]);
 					refl[j].setTrackIn(&curr[j]);
-					curr[j].setReflIn(false);
-					refl[j].setReflIn(false);
+					curr[j].setSurfBwd(3);
+					refl[j].setSurfBwd(3);
+
+					if (_geom->getSurface(3)->getBoundary() == REFLECTIVE){
+						curr[j].setReflIn(REFL_FALSE);
+						refl[j].setReflIn(REFL_FALSE);
+					}
+					else{
+						curr[j].setReflIn(VAC_FALSE);
+						refl[j].setReflIn(VAC_FALSE);
+					}
 
 					curr[j].setTrackOut(&refl[nti - (nxi - nyi) + j]);
 					refl[nti - (nxi - nyi) + j].setTrackOut(&curr[j]);
-					curr[j].setReflOut(true);
-					refl[nti - (nxi - nyi) + j].setReflOut(true);
+					curr[j].setSurfFwd(4);
+					refl[nti - (nxi - nyi) + j].setSurfFwd(4);
+
+					if (_geom->getSurface(4)->getBoundary() == REFLECTIVE){
+						curr[j].setReflOut(REFL_TRUE);
+						refl[nti - (nxi - nyi) + j].setReflOut(REFL_TRUE);
+					}
+					else{
+						curr[j].setReflOut(VAC_TRUE);
+						refl[nti - (nxi - nyi) + j].setReflOut(VAC_TRUE);
+					}
 				}
 
 				/* Bottom to right hand side */
 				else if (j < nxi) {
 					curr[j].setTrackIn(&refl[j]);
 					refl[j].setTrackIn(&curr[j]);
-					curr[j].setReflIn(false);
-					refl[j].setReflIn(false);
+					curr[j].setSurfBwd(3);
+					refl[j].setSurfBwd(3);
+
+					if (_geom->getSurface(3)->getBoundary() == REFLECTIVE){
+						curr[j].setReflIn(REFL_FALSE);
+						refl[j].setReflIn(REFL_FALSE);
+					}
+					else{
+						curr[j].setReflIn(VAC_FALSE);
+						refl[j].setReflIn(VAC_FALSE);
+					}
 
 					curr[j].setTrackOut(&refl[nxi + (nxi - j) - 1]);
 					refl[nxi + (nxi - j) - 1].setTrackIn(&curr[j]);
-					curr[j].setReflOut(false);
-					refl[nxi + (nxi - j) - 1].setReflIn(true);
+					curr[j].setSurfFwd(2);
+					refl[nxi + (nxi - j) - 1].setSurfBwd(2);
+
+					if (_geom->getSurface(2)->getBoundary() == REFLECTIVE){
+						curr[j].setReflOut(REFL_FALSE);
+						refl[nxi + (nxi - j) - 1].setReflIn(REFL_TRUE);
+					}
+					else{
+						curr[j].setReflOut(VAC_FALSE);
+						refl[nxi + (nxi - j) - 1].setReflIn(VAC_TRUE);
+					}
 				}
 
 				/* Left-hand side to top (j > nx) */
 				else {
 					curr[j].setTrackIn(&refl[j - nxi]);
 					refl[j - nxi].setTrackOut(&curr[j]);
-					curr[j].setReflIn(true);
-					refl[j - nxi].setReflOut(false);
+					curr[j].setSurfBwd(1);
+					refl[j - nxi].setSurfFwd(1);
+
+					if (_geom->getSurface(1)->getBoundary() == REFLECTIVE){
+						curr[j].setReflIn(REFL_TRUE);
+						refl[j - nxi].setReflOut(REFL_FALSE);
+					}
+					else{
+						curr[j].setReflIn(VAC_TRUE);
+						refl[j - nxi].setReflOut(VAC_FALSE);
+					}
 
 					curr[j].setTrackOut(&refl[nyi + (nti - j) - 1]);
 					refl[nyi + (nti - j) - 1].setTrackOut(&curr[j]);
-					curr[j].setReflOut(true);
-					refl[nyi + (nti - j) - 1].setReflOut(true);
+					curr[j].setSurfFwd(4);
+					refl[nyi + (nti - j) - 1].setSurfFwd(4);
+
+					if (_geom->getSurface(4)->getBoundary() == REFLECTIVE){
+						curr[j].setReflOut(REFL_TRUE);
+						refl[nyi + (nti - j) - 1].setReflOut(REFL_TRUE);
+					}
+					else{
+						curr[j].setReflOut(VAC_TRUE);
+						refl[nyi + (nti - j) - 1].setReflOut(VAC_TRUE);
+					}
 				}
 			}
 		}

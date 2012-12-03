@@ -31,6 +31,10 @@ private:
 	double _height;
 	bool _multigroup;
 	bool _print_matrices;
+	boundaryType _boundary[4];
+	double _keff_cmfd[int(MAX_ITERATIONS)];
+	double _keff_moc[int(MAX_ITERATIONS)];
+
 
 public:
 	Mesh();
@@ -57,6 +61,13 @@ public:
 	bool getMultigroup();
 	void setPrintMatrices(bool printMatrices);
 	bool getPrintMatrices();
+	void setBoundary(boundaryType boundary, int s);
+	boundaryType getBoundary(int s);
+	void setKeffCMFD(double keff, int iter);
+	double getKeffCMFD(int iter);
+	void setKeffMOC(double keff, int iter);
+	double getKeffMOC(int iter);
+
 };
 
 #endif /* MESH_H_ */

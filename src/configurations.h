@@ -15,7 +15,7 @@
  *****************************************************************************/
 
 #define NUM_POLAR_ANGLES 3
-#define NUM_ENERGY_GROUPS 7
+#define NUM_ENERGY_GROUPS 2
 #define GRP_TIMES_ANG NUM_POLAR_ANGLES*NUM_ENERGY_GROUPS
 
 /* Convergence threshold for scalar flux in each region during fixed source
@@ -38,10 +38,6 @@
 
 /* If this machine has OpenMP installed, define as true for parallel speedup */
 #define USE_OPENMP false
-
-/* Perform CMFD acceleration in the solver on a lattice level */
-#define CMFD_ACCEL true
-
 
 /******************************************************************************
  *********************** PHYSICAL CONSTANTS ***********************************

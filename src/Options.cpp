@@ -44,12 +44,13 @@ Options::Options(int argc, const char **argv) {
 	_compress_cross_sections = false;	/* Default will not compress cross-sections */
 	_cmfd = true; 						/* Default will not perform CMFD acceleration */
 	_update_flux = false;  				/* Default will not use CMFD to update flux */
-	_plot_current = false;				/* Default will not plot net current */
+	_plot_current = false;				/* Default will not plot cmfd currents */
+	_plot_diffusion = false;			/* Default will not plot diffusion flux */
 	_keff_conv_thresh = 1e-6;			/* Default will set keff conv thresh to 1e-6 */
 	_multigroup = false;				/* Default sets CMFD to one group structure */
 	_print_matrices = false;			/* Default will not print matrices */
 	_cmfd_level = 1;					/* Default cmfd level is 1 (hightest level) */
-
+	_plot_keff = false;					/* Default will not plot keff */
 
 	for (int i = 0; i < argc; i++) {
 		if (i > 0) {
@@ -90,6 +91,12 @@ Options::Options(int argc, const char **argv) {
 			else if (strcmp(argv[i], "-pc") == 0 ||
 					strcmp(argv[i], "--plotcurrent") == 0)
 				_plot_current = true;
+			else if (strcmp(argv[i], "-pk") == 0 ||
+					strcmp(argv[i], "--plotkeff") == 0)
+				_plot_keff = true;
+			else if (strcmp(argv[i], "-pd") == 0 ||
+					strcmp(argv[i], "--plotdiffusion") == 0)
+				_plot_diffusion = true;
 			else if (LAST("--keffconv") || LAST("-kc"))
 				_keff_conv_thresh = atof(argv[i]);
 			else if (strcmp(argv[i], "-mg") == 0 ||
@@ -112,7 +119,7 @@ Options::~Options(void) { }
  * console
  * @return path to the geometry input file
  */
-const char *Options::getGeometryFile() const {
+const char *Options::getGeometryFile() const{
     return _geometry_file.c_str();
 }
 
@@ -122,7 +129,7 @@ const char *Options::getGeometryFile() const {
  * console
  * @return path to the geometry input file
  */
-const char *Options::getMaterialFile() const {
+const char *Options::getMaterialFile() const{
     return _material_file.c_str();
 }
 
@@ -236,12 +243,31 @@ bool Options::cmfd() const {
 }
 
 /**
- * Returns a boolean representing whether or not to plot the net current.
+ * Returns a boolean representing whether or not to plot the cmfd fluxes
+ * at each step.
  *  If true, the net current will be plotted in a file of _extension type
  * @return whether or not to plot net current
  */
 bool Options::plotCurrent() const {
 	return _plot_current;
+}
+
+/**
+ * Returns a boolean representing whether or not to plot the diffusion flux.
+ *  If true, the net current will be plotted in a file of _extension type
+ * @return whether or not to plot net current
+ */
+bool Options::plotDiffusion() const {
+	return _plot_diffusion;
+}
+
+/**
+ * Returns a boolean representing whether or not to plot keff.
+ *  If true, the net current will be plotted in a file of _extension type
+ * @return whether or not to plot net current
+ */
+bool Options::plotKeff() const {
+	return _plot_keff;
 }
 
 /**

@@ -259,6 +259,16 @@ void Geometry::addSurface(Surface* surface) {
 		if (surface->getYMax() >= _y_max)
 			_y_max = surface->getYMax();
 		break;
+	case VACUUM:
+		if (surface->getXMin() <= _x_min)
+			_x_min = surface->getXMin();
+		if (surface->getXMax() >= _x_max)
+			_x_max = surface->getXMax();
+		if (surface->getYMin() <= _y_min)
+			_y_min = surface->getYMin();
+		if (surface->getYMax() >= _y_max)
+			_y_max = surface->getYMax();
+		break;
 	case BOUNDARY_NONE:
 		break;
 	}
@@ -1773,10 +1783,11 @@ void Geometry::segmentize(Track* track) {
 				segment_end.getY());
 
 		new_segment->_region_id = findFSRId(&segment_start);
-#if CMFD_ACCEL
+
+		/* get pointer to mesh surfaces that the segment crosses */
 		new_segment->_mesh_surface_fwd = _mesh->findMeshSurface(new_segment->_region_id, &segment_end);
 		new_segment->_mesh_surface_bwd = _mesh->findMeshSurface(new_segment->_region_id, &segment_start);
-#endif
+
 
 		/* Checks to make sure that new segment does not have the same start
 		 * and end points */
@@ -2058,6 +2069,12 @@ void Geometry::makeCMFDMesh(int numAzim, bool multigroup, bool printMatrices, in
 	int height = 0;
 	findMeshWidth(univ, &width, cmfdLevel);
 	findMeshHeight(univ, &height, cmfdLevel);
+
+	/* set mesh boundary conditions */
+	_mesh->setBoundary(getSurface(1)->getBoundary(), 0);
+	_mesh->setBoundary(getSurface(2)->getBoundary(), 2);
+	_mesh->setBoundary(getSurface(3)->getBoundary(), 1);
+	_mesh->setBoundary(getSurface(4)->getBoundary(), 3);
 
 	/* set the cell and geometric width and height of mesh */
 	_mesh->setCellHeight(height);

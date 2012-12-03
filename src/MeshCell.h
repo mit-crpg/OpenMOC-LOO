@@ -32,6 +32,7 @@ private:
 	int _fsr_end;
 	double _chi[NUM_ENERGY_GROUPS];
 	double _sigma_a[NUM_ENERGY_GROUPS];
+	double _sigma_t[NUM_ENERGY_GROUPS];
 	double _sigma_s[NUM_ENERGY_GROUPS*NUM_ENERGY_GROUPS];
 	double _nu_sigma_f[NUM_ENERGY_GROUPS];
 	double _diffusivity[NUM_ENERGY_GROUPS];
@@ -53,6 +54,8 @@ public:
 	double* getChi();
 	void setSigmaA(double sigmaA, int e);
 	double* getSigmaA();
+	void setSigmaT(double sigmaT, int e);
+	double* getSigmaT();
 	void setSigmaS(double sigmaS, int e, int ep);
 	double* getSigmaS();
 	void setNuSigmaF(double nuSigmaF, int e);

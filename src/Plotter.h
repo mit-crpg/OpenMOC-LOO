@@ -25,8 +25,6 @@
 #include "Mesh.h"
 #include "MeshCell.h"
 
-
-
 class Plotter{
 private:
 	double _width;
@@ -40,8 +38,11 @@ private:
 	bool _specs;
 	bool _fluxes;
 	bool _net_current;
+	bool _plot_diffusion;
+	bool _plot_keff;
 public:
-	Plotter(Geometry* geom, const int bit_dim, std::string extension, bool specs, bool fluxes, bool netCurrent);
+	Plotter(Geometry* geom, const int bit_dim, std::string extension, bool specs, bool fluxes,
+			bool netCurrent, bool plotDiffusion, bool plotKeff);
 	virtual ~Plotter();
 	void plotTracksReflective(Track* track, int numReflect);
 	void makeFSRMap(int* pixMap);
@@ -64,7 +65,10 @@ public:
 	void plotDHats(Mesh* mesh, int iter_num);
 	void plotXS(Mesh* mesh, int iter_num);
 	bool plotCurrent();
-	void plotCMFDflux(Mesh* mesh, int iter_num);
+	bool plotKeff();
+	bool plotDiffusion();
+	void plotCMFDflux(Mesh* mesh, std::string string, int iter_num);
+	void plotCMFDKeff(Mesh* mesh, int num_iter);
 };
 
 

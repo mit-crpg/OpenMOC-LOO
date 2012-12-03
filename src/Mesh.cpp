@@ -8,6 +8,7 @@
 #include "Mesh.h"
 
 Mesh::Mesh(){
+
 }
 
 Mesh::~Mesh(){
@@ -18,6 +19,13 @@ void Mesh::makeMeshCells(){
 
 	/* make mesh cells */
 	_cells = new MeshCell[_cell_width * _cell_height];
+
+	/* set mesh surface cell id's */
+	for (int i = 0; i < _cell_width * _cell_height; i++){
+		for (int s = 0; s < 8; s++){
+			_cells[i].getMeshSurfaces(s)->setCellId(i);
+		}
+	}
 
 }
 
@@ -187,9 +195,17 @@ void Mesh::printCurrents(){
 }
 
 
-void Mesh::splitCorners(){
+void Mesh::setBoundary(boundaryType boundary, int s){
+	_boundary[s] = boundary;
+}
 
-	log_printf(NORMAL, "Splitting corners...");
+
+boundaryType Mesh::getBoundary(int s){
+	return _boundary[s];
+}
+
+
+void Mesh::splitCorners(){
 
 	MeshSurface* surfaceSide;
 	MeshSurface* surfaceCorner1;
@@ -344,5 +360,24 @@ void Mesh::computeTotCurrents(){
 		}
 	}
 }
+
+void Mesh::setKeffCMFD(double keff, int iter){
+	_keff_cmfd[iter] = keff;
+}
+
+double Mesh::getKeffCMFD(int iter){
+	return _keff_cmfd[iter];
+}
+
+void Mesh::setKeffMOC(double keff, int iter){
+	_keff_moc[iter] = keff;
+}
+
+double Mesh::getKeffMOC(int iter){
+	return _keff_moc[iter];
+}
+
+
+
 
 

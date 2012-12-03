@@ -47,6 +47,14 @@ double* MeshSurface::getDTilde(){
 	return _d_tilde;
 }
 
+void MeshSurface::setDDif(double dDif, int e){
+	_d_dif[e] = dDif;
+}
+
+double* MeshSurface::getDDif(){
+	return _d_dif;
+}
+
 void MeshSurface::setSurfaceNum(int surfaceNum){
 	_surface_num = surfaceNum;
 }
@@ -63,8 +71,12 @@ void MeshSurface::setId(int id){
 	_id = id;
 }
 
+int MeshSurface::getCellId(){
+	return _cell_id;
+}
 
-
-
+void MeshSurface::setCellId(int id){
+	_cell_id = id;
+}
 
 

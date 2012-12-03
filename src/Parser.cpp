@@ -584,6 +584,8 @@ void XMLCALL Parser_XMLCallback_Start(void *context,
 
 				if (strcmp(value, "reflective") == 0)
 					f->surface.boundary = REFLECTIVE;
+				else if (strcmp(value, "vacuum") == 0)
+					f->surface.boundary = VACUUM;
 				else
 					log_printf(ERROR, "Only supports reflective boundary");
 			} else {
