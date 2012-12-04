@@ -107,32 +107,32 @@ MeshSurface* MeshCell::findSurface(LocalCoords* coord, int i){
 	/* find which surface coord is on */
 	/* left */
 	if (fabs(x - _bounds[0]) < 1e-8){
-		if (fabs(y - _bounds[1]) < 1e-8){
-			meshSurface = &_mesh_surfaces[4];
-			surface = 4;
+		if (fabs(y - _bounds[1]) > 1e-8 && fabs(y - _bounds[3]) > 1e-8){
+			meshSurface = &_mesh_surfaces[0];
+			surface = 0;
 		}
 		else if (fabs(y - _bounds[3]) < 1e-8){
 			meshSurface = &_mesh_surfaces[7];
 			surface = 7;
 		}
 		else{
-			meshSurface = &_mesh_surfaces[0];
-			surface = 0;
+			meshSurface = &_mesh_surfaces[4];
+			surface = 4;
 		}
 	}
 	/* right */
 	else if (fabs(x - _bounds[2]) < 1e-8){
-		if (fabs(y - _bounds[1]) < 1e-8){
-			meshSurface = &_mesh_surfaces[5];
-			surface = 5;
+		if (fabs(y - _bounds[1]) > 1e-8 && fabs(y - _bounds[3]) > 1e-8){
+			meshSurface = &_mesh_surfaces[2];
+			surface = 2;
 		}
 		else if (fabs(y - _bounds[3]) < 1e-8){
 			meshSurface = &_mesh_surfaces[6];
 			surface = 6;
 		}
 		else{
-			meshSurface = &_mesh_surfaces[2];
-			surface = 2;
+			meshSurface = &_mesh_surfaces[5];
+			surface = 5;
 		}
 	}
 	/* top */
@@ -146,9 +146,9 @@ MeshSurface* MeshCell::findSurface(LocalCoords* coord, int i){
 		surface = 1;
 	}
 
-	if (surface != -1){
-		log_printf(DEBUG, "coord (%f, %f) on surface: %i, cell: %i -> bounds[%f,%f,%f,%f]", x, y, surface, i, _bounds[0],_bounds[1],_bounds[2],_bounds[3]);
-	}
+//	if (surface != -1){
+//		log_printf(DEBUG, "coord (%f, %f) on surface: %i, cell: %i -> bounds[%f,%f,%f,%f]", x, y, surface, i, _bounds[0],_bounds[1],_bounds[2],_bounds[3]);
+//	}
 
 	return meshSurface;
 }

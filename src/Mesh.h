@@ -34,7 +34,7 @@ private:
 	boundaryType _boundary[4];
 	double _keff_cmfd[int(MAX_ITERATIONS)];
 	double _keff_moc[int(MAX_ITERATIONS)];
-
+	int* _fsr_indices;
 
 public:
 	Mesh();

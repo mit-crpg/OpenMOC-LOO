@@ -39,6 +39,9 @@
 /* If this machine has OpenMP installed, define as true for parallel speedup */
 #define USE_OPENMP false
 
+/* Axial buckling term used for diffusion problems */
+#define AXIAL_BUCKLING 1e-4
+
 /******************************************************************************
  *********************** PHYSICAL CONSTANTS ***********************************
  *****************************************************************************/

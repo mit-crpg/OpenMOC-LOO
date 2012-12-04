@@ -198,9 +198,15 @@ void Cmfd::computeDs(){
 						d_hat = 0.0;
 						d_tilde = 0.0;
 						current = 0.0;
+
+						/* set d_dif */
+						meshCell->getMeshSurfaces(0)->setDDif(0.0, e);
 					}
 					else if (_mesh->getBoundary(0) == VACUUM){
 						current = - meshCell->getMeshSurfaces(0)->getCurrent(e);
+
+						/* set d_dif */
+						meshCell->getMeshSurfaces(0)->setDDif(2 * d / meshCell->getHeight() / (1 + 4 * d / meshCell->getHeight()), e);
 						d_hat = 2 * d*f / meshCell->getHeight() / (1 + 4 * d*f / meshCell->getHeight());
 						d_tilde = - (d_hat * flux + current / meshCell->getHeight()) / flux;
 					}
@@ -210,6 +216,9 @@ void Cmfd::computeDs(){
 					meshCellNext = _mesh->getCells(y*cell_width + x - 1);
 					d_next = meshCellNext->getDiffusivity()[e];
 					flux_next = meshCellNext->getOldFlux()[e];
+
+					/* set d_dif */
+					meshCell->getMeshSurfaces(0)->setDDif(2.0 * d * d_next / (meshCell->getWidth() * d + meshCellNext->getWidth() * d_next), e);
 
 					/* get diffusion correction term for meshCellNext */
 					f_next = computeDiffCorrect(d_next, meshCellNext->getWidth());
@@ -230,9 +239,6 @@ void Cmfd::computeDs(){
 					d_tilde = -(d_hat * (flux - flux_next) + current  / meshCell->getHeight()) / (flux_next + flux);
 
 				}
-
-				/* set d_dif */
-				meshCell->getMeshSurfaces(0)->setDDif(d_hat, e);
 
 				/* if abs(d_tilde) > abs(d_hat) -> make them equal in magnitude */
 				if (fabs(d_tilde) > fabs(d_hat)){
@@ -268,9 +274,16 @@ void Cmfd::computeDs(){
 						d_hat = 0.0;
 						d_tilde = 0.0;
 						current = 0.0;
+
+						/* set d_dif */
+						meshCell->getMeshSurfaces(1)->setDDif(0.0, e);
 					}
 					else if (_mesh->getBoundary(1) == VACUUM){
 						current = meshCell->getMeshSurfaces(1)->getCurrent(e);
+
+						/* set d_dif */
+						meshCell->getMeshSurfaces(1)->setDDif(2 * d / meshCell->getHeight() / (1 + 4 * d / meshCell->getHeight()), e);
+
 						d_hat = 2 * d*f / meshCell->getHeight() / (1 + 4 * d*f / meshCell->getHeight());
 						d_tilde = (d_hat * flux - current / meshCell->getWidth()) / flux;
 					}
@@ -280,6 +293,9 @@ void Cmfd::computeDs(){
 					meshCellNext = _mesh->getCells((y+1)*cell_width + x);
 					d_next = meshCellNext->getDiffusivity()[e];
 					flux_next = meshCellNext->getOldFlux()[e];
+
+					/* set d_dif */
+					meshCell->getMeshSurfaces(1)->setDDif(2.0 * d * d_next / (meshCell->getHeight() * d + meshCellNext->getHeight() * d_next), e);
 
 					/* get diffusion correction term for meshCellNext */
 					f_next = computeDiffCorrect(d_next, meshCellNext->getHeight());
@@ -300,9 +316,6 @@ void Cmfd::computeDs(){
 					d_tilde = -(d_hat * (flux_next - flux) + current / meshCell->getWidth()) / (flux_next + flux);
 
 				}
-
-				/* set d_dif */
-				meshCell->getMeshSurfaces(1)->setDDif(d_hat, e);
 
 				/* if abs(d_tilde) > abs(d_hat) -> make them equal to each other */
 				if (fabs(d_tilde) > fabs(d_hat)){
@@ -338,9 +351,16 @@ void Cmfd::computeDs(){
 						d_hat = 0.0;
 						d_tilde = 0.0;
 						current = 0.0;
+
+						/* set d_dif */
+						meshCell->getMeshSurfaces(2)->setDDif(0.0, e);
 					}
 					else if (_mesh->getBoundary(2) == VACUUM){
 						current = meshCell->getMeshSurfaces(2)->getCurrent(e);
+
+						/* set d_dif */
+						meshCell->getMeshSurfaces(2)->setDDif(2 * d / meshCell->getHeight() / (1 + 4 * d / meshCell->getHeight()), e);
+
 						d_hat = 2 * d*f / meshCell->getHeight() / (1 + 4 * d*f / meshCell->getHeight());
 						d_tilde = (d_hat * flux - current / meshCell->getHeight()) / flux;
 					}
@@ -351,6 +371,9 @@ void Cmfd::computeDs(){
 					meshCellNext = _mesh->getCells(y*cell_width + x + 1);
 					d_next = meshCellNext->getDiffusivity()[e];
 					flux_next = meshCellNext->getOldFlux()[e];
+
+					/* set d_dif */
+					meshCell->getMeshSurfaces(2)->setDDif(2.0 * d * d_next / (meshCell->getWidth() * d + meshCellNext->getWidth() * d_next), e);
 
 					/* get diffusion correction term for meshCellNext */
 					f_next = computeDiffCorrect(d_next, meshCellNext->getWidth());
@@ -371,9 +394,6 @@ void Cmfd::computeDs(){
 					d_tilde = -(d_hat * (flux_next - flux) + current / meshCell->getHeight()) / (flux_next + flux);
 
 				}
-
-				/* set d_dif */
-				meshCell->getMeshSurfaces(2)->setDDif(d_hat, e);
 
 				/* if abs(d_tilde) > abs(d_hat) -> make them equal to each other */
 				if (fabs(d_tilde) > fabs(d_hat)){
@@ -410,9 +430,16 @@ void Cmfd::computeDs(){
 						d_hat = 0.0;
 						d_tilde = 0.0;
 						current = 0.0;
+
+						/* set d_dif */
+						meshCell->getMeshSurfaces(3)->setDDif(0.0, e);
 					}
 					else if (_mesh->getBoundary(3) == VACUUM){
 						current = - meshCell->getMeshSurfaces(3)->getCurrent(e);
+
+						/* set d_dif */
+						meshCell->getMeshSurfaces(3)->setDDif(2 * d / meshCell->getHeight() / (1 + 4 * d / meshCell->getHeight()), e);
+
 						d_hat = 2 * d*f / meshCell->getHeight() / (1 + 4 * d*f / meshCell->getHeight());
 						d_tilde = - (d_hat * flux + current / meshCell->getWidth()) / flux;
 					}
@@ -422,6 +449,9 @@ void Cmfd::computeDs(){
 					meshCellNext = _mesh->getCells((y-1)*cell_width + x);
 					d_next = meshCellNext->getDiffusivity()[e];
 					flux_next = meshCellNext->getOldFlux()[e];
+
+					/* set d_dif */
+					meshCell->getMeshSurfaces(3)->setDDif(2.0 * d * d_next / (meshCell->getHeight() * d + meshCellNext->getHeight() * d_next), e);
 
 					/* get diffusion correction term for meshCellNext */
 					f_next = computeDiffCorrect(d_next, meshCellNext->getHeight());
@@ -442,9 +472,6 @@ void Cmfd::computeDs(){
 					d_tilde = -(d_hat * (flux - flux_next) + current / meshCell->getWidth()) / (flux_next + flux);
 
 				}
-
-				/* set d_dif */
-				meshCell->getMeshSurfaces(3)->setDDif(d_hat, e);
 
 				/* if abs(d_tilde) > abs(d_hat) -> make them equal to each other */
 				if (fabs(d_tilde) > fabs(d_hat)){
@@ -980,8 +1007,8 @@ double Cmfd::computeDiffCorrect(double d, double h){
 		rho += mu * _quad->getWeight(p) * alpha;
 	}
 
-	F = 1 + h * rho / (2 * d);
-
+    F = 1 + h * rho / (2 * d);
+    
 	return F;
 
 }

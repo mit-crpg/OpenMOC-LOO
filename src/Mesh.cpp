@@ -131,6 +131,8 @@ void Mesh::setCellBounds(){
 
 void Mesh::setFSRBounds(){
 
+	_fsr_indices = new int[2 * _cell_width * _cell_height];
+
 	int min;
 	int max;
 	int fsr;
@@ -148,6 +150,8 @@ void Mesh::setFSRBounds(){
 
 		_cells[i].setFSRStart(min);
 		_cells[i].setFSREnd(max);
+		_fsr_indices[2*i] = min;
+		_fsr_indices[2*i+1] = max;
 	}
 }
 
@@ -157,12 +161,17 @@ MeshSurface* Mesh::findMeshSurface(int fsr_id, LocalCoords* coord){
 	MeshSurface* meshSurface = NULL;
 
 	/* find which MeshCell fsr_id is in -> get meshSuface that coord is on*/
+//	for (int i = 0; i < _cell_width * _cell_height; i++){
+//		if (fsr_id >= _cells[i].getFSRStart() && fsr_id <= _cells[i].getFSREnd()){
+//			meshSurface = _cells[i].findSurface(coord, i);
+//			break;
+//		}
+//	}
 	for (int i = 0; i < _cell_width * _cell_height; i++){
-		if (fsr_id >= _cells[i].getFSRStart() && fsr_id <= _cells[i].getFSREnd()){
+		if (fsr_id >= _fsr_indices[2*i] && fsr_id <= _fsr_indices[2*i+1]){
 			meshSurface = _cells[i].findSurface(coord, i);
 			break;
 		}
-
 	}
 
 	return meshSurface;
