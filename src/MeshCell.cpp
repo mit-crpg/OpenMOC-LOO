@@ -100,7 +100,6 @@ double* MeshCell::getBounds(){
 
 MeshSurface* MeshCell::findSurface(LocalCoords* coord, int i){
 	MeshSurface* meshSurface = NULL;
-	int surface = -1;
 	double x = coord->getX();
 	double y = coord->getY();
 
@@ -109,46 +108,34 @@ MeshSurface* MeshCell::findSurface(LocalCoords* coord, int i){
 	if (fabs(x - _bounds[0]) < 1e-8){
 		if (fabs(y - _bounds[1]) > 1e-8 && fabs(y - _bounds[3]) > 1e-8){
 			meshSurface = &_mesh_surfaces[0];
-			surface = 0;
 		}
 		else if (fabs(y - _bounds[3]) < 1e-8){
 			meshSurface = &_mesh_surfaces[7];
-			surface = 7;
 		}
 		else{
 			meshSurface = &_mesh_surfaces[4];
-			surface = 4;
 		}
 	}
 	/* right */
 	else if (fabs(x - _bounds[2]) < 1e-8){
 		if (fabs(y - _bounds[1]) > 1e-8 && fabs(y - _bounds[3]) > 1e-8){
 			meshSurface = &_mesh_surfaces[2];
-			surface = 2;
 		}
 		else if (fabs(y - _bounds[3]) < 1e-8){
 			meshSurface = &_mesh_surfaces[6];
-			surface = 6;
 		}
 		else{
 			meshSurface = &_mesh_surfaces[5];
-			surface = 5;
 		}
 	}
 	/* top */
 	else if (fabs(y - _bounds[3]) < 1e-8){
 		meshSurface = &_mesh_surfaces[3];
-		surface = 3;
 	}
 	/* bottom */
 	else if (fabs(y - _bounds[1]) < 1e-8){
 		meshSurface = &_mesh_surfaces[1];
-		surface = 1;
 	}
-
-//	if (surface != -1){
-//		log_printf(DEBUG, "coord (%f, %f) on surface: %i, cell: %i -> bounds[%f,%f,%f,%f]", x, y, surface, i, _bounds[0],_bounds[1],_bounds[2],_bounds[3]);
-//	}
 
 	return meshSurface;
 }
@@ -228,5 +215,23 @@ double MeshCell::getVolume(){
 void MeshCell::setVolume(double volume){
 	_volume = volume;
 }
+
+void MeshCell::setTemp(double temp){
+	_temp = temp;
+}
+
+double MeshCell::getTemp(){
+	return _temp;
+}
+
+Material* MeshCell::getMaterial(){
+	return _material;
+}
+
+void MeshCell::setMaterial(Material* material){
+	_material = material;
+}
+
+
 
 

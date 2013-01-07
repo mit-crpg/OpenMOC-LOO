@@ -17,7 +17,6 @@
 #include <string>
 #include <sstream>
 #include <queue>
-#include <armadillo>
 #include "Geometry.h"
 #include "Quadrature.h"
 #include "FlatSourceRegion.h"
@@ -51,6 +50,9 @@ private:
 	double _k_eff;
 	Plotter* _plotter;
 	bool _update_flux;
+	Mat _A;
+	Mat _M;
+	Vec _phi_new;
 
 public:
 	Cmfd(Geometry* geom, Plotter* plotter, Mesh* mesh, bool updateFlux);
@@ -59,8 +61,12 @@ public:
  	void computeXS(FlatSourceRegion* fsrs);
  	double computeDiffCorrect(double d, double h);
  	void updateMOCFlux();
- 	void constructAMPhi(Mat A, Mat B, Vec phi_old, solveType solveMethod);
+ 	int constructAMPhi(Mat A, Mat B, Vec phi_old, solveType solveMethod);
  	double computeCMFDFluxPower(solveType solveMethod, int moc_iter);
+ 	Mat getA();
+ 	Mat getM();
+ 	Vec getPhiNew();
+ 	int createAMPhi(PetscInt size1, PetscInt size2, int cells);
 
 
 };

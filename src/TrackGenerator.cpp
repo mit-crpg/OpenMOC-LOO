@@ -607,7 +607,7 @@ void TrackGenerator::segmentize() {
 	if (_plotter->plotSpecs() == true){
 		/* plot segments, FSRs, cells, and materials */
 		plot(bitMap, "segments", _plotter->getExtension());
-		_plotter->makeFSRMap(bitMapFSR->pixels);
+		_plotter->copyFSRMap(bitMapFSR->pixels);
 		plot(bitMapFSR, "FSRs", _plotter->getExtension());
 		_plotter->makeRegionMap(bitMapFSR->pixels, bitMap->pixels, _geom->getFSRtoCellMap());
 		plot(bitMap, "cells", _plotter->getExtension());

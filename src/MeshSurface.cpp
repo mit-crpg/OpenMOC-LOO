@@ -14,6 +14,8 @@ MeshSurface::MeshSurface(){
 		_d_hat[e]    = 0.0;
 		_current[e]  = 0.0;
 	}
+
+	_boundary_type = BOUNDARY_NONE;
 }
 
 MeshSurface::~MeshSurface(){}
@@ -78,5 +80,14 @@ int MeshSurface::getCellId(){
 void MeshSurface::setCellId(int id){
 	_cell_id = id;
 }
+
+void MeshSurface::setBoundary(boundaryType boundary){
+	_boundary_type = boundary;
+}
+
+boundaryType MeshSurface::getBoundary(){
+	return _boundary_type;
+}
+
 
 

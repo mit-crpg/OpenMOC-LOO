@@ -10,7 +10,7 @@
 #include "Cmfd.h"
 
 /**
- * Solver constructor
+ * Transient constructor
  * @param geom pointer to the geometry
  * @param track_generator pointer to the trackgenerator
  */
@@ -21,6 +21,17 @@ Cmfd::Cmfd(Geometry* geom, Plotter* plotter, Mesh* mesh, bool updateFlux) {
 	_update_flux = updateFlux;
 	_quad = new Quadrature(TABUCHI);
 
+	PetscInt size1, size2;
+	int ng = NUM_ENERGY_GROUPS;
+	if (_mesh->getMultigroup() == false){
+		ng = 1;
+	}
+
+	int cw = mesh->getCellWidth();
+	int ch = mesh->getCellHeight();
+	size1 = cw*ch*ng;
+	size2 = 4 + ng;
+	cw = createAMPhi(size1, size2, ch*cw*ng);
 }
 
 /**
@@ -28,6 +39,21 @@ Cmfd::Cmfd(Geometry* geom, Plotter* plotter, Mesh* mesh, bool updateFlux) {
  */
 Cmfd::~Cmfd() {
 }
+
+
+int Cmfd::createAMPhi(PetscInt size1, PetscInt size2, int cells){
+
+	int petsc_err = 0;
+
+	petsc_err = MatCreateSeqAIJ(PETSC_COMM_WORLD, size1, size1, size2, PETSC_NULL, &_A);
+	size2 = size2 - 4;
+	petsc_err = MatCreateSeqAIJ(PETSC_COMM_WORLD, size1, size1, size2, PETSC_NULL, &_M);
+	petsc_err = VecCreateSeq(PETSC_COMM_WORLD, cells, &_phi_new);
+	CHKERRQ(petsc_err);
+
+	return petsc_err;
+}
+
 
 
 /* compute the cross section for all MeshCells in the Mesh */
@@ -39,6 +65,8 @@ void Cmfd::computeXS(FlatSourceRegion* fsrs){
 	/* initialize variables */
 	double volume, flux, abs, tot, nu_fis, chi;
 	double* scat;
+	double* mat_mult;
+	double* mat_mult_a;
 	double abs_tally_cell, nu_fis_tally_cell, dif_tally_cell, rxn_tally_cell, vol_tally_cell, tot_tally_cell;
 	double nu_fis_tally, dif_tally, rxn_tally, abs_tally, tot_tally;
 	double scat_tally_cell[NUM_ENERGY_GROUPS];
@@ -86,8 +114,10 @@ void Cmfd::computeXS(FlatSourceRegion* fsrs){
 				tot = material->getSigmaT()[e];
 				nu_fis = material->getNuSigmaF()[e];
 				scat = material->getSigmaS();
+				mat_mult = fsr->getMatMult();
+				mat_mult_a = fsr->getMatMultA();
 
-				abs_tally_cell += abs * flux * volume;
+				abs_tally_cell += abs * flux * volume * mat_mult_a[e];
 				tot_tally_cell += tot * flux * volume;
 				dif_tally_cell += flux  * volume / (3.0 * tot);
 				nu_fis_tally_cell += nu_fis * flux * volume;
@@ -96,9 +126,8 @@ void Cmfd::computeXS(FlatSourceRegion* fsrs){
 
 
 				for (int g = 0; g < NUM_ENERGY_GROUPS; g++){
-					scat_tally_cell[g] += scat[g*NUM_ENERGY_GROUPS + e] * flux * volume;
+					scat_tally_cell[g] += scat[g*NUM_ENERGY_GROUPS + e] * flux * volume * mat_mult[g*NUM_ENERGY_GROUPS + e];
 				}
-
 
 				if (chi >= meshCell->getChi()[e]){
 					meshCell->setChi(chi,e);
@@ -125,7 +154,6 @@ void Cmfd::computeXS(FlatSourceRegion* fsrs){
 				rxn_tally += rxn_tally_cell;
 			}
 		}
-
 
 		if (_mesh->getMultigroup() == false){
 			meshCell->setVolume(vol_tally_cell);
@@ -163,10 +191,11 @@ void Cmfd::computeDs(){
 	double d, d_next, d_hat, d_tilde, current, flux, flux_next, f = 1, f_next = 1;
 	MeshCell* meshCell;
 	MeshCell* meshCellNext;
-	int ng = 1;
+	int ng = NUM_ENERGY_GROUPS;
 
-	if (_mesh->getMultigroup() == true){
-		ng = NUM_ENERGY_GROUPS;
+	if (_mesh->getMultigroup() == false){
+		ng = 1;
+		_mesh->computeTotCurrents();
 	}
 
 	/* set cell width and height */
@@ -206,8 +235,8 @@ void Cmfd::computeDs(){
 						current = - meshCell->getMeshSurfaces(0)->getCurrent(e);
 
 						/* set d_dif */
-						meshCell->getMeshSurfaces(0)->setDDif(2 * d / meshCell->getHeight() / (1 + 4 * d / meshCell->getHeight()), e);
-						d_hat = 2 * d*f / meshCell->getHeight() / (1 + 4 * d*f / meshCell->getHeight());
+						meshCell->getMeshSurfaces(0)->setDDif(2 * d / meshCell->getWidth() / (1 + 4 * d / meshCell->getWidth()), e);
+						d_hat = 2 * d*f / meshCell->getWidth() / (1 + 4 * d*f / meshCell->getWidth());
 						d_tilde = - (d_hat * flux + current / meshCell->getHeight()) / flux;
 					}
 				}
@@ -238,22 +267,23 @@ void Cmfd::computeDs(){
 					/* compute d_tilde */
 					d_tilde = -(d_hat * (flux - flux_next) + current  / meshCell->getHeight()) / (flux_next + flux);
 
+					/* if abs(d_tilde) > abs(d_hat) -> make them equal in magnitude */
+					if (fabs(d_tilde) > fabs(d_hat)){
+						log_printf(DEBUG, "correcting Ds");
+
+						/* d_tilde is positive */
+						if (1 - fabs(d_tilde)/d_tilde < 1e-8){
+							d_hat   = - current/(2*flux*meshCell->getHeight());
+							d_tilde = - current/(2*flux*meshCell->getHeight());
+						}
+						else{
+							d_hat   = current/(2*flux_next*meshCell->getHeight());
+							d_tilde = - current/(2*flux_next*meshCell->getHeight());
+						}
+					}
 				}
 
-				/* if abs(d_tilde) > abs(d_hat) -> make them equal in magnitude */
-				if (fabs(d_tilde) > fabs(d_hat)){
-					log_printf(DEBUG, "correcting Ds");
 
-					/* d_tilde is positive */
-					if (1 - fabs(d_tilde)/d_tilde < 1e-8){
-						d_hat   = - current/(2*flux*meshCell->getHeight());
-						d_tilde = - current/(2*flux*meshCell->getHeight());
-					}
-					else{
-						d_hat   = current/(2*flux_next*meshCell->getHeight());
-						d_tilde = - current/(2*flux_next*meshCell->getHeight());
-					}
-				}
 
 				log_printf(DEBUG, "cell: %i, group: %i, side:   LEFT, current: %f, dhat: %f, dtilde: %f", y*cell_width + x, e, current, d_hat, d_tilde);
 
@@ -286,6 +316,7 @@ void Cmfd::computeDs(){
 
 						d_hat = 2 * d*f / meshCell->getHeight() / (1 + 4 * d*f / meshCell->getHeight());
 						d_tilde = (d_hat * flux - current / meshCell->getWidth()) / flux;
+
 					}
 				}
 				else{
@@ -315,20 +346,19 @@ void Cmfd::computeDs(){
 					/* compute d_tilde */
 					d_tilde = -(d_hat * (flux_next - flux) + current / meshCell->getWidth()) / (flux_next + flux);
 
-				}
+					/* if abs(d_tilde) > abs(d_hat) -> make them equal to each other */
+					if (fabs(d_tilde) > fabs(d_hat)){
+						log_printf(DEBUG, "correcting Ds");
 
-				/* if abs(d_tilde) > abs(d_hat) -> make them equal to each other */
-				if (fabs(d_tilde) > fabs(d_hat)){
-					log_printf(DEBUG, "correcting Ds");
-
-					/* d_tilde is positive */
-					if (1 - fabs(d_tilde)/d_tilde < 1e-8){
-						d_hat   = - current/(2*flux_next*meshCell->getHeight());
-						d_tilde = - current/(2*flux_next*meshCell->getHeight());
-					}
-					else{
-						d_hat   = current/(2*flux*meshCell->getHeight());
-						d_tilde = - current/(2*flux*meshCell->getHeight());
+						/* d_tilde is positive */
+						if (1 - fabs(d_tilde)/d_tilde < 1e-8){
+							d_hat   = - current/(2*flux_next*meshCell->getWidth());
+							d_tilde = - current/(2*flux_next*meshCell->getWidth());
+						}
+						else{
+							d_hat   = current/(2*flux*meshCell->getWidth());
+							d_tilde = - current/(2*flux*meshCell->getWidth());
+						}
 					}
 				}
 
@@ -359,10 +389,11 @@ void Cmfd::computeDs(){
 						current = meshCell->getMeshSurfaces(2)->getCurrent(e);
 
 						/* set d_dif */
-						meshCell->getMeshSurfaces(2)->setDDif(2 * d / meshCell->getHeight() / (1 + 4 * d / meshCell->getHeight()), e);
+						meshCell->getMeshSurfaces(2)->setDDif(2 * d / meshCell->getWidth() / (1 + 4 * d / meshCell->getWidth()), e);
 
-						d_hat = 2 * d*f / meshCell->getHeight() / (1 + 4 * d*f / meshCell->getHeight());
+						d_hat = 2 * d*f / meshCell->getWidth() / (1 + 4 * d*f / meshCell->getWidth());
 						d_tilde = (d_hat * flux - current / meshCell->getHeight()) / flux;
+
 					}
 				}
 				else{
@@ -393,20 +424,19 @@ void Cmfd::computeDs(){
 					/* compute d_tilde */
 					d_tilde = -(d_hat * (flux_next - flux) + current / meshCell->getHeight()) / (flux_next + flux);
 
-				}
+					/* if abs(d_tilde) > abs(d_hat) -> make them equal to each other */
+					if (fabs(d_tilde) > fabs(d_hat)){
+						log_printf(DEBUG, "correcting Ds");
 
-				/* if abs(d_tilde) > abs(d_hat) -> make them equal to each other */
-				if (fabs(d_tilde) > fabs(d_hat)){
-					log_printf(DEBUG, "correcting Ds");
-
-					/* d_tilde is positive */
-					if (1 - fabs(d_tilde)/d_tilde < 1e-8){
-						d_hat   = - current/(2*flux_next*meshCell->getHeight());
-						d_tilde = - current/(2*flux_next*meshCell->getHeight());
-					}
-					else{
-						d_hat   = current/(2*flux*meshCell->getHeight());
-						d_tilde = - current/(2*flux*meshCell->getHeight());
+						/* d_tilde is positive */
+						if (1 - fabs(d_tilde)/d_tilde < 1e-8){
+							d_hat   = - current/(2*flux_next*meshCell->getHeight());
+							d_tilde = - current/(2*flux_next*meshCell->getHeight());
+						}
+						else{
+							d_hat   = current/(2*flux*meshCell->getHeight());
+							d_tilde = - current/(2*flux*meshCell->getHeight());
+						}
 					}
 				}
 
@@ -442,6 +472,7 @@ void Cmfd::computeDs(){
 
 						d_hat = 2 * d*f / meshCell->getHeight() / (1 + 4 * d*f / meshCell->getHeight());
 						d_tilde = - (d_hat * flux + current / meshCell->getWidth()) / flux;
+
 					}
 				}
 				else{
@@ -471,21 +502,21 @@ void Cmfd::computeDs(){
 					/* compute d_tilde */
 					d_tilde = -(d_hat * (flux - flux_next) + current / meshCell->getWidth()) / (flux_next + flux);
 
-				}
+					/* if abs(d_tilde) > abs(d_hat) -> make them equal to each other */
+					if (fabs(d_tilde) > fabs(d_hat)){
+						log_printf(DEBUG, "correcting Ds");
 
-				/* if abs(d_tilde) > abs(d_hat) -> make them equal to each other */
-				if (fabs(d_tilde) > fabs(d_hat)){
-					log_printf(DEBUG, "correcting Ds");
+						/* d_tilde is positive */
+						if (1 - fabs(d_tilde)/d_tilde < 1e-8){
+							d_hat   = - current/(2*flux*meshCell->getWidth());
+							d_tilde = - current/(2*flux*meshCell->getWidth());
+						}
+						else{
+							d_hat   = current/(2*flux_next*meshCell->getWidth());
+							d_tilde = - current/(2*flux_next*meshCell->getWidth());
+						}
+					}
 
-					/* d_tilde is positive */
-					if (1 - fabs(d_tilde)/d_tilde < 1e-8){
-						d_hat   = - current/(2*flux*meshCell->getHeight());
-						d_tilde = - current/(2*flux*meshCell->getHeight());
-					}
-					else{
-						d_hat   = current/(2*flux_next*meshCell->getHeight());
-						d_tilde = - current/(2*flux_next*meshCell->getHeight());
-					}
 				}
 
 				log_printf(DEBUG, "cell: %i, group: %i, side:    TOP, current: %f, dhat: %f, dtilde: %f", y*cell_width + x, e, current, d_hat, d_tilde);
@@ -496,7 +527,6 @@ void Cmfd::computeDs(){
 			}
 		}
 	}
-
 }
 
 
@@ -505,7 +535,7 @@ void Cmfd::computeDs(){
  */
 double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter){
 
-	log_printf(NORMAL, "Running diffusion solver...");
+	log_printf(INFO, "Running diffusion solver...");
 
 	MeshCell* meshCell;
 	double keff;
@@ -518,41 +548,41 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter){
 	int cw = _mesh->getCellWidth();
 	int petsc_err;
 
-	Mat A, M;
 	Vec phi_old;
-	PetscInt size1, size2;
-
-	size1 = ch*cw*ng;
-	size2 = 4 + ng;
-	petsc_err = MatCreateSeqAIJ(PETSC_COMM_WORLD, size1, size1, size2, PETSC_NULL, &A);
-	size2 = ng;
-	petsc_err = MatCreateSeqAIJ(PETSC_COMM_WORLD, size1, size1, size2, PETSC_NULL, &M);
+	PetscInt size1;
+	size1 = cw*ch*ng;
 	petsc_err = VecCreateSeq(PETSC_COMM_WORLD, size1, &phi_old);
 	CHKERRQ(petsc_err);
 
 	/* construct A matrix, M matrix, and flux vector */
-	constructAMPhi(A, M, phi_old, solveMethod);
+	petsc_err = MatZeroEntries(_A);
+	petsc_err = MatZeroEntries(_M);
+	petsc_err = constructAMPhi(_A, _M, phi_old, solveMethod);
+	CHKERRQ(petsc_err);
 
-	int max_outer = 1000;
+	int max_outer = 25;
+	if (solveMethod == DIFFUSION){
+		max_outer = 1000;
+	}
+
 	PetscScalar sumold, sumnew, scale_val, eps;
 	double criteria = 1e-8;
 
-	Vec sold, snew, phi_new, res;
+	Vec sold, snew, res;
 	petsc_err = VecCreateSeq(PETSC_COMM_WORLD, ch*cw*ng, &sold);
 	petsc_err = VecCreateSeq(PETSC_COMM_WORLD, ch*cw*ng, &snew);
-	petsc_err = VecCreateSeq(PETSC_COMM_WORLD, ch*cw*ng, &phi_new);
 	petsc_err = VecCreateSeq(PETSC_COMM_WORLD, ch*cw*ng, &res);
 	CHKERRQ(petsc_err);
 
 	size1 = 1;
-	petsc_err = VecSet(phi_new, size1);
+	petsc_err = VecSet(_phi_new, size1);
 	CHKERRQ(petsc_err);
 
 	/* assembly vectors and matrices */
 	petsc_err = VecAssemblyBegin(phi_old);
 	petsc_err = VecAssemblyEnd(phi_old);
-	petsc_err = VecAssemblyBegin(phi_new);
-	petsc_err = VecAssemblyEnd(phi_new);
+	petsc_err = VecAssemblyBegin(_phi_new);
+	petsc_err = VecAssemblyEnd(_phi_new);
 	petsc_err = VecAssemblyBegin(sold);
 	petsc_err = VecAssemblyEnd(sold);
 	petsc_err = VecAssemblyBegin(snew);
@@ -561,12 +591,12 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter){
 	petsc_err = VecAssemblyEnd(res);
 	CHKERRQ(petsc_err);
 
-	petsc_err = VecCopy(phi_old, phi_new);
+	petsc_err = VecCopy(phi_old, _phi_new);
 
-	petsc_err = MatAssemblyBegin(A, MAT_FINAL_ASSEMBLY);
-	petsc_err = MatAssemblyEnd(A, MAT_FINAL_ASSEMBLY);
-	petsc_err = MatAssemblyBegin(M, MAT_FINAL_ASSEMBLY);
-	petsc_err = MatAssemblyEnd(M, MAT_FINAL_ASSEMBLY);
+	petsc_err = MatAssemblyBegin(_A, MAT_FINAL_ASSEMBLY);
+	petsc_err = MatAssemblyEnd(_A, MAT_FINAL_ASSEMBLY);
+	petsc_err = MatAssemblyBegin(_M, MAT_FINAL_ASSEMBLY);
+	petsc_err = MatAssemblyEnd(_M, MAT_FINAL_ASSEMBLY);
 	CHKERRQ(petsc_err);
 
 	/* initialize KSP solver */
@@ -575,12 +605,12 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter){
 	petsc_err = KSPSetTolerances(ksp, PETSC_DEFAULT, PETSC_DEFAULT, PETSC_DEFAULT, PETSC_DEFAULT);
 	petsc_err = KSPSetType(ksp, KSPGMRES);
 	petsc_err = KSPSetInitialGuessNonzero(ksp, PETSC_TRUE);
-	petsc_err = KSPSetOperators(ksp, A, A, SAME_NONZERO_PATTERN);
+	petsc_err = KSPSetOperators(ksp, _A, _A, SAME_NONZERO_PATTERN);
 	petsc_err = KSPSetUp(ksp);
 	petsc_err = KSPSetFromOptions(ksp);
 	CHKERRQ(petsc_err);
 
-	petsc_err = MatMult(M, phi_new, sold);
+	petsc_err = MatMult(_M, _phi_new, sold);
 	petsc_err = VecSum(sold, &sumold);
 	scale_val = (cw * ch * ng) / sumold;
 	petsc_err = VecScale(sold, scale_val);
@@ -591,8 +621,8 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter){
 
 	for (iter = 0; iter < max_outer; iter++){
 
-		petsc_err = KSPSolve(ksp, sold, phi_new);
-		petsc_err = MatMult(M, phi_new, snew);
+		petsc_err = KSPSolve(ksp, sold, _phi_new);
+		petsc_err = MatMult(_M, _phi_new, snew);
 		petsc_err = VecSum(snew, &sumnew);
 		CHKERRQ(petsc_err);
 
@@ -623,11 +653,11 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter){
 
 	log_printf(NORMAL, "Diffusion solver iter: %i, keff: %f", iter, keff);
 
-	petsc_err = VecSum(phi_new, &sumnew);
-	scale_val = sumnew / (cw*ch*ng);
-	petsc_err = VecScale(phi_new, scale_val);
+	petsc_err = VecSum(_phi_new, &sumnew);
+	scale_val = (cw*ch*ng) / sumnew;
+	petsc_err = VecScale(_phi_new, scale_val);
 	petsc_err = VecSum(phi_old, &sumold);
-	scale_val = sumold / (cw*ch*ng);
+	scale_val = (cw*ch*ng) / sumold;
 	petsc_err = VecScale(phi_old, scale_val);
 	CHKERRQ(petsc_err);
 
@@ -635,7 +665,7 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter){
 	PetscScalar *new_phi;
 
 	petsc_err = VecGetArray(phi_old, &old_phi);
-	petsc_err = VecGetArray(phi_new, &new_phi);
+	petsc_err = VecGetArray(_phi_new, &new_phi);
 	CHKERRQ(petsc_err);
 
 	for (int i = 0; i < cw*ch; i++){
@@ -647,22 +677,26 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter){
 	}
 
 	petsc_err = VecRestoreArray(phi_old, &old_phi);
-	petsc_err = VecRestoreArray(phi_new, &new_phi);
+	petsc_err = VecRestoreArray(_phi_new, &new_phi);
 	CHKERRQ(petsc_err);
 
+	MatMult(_A,_phi_new, sold);
+	sumold = 1/keff;
+	MatScale(_M,sumold);
+	MatMult(_M,_phi_new,snew);
+	sumold = -1;
+	VecWAXPY(res, sumold, snew, sold);
+	VecSum(res,&sumold);
+
+	log_printf(NORMAL, "CMFD/DIFFUSION residual: %f", double(sumold));
+
 	/* destroy matrices and vectors */
-	petsc_err = MatDestroy(&A);
-	petsc_err = MatDestroy(&M);
 	petsc_err = VecDestroy(&phi_old);
-	petsc_err = VecDestroy(&phi_new);
 	petsc_err = VecDestroy(&snew);
 	petsc_err = VecDestroy(&sold);
 	petsc_err = VecDestroy(&res);
+	petsc_err = KSPDestroy(&ksp);
 	CHKERRQ(petsc_err);
-
-	if (_update_flux == true && solveMethod == CMFD){
-		updateMOCFlux();
-	}
 
 	std::string string;
 
@@ -671,11 +705,6 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter){
 			string = "diff";
 			_plotter->plotCMFDflux(_mesh, string, moc_iter);
 		}
-	}
-
-	/* compute the total surface currents */
-	if (_mesh->getMultigroup() == false){
-		_mesh->computeTotCurrents();
 	}
 
 	if (_plotter->plotKeff()){
@@ -695,12 +724,13 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter){
 }
 
 
-void Cmfd::constructAMPhi(Mat A, Mat M, Vec phi_old, solveType solveMethod){
+int Cmfd::constructAMPhi(Mat A, Mat M, Vec phi_old, solveType solveMethod){
 
 	int ch = _mesh->getCellHeight();
 	int cw = _mesh->getCellWidth();
 	int ng;
 	MeshCell* meshCell;
+	int petsc_err = 0;
 
 	PetscInt indice1, indice2;
 	PetscScalar value;
@@ -725,13 +755,15 @@ void Cmfd::constructAMPhi(Mat A, Mat M, Vec phi_old, solveType solveMethod){
 				/* get old flux */
 				indice1 = int((y*cw + x)*ng+e);
 
-				VecSetValues(phi_old, 1, &indice1, &meshCell->getOldFlux()[e], INSERT_VALUES);
+				petsc_err = VecSetValues(phi_old, 1, &indice1, &meshCell->getOldFlux()[e], INSERT_VALUES);
+				CHKERRQ(petsc_err);
 
 				/* diagonal - A */
 				value = meshCell->getSigmaA()[e] * meshCell->getVolume();
 				indice1 = (y*cw + x)*ng + e;
 				indice2 = (y*cw + x)*ng + e;
-				MatSetValues(A, 1, &indice1, 1, &indice2, &value, ADD_VALUES);
+				petsc_err = MatSetValues(A, 1, &indice1, 1, &indice2, &value, ADD_VALUES);
+				CHKERRQ(petsc_err);
 
 				/* scattering out */
 				for (int g = 0; g < ng; g++){
@@ -739,7 +771,8 @@ void Cmfd::constructAMPhi(Mat A, Mat M, Vec phi_old, solveType solveMethod){
 						value = meshCell->getSigmaS()[e*ng + g] * meshCell->getVolume();
 						indice1 = (y*cw + x)*ng+e;
 						indice2 = (y*cw + x)*ng+e;
-						MatSetValues(A, 1, &indice1, 1, &indice2, &value, ADD_VALUES);
+						petsc_err = MatSetValues(A, 1, &indice1, 1, &indice2, &value, ADD_VALUES);
+						CHKERRQ(petsc_err);
 					}
 				}
 
@@ -749,7 +782,8 @@ void Cmfd::constructAMPhi(Mat A, Mat M, Vec phi_old, solveType solveMethod){
 					value = meshCell->getChi()[e] * meshCell->getNuSigmaF()[g] * meshCell->getVolume();
 					indice1 = (y*cw + x)*ng+e;
 					indice2 = (y*cw + x)*ng + g;
-					MatSetValues(M, 1, &indice1, 1, &indice2, &value, INSERT_VALUES);
+					petsc_err = MatSetValues(M, 1, &indice1, 1, &indice2, &value, INSERT_VALUES);
+				CHKERRQ(petsc_err);
 				}
 
 
@@ -759,7 +793,8 @@ void Cmfd::constructAMPhi(Mat A, Mat M, Vec phi_old, solveType solveMethod){
 						value = - meshCell->getSigmaS()[g*ng + e] * meshCell->getVolume();
 						indice1 = (y*cw + x)*ng+e;
 						indice2 = (y*cw + x)*ng + g;
-						MatSetValues(A, 1, &indice1, 1, &indice2, &value, ADD_VALUES);
+						petsc_err = MatSetValues(A, 1, &indice1, 1, &indice2, &value, ADD_VALUES);
+						CHKERRQ(petsc_err);
 					}
 				}
 
@@ -772,7 +807,8 @@ void Cmfd::constructAMPhi(Mat A, Mat M, Vec phi_old, solveType solveMethod){
 
 				indice1 = (y*cw + x)*ng + e;
 				indice2 = (y*cw + x)*ng + e;
-				MatSetValues(A, 1, &indice1,1 , &indice2, &value, ADD_VALUES);
+				petsc_err = MatSetValues(A, 1, &indice1,1 , &indice2, &value, ADD_VALUES);
+				CHKERRQ(petsc_err);
 
 				/* transport in */
 				if (x != cw - 1){
@@ -783,7 +819,8 @@ void Cmfd::constructAMPhi(Mat A, Mat M, Vec phi_old, solveType solveMethod){
 
 					indice1 = (y*cw + x)*ng + e;
 					indice2 = (y*cw + x + 1)*ng + e;
-					MatSetValues(A, 1, &indice1, 1, &indice2, &value, ADD_VALUES);
+					petsc_err = MatSetValues(A, 1, &indice1, 1, &indice2, &value, ADD_VALUES);
+					CHKERRQ(petsc_err);
 				}
 
 				/* LEFT */
@@ -795,7 +832,8 @@ void Cmfd::constructAMPhi(Mat A, Mat M, Vec phi_old, solveType solveMethod){
 
 				indice1 = (y*cw + x)*ng + e;
 				indice2 = (y*cw + x)*ng + e;
-				MatSetValues(A, 1, &indice1, 1, &indice2, &value, ADD_VALUES);
+				petsc_err = MatSetValues(A, 1, &indice1, 1, &indice2, &value, ADD_VALUES);
+				CHKERRQ(petsc_err);
 
 				/* transport in */
 				if (x != 0){
@@ -806,7 +844,8 @@ void Cmfd::constructAMPhi(Mat A, Mat M, Vec phi_old, solveType solveMethod){
 
 					indice1 = (y*cw + x)*ng + e;
 					indice2 = (y*cw + x - 1)*ng + e;
-					MatSetValues(A, 1, &indice1, 1, &indice2, &value, ADD_VALUES);
+					petsc_err = MatSetValues(A, 1, &indice1, 1, &indice2, &value, ADD_VALUES);
+					CHKERRQ(petsc_err);
 				}
 
 				/* BELOW */
@@ -818,7 +857,8 @@ void Cmfd::constructAMPhi(Mat A, Mat M, Vec phi_old, solveType solveMethod){
 
 				indice1 = (y*cw + x)*ng + e;
 				indice2 = (y*cw + x)*ng + e;
-				MatSetValues(A, 1, &indice1, 1, &indice2, &value, ADD_VALUES);
+				petsc_err = MatSetValues(A, 1, &indice1, 1, &indice2, &value, ADD_VALUES);
+				CHKERRQ(petsc_err);
 
 				/* transport in */
 				if (y != ch - 1){
@@ -829,7 +869,8 @@ void Cmfd::constructAMPhi(Mat A, Mat M, Vec phi_old, solveType solveMethod){
 
 					indice1 = (y*cw + x)*ng + e;
 					indice2 = ((y+1)*cw + x)*ng + e;
-					MatSetValues(A, 1, &indice1, 1, &indice2, &value, ADD_VALUES);
+					petsc_err = MatSetValues(A, 1, &indice1, 1, &indice2, &value, ADD_VALUES);
+					CHKERRQ(petsc_err);
 				}
 
 				/* ABOVE */
@@ -841,7 +882,8 @@ void Cmfd::constructAMPhi(Mat A, Mat M, Vec phi_old, solveType solveMethod){
 
 				indice1 = (y*cw + x)*ng + e;
 				indice2 =  (y*cw + x)*ng + e;
-				MatSetValues(A, 1, &indice1, 1, &indice2, &value, ADD_VALUES);
+				petsc_err = MatSetValues(A, 1, &indice1, 1, &indice2, &value, ADD_VALUES);
+				CHKERRQ(petsc_err);
 
 				/* transport in */
 				if (y != 0){
@@ -852,11 +894,14 @@ void Cmfd::constructAMPhi(Mat A, Mat M, Vec phi_old, solveType solveMethod){
 
 					indice1 = (y*cw + x)*ng + e;
 					indice2 = ((y-1)*cw + x)*ng + e;
-					MatSetValues(A, 1, &indice1, 1, &indice2, &value, ADD_VALUES);
+					petsc_err = MatSetValues(A, 1, &indice1, 1, &indice2, &value, ADD_VALUES);
+					CHKERRQ(petsc_err);
 				}
 			}
 		}
 	}
+
+	return petsc_err;
 }
 
 
@@ -866,7 +911,7 @@ void Cmfd::constructAMPhi(Mat A, Mat M, Vec phi_old, solveType solveMethod){
 /* update the MOC flux in each FSR and track fluxes at the boundaries */
 void Cmfd::updateMOCFlux(){
 
-	log_printf(NORMAL, "Updating MOC flux...");
+	log_printf(INFO, "Updating MOC flux...");
 
 	/* initialize variables */
 	MeshCell* meshCell;
@@ -910,86 +955,6 @@ void Cmfd::updateMOCFlux(){
 			}
 		}
 	}
-
-//	/* update track fluxes */
-//	Track* track;
-//	int num_segments;
-//	std::vector<segment*> segments;
-//	segment* segment;
-//	double* polar_fluxes;
-//	int e, p, pe;
-//	double current, d_hat, d_tilde, cell_flux;
-//	int surfId;
-//
-//
-//	for (int j = 0; j < _num_azim; j++){
-//
-//		/* Loop over all tracks for this azimuthal angles */
-//		for (int k = 0; k < _num_tracks[j]; k++) {
-//
-//			/* Initialize local pointers to important data structures */
-//			track = &_tracks[j][k];
-//			polar_fluxes = track->getPolarFluxes();
-//
-//			/* get first segment */
-//			segments = track->getSegments();
-//			num_segments = track->getNumSegments();
-//			segment = segments.at(0);
-//
-//			/* set polar angle * energy group to 0 */
-//			pe = 0;
-//
-//			/* loop over energy groups */
-//			for (e = 0; e < NUM_ENERGY_GROUPS; e++) {
-//
-//				/* loop over polar angles */
-//				for (p = 0; p < NUM_POLAR_ANGLES; p++){
-//
-//					surfId = segment->_mesh_surface_bwd->getId();
-//
-//					if (surfId == 0 || surfId == 1 || surfId == 2 || surfId == 3){
-//						current = segment->_mesh_surface_bwd->getCurrent(e);
-//						d_hat = segment->_mesh_surface_bwd->getDHat()[e];
-//						d_tilde = segment->_mesh_surface_bwd->getDTilde()[e];
-//						meshCell = mesh->getCells(segment->_mesh_surface_bwd->getCellId());
-//						cell_flux = meshCell->getNewFlux()[e];
-//
-//						polar_fluxes[pe] = fabs(polar_fluxes[pe] / current * (d_hat - d_tilde) * cell_flux);
-//
-//						pe++;
-//					}
-//				}
-//			}
-//
-//			/* get last segment */
-//			segment = segments.at(num_segments - 1);
-//
-//
-//			/* set polar angle * energy group to GRP_TIMES_ANG */
-//			pe = GRP_TIMES_ANG;
-//
-//			/* loop over energy groups */
-//			for (e = 0; e < NUM_ENERGY_GROUPS; e++) {
-//
-//				/* loop over polar angles */
-//				for (p = 0; p < NUM_POLAR_ANGLES; p++){
-//
-//					surfId = segment->_mesh_surface_fwd->getId();
-//
-//					if (surfId == 0 || surfId == 1 || surfId == 2 || surfId == 3){
-//						current = segment->_mesh_surface_fwd->getCurrent(e);
-//						d_hat = segment->_mesh_surface_fwd->getDHat()[e];
-//						d_tilde = segment->_mesh_surface_fwd->getDTilde()[e];
-//						meshCell = mesh->getCells(segment->_mesh_surface_fwd->getId());
-//						cell_flux = meshCell->getNewFlux()[e];
-//
-//						polar_fluxes[pe] = fabs(polar_fluxes[pe] / current * (d_hat - d_tilde) * cell_flux);
-//
-//						pe++;
-//					}
-//				}
-//			}
-//		}
 }
 
 
@@ -1010,6 +975,19 @@ double Cmfd::computeDiffCorrect(double d, double h){
     F = 1 + h * rho / (2 * d);
     
 	return F;
+
+}
+
+Mat Cmfd::getA(){
+	return _A;
+}
+
+Mat Cmfd::getM(){
+	return _M;
+}
+
+Vec Cmfd::getPhiNew(){
+	return _phi_new;
 
 }
 

@@ -19,6 +19,8 @@
 #include "log.h"
 #include <vector>
 #include "configurations.h"
+#include "Surface.h"
+
 
 
 class MeshSurface {
@@ -31,6 +33,7 @@ private:
 	int _surface_num;
 	int _id;
 	int _cell_id;
+	boundaryType _boundary_type;
 
 public:
 	MeshSurface();
@@ -51,6 +54,8 @@ public:
 	void setId(int id);
 	int getCellId();
 	void setCellId(int id);
+	void setBoundary(boundaryType boundary);
+	boundaryType getBoundary();
 
 };
 

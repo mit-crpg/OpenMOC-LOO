@@ -17,7 +17,6 @@
 #include <string>
 #include <sstream>
 #include <queue>
-#include <armadillo>
 #include "Geometry.h"
 #include "Quadrature.h"
 #include "Track.h"
@@ -66,12 +65,15 @@ private:
 	bool _update_flux;
 	double _keff_conv_thresh;
 	bool _compute_powers;
+	bool _run_cmfd;
+	bool _diffusion;
 #endif
 	void precomputeFactors();
 	double computePreFactor(segment* seg, int energy, int angle);
 	void initializeFSRs();
 public:
-	Solver(Geometry* geom, TrackGenerator* track_generator, Plotter* plotter, Cmfd* cmfd, bool _update_flux, double keffConvThresh, bool computePowers);
+	Solver(Geometry* geom, TrackGenerator* track_generator, Plotter* plotter, Cmfd* cmfd,
+			bool _update_flux, double keffConvThresh, bool computePowers, bool runCmfd, bool diffusion);
 	virtual ~Solver();
 	void zeroTrackFluxes();
 	void oneFSRFluxes();
@@ -79,7 +81,7 @@ public:
 	void zeroMeshCells();
 	void zeroLeakage();
 	void computeRatios();
-	void updateKeff();
+	void updateKeff(int iteration);
 	double** getFSRtoFluxMap();
 	void fixedSourceIteration(int max_iterations);
 	double computeKeff(int max_iterations);
@@ -90,6 +92,7 @@ public:
  	void renormCurrents(Mesh* mesh, double keff);
  	double getEps(Mesh* mesh, double keff, double renorm_factor);
  	void initializeSource();
+ 	FlatSourceRegion* getFSRs();
 
 };
 

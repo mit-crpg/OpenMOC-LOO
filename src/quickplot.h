@@ -24,11 +24,19 @@ typedef enum colortypes {
 	BLACKWHITE
 }colortype;
 
+//typedef enum scaling {
+//	LINEAR,
+//	LOG,
+//	SQRT
+//}scaling;
+
+
 /* define BitMap struct */
 template <typename U>
 struct BitMap {
 	U* pixels;
 	colortype color_type;
+//	scaling scaling_type;
 	int pixel_x;
 	int pixel_y;
 	double geom_x;
@@ -253,14 +261,24 @@ void normalize(BitMap<U>* bitMap, float* pixMap){
 
 	float* bounds = new float[2];
 	getBounds(bitMap, pixMap, bounds);
-
+    
 	/* copy bitMap to bitMapRGB and normalize */
 	for (int y=0;y< bitMap->pixel_y; y++){
 		for (int x=0;x< bitMap->pixel_x; x++){
 			if (pixMap[y * bitMap->pixel_x + x] == -1){
 				pixMap[y * bitMap->pixel_x + x] = bounds[0];
 			}
+
+			/* scale pixmap values */
+//			if (bitMap->scaling_type == SQRT){
+//				pixMap[y * bitMap->pixel_x + x] = (std::sqrt(pixMap[y * bitMap->pixel_x + x]) - std::sqrt(bounds[0])) / (std::sqrt(bounds[1]) - std::sqrt(bounds[0]));
+//			}
+//			else if (bitMap->scaling_type == LOG){
+//				pixMap[y * bitMap->pixel_x + x] = std::log(pixMap[y * bitMap->pixel_x + x]/bounds[0]) / std::log(bounds[1]/bounds[0]);
+//			}
+//			else{
 			pixMap[y * bitMap->pixel_x + x] = (pixMap[y * bitMap->pixel_x + x] - bounds[0]) /  (bounds[1] - bounds[0]);
+//			}
 		}
 	}
 

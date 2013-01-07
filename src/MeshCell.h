@@ -27,6 +27,7 @@ private:
 	double _height;
 	std::vector<int> _FSRs;
 	MeshSurface* _mesh_surfaces;
+	Material* _material;
 	double* _bounds;
 	int _fsr_start;
 	int _fsr_end;
@@ -40,6 +41,7 @@ private:
 	double _new_flux[NUM_ENERGY_GROUPS];
 	double _volume;
 	int _cell_id;
+	double _temp;
 
 public:
 	MeshCell();
@@ -76,6 +78,10 @@ public:
 	double* getOldFlux();
 	void setVolume(double volume);
 	double getVolume();
+	double getTemp();
+	void setTemp(double temp);
+	Material* getMaterial();
+	void setMaterial(Material* material);
 };
 
 

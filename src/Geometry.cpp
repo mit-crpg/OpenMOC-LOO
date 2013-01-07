@@ -57,6 +57,7 @@ Geometry::Geometry(Parser* parser) {
 				return;
 			});
 
+
 	/* Generate flat source regions */
 	Universe *univ = _universes.at(0);
 	_num_FSRs = univ->computeFSRMaps();
@@ -76,7 +77,10 @@ Geometry::Geometry(Parser* parser) {
 	}
 
 	_mesh = new Mesh;
+
 }
+
+
 
 
 /**
@@ -2047,7 +2051,7 @@ bool Geometry::mapContainsKey(std::map<K, V> map, K key) {
  * to the Mesh and defines the values in each MeshCell.
  * @param mesh a pointer to the Mesh object
  */
-void Geometry::makeCMFDMesh(int numAzim, bool multigroup, bool printMatrices, int cmfdLevel){
+void Geometry::makeCMFDMesh(Mesh* mesh, int numAzim, bool multigroup, bool printMatrices, int cmfdLevel){
 	log_printf(NORMAL, "Making CMFD mesh at level %i...", cmfdLevel);
 
 	int max_cmfd_level = 0;
@@ -2067,21 +2071,22 @@ void Geometry::makeCMFDMesh(int numAzim, bool multigroup, bool printMatrices, in
 	/* find cell width and height at CMFD_LEVEL lattice */
 	int width = 0;
 	int height = 0;
-	findMeshWidth(univ, &width, cmfdLevel);
 	findMeshHeight(univ, &height, cmfdLevel);
+	univ = _universes.at(0);
+	findMeshWidth(univ, &width, cmfdLevel);
 
 	/* set mesh boundary conditions */
-	_mesh->setBoundary(getSurface(1)->getBoundary(), 0);
-	_mesh->setBoundary(getSurface(2)->getBoundary(), 2);
-	_mesh->setBoundary(getSurface(3)->getBoundary(), 1);
-	_mesh->setBoundary(getSurface(4)->getBoundary(), 3);
+	mesh->setBoundary(getSurface(1)->getBoundary(), 0);
+	mesh->setBoundary(getSurface(2)->getBoundary(), 2);
+	mesh->setBoundary(getSurface(3)->getBoundary(), 1);
+	mesh->setBoundary(getSurface(4)->getBoundary(), 3);
 
 	/* set the cell and geometric width and height of mesh */
-	_mesh->setCellHeight(height);
-	_mesh->setCellWidth(width);
-	_mesh->setHeight(getHeight());
-	_mesh->setWidth(getWidth());
-	_mesh->makeMeshCells();
+	mesh->setCellHeight(height);
+	mesh->setCellWidth(width);
+	mesh->setHeight(getHeight());
+	mesh->setWidth(getWidth());
+	mesh->makeMeshCells();
 
 	log_printf(NORMAL, "Made CMFD mesh with %i mesh cells...", height*width);
 
@@ -2091,13 +2096,13 @@ void Geometry::makeCMFDMesh(int numAzim, bool multigroup, bool printMatrices, in
 	/* make a vector of FSR ids in each mesh cell */
 	int meshCellNum = 0;
 	log_printf(DEBUG, "defining mesh...");
-	defineMesh(univ, cmfdLevel, &meshCellNum, 0, true, 0);
-	_mesh->setCellBounds();
-	_mesh->setFSRBounds();
+	defineMesh(mesh, univ, cmfdLevel, &meshCellNum, 0, true, 0);
+	mesh->setCellBounds();
+	mesh->setFSRBounds(getSurface(1)->getBoundary(), getSurface(2)->getBoundary(), getSurface(3)->getBoundary(), getSurface(4)->getBoundary());
 
 	log_printf(DEBUG, "Setting multigroup and print flags");
-	_mesh->setMultigroup(multigroup);
-	_mesh->setPrintMatrices(printMatrices);
+	mesh->setMultigroup(multigroup);
+	mesh->setPrintMatrices(printMatrices);
 
 	return;
 }
@@ -2181,7 +2186,7 @@ void Geometry::findFSRs(Universe* univ, MeshCell* meshCell, int *fsr_id){
  * universe
  */
 /* define the MeshCell objects (_width, _height, and _FRSs)  */
-void Geometry::defineMesh(Universe* univ, int depth, int* meshCellNum, int row, bool base, int fsr_id){
+void Geometry::defineMesh(Mesh* mesh, Universe* univ, int depth, int* meshCellNum, int row, bool base, int fsr_id){
 
 	/* If the universe is a SIMPLE type universe */
 	if (univ->getType() == SIMPLE){
@@ -2194,7 +2199,7 @@ void Geometry::defineMesh(Universe* univ, int depth, int* meshCellNum, int row, 
 		for (iter = cells.begin(); iter != cells.end(); ++iter) {
 			curr = iter->second;CellFill* fill_cell = static_cast<CellFill*>(curr);
 			Universe* universe_fill = fill_cell->getUniverseFill();
-			defineMesh(universe_fill, depth, meshCellNum, row, base, fsr_id);
+			defineMesh(mesh, universe_fill, depth, meshCellNum, row, base, fsr_id);
 		}
 	}
 
@@ -2218,10 +2223,10 @@ void Geometry::defineMesh(Universe* univ, int depth, int* meshCellNum, int row, 
 						log_printf(DEBUG, "added FSR id to counter -> fsr id: %i", fsr_id);
 
 						/* store the fsr_ids of the FSRs in this LATTICE in a MeshCell object */
-						findFSRs(curr, _mesh->getCells(*meshCellNum), &fsr_id);
-						_mesh->getCells(*meshCellNum)->setWidth(lattice->getWidthX());
-						_mesh->getCells(*meshCellNum)->setHeight(lattice->getWidthY());
-						log_printf(DEBUG, "mesh cell: %i, width: %f, height: %f", *meshCellNum, _mesh->getCells(*meshCellNum)->getWidth(),_mesh->getCells(*meshCellNum)->getHeight());
+						findFSRs(curr, mesh->getCells(*meshCellNum), &fsr_id);
+						mesh->getCells(*meshCellNum)->setWidth(lattice->getWidthX());
+						mesh->getCells(*meshCellNum)->setHeight(lattice->getWidthY());
+						log_printf(DEBUG, "mesh cell: %i, width: %f, height: %f", *meshCellNum, mesh->getCells(*meshCellNum)->getWidth(),mesh->getCells(*meshCellNum)->getHeight());
 						*meshCellNum = *meshCellNum + 1;
 					}
 				}
@@ -2235,10 +2240,10 @@ void Geometry::defineMesh(Universe* univ, int depth, int* meshCellNum, int row, 
 					log_printf(DEBUG, "set fsr id to: %i", fsr_id);
 
 					/* store the fsr_ids of the FSRs in this LATTICE in a MeshCell object */
-					findFSRs(curr, _mesh->getCells(*meshCellNum), &fsr_id);
-					_mesh->getCells(*meshCellNum)->setWidth(lattice->getWidthX());
-					_mesh->getCells(*meshCellNum)->setHeight(lattice->getWidthY());
-					log_printf(DEBUG, "mesh cell num: %i, width: %f, height: %f", *meshCellNum, _mesh->getCells(*meshCellNum)->getWidth(),_mesh->getCells(*meshCellNum)->getHeight());
+					findFSRs(curr, mesh->getCells(*meshCellNum), &fsr_id);
+					mesh->getCells(*meshCellNum)->setWidth(lattice->getWidthX());
+					mesh->getCells(*meshCellNum)->setHeight(lattice->getWidthY());
+					log_printf(DEBUG, "mesh cell num: %i, width: %f, height: %f", *meshCellNum, mesh->getCells(*meshCellNum)->getWidth(),mesh->getCells(*meshCellNum)->getHeight());
 					*meshCellNum = *meshCellNum + 1;
 				}
 			}
@@ -2248,15 +2253,16 @@ void Geometry::defineMesh(Universe* univ, int depth, int* meshCellNum, int row, 
 		else {
 			base = false;
 			for (int i = num_y-1; i > -1; i--) {
-				curr = lattice->getUniverse(0, 0);
+				curr = lattice->getUniverse(0, i);
 				int nextHeight = nextLatticeHeight(curr);
+				log_printf(DEBUG, "next height: %i", nextHeight);
 				for (int k = nextHeight-1; k > -1; k--) {
 					for (int j = 0; j < num_x; j++) {
 						curr = lattice->getUniverse(j, i);
 						fsr_id = lattice->getFSR(j,i);
 
-						/* recursively call defineMesh until LATTICE leve of CMFD mesh is reached */
-						defineMesh(curr, depth - 1, meshCellNum, k, base, fsr_id);
+						/* recursively call defineMesh until LATTICE level of CMFD mesh is reached */
+						defineMesh(mesh, curr, depth - 1, meshCellNum, k, base, fsr_id);
 					}
 				}
 			}
@@ -2324,7 +2330,7 @@ void Geometry::findMeshHeight(Universe* univ, int* height, int depth){
 			if (curr->getType() == FILL){
 				CellFill* fill_cell = static_cast<CellFill*>(curr);
 				Universe* universe_fill = fill_cell->getUniverseFill();
-				findMeshWidth(universe_fill, height, depth);
+				findMeshHeight(universe_fill, height, depth);
 			}
 		}
 	}
@@ -2343,13 +2349,13 @@ void Geometry::findMeshHeight(Universe* univ, int* height, int depth){
 				*height = *height + num_y;
 			}
 			else{
+				depth = depth - 1;
 				for (int i = num_y-1; i > -1; i--) {
 					curr = lattice->getUniverse(0, i);
 
-					/* find the width of the current universe */
-					findMeshWidth(curr, height, depth);
+					/* find the height of the current universe */
+					findMeshHeight(curr, height, depth);
 				}
-				depth = depth - 1;
 			}
 		}
 	}
@@ -2451,11 +2457,13 @@ int Geometry::findMeshDepth(Universe* univ, int cmfd_level){
 		int min = 0;
 		int levels = 0;
 
-		/* loop through lattice cells and recursively call  */
-		for (int x = 0; x < j; x++){
-			for (int y = 0; y < i; y++){
+		log_printf(DEBUG, "findMeshDepth in lattice: (j,i) - (%i,%i)", j,i);
 
-				curr = lattice->getUniverse(j, i);
+		/* loop through lattice cells and recursively call  */
+		for (int x = 0; x <= j; x++){
+			for (int y = 0; y <= i; y++){
+
+				curr = lattice->getUniverse(x, y);
 
 				/* find the width of the current universe */
 				levels = findMeshDepth(curr, cmfd_level);

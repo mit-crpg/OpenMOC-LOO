@@ -256,7 +256,7 @@ Parser::Parser (const Options *opts) {
 	geofile = fopen(opts->getGeometryFile(), "r");
 	if (geofile == NULL) {
 		log_printf(ERROR, "Given geometry file %s does not exist",
-				   opts->getGeometryFile());
+				opts->getGeometryFile());
 	}
 
 	/* Passes single characters to the parser, which is quite slow but

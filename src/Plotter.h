@@ -14,6 +14,7 @@
 #include <map>
 #include <utility>
 #include <sstream>
+#include <iomanip>
 #include "Point.h"
 #include "Track.h"
 #include "Geometry.h"
@@ -40,12 +41,15 @@ private:
 	bool _net_current;
 	bool _plot_diffusion;
 	bool _plot_keff;
+	int *_FSR_map;
 public:
 	Plotter(Geometry* geom, const int bit_dim, std::string extension, bool specs, bool fluxes,
 			bool netCurrent, bool plotDiffusion, bool plotKeff);
 	virtual ~Plotter();
 	void plotTracksReflective(Track* track, int numReflect);
-	void makeFSRMap(int* pixMap);
+	void makeFSRMap();
+	int *getFSRMap();
+	void copyFSRMap(int *pixels);
 	int getBitLengthX();
 	int getBitLengthY();
 	double getXPixel();

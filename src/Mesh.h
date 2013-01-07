@@ -34,7 +34,10 @@ private:
 	boundaryType _boundary[4];
 	double _keff_cmfd[int(MAX_ITERATIONS)];
 	double _keff_moc[int(MAX_ITERATIONS)];
+	double _old_time;
 	int* _fsr_indices;
+	double* _cell_bounds;
+	MeshSurface **_surfaces;
 
 public:
 	Mesh();
@@ -50,9 +53,9 @@ public:
 	void setCellHeight(int cellHeight);
 	MeshCell* getCells(int cell);
 	void setCellBounds();
-	void setFSRBounds();
+	void setFSRBounds(boundaryType left, boundaryType right, boundaryType bottom, boundaryType top);
 	int findMeshCell(double x, double y);
-	MeshSurface* findMeshSurface(int fsr_id, LocalCoords* coord);
+	int findMeshSurface(int fsr_id, LocalCoords* coord);
 	void printBounds();
 	void printCurrents();
 	void computeTotCurrents();
@@ -67,6 +70,9 @@ public:
 	double getKeffCMFD(int iter);
 	void setKeffMOC(double keff, int iter);
 	double getKeffMOC(int iter);
+	MeshSurface **getSurfaces();
+	double getOldTime();
+	void setOldTime(double time);
 
 };
 

@@ -107,10 +107,10 @@ public:
 	template <class K, class V>
 	bool mapContainsKey(std::map<K, V> map, K key);
 
-	void makeCMFDMesh(int numAzim, bool multigroup, bool printMatrices, int cmfdLevel);
+	void makeCMFDMesh(Mesh* mesh, int numAzim, bool multigroup, bool printMatrices, int cmfdLevel);
 	void findMeshWidth(Universe* univ, int* width, int depth);
 	void findMeshHeight(Universe* univ, int* height, int depth);
-	void defineMesh(Universe* univ, int depth, int* meshCellNum, int row, bool base, int fsr_id);
+	void defineMesh(Mesh* mesh, Universe* univ, int depth, int* meshCellNum, int row, bool base, int fsr_id);
 	void findFSRs(Universe* univ, MeshCell* meshCell, int* fsr_id);
 	int nextLatticeHeight(Universe* curr);
 	Mesh* getMesh();

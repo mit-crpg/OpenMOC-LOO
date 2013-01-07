@@ -9,15 +9,17 @@
 <geometry>
     
     <!-- Definition of Cells -->
-    <cell id="1" fill="6" surfaces="1 -2 3 -4" />
+    <cell id="1" fill="7" surfaces="1 -2 3 -4" />
     <cell id="101" universe="1" material="1"/>
     <cell id="102" universe="2" material="2"/>
     <cell id="201" universe="3" material="3"/>
     <cell id="202" universe="4" material="4"/>
-    <cell id="301" universe="5" material="5"/>
+    <cell id="301" universe="5" material="6"/>
+    <cell id="302" universe="6" material="5"/>
+
     
     <!-- 11 x 11 core -->
-    <lattice id="6">
+    <lattice id="7">
         <type>rectangular</type>
         <dimension>11 11</dimension>
         <width>15.0 15.0</width>
@@ -26,8 +28,8 @@
             5 5 5 5 5 5 5 5 5 5 5
             3 3 3 3 3 3 3 5 5 5 5
             3 3 3 3 3 3 3 4 5 5 5
-            2 1 1 1 1 2 2 3 3 5 5
-            2 1 1 1 1 2 2 3 3 5 5
+            2 1 1 1 1 2 2 6 6 5 5
+            2 1 1 1 1 2 2 6 6 5 5
             1 1 1 1 1 1 1 3 3 5 5
             1 1 1 1 1 1 1 3 3 5 5
             1 1 1 1 1 1 1 3 3 5 5

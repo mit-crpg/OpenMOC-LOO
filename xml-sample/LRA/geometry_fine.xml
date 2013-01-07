@@ -9,12 +9,13 @@
 <geometry>
     
     <!-- Definition of Cells -->
-    <cell id="1" fill="6" surfaces="1 -2 3 -4" />
+    <cell id="1" fill="7" surfaces="1 -2 3 -4" />
     <cell id="101" universe="1" material="1"/>
     <cell id="102" universe="2" material="2"/>
     <cell id="201" universe="3" material="3"/>
     <cell id="202" universe="4" material="4"/>
-    <cell id="301" universe="5" material="5"/>
+    <cell id="301" universe="5" material="6"/>
+    <cell id="302" universe="6" material="5"/>
     
 
     <!-- ASSEMBLIES -->
@@ -33,6 +34,9 @@
     
     <!-- material 5 -->
     <cell id="35" universe="15" fill="25" surfaces="" />
+
+    <!-- material 6 -->
+    <cell id="36" universe="16" fill="26" surfaces="" />
     
     <!-- material 1 bundle -->
     <lattice id="21">
@@ -133,21 +137,37 @@
         </universes>
     </lattice>
     
-    
+    <!-- material 6 bundle -->
+    <lattice id="26">
+        <type>rectangular</type>
+        <dimension>10 10</dimension>
+        <width>1.5 1.5</width>
+        <universes>
+            6 6 6 6 6 6 6 6 6 6
+            6 6 6 6 6 6 6 6 6 6
+            6 6 6 6 6 6 6 6 6 6
+            6 6 6 6 6 6 6 6 6 6
+            6 6 6 6 6 6 6 6 6 6
+            6 6 6 6 6 6 6 6 6 6
+            6 6 6 6 6 6 6 6 6 6
+            6 6 6 6 6 6 6 6 6 6
+            6 6 6 6 6 6 6 6 6 6
+            6 6 6 6 6 6 6 6 6 6
+        </universes>
+    </lattice>
     
     <!-- 11 x 11 core -->
-    <lattice id="6">
+    <lattice id="7">
         <type>rectangular</type>
         <dimension>11 11</dimension>
-        
         <width>15.0 15.0</width>
         <universes>
             15 15 15 15 15 15 15 15 15 15 15
             15 15 15 15 15 15 15 15 15 15 15
             13 13 13 13 13 13 13 15 15 15 15
             13 13 13 13 13 13 13 14 15 15 15
-            12 11 11 11 11 12 12 13 13 15 15
-            12 11 11 11 11 12 12 13 13 15 15
+            12 11 11 11 11 12 12 16 16 15 15
+            12 11 11 11 11 12 12 16 16 15 15
             11 11 11 11 11 11 11 13 13 15 15
             11 11 11 11 11 11 11 13 13 15 15
             11 11 11 11 11 11 11 13 13 15 15

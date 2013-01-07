@@ -20,7 +20,7 @@
  * @param argc the number of command line arguments from console
  * @param argv a char array of command line arguments from console
  */
-Options::Options(int argc, const char **argv) {
+Options::Options(int argc, char **argv) {
 
 	/* Checks the working directory to set the relative path for input files
 	 * This is important so that default input files work when program is run
@@ -51,6 +51,11 @@ Options::Options(int argc, const char **argv) {
 	_print_matrices = false;			/* Default will not print matrices */
 	_cmfd_level = 1;					/* Default cmfd level is 1 (hightest level) */
 	_plot_keff = false;					/* Default will not plot keff */
+	_transient = false;					/* Default will not solve transient problem */
+	_time_end = 1.0;					/* Default end time is 1 second */
+	_dt_outer = 1.0e-4;					/* Default outer time step is 1.0e-4 seconds */
+	_dt_inner = 5.0e-7;					/* Default inner time step is 5.0e-7 seconds */
+	_diffusion = false;					/* Default will not solve diffusion problem */
 
 	for (int i = 0; i < argc; i++) {
 		if (i > 0) {
@@ -88,17 +93,32 @@ Options::Options(int argc, const char **argv) {
 			else if (strcmp(argv[i], "-uf") == 0 ||
 					strcmp(argv[i], "--updateflux") == 0)
 				_update_flux = true;
+			else if (strcmp(argv[i], "-nc") == 0 ||
+					strcmp(argv[i], "--nocmfd") == 0)
+				_cmfd = false;
 			else if (strcmp(argv[i], "-pc") == 0 ||
 					strcmp(argv[i], "--plotcurrent") == 0)
 				_plot_current = true;
 			else if (strcmp(argv[i], "-pk") == 0 ||
 					strcmp(argv[i], "--plotkeff") == 0)
 				_plot_keff = true;
+			else if (strcmp(argv[i], "-tr") == 0 ||
+					strcmp(argv[i], "--transient") == 0)
+				_transient = true;
+			else if (strcmp(argv[i], "-df") == 0 ||
+					strcmp(argv[i], "--diffusion") == 0)
+				_diffusion = true;
 			else if (strcmp(argv[i], "-pd") == 0 ||
 					strcmp(argv[i], "--plotdiffusion") == 0)
 				_plot_diffusion = true;
 			else if (LAST("--keffconv") || LAST("-kc"))
 				_keff_conv_thresh = atof(argv[i]);
+			else if (LAST("--timeend") || LAST("-te"))
+				_time_end = atof(argv[i]);
+			else if (LAST("--timestepouter") || LAST("-dto"))
+				_dt_outer = atof(argv[i]);
+			else if (LAST("--timestepinner") || LAST("-dti"))
+				_dt_inner = atof(argv[i]);
 			else if (strcmp(argv[i], "-mg") == 0 ||
 					strcmp(argv[i], "--multigroup") == 0)
 				_multigroup = true;
@@ -119,8 +139,8 @@ Options::~Options(void) { }
  * console
  * @return path to the geometry input file
  */
-const char *Options::getGeometryFile() const{
-    return _geometry_file.c_str();
+const char *Options::getGeometryFile() const {
+    return (const char*)_geometry_file.c_str();
 }
 
 /**
@@ -129,8 +149,8 @@ const char *Options::getGeometryFile() const{
  * console
  * @return path to the geometry input file
  */
-const char *Options::getMaterialFile() const{
-    return _material_file.c_str();
+const char *Options::getMaterialFile() const {
+    return (const char*)_material_file.c_str();
 }
 
 
@@ -139,7 +159,7 @@ const char *Options::getMaterialFile() const{
  * console. If true, the geometry will be printed out after parsing is complete
  * @return whether or not to dump the geometry to the console
  */
-bool Options::dumpGeometry() const {
+bool Options::dumpGeometry(){
 	return _dump_geometry;
 }
 
@@ -148,7 +168,7 @@ bool Options::dumpGeometry() const {
  * not set at runtime from the console
  * @return the number of azimuthal angles
  */
-double Options::getNumAzim() const {
+double Options::getNumAzim(){
     return _num_azim;
 }
 
@@ -157,7 +177,7 @@ double Options::getNumAzim() const {
  * (or pixels) if not set at runtime from the console
  * @return the y dimension of plots.
  */
-int Options::getBitDimension() const{
+int Options::getBitDimension(){
 	return _bit_dimension;
 }
 
@@ -168,7 +188,7 @@ int Options::getBitDimension() const{
  * from the console
  * @return the track spacing
  */
-double Options::getTrackSpacing() const {
+double Options::getTrackSpacing(){
     return _track_spacing;
 }
 
@@ -178,8 +198,8 @@ double Options::getTrackSpacing() const {
  * at runtime from the console
  * @return the verbosity
  */
-const char* Options::getVerbosity() const {
-    return _verbosity.c_str();
+char* Options::getVerbosity(){
+    return (char*)_verbosity.c_str();
 }
 
 /**
@@ -187,8 +207,8 @@ const char* Options::getVerbosity() const {
  * at runtime from the console
  * @return the image files extension
  */
-std::string Options::getExtension() const {
-    return _extension.c_str();
+std::string Options::getExtension(){
+    return _extension;
 }
 
 /**
@@ -196,7 +216,7 @@ std::string Options::getExtension() const {
  *  If true, the specs will be plotted in a file of _extension type
  * @return whether or not to plot materials
  */
-bool Options::plotSpecs() const {
+bool Options::plotSpecs(){
 	return _plot_specs;
 }
 
@@ -205,7 +225,7 @@ bool Options::plotSpecs() const {
  *  If true, the cells will be plotted in a file of _extension type
  * @return whether or not to plot materials
  */
-bool Options::plotFluxes() const {
+bool Options::plotFluxes(){
 	return _plot_fluxes;
 }
 
@@ -216,7 +236,7 @@ bool Options::plotFluxes() const {
  * in a new directory called "PinPowers"
  * @return whether or not to compute the pin powers
  */
-bool Options::computePinPowers() const {
+bool Options::computePinPowers(){
 	return _compute_pin_powers;
 }
 
@@ -230,7 +250,7 @@ bool Options::computePinPowers() const {
  * cross-section values
  * @return whether or not to compute the pin powers
  */
-bool Options::compressCrossSections() const {
+bool Options::compressCrossSections(){
 	return _compress_cross_sections;
 }
 
@@ -238,7 +258,7 @@ bool Options::compressCrossSections() const {
  * Returns a boolean representing whether or not to perform CMFD acceleration
  * @return whether or not to perform CMFD acceleration
  */
-bool Options::cmfd() const {
+bool Options::cmfd(){
 	return _cmfd;
 }
 
@@ -248,7 +268,7 @@ bool Options::cmfd() const {
  *  If true, the net current will be plotted in a file of _extension type
  * @return whether or not to plot net current
  */
-bool Options::plotCurrent() const {
+bool Options::plotCurrent(){
 	return _plot_current;
 }
 
@@ -257,7 +277,7 @@ bool Options::plotCurrent() const {
  *  If true, the net current will be plotted in a file of _extension type
  * @return whether or not to plot net current
  */
-bool Options::plotDiffusion() const {
+bool Options::plotDiffusion(){
 	return _plot_diffusion;
 }
 
@@ -266,7 +286,7 @@ bool Options::plotDiffusion() const {
  *  If true, the net current will be plotted in a file of _extension type
  * @return whether or not to plot net current
  */
-bool Options::plotKeff() const {
+bool Options::plotKeff(){
 	return _plot_keff;
 }
 
@@ -274,7 +294,7 @@ bool Options::plotKeff() const {
  * Returns a boolean representing whether or not to use CMFD to update flux
  * @return whether or not to use CMFD to update flux
  */
-bool Options::updateFlux() const {
+bool Options::updateFlux(){
 	return _update_flux;
 }
 
@@ -306,4 +326,31 @@ bool Options::getPrintMatrices() {
 int Options::getCmfdLevel(){
 	return _cmfd_level;
 }
+
+bool Options::getCmfd(){
+	return _cmfd;
+}
+
+bool Options::getTransient(){
+	return _transient;
+}
+
+bool Options::getDiffusion(){
+	return _diffusion;
+}
+
+double Options::getTimeEnd(){
+	return _time_end;
+}
+
+double Options::getTimeStepOuter(){
+	return _dt_outer;
+}
+
+double Options::getTimeStepInner(){
+	return _dt_inner;
+}
+
+
+
 

@@ -23,6 +23,8 @@ private:
 	int _id;
 	Material* _material;
 	double _volume;
+	double _mat_mult[NUM_ENERGY_GROUPS*NUM_ENERGY_GROUPS];
+	double _mat_mult_a[NUM_ENERGY_GROUPS];
 	double _flux[NUM_ENERGY_GROUPS];
 	double _old_flux[NUM_ENERGY_GROUPS];
 	double _source[NUM_ENERGY_GROUPS];
@@ -56,6 +58,10 @@ public:
     void normalizeFluxes(double factor);
     void computeRatios();
     double computeFissionRate();
+    void setMatMult(int group, double mult);
+    double* getMatMult();
+    void setMatMultA(int group, double mult);
+    double* getMatMultA();
 };
 
 

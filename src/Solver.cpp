@@ -15,8 +15,8 @@
  * @param geom pointer to the geometry
  * @param track_generator pointer to the trackgenerator
  */
-Solver::Solver(Geometry* geom, TrackGenerator* track_generator,
-								Plotter* plotter, Cmfd* cmfd, bool updateFlux, double keffConvThresh, bool computePowers) {
+Solver::Solver(Geometry* geom, TrackGenerator* track_generator, Plotter* plotter, Cmfd* cmfd,
+		bool updateFlux, double keffConvThresh, bool computePowers, bool runCmfd, bool diffusion) {
 	_geom = geom;
 	_quad = new Quadrature(TABUCHI);
 	_num_FSRs = geom->getNumFSRs();
@@ -28,7 +28,9 @@ Solver::Solver(Geometry* geom, TrackGenerator* track_generator,
 	_cmfd = cmfd;
 	_keff_conv_thresh = keffConvThresh;
 	_compute_powers = computePowers;
+	_run_cmfd = runCmfd;
 	_k_eff = 0.0;
+	_diffusion = diffusion;
 	try{
 		_flat_source_regions = new FlatSourceRegion[_num_FSRs];
 		_FSRs_to_powers = new double[_num_FSRs];
@@ -377,7 +379,7 @@ void Solver::zeroLeakage(){
  * Compute k_eff from the new and old source and the value of k_eff from
  * the previous iteration
  */
-void Solver::updateKeff() {
+void Solver::updateKeff(int iteration) {
 
 	double tot_abs = 0.0;
 	double tot_fission = 0.0;
@@ -387,6 +389,7 @@ void Solver::updateKeff() {
 	double* sigma_a;
 	double* nu_sigma_f;
 	double* flux;
+	double* mat_mult_a;
 	Material* material;
 	FlatSourceRegion* fsr;
 
@@ -401,11 +404,12 @@ void Solver::updateKeff() {
 		fsr = &_flat_source_regions[r];
 		material = fsr->getMaterial();
 		sigma_a = material->getSigmaA();
+		mat_mult_a = fsr->getMatMultA();
 		nu_sigma_f = material->getNuSigmaF();
 		flux = fsr->getFlux();
 
 		for (int e = 0; e < NUM_ENERGY_GROUPS; e++) {
-			abs += sigma_a[e] * flux[e] * fsr->getVolume();
+			abs += sigma_a[e] * flux[e] * fsr->getVolume() * mat_mult_a[e];
 			fission += nu_sigma_f[e] * flux[e] * fsr->getVolume();
 		}
 
@@ -429,10 +433,15 @@ void Solver::updateKeff() {
 			leakage += _geom->getSurface(s)->getLeakage()[e];
 		}
 	}
-
-	_k_eff = tot_fission/(tot_abs + leakage);
-	log_printf(INFO, "Computed k_eff = %f", _k_eff);
-
+    
+    _geom->getMesh()->setKeffMOC(tot_fission/(tot_abs + leakage), iteration);
+    log_printf(DEBUG, "MOC fis: %f, abs: %f, leak: %f, k_eff = %f", tot_fission, tot_abs, leakage, tot_fission/(tot_abs + leakage));
+    
+    if (_update_flux == false){
+        _k_eff = tot_fission/(tot_abs + leakage);
+        log_printf(INFO, "Computed k_eff = %f", _k_eff);
+    }
+    
 	return;
 }
 
@@ -527,7 +536,7 @@ void Solver::computePinPowers() {
 	bitMap->color_type = SCALED;
 
 	/* make FSR BitMap */
-	_plotter->makeFSRMap(bitMapFSR->pixels);
+	_plotter->copyFSRMap(bitMapFSR->pixels);
 
 	/* Loop over all FSRs and compute the fission rate*/
 	for (int i=0; i < _num_FSRs; i++) {
@@ -596,7 +605,7 @@ void Solver::plotFluxes(int iter_num){
 	bitMap->color_type = SCALED;
 
 	/* make FSR BitMap */
-	_plotter->makeFSRMap(bitMapFSR->pixels);
+	_plotter->copyFSRMap(bitMapFSR->pixels);
 
 	for (int i = 0; i < NUM_ENERGY_GROUPS; i++){
 
@@ -642,6 +651,8 @@ void Solver::fixedSourceIteration(int max_iterations) {
 	double volume;
 	int t, j, k, s, p, e, pe;
 	int num_threads = _num_azim / 2;
+	MeshSurface **meshSurfaces = _geom->getMesh()->getSurfaces();
+	MeshSurface* meshSurface;
 
 #if !STORE_PREFACTORS
 	double sigma_t_l;
@@ -743,7 +754,8 @@ void Solver::fixedSourceIteration(int max_iterations) {
 #endif
 
 					/* if segment crosses a surface in fwd direction, tally current/weight */
-					if (segment->_mesh_surface_fwd != NULL){
+					if (segment->_mesh_surface_fwd != -1){
+						meshSurface = meshSurfaces[segment->_mesh_surface_fwd];
 
 						/* set polar angle * energy group to 0 */
 						pe = 0;
@@ -755,7 +767,7 @@ void Solver::fixedSourceIteration(int max_iterations) {
 							for (p = 0; p < NUM_POLAR_ANGLES; p++){
 
 								/* increment current (polar and azimuthal weighted flux, group)*/
-								segment->_mesh_surface_fwd->incrementCurrent(polar_fluxes[pe]*weights[p]/2.0, e);
+								meshSurface->incrementCurrent(polar_fluxes[pe]*weights[p]/2.0, e);
 
 								pe++;
 							}
@@ -776,9 +788,6 @@ void Solver::fixedSourceIteration(int max_iterations) {
 					/* loop over polar angles */
 					for (p = 0; p < NUM_POLAR_ANGLES; p++){
 						_geom->getSurface(track->getSurfFwd())->incrementLeakage(track->isReflOut(), polar_fluxes[pe]*weights[p]/2.0,e);
-						if (track->isReflOut() == VAC_TRUE || track->isReflOut() == VAC_FALSE){
-//							log_printf(NORMAL, "FWD track: (%f, %f)-(%f, %f), mesh surface: %i, incr. leak: %f, energy: %i", track->getStart()->getX(), track->getStart()->getY(), track->getEnd()->getX(), track->getEnd()->getY(), track->getSurfFwd(), polar_fluxes[pe]*weights[p]/2.0,e);
-						}
 						pe++;
 					}
 				}
@@ -833,7 +842,8 @@ void Solver::fixedSourceIteration(int max_iterations) {
 #endif
 
 					/* if segment crosses a surface in bwd direction, tally current/weight */
-					if (segment->_mesh_surface_bwd != NULL){
+					if (segment->_mesh_surface_bwd != -1){
+						meshSurface = meshSurfaces[segment->_mesh_surface_bwd];
 
 						/* set polar angle * energy group to num groups * num angles */
 						pe = GRP_TIMES_ANG;
@@ -845,7 +855,7 @@ void Solver::fixedSourceIteration(int max_iterations) {
 							for (p = 0; p < NUM_POLAR_ANGLES; p++){
 
 								/* increment current (polar and azimuthal weighted flux, group)*/
-								segment->_mesh_surface_bwd->incrementCurrent(polar_fluxes[pe]*weights[p]/2.0, e);
+								meshSurface->incrementCurrent(polar_fluxes[pe]*weights[p]/2.0, e);
 
 								pe++;
 							}
@@ -866,9 +876,6 @@ void Solver::fixedSourceIteration(int max_iterations) {
 					/* loop over polar angles */
 					for (p = 0; p < NUM_POLAR_ANGLES; p++){
 						_geom->getSurface(track->getSurfBwd())->incrementLeakage(track->isReflIn(), polar_fluxes[pe]*weights[p]/2.0,e);
-						if (track->isReflIn() == VAC_TRUE || track->isReflIn() == VAC_FALSE){
-//							log_printf(NORMAL, "BWD track: (%f, %f)-(%f, %f), mesh surface: %i, incr. leak: %f, energy: %i", track->getStart()->getX(), track->getStart()->getY(), track->getEnd()->getX(), track->getEnd()->getY(), track->getSurfBwd(), polar_fluxes[pe]*weights[p]/2.0,e);
-						}
 						pe++;
 					}
 				}
@@ -968,6 +975,8 @@ void Solver::initializeSource(){
 	double* chi;
 	double* scalar_flux;
 	double* source;
+	double* mat_mult_a;
+	double* mat_mult;
 	FlatSourceRegion* fsr;
 	Material* material;
 	int start_index, end_index;
@@ -1038,6 +1047,8 @@ void Solver::initializeSource(){
 		sigma_a    = material->getSigmaA();
 		chi = material->getChi();
 		sigma_s = material->getSigmaS();
+		mat_mult_a = fsr->getMatMultA();
+		mat_mult = fsr->getMatMult();
 
 		start_index = material->getNuSigmaFStart();
 		end_index = material->getNuSigmaFEnd();
@@ -1048,7 +1059,7 @@ void Solver::initializeSource(){
 
 		/* Compute total scattering source for group G */
 		for (int G = 0; G < NUM_ENERGY_GROUPS; G++) {
-			abs_source_tot  += scalar_flux[G] * sigma_a[G] * fsr->getVolume();
+			abs_source_tot  += scalar_flux[G] * sigma_a[G] * fsr->getVolume() * mat_mult_a[G];
 			fis_source_tot  += scalar_flux[G] * nu_sigma_f[G] * fsr->getVolume();
 			scatter_source = 0;
 
@@ -1057,7 +1068,7 @@ void Solver::initializeSource(){
 
 			for (int g = start_index; g < end_index; g++)
 				scatter_source += sigma_s[G*NUM_ENERGY_GROUPS + g]
-				                          * scalar_flux[g];
+				                          * scalar_flux[g]*mat_mult[G*NUM_ENERGY_GROUPS + g];
 
 			/* Set the total source for region r in group G */
 			source[G] = ((1.0 / (_old_k_effs.front())) * fission_source *
@@ -1117,27 +1128,29 @@ double Solver::computeKeff(int max_iterations) {
 		_cmfd->computeDs();
 
 		/* run diffision problem on 1st iteration */
-		if (i == 0){
+		if (i == 0 && _diffusion == true){
 			cmfd_keff = _cmfd->computeCMFDFluxPower(DIFFUSION, i);
 		}
 
-		cmfd_keff = _cmfd->computeCMFDFluxPower(CMFD, i);
+		if (_run_cmfd){
+			cmfd_keff = _cmfd->computeCMFDFluxPower(CMFD, i);
+		}
 
 		/* Update k_eff */
+        updateKeff(i);
 		if (_update_flux == true){
 			_k_eff = cmfd_keff;
-		}
-		else{
-			updateKeff();
-		}
-
-		_geom->getMesh()->setKeffMOC(_k_eff, i);
-
+            _cmfd->updateMOCFlux();
+        }
+        
 		/* If k_eff converged, return k_eff */
 		if (fabs(_old_k_effs.back() - _k_eff) < _keff_conv_thresh){
 			/* Plot net current, surface flux, xs, and d_hats for mesh */
 
 			fixedSourceIteration(1000);
+//			fixedSourceIteration(1);
+			_cmfd->computeXS(_flat_source_regions);
+			_cmfd->computeDs();
 
 			if (_compute_powers == true){
 				computePinPowers();
@@ -1195,96 +1208,58 @@ void Solver::checkNeutBal(Mesh* mesh, double keff){
 
 	/* residual = leakage + absorption - fission */
 
-	double leak, absorb, fis, res, ratio;
-	double absorb_tot = 0.0, leak_tot = 0.0, fis_tot = 0.0, ratio_tot = 0.0, res_tot = 0.0, fis_rate = 0.0, fis_rate_tot = 0.0;
+	double leak = 0, absorb = 0, fis = 0;
 
 	MeshCell* meshCell;
-	MeshCell* meshCellNext;
 
 	int cell_height = mesh->getCellHeight();
 	int cell_width = mesh->getCellWidth();
 	int ng = NUM_ENERGY_GROUPS;
+	if (mesh->getMultigroup() == false){
+		ng = 1;
+	}
 
 	/* loop over mesh cells in y direction */
 	for (int y = 0; y < cell_height; y++){
 
-		// loop over mesh cells in x direction
+		/* loop over mesh cells in x direction */
 		for (int x = 0; x < cell_width; x++){
-
-			/* intialize tallies to 0 */
-			leak = 0.0;
-			absorb = 0.0;
-			fis = 0.0;
-			res = 0.0;
-			ratio = 0.0;
 
 			/* get mesh cell */
 			meshCell = mesh->getCells(y*cell_width + x);
 
-			/* cell to right */
-			if (x != cell_width - 1){
-				meshCellNext = mesh->getCells(y*cell_width + x + 1);
-				for (int e = 0; e < ng; e++){
-					leak += meshCell->getMeshSurfaces(2)->getCurrent(e);
-					leak -= meshCellNext->getMeshSurfaces(0)->getCurrent(e);
-				}
-			}
-
-			/* cell to left */
-			if (x != 0){
-				meshCellNext = mesh->getCells(y*cell_width + x - 1);
-				for (int e = 0; e < ng; e++){
-					leak += meshCell->getMeshSurfaces(0)->getCurrent(e);
-					leak -= meshCellNext->getMeshSurfaces(2)->getCurrent(e);
-				}
-			}
-
-			/* above */
-			if (y != 0){
-				meshCellNext = mesh->getCells((y-1)*cell_width + x);
-				for (int e = 0; e < ng; e++){
-					leak += meshCell->getMeshSurfaces(3)->getCurrent(e);
-					leak -= meshCellNext->getMeshSurfaces(1)->getCurrent(e);
-				}
-			}
-
-			/* below */
-			if (y != cell_height - 1){
-				meshCellNext = mesh->getCells((y+1)*cell_width + x);
-				for (int e = 0; e < ng; e++){
-					leak += meshCell->getMeshSurfaces(1)->getCurrent(e);
-					leak -= meshCellNext->getMeshSurfaces(3)->getCurrent(e);
+			/* leakage */
+			for (int s = 0; s < 4; s++){
+				if (meshCell->getMeshSurfaces(s)->getBoundary() == VACUUM){
+					for (int e = 0; e < ng; e++){
+						leak += meshCell->getMeshSurfaces(s)->getCurrent(e);
+					}
 				}
 			}
 
 			/* compute absorb and fis rates */
 			for (int e = 0; e < ng; e ++){
-				absorb = meshCell->getSigmaA()[e]*meshCell->getVolume()*meshCell->getNewFlux()[e];
-				for (int g = 0; g < ng; g++){
-					fis = 1.0 / keff * meshCell->getChi()[e] * meshCell->getNuSigmaF()[g]*meshCell->getVolume()*meshCell->getNewFlux()[g];
-					fis_rate = meshCell->getChi()[e] * meshCell->getNuSigmaF()[g]*meshCell->getVolume()*meshCell->getNewFlux()[g];
-				}
+				absorb += meshCell->getSigmaA()[e]*meshCell->getVolume()*meshCell->getOldFlux()[e];
+				fis    += meshCell->getNuSigmaF()[e]*meshCell->getVolume()*meshCell->getOldFlux()[e];
 			}
 
-			/* compute ratio of (fis - abs) / leak and residual */
-			ratio = (fis - absorb) / leak;
-			res = leak + absorb - fis;
-
-			/* tally total leak, abs, fis, and ratio */
-			leak_tot += leak;
-			absorb_tot += absorb;
-			fis_rate_tot += fis_rate;
-			fis_tot += fis;
-			ratio_tot += ratio;
-
-			log_printf(NORMAL, "cell: %i, leak: %f, absorb: %f, fis: %f, res: %f, flux: %f, keff: %f, ratio: %f", y*cell_width+x,
-					leak, absorb, fis, res, meshCell->getNewFlux()[0], meshCell->getNuSigmaF()[0] / meshCell->getSigmaA()[0], ratio);
 		}
 	}
 
 	/* compute total residual and average ratio */
-	res_tot = leak_tot + absorb_tot - fis_tot;
-	ratio_tot = (fis_tot - absorb_tot) / leak_tot;
-	log_printf(NORMAL, "Total leak: %f, absorb: %f, fis: %f, res: %f, keff: %f, keff_in: %f, ratio: %f", leak_tot, absorb_tot, fis_tot, res_tot, fis_rate_tot/absorb_tot, keff, ratio_tot);
+	log_printf(NORMAL, "CMFD fis: %f, absorb: %f, leak: %f, keff: %f", fis, absorb, leak, fis/(leak + absorb));
 }
+
+
+FlatSourceRegion* Solver::getFSRs(){
+
+	return _flat_source_regions;
+}
+
+
+
+
+
+
+
 

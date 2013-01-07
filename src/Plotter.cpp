@@ -28,9 +28,12 @@ Plotter::Plotter(Geometry* geom, const int bitDim, std::string extension, bool s
 	_height = _geom->getHeight();
 	double ratio = _width/_height;
 
+
 	/* set pixel dimensions of plots */
 	_bit_length_x = int (bitDim*ratio);
 	_bit_length_y = bitDim;
+
+	_FSR_map = new int[_bit_length_x*_bit_length_y];
 
 	/* make multiplier for translating geometry coordinates
 	 * to bitmap coordinates.
@@ -263,7 +266,7 @@ void Plotter::makeRegionMap(int* pixMapFSR, float* pixMap, double* regionMap){
  * Loops over pixels in pixMap array and finds the corresponding
  * FSR in geometry.
  */
-void Plotter::makeFSRMap(int* pixMap){
+void Plotter::makeFSRMap(){
 	log_printf(NORMAL, "Generating FSR maps...");
 
 	/* initialize variables */
@@ -284,13 +287,29 @@ void Plotter::makeFSRMap(int* pixMap){
 			_geom->findCell(&point);
 
 			/* Store FSR id in pixMap */
-			pixMap[y * _bit_length_x + x] = _geom->findFSRId(&point);
+			_FSR_map[y * _bit_length_x + x] = _geom->findFSRId(&point);
 
 			/* Remove all allocated localcoords */
 			point.prune();
 		}
 	}
 }
+
+int *Plotter::getFSRMap(){
+	return _FSR_map;
+}
+
+void Plotter::copyFSRMap(int *pixels){
+
+	for (int x = 0; x < _bit_length_x; x++){
+		for (int y = 0; y < _bit_length_y; y++){
+			pixels[y * _bit_length_x + x] = _FSR_map[y * _bit_length_x + x];
+		}
+	}
+}
+
+
+
 
 /* plot CMFD mesh */
 void Plotter::plotCMFDMesh(Mesh* mesh){
@@ -813,6 +832,7 @@ void Plotter::plotCMFDflux(Mesh* mesh, std::string title1, int iter_num){
 	double x_global;
 	double y_global;
 	std::stringstream string;
+	std::stringstream num;
 	std::string title_str;
 
 	int ng = 1;
@@ -833,8 +853,11 @@ void Plotter::plotCMFDflux(Mesh* mesh, std::string title1, int iter_num){
 			}
 		}
 
+
+		num.str("");
+		num << std::setw(5) << std::setfill('0') << iter_num;
 		string.str("");
-		string << title1 << "_old_i" << iter_num << "_g_" << e+1;
+		string << title1 << "_old_i_" << num.str() << "_g_" << e+1;
 		title_str = string.str();
 
 
@@ -862,7 +885,7 @@ void Plotter::plotCMFDflux(Mesh* mesh, std::string title1, int iter_num){
 		}
 
 		string.str("");
-		string << title1 << "_new_i" << iter_num << "_g_" << e+1;
+		string << title1 << "_new_i_" << num.str() << "_g_" << e+1;
 		title_str = string.str();
 
 		/* create filename with correct extension */
@@ -875,6 +898,36 @@ void Plotter::plotCMFDflux(Mesh* mesh, std::string title1, int iter_num){
 		}
 
 	}
+
+	/* PLOT FLUX DIFFERENCE */
+
+	for (int e = 0; e < ng; e++){
+
+		/* find meshCell for each pixel */
+		for (int y=0;y < _bit_length_y; y++){
+			for (int x = 0; x < _bit_length_x; x++){
+				x_global = convertToGeometryX(x);
+				y_global = convertToGeometryY(y);
+				bitMap->pixels[y * _bit_length_x + x] = mesh->getCells(mesh->findMeshCell(x_global, y_global))->getNewFlux()[e]
+				   - mesh->getCells(mesh->findMeshCell(x_global, y_global))->getOldFlux()[e];
+			}
+		}
+
+		string.str("");
+		string << "res" << "_new_i_" << num.str() << "_g_" << e+1;
+		title_str = string.str();
+
+		/* create filename with correct extension */
+		if (_extension == "tiff" || _extension == "jpg" || _extension == "png"){
+			plot(bitMap, title_str, _extension);
+		}
+		else{
+			log_printf(WARNING, "CMFD flux can only be plotted in tiff, jpg, and png. Plotting CMFD flux as png...");
+			plot(bitMap, title_str, "png");
+		}
+
+	}
+
 
 	deleteBitMap(bitMap);
 }
@@ -983,7 +1036,6 @@ void Plotter::plotCMFDKeff(Mesh* mesh, int num_iter){
 	deleteBitMap(bitMap);
 
 }
-
 
 
 

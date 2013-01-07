@@ -129,9 +129,11 @@ void Mesh::setCellBounds(){
 
 }
 
-void Mesh::setFSRBounds(){
+void Mesh::setFSRBounds(boundaryType left, boundaryType right, boundaryType bottom, boundaryType top){
 
-	_fsr_indices = new int[2 * _cell_width * _cell_height];
+	_fsr_indices = new int        [2 * _cell_width * _cell_height];
+	_cell_bounds = new double     [4 * _cell_width * _cell_height];
+	_surfaces =  new MeshSurface *[8 * _cell_width * _cell_height];
 
 	int min;
 	int max;
@@ -152,29 +154,123 @@ void Mesh::setFSRBounds(){
 		_cells[i].setFSREnd(max);
 		_fsr_indices[2*i] = min;
 		_fsr_indices[2*i+1] = max;
+
+		_cell_bounds[i*4  ] = _cells[i].getBounds()[0];
+		_cell_bounds[i*4+1] = _cells[i].getBounds()[1];
+		_cell_bounds[i*4+2] = _cells[i].getBounds()[2];
+		_cell_bounds[i*4+3] = _cells[i].getBounds()[3];
+
+		_surfaces[i*8  ] = _cells[i].getMeshSurfaces(0);
+		_surfaces[i*8+1] = _cells[i].getMeshSurfaces(1);
+		_surfaces[i*8+2] = _cells[i].getMeshSurfaces(2);
+		_surfaces[i*8+3] = _cells[i].getMeshSurfaces(3);
+		_surfaces[i*8+4] = _cells[i].getMeshSurfaces(4);
+		_surfaces[i*8+5] = _cells[i].getMeshSurfaces(5);
+		_surfaces[i*8+6] = _cells[i].getMeshSurfaces(6);
+		_surfaces[i*8+7] = _cells[i].getMeshSurfaces(7);
+
 	}
+
+	for (int x = 0; x < _cell_width; x++){
+		for (int y = 0; y < _cell_height; y++){
+
+			/* left */
+			if (x == 0){
+				if (left == VACUUM){
+					_cells[y*_cell_width+x].getMeshSurfaces(0)->setBoundary(VACUUM);
+				}
+				else{
+					_cells[y*_cell_width+x].getMeshSurfaces(0)->setBoundary(REFLECTIVE);
+				}
+			}
+
+			/* right */
+			if (x == _cell_width-1){
+				if (right == VACUUM){
+					_cells[y*_cell_width+x].getMeshSurfaces(2)->setBoundary(VACUUM);
+				}
+				else{
+					_cells[y*_cell_width+x].getMeshSurfaces(2)->setBoundary(REFLECTIVE);
+				}
+			}
+
+			/* bottom */
+			if (y == _cell_height - 1){
+				if (bottom == VACUUM){
+					_cells[y*_cell_width+x].getMeshSurfaces(1)->setBoundary(VACUUM);
+				}
+				else{
+					_cells[y*_cell_width+x].getMeshSurfaces(1)->setBoundary(REFLECTIVE);
+				}
+			}
+
+			/* top */
+			if (y == 0){
+				if (top == VACUUM){
+					_cells[y*_cell_width+x].getMeshSurfaces(3)->setBoundary(VACUUM);
+				}
+				else{
+					_cells[y*_cell_width+x].getMeshSurfaces(3)->setBoundary(REFLECTIVE);
+				}
+			}
+
+		}
+	}
+
+
 }
 
 
 /* Using an fsr_id and coordinate, find which surface a coordinate is on */
-MeshSurface* Mesh::findMeshSurface(int fsr_id, LocalCoords* coord){
-	MeshSurface* meshSurface = NULL;
+int Mesh::findMeshSurface(int fsr_id, LocalCoords* coord){
+
+	int surface = -1;
+	double x = coord->getX();
+	double y = coord->getY();
 
 	/* find which MeshCell fsr_id is in -> get meshSuface that coord is on*/
-//	for (int i = 0; i < _cell_width * _cell_height; i++){
-//		if (fsr_id >= _cells[i].getFSRStart() && fsr_id <= _cells[i].getFSREnd()){
-//			meshSurface = _cells[i].findSurface(coord, i);
-//			break;
-//		}
-//	}
 	for (int i = 0; i < _cell_width * _cell_height; i++){
 		if (fsr_id >= _fsr_indices[2*i] && fsr_id <= _fsr_indices[2*i+1]){
-			meshSurface = _cells[i].findSurface(coord, i);
+
+			/* find which surface coord is on */
+			/* left */
+			if (fabs(x - _cell_bounds[i*4+0]) < 1e-8){
+				if (fabs(y - _cell_bounds[i*4+1]) > 1e-8 && fabs(y - _cell_bounds[i*4+3]) > 1e-8){
+					surface = i*8+0;
+				}
+				else if (fabs(y - _cell_bounds[i*4+3]) < 1e-8){
+					surface = i*8+7;
+				}
+				else{
+					surface = i*8+4;
+				}
+			}
+			/* right */
+			else if (fabs(x - _cell_bounds[i*4+2]) < 1e-8){
+				if (fabs(y - _cell_bounds[i*4+1]) > 1e-8 && fabs(y - _cell_bounds[i*4+3]) > 1e-8){
+					surface = i*8+2;
+				}
+				else if (fabs(y - _cell_bounds[i*4+3]) < 1e-8){
+					surface = i*8+6;
+				}
+				else{
+					surface = i*8+5;
+				}
+			}
+			/* top */
+			else if (fabs(y - _cell_bounds[i*4+3]) < 1e-8){
+				surface = i*8+3;
+			}
+			/* bottom */
+			else if (fabs(y - _cell_bounds[i*4+1]) < 1e-8){
+				surface = i*8+1;
+			}
+
 			break;
 		}
 	}
 
-	return meshSurface;
+	return surface;
 }
 
 void Mesh::printBounds(){
@@ -386,7 +482,15 @@ double Mesh::getKeffMOC(int iter){
 	return _keff_moc[iter];
 }
 
+MeshSurface **Mesh::getSurfaces(){
+	return _surfaces;
+}
 
+double Mesh::getOldTime(){
+	return _old_time;
+}
 
-
+void Mesh::setOldTime(double time){
+	_old_time = time;
+}
 
