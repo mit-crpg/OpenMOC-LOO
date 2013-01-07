@@ -17,6 +17,7 @@
  */
 Solver::Solver(Geometry* geom, TrackGenerator* track_generator, Plotter* plotter, Cmfd* cmfd,
 		bool updateFlux, double keffConvThresh, bool computePowers, bool runCmfd, bool diffusion) {
+
 	_geom = geom;
 	_quad = new Quadrature(TABUCHI);
 	_num_FSRs = geom->getNumFSRs();
@@ -31,6 +32,7 @@ Solver::Solver(Geometry* geom, TrackGenerator* track_generator, Plotter* plotter
 	_run_cmfd = runCmfd;
 	_k_eff = 0.0;
 	_diffusion = diffusion;
+
 	try{
 		_flat_source_regions = new FlatSourceRegion[_num_FSRs];
 		_FSRs_to_powers = new double[_num_FSRs];
@@ -434,14 +436,19 @@ void Solver::updateKeff(int iteration) {
 		}
 	}
     
-    _geom->getMesh()->setKeffMOC(tot_fission/(tot_abs + leakage), iteration);
-    log_printf(DEBUG, "MOC fis: %f, abs: %f, leak: %f, k_eff = %f", tot_fission, tot_abs, leakage, tot_fission/(tot_abs + leakage));
-    
-    if (_update_flux == false){
-        _k_eff = tot_fission/(tot_abs + leakage);
-        log_printf(INFO, "Computed k_eff = %f", _k_eff);
-    }
-    
+	_k_eff = tot_fission/(tot_abs + leakage);
+	log_printf(INFO, "Computed k_eff = %f", _k_eff);
+
+	if (_run_cmfd){
+		_geom->getMesh()->setKeffMOC(tot_fission/(tot_abs + leakage), iteration);
+		log_printf(DEBUG, "MOC fis: %f, abs: %f, leak: %f, k_eff = %f", tot_fission, tot_abs, leakage, tot_fission/(tot_abs + leakage));
+
+		if (_update_flux){
+			_k_eff = _cmfd->getKeff();
+            _cmfd->updateMOCFlux();
+		}
+	}
+
 	return;
 }
 
@@ -667,8 +674,11 @@ void Solver::fixedSourceIteration(int max_iterations) {
 
 		/* Initialize flux in each region to zero */
 		zeroFSRFluxes();
-		zeroMeshCells();
 		zeroLeakage();
+
+		if (_run_cmfd){
+			zeroMeshCells();
+		}
 
 		/* Loop over azimuthal each thread and azimuthal angle*
 		 * If we are using OpenMP then we create a separate thread
@@ -754,22 +764,24 @@ void Solver::fixedSourceIteration(int max_iterations) {
 #endif
 
 					/* if segment crosses a surface in fwd direction, tally current/weight */
-					if (segment->_mesh_surface_fwd != -1){
-						meshSurface = meshSurfaces[segment->_mesh_surface_fwd];
+					if (_run_cmfd){
+						if (segment->_mesh_surface_fwd != -1){
+							meshSurface = meshSurfaces[segment->_mesh_surface_fwd];
 
-						/* set polar angle * energy group to 0 */
-						pe = 0;
+							/* set polar angle * energy group to 0 */
+							pe = 0;
 
-						/* loop over energy groups */
-						for (e = 0; e < NUM_ENERGY_GROUPS; e++) {
+							/* loop over energy groups */
+							for (e = 0; e < NUM_ENERGY_GROUPS; e++) {
 
-							/* loop over polar angles */
-							for (p = 0; p < NUM_POLAR_ANGLES; p++){
+								/* loop over polar angles */
+								for (p = 0; p < NUM_POLAR_ANGLES; p++){
 
-								/* increment current (polar and azimuthal weighted flux, group)*/
-								meshSurface->incrementCurrent(polar_fluxes[pe]*weights[p]/2.0, e);
+									/* increment current (polar and azimuthal weighted flux, group)*/
+									meshSurface->incrementCurrent(polar_fluxes[pe]*weights[p]/2.0, e);
 
-								pe++;
+									pe++;
+								}
 							}
 						}
 					}
@@ -842,22 +854,24 @@ void Solver::fixedSourceIteration(int max_iterations) {
 #endif
 
 					/* if segment crosses a surface in bwd direction, tally current/weight */
-					if (segment->_mesh_surface_bwd != -1){
-						meshSurface = meshSurfaces[segment->_mesh_surface_bwd];
+					if (_run_cmfd){
+						if (segment->_mesh_surface_bwd != -1){
+							meshSurface = meshSurfaces[segment->_mesh_surface_bwd];
 
-						/* set polar angle * energy group to num groups * num angles */
-						pe = GRP_TIMES_ANG;
+							/* set polar angle * energy group to num groups * num angles */
+							pe = GRP_TIMES_ANG;
 
-						/* loop over energy groups */
-						for (e = 0; e < NUM_ENERGY_GROUPS; e++) {
+							/* loop over energy groups */
+							for (e = 0; e < NUM_ENERGY_GROUPS; e++) {
 
-							/* loop over polar angles */
-							for (p = 0; p < NUM_POLAR_ANGLES; p++){
+								/* loop over polar angles */
+								for (p = 0; p < NUM_POLAR_ANGLES; p++){
 
-								/* increment current (polar and azimuthal weighted flux, group)*/
-								meshSurface->incrementCurrent(polar_fluxes[pe]*weights[p]/2.0, e);
+									/* increment current (polar and azimuthal weighted flux, group)*/
+									meshSurface->incrementCurrent(polar_fluxes[pe]*weights[p]/2.0, e);
 
-								pe++;
+									pe++;
+								}
 							}
 						}
 					}
@@ -1124,33 +1138,31 @@ double Solver::computeKeff(int max_iterations) {
 		fixedSourceIteration(1);
 
 		/* Initialize CMFD xs and d's */
-		_cmfd->computeXS(_flat_source_regions);
-		_cmfd->computeDs();
-
-		/* run diffision problem on 1st iteration */
-		if (i == 0 && _diffusion == true){
-			cmfd_keff = _cmfd->computeCMFDFluxPower(DIFFUSION, i);
-		}
-
 		if (_run_cmfd){
-			cmfd_keff = _cmfd->computeCMFDFluxPower(CMFD, i);
+
+			/* compute xs and diffusion coefficients */
+			_cmfd->computeXS(_flat_source_regions);
+			_cmfd->computeDs();
+
+			/* run diffusion problem on initial geometry */
+			if (i == 0 && _diffusion == true){
+				cmfd_keff = _cmfd->computeCMFDFluxPower(DIFFUSION, i);
+			}
+
+			/* run CMFD diffusion problem */
+			if (_run_cmfd)
+				cmfd_keff = _cmfd->computeCMFDFluxPower(CMFD, i);
+
 		}
 
 		/* Update k_eff */
         updateKeff(i);
-		if (_update_flux == true){
-			_k_eff = cmfd_keff;
-            _cmfd->updateMOCFlux();
-        }
-        
+
 		/* If k_eff converged, return k_eff */
 		if (fabs(_old_k_effs.back() - _k_eff) < _keff_conv_thresh){
 			/* Plot net current, surface flux, xs, and d_hats for mesh */
 
 			fixedSourceIteration(1000);
-//			fixedSourceIteration(1);
-			_cmfd->computeXS(_flat_source_regions);
-			_cmfd->computeDs();
 
 			if (_compute_powers == true){
 				computePinPowers();

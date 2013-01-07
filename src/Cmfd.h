@@ -53,9 +53,10 @@ private:
 	Mat _A;
 	Mat _M;
 	Vec _phi_new;
+	double _keff;
 
 public:
-	Cmfd(Geometry* geom, Plotter* plotter, Mesh* mesh, bool updateFlux);
+	Cmfd(Geometry* geom, Plotter* plotter, Mesh* mesh, bool updateFlux, bool runCmfd);
 	virtual ~Cmfd();
  	void computeDs();
  	void computeXS(FlatSourceRegion* fsrs);
@@ -67,6 +68,7 @@ public:
  	Mat getM();
  	Vec getPhiNew();
  	int createAMPhi(PetscInt size1, PetscInt size2, int cells);
+ 	double getKeff();
 
 
 };

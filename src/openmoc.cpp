@@ -76,15 +76,19 @@ int main(int argc, char **argv) {
 	TrackGenerator track_generator(&geometry, &plotter, opts.getNumAzim(),
 				       opts.getTrackSpacing());
 
+	/* Tell geometry whether CMFD is on/off */
+	geometry.setCmfd(opts.getCmfd());
+
 	/* Make CMFD mesh */
-	geometry.makeCMFDMesh(geometry.getMesh(), opts.getNumAzim(), opts.getGroupStructure(), opts.getPrintMatrices(), opts.getCmfdLevel());
+	if (opts.getCmfd())
+		geometry.makeCMFDMesh(geometry.getMesh(), opts.getNumAzim(), opts.getGroupStructure(), opts.getPrintMatrices(), opts.getCmfdLevel());
 
 	/* make FSR map for plotting */
 	if (opts.plotCurrent() || opts.plotDiffusion() || opts.plotFluxes() || opts.plotSpecs())
 		plotter.makeFSRMap();
 
 	/* plot CMFD mesh */
-	if (opts.plotSpecs()){
+	if (opts.plotSpecs() && opts.getCmfd()){
 		plotter.plotCMFDMesh(geometry.getMesh());
 	}
 
@@ -104,7 +108,7 @@ int main(int argc, char **argv) {
 	timer.recordSplit("Segmenting tracks");
 
 	/* create CMFD class */
-	Cmfd cmfd(&geometry, &plotter, geometry.getMesh(), opts.updateFlux());
+	Cmfd cmfd(&geometry, &plotter, geometry.getMesh(), opts.updateFlux(), opts.getCmfd());
 
 	/* Fixed source iteration to solve for k_eff */
 	Solver solver(&geometry, &track_generator, &plotter, &cmfd, opts.updateFlux(), opts.getKeffConvThresh(), opts.computePinPowers(), opts.getCmfd(), opts.getDiffusion());

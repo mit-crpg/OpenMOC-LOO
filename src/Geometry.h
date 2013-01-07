@@ -46,6 +46,7 @@ private:
 	int* _FSRs_to_materials;
 	double _max_seg_length;
 	double _min_seg_length;
+	bool _run_cmfd;
 	std::map<int, Material*> _materials;
 	std::map<int, Surface*> _surfaces;
 	std::map<int, Cell*> _cells;
@@ -115,6 +116,7 @@ public:
 	int nextLatticeHeight(Universe* curr);
 	Mesh* getMesh();
 	int findMeshDepth(Universe* univ, int cmfd_level);
+	void setCmfd(bool runCmfd);
 
 };
 

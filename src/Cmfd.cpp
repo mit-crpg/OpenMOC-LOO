@@ -14,24 +14,29 @@
  * @param geom pointer to the geometry
  * @param track_generator pointer to the trackgenerator
  */
-Cmfd::Cmfd(Geometry* geom, Plotter* plotter, Mesh* mesh, bool updateFlux) {
+Cmfd::Cmfd(Geometry* geom, Plotter* plotter, Mesh* mesh, bool updateFlux, bool runCmfd) {
+
 	_geom = geom;
 	_plotter = plotter;
 	_mesh = mesh;
 	_update_flux = updateFlux;
 	_quad = new Quadrature(TABUCHI);
 
-	PetscInt size1, size2;
-	int ng = NUM_ENERGY_GROUPS;
-	if (_mesh->getMultigroup() == false){
-		ng = 1;
-	}
+	if (runCmfd){
 
-	int cw = mesh->getCellWidth();
-	int ch = mesh->getCellHeight();
-	size1 = cw*ch*ng;
-	size2 = 4 + ng;
-	cw = createAMPhi(size1, size2, ch*cw*ng);
+		PetscInt size1, size2;
+		int ng = NUM_ENERGY_GROUPS;
+		if (_mesh->getMultigroup() == false){
+			ng = 1;
+		}
+
+		int cw = mesh->getCellWidth();
+		int ch = mesh->getCellHeight();
+		size1 = cw*ch*ng;
+		size2 = 4 + ng;
+		cw = createAMPhi(size1, size2, ch*cw*ng);
+
+	}
 }
 
 /**
@@ -538,7 +543,6 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter){
 	log_printf(INFO, "Running diffusion solver...");
 
 	MeshCell* meshCell;
-	double keff;
 	int ng = NUM_ENERGY_GROUPS;
 	if (_mesh->getMultigroup() == false){
 		ng = 1;
@@ -566,7 +570,7 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter){
 	}
 
 	PetscScalar sumold, sumnew, scale_val, eps;
-	double criteria = 1e-8;
+	double criteria = 1e-10;
 
 	Vec sold, snew, res;
 	petsc_err = VecCreateSeq(PETSC_COMM_WORLD, ch*cw*ng, &sold);
@@ -626,8 +630,8 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter){
 		petsc_err = VecSum(snew, &sumnew);
 		CHKERRQ(petsc_err);
 
-		keff = sumnew / sumold;
-		petsc_err = VecScale(sold, keff);
+		_keff = sumnew / sumold;
+		petsc_err = VecScale(sold, _keff);
 		scale_val = 1e-15;
 		petsc_err = VecShift(snew, scale_val);
 		petsc_err = VecPointwiseDivide(res, sold, snew);
@@ -651,7 +655,7 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter){
 		}
 	}
 
-	log_printf(NORMAL, "Diffusion solver iter: %i, keff: %f", iter, keff);
+	log_printf(NORMAL, "Diffusion solver iter: %i, keff: %f", iter, _keff);
 
 	petsc_err = VecSum(_phi_new, &sumnew);
 	scale_val = (cw*ch*ng) / sumnew;
@@ -681,14 +685,14 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter){
 	CHKERRQ(petsc_err);
 
 	MatMult(_A,_phi_new, sold);
-	sumold = 1/keff;
+	sumold = 1/_keff;
 	MatScale(_M,sumold);
 	MatMult(_M,_phi_new,snew);
 	sumold = -1;
 	VecWAXPY(res, sumold, snew, sold);
 	VecSum(res,&sumold);
 
-	log_printf(NORMAL, "CMFD/DIFFUSION residual: %f", double(sumold));
+	log_printf(DEBUG, "CMFD/DIFFUSION residual: %f", double(sumold));
 
 	/* destroy matrices and vectors */
 	petsc_err = VecDestroy(&phi_old);
@@ -717,10 +721,10 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter){
 	}
 
 	if (solveMethod == CMFD){
-		_mesh->setKeffCMFD(keff, moc_iter);
+		_mesh->setKeffCMFD(_keff, moc_iter);
 	}
 
-	return keff;
+	return _keff;
 }
 
 
@@ -991,7 +995,9 @@ Vec Cmfd::getPhiNew(){
 
 }
 
-
+double Cmfd::getKeff(){
+	return _keff;
+}
 
 
 

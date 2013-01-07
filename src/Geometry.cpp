@@ -1789,9 +1789,10 @@ void Geometry::segmentize(Track* track) {
 		new_segment->_region_id = findFSRId(&segment_start);
 
 		/* get pointer to mesh surfaces that the segment crosses */
-		new_segment->_mesh_surface_fwd = _mesh->findMeshSurface(new_segment->_region_id, &segment_end);
-		new_segment->_mesh_surface_bwd = _mesh->findMeshSurface(new_segment->_region_id, &segment_start);
-
+		if (_run_cmfd){
+			new_segment->_mesh_surface_fwd = _mesh->findMeshSurface(new_segment->_region_id, &segment_end);
+			new_segment->_mesh_surface_bwd = _mesh->findMeshSurface(new_segment->_region_id, &segment_start);
+		}
 
 		/* Checks to make sure that new segment does not have the same start
 		 * and end points */
@@ -2634,3 +2635,11 @@ double Geometry::computePinAbsorption
 
 	return sigma_a;
 }
+
+
+void Geometry::setCmfd(bool runCmfd){
+	_run_cmfd = runCmfd;
+}
+
+
+
