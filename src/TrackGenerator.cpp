@@ -184,7 +184,7 @@ void TrackGenerator::generateTracks() {
 			_azim_weights[i] = (x1 + x2) / (2 * M_PI) * d_eff[i] * 2;
 		}
 
-		log_printf(NORMAL, "Generating track start and end points...");
+		log_printf(INFO, "Generating track start and end points...");
 
 		/* Compute track starting and end points */
 		for (int i = 0; i < _num_azim; i++) {

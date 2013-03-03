@@ -61,7 +61,7 @@ public:
  	void computeDs();
  	void computeXS(FlatSourceRegion* fsrs);
  	double computeDiffCorrect(double d, double h);
- 	void updateMOCFlux();
+ 	void updateMOCFlux(int iteration);
  	int constructAMPhi(Mat A, Mat B, Vec phi_old, solveType solveMethod);
  	double computeCMFDFluxPower(solveType solveMethod, int moc_iter);
  	Mat getA();

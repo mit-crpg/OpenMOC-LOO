@@ -29,8 +29,8 @@ double MeshSurface::getCurrent(int group){
 	return _current[group];
 }
 
-void MeshSurface::incrementCurrent(double flux, int group){
-	_current[group] += flux;
+void MeshSurface::incrementCurrent(double current, int group){
+	_current[group] += current;
 }
 
 void MeshSurface::setDHat(double dHat, int e){

@@ -391,6 +391,7 @@ void Solver::updateKeff(int iteration) {
 	double* sigma_a;
 	double* nu_sigma_f;
 	double* flux;
+	double* chi;
 	double* mat_mult_a;
 	Material* material;
 	FlatSourceRegion* fsr;
@@ -407,12 +408,15 @@ void Solver::updateKeff(int iteration) {
 		material = fsr->getMaterial();
 		sigma_a = material->getSigmaA();
 		mat_mult_a = fsr->getMatMultA();
+		chi = material->getChi();
 		nu_sigma_f = material->getNuSigmaF();
 		flux = fsr->getFlux();
 
 		for (int e = 0; e < NUM_ENERGY_GROUPS; e++) {
 			abs += sigma_a[e] * flux[e] * fsr->getVolume() * mat_mult_a[e];
-			fission += nu_sigma_f[e] * flux[e] * fsr->getVolume();
+			for (int g = 0; g < NUM_ENERGY_GROUPS; g++){
+				fission += chi[e] * nu_sigma_f[g] * flux[g] * fsr->getVolume();
+			}
 		}
 
 			#if USE_OPENMP
@@ -437,15 +441,14 @@ void Solver::updateKeff(int iteration) {
 	}
     
 	_k_eff = tot_fission/(tot_abs + leakage);
-	log_printf(INFO, "Computed k_eff = %f", _k_eff);
 
 	if (_run_cmfd){
 		_geom->getMesh()->setKeffMOC(tot_fission/(tot_abs + leakage), iteration);
-		log_printf(DEBUG, "MOC fis: %f, abs: %f, leak: %f, k_eff = %f", tot_fission, tot_abs, leakage, tot_fission/(tot_abs + leakage));
+		log_printf(NORMAL, "CMFD k_eff: %f, MOC k_eff = %f", _cmfd->getKeff() , tot_fission/(tot_abs + leakage));
 
 		if (_update_flux){
 			_k_eff = _cmfd->getKeff();
-            _cmfd->updateMOCFlux();
+            _cmfd->updateMOCFlux(iteration);
 		}
 	}
 
@@ -788,6 +791,7 @@ void Solver::fixedSourceIteration(int max_iterations) {
 
 					/* Increment the scalar flux for this FSR */
 					fsr->incrementFlux(fsr_flux);
+
 				}
 
 				/* Transfer flux to outgoing track */
@@ -878,6 +882,7 @@ void Solver::fixedSourceIteration(int max_iterations) {
 
 					/* Increment the scalar flux for this FSR */
 					fsr->incrementFlux(fsr_flux);
+
 				}
 
 				/* Transfer flux to incoming track */
@@ -907,7 +912,6 @@ void Solver::fixedSourceIteration(int max_iterations) {
 			}
 		}
 
-
 		/* Add in source term and normalize flux to volume for each region */
 		/* Loop over flat source regions, energy groups */
 		#if USE_OPENMP
@@ -928,6 +932,19 @@ void Solver::fixedSourceIteration(int max_iterations) {
 			}
 		}
 
+//		/* Update the old scalar flux for each region, energy group */
+//		#if USE_OPENMP
+//		#pragma omp parallel for private(fsr, scalar_flux, old_scalar_flux)
+//		#endif
+//		for (int r = 0; r < _num_FSRs; r++) {
+//			fsr = &_flat_source_regions[r];
+//			scalar_flux = fsr->getFlux();
+//			old_scalar_flux = fsr->getOldFlux();
+//
+//			/* Update old scalar flux */
+//			for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
+//				old_scalar_flux[e] = scalar_flux[e];
+//		}
 
 		/* Check for convergence if max_iterations > 1 */
 		if (max_iterations > 1) {
@@ -952,20 +969,6 @@ void Solver::fixedSourceIteration(int max_iterations) {
 
 			if (converged)
 				return;
-		}
-
-		/* Update the old scalar flux for each region, energy group */
-		#if USE_OPENMP
-		#pragma omp parallel for private(fsr, scalar_flux, old_scalar_flux)
-		#endif
-		for (int r = 0; r < _num_FSRs; r++) {
-			fsr = &_flat_source_regions[r];
-			scalar_flux = fsr->getFlux();
-			old_scalar_flux = fsr->getOldFlux();
-
-			/* Update old scalar flux */
-			for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
-				old_scalar_flux[e] = scalar_flux[e];
 		}
 	}
 
@@ -1043,9 +1046,6 @@ void Solver::initializeSource(){
 	 * Compute the source for each region
 	 *********************************************************************/
 
-	abs_source_tot = 0;
-	fis_source_tot = 0;
-
 	/* For all regions, find the source */
 	for (int r = 0; r < _num_FSRs; r++) {
 
@@ -1061,7 +1061,6 @@ void Solver::initializeSource(){
 		sigma_a    = material->getSigmaA();
 		chi = material->getChi();
 		sigma_s = material->getSigmaS();
-		mat_mult_a = fsr->getMatMultA();
 		mat_mult = fsr->getMatMult();
 
 		start_index = material->getNuSigmaFStart();
@@ -1073,10 +1072,8 @@ void Solver::initializeSource(){
 
 		/* Compute total scattering source for group G */
 		for (int G = 0; G < NUM_ENERGY_GROUPS; G++) {
-			abs_source_tot  += scalar_flux[G] * sigma_a[G] * fsr->getVolume() * mat_mult_a[G];
-			fis_source_tot  += scalar_flux[G] * nu_sigma_f[G] * fsr->getVolume();
-			scatter_source = 0;
 
+			scatter_source = 0;
 			start_index = material->getSigmaSStart(G);
 			end_index = material->getSigmaSEnd(G);
 
@@ -1137,21 +1134,27 @@ double Solver::computeKeff(int max_iterations) {
 		/* Iterate on the flux with the new source */
 		fixedSourceIteration(1);
 
-		/* Initialize CMFD xs and d's */
+		/* Run CMFD acceleration */
 		if (_run_cmfd){
 
-			/* compute xs and diffusion coefficients */
+			setOldFSRFlux();
+			initializeSource();
+			fixedSourceIteration(1);
+
+			/* compute cross sections and diffusion coefficients */
 			_cmfd->computeXS(_flat_source_regions);
 			_cmfd->computeDs();
 
-			/* run diffusion problem on initial geometry */
+			/* Check for neutron balance */
+			checkNeutBal(_geom->getMesh());
+
+			/* Run diffusion problem on initial geometry */
 			if (i == 0 && _diffusion == true){
 				cmfd_keff = _cmfd->computeCMFDFluxPower(DIFFUSION, i);
 			}
 
-			/* run CMFD diffusion problem */
-			if (_run_cmfd)
-				cmfd_keff = _cmfd->computeCMFDFluxPower(CMFD, i);
+			/* Run CMFD diffusion problem */
+			cmfd_keff = _cmfd->computeCMFDFluxPower(CMFD, i);
 
 		}
 
@@ -1160,15 +1163,32 @@ double Solver::computeKeff(int max_iterations) {
 
 		/* If k_eff converged, return k_eff */
 		if (fabs(_old_k_effs.back() - _k_eff) < _keff_conv_thresh){
-			/* Plot net current, surface flux, xs, and d_hats for mesh */
 
+			/* Converge the flux */
 			fixedSourceIteration(1000);
 
+			if (_run_cmfd){
+				_cmfd->computeXS(_flat_source_regions);
+				_cmfd->computeDs();
+				cmfd_keff = _cmfd->computeCMFDFluxPower(CMFD, i);
+				updateKeff(2000);
+			}
+
+			/* plot pin powers */
 			if (_compute_powers == true){
 				computePinPowers();
 			}
 
+			/* plot CMFD flux and xs */
+			if (_run_cmfd && _plotter->plotCurrent()){
+				_plotter->plotDHats(_geom->getMesh(), 0);
+				_plotter->plotNetCurrents(_geom->getMesh());
+				_plotter->plotXS(_geom->getMesh(), 0);
+			}
+
+			/* plot MOC flux */
 			if (_plotter->plotFlux() == true){
+
 				/* Load fluxes into FSR to flux map */
 				for (int r=0; r < _num_FSRs; r++) {
 					double* fluxes = _flat_source_regions[r].getFlux();
@@ -1178,14 +1198,14 @@ double Solver::computeKeff(int max_iterations) {
 							_FSRs_to_fluxes[NUM_ENERGY_GROUPS][r] + fluxes[e];
 					}
 				}
+
 				plotFluxes(i+1);
 			}
 
 			return _k_eff;
 		}
 
-		/* If not converged, save old k_eff and pop off old_keff from
-		 *  previous iteration */
+		/* If not converged, save old k_eff and pop off old_keff from previous iteration */
 		_old_k_effs.push(_k_eff);
 		if (_old_k_effs.size() == NUM_KEFFS_TRACKED)
 			_old_k_effs.pop();
@@ -1214,9 +1234,9 @@ double Solver::computeKeff(int max_iterations) {
 /*
  * check neutron balance in each mesh cell
  */
-void Solver::checkNeutBal(Mesh* mesh, double keff){
+void Solver::checkNeutBal(Mesh* mesh){
 
-	log_printf(NORMAL, "Checking neutron balance...");
+	log_printf(INFO, "Checking neutron balance...");
 
 	/* residual = leakage + absorption - fission */
 
@@ -1244,7 +1264,22 @@ void Solver::checkNeutBal(Mesh* mesh, double keff){
 			for (int s = 0; s < 4; s++){
 				if (meshCell->getMeshSurfaces(s)->getBoundary() == VACUUM){
 					for (int e = 0; e < ng; e++){
-						leak += meshCell->getMeshSurfaces(s)->getCurrent(e);
+						if (s == 0){
+							leak += meshCell->getMeshSurfaces(s)->getDHat()[e] * meshCell->getOldFlux()[e]*meshCell->getHeight();
+							leak += meshCell->getMeshSurfaces(s)->getDTilde()[e] * meshCell->getOldFlux()[e]*meshCell->getHeight();
+						}
+						else if (s == 2){
+							leak += meshCell->getMeshSurfaces(s)->getDHat()[e] * meshCell->getOldFlux()[e]*meshCell->getHeight();
+							leak -= meshCell->getMeshSurfaces(s)->getDTilde()[e] * meshCell->getOldFlux()[e]*meshCell->getHeight();
+						}
+						else if (s == 1){
+							leak += meshCell->getMeshSurfaces(s)->getDHat()[e] * meshCell->getOldFlux()[e]*meshCell->getWidth();
+							leak -= meshCell->getMeshSurfaces(s)->getDTilde()[e] * meshCell->getOldFlux()[e]*meshCell->getWidth();
+						}
+						else if (s == 3){
+							leak += meshCell->getMeshSurfaces(s)->getDHat()[e] * meshCell->getOldFlux()[e]*meshCell->getWidth();
+							leak += meshCell->getMeshSurfaces(s)->getDTilde()[e] * meshCell->getOldFlux()[e]*meshCell->getWidth();
+						}
 					}
 				}
 			}
@@ -1259,7 +1294,7 @@ void Solver::checkNeutBal(Mesh* mesh, double keff){
 	}
 
 	/* compute total residual and average ratio */
-	log_printf(NORMAL, "CMFD fis: %f, absorb: %f, leak: %f, keff: %f", fis, absorb, leak, fis/(leak + absorb));
+	log_printf(INFO, "CMFD fis: %f, absorb: %f, leak: %f, keff: %f", fis, absorb, leak, fis/(leak + absorb));
 }
 
 
@@ -1269,6 +1304,25 @@ FlatSourceRegion* Solver::getFSRs(){
 }
 
 
+/* Set the Old Flux for each FSR equal to FSR flux */
+void Solver::setOldFSRFlux(){
+
+	FlatSourceRegion* fsr;
+
+	/* Compute total fission source for this region */
+	for (int r = 0; r < _num_FSRs; r++) {
+
+		/* Get pointers to important data structures */
+		fsr = &_flat_source_regions[r];
+
+		/* loop over energy groups */
+		for (int e = 0; e < NUM_ENERGY_GROUPS; e++){
+
+			fsr->setOldFlux(e, fsr->getFlux()[e]);
+
+		}
+	}
+}
 
 
 

@@ -90,6 +90,17 @@ void Cell::setSurfacePointer(Surface* surface) {
 
 		log_printf(INFO, "Set the surface pointer for cell id = %d for "
 				"surface id = %d", _id, surface->getId());
+
+		log_printf(INFO, "Set the surface pointer for cell id = %d for "
+				"surface id = %d", _id, surface->getId());
+
+		if (surface->getType() == XPLANE){
+			log_printf(INFO, "Surface %i has x = %f", surface->getId(), surface->getXMin());
+		}
+		else if (surface->getType() == YPLANE){
+			log_printf(INFO, "Surface %i has y = %f", surface->getId(), surface->getYMin());
+		}
+
 	}
 	catch (std::exception &e) {
 		log_printf(ERROR, 
@@ -179,8 +190,10 @@ bool Cell::cellContains(Point* point) {
 
 		/* If the surface evaluated point is not the same sign as the surface
 		 * or within a threshold, return false */
-		if (iter->second->evaluate(point) * iter->first < -ON_SURFACE_THRESH)
+		if (iter->second->evaluate(point) * iter->first < -ON_SURFACE_THRESH){
 			return false;
+		}
+
 	}
 
 	return true;

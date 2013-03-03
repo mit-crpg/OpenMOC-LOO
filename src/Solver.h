@@ -88,11 +88,12 @@ public:
 	void plotFluxes(int iter_num);
 	void checkTrackSpacing();
 	void computePinPowers();
- 	void checkNeutBal(Mesh* mesh, double keff);
+ 	void checkNeutBal(Mesh* mesh);
  	void renormCurrents(Mesh* mesh, double keff);
  	double getEps(Mesh* mesh, double keff, double renorm_factor);
  	void initializeSource();
  	FlatSourceRegion* getFSRs();
+ 	void setOldFSRFlux();
 
 };
 

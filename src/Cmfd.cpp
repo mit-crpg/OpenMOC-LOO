@@ -114,7 +114,7 @@ void Cmfd::computeXS(FlatSourceRegion* fsrs){
 				material = fsr->getMaterial();
 				chi = material->getChi()[e];
 				volume = fsr->getVolume();
-				flux = fsr->getFlux()[e];
+				flux = fsr->getOldFlux()[e];
 				abs = material->getSigmaA()[e];
 				tot = material->getSigmaT()[e];
 				nu_fis = material->getNuSigmaF()[e];
@@ -132,6 +132,7 @@ void Cmfd::computeXS(FlatSourceRegion* fsrs){
 
 				for (int g = 0; g < NUM_ENERGY_GROUPS; g++){
 					scat_tally_cell[g] += scat[g*NUM_ENERGY_GROUPS + e] * flux * volume * mat_mult[g*NUM_ENERGY_GROUPS + e];
+					log_printf(DEBUG, "scattering from group %i to %i: %f", e, g, scat[g*NUM_ENERGY_GROUPS + e]);
 				}
 
 				if (chi >= meshCell->getChi()[e]){
@@ -179,13 +180,15 @@ void Cmfd::computeXS(FlatSourceRegion* fsrs){
 	for (int i = 0; i < _mesh->getCellWidth() * _mesh->getCellHeight(); i++){
 		meshCell = _mesh->getCells(i);
 		for (int e = 0; e < NUM_ENERGY_GROUPS; e++){
-			fis_tot += meshCell->getNuSigmaF()[e]*meshCell->getOldFlux()[e]*meshCell->getVolume();
+			for (int g = 0; g < NUM_ENERGY_GROUPS; g++){
+				fis_tot += meshCell->getChi()[e] * meshCell->getNuSigmaF()[g]*meshCell->getOldFlux()[g]*meshCell->getVolume();
+			}
 			abs_tot += meshCell->getSigmaA()[e]*meshCell->getOldFlux()[e]*meshCell->getVolume();
 		}
 	}
 
 	/* print keff based on nu_fis / abs */
-	log_printf(DEBUG, "fission rate / abs rate: %f", fis_tot / abs_tot);
+	log_printf(NORMAL, "fission rate / abs rate: %f", fis_tot / abs_tot);
 }
 
 
@@ -272,23 +275,22 @@ void Cmfd::computeDs(){
 					/* compute d_tilde */
 					d_tilde = -(d_hat * (flux - flux_next) + current  / meshCell->getHeight()) / (flux_next + flux);
 
-					/* if abs(d_tilde) > abs(d_hat) -> make them equal in magnitude */
-					if (fabs(d_tilde) > fabs(d_hat)){
-						log_printf(DEBUG, "correcting Ds");
-
-						/* d_tilde is positive */
-						if (1 - fabs(d_tilde)/d_tilde < 1e-8){
-							d_hat   = - current/(2*flux*meshCell->getHeight());
-							d_tilde = - current/(2*flux*meshCell->getHeight());
-						}
-						else{
-							d_hat   = current/(2*flux_next*meshCell->getHeight());
-							d_tilde = - current/(2*flux_next*meshCell->getHeight());
-						}
-					}
 				}
 
+				/* if abs(d_tilde) > abs(d_hat) -> make them equal in magnitude */
+				if (fabs(d_tilde) > fabs(d_hat)){
+					log_printf(INFO, "correcting Ds: LEFT   group: %i, x: %i, y: %i, dh: %f, dt: %f, c:%f", e, x, y, d_hat, d_tilde, current);
 
+					/* d_tilde is positive */
+					if (1 - fabs(d_tilde)/d_tilde < 1e-8){
+						d_hat   = - current/(2*flux*meshCell->getHeight());
+						d_tilde = - current/(2*flux*meshCell->getHeight());
+					}
+					else{
+						d_hat   = current/(2*flux_next*meshCell->getHeight());
+						d_tilde = - current/(2*flux_next*meshCell->getHeight());
+					}
+				}
 
 				log_printf(DEBUG, "cell: %i, group: %i, side:   LEFT, current: %f, dhat: %f, dtilde: %f", y*cell_width + x, e, current, d_hat, d_tilde);
 
@@ -351,23 +353,24 @@ void Cmfd::computeDs(){
 					/* compute d_tilde */
 					d_tilde = -(d_hat * (flux_next - flux) + current / meshCell->getWidth()) / (flux_next + flux);
 
-					/* if abs(d_tilde) > abs(d_hat) -> make them equal to each other */
-					if (fabs(d_tilde) > fabs(d_hat)){
-						log_printf(DEBUG, "correcting Ds");
-
-						/* d_tilde is positive */
-						if (1 - fabs(d_tilde)/d_tilde < 1e-8){
-							d_hat   = - current/(2*flux_next*meshCell->getWidth());
-							d_tilde = - current/(2*flux_next*meshCell->getWidth());
-						}
-						else{
-							d_hat   = current/(2*flux*meshCell->getWidth());
-							d_tilde = - current/(2*flux*meshCell->getWidth());
-						}
-					}
 				}
 
 				log_printf(DEBUG, "cell: %i, group: %i, side: BOTTOM, current: %f, dhat: %f, dtilde: %f", y*cell_width + x, e, current, d_hat, d_tilde);
+
+				/* if abs(d_tilde) > abs(d_hat) -> make them equal to each other */
+				if (fabs(d_tilde) > fabs(d_hat)){
+					log_printf(INFO, "correcting Ds: BOTTOM group: %i, x: %i, y: %i, dh: %f, dt: %f, c:%f", e, x, y, d_hat, d_tilde, current);
+
+					/* d_tilde is positive */
+					if (1 - fabs(d_tilde)/d_tilde < 1e-8){
+						d_hat   = - current/(2*flux_next*meshCell->getWidth());
+						d_tilde = - current/(2*flux_next*meshCell->getWidth());
+					}
+					else{
+						d_hat   = current/(2*flux*meshCell->getWidth());
+						d_tilde = - current/(2*flux*meshCell->getWidth());
+					}
+				}
 
 				/* set d_hat and d_tilde */
 				meshCell->getMeshSurfaces(1)->setDHat(d_hat, e);
@@ -429,24 +432,25 @@ void Cmfd::computeDs(){
 					/* compute d_tilde */
 					d_tilde = -(d_hat * (flux_next - flux) + current / meshCell->getHeight()) / (flux_next + flux);
 
-					/* if abs(d_tilde) > abs(d_hat) -> make them equal to each other */
-					if (fabs(d_tilde) > fabs(d_hat)){
-						log_printf(DEBUG, "correcting Ds");
 
-						/* d_tilde is positive */
-						if (1 - fabs(d_tilde)/d_tilde < 1e-8){
-							d_hat   = - current/(2*flux_next*meshCell->getHeight());
-							d_tilde = - current/(2*flux_next*meshCell->getHeight());
-						}
-						else{
-							d_hat   = current/(2*flux*meshCell->getHeight());
-							d_tilde = - current/(2*flux*meshCell->getHeight());
-						}
-					}
 				}
 
 				log_printf(DEBUG, "cell: %i, group: %i, side:  RIGHT, current: %f, dhat: %f, dtilde: %f", y*cell_width + x, e, current, d_hat, d_tilde);
 
+				/* if abs(d_tilde) > abs(d_hat) -> make them equal to each other */
+				if (fabs(d_tilde) > fabs(d_hat)){
+					log_printf(INFO, "correcting Ds: RIGHT  group: %i, x: %i, y: %i, dh: %f, dt: %f, c: %f", e, x, y, d_hat, d_tilde, current);
+
+					/* d_tilde is positive */
+					if (1 - fabs(d_tilde)/d_tilde < 1e-8){
+						d_hat   = - current/(2*flux_next*meshCell->getHeight());
+						d_tilde = - current/(2*flux_next*meshCell->getHeight());
+					}
+					else{
+						d_hat   = current/(2*flux*meshCell->getHeight());
+						d_tilde = - current/(2*flux*meshCell->getHeight());
+					}
+				}
 
 				/* set d_hat and d_tilde */
 				meshCell->getMeshSurfaces(2)->setDHat(d_hat, e);
@@ -477,7 +481,6 @@ void Cmfd::computeDs(){
 
 						d_hat = 2 * d*f / meshCell->getHeight() / (1 + 4 * d*f / meshCell->getHeight());
 						d_tilde = - (d_hat * flux + current / meshCell->getWidth()) / flux;
-
 					}
 				}
 				else{
@@ -506,25 +509,24 @@ void Cmfd::computeDs(){
 
 					/* compute d_tilde */
 					d_tilde = -(d_hat * (flux - flux_next) + current / meshCell->getWidth()) / (flux_next + flux);
-
-					/* if abs(d_tilde) > abs(d_hat) -> make them equal to each other */
-					if (fabs(d_tilde) > fabs(d_hat)){
-						log_printf(DEBUG, "correcting Ds");
-
-						/* d_tilde is positive */
-						if (1 - fabs(d_tilde)/d_tilde < 1e-8){
-							d_hat   = - current/(2*flux*meshCell->getWidth());
-							d_tilde = - current/(2*flux*meshCell->getWidth());
-						}
-						else{
-							d_hat   = current/(2*flux_next*meshCell->getWidth());
-							d_tilde = - current/(2*flux_next*meshCell->getWidth());
-						}
-					}
-
 				}
 
 				log_printf(DEBUG, "cell: %i, group: %i, side:    TOP, current: %f, dhat: %f, dtilde: %f", y*cell_width + x, e, current, d_hat, d_tilde);
+
+				/* if abs(d_tilde) > abs(d_hat) -> make them equal to each other */
+				if (fabs(d_tilde) > fabs(d_hat)){
+					log_printf(INFO, "correcting Ds: TOP    group: %i, x: %i, y: %i, dh: %f, dt: %f, c:%f", e, x, y, d_hat, d_tilde, current);
+
+					/* d_tilde is positive */
+					if (1 - fabs(d_tilde)/d_tilde < 1e-8){
+						d_hat   = - current/(2*flux*meshCell->getWidth());
+						d_tilde = - current/(2*flux*meshCell->getWidth());
+					}
+					else{
+						d_hat   = current/(2*flux_next*meshCell->getWidth());
+						d_tilde = - current/(2*flux_next*meshCell->getWidth());
+					}
+				}
 
 				/* set d_hat and d_tilde */
 				meshCell->getMeshSurfaces(3)->setDHat(d_hat, e);
@@ -532,6 +534,50 @@ void Cmfd::computeDs(){
 			}
 		}
 	}
+
+
+	/* compute fis and abs rates based on tallied fluxes an XSs */
+	double fis_tot = 0;
+	double abs_tot = 0;
+	double leak = 0;
+
+	for (int i = 0; i < _mesh->getCellWidth() * _mesh->getCellHeight(); i++){
+		meshCell = _mesh->getCells(i);
+		for (int e = 0; e < ng; e++){
+			for (int g = 0; g < ng; g++){
+				fis_tot += meshCell->getChi()[e]*meshCell->getNuSigmaF()[g]*meshCell->getOldFlux()[g]*meshCell->getVolume();
+			}
+			abs_tot += meshCell->getSigmaA()[e]*meshCell->getOldFlux()[e]*meshCell->getVolume();
+
+			/* leakage */
+			for (int s = 0; s < 4; s++){
+				if (meshCell->getMeshSurfaces(s)->getBoundary() == VACUUM){
+					if (s == 0){
+						leak += meshCell->getMeshSurfaces(s)->getDHat()[e] * meshCell->getOldFlux()[e]*meshCell->getHeight();
+						leak += meshCell->getMeshSurfaces(s)->getDTilde()[e] * meshCell->getOldFlux()[e]*meshCell->getHeight();
+					}
+					else if (s == 2){
+						leak += meshCell->getMeshSurfaces(s)->getDHat()[e] * meshCell->getOldFlux()[e]*meshCell->getHeight();
+						leak -= meshCell->getMeshSurfaces(s)->getDTilde()[e] * meshCell->getOldFlux()[e]*meshCell->getHeight();
+					}
+					else if (s == 1){
+						leak += meshCell->getMeshSurfaces(s)->getDHat()[e] * meshCell->getOldFlux()[e]*meshCell->getWidth();
+						leak -= meshCell->getMeshSurfaces(s)->getDTilde()[e] * meshCell->getOldFlux()[e]*meshCell->getWidth();
+					}
+					else if (s == 3){
+						leak += meshCell->getMeshSurfaces(s)->getDHat()[e] * meshCell->getOldFlux()[e]*meshCell->getWidth();
+						leak += meshCell->getMeshSurfaces(s)->getDTilde()[e] * meshCell->getOldFlux()[e]*meshCell->getWidth();
+					}
+				}
+			}
+
+		}
+	}
+
+
+	/* print keff based on nu_fis / abs */
+//	log_printf(NORMAL, "fission rate / (abs + leak rate): %f, leak: %f", fis_tot / (abs_tot + leak), leak);
+
 }
 
 
@@ -564,13 +610,15 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter){
 	petsc_err = constructAMPhi(_A, _M, phi_old, solveMethod);
 	CHKERRQ(petsc_err);
 
-	int max_outer = 25;
+	int max_outer = 10;
 	if (solveMethod == DIFFUSION){
 		max_outer = 1000;
 	}
 
 	PetscScalar sumold, sumnew, scale_val, eps;
-	double criteria = 1e-10;
+	PetscReal rtol = 1e-10;
+	PetscReal atol = 1e-10;
+	double criteria = 1e-6;
 
 	Vec sold, snew, res;
 	petsc_err = VecCreateSeq(PETSC_COMM_WORLD, ch*cw*ng, &sold);
@@ -606,13 +654,22 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter){
 	/* initialize KSP solver */
 	KSP ksp;
 	petsc_err = KSPCreate(PETSC_COMM_WORLD, &ksp);
-	petsc_err = KSPSetTolerances(ksp, PETSC_DEFAULT, PETSC_DEFAULT, PETSC_DEFAULT, PETSC_DEFAULT);
+	petsc_err = KSPSetTolerances(ksp, rtol, atol, PETSC_DEFAULT, PETSC_DEFAULT);
 	petsc_err = KSPSetType(ksp, KSPGMRES);
 	petsc_err = KSPSetInitialGuessNonzero(ksp, PETSC_TRUE);
 	petsc_err = KSPSetOperators(ksp, _A, _A, SAME_NONZERO_PATTERN);
 	petsc_err = KSPSetUp(ksp);
 	petsc_err = KSPSetFromOptions(ksp);
 	CHKERRQ(petsc_err);
+
+	petsc_err = MatMult(_M, _phi_new, snew);
+	petsc_err = VecSum(snew, &sumnew);
+	petsc_err = MatMult(_A, _phi_new, sold);
+	petsc_err = VecSum(sold, &sumold);
+	_keff = float(sumnew)/float(sumold);
+	log_printf(NORMAL, "CMFD iter: %i, keff: %f", 0, _keff);
+	CHKERRQ(petsc_err);
+
 
 	petsc_err = MatMult(_M, _phi_new, sold);
 	petsc_err = VecSum(sold, &sumold);
@@ -631,6 +688,7 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter){
 		CHKERRQ(petsc_err);
 
 		_keff = sumnew / sumold;
+		log_printf(NORMAL, "CMFD iter: %i, keff: %f", iter + 1, _keff);
 		petsc_err = VecScale(sold, _keff);
 		scale_val = 1e-15;
 		petsc_err = VecShift(snew, scale_val);
@@ -655,7 +713,7 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter){
 		}
 	}
 
-	log_printf(NORMAL, "Diffusion solver iter: %i, keff: %f", iter, _keff);
+	log_printf(DEBUG, "Diffusion solver iter: %i, keff: %f", iter, _keff);
 
 	petsc_err = VecSum(_phi_new, &sumnew);
 	scale_val = (cw*ch*ng) / sumnew;
@@ -694,6 +752,11 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter){
 
 	log_printf(DEBUG, "CMFD/DIFFUSION residual: %f", double(sumold));
 
+//	petsc_err = PetscViewerPushFormat(PETSC_VIEWER_STDOUT_WORLD,PETSC_VIEWER_ASCII_MATLAB);
+//	petsc_err = MatView(_A,PETSC_VIEWER_STDOUT_WORLD);
+//	petsc_err = MatView(_M,PETSC_VIEWER_STDOUT_WORLD);
+//	CHKERRQ(petsc_err);
+
 	/* destroy matrices and vectors */
 	petsc_err = VecDestroy(&phi_old);
 	petsc_err = VecDestroy(&snew);
@@ -723,6 +786,47 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter){
 	if (solveMethod == CMFD){
 		_mesh->setKeffCMFD(_keff, moc_iter);
 	}
+
+
+//	/* compute fis and abs rates based on tallied fluxes an XSs */
+//	double fis_tot = 0;
+//	double abs_tot = 0;
+//	double leak = 0;
+//
+//	for (int i = 0; i < _mesh->getCellWidth() * _mesh->getCellHeight(); i++){
+//		meshCell = _mesh->getCells(i);
+//		for (int e = 0; e < ng; e++){
+//			for (int g = 0; g < ng; g++){
+//				fis_tot += meshCell->getChi()[e] * meshCell->getNuSigmaF()[g]*meshCell->getNewFlux()[g]*meshCell->getVolume();
+//			}
+//			abs_tot += meshCell->getSigmaA()[e]*meshCell->getNewFlux()[e]*meshCell->getVolume();
+//
+//			/* leakage */
+//			for (int s = 0; s < 4; s++){
+//				if (meshCell->getMeshSurfaces(s)->getBoundary() == VACUUM){
+//					if (s == 0){
+//						leak += meshCell->getMeshSurfaces(s)->getDHat()[e] * meshCell->getNewFlux()[e]*meshCell->getHeight();
+//						leak += meshCell->getMeshSurfaces(s)->getDTilde()[e] * meshCell->getNewFlux()[e]*meshCell->getHeight();
+//					}
+//					else if (s == 2){
+//						leak += meshCell->getMeshSurfaces(s)->getDHat()[e] * meshCell->getNewFlux()[e]*meshCell->getHeight();
+//						leak -= meshCell->getMeshSurfaces(s)->getDTilde()[e] * meshCell->getNewFlux()[e]*meshCell->getHeight();
+//					}
+//					else if (s == 1){
+//						leak += meshCell->getMeshSurfaces(s)->getDHat()[e] * meshCell->getNewFlux()[e]*meshCell->getWidth();
+//						leak -= meshCell->getMeshSurfaces(s)->getDTilde()[e] * meshCell->getNewFlux()[e]*meshCell->getWidth();
+//					}
+//					else if (s == 3){
+//						leak += meshCell->getMeshSurfaces(s)->getDHat()[e] * meshCell->getNewFlux()[e]*meshCell->getWidth();
+//						leak += meshCell->getMeshSurfaces(s)->getDTilde()[e] * meshCell->getNewFlux()[e]*meshCell->getWidth();
+//					}
+//				}
+//			}
+//
+//		}
+//	}
+//
+//	_keff = fis_tot / (abs_tot + leak);
 
 	return _keff;
 }
@@ -758,8 +862,9 @@ int Cmfd::constructAMPhi(Mat A, Mat M, Vec phi_old, solveType solveMethod){
 
 				/* get old flux */
 				indice1 = int((y*cw + x)*ng+e);
-
+				value = 1.0;
 				petsc_err = VecSetValues(phi_old, 1, &indice1, &meshCell->getOldFlux()[e], INSERT_VALUES);
+//				petsc_err = VecSetValues(phi_old, 1, &indice1, &value, INSERT_VALUES);
 				CHKERRQ(petsc_err);
 
 				/* diagonal - A */
@@ -913,7 +1018,7 @@ int Cmfd::constructAMPhi(Mat A, Mat M, Vec phi_old, solveType solveMethod){
 
 
 /* update the MOC flux in each FSR and track fluxes at the boundaries */
-void Cmfd::updateMOCFlux(){
+void Cmfd::updateMOCFlux(int iteration){
 
 	log_printf(INFO, "Updating MOC flux...");
 
@@ -951,8 +1056,10 @@ void Cmfd::updateMOCFlux(){
 			for (iter = meshCell->getFSRs()->begin(); iter != meshCell->getFSRs()->end(); ++iter) {
 				fsr = &_flat_source_regions[*iter];
 				/* get fsr flux */
-				flux = fsr->getFlux();
+				flux = fsr->getOldFlux();
 				fsr_new_flux = new_flux / old_flux * flux[e];
+
+				log_printf(INFO, "Updating flux in FSR: %i, cell: %i, group: %i, ratio: %f", fsr->getId() ,i, e, new_flux / old_flux);
 
 				/* set new flux in FSR */
 				fsr->setFlux(e, fsr_new_flux);
@@ -977,7 +1084,7 @@ double Cmfd::computeDiffCorrect(double d, double h){
 	}
 
     F = 1 + h * rho / (2 * d);
-    
+
 	return F;
 
 }

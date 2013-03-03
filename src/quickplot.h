@@ -455,7 +455,7 @@ int convertToBitmapX(BitMap<U>* bitMap, V x){
  */
 template <typename U, typename V>
 int convertToBitmapY(BitMap<U>* bitMap, V y){
-	return int(-(y - bitMap->center_y) * (bitMap->pixel_y - 1) / bitMap->geom_x + (bitMap->pixel_y - 1) / 2.0);
+	return int(-(y - bitMap->center_y) * (bitMap->pixel_y - 1) / bitMap->geom_y + (bitMap->pixel_y - 1) / 2.0);
 }
 
 /**

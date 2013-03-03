@@ -7,10 +7,10 @@
 <geometry>
 
 <!-- Definition of Cells -->
-  <cell id="1" fill="5" surfaces="1 -2 3 -4" />
+  <cell id="1" universe="0" fill="5" surfaces="1 -2 3 -4" />
   <cell id="101" universe="1" material="1" surfaces="-5"/>
   <cell id="102" universe="1" material="2" surfaces="5"/>
-  <cell id="201" universe="2" material="1" surfaces="-6"/>
+  <cell id="201" universe="2" material="2" surfaces="-6"/>
   <cell id="202" universe="2" material="2" surfaces="6"/>
 <!-- Definition of Lattices -->
   <lattice id="5">
@@ -28,6 +28,6 @@
   <surface id="2" type="x-plane" coeffs="1.0"  boundary="reflective"/>
   <surface id="3" type="y-plane" coeffs="-1.0" boundary="reflective" />
   <surface id="4" type="y-plane" coeffs="1.0"  boundary="reflective"/>
-  <surface id="5" type="circle"  coeffs="0.0 0.0 0.45" />
-  <surface id="6" type="circle"  coeffs="0.0 0.0 0.38" />
+  <surface id="5" type="circle"  coeffs="0.0 0.0 0.25" />
+  <surface id="6" type="circle"  coeffs="0.0 0.0 0.28" />
 </geometry>

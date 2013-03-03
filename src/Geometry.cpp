@@ -2458,8 +2458,6 @@ int Geometry::findMeshDepth(Universe* univ, int cmfd_level){
 		int min = 0;
 		int levels = 0;
 
-		log_printf(DEBUG, "findMeshDepth in lattice: (j,i) - (%i,%i)", j,i);
-
 		/* loop through lattice cells and recursively call  */
 		for (int x = 0; x <= j; x++){
 			for (int y = 0; y <= i; y++){

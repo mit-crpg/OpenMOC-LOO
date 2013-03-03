@@ -252,8 +252,8 @@ void Surface::incrementLeakage(reflectType direction, double leakage, int e){
 Plane::Plane(const int id, const boundaryType boundary,
 	     const double A, const double B,
 	     const double C): Surface(id, PLANE, boundary) {
-	_A = A;
-	_B = B;
+	_A = B;
+	_B = A;
 	_C = C;
 }
 
