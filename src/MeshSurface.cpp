@@ -33,6 +33,19 @@ void MeshSurface::incrementCurrent(double current, int group){
 	_current[group] += current;
 }
 
+void MeshSurface::setFlux(double flux, int group, int index){
+	_flux[group][index] = flux;
+}
+
+double MeshSurface::getFlux(int group, int index){
+	return _flux[group][index];
+}
+
+void MeshSurface::incrementFlux(double flux, int group, int index){
+	_flux[group][index] += flux;
+}
+
+
 void MeshSurface::setDHat(double dHat, int e){
 	_d_hat[e] = dHat;
 }

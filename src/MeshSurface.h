@@ -26,7 +26,7 @@
 class MeshSurface {
 private:
 	double _current[NUM_ENERGY_GROUPS];
-	double _flux[NUM_ENERGY_GROUPS];
+	double* _flux[NUM_ENERGY_GROUPS];
 	double _d_hat[NUM_ENERGY_GROUPS];
 	double _d_tilde[NUM_ENERGY_GROUPS];
 	double _d_dif[NUM_ENERGY_GROUPS];
@@ -42,6 +42,9 @@ public:
 	void setCurrent(double current, int group);
 	double getCurrent(int group);
 	void incrementCurrent(double current, int group);
+	void setFlux(double flux, int group, int index);
+	double getFlux(int group, int index);
+	void incrementFlux(double flux, int group, int index);
 	void setDHat(double dHat, int e);
 	double* getDHat();
 	void setDTilde(double dTilde, int e);
