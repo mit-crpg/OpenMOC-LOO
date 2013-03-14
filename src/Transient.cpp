@@ -137,8 +137,8 @@ arma::mat Transient::constructN(Mesh* mesh, arma::mat N, arma::mat A, arma::mat 
 	g2_mult = 1.0 / g2_mult;
 
 
-	colvec shape_1 = shape(span(0,nc-1));
-	colvec shape_2 = shape(span(nc,2*nc-1));
+//	colvec shape_1 = shape(span(0,nc-1));
+//	colvec shape_2 = shape(span(nc,2*nc-1));
 	N(0,0) = sum(((1-beta)*M(0,span::all)/_keff_0 * shape  - sum(A(span(0,4),span::all) * shape))) * g1_mult;
 	N(0,1) = sum(((1-beta)*M(1,span::all)/_keff_0 * shape)) * g1_mult;
 	N(1,0) = sum(- A(5,span::all) * shape ) * g2_mult;
@@ -354,7 +354,7 @@ void Transient::tempFeedback(Mesh* mesh, arma::colvec B, double time_new){
 
 	/* compute power multiplication factor */
 	double cell_power, cell_temp;
-	double abs_base, abs_new, scat_base;
+	double abs_base = 0, abs_new = 0, scat_base = 0;
 
 
 	MeshCell* meshCell;
@@ -555,7 +555,7 @@ double Transient::computePower(Mesh* mesh, arma::colvec B){
 /* compute the max normalized assembly power */
 double Transient::computePowerAss(Mesh* mesh, arma::colvec B){
 
-	MeshCell* meshCell;
+	MeshCell* meshCell = NULL;
 
 	double power = 0.0, power_max = 0.0, power_cell = 0.0;;
 	int cw = mesh->getCellWidth();

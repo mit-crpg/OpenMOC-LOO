@@ -4,11 +4,15 @@ COMPILEOPTS += -Werror
 COMPILEOPTS += -std=gnu++0x
 COMPILEOPTS += -fopenmp
 COMPILEOPTS += -O2
+COMPILEOPTS += -I/usr/include/petsc
+COMPILEOPTS += -I/usr/include/petsc/linux-gnu-cxx-debug/include
+COMPILEOPTS += -I/usr/include/petsc/linux-gnu-cxx-opt/include
 
 BINARIES    += openmoc
 LINKOPTS    += -lexpat
 LINKOPTS    += -lsilo
 LINKOPTS	+= -larmadillo
+LINKOPTS 	+= -lpetsc
 LINKOPTS    += `pkg-config Magick++ --libs`
 COMPILEOPTS += `pkg-config Magick++ --cflags`
 SOURCES     += openmoc.cpp

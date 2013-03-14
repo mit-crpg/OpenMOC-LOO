@@ -73,7 +73,8 @@ void Cmfd::computeXS(FlatSourceRegion* fsrs){
 	double* mat_mult;
 	double* mat_mult_a;
 	double abs_tally_cell, nu_fis_tally_cell, dif_tally_cell, rxn_tally_cell, vol_tally_cell, tot_tally_cell;
-	double nu_fis_tally, dif_tally, rxn_tally, abs_tally, tot_tally;
+	double nu_fis_tally = 0 , dif_tally = 0, rxn_tally = 0, abs_tally = 0, 
+		tot_tally = 0;
 	double scat_tally_cell[NUM_ENERGY_GROUPS];
 
 	MeshCell* meshCell;
@@ -196,7 +197,8 @@ void Cmfd::computeXS(FlatSourceRegion* fsrs){
 void Cmfd::computeDs(){
 
 	/* initialize variables */
-	double d, d_next, d_hat, d_tilde, current, flux, flux_next, f = 1, f_next = 1;
+	double d = 0, d_next = 0, d_hat = 0, d_tilde = 0, 
+		current = 0, flux = 0, flux_next = 0, f = 1, f_next = 1;
 	MeshCell* meshCell;
 	MeshCell* meshCellNext;
 	int ng = NUM_ENERGY_GROUPS;

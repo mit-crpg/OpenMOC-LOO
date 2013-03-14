@@ -984,7 +984,7 @@ void Solver::fixedSourceIteration(int max_iterations) {
 void Solver::initializeSource(){
 
 	double scatter_source, fission_source;
-	double fis_source_tot, abs_source_tot;
+	//double fis_source_tot, abs_source_tot;
 	double renorm_factor, volume;
 	double* nu_sigma_f;
 	double* sigma_a;
@@ -992,7 +992,7 @@ void Solver::initializeSource(){
 	double* chi;
 	double* scalar_flux;
 	double* source;
-	double* mat_mult_a;
+	//double* mat_mult_a;
 	double* mat_mult;
 	FlatSourceRegion* fsr;
 	Material* material;
