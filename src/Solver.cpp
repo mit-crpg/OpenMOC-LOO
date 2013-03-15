@@ -769,8 +769,7 @@ void Solver::tallyCmfdBackwardCurrent(Track *track, segment *segment,
 		   num groups * num angles */
 		pe = GRP_TIMES_ANG;
 
-		/* Tallies current (polar & azimuthal weighted flux)
-		   for CMFD */
+		/* Tallies current (polar & azimuthal weighted flux) for CMFD */
 		for (e = 0; e < NUM_ENERGY_GROUPS; e++) {
 			for (p = 0; p < NUM_POLAR_ANGLES; p++){
 				meshSurface->incrementCurrent
@@ -873,7 +872,8 @@ void Solver::fixedSourceIteration(int max_iterations) {
 #if !STORE_PREFACTORS
 					sigma_t = segment->_material->getSigmaT();
 
-					for (e = 0; e < NUM_ENERGY_GROUPS; e++) {
+					for (e = 0; e < NUM_ENERGY_GROUPS; e++)
+					{
 
 						fsr_flux[e] = 0;
 						sigma_t_l = sigma_t[e] * segment->_length;
@@ -882,7 +882,8 @@ void Solver::fixedSourceIteration(int max_iterations) {
 						index = std::min(index * 2 * NUM_POLAR_ANGLES,
 												_pre_factor_max_index);
 
-						for (p = 0; p < NUM_POLAR_ANGLES; p++){
+						for (p = 0; p < NUM_POLAR_ANGLES; p++)
+						{
 							delta = (polar_fluxes[pe] - ratios[e]) *
 							(1 - (_pre_factor_array[index + 2 * p] * sigma_t_l
 							+ _pre_factor_array[index + 2 * p + 1]));
@@ -924,8 +925,10 @@ void Solver::fixedSourceIteration(int max_iterations) {
 
 				/* Tallys leakage */
 				pe = 0;
-				for (e = 0; e < NUM_ENERGY_GROUPS; e++) {
-					for (p = 0; p < NUM_POLAR_ANGLES; p++){
+				for (e = 0; e < NUM_ENERGY_GROUPS; e++) 
+				{
+					for (p = 0; p < NUM_POLAR_ANGLES; p++)
+					{
 						_geom->getSurface(track->getSurfFwd())
 							->incrementLeakage(track->isReflOut(), 
 											   polar_fluxes[pe]*weights[p]/2.0,
