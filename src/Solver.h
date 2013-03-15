@@ -97,6 +97,14 @@ public:
  	void initializeSource();
  	FlatSourceRegion* getFSRs();
  	void setOldFSRFlux();
+	void tallyLooForwardFlux(Track *track, segment *segment, 
+							 MeshSurface **meshSurfaces);
+	void tallyLooBackwardFlux(Track *track, segment *segment, 
+							  MeshSurface **meshSurfaces);
+	void tallyCmfdForwardCurrent(Track *track, segment *segment, 
+							 MeshSurface **meshSurfaces);
+	void tallyCmfdBackwardCurrent(Track *track, segment *segment, 
+							  MeshSurface **meshSurfaces);
 
 };
 

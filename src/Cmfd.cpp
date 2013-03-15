@@ -575,11 +575,6 @@ void Cmfd::computeDs(){
 
 		}
 	}
-
-
-	/* print keff based on nu_fis / abs */
-//	log_printf(NORMAL, "fission rate / (abs + leak rate): %f, leak: %f", fis_tot / (abs_tot + leak), leak);
-
 }
 
 
@@ -669,7 +664,7 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter){
 	petsc_err = MatMult(_A, _phi_new, sold);
 	petsc_err = VecSum(sold, &sumold);
 	_keff = float(sumnew)/float(sumold);
-	log_printf(NORMAL, "CMFD iter: %i, keff: %f", 0, _keff);
+	log_printf(INFO, "CMFD iter: %i, keff: %f", 0, _keff);
 	CHKERRQ(petsc_err);
 
 
@@ -690,7 +685,7 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter){
 		CHKERRQ(petsc_err);
 
 		_keff = sumnew / sumold;
-		log_printf(NORMAL, "CMFD iter: %i, keff: %f", iter + 1, _keff);
+		log_printf(INFO, "CMFD iter: %i, keff: %f", iter + 1, _keff);
 		petsc_err = VecScale(sold, _keff);
 		scale_val = 1e-15;
 		petsc_err = VecShift(snew, scale_val);
