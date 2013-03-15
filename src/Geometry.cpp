@@ -2634,10 +2634,12 @@ double Geometry::computePinAbsorption
 	return sigma_a;
 }
 
-
 void Geometry::setCmfd(bool runCmfd){
 	_run_cmfd = runCmfd;
 }
 
+void Geometry::setLoo(bool runLoo){
+	_run_loo = runLoo;
+}
 
 

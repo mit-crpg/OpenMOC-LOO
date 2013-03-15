@@ -70,7 +70,8 @@ int main(int argc, char **argv) {
 
 	/* Initialize plotter */
 	Plotter plotter(&geometry, opts.getBitDimension(), opts.getExtension(),
-			opts.plotSpecs(), opts.plotFluxes(), opts.plotCurrent(), opts.plotDiffusion(), opts.plotKeff());
+			opts.plotSpecs(), opts.plotFluxes(), opts.plotCurrent(), 
+					opts.plotDiffusion(), opts.plotKeff());
 
 	/* Initialize track generator */
 	TrackGenerator track_generator(&geometry, &plotter, opts.getNumAzim(),
@@ -78,13 +79,17 @@ int main(int argc, char **argv) {
 
 	/* Tell geometry whether CMFD is on/off */
 	geometry.setCmfd(opts.getCmfd());
+	geometry.setLoo(opts.getLoo());
 
 	/* Make CMFD mesh */
-	if (opts.getCmfd())
-		geometry.makeCMFDMesh(geometry.getMesh(), opts.getNumAzim(), opts.getGroupStructure(), opts.getPrintMatrices(), opts.getCmfdLevel());
+	if (opts.getCmfd() || opts.getLoo())
+		geometry.makeCMFDMesh(geometry.getMesh(), opts.getNumAzim(), 
+							  opts.getGroupStructure(), opts.getPrintMatrices(),
+							  opts.getCmfdLevel());
 
 	/* make FSR map for plotting */
-	if (opts.plotCurrent() || opts.plotDiffusion() || opts.plotFluxes() || opts.plotSpecs())
+	if (opts.plotCurrent() || opts.plotDiffusion() || opts.plotFluxes() || 
+		opts.plotSpecs())
 		plotter.makeFSRMap();
 
 	/* plot CMFD mesh */
@@ -108,14 +113,20 @@ int main(int argc, char **argv) {
 	timer.recordSplit("Segmenting tracks");
 
 	/* create CMFD class */
-	Cmfd cmfd(&geometry, &plotter, geometry.getMesh(), opts.updateFlux(), opts.getCmfd());
+	Cmfd cmfd(&geometry, &plotter, geometry.getMesh(), opts.updateFlux(), 
+			  opts.getCmfd());
 
 	/* Fixed source iteration to solve for k_eff */
-	Solver solver(&geometry, &track_generator, &plotter, &cmfd, opts.updateFlux(), opts.getKeffConvThresh(), opts.computePinPowers(), opts.getCmfd(), opts.getDiffusion());
+	Solver solver(&geometry, &track_generator, &plotter, &cmfd, 
+				  opts.updateFlux(), opts.getKeffConvThresh(), 
+				  opts.computePinPowers(), opts.getCmfd(), opts.getLoo(),
+				  opts.getDiffusion());
 
 	if (opts.getTransient()){
 		/* Solve the transient problem */
-		Transient transient(&geometry, &cmfd, geometry.getMesh(), &solver, &plotter, opts.getTimeEnd(), opts.getTimeStepOuter(), opts.getTimeStepInner());
+		Transient transient(&geometry, &cmfd, geometry.getMesh(), &solver, 
+							&plotter, opts.getTimeEnd(), 
+							opts.getTimeStepOuter(), opts.getTimeStepInner());
 		timer.reset();
 		timer.start();
 		transient.solve();

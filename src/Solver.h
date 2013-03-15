@@ -66,14 +66,17 @@ private:
 	double _keff_conv_thresh;
 	bool _compute_powers;
 	bool _run_cmfd;
+	bool _run_loo;
 	bool _diffusion;
 #endif
 	void precomputeFactors();
 	double computePreFactor(segment* seg, int energy, int angle);
 	void initializeFSRs();
 public:
-	Solver(Geometry* geom, TrackGenerator* track_generator, Plotter* plotter, Cmfd* cmfd,
-			bool _update_flux, double keffConvThresh, bool computePowers, bool runCmfd, bool diffusion);
+	Solver(Geometry* geom, TrackGenerator* track_generator, 
+		   Plotter* plotter, Cmfd* cmfd,
+		   bool _update_flux, double keffConvThresh, 
+		   bool computePowers, bool runCmfd, bool runLoo, bool diffusion);
 	virtual ~Solver();
 	void zeroTrackFluxes();
 	void oneFSRFluxes();

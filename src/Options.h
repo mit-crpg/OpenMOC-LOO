@@ -22,9 +22,7 @@ private:
 	std::string _relative_path;
 	std::string _geometry_file;
 	std::string _material_file;
-
 	std::string _track_input_file;
-
 	std::string _extension;
 	double _track_spacing;
 	int _num_azim;
@@ -36,6 +34,7 @@ private:
 	bool _compute_pin_powers;
 	bool _compress_cross_sections;
 	bool _cmfd;
+	bool _loo;
 	bool _plot_current;
 	bool _plot_diffusion;
 	bool _plot_keff;
@@ -74,6 +73,7 @@ public:
 	bool getPrintMatrices();
 	int getCmfdLevel();
 	bool getCmfd();
+	bool getLoo();
 	bool getDiffusion();
 	bool getTransient();
 	double getTimeEnd();

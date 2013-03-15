@@ -43,6 +43,7 @@ Options::Options(int argc, char **argv) {
 	_compute_pin_powers = false;		/* Default will not compute pin powers */
 	_compress_cross_sections = false;	/* Default will not compress cross-sections */
 	_cmfd = true; 						/* Default will not perform CMFD acceleration */
+	_loo = true;
 	_update_flux = false;  				/* Default will not use CMFD to update flux */
 	_plot_current = false;				/* Default will not plot cmfd currents */
 	_plot_diffusion = false;			/* Default will not plot diffusion flux */
@@ -329,6 +330,10 @@ int Options::getCmfdLevel(){
 
 bool Options::getCmfd(){
 	return _cmfd;
+}
+
+bool Options::getLoo(){
+	return _loo;
 }
 
 bool Options::getTransient(){

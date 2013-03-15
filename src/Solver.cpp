@@ -15,8 +15,10 @@
  * @param geom pointer to the geometry
  * @param track_generator pointer to the trackgenerator
  */
-Solver::Solver(Geometry* geom, TrackGenerator* track_generator, Plotter* plotter, Cmfd* cmfd,
-		bool updateFlux, double keffConvThresh, bool computePowers, bool runCmfd, bool diffusion) {
+Solver::Solver(Geometry* geom, TrackGenerator* track_generator, 
+			   Plotter* plotter, Cmfd* cmfd, bool updateFlux, 
+			   double keffConvThresh, bool computePowers, 
+			   bool runCmfd, bool runLoo, bool diffusion) {
 
 	_geom = geom;
 	_quad = new Quadrature(TABUCHI);
@@ -30,6 +32,7 @@ Solver::Solver(Geometry* geom, TrackGenerator* track_generator, Plotter* plotter
 	_keff_conv_thresh = keffConvThresh;
 	_compute_powers = computePowers;
 	_run_cmfd = runCmfd;
+	_run_loo = runLoo;
 	_k_eff = 0.0;
 	_diffusion = diffusion;
 
