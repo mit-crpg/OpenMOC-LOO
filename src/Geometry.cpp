@@ -1769,12 +1769,14 @@ void Geometry::segmentize(Track* track) {
 		curr = findNextCell(&segment_end, phi);
 
 		/* Find the segment length between the segments start and end points */
-		segment_length = segment_end.getPoint()->distance(segment_start.getPoint());
+		segment_length = segment_end.getPoint()
+			->distance(segment_start.getPoint());
 
 		/* Create a new segment */
 		segment* new_segment = new segment;
 		new_segment->_length = segment_length;
-		new_segment->_material = _materials.at(static_cast<CellBasic*>(prev)->getMaterial());
+		new_segment->_material = _materials.at(static_cast<CellBasic*>(prev)
+											   ->getMaterial());
 
 		/* Update the max and min segment lengths */
 		if (segment_length > _max_seg_length)
@@ -1782,16 +1784,18 @@ void Geometry::segmentize(Track* track) {
 		if (segment_length < _min_seg_length)
 			_min_seg_length = segment_length;
 
-		log_printf(DEBUG, "segment start x = %f, y = %f, segment end x = %f, y = %f",
+		log_printf(DEBUG, "segment start x = %f, y = %f, end x = %f, y = %f",
 				segment_start.getX(), segment_start.getY(), segment_end.getX(),
 				segment_end.getY());
 
 		new_segment->_region_id = findFSRId(&segment_start);
 
-		/* get pointer to mesh surfaces that the segment crosses */
-		if (_run_cmfd){
-			new_segment->_mesh_surface_fwd = _mesh->findMeshSurface(new_segment->_region_id, &segment_end);
-			new_segment->_mesh_surface_bwd = _mesh->findMeshSurface(new_segment->_region_id, &segment_start);
+		/* Gets pointer to mesh surfaces that the segment crosses */
+		if (_run_cmfd || _run_loo){
+			new_segment->_mesh_surface_fwd = 
+				_mesh->findMeshSurface(new_segment->_region_id, &segment_end);
+			new_segment->_mesh_surface_bwd = 
+				_mesh->findMeshSurface(new_segment->_region_id, &segment_start);
 		}
 
 		/* Checks to make sure that new segment does not have the same start

@@ -30,6 +30,8 @@ Options::Options(int argc, char **argv) {
 	else
 		_relative_path = "";
 
+	_cmfd = true; 						/* Default will not perform CMFD acceleration */
+	_loo = true;
 	_geometry_file = _relative_path + "xml-sample/SimpleLattice/geometry.xml"; 	 /* Default geometry input file */
 	_material_file = _relative_path + "xml-sample/SimpleLattice/material.xml";    /* Default material input file */
 	_track_spacing = 0.1;				/* Default track spacing */
@@ -42,8 +44,6 @@ Options::Options(int argc, char **argv) {
 	_plot_fluxes = false;				/* Default will not plot fluxes */
 	_compute_pin_powers = false;		/* Default will not compute pin powers */
 	_compress_cross_sections = false;	/* Default will not compress cross-sections */
-	_cmfd = true; 						/* Default will not perform CMFD acceleration */
-	_loo = true;
 	_update_flux = false;  				/* Default will not use CMFD to update flux */
 	_plot_current = false;				/* Default will not plot cmfd currents */
 	_plot_diffusion = false;			/* Default will not plot diffusion flux */
@@ -97,6 +97,9 @@ Options::Options(int argc, char **argv) {
 			else if (strcmp(argv[i], "-nc") == 0 ||
 					strcmp(argv[i], "--nocmfd") == 0)
 				_cmfd = false;
+			else if (strcmp(argv[i], "-nl") == 0 ||
+					strcmp(argv[i], "--noloo") == 0)
+				_loo = false;
 			else if (strcmp(argv[i], "-pc") == 0 ||
 					strcmp(argv[i], "--plotcurrent") == 0)
 				_plot_current = true;

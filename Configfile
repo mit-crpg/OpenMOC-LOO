@@ -7,6 +7,7 @@ COMPILEOPTS += -O2
 COMPILEOPTS += -I/usr/include/petsc
 COMPILEOPTS += -I/usr/include/petsc/linux-gnu-cxx-debug/include
 COMPILEOPTS += -I/usr/include/petsc/linux-gnu-cxx-opt/include
+COMPILEOPTS += -g
 
 BINARIES    += openmoc
 LINKOPTS    += -lexpat
