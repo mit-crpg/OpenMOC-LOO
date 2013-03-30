@@ -17,7 +17,6 @@
 #include "Solver.h"
 #include "Timer.h"
 #include "log.h"
-#include "Transient.h"
 #include "configurations.h"
 #include "Plotter.h"
 #include "Cmfd.h"
@@ -122,26 +121,13 @@ int main(int argc, char **argv) {
 				  opts.computePinPowers(), opts.getCmfd(), opts.getLoo(),
 				  opts.getDiffusion());
 
-	if (opts.getTransient()){
-		/* Solve the transient problem */
-		Transient transient(&geometry, &cmfd, geometry.getMesh(), &solver, 
-							&plotter, opts.getTimeEnd(), 
-							opts.getTimeStepOuter(), opts.getTimeStepInner());
-		timer.reset();
-		timer.start();
-		transient.solve();
-		timer.stop();
-		timer.recordSplit("Time dependent problem");
-	}
-	else{
-		/* solve steady state problem */
-		timer.reset();
-		timer.start();
-		k_eff = solver.computeKeff(MAX_ITERATIONS);
-		timer.stop();
-		timer.recordSplit("Fixed source iteration");
-		log_printf(RESULT, "k_eff = %f", k_eff);
-	}
+	/* solve steady state problem */
+	timer.reset();
+	timer.start();
+	k_eff = solver.computeKeff(MAX_ITERATIONS);
+	timer.stop();
+	timer.recordSplit("Fixed source iteration");
+	log_printf(RESULT, "k_eff = %f", k_eff);
 
 	/* Finalize petsc */
 	PetscFinalize();

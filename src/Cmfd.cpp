@@ -189,7 +189,7 @@ void Cmfd::computeXS(FlatSourceRegion* fsrs){
 	}
 
 	/* print keff based on nu_fis / abs */
-	log_printf(NORMAL, "fission rate / abs rate: %f", fis_tot / abs_tot);
+	log_printf(INFO, "fission rate / abs rate: %f", fis_tot / abs_tot);
 }
 
 

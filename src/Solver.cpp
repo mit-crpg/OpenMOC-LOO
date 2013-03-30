@@ -446,11 +446,24 @@ void Solver::updateKeff(int iteration) {
 	_k_eff = tot_fission/(tot_abs + leakage);
 
 	/* Update keff for MOC sweep */
-	if (_run_cmfd || _run_loo){
+	if (_run_cmfd){
 		_geom->getMesh()->setKeffMOC(tot_fission/(tot_abs + leakage), 
 									 iteration);
 
 		log_printf(NORMAL, "CMFD k_eff: %f, MOC k_eff = %f", _cmfd->getKeff(), 
+				   tot_fission/(tot_abs + leakage));
+
+		if (_update_flux){
+			_k_eff = _cmfd->getKeff();
+            _cmfd->updateMOCFlux(iteration);
+		}
+	}
+
+	if (_run_loo){
+		_geom->getMesh()->setKeffMOC(tot_fission/(tot_abs + leakage), 
+									 iteration);
+
+		log_printf(NORMAL, "LOO k_eff: %f, MOC k_eff = %f", _cmfd->getKeff(), 
 				   tot_fission/(tot_abs + leakage));
 
 		if (_update_flux){
@@ -665,8 +678,13 @@ void Solver::tallyLooForwardFlux(Track *track, segment *segment,
 		/* set polar angle * energy group to 0 */
 		pe = 0;
 		phi = track->getPhi();
-		if (fabs(phi) > PI/2.0) 
+		if (fabs(phi) < PI/2.0) 
+			index = 0;
+		else if (fabs(phi) < PI)
 			index = 1;
+		else
+			log_printf(WARNING, "Something went wrong -- forward flux" 
+					   " has a phi of %f.", phi);
 
 		/* loop over energy groups */
 		for (e = 0; e < NUM_ENERGY_GROUPS; e++) 
@@ -682,6 +700,9 @@ void Solver::tallyLooForwardFlux(Track *track, segment *segment,
 				pe++;
 			}
 		}
+
+		/* FIXME: need spacing */
+
 	}
 	return;
 }
@@ -705,9 +726,15 @@ void Solver::tallyLooBackwardFlux(Track *track, segment *segment,
 		   num groups * num angles */
 		pe = GRP_TIMES_ANG;
 
+		/* Finds the correct flux index */
 		phi = track->getPhi();
-		if (fabs(phi) > PI/2) 
+		if (fabs(phi) < PI/2.0) 
+			index = 0;
+		else if (fabs(phi) < PI)
 			index = 1;
+		else
+			log_printf(WARNING, "Something went wrong -- forward flux" 
+					   " has a phi of %f.", phi);
 
 		/* Tallies Quadrature Flux */
 		for (e = 0; e < NUM_ENERGY_GROUPS; e++) 
@@ -1089,7 +1116,7 @@ void Solver::initializeSource(){
 	//double fis_source_tot, abs_source_tot;
 	double renorm_factor, volume;
 	double* nu_sigma_f;
-	double* sigma_a;
+	//double* sigma_a;
 	double* sigma_s;
 	double* chi;
 	double* scalar_flux;
@@ -1160,7 +1187,7 @@ void Solver::initializeSource(){
 		source = fsr->getSource();
 		material = fsr->getMaterial();
 		nu_sigma_f = material->getNuSigmaF();
-		sigma_a    = material->getSigmaA();
+		//sigma_a    = material->getSigmaA();
 		chi = material->getChi();
 		sigma_s = material->getSigmaS();
 		mat_mult = fsr->getMatMult();
@@ -1258,6 +1285,8 @@ double Solver::computeKeff(int max_iterations) {
 
 			/* Run CMFD diffusion problem */
 			cmfd_keff = _cmfd->computeCMFDFluxPower(CMFD, i);
+			/* FIXME: a hack: cmfd_keff set but not used */
+			cmfd_keff = cmfd_keff;
 		}
 
 		/* Run LOO acceleration */
@@ -1287,7 +1316,7 @@ double Solver::computeKeff(int max_iterations) {
 			/* FIXME: Extracts track start & end fluxes */
 
 			/* FIXME: Performs low order MOC */
-			loo_keff = 1;//_cmfd->computeCMFDFluxPower(CMFD, i);
+			loo_keff = loo_keff;//_cmfd->computeCMFDFluxPower(CMFD, i);
 		}
 
 		/* Update k_eff */

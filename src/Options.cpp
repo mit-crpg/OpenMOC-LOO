@@ -30,7 +30,7 @@ Options::Options(int argc, char **argv) {
 	else
 		_relative_path = "";
 
-	_cmfd = true; 						/* Default will not perform CMFD acceleration */
+	_cmfd = false; 						/* Default will not perform CMFD acceleration */
 	_loo = true;
 	_geometry_file = _relative_path + "xml-sample/SimpleLattice/geometry.xml"; 	 /* Default geometry input file */
 	_material_file = _relative_path + "xml-sample/SimpleLattice/material.xml";    /* Default material input file */
