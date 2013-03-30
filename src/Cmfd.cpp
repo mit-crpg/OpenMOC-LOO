@@ -59,9 +59,7 @@ int Cmfd::createAMPhi(PetscInt size1, PetscInt size2, int cells){
 	return petsc_err;
 }
 
-
-
-/* compute the cross section for all MeshCells in the Mesh */
+/* Computes the homogenized cross section for all MeshCells in the Mesh */
 void Cmfd::computeXS(FlatSourceRegion* fsrs){
 
 	_mesh->splitCorners();
@@ -72,30 +70,32 @@ void Cmfd::computeXS(FlatSourceRegion* fsrs){
 	double* scat;
 	double* mat_mult;
 	double* mat_mult_a;
-	double abs_tally_cell, nu_fis_tally_cell, dif_tally_cell, rxn_tally_cell, vol_tally_cell, tot_tally_cell;
-	double nu_fis_tally = 0 , dif_tally = 0, rxn_tally = 0, abs_tally = 0, 
-		tot_tally = 0;
+	double abs_tally_cell, nu_fis_tally_cell, dif_tally_cell, rxn_tally_cell;
+	double vol_tally_cell, tot_tally_cell;
+	double nu_fis_tally, dif_tally, rxn_tally, abs_tally, tot_tally;
 	double scat_tally_cell[NUM_ENERGY_GROUPS];
 
 	MeshCell* meshCell;
 	FlatSourceRegion* fsr;
 	Material* material;
 
-	/* loop over mesh cells */
-	for (int i = 0; i < _mesh->getCellWidth() * _mesh->getCellHeight(); i++){
+	log_printf(DEBUG, "Enter Cmfd::computeXS(..)");
+
+	/* For each mesh cell, we compute homogenized xs */
+	for (int i = 0; i < _mesh->getCellWidth() * _mesh->getCellHeight(); i++)
+	{
 		meshCell = _mesh->getCells(i);
 
-		if (_mesh->getMultigroup() == false){
-			abs_tally = 0.0;
-			nu_fis_tally = 0.0;
-			dif_tally = 0.0;
-			tot_tally = 0.0;
-			rxn_tally = 0.0;
-		}
+		/* Zeroes tallies for this energy group */
+		abs_tally = 0.0;
+		nu_fis_tally = 0.0;
+		dif_tally = 0.0;
+		tot_tally = 0.0;
+		rxn_tally = 0.0;
 
-		/* loop over energy groups */
-		std::vector<int>::iterator iter;
-		for (int e = 0; e < NUM_ENERGY_GROUPS; e++) {
+		/* Computes flux weighted xs for each energy group */
+		for (int e = 0; e < NUM_ENERGY_GROUPS; e++) 
+		{
 			abs_tally_cell = 0;
 			nu_fis_tally_cell = 0;
 			dif_tally_cell = 0;
@@ -103,12 +103,17 @@ void Cmfd::computeXS(FlatSourceRegion* fsrs){
 			vol_tally_cell = 0;
 			tot_tally_cell = 0;
 
-			for (int g = 0; g < NUM_ENERGY_GROUPS; g++){
+			for (int g = 0; g < NUM_ENERGY_GROUPS; g++)
+			{
 				scat_tally_cell[g] = 0;
 			}
 
 			/* loop over FSRs in mesh cell */
-			for (iter = meshCell->getFSRs()->begin(); iter != meshCell->getFSRs()->end(); ++iter){
+			std::vector<int>::iterator iter;
+			for (iter = meshCell->getFSRs()->begin(); 
+				 iter != meshCell->getFSRs()->end(); ++iter)
+			{
+
 				fsr = &_flat_source_regions[*iter];
 
 				/* Gets FSR specific data. */
@@ -131,17 +136,24 @@ void Cmfd::computeXS(FlatSourceRegion* fsrs){
 				vol_tally_cell += volume;
 
 
-				for (int g = 0; g < NUM_ENERGY_GROUPS; g++){
-					scat_tally_cell[g] += scat[g*NUM_ENERGY_GROUPS + e] * flux * volume * mat_mult[g*NUM_ENERGY_GROUPS + e];
-					log_printf(DEBUG, "scattering from group %i to %i: %f", e, g, scat[g*NUM_ENERGY_GROUPS + e]);
+				for (int g = 0; g < NUM_ENERGY_GROUPS; g++)
+				{
+					scat_tally_cell[g] += scat[g*NUM_ENERGY_GROUPS + e] 
+						* flux * volume * mat_mult[g*NUM_ENERGY_GROUPS + e];
+					log_printf(DEBUG, "scattering from group %i to %i: %f", 
+							   e, g, scat[g*NUM_ENERGY_GROUPS + e]);
 				}
 
-				if (chi >= meshCell->getChi()[e]){
+				if (chi >= meshCell->getChi()[e])
+				{
 					meshCell->setChi(chi,e);
 				}
-			}
+			} /* end of looping through FSRs */
 
-			if (_mesh->getMultigroup() == true){
+			/* For multi energy groups, we go ahead and set the xs for this 
+			 * energy group */
+			if (_mesh->getMultigroup() == true)
+			{
 				meshCell->setVolume(vol_tally_cell);
 				meshCell->setSigmaA(abs_tally_cell / rxn_tally_cell, e);
 				meshCell->setSigmaT(tot_tally_cell / rxn_tally_cell, e);
@@ -149,11 +161,15 @@ void Cmfd::computeXS(FlatSourceRegion* fsrs){
 				meshCell->setDiffusivity(dif_tally_cell / rxn_tally_cell, e);
 				meshCell->setOldFlux(rxn_tally_cell / vol_tally_cell, e);
 
-				for (int g = 0; g < NUM_ENERGY_GROUPS; g++){
-					meshCell->setSigmaS(scat_tally_cell[g] / rxn_tally_cell,e,g);
+				for (int g = 0; g < NUM_ENERGY_GROUPS; g++)
+				{
+					meshCell->setSigmaS(scat_tally_cell[g] 
+										/ rxn_tally_cell,e,g);
 				}
 			}
-			else{
+			/* For homogenized one energy group, we tally over all e's */
+			else
+			{
 				abs_tally += abs_tally_cell;
 				tot_tally += tot_tally_cell;
 				nu_fis_tally += nu_fis_tally_cell;
@@ -162,6 +178,7 @@ void Cmfd::computeXS(FlatSourceRegion* fsrs){
 			}
 		}
 
+		/* For homogenized one energy group, set xs after all e's are done */
 		if (_mesh->getMultigroup() == false){
 			meshCell->setVolume(vol_tally_cell);
 			meshCell->setSigmaT(tot_tally / rxn_tally, 0);
@@ -171,25 +188,27 @@ void Cmfd::computeXS(FlatSourceRegion* fsrs){
 			meshCell->setOldFlux(rxn_tally / vol_tally_cell, 0);
 			meshCell->setChi(1,0);
 		}
-
-
 	}
 
-	/* compute fis and abs rates based on tallied fluxes an XSs */
+	#if 0
+	/* Computes keff = fission / abs based entirely on mat properties */
 	double fis_tot = 0;
 	double abs_tot = 0;
 	for (int i = 0; i < _mesh->getCellWidth() * _mesh->getCellHeight(); i++){
 		meshCell = _mesh->getCells(i);
 		for (int e = 0; e < NUM_ENERGY_GROUPS; e++){
 			for (int g = 0; g < NUM_ENERGY_GROUPS; g++){
-				fis_tot += meshCell->getChi()[e] * meshCell->getNuSigmaF()[g]*meshCell->getOldFlux()[g]*meshCell->getVolume();
+				fis_tot += meshCell->getChi()[e] * meshCell->getNuSigmaF()[g]
+					* meshCell->getOldFlux()[g]*meshCell->getVolume();
 			}
-			abs_tot += meshCell->getSigmaA()[e]*meshCell->getOldFlux()[e]*meshCell->getVolume();
+			abs_tot += meshCell->getSigmaA()[e]*meshCell->getOldFlux()[e]
+				* meshCell->getVolume();
 		}
 	}
 
 	/* print keff based on nu_fis / abs */
 	log_printf(INFO, "fission rate / abs rate: %f", fis_tot / abs_tot);
+	#endif
 }
 
 
@@ -577,7 +596,6 @@ void Cmfd::computeDs(){
 	}
 }
 
-
 /*
  * compute the flux in each mesh cell using power iteration with Petsc's GMRES numerical inversion
  */
@@ -749,11 +767,6 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter){
 
 	log_printf(DEBUG, "CMFD/DIFFUSION residual: %f", double(sumold));
 
-//	petsc_err = PetscViewerPushFormat(PETSC_VIEWER_STDOUT_WORLD,PETSC_VIEWER_ASCII_MATLAB);
-//	petsc_err = MatView(_A,PETSC_VIEWER_STDOUT_WORLD);
-//	petsc_err = MatView(_M,PETSC_VIEWER_STDOUT_WORLD);
-//	CHKERRQ(petsc_err);
-
 	/* destroy matrices and vectors */
 	petsc_err = VecDestroy(&phi_old);
 	petsc_err = VecDestroy(&snew);
@@ -783,48 +796,54 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter){
 	if (solveMethod == CMFD){
 		_mesh->setKeffCMFD(_keff, moc_iter);
 	}
+	return _keff;
+}
 
+/*
+ * compute the flux in each mesh cell using power iteration with Petsc's GMRES numerical inversion
+ */
+double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter){
 
-//	/* compute fis and abs rates based on tallied fluxes an XSs */
-//	double fis_tot = 0;
-//	double abs_tot = 0;
-//	double leak = 0;
-//
-//	for (int i = 0; i < _mesh->getCellWidth() * _mesh->getCellHeight(); i++){
-//		meshCell = _mesh->getCells(i);
-//		for (int e = 0; e < ng; e++){
-//			for (int g = 0; g < ng; g++){
-//				fis_tot += meshCell->getChi()[e] * meshCell->getNuSigmaF()[g]*meshCell->getNewFlux()[g]*meshCell->getVolume();
-//			}
-//			abs_tot += meshCell->getSigmaA()[e]*meshCell->getNewFlux()[e]*meshCell->getVolume();
-//
-//			/* leakage */
-//			for (int s = 0; s < 4; s++){
-//				if (meshCell->getMeshSurfaces(s)->getBoundary() == VACUUM){
-//					if (s == 0){
-//						leak += meshCell->getMeshSurfaces(s)->getDHat()[e] * meshCell->getNewFlux()[e]*meshCell->getHeight();
-//						leak += meshCell->getMeshSurfaces(s)->getDTilde()[e] * meshCell->getNewFlux()[e]*meshCell->getHeight();
-//					}
-//					else if (s == 2){
-//						leak += meshCell->getMeshSurfaces(s)->getDHat()[e] * meshCell->getNewFlux()[e]*meshCell->getHeight();
-//						leak -= meshCell->getMeshSurfaces(s)->getDTilde()[e] * meshCell->getNewFlux()[e]*meshCell->getHeight();
-//					}
-//					else if (s == 1){
-//						leak += meshCell->getMeshSurfaces(s)->getDHat()[e] * meshCell->getNewFlux()[e]*meshCell->getWidth();
-//						leak -= meshCell->getMeshSurfaces(s)->getDTilde()[e] * meshCell->getNewFlux()[e]*meshCell->getWidth();
-//					}
-//					else if (s == 3){
-//						leak += meshCell->getMeshSurfaces(s)->getDHat()[e] * meshCell->getNewFlux()[e]*meshCell->getWidth();
-//						leak += meshCell->getMeshSurfaces(s)->getDTilde()[e] * meshCell->getNewFlux()[e]*meshCell->getWidth();
-//					}
-//				}
-//			}
-//
-//		}
-//	}
-//
-//	_keff = fis_tot / (abs_tot + leak);
+	log_printf(INFO, "Running low order MOC solver...");
 
+	#if 0
+	/* Obtains info about the meshes */
+	MeshCell* meshCell;
+	int ng = NUM_ENERGY_GROUPS;
+	if (_mesh->getMultigroup() == false){
+		ng = 1;
+	}
+
+	int ch = _mesh->getCellHeight();
+	int cw = _mesh->getCellWidth();
+
+	int max_outer = 10;
+	if (solveMethod == DIFFUSION){
+		max_outer = 1000;
+	}
+#endif
+
+	/* Plots stuffs */
+	std::string string;
+	if (solveMethod == DIFFUSION){
+		if (_plotter->plotDiffusion() == true){
+			string = "diff";
+			_plotter->plotCMFDflux(_mesh, string, moc_iter);
+		}
+	}
+
+	if (_plotter->plotKeff()){
+		_plotter->plotCMFDKeff(_mesh, moc_iter);
+	}
+
+	if (_plotter->plotCurrent()){
+		string = "loo";
+		_plotter->plotCMFDflux(_mesh, string, moc_iter);
+	}
+
+	if (solveMethod == CMFD){
+		_mesh->setKeffCMFD(_keff, moc_iter);
+	}
 	return _keff;
 }
 

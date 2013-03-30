@@ -36,7 +36,8 @@
  */
 enum solveType {
 	DIFFUSION,
-	CMFD
+	CMFD,
+	LOO
 };
 
 #include "Plotter.h"
@@ -64,6 +65,7 @@ public:
  	void updateMOCFlux(int iteration);
  	int constructAMPhi(Mat A, Mat B, Vec phi_old, solveType solveMethod);
  	double computeCMFDFluxPower(solveType solveMethod, int moc_iter);
+	double computeLooFluxPower(solveType solveMethod, int moc_iter);
  	Mat getA();
  	Mat getM();
  	Vec getPhiNew();
