@@ -60,6 +60,9 @@ public:
 	Cmfd(Geometry* geom, Plotter* plotter, Mesh* mesh, bool updateFlux, bool runCmfd);
 	virtual ~Cmfd();
  	void computeDs();
+	void computeDsBackup();
+	void computeDsxDirection(double x, double y, int e, MeshCell *meshCell, 
+							 double d, double f, double flux, int cell_width);
  	void computeXS(FlatSourceRegion* fsrs);
  	double computeDiffCorrect(double d, double h);
  	void updateMOCFlux(int iteration);
