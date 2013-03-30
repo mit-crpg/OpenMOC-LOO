@@ -17,8 +17,7 @@ FlatSourceRegion::FlatSourceRegion() {
 	_material = NULL;
 	_volume = 0.0;
 
-
-	/* Zero the region's flux and source */
+	/* Initializes region's other attributes */
 	for (int e = 0; e < NUM_ENERGY_GROUPS; e++) {
 		_flux[e] = 0.0;
 		_old_flux[e] = 0.0;
@@ -287,12 +286,7 @@ void FlatSourceRegion::computeRatios() {
 	double* sigma_t = _material->getSigmaT();
 
 	for (int e = 0; e < NUM_ENERGY_GROUPS; e++) {
-		if (_material->getId() == 5){
-			_ratios[e] = _source[e]/(sigma_t[e]);
-		}
-		else{
 			_ratios[e] = _source[e]/sigma_t[e];
-		}
 	}
 
 	return;
@@ -322,7 +316,6 @@ double FlatSourceRegion::computeFissionRate() {
 
 
 void FlatSourceRegion::setMatMult(int group, double mult){
-
 	_mat_mult[group] = mult;
 }
 
@@ -331,7 +324,6 @@ double* FlatSourceRegion::getMatMult(){
 }
 
 void FlatSourceRegion::setMatMultA(int group, double mult){
-
 	_mat_mult_a[group] = mult;
 }
 
