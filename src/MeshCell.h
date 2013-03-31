@@ -42,14 +42,21 @@ private:
 	double _volume;
 	int _cell_id;
 	double _temp;
+	/* for LOO */
+	double _l;
+	double _src[NUM_ENERGY_GROUPS]; /* averaged source */
+	double _quad_flux[8*NUM_ENERGY_GROUPS];
+	double _quad_src[8*NUM_ENERGY_GROUPS];
 
 public:
 	MeshCell();
 	virtual ~MeshCell();
 	double getWidth();
 	double getHeight();
+	double getL();
 	void setWidth(double width);
 	void setHeight(double height);
+	void setL(double l);
 	std::vector<int>* getFSRs();
 	void addFSR(int fsr);
 	void setChi(double chi, int e);
@@ -82,6 +89,13 @@ public:
 	void setTemp(double temp);
 	Material* getMaterial();
 	void setMaterial(Material* material);
+	/* LOO */
+	void setSrc(double flux, int e);
+	double* getSrc();
+	void setQuadFlux(double quadFlux, int e, int index);
+	double* getQuadFlux();
+	void setQuadSrc(double quadSrc, int e, int index);
+	double* getQuadSrc();
 };
 
 

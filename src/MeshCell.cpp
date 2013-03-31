@@ -12,10 +12,9 @@ MeshCell::MeshCell(){
 	_volume = 0;
 	_bounds = new double[4];
 	_cell_id = 0;
-
+	
 	/* allocate memory for mesh surfaces */
 	_mesh_surfaces = new MeshSurface[8];
-
 	/* set surface id */
 	_mesh_surfaces[0].setId(0);		/* left */
 	_mesh_surfaces[1].setId(1);		/* bottom */
@@ -27,7 +26,8 @@ MeshCell::MeshCell(){
 	_mesh_surfaces[7].setId(7);		/* top left */
 
 
-	for (int e = 0; e < NUM_ENERGY_GROUPS; e++){
+	for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
+	{
 		_chi[e]         = 0.0;
 		_nu_sigma_f[e]  = 0.0;
 		_sigma_a[e]     = 0.0;
@@ -35,8 +35,15 @@ MeshCell::MeshCell(){
 		_diffusivity[e] = 0.0;
 		_old_flux[e]    = 0.0;
 		_new_flux[e]    = 0.0;
-		for (int g = 0; g < NUM_ENERGY_GROUPS; g++){
+		for (int g = 0; g < NUM_ENERGY_GROUPS; g++)
+		{
 			_sigma_s[e*NUM_ENERGY_GROUPS + g] = 0.0;
+		}
+		_src[e] = 0.0;
+		for (int k = 0; k < 8; k++) 
+		{
+			_quad_flux[e * 8 + k] = 0.0;
+			_quad_src[e * 8 + k] = 0.0;
 		}
 	}
 }
@@ -52,12 +59,20 @@ double MeshCell::getHeight(){
 	return _height;
 }
 
+double MeshCell::getL(){
+	return _l;
+}
+
 void MeshCell::setWidth(double width){
 	_width = width;
 }
 
 void MeshCell::setHeight(double height){
 	_height = height;
+}
+
+void MeshCell::setL(double l){
+	_l = l;
 }
 
 int MeshCell::getFSRStart(){
@@ -96,7 +111,6 @@ void MeshCell::setBounds(double x, double y){
 double* MeshCell::getBounds(){
 	return _bounds;
 }
-
 
 MeshSurface* MeshCell::findSurface(LocalCoords* coord, int i){
 	MeshSurface* meshSurface = NULL;
@@ -208,6 +222,14 @@ void MeshCell::setNewFlux(double flux, int e){
 	_new_flux[e] = flux;
 }
 
+double* MeshCell::getSrc(){
+	return _src;
+}
+
+void MeshCell::setSrc(double flux, int e){
+	_src[e] = flux;
+}
+
 double MeshCell::getVolume(){
 	return _volume;
 }
@@ -232,6 +254,18 @@ void MeshCell::setMaterial(Material* material){
 	_material = material;
 }
 
+void MeshCell::setQuadFlux(double quadFlux, int e, int index){
+	_quad_flux[e*NUM_ENERGY_GROUPS + index] = quadFlux;
+}
 
+double* MeshCell::getQuadFlux(){
+	return _quad_flux;
+}
 
+void MeshCell::setQuadSrc(double quadSrc, int e, int index){
+	_quad_src[e*NUM_ENERGY_GROUPS + index] = quadSrc;
+}
 
+double* MeshCell::getQuadSrc(){
+	return _quad_src;
+}

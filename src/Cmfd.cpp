@@ -196,8 +196,11 @@ void Cmfd::computeXS(FlatSourceRegion* fsrs){
 	double abs_tot = 0;
 	for (int i = 0; i < _mesh->getCellWidth() * _mesh->getCellHeight(); i++){
 		meshCell = _mesh->getCells(i);
-		for (int e = 0; e < NUM_ENERGY_GROUPS; e++){
-			for (int g = 0; g < NUM_ENERGY_GROUPS; g++){
+		for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
+		{
+			for (int g = 0; g < NUM_ENERGY_GROUPS; g++)
+			{
+				/* FIXME: should there be a chi on the top of k? */
 				fis_tot += meshCell->getChi()[e] * meshCell->getNuSigmaF()[g]
 					* meshCell->getOldFlux()[g]*meshCell->getVolume();
 			}
@@ -1038,13 +1041,13 @@ void Cmfd::initializeQuadFlux()
 		{
 			meshCell = _mesh->getCells(y*cell_width + x);
 
-			log_printf(NORMAL, "Cell (x,y) = (%d, %d), surface[0].flux[0] = %f",
+			log_printf(DEBUG, "Cell (x,y) = (%d, %d), surface[0].flux[0] = %f",
 					   x, y, meshCell->getMeshSurfaces(0)->getFlux(0, 0));
-			log_printf(NORMAL, "Cell (x,y) = (%d, %d), surface[0].flux[1] = %f",
+			log_printf(DEBUG, "Cell (x,y) = (%d, %d), surface[0].flux[1] = %f",
 					   x,y, meshCell->getMeshSurfaces(0)->getFlux(0, 1));
-			log_printf(NORMAL, "Cell (x,y) = (%d, %d), surface[2].flux[0] = %f",
+			log_printf(DEBUG, "Cell (x,y) = (%d, %d), surface[2].flux[0] = %f",
 					   x,y, meshCell->getMeshSurfaces(2)->getFlux(0, 0));
-			log_printf(NORMAL, "Cell (x,y) = (%d, %d), surface[2].flux[1] = %f",
+			log_printf(DEBUG, "Cell (x,y) = (%d, %d), surface[2].flux[1] = %f",
 					   x,y,meshCell->getMeshSurfaces(2)->getFlux(0, 1));
 
 
@@ -1261,26 +1264,48 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter){
  * compute the flux in each mesh cell using power iteration with Petsc's GMRES numerical inversion
  */
 double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter){
-
 	log_printf(INFO, "Running low order MOC solver...");
+	int iter, max_outer = 100; 
+	if (solveMethod == DIFFUSION){
+		max_outer = 1000;
+	}
+	double keff = 0; 
 
-	#if 0
 	/* Obtains info about the meshes */
 	MeshCell* meshCell;
+	int ch = _mesh->getCellHeight();
+	int cw = _mesh->getCellWidth();
 	int ng = NUM_ENERGY_GROUPS;
 	if (_mesh->getMultigroup() == false){
 		ng = 1;
 	}
 
-	int ch = _mesh->getCellHeight();
-	int cw = _mesh->getCellWidth();
+	for (iter = 0; iter < max_outer; iter++)
+	{
+		/* Computes keff assuming zero leakage */
+		double fis_tot = 0, abs_tot = 0;
+		for (int i = 0; i < cw * ch; i++)
+		{
+			meshCell = _mesh->getCells(i);
+			for (int e = 0; e < ng; e++)
+			{
+				for (int g = 0; g < ng; g++)
+				{
+					/* FIXME: should there be a chi on the top of k? */
+					fis_tot += meshCell->getChi()[e]
+						* meshCell->getNuSigmaF()[g]
+						* meshCell->getOldFlux()[g] * meshCell->getVolume();
+				}
+				abs_tot += meshCell->getSigmaA()[e] * meshCell->getOldFlux()[e]
+					* meshCell->getVolume();
+			}
+		}
+		keff = fis_tot / abs_tot; 
+		log_printf(NORMAL, "%d-th LOO iteration k = %f", iter, keff);
 
-	int max_outer = 10;
-	if (solveMethod == DIFFUSION){
-		max_outer = 1000;
+		/* Computes new cell averaged source */
+
 	}
-#endif
-
 	/* Plots stuffs */
 	std::string string;
 	if (solveMethod == DIFFUSION){

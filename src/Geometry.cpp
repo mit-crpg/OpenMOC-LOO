@@ -2103,7 +2103,10 @@ void Geometry::makeCMFDMesh(Mesh* mesh, int numAzim, bool multigroup, bool print
 	log_printf(DEBUG, "defining mesh...");
 	defineMesh(mesh, univ, cmfdLevel, &meshCellNum, 0, true, 0);
 	mesh->setCellBounds();
-	mesh->setFSRBounds(getSurface(1)->getBoundary(), getSurface(2)->getBoundary(), getSurface(3)->getBoundary(), getSurface(4)->getBoundary());
+	mesh->setFSRBounds(getSurface(1)->getBoundary(), 
+					   getSurface(2)->getBoundary(), 
+					   getSurface(3)->getBoundary(), 
+					   getSurface(4)->getBoundary());
 
 	log_printf(DEBUG, "Setting multigroup and print flags");
 	mesh->setMultigroup(multigroup);
@@ -2114,8 +2117,9 @@ void Geometry::makeCMFDMesh(Mesh* mesh, int numAzim, bool multigroup, bool print
 
 
 /**
- * This is a recursive function which stores the fsr_id's of all flat source regions
- * located in a MeshCell object in a vector. The vector is owned by the MeshCell object.
+ * This is a recursive function which stores the fsr_id's of all flat source 
+ * regions located in a MeshCell object in a vector. The vector is owned by 
+ * the MeshCell object.
  * @param univ a pointer to a the universe that contains the MeshCell
  * @param meshCell a pointer to the MeshCell object
  * @param fsr_id a pointer to an integer that is set to first fsr_id in this
@@ -2138,11 +2142,13 @@ void Geometry::findFSRs(Universe* univ, MeshCell* meshCell, int *fsr_id){
 			if (curr->getType() == MATERIAL) {
 				log_printf(DEBUG, "pushing back fsr id: %i", *fsr_id);
 				meshCell->addFSR(*fsr_id);
-				log_printf(DEBUG, "size of fsr list: %i", meshCell->getFSRs()->size());
+				log_printf(DEBUG, "size of fsr list: %i", 
+						   meshCell->getFSRs()->size());
 				*fsr_id += 1;
 			}
 
-			/* If the current cell is a FILL type cell recursively call findFSRs */
+			/* If the current cell is a FILL type cell recursively call 
+			 * findFSRs */
 			else {
 				CellFill* fill_cell = static_cast<CellFill*>(curr);
 				Universe* universe_fill = fill_cell->getUniverseFill();
@@ -2165,7 +2171,8 @@ void Geometry::findFSRs(Universe* univ, MeshCell* meshCell, int *fsr_id){
 
 				/* Get a pointer to the current lattice cell */
 				curr = lattice->getUniverse(j, i);
-				log_printf(DEBUG, "getting lattice fsr: %i", lattice->getFSR(j,i));
+				log_printf(DEBUG, "getting lattice fsr: %i", 
+						   lattice->getFSR(j,i));
 				*fsr_id = baseFSR + lattice->getFSR(j,i);
 
 				/* find all FSRs in this lattice */
@@ -2225,13 +2232,22 @@ void Geometry::defineMesh(Mesh* mesh, Universe* univ, int depth, int* meshCellNu
 					for (int j = 0; j < num_x; j++) {
 						curr = lattice->getUniverse(j, i);
 						fsr_id = lattice->getFSR(j,i);
-						log_printf(DEBUG, "added FSR id to counter -> fsr id: %i", fsr_id);
+						log_printf(DEBUG, "added FSR id to counter -> fsr id:"
+								   " %i", fsr_id);
 
-						/* store the fsr_ids of the FSRs in this LATTICE in a MeshCell object */
+						/* store the fsr_ids of the FSRs in this LATTICE 
+						 * in a MeshCell object */
 						findFSRs(curr, mesh->getCells(*meshCellNum), &fsr_id);
-						mesh->getCells(*meshCellNum)->setWidth(lattice->getWidthX());
-						mesh->getCells(*meshCellNum)->setHeight(lattice->getWidthY());
-						log_printf(DEBUG, "mesh cell: %i, width: %f, height: %f", *meshCellNum, mesh->getCells(*meshCellNum)->getWidth(),mesh->getCells(*meshCellNum)->getHeight());
+						double w = lattice->getWidthX();
+						double h = lattice->getWidthY();
+						double l = 0.5 * sqrt(w * w + h * h);
+						mesh->getCells(*meshCellNum)->setWidth(w);
+						mesh->getCells(*meshCellNum)->setHeight(h);
+						mesh->getCells(*meshCellNum)->setL(l);
+						log_printf(DEBUG, "mesh cell: %i, width: %f,"
+								   " height: %f", *meshCellNum, w, h);
+						
+						/* increments the # of mesh cells */
 						*meshCellNum = *meshCellNum + 1;
 					}
 				}
@@ -2244,11 +2260,20 @@ void Geometry::defineMesh(Mesh* mesh, Universe* univ, int depth, int* meshCellNu
 					fsr_id = baseFSR + lattice->getFSR(j,row);
 					log_printf(DEBUG, "set fsr id to: %i", fsr_id);
 
-					/* store the fsr_ids of the FSRs in this LATTICE in a MeshCell object */
+					/* store the fsr_ids of the FSRs in this LATTICE 
+					 * in a MeshCell object */
 					findFSRs(curr, mesh->getCells(*meshCellNum), &fsr_id);
-					mesh->getCells(*meshCellNum)->setWidth(lattice->getWidthX());
-					mesh->getCells(*meshCellNum)->setHeight(lattice->getWidthY());
-					log_printf(DEBUG, "mesh cell num: %i, width: %f, height: %f", *meshCellNum, mesh->getCells(*meshCellNum)->getWidth(),mesh->getCells(*meshCellNum)->getHeight());
+					double w = lattice->getWidthX();
+					double h = lattice->getWidthY();
+					double l = 0.5 * sqrt(w * w + h * h);	
+					mesh->getCells(*meshCellNum)->setWidth(w);
+					mesh->getCells(*meshCellNum)->setHeight(h);
+					mesh->getCells(*meshCellNum)->setL(l);
+
+					log_printf(DEBUG, "mesh cell: %i, width: %f,"
+							   " height: %f", *meshCellNum, w, h);
+					
+					/* increments the # of mesh cells */
 					*meshCellNum = *meshCellNum + 1;
 				}
 			}
