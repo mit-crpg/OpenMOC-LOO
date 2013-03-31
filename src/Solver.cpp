@@ -362,7 +362,12 @@ void Solver::zeroMeshCells() {
 
 				/* set current to zero */
 				meshCell->getMeshSurfaces(surface)->setCurrent(0, group);
-			}
+
+				/* set flux to zero */
+				for (int index = 0; index < 2; index++){
+				meshCell->getMeshSurfaces(surface)->setFlux(0,group,index);
+                }
+            }
 		}
 	}
 
