@@ -664,86 +664,72 @@ void Solver::plotFluxes(int iter_num){
 
 void Solver::tallyLooForwardFlux(Track *track, segment *segment, 
 								 MeshSurface **meshSurfaces){
-	double phi = 0; 
-	int index = 0;
+	int index = 0, pe, p, e, surfID;
 	MeshSurface *meshSurface;
-	int pe, p, e;
+	/* notice this is polar flux weights, more than just polar weights */
 	double *weights = track->getPolarWeights();
 	double *polar_fluxes = track->getPolarFluxes();
+	double phi = track->getPhi();
 
-	if (segment->_mesh_surface_fwd != -1)
+	/* Defines index */
+	if (phi > PI/2)
+		index = 1;
+
+	/* get the ID of the surface that the segment ends on */
+	surfID = segment->_mesh_surface_fwd;
+
+	if (surfID != -1)
 	{
-		meshSurface = 
-			meshSurfaces[segment->_mesh_surface_fwd];
+		meshSurface = meshSurfaces[surfID];
 		/* set polar angle * energy group to 0 */
 		pe = 0;
-		phi = track->getPhi();
-		if (fabs(phi) < PI/2.0) 
-			index = 0;
-		else if (fabs(phi) < PI)
-			index = 1;
-		else
-			log_printf(WARNING, "Something went wrong -- forward flux" 
-					   " has a phi of %f.", phi);
-
 		/* loop over energy groups */
 		for (e = 0; e < NUM_ENERGY_GROUPS; e++) 
 		{
 			/* loop over polar angles */
 			for (p = 0; p < NUM_POLAR_ANGLES; p++)
 			{
-				/* increment flux (polar and azimuthal 
-				   weighted flux, group)*/
-				meshSurface->incrementFlux
-					(polar_fluxes[pe]*weights[p], e, 
-					 index);
+				/* increment flux by polar flux times polar flux weights */
+				meshSurface->incrementFlux(polar_fluxes[pe] * weights[p], 
+										   e, index);
 				pe++;
 			}
 		}
-
-		/* FIXME: need spacing */
-
 	}
 	return;
 }
 
 void Solver::tallyLooBackwardFlux(Track *track, segment *segment, 
 								  MeshSurface **meshSurfaces){
-	double phi = 0; 
-	int index = 0;
-	int pe, p, e;
+	int index = 0, pe, p, e, surfID;
 	MeshSurface *meshSurface;
 	double *weights = track->getPolarWeights();
 	double *polar_fluxes = track->getPolarFluxes();
+	double phi = track->getPhi();
 
-	if (segment->_mesh_surface_bwd != -1)
+	/* Defines index */
+	if (phi > PI/2)
+		index = 1;
+	
+	/* get the ID of the surface that the segment starts on */
+	surfID = segment->_mesh_surface_bwd;
+
+	if (surfID != -1)
 	{
 		/* Obtains the surface that the segment crosses */
-		meshSurface = 
-			meshSurfaces[segment->_mesh_surface_bwd];
+		meshSurface = meshSurfaces[surfID];
 
 		/* Set polar angle * energy group to 
 		   num groups * num angles */
 		pe = GRP_TIMES_ANG;
-
-		/* Finds the correct flux index */
-		phi = track->getPhi();
-		if (fabs(phi) < PI/2.0) 
-			index = 0;
-		else if (fabs(phi) < PI)
-			index = 1;
-		else
-			log_printf(WARNING, "Something went wrong -- forward flux" 
-					   " has a phi of %f.", phi);
 
 		/* Tallies Quadrature Flux */
 		for (e = 0; e < NUM_ENERGY_GROUPS; e++) 
 		{
 			for (p = 0; p < NUM_POLAR_ANGLES; p++)
 			{
-				meshSurface->incrementFlux
-					(polar_fluxes[pe]*weights[p], e, 
-					 index);
+				meshSurface->incrementFlux(polar_fluxes[pe] * weights[p], 
+										   e, index);
 				pe++;
 			}
 		}
@@ -755,6 +741,8 @@ void Solver::tallyCmfdForwardCurrent(Track *track, segment *segment,
 									 MeshSurface **meshSurfaces){
 	MeshSurface *meshSurface;
 	int pe, p, e;
+	/* polar weights should be azi weight x sin(theta) x polar weight x 4 pi, 
+	 * where azi weight takes into accout the spacing between tracks */
 	double *weights = track->getPolarWeights();
 	double *polar_fluxes = track->getPolarFluxes();
 
@@ -770,8 +758,7 @@ void Solver::tallyCmfdForwardCurrent(Track *track, segment *segment,
 			/* loop over polar angles */
 			for (p = 0; p < NUM_POLAR_ANGLES; p++)
 			{
-				/* increment current (polar and azimuthal 
-				   weighted flux, group)*/
+				/* increment current (polar flux times polar weights); */
 				meshSurface->incrementCurrent
 					(polar_fluxes[pe]*weights[p]/2.0, e);
 				pe++;
@@ -1254,7 +1241,8 @@ double Solver::computeKeff(int max_iterations) {
 	}
 
 	/* Source iteration loop */
-	for (int i = 0; i < max_iterations; i++) {
+	int i;
+	for (i = 0; i < max_iterations; i++) {
 
 		log_printf(NORMAL, "Iteration %d: k_eff = %f", i, _k_eff);
 
@@ -1300,6 +1288,9 @@ double Solver::computeKeff(int max_iterations) {
 			   Computes cross sections */
 			_cmfd->computeXS(_flat_source_regions);
 
+			/* FIXME: Extracts track start & end fluxes */
+			_cmfd->initializeQuadFlux();
+
 			#if 0
 			/* Check for neutron balance */
 			checkNeutBal(_geom->getMesh());
@@ -1313,10 +1304,9 @@ double Solver::computeKeff(int max_iterations) {
 			loo_keff = _cmfd->computeCMFDFluxPower(CMFD, i);
 			#endif
 
-			/* FIXME: Extracts track start & end fluxes */
-
 			/* FIXME: Performs low order MOC */
-			loo_keff = loo_keff;//_cmfd->computeCMFDFluxPower(CMFD, i);
+			loo_keff =_cmfd->computeLooFluxPower(LOO, i);
+			loo_keff = loo_keff;
 		}
 
 		/* Update k_eff */
@@ -1344,6 +1334,13 @@ double Solver::computeKeff(int max_iterations) {
 			/* plot CMFD flux and xs */
 			if (_run_cmfd && _plotter->plotCurrent()){
 				_plotter->plotDHats(_geom->getMesh(), 0);
+				_plotter->plotNetCurrents(_geom->getMesh());
+				_plotter->plotXS(_geom->getMesh(), 0);
+			}
+
+			/* plot LOO flux and xs */
+			if (_run_loo && _plotter->plotQuadFluxFlag()){
+				_plotter->plotQuadFlux(_geom->getMesh(), i);
 				_plotter->plotNetCurrents(_geom->getMesh());
 				_plotter->plotXS(_geom->getMesh(), 0);
 			}

@@ -73,14 +73,6 @@ double* MeshSurface::getDDif(){
 	return _d_dif;
 }
 
-void MeshSurface::setSurfaceNum(int surfaceNum){
-	_surface_num = surfaceNum;
-}
-
-int MeshSurface::getSurfaceNum(){
-	return _surface_num;
-}
-
 int MeshSurface::getId(){
 	return _id;
 }

@@ -35,6 +35,7 @@ private:
 	bool _compress_cross_sections;
 	bool _cmfd;
 	bool _loo;
+	bool _plot_quad_flux;
 	bool _plot_current;
 	bool _plot_diffusion;
 	bool _plot_keff;
@@ -64,6 +65,7 @@ public:
     bool computePinPowers();
     bool compressCrossSections();
 	bool cmfd();
+	bool plotQuadFlux();
 	bool plotCurrent();
 	bool plotDiffusion();
 	bool plotKeff();

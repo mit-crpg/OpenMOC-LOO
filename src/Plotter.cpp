@@ -12,8 +12,9 @@
  * Plotting constructor
  * @param geom a pointer to a geometry object
  */
-Plotter::Plotter(Geometry* geom, const int bitDim, std::string extension, bool specs, bool fluxes,
-		bool netCurrent, bool plotDiffusion, bool plotKeff) {
+Plotter::Plotter(Geometry* geom, const int bitDim, std::string extension, 
+				 bool specs, bool fluxes, bool netCurrent, bool plotDiffusion, 
+				 bool plotKeff, bool plotQuadFluxFlag) {
 
 	/* extension for plotting files */
 	_extension = extension;
@@ -23,7 +24,7 @@ Plotter::Plotter(Geometry* geom, const int bitDim, std::string extension, bool s
 	_net_current = netCurrent;
 	_plot_diffusion = plotDiffusion;
 	_plot_keff = plotKeff;
-
+	_plot_quad_flux_flag = plotQuadFluxFlag;
 	_width = _geom->getWidth();
 	_height = _geom->getHeight();
 	double ratio = _width/_height;
@@ -126,6 +127,14 @@ bool Plotter::plotKeff(){
  */
 bool Plotter::plotCurrent(){
 	return _net_current;
+}
+
+/**
+ * Return boolean to decide whether to plot quadrature flux
+ * @return boolean to decide whether to plot quadrature flux
+ */
+bool Plotter::plotQuadFluxFlag(){
+	return _plot_quad_flux_flag;
 }
 
 /* PLOTTING HELPER FUNCTIONS */
@@ -731,6 +740,147 @@ void Plotter::plotDHats(Mesh* mesh, int iter_num){
 
 	deleteBitMap(bitMap);
 }
+
+void Plotter::plotQuadFlux(Mesh* mesh, int iter_num){
+	log_printf(NORMAL, "plotting quadrature fluxes...");
+
+	/* set up bitMap */
+	BitMap<int>* bitMap = new BitMap<int>;
+	bitMap->pixel_x = _bit_length_x;
+	bitMap->pixel_y = _bit_length_y;
+	initialize(bitMap);
+	bitMap->geom_x = _width;
+	bitMap->geom_y = _height;
+	bitMap->color_type = SCALED;
+
+	double x_global;
+	double y_global;
+
+	/* find meshCell for each pixel */
+	for (int y = 0;y < _bit_length_y; y++){
+		for (int x = 0; x < _bit_length_x; x++){
+			x_global = convertToGeometryX(x);
+			y_global = convertToGeometryY(y);
+			bitMap->pixels[y * _bit_length_x + x] = 
+				mesh->findMeshCell(x_global, y_global);
+		}
+	}
+
+	double x_mid, y_mid;
+	MeshCell* meshCell;
+	std::stringstream text_stream;
+	std::string text;
+
+	/* plot mesh currents next to surface */
+	for (int cellY = 0; cellY < mesh->getCellHeight(); cellY++){
+		for (int cellX = 0; cellX < mesh->getCellWidth(); cellX++){
+			meshCell = mesh->getCells(cellY * mesh->getCellWidth() + cellX);
+
+			/* SIDE 0 */
+			/* get midpoint of mesh surface */
+			x_mid = convertToPixelX(meshCell->getBounds()[0]);
+			y_mid = convertToPixelY((meshCell->getBounds()[1] + 
+									 meshCell->getBounds()[3]) / 2.0);
+
+			/* create string and draw on bitMap */
+			/* getFlux(group, index) */
+			text_stream << "surf[0].flux[1]: " << 
+				meshCell->getMeshSurfaces(0)->getFlux(0,1);
+			text = text_stream.str();
+			text_stream.str("");
+			drawText(bitMap, text, x_mid - 140, y_mid - 20.0);
+			text.clear();
+
+			text_stream << "surf[0].flux[0]: " << 
+				meshCell->getMeshSurfaces(0)->getFlux(0,0);
+			text = text_stream.str();
+			text_stream.str("");
+			drawText(bitMap, text, x_mid - 140, y_mid + 20.0);
+			text.clear();
+
+
+			/* SIDE 1 */
+			/* get midpoint of mesh surface */
+			x_mid = convertToPixelX((meshCell->getBounds()[0] 
+									 + meshCell->getBounds()[2]) / 2.0);
+			y_mid = convertToPixelY(meshCell->getBounds()[1]);
+
+			/* create string and draw on bitMap */
+			text_stream << "surf[1].flux[0]: " << 
+				meshCell->getMeshSurfaces(1)->getFlux(0,0);
+			text = text_stream.str();
+			text_stream.str("");
+			drawText(bitMap, text, x_mid - 120, y_mid + 20.0);
+			text.clear();
+
+			text_stream << "surf[1].flux[1]: " << 
+				meshCell->getMeshSurfaces(1)->getFlux(0,1);
+			text = text_stream.str();
+			text_stream.str("");
+			drawText(bitMap, text, x_mid + 20, y_mid + 20.0);
+			text.clear();
+
+			/* SIDE 2 */
+			/* get midpoint of mesh surface */
+			x_mid = convertToPixelX(meshCell->getBounds()[2]);
+			y_mid = convertToPixelY((meshCell->getBounds()[1] 
+									 + meshCell->getBounds()[3]) / 2.0);
+
+			/* create string and draw on bitMap */
+			text_stream << "surf[2].flux[0]: " << 
+				meshCell->getMeshSurfaces(2)->getFlux(0,0);
+			text = text_stream.str();
+			text_stream.str("");
+			drawText(bitMap, text, x_mid + 20, y_mid - 20);
+			text.clear();
+
+			text_stream << "surf[2].flux[1]: " << 
+				meshCell->getMeshSurfaces(2)->getFlux(0,1);
+			text = text_stream.str();
+			text_stream.str("");
+			drawText(bitMap, text, x_mid + 20, y_mid + 20);
+			text.clear();
+
+			/* SIDE 3 */
+			/* get midpoint of mesh surface */
+			x_mid = convertToPixelX((meshCell->getBounds()[0] 
+									 + meshCell->getBounds()[2]) / 2.0);
+			y_mid = convertToPixelY(meshCell->getBounds()[3]);
+
+			/* create string and draw on bitMap */
+			text_stream << "surf[3].flux[1]: " << 
+				meshCell->getMeshSurfaces(3)->getFlux(0,1);
+			text = text_stream.str();
+			text_stream.str("");
+			drawText(bitMap, text, x_mid - 120, y_mid - 20.0);
+			text.clear();
+
+			text_stream << "surf[3].flux[0]: " << 
+				meshCell->getMeshSurfaces(3)->getFlux(0,0);
+			text = text_stream.str();
+			text_stream.str("");
+			drawText(bitMap, text, x_mid + 20, y_mid - 20.0);
+			text.clear();
+		}
+	}
+
+	std::stringstream string;
+	string << "loo_quad_flux_i_" << iter_num;
+	std::string title_str = string.str();
+
+	/* create filename with correct extension */
+	if (_extension == "tiff" || _extension == "jpg" || _extension == "png"){
+		plot(bitMap, title_str, _extension);
+	}
+	else{
+		log_printf(WARNING, "Quad Flux can only be plotted in tiff, jpg, and"
+				   " png. Plotting LOO Quad Flux as png...");
+		plot(bitMap, title_str, "png");
+	}
+
+	deleteBitMap(bitMap);
+}
+
 
 void Plotter::plotXS(Mesh* mesh, int iter_num){
 	log_printf(NORMAL, "plotting cross sections...");

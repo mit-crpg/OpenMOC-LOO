@@ -10,16 +10,16 @@
   <cell id="1" universe="0" fill="5" surfaces="1 -2 3 -4" />
   <cell id="101" universe="1" material="1" surfaces="-5"/>
   <cell id="102" universe="1" material="2" surfaces="5"/>
-  <cell id="201" universe="2" material="2" surfaces="-6"/>
-  <cell id="202" universe="2" material="2" surfaces="6"/>
+  <cell id="201" universe="2" material="1" surfaces="-6"/>
+  <cell id="202" universe="2" material="1" surfaces="6"/>
 <!-- Definition of Lattices -->
   <lattice id="5">
     <type>rectangular</type>
     <dimension>2 2</dimension>
     <width>1.0 1.0</width>
     <universes>
-      1 2
-      2 1
+      2 2
+      2 2
     </universes>
   </lattice>
 

@@ -59,6 +59,7 @@ private:
 public:
 	Cmfd(Geometry* geom, Plotter* plotter, Mesh* mesh, bool updateFlux, bool runCmfd);
 	virtual ~Cmfd();
+	void initializeQuadFlux();
  	void computeDs();
 	void computeDsBackup();
 	void computeDsxDirection(double x, double y, int e, MeshCell *meshCell, 

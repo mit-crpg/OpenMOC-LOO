@@ -69,8 +69,8 @@ int main(int argc, char **argv) {
 
 	/* Initialize plotter */
 	Plotter plotter(&geometry, opts.getBitDimension(), opts.getExtension(),
-			opts.plotSpecs(), opts.plotFluxes(), opts.plotCurrent(), 
-					opts.plotDiffusion(), opts.plotKeff());
+					opts.plotSpecs(), opts.plotFluxes(), opts.plotCurrent(), 
+					opts.plotDiffusion(), opts.plotKeff(), opts.plotQuadFlux());
 
 	/* Initialize track generator */
 	TrackGenerator track_generator(&geometry, &plotter, opts.getNumAzim(),

@@ -21,7 +21,9 @@
  * @param argv a char array of command line arguments from console
  */
 Options::Options(int argc, char **argv) {
-
+	_cmfd = false; 					
+	_loo = true;
+	_plot_quad_flux = true; 
 	/* Checks the working directory to set the relative path for input files
 	 * This is important so that default input files work when program is run
 	 * from both eclipse and the console */
@@ -30,8 +32,6 @@ Options::Options(int argc, char **argv) {
 	else
 		_relative_path = "";
 
-	_cmfd = false; 						/* Default will not perform CMFD acceleration */
-	_loo = true;
 	_geometry_file = _relative_path + "xml-sample/SimpleLattice/geometry.xml"; 	 /* Default geometry input file */
 	_material_file = _relative_path + "xml-sample/SimpleLattice/material.xml";    /* Default material input file */
 	_track_spacing = 0.1;				/* Default track spacing */
@@ -97,9 +97,15 @@ Options::Options(int argc, char **argv) {
 			else if (strcmp(argv[i], "-nc") == 0 ||
 					strcmp(argv[i], "--nocmfd") == 0)
 				_cmfd = false;
+			else if (strcmp(argv[i], "-wc") == 0 ||
+					strcmp(argv[i], "--withcmfd") == 0)
+				_cmfd = true;
 			else if (strcmp(argv[i], "-nl") == 0 ||
 					strcmp(argv[i], "--noloo") == 0)
 				_loo = false;
+			else if (strcmp(argv[i], "-wl") == 0 ||
+					strcmp(argv[i], "--withloo") == 0)
+				_loo = true;
 			else if (strcmp(argv[i], "-pc") == 0 ||
 					strcmp(argv[i], "--plotcurrent") == 0)
 				_plot_current = true;
@@ -268,12 +274,22 @@ bool Options::cmfd(){
 
 /**
  * Returns a boolean representing whether or not to plot the cmfd fluxes
- * at each step.
- *  If true, the net current will be plotted in a file of _extension type
+ * at each step. If true, the net current will be plotted in a file of 
+ * _extension type
  * @return whether or not to plot net current
  */
 bool Options::plotCurrent(){
 	return _plot_current;
+}
+
+/**
+ * Returns a boolean representing whether or not to plot the loo surface
+ * averaged quadrature fluxes at each step. If true, the quadrature fluxes 
+ * will be plotted in a file of _extension type
+ * @return whether or not to plot quadrature flux
+ */
+bool Options::plotQuadFlux(){
+	return _plot_quad_flux;
 }
 
 /**

@@ -1012,9 +1012,51 @@ void Cmfd::computeDsBackup(){
 	}
 }
 
-/*
- * compute the flux in each mesh cell using power iteration with Petsc's GMRES numerical inversion
- */
+/* Initializes the quadrature fluxes for each mesh cell */
+void Cmfd::initializeQuadFlux()
+{
+	/* initialize variables */
+	MeshCell* meshCell;
+	//MeshCell* meshCellNext;
+	//int ng = NUM_ENERGY_GROUPS;
+
+	#if 0
+	if (_mesh->getMultigroup() == false){
+		ng = 1;
+		_mesh->computeTotCurrents();
+	}
+	#endif
+
+	/* set cell width and height */
+	int cell_height = _mesh->getCellHeight();
+	int cell_width = _mesh->getCellWidth();
+
+	/* loop over all mesh cells */
+	for (int y = 0; y < cell_height; y++)
+	{
+		for (int x = 0; x < cell_width; x++)
+		{
+			meshCell = _mesh->getCells(y*cell_width + x);
+
+			log_printf(NORMAL, "Cell (x,y) = (%d, %d), surface[0].flux[0] = %f",
+					   x, y, meshCell->getMeshSurfaces(0)->getFlux(0, 0));
+			log_printf(NORMAL, "Cell (x,y) = (%d, %d), surface[0].flux[1] = %f",
+					   x,y, meshCell->getMeshSurfaces(0)->getFlux(0, 1));
+			log_printf(NORMAL, "Cell (x,y) = (%d, %d), surface[2].flux[0] = %f",
+					   x,y, meshCell->getMeshSurfaces(2)->getFlux(0, 0));
+			log_printf(NORMAL, "Cell (x,y) = (%d, %d), surface[2].flux[1] = %f",
+					   x,y,meshCell->getMeshSurfaces(2)->getFlux(0, 1));
+
+
+				//for (int e = 0; e < ng; e++)
+				//{			   
+				//}
+		}
+	}
+}	 
+
+/* Computes the flux in each mesh cell using power iteration with Petsc's 
+ * GMRES numerical inversion */
 double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter){
 
 	log_printf(INFO, "Running diffusion solver...");
