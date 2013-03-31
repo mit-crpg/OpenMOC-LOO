@@ -407,7 +407,8 @@ void Solver::updateKeff(int iteration) {
 #if USE_OPENMP
 #pragma omp parallel shared(tot_abs, tot_fission)
 {
-	#pragma omp for private(fsr, material, sigma_a, nu_sigma_f, flux, abs, fission)
+	#pragma omp for private(fsr, material, sigma_a, nu_sigma_f, flux, abs, 
+							fission)
 	#endif
 	for (int r = 0; r < _num_FSRs; r++) {
 		abs = 0;

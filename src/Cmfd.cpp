@@ -1260,9 +1260,7 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter){
 	return _keff;
 }
 
-/*
- * compute the flux in each mesh cell using power iteration with Petsc's GMRES numerical inversion
- */
+/* Computes the flux in each mesh cell using LOO */
 double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter){
 	log_printf(INFO, "Running low order MOC solver...");
 	int iter, max_outer = 100; 
@@ -1280,6 +1278,23 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter){
 		ng = 1;
 	}
 
+	/* Initializes terms from (m+1/2) results */
+	//double old_quad_src[8*ng];
+
+	for (int i = 0; i < cw * ch; i++)
+	{
+		meshCell = _mesh->getCells(i);
+		for (int e = 0; e < ng; e++) 
+		{
+			/* Copies old fluxes into new fluxes */
+			meshCell->setNewFlux(meshCell->getOldFlux()[e], e);
+		}
+	}
+
+
+	/* Starts LOO acceleration iteration, we do not update src, quad_src, 
+	 * quad_flux, old_flux, as they are computed from the MOC step (i.e., 
+	 * order m+1/2) and should not be updated during acceleration step. */
 	for (iter = 0; iter < max_outer; iter++)
 	{
 		/* Computes keff assuming zero leakage */
@@ -1294,14 +1309,14 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter){
 					/* FIXME: should there be a chi on the top of k? */
 					fis_tot += meshCell->getChi()[e]
 						* meshCell->getNuSigmaF()[g]
-						* meshCell->getOldFlux()[g] * meshCell->getVolume();
+						* meshCell->getNewFlux()[g] * meshCell->getVolume();
 				}
-				abs_tot += meshCell->getSigmaA()[e] * meshCell->getOldFlux()[e]
+				abs_tot += meshCell->getSigmaA()[e] * meshCell->getNewFlux()[e]
 					* meshCell->getVolume();
 			}
 		}
 		keff = fis_tot / abs_tot; 
-		log_printf(NORMAL, "%d-th LOO iteration k = %f", iter, keff);
+		log_printf(INFO, "%d-th LOO iteration k = %f", iter, keff);
 
 		/* Computes new cell averaged source */
 
@@ -1502,7 +1517,8 @@ int Cmfd::constructAMPhi(Mat A, Mat M, Vec phi_old, solveType solveMethod){
 
 					indice1 = (y*cw + x)*ng + e;
 					indice2 = ((y-1)*cw + x)*ng + e;
-					petsc_err = MatSetValues(A, 1, &indice1, 1, &indice2, &value, ADD_VALUES);
+					petsc_err = MatSetValues(A, 1, &indice1, 1, &indice2, 
+											 &value, ADD_VALUES);
 					CHKERRQ(petsc_err);
 				}
 			}
@@ -1512,14 +1528,11 @@ int Cmfd::constructAMPhi(Mat A, Mat M, Vec phi_old, solveType solveMethod){
 	return petsc_err;
 }
 
-
-
-
-
-/* update the MOC flux in each FSR and track fluxes at the boundaries */
+/* Updates the MOC flux in each FSR based on results from the acceleration
+ * steps; we use the ratio of the cell averaged flux to update the FSR flux */
 void Cmfd::updateMOCFlux(int iteration){
 
-	log_printf(INFO, "Updating MOC flux...");
+	log_printf(INFO, "Updating MOC flux using form func from acceleration...");
 
 	/* initialize variables */
 	MeshCell* meshCell;
@@ -1548,17 +1561,21 @@ void Cmfd::updateMOCFlux(int iteration){
 				new_flux = meshCell->getNewFlux()[0];
 			}
 
-			log_printf(DEBUG, "Updating flux in meshCell: %i, flux ratio: %f", i, new_flux / old_flux);
+			log_printf(DEBUG, "Updating flux in meshCell: %i, flux ratio: %f", 
+					   i, new_flux / old_flux);
 
 			/* loop over FRSs in mesh cell */
 			std::vector<int>::iterator iter;
-			for (iter = meshCell->getFSRs()->begin(); iter != meshCell->getFSRs()->end(); ++iter) {
+			for (iter = meshCell->getFSRs()->begin(); 
+				 iter != meshCell->getFSRs()->end(); ++iter) {
 				fsr = &_flat_source_regions[*iter];
 				/* get fsr flux */
 				flux = fsr->getOldFlux();
 				fsr_new_flux = new_flux / old_flux * flux[e];
 
-				log_printf(INFO, "Updating flux in FSR: %i, cell: %i, group: %i, ratio: %f", fsr->getId() ,i, e, new_flux / old_flux);
+				log_printf(INFO, "Updating flux in FSR: %i, cell: %i,"
+						   " group: %i, ratio: %f", fsr->getId() ,i, e, 
+						   new_flux / old_flux);
 
 				/* set new flux in FSR */
 				fsr->setFlux(e, fsr_new_flux);
