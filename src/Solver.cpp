@@ -802,7 +802,7 @@ void Solver::tallyCmfdBackwardCurrent(Track *track, segment *segment,
 }
 
 /* Performs MOC sweep, could be just one sweep or till convergance */
-void Solver::fixedSourceIteration(int max_iterations) {
+void Solver::MOCsweep(int max_iterations) {
 
 	Track* track;
 	int num_segments;
@@ -1097,7 +1097,6 @@ void Solver::fixedSourceIteration(int max_iterations) {
 	if (max_iterations > 1)
 		log_printf(WARNING, "Scalar flux did not converge after %d iterations",
 															max_iterations);
-
 	return;
 }
 
@@ -1256,14 +1255,14 @@ double Solver::computeKeff(int max_iterations) {
 		initializeSource();
 
 		/* Iterate on the flux with the new source */
-		fixedSourceIteration(1);
+		MOCsweep(1);
 
 		/* Run CMFD acceleration */
 		if (_run_cmfd){
 
 			setOldFSRFlux();
 			initializeSource();
-			fixedSourceIteration(1);
+			MOCsweep(1);
 
 			/* compute cross sections and diffusion coefficients */
 			_cmfd->computeXS(_flat_source_regions);
@@ -1288,7 +1287,7 @@ double Solver::computeKeff(int max_iterations) {
 
 			setOldFSRFlux();
 			initializeSource();
-			fixedSourceIteration(1);
+			MOCsweep(1);
 
 			/* LOO Method 1: assume constant Sigma in each mesh. 
 			   Computes cross sections */
@@ -1322,7 +1321,7 @@ double Solver::computeKeff(int max_iterations) {
 		if (fabs(_old_k_effs.back() - _k_eff) < _keff_conv_thresh){
 
 			/* Converge the flux */
-			fixedSourceIteration(1000);
+			MOCsweep(1000);
 
 			/* FIXME: why do we need to do this again when already converged? */
 			if (_run_cmfd){
@@ -1391,7 +1390,7 @@ double Solver::computeKeff(int max_iterations) {
 															max_iterations);
 
 	/* Converge the scalar flux spatially within geometry to plot */
-	fixedSourceIteration(1000);
+	MOCsweep(1000);
 
 	return _k_eff;
 }

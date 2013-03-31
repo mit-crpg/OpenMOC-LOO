@@ -86,7 +86,7 @@ public:
 	void computeRatios();
 	void updateKeff(int iteration);
 	double** getFSRtoFluxMap();
-	void fixedSourceIteration(int max_iterations);
+	void MOCsweep(int max_iterations);
 	double computeKeff(int max_iterations);
 	void plotFluxes(int iter_num);
 	void checkTrackSpacing();
