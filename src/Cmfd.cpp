@@ -1623,4 +1623,58 @@ double Cmfd::getKeff(){
 }
 
 
+/* Store the mesh cell averaged source before a MOC sweep */
+void Cmfd::storePreMOCMeshSource(FlatSourceRegion* fsrs)
+{
+	_flat_source_regions = fsrs;
 
+	/* initialize variables */
+	double volume, source;
+	double vol_tally_cell;
+	double source_tally_cell, source_tally;
+
+	MeshCell* meshCell;
+	FlatSourceRegion* fsr;
+
+	log_printf(DEBUG, "Enter Cmfd::storePreMOCMeshSource(..)");
+
+	/* For each mesh cell, we compute homogenized xs */
+	for (int i = 0; i < _mesh->getCellWidth() * _mesh->getCellHeight(); i++)
+	{
+		meshCell = _mesh->getCells(i);
+
+		/* Zeroes tallies for this energy group */
+		source_tally = 0;
+
+		/* Computes flux weighted xs for each energy group */
+		for (int e = 0; e < NUM_ENERGY_GROUPS; e++) 
+		{
+			vol_tally_cell = 0;
+			source_tally_cell = 0;
+
+			/* loop over FSRs in mesh cell, accumulate cell tally */
+			std::vector<int>::iterator iter;
+			for (iter = meshCell->getFSRs()->begin(); 
+				 iter != meshCell->getFSRs()->end(); ++iter)
+			{
+				fsr = &_flat_source_regions[*iter];
+				volume = fsr->getVolume();
+				source = fsr->getSource()[e];
+
+				source_tally_cell += source * volume;
+				vol_tally_cell += volume;
+			} 
+
+			/* For multi energy groups, we go ahead and set the xs for this 
+			 * energy group */
+			if (_mesh->getMultigroup() == true)
+				meshCell->setSrc(source_tally_cell / vol_tally_cell, e);
+			else /* For homogenized one energy group, we tally over all e's */
+				source_tally += source_tally_cell;
+		}
+
+		/* For homogenized one energy group, set xs after all e's are done */
+		if (_mesh->getMultigroup() == false)
+			meshCell->setOldFlux(source_tally / vol_tally_cell, 0);
+	}
+}

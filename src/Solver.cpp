@@ -1104,27 +1104,17 @@ void Solver::MOCsweep(int max_iterations) {
 /* initialize the source and renormalize the fsr and track fluxes */
 void Solver::initializeSource(){
 
-	double scatter_source, fission_source;
-	//double fis_source_tot, abs_source_tot;
+	double scatter_source, fission_source = 0;
 	double renorm_factor, volume;
 	double* nu_sigma_f;
-	//double* sigma_a;
 	double* sigma_s;
 	double* chi;
 	double* scalar_flux;
 	double* source;
-	//double* mat_mult_a;
 	double* mat_mult;
 	FlatSourceRegion* fsr;
 	Material* material;
 	int start_index, end_index;
-
-
-	/*********************************************************************
-	 * Renormalize scalar and boundary fluxes
-	 *********************************************************************/
-	/* Initialize fission source to zero */
-	fission_source = 0;
 
 	/* Compute total fission source for this region */
 	for (int r = 0; r < _num_FSRs; r++) {
@@ -1177,7 +1167,6 @@ void Solver::initializeSource(){
 		source = fsr->getSource();
 		material = fsr->getMaterial();
 		nu_sigma_f = material->getNuSigmaF();
-		//sigma_a    = material->getSigmaA();
 		chi = material->getChi();
 		sigma_s = material->getSigmaS();
 		mat_mult = fsr->getMatMult();
@@ -1191,7 +1180,6 @@ void Solver::initializeSource(){
 
 		/* Compute total scattering source for group G */
 		for (int G = 0; G < NUM_ENERGY_GROUPS; G++) {
-
 			scatter_source = 0;
 			start_index = material->getSigmaSStart(G);
 			end_index = material->getSigmaSEnd(G);
@@ -1214,7 +1202,7 @@ void Solver::initializeSource(){
 
 double Solver::kernel(int max_iterations) {
 
-	log_printf(NORMAL, "Computing k_eff...");
+	log_printf(NORMAL, "Starting kernel ...");
 
 	double* source;
 	double* old_source;
@@ -1285,6 +1273,8 @@ double Solver::kernel(int max_iterations) {
 
 			setOldFSRFlux();
 			initializeSource();
+
+			_cmfd->storePreMOCMeshSource(_flat_source_regions);
 			MOCsweep(1);
 
 			/* LOO Method 1: assume constant Sigma in each mesh. 
@@ -1468,27 +1458,22 @@ FlatSourceRegion* Solver::getFSRs(){
 
 
 /* Set the Old Flux for each FSR equal to FSR flux */
-void Solver::setOldFSRFlux(){
-
+void Solver::setOldFSRFlux()
+{
 	FlatSourceRegion* fsr;
 
 	/* Compute total fission source for this region */
-	for (int r = 0; r < _num_FSRs; r++) {
-
+	for (int r = 0; r < _num_FSRs; r++) 
+	{
 		/* Get pointers to important data structures */
 		fsr = &_flat_source_regions[r];
 
 		/* loop over energy groups */
-		for (int e = 0; e < NUM_ENERGY_GROUPS; e++){
-
+		for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
+		{
 			fsr->setOldFlux(e, fsr->getFlux()[e]);
 
 		}
 	}
 }
-
-
-
-
-
 

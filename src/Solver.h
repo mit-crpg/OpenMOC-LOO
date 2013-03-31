@@ -105,7 +105,6 @@ public:
 							 MeshSurface **meshSurfaces);
 	void tallyCmfdBackwardCurrent(Track *track, segment *segment, 
 							  MeshSurface **meshSurfaces);
-
 };
 
 #endif /* SOLVER_H_ */

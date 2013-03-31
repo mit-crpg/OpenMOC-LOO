@@ -57,7 +57,8 @@ private:
 	double _keff;
 
 public:
-	Cmfd(Geometry* geom, Plotter* plotter, Mesh* mesh, bool updateFlux, bool runCmfd);
+	Cmfd(Geometry* geom, Plotter* plotter, Mesh* mesh, bool updateFlux, 
+		 bool runCmfd);
 	virtual ~Cmfd();
 	void initializeQuadFlux();
  	void computeDs();
@@ -75,8 +76,7 @@ public:
  	Vec getPhiNew();
  	int createAMPhi(PetscInt size1, PetscInt size2, int cells);
  	double getKeff();
-
-
+	void storePreMOCMeshSource(FlatSourceRegion* fsrs);
 };
 
 #endif /* CMFD_H_ */
