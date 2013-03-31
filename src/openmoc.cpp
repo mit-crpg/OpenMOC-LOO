@@ -111,20 +111,20 @@ int main(int argc, char **argv) {
 	timer.stop();
 	timer.recordSplit("Segmenting tracks");
 
-	/* create CMFD class */
+	/* Create CMFD class */
 	Cmfd cmfd(&geometry, &plotter, geometry.getMesh(), opts.updateFlux(), 
 			  opts.getCmfd());
 
-	/* Fixed source iteration to solve for k_eff */
+	/* Creat Solver class */
 	Solver solver(&geometry, &track_generator, &plotter, &cmfd, 
 				  opts.updateFlux(), opts.getKeffConvThresh(), 
 				  opts.computePinPowers(), opts.getCmfd(), opts.getLoo(),
 				  opts.getDiffusion());
 
-	/* solve steady state problem */
+	/* Solve steady state problem */
 	timer.reset();
 	timer.start();
-	k_eff = solver.computeKeff(MAX_ITERATIONS);
+	k_eff = solver.kernel(MAX_ITERATIONS);
 	timer.stop();
 	timer.recordSplit("Fixed source iteration");
 	log_printf(RESULT, "k_eff = %f", k_eff);

@@ -87,7 +87,7 @@ public:
 	void updateKeff(int iteration);
 	double** getFSRtoFluxMap();
 	void MOCsweep(int max_iterations);
-	double computeKeff(int max_iterations);
+	double kernel(int max_iterations);
 	void plotFluxes(int iter_num);
 	void checkTrackSpacing();
 	void computePinPowers();

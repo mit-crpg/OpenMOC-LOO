@@ -801,7 +801,7 @@ void Solver::tallyCmfdBackwardCurrent(Track *track, segment *segment,
 	return;
 }
 
-/* Performs MOC sweep, could be just one sweep or till convergance */
+/* Performs MOC sweep(s), could be just one sweep or till convergance */
 void Solver::MOCsweep(int max_iterations) {
 
 	Track* track;
@@ -1123,7 +1123,6 @@ void Solver::initializeSource(){
 	/*********************************************************************
 	 * Renormalize scalar and boundary fluxes
 	 *********************************************************************/
-
 	/* Initialize fission source to zero */
 	fission_source = 0;
 
@@ -1161,7 +1160,6 @@ void Solver::initializeSource(){
 		for (int j = 0; j < _num_tracks[i]; j++)
 			_tracks[i][j].normalizeFluxes(renorm_factor);
 	}
-
 
 	/*********************************************************************
 	 * Compute the source for each region
@@ -1214,7 +1212,7 @@ void Solver::initializeSource(){
 }
 
 
-double Solver::computeKeff(int max_iterations) {
+double Solver::kernel(int max_iterations) {
 
 	log_printf(NORMAL, "Computing k_eff...");
 
