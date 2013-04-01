@@ -1015,20 +1015,20 @@ void Cmfd::computeDsBackup(){
 	}
 }
 
-/* Initializes the quadrature fluxes for each mesh cell */
-void Cmfd::initializeQuadFlux()
+/* Computes _quad_src based on (m+1/2) results */
+void Cmfd::computeQuadSrc()
 {
-	/* initialize variables */
+	/* Initializations */
+	MeshSurface *s[4];
 	MeshCell* meshCell;
-	//MeshCell* meshCellNext;
-	//int ng = NUM_ENERGY_GROUPS;
+	MeshCell* meshCellNext;
+	int ng = NUM_ENERGY_GROUPS;
+	double out[ng][8], in[ng][8];
 
-	#if 0
 	if (_mesh->getMultigroup() == false){
 		ng = 1;
-		_mesh->computeTotCurrents();
+		//_mesh->computeTotCurrents();
 	}
-	#endif
 
 	/* set cell width and height */
 	int cell_height = _mesh->getCellHeight();
@@ -1041,19 +1041,164 @@ void Cmfd::initializeQuadFlux()
 		{
 			meshCell = _mesh->getCells(y*cell_width + x);
 
+			/* get four surfaces */
+			for (int i = 0; i < 4; i++) 
+				s[i] = meshCell->getMeshSurfaces(i);
+
+			for (int e = 0; e < ng; e++)
+			{
+				out[e][0] = s[2]->getFlux(e,0);
+				out[e][1] = s[1]->getFlux(e,0);
+				out[e][2] = s[3]->getFlux(e,1);
+				out[e][3] = s[2]->getFlux(e,1);
+				out[e][4] = s[0]->getFlux(e,0);
+				out[e][5] = s[3]->getFlux(e,0);
+				out[e][6] = s[1]->getFlux(e,1);
+				out[e][7] = s[0]->getFlux(e,1);
+			}
+
+
 			log_printf(DEBUG, "Cell (x,y) = (%d, %d), surface[0].flux[0] = %f",
-					   x, y, meshCell->getMeshSurfaces(0)->getFlux(0, 0));
+					   x, y, s[0]->getFlux(0, 0));
 			log_printf(DEBUG, "Cell (x,y) = (%d, %d), surface[0].flux[1] = %f",
-					   x,y, meshCell->getMeshSurfaces(0)->getFlux(0, 1));
+					   x,y, s[0]->getFlux(0, 1));
 			log_printf(DEBUG, "Cell (x,y) = (%d, %d), surface[2].flux[0] = %f",
-					   x,y, meshCell->getMeshSurfaces(2)->getFlux(0, 0));
+					   x,y, s[2]->getFlux(0, 0));
 			log_printf(DEBUG, "Cell (x,y) = (%d, %d), surface[2].flux[1] = %f",
-					   x,y,meshCell->getMeshSurfaces(2)->getFlux(0, 1));
+					   x,y, s[2]->getFlux(0, 1));
+
+			if (x == 0)
+			{
+				if (_mesh->getBoundary(0) == REFLECTIVE)
+				{
+					for (int e = 0; e < ng; e++)
+					{
+						in[e][5] = s[0]->getFlux(e,1);
+						in[e][6] = s[0]->getFlux(e,0);
+					}
+				}
+				else if (_mesh->getBoundary(0) == VACUUM)
+				{
+					for (int e = 0; e < ng; e++)
+					{
+						in[e][5] = 0;
+						in[e][6] = 0;
+					}
+				}
+			}
+			else
+			{
+				meshCellNext = _mesh->getCells(y*cell_width + x - 1);
+				for (int e = 0; e < ng; e++)
+				{
+					in[e][5] = meshCellNext->getMeshSurfaces(2)->getFlux(e,0);
+					in[e][6] = meshCellNext->getMeshSurfaces(2)->getFlux(e,1);
+				}			
+			}
 
 
-				//for (int e = 0; e < ng; e++)
-				//{			   
-				//}
+			if (x == cell_width - 1)
+			{
+				if (_mesh->getBoundary(2) == REFLECTIVE)
+				{
+					for (int e = 0; e < ng; e++)
+					{
+						in[e][1] = s[2]->getFlux(e,1);
+						in[e][2] = s[2]->getFlux(e,0);
+					}
+				}
+				else if (_mesh->getBoundary(2) == VACUUM)
+				{
+					for (int e = 0; e < ng; e++)
+					{
+						in[e][1] = 0;
+						in[e][2] = 0;
+					}
+				}
+			}
+			else
+			{
+				meshCellNext = _mesh->getCells(y*cell_width + x + 1);
+				for (int e = 0; e < ng; e++)
+				{
+					in[e][1] = meshCellNext->getMeshSurfaces(0)->getFlux(e,0);
+					in[e][2] = meshCellNext->getMeshSurfaces(0)->getFlux(e,1);
+				}			
+			}			
+			
+			if (y == 0)
+			{
+				if (_mesh->getBoundary(3) == REFLECTIVE)
+				{
+					for (int e = 0; e < ng; e++)
+					{
+						in[e][3] = s[3]->getFlux(e,0);
+						in[e][4] = s[3]->getFlux(e,1);
+					}
+				}
+				else if (_mesh->getBoundary(3) == VACUUM)
+				{
+					for (int e = 0; e < ng; e++)
+					{
+						in[e][3] = 0;
+						in[e][4] = 0;
+					}
+				}
+			}
+			else
+			{
+				meshCellNext = _mesh->getCells( (y - 1) * cell_width + x);
+				for (int e = 0; e < ng; e++)
+				{
+					in[e][3] = meshCellNext->getMeshSurfaces(1)->getFlux(e,1);
+					in[e][4] = meshCellNext->getMeshSurfaces(1)->getFlux(e,0);
+				}			
+			}
+
+			if (y == cell_height - 1)
+			{
+				if (_mesh->getBoundary(1) == REFLECTIVE)
+				{
+					for (int e = 0; e < ng; e++)
+					{
+						in[e][7] = s[1]->getFlux(e,0);
+						in[e][0] = s[1]->getFlux(e,1);
+					}
+				}
+				else if (_mesh->getBoundary(1) == VACUUM)
+				{
+					for (int e = 0; e < ng; e++)
+					{
+						in[e][7] = 0;
+						in[e][0] = 0;
+					}
+				}
+			}
+			else
+			{
+				meshCellNext = _mesh->getCells( (y + 1) * cell_width + x);
+				for (int e = 0; e < ng; e++)
+				{
+					in[e][7] = meshCellNext->getMeshSurfaces(3)->getFlux(e,1);
+					in[e][0] = meshCellNext->getMeshSurfaces(0)->getFlux(e,0);
+				}			
+			}
+
+			/* Now that we have all the in's and out's, computes src */
+			double l = meshCell->getL();
+			for (int e = 0; e < ng; e++)
+			{
+				double xs = meshCell->getSigmaT()[e];
+				double ex = exp(-xs * l);
+
+				for (int i = 0; i < 8; i++)
+				{
+					double src = xs * (out[e][i] - ex * in[e][i]) / (1.0 - ex);
+					meshCell->setQuadSrc(src, e, i);
+				}
+
+			}
+
 		}
 	}
 }	 

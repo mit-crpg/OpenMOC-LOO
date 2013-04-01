@@ -90,7 +90,7 @@ public:
 	Material* getMaterial();
 	void setMaterial(Material* material);
 	/* LOO */
-	void setSrc(double flux, int e);
+	void setSrc(double src, int e);
 	double* getSrc();
 	void setQuadFlux(double quadFlux, int e, int index);
 	double* getQuadFlux();

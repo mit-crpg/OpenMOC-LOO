@@ -60,7 +60,6 @@ public:
 	Cmfd(Geometry* geom, Plotter* plotter, Mesh* mesh, bool updateFlux, 
 		 bool runCmfd);
 	virtual ~Cmfd();
-	void initializeQuadFlux();
  	void computeDs();
 	void computeDsBackup();
 	void computeDsxDirection(double x, double y, int e, MeshCell *meshCell, 
@@ -70,13 +69,15 @@ public:
  	void updateMOCFlux(int iteration);
  	int constructAMPhi(Mat A, Mat B, Vec phi_old, solveType solveMethod);
  	double computeCMFDFluxPower(solveType solveMethod, int moc_iter);
-	double computeLooFluxPower(solveType solveMethod, int moc_iter);
  	Mat getA();
  	Mat getM();
  	Vec getPhiNew();
  	int createAMPhi(PetscInt size1, PetscInt size2, int cells);
  	double getKeff();
+	/* LOO */
 	void storePreMOCMeshSource(FlatSourceRegion* fsrs);
+	void computeQuadSrc();
+	double computeLooFluxPower(solveType solveMethod, int moc_iter);
 };
 
 #endif /* CMFD_H_ */

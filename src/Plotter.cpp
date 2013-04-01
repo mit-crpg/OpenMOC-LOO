@@ -317,9 +317,6 @@ void Plotter::copyFSRMap(int *pixels){
 	}
 }
 
-
-
-
 /* plot CMFD mesh */
 void Plotter::plotCMFDMesh(Mesh* mesh){
 	log_printf(NORMAL, "plotting CMFD mesh...");
@@ -742,7 +739,8 @@ void Plotter::plotDHats(Mesh* mesh, int iter_num){
 }
 
 void Plotter::plotQuadFlux(Mesh* mesh, int iter_num){
-	log_printf(NORMAL, "plotting quadrature fluxes...");
+	log_printf(NORMAL, "plotting quadrature fluxes for %d-th iteration ...", 
+			   iter_num);
 
 	/* set up bitMap */
 	BitMap<int>* bitMap = new BitMap<int>;
@@ -757,8 +755,8 @@ void Plotter::plotQuadFlux(Mesh* mesh, int iter_num){
 	double y_global;
 
 	/* find meshCell for each pixel */
-	for (int y = 0;y < _bit_length_y; y++){
-		for (int x = 0; x < _bit_length_x; x++){
+	for (int y = 0; y < _bit_length_y; y++){
+		for (int x =  0 ; x < _bit_length_x; x++){
 			x_global = convertToGeometryX(x);
 			y_global = convertToGeometryY(y);
 			bitMap->pixels[y * _bit_length_x + x] = 
@@ -797,7 +795,6 @@ void Plotter::plotQuadFlux(Mesh* mesh, int iter_num){
 			text_stream.str("");
 			drawText(bitMap, text, x_mid - 140, y_mid + 20.0);
 			text.clear();
-
 
 			/* SIDE 1 */
 			/* get midpoint of mesh surface */
@@ -865,7 +862,7 @@ void Plotter::plotQuadFlux(Mesh* mesh, int iter_num){
 	}
 
 	std::stringstream string;
-	string << "loo_quad_flux_i_" << iter_num;
+	string << "loo_quad_flux_" << iter_num << "_iter";
 	std::string title_str = string.str();
 
 	/* create filename with correct extension */

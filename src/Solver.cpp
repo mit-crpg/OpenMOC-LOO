@@ -1281,8 +1281,8 @@ double Solver::kernel(int max_iterations) {
 			   Computes cross sections */
 			_cmfd->computeXS(_flat_source_regions);
 
-			/* FIXME: Extracts track start & end fluxes */
-			_cmfd->initializeQuadFlux();
+			/* Computes _quad_src based on (m+1/2) results  */
+			_cmfd->computeQuadSrc();
 
 			#if 0
 			/* Check for neutron balance */

@@ -78,8 +78,4 @@ public:
 	void plotCMFDKeff(Mesh* mesh, int num_iter);
 };
 
-
-
-
-
 #endif /* PLOTTER_H_ */
