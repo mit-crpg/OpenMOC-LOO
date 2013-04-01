@@ -1190,15 +1190,17 @@ void Cmfd::computeQuadSrc()
 			{
 				double xs = meshCell->getSigmaT()[e];
 				double ex = exp(-xs * l);
+				double sum_quad_flux = 0;
 
 				for (int i = 0; i < 8; i++)
 				{
 					double src = xs * (out[e][i] - ex * in[e][i]) / (1.0 - ex);
 					meshCell->setQuadSrc(src, e, i);
+
+					sum_quad_flux += src/xs - (out[e][i] - in[e][i])/(xs * l);
 				}
-
+				meshCell->setSumQuadFlux(sum_quad_flux, e);
 			}
-
 		}
 	}
 }	 

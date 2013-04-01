@@ -39,7 +39,10 @@ MeshCell::MeshCell(){
 		{
 			_sigma_s[e*NUM_ENERGY_GROUPS + g] = 0.0;
 		}
+
+		/* LOO */
 		_src[e] = 0.0;
+		_sum_quad_flux[e] = 0.0;
 		for (int k = 0; k < 8; k++) 
 		{
 			_quad_flux[e * 8 + k] = 0.0;
@@ -268,4 +271,12 @@ void MeshCell::setQuadSrc(double quadSrc, int e, int index){
 
 double* MeshCell::getQuadSrc(){
 	return _quad_src;
+}
+
+double* MeshCell::getSumQuadFlux(){
+	return _sum_quad_flux;
+}
+
+void MeshCell::setSumQuadFlux(double flux, int e){
+	_sum_quad_flux[e] = flux;
 }
