@@ -1425,17 +1425,12 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter){
 		ng = 1;
 	}
 
-	/* Initializes terms from (m+1/2) results */
-	//double old_quad_src[8*ng];
-
+	/* Copies old fluxes into new fluxes */
 	for (int i = 0; i < cw * ch; i++)
 	{
 		meshCell = _mesh->getCells(i);
 		for (int e = 0; e < ng; e++) 
-		{
-			/* Copies old fluxes into new fluxes */
 			meshCell->setNewFlux(meshCell->getOldFlux()[e], e);
-		}
 	}
 
 
@@ -1465,9 +1460,28 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter){
 		keff = fis_tot / abs_tot; 
 		log_printf(INFO, "%d-th LOO iteration k = %f", iter, keff);
 
-		/* Computes new cell averaged source */
+		/* Computes new cell averaged source, looping over energy groups */
+		double new_src[NUM_ENERGY_GROUPS];
+		for (int i = 0; i < cw * ch; i++)
+		{
+			meshCell = _mesh->getCells(i);
+			for (int e = 0; e < ng; e++)
+			{
+				new_src[e] = 0.0;
+				for (int g = 0; g < ng; g++)
+				{
+					new_src[e] += meshCell->getSigmaS()[e*ng+g];
+					new_src[e] += meshCell->getChi()[e] 
+						* meshCell->getNuSigmaF()[g] / keff;
+				}
+				new_src[e] *= meshCell->getNewFlux()[e];
+			}
+		}
+		/* Initializes terms from (m+1/2) results */
+		//double old_quad_src[8*ng];
 
 	}
+
 	/* Plots stuffs */
 	std::string string;
 	if (solveMethod == DIFFUSION){
