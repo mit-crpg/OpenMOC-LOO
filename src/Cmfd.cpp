@@ -1506,10 +1506,15 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter){
 			}
 		}
 
+		/* Sweeps over geometry, solve LOO MOC */
+		/* FIXME: we do not really accumulate scalar flux as we do in the outter
+		 * MOC sweeps right? We only deal with angular flux in this case? */
+		
 
-		/* Initializes terms from (m+1/2) results */
-		//double old_quad_src[8*ng];
+		/* Computes new cell-averaged scalar flux based on new_sum_quad_flux */
 
+
+		/* Checks for convergence */
 	}
 
 	/* Plots stuffs */
