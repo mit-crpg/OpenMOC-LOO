@@ -1482,7 +1482,6 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter){
 			}
 		}
 
-#if 0
 		/* Updates 8 quadrature sources based on form function */
 		double **new_quad_src;
 		new_quad_src = new double*[cw*ch];
@@ -1498,13 +1497,14 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter){
 					/* Notice getSrc()[e] returns the $\bar{Q}_g^{(m)}$ */
 					new_quad_src[i][d] = meshCell->getQuadSrc()[d] 
 						* new_src[i][e] / meshCell->getSrc()[e];	
+					log_printf(DEBUG, "Old Mesh Averaged Source = %e", 
+							   meshCell->getSrc()[e]);
 					log_printf(DEBUG, "Updated quadrature source for cell %d" 
-							   " energy %d, track %d is %e", i, e, g, 
+							   " energy %d, track %d is %f", i, e, g, 
 							   new_quad_src[i][d]);
 				}
 			}
 		}
-#endif
 
 
 		/* Initializes terms from (m+1/2) results */
@@ -1866,6 +1866,6 @@ void Cmfd::storePreMOCMeshSource(FlatSourceRegion* fsrs)
 
 		/* For homogenized one energy group, set xs after all e's are done */
 		if (_mesh->getMultigroup() == false)
-			meshCell->setOldFlux(source_tally / vol_tally_cell, 0);
+			meshCell->setSrc(source_tally / vol_tally_cell, 0);
 	}
 }
