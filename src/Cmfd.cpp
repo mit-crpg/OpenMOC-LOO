@@ -1461,22 +1461,52 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter){
 		log_printf(INFO, "%d-th LOO iteration k = %f", iter, keff);
 
 		/* Computes new cell averaged source, looping over energy groups */
-		double new_src[NUM_ENERGY_GROUPS];
+		double **new_src;
+		new_src = new double*[cw*ch];
 		for (int i = 0; i < cw * ch; i++)
 		{
 			meshCell = _mesh->getCells(i);
+			new_src[i] = new double[NUM_ENERGY_GROUPS];
 			for (int e = 0; e < ng; e++)
 			{
-				new_src[e] = 0.0;
+				new_src[i][e] = 0.0;
 				for (int g = 0; g < ng; g++)
 				{
-					new_src[e] += meshCell->getSigmaS()[e*ng+g];
-					new_src[e] += meshCell->getChi()[e] 
+					new_src[i][e] += meshCell->getSigmaS()[e*ng+g];
+					new_src[i][e] += meshCell->getChi()[e] 
 						* meshCell->getNuSigmaF()[g] / keff;
 				}
-				new_src[e] *= meshCell->getNewFlux()[e];
+				new_src[i][e] *= meshCell->getNewFlux()[e];
+				log_printf(DEBUG, "Cell averaged source for cell %d, energy %d"
+						   " is %e", i, e, new_src[i][e]);
 			}
 		}
+
+#if 0
+		/* Updates 8 quadrature sources based on form function */
+		double **new_quad_src;
+		new_quad_src = new double*[cw*ch];
+		for (int i = 0; i < cw * ch; i++)
+		{
+			meshCell = _mesh->getCells(i);
+			new_quad_src[i] = new double[8 * NUM_ENERGY_GROUPS];
+			for (int e = 0; e < ng; e++)
+			{
+				for (int g = 0; g < 8; g++)
+				{
+					int d = e * ng + g;
+					/* Notice getSrc()[e] returns the $\bar{Q}_g^{(m)}$ */
+					new_quad_src[i][d] = meshCell->getQuadSrc()[d] 
+						* new_src[i][e] / meshCell->getSrc()[e];	
+					log_printf(DEBUG, "Updated quadrature source for cell %d" 
+							   " energy %d, track %d is %e", i, e, g, 
+							   new_quad_src[i][d]);
+				}
+			}
+		}
+#endif
+
+
 		/* Initializes terms from (m+1/2) results */
 		//double old_quad_src[8*ng];
 
