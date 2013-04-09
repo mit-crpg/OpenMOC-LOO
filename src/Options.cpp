@@ -23,7 +23,7 @@
 Options::Options(int argc, char **argv) {
 	_cmfd = false; 					
 	_loo = true;
-	_plot_quad_flux = true; 
+	_plot_quad_flux = false; 
 	/* Checks the working directory to set the relative path for input files
 	 * This is important so that default input files work when program is run
 	 * from both eclipse and the console */
@@ -99,13 +99,19 @@ Options::Options(int argc, char **argv) {
 				_cmfd = false;
 			else if (strcmp(argv[i], "-wc") == 0 ||
 					strcmp(argv[i], "--withcmfd") == 0)
+			{
 				_cmfd = true;
+				_loo = false;
+			}
 			else if (strcmp(argv[i], "-nl") == 0 ||
 					strcmp(argv[i], "--noloo") == 0)
 				_loo = false;
 			else if (strcmp(argv[i], "-wl") == 0 ||
 					strcmp(argv[i], "--withloo") == 0)
+			{
 				_loo = true;
+				_cmfd = false;
+			}
 			else if (strcmp(argv[i], "-pc") == 0 ||
 					strcmp(argv[i], "--plotcurrent") == 0)
 				_plot_current = true;

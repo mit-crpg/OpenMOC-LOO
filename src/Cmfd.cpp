@@ -1410,11 +1410,11 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter){
 /* Computes the flux in each mesh cell using LOO */
 double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter){
 	log_printf(INFO, "Running low order MOC solver...");
-	int iter, max_outer = 100; 
+	int iter, max_outer = 1000; 
 	if (solveMethod == DIFFUSION){
 		max_outer = 1000;
 	}
-	double keff = 0; 
+	double old_keff = 1.0;
 
 	/* Obtains info about the meshes */
 	MeshCell* meshCell;
@@ -1433,32 +1433,42 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter){
 			meshCell->setNewFlux(meshCell->getOldFlux()[e], e);
 	}
 
+	/* Pre-compute factors that do not change between iterations */
+	double **sum_quad_flux, **quad_xs, **ratio, **expo, **tau;
+	sum_quad_flux = new double*[cw*ch];
+	quad_xs = new double*[cw*ch];
+	ratio = new double*[cw*ch];
+	expo = new double*[cw*ch];
+	tau = new double*[cw*ch];
+
+	double l = _mesh->getCells(0)->getL();
+
+	for (int i = 0; i < cw * ch; i++)
+	{
+		sum_quad_flux[i] = new double[NUM_ENERGY_GROUPS];
+		quad_xs[i] = new double[NUM_ENERGY_GROUPS];
+		ratio[i] = new double[NUM_ENERGY_GROUPS];
+		expo[i] = new double[NUM_ENERGY_GROUPS];
+		tau[i] = new double[NUM_ENERGY_GROUPS];
+		
+		for (int e = 0; e < ng; e++)
+		{
+			sum_quad_flux[i][e] = 0;
+			quad_xs[i][e] = _mesh->getCells(i)->getSigmaT()[e];
+			tau[i][e] = quad_xs[i][e] * l;
+			expo[i][e] = exp(-tau[i][e]);
+			ratio[i][e] = (1 - expo[i][e]) / tau[i][e];
+		}
+	}
+
+	_keff = 1.0;
 
 	/* Starts LOO acceleration iteration, we do not update src, quad_src, 
 	 * quad_flux, old_flux, as they are computed from the MOC step (i.e., 
 	 * order m+1/2) and should not be updated during acceleration step. */
 	for (iter = 0; iter < max_outer; iter++)
 	{
-		/* Computes keff assuming zero leakage */
-		double fis_tot = 0, abs_tot = 0;
-		for (int i = 0; i < cw * ch; i++)
-		{
-			meshCell = _mesh->getCells(i);
-			for (int e = 0; e < ng; e++)
-			{
-				for (int g = 0; g < ng; g++)
-				{
-					/* FIXME: should there be a chi on the top of k? */
-					fis_tot += meshCell->getChi()[e]
-						* meshCell->getNuSigmaF()[g]
-						* meshCell->getNewFlux()[g] * meshCell->getVolume();
-				}
-				abs_tot += meshCell->getSigmaA()[e] * meshCell->getNewFlux()[e]
-					* meshCell->getVolume();
-			}
-		}
-		keff = fis_tot / abs_tot; 
-		log_printf(INFO, "%d-th LOO iteration k = %f", iter, keff);
+		old_keff = _keff;
 
 		/* Computes new cell averaged source, looping over energy groups */
 		double **new_src;
@@ -1474,7 +1484,7 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter){
 				{
 					new_src[i][e] += meshCell->getSigmaS()[e*ng+g];
 					new_src[i][e] += meshCell->getChi()[e] 
-						* meshCell->getNuSigmaF()[g] / keff;
+						* meshCell->getNuSigmaF()[g] / _keff;
 				}
 				new_src[i][e] *= meshCell->getNewFlux()[e];
 				log_printf(DEBUG, "Cell averaged source for cell %d, energy %d"
@@ -1509,36 +1519,150 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter){
 		/* Sweeps over geometry, solve LOO MOC */
 		/* FIXME: we do not really accumulate scalar flux as we do in the outter
 		 * MOC sweeps right? We only deal with angular flux in this case? */
-		
+		for (int e = 0; e < ng; e++)
+		{
+			double flux;
+			int i, g, d;
+			int i_array[]  = {2,3,1,1,1,0,2,2};
+			int g_array[]  = {0,5,0,2,4,1,4,6};
+			int i_array2[] = {3,3,1,0,0,0,2,3};
+			int g_array2[] = {0,2,7,2,4,6,3,6};
+
+			/* 1st loop */
+			flux = _mesh->getCells(2)->getQuadFlux()[e*ng + 0];		
+			for (int x = 0; x < 8; x++)
+			{
+				for (int y = 0; y < 8; y++)
+				{
+					i = i_array[x];
+					g = g_array[y];
+					d = e * ng + g;
+					sum_quad_flux[i][e] += flux * ratio[i][e] + 
+						new_quad_src[i][d] * l * ratio[i][e];
+					flux = expo[i][e] * flux + new_quad_src[i][d] * l 
+						* ratio[i][e];
+				}
+			}
+			_mesh->getCells(2)->setQuadFlux(flux, e, 0);
+			flux = _mesh->getCells(2)->getQuadFlux()[e*ng + 7];		
+			for (int x = 7; x >=0 ; x--)
+			{
+				for (int y = 7; y >= 0; y--)
+				{
+					i = i_array[x];
+					g = g_array[y];
+					d = e * ng + g;
+					sum_quad_flux[i][e] += flux * ratio[i][e] + 
+						new_quad_src[i][d] * l * ratio[i][e];
+					flux = expo[i][e] * flux + new_quad_src[i][d] * l 
+						* ratio[i][e];
+				}
+			}
+			_mesh->getCells(2)->setQuadFlux(flux, e, 7);
+
+
+			/* 2nd loop */
+			flux = _mesh->getCells(3)->getQuadFlux()[e*ng + 0];		
+			for (int x = 0; x < 8; x++)
+			{
+				for (int y = 0; y < 8; y++)
+				{
+					i = i_array2[x];
+					g = g_array2[y];
+					d = e * ng + g;
+					sum_quad_flux[i][e] += flux * ratio[i][e] + 
+						new_quad_src[i][d] * l * ratio[i][e];
+					flux = expo[i][e] * flux + new_quad_src[i][d] * l 
+						* ratio[i][e];
+				}
+			}
+			_mesh->getCells(3)->setQuadFlux(flux, e, 0);
+			flux = _mesh->getCells(3)->getQuadFlux()[e*ng + 7];		
+			for (int x = 7; x >=0 ; x--)
+			{
+				for (int y = 7; y >= 0; y--)
+				{
+					i = i_array2[x];
+					g = g_array2[y];
+					d = e * ng + g;
+					sum_quad_flux[i][e] += flux * ratio[i][e] + 
+						new_quad_src[i][d] * l * ratio[i][e];
+					flux = expo[i][e] * flux + new_quad_src[i][d] * l 
+						* ratio[i][e];
+				}
+			}
+			_mesh->getCells(3)->setQuadFlux(flux, e, 7);
+		}		
 
 		/* Computes new cell-averaged scalar flux based on new_sum_quad_flux */
-
+		for (int i = 0; i < cw * ch; i++)
+		{
+			meshCell = _mesh->getCells(i);
+			for (int e = 0; e < ng; e++) 
+			{
+				meshCell->setNewFlux(meshCell->getOldFlux()[e] 
+									 * sum_quad_flux[i][e] 
+									 / meshCell->getSumQuadFlux()[e], e);
+			}
+		}
 
 		/* Checks for convergence */
-	}
+		/* Computes keff assuming zero leakage */
+		double fis_tot = 0, abs_tot = 0;
+		for (int i = 0; i < cw * ch; i++)
+		{
+			meshCell = _mesh->getCells(i);
+			for (int e = 0; e < ng; e++)
+			{
+				for (int g = 0; g < ng; g++)
+				{
+					/* FIXME: should there be a chi on the top of k? */
+					fis_tot += meshCell->getChi()[e]
+						* meshCell->getNuSigmaF()[g]
+						* meshCell->getNewFlux()[g] * meshCell->getVolume();
+				}
+				abs_tot += meshCell->getSigmaA()[e] * meshCell->getNewFlux()[e]
+					* meshCell->getVolume();
+			}
+		}
+		_keff = fis_tot / abs_tot; 
+		log_printf(NORMAL, "%d-th LOO iteration k = %f", iter, _keff);
 
-	/* Plots stuffs */
-	std::string string;
-	if (solveMethod == DIFFUSION){
-		if (_plotter->plotDiffusion() == true){
-			string = "diff";
-			_plotter->plotCMFDflux(_mesh, string, moc_iter);
+		if ((iter > 5) && (fabs(_keff - old_keff) / _keff < 1e-6))
+		{
+			/* new flux is already in place */
+			/* just need to print stuff */
+			std::string string;
+			if (solveMethod == DIFFUSION)
+			{
+				if (_plotter->plotDiffusion() == true){
+					string = "diff";
+					_plotter->plotCMFDflux(_mesh, string, moc_iter);
+				}
+			}
+
+			if (_plotter->plotKeff())
+			{
+				_plotter->plotCMFDKeff(_mesh, moc_iter);
+			}
+
+			if (_plotter->plotCurrent())
+			{
+				string = "loo";
+				_plotter->plotCMFDflux(_mesh, string, moc_iter);
+			}
+
+			if (solveMethod == CMFD)
+			{
+				_mesh->setKeffCMFD(_keff, moc_iter);
+			}
+
+			return _keff;
 		}
 	}
-
-	if (_plotter->plotKeff()){
-		_plotter->plotCMFDKeff(_mesh, moc_iter);
-	}
-
-	if (_plotter->plotCurrent()){
-		string = "loo";
-		_plotter->plotCMFDflux(_mesh, string, moc_iter);
-	}
-
-	if (solveMethod == CMFD){
-		_mesh->setKeffCMFD(_keff, moc_iter);
-	}
-	return _keff;
+	
+	log_printf(WARNING, "Keff not converging after %d iterations", max_outer);
+	return 1.0;
 }
 
 
@@ -1874,3 +1998,6 @@ void Cmfd::storePreMOCMeshSource(FlatSourceRegion* fsrs)
 			meshCell->setSrc(source_tally / vol_tally_cell, 0);
 	}
 }
+
+
+

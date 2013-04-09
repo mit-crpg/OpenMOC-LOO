@@ -78,6 +78,7 @@ public:
 	void storePreMOCMeshSource(FlatSourceRegion* fsrs);
 	void computeQuadSrc();
 	double computeLooFluxPower(solveType solveMethod, int moc_iter);
+	//void oneTrack(double **sum_quad_flux, double flux, int i, int g);
 };
 
 #endif /* CMFD_H_ */
