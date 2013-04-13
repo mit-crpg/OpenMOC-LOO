@@ -908,6 +908,8 @@ void Plotter::plotXS(Mesh* mesh, int iter_num){
 	std::stringstream text_stream;
 	std::string text;
 
+	int e = 6;
+
 	/* plot mesh currents next to surface */
 	for (int cellY = 0; cellY < mesh->getCellHeight(); cellY++){
 		for (int cellX = 0; cellX < mesh->getCellWidth(); cellX++){
@@ -918,28 +920,28 @@ void Plotter::plotXS(Mesh* mesh, int iter_num){
 			y_mid = convertToPixelY((meshCell->getBounds()[1] + meshCell->getBounds()[3]) / 2.0);
 
 			/* Sigma A */
-			text_stream << "SigmaA: " << meshCell->getSigmaA()[0];
+			text_stream << "SigmaA: " << meshCell->getSigmaA()[e];
 			text = text_stream.str();
 			text_stream.str("");
 			drawText(bitMap, text, x_mid - 50, y_mid + 45);
 			text.clear();
 
 			/* Sigma S */
-			text_stream << "SigmaS: " << meshCell->getSigmaS()[0];
+			text_stream << "SigmaS: " << meshCell->getSigmaS()[e];
 			text = text_stream.str();
 			text_stream.str("");
 			drawText(bitMap, text, x_mid - 50, y_mid + 15);
 			text.clear();
 
 			/* Nu Sigma F */
-			text_stream << "NuSigmaF: " << meshCell->getNuSigmaF()[0];
+			text_stream << "NuSigmaF: " << meshCell->getNuSigmaF()[e];
 			text = text_stream.str();
 			text_stream.str("");
 			drawText(bitMap, text, x_mid - 50, y_mid);
 			text.clear();
 
 			/* Diffusivity */
-			text_stream << "Diffusivity: " << meshCell->getDiffusivity()[0];
+			text_stream << "Diffusivity: " << meshCell->getDiffusivity()[e];
 			text = text_stream.str();
 			text_stream.str("");
 			drawText(bitMap, text, x_mid - 50, y_mid - 30);

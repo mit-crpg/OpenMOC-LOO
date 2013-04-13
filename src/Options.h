@@ -42,12 +42,8 @@ private:
 	bool _update_flux;
 	bool _multigroup;
 	bool _print_matrices;
-	bool _transient;
 	bool _diffusion;
 	double _keff_conv_thresh;
-	double _time_end;
-	double _dt_outer;
-	double _dt_inner;
 	int _cmfd_level;
 public:
     Options(int argc, char **argv);
@@ -77,11 +73,6 @@ public:
 	bool getCmfd();
 	bool getLoo();
 	bool getDiffusion();
-	bool getTransient();
-	double getTimeEnd();
-	double getTimeStepOuter();
-	double getTimeStepInner();
-
 };
 
 #endif

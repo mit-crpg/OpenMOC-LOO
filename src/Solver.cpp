@@ -265,9 +265,9 @@ void Solver::initializeFSRs() {
 
 
 /**
- * Zero each track's incoming and outgoing polar fluxes
+ * Initialize each track's incoming and outgoing polar fluxes
  */
-void Solver::zeroTrackFluxes() {
+void Solver::initializeTrackFluxes(double flux) {
 
 	log_printf(INFO, "Setting all track polar fluxes to zero...");
 
@@ -283,7 +283,7 @@ void Solver::zeroTrackFluxes() {
 			polar_fluxes = _tracks[i][j].getPolarFluxes();
 
 			for (int i = 0; i < GRP_TIMES_ANG * 2; i++)
-				polar_fluxes[i] = 0.0;
+				polar_fluxes[i] = flux;
 		}
 	}
 }
@@ -453,11 +453,10 @@ void Solver::updateKeff(int iteration) {
 
 	/* Update keff for MOC sweep */
 	if (_run_cmfd){
-		_geom->getMesh()->setKeffMOC(tot_fission/(tot_abs + leakage), 
-									 iteration);
+		_geom->getMesh()->setKeffMOC(_k_eff, iteration);
 
-		log_printf(NORMAL, "CMFD k_eff: %f, MOC k_eff = %f", _cmfd->getKeff(), 
-				   tot_fission/(tot_abs + leakage));
+		log_printf(NORMAL, "Iteration %d, MOC k_eff: %f, CMFD k_eff = %f", 
+		iteration, _k_eff, _cmfd->getKeff());
 
 		if (_update_flux){
 			_k_eff = _cmfd->getKeff();
@@ -1103,8 +1102,8 @@ void Solver::MOCsweep(int max_iterations) {
 
 /* initialize the source and renormalize the fsr and track fluxes */
 void Solver::initializeSource(){
-
-	double scatter_source, fission_source = 0;
+			
+	double scatter_source, fission_source = 0, total_vol = 0;
 	double renorm_factor, volume;
 	double* nu_sigma_f;
 	double* sigma_s;
@@ -1131,10 +1130,12 @@ void Solver::initializeSource(){
 
 		for (int e = start_index; e < end_index; e++)
 			fission_source += nu_sigma_f[e] * scalar_flux[e] * volume;
+
+		total_vol += volume;
 	}
 
 	/* Renormalize scalar fluxes in each region */
-	renorm_factor = 1.0 / fission_source;
+	renorm_factor = total_vol / fission_source;
 
 	#if USE_OPENMP
 	#pragma omp parallel for
@@ -1218,7 +1219,7 @@ double Solver::kernel(int max_iterations) {
 
 	/* Set scalar flux to unity for each region */
 	oneFSRFluxes();
-	zeroTrackFluxes();
+	initializeTrackFluxes(1.0);
 
 	/* Set the old source to unity for each Region */
 	#if USE_OPENMP
@@ -1233,9 +1234,10 @@ double Solver::kernel(int max_iterations) {
 
 	/* Source iteration loop */
 	int i;
+	log_printf(NORMAL, "Starting guess of k_eff = %f", _k_eff);
 	for (i = 0; i < max_iterations; i++) {
 
-		log_printf(NORMAL, "Iteration %d: k_eff = %f", i, _k_eff);
+		log_printf(INFO, "Iteration %d: k_eff = %f", i, _k_eff);
 
 		/* initialize the source and renormalize fsr and track fluxes */
 		initializeSource();

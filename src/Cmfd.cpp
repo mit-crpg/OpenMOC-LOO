@@ -1893,7 +1893,7 @@ void Cmfd::updateMOCFlux(int iteration){
 				flux = fsr->getOldFlux();
 				fsr_new_flux = new_flux / old_flux * flux[e];
 
-				log_printf(INFO, "Updating flux in FSR: %i, cell: %i,"
+				log_printf(NORMAL, "Updating flux in FSR: %i, cell: %i,"
 						   " group: %i, ratio: %f", fsr->getId() ,i, e, 
 						   new_flux / old_flux);
 

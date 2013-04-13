@@ -21,8 +21,8 @@
  * @param argv a char array of command line arguments from console
  */
 Options::Options(int argc, char **argv) {
-	_cmfd = false; 					
-	_loo = true;
+	_cmfd = true; 					
+	_loo = false;
 	_plot_quad_flux = false; 
 	/* Checks the working directory to set the relative path for input files
 	 * This is important so that default input files work when program is run
@@ -44,18 +44,14 @@ Options::Options(int argc, char **argv) {
 	_plot_fluxes = false;				/* Default will not plot fluxes */
 	_compute_pin_powers = false;		/* Default will not compute pin powers */
 	_compress_cross_sections = false;	/* Default will not compress cross-sections */
-	_update_flux = false;  				/* Default will not use CMFD to update flux */
+	_update_flux = true;  				/* Default will not use CMFD to update flux */
 	_plot_current = false;				/* Default will not plot cmfd currents */
-	_plot_diffusion = false;			/* Default will not plot diffusion flux */
-	_keff_conv_thresh = 1e-6;			/* Default will set keff conv thresh to 1e-6 */
-	_multigroup = false;				/* Default sets CMFD to one group structure */
+	_plot_diffusion = true;			/* Default will not plot diffusion flux */
+	_keff_conv_thresh = 1e-12;			/* Default will set keff conv thresh to 1e-6 */
+	_multigroup = true;				/* Default sets CMFD to one group structure */
 	_print_matrices = false;			/* Default will not print matrices */
 	_cmfd_level = 1;					/* Default cmfd level is 1 (hightest level) */
 	_plot_keff = false;					/* Default will not plot keff */
-	_transient = false;					/* Default will not solve transient problem */
-	_time_end = 1.0;					/* Default end time is 1 second */
-	_dt_outer = 1.0e-4;					/* Default outer time step is 1.0e-4 seconds */
-	_dt_inner = 5.0e-7;					/* Default inner time step is 5.0e-7 seconds */
 	_diffusion = false;					/* Default will not solve diffusion problem */
 
 	for (int i = 0; i < argc; i++) {
@@ -118,9 +114,6 @@ Options::Options(int argc, char **argv) {
 			else if (strcmp(argv[i], "-pk") == 0 ||
 					strcmp(argv[i], "--plotkeff") == 0)
 				_plot_keff = true;
-			else if (strcmp(argv[i], "-tr") == 0 ||
-					strcmp(argv[i], "--transient") == 0)
-				_transient = true;
 			else if (strcmp(argv[i], "-df") == 0 ||
 					strcmp(argv[i], "--diffusion") == 0)
 				_diffusion = true;
@@ -129,12 +122,6 @@ Options::Options(int argc, char **argv) {
 				_plot_diffusion = true;
 			else if (LAST("--keffconv") || LAST("-kc"))
 				_keff_conv_thresh = atof(argv[i]);
-			else if (LAST("--timeend") || LAST("-te"))
-				_time_end = atof(argv[i]);
-			else if (LAST("--timestepouter") || LAST("-dto"))
-				_dt_outer = atof(argv[i]);
-			else if (LAST("--timestepinner") || LAST("-dti"))
-				_dt_inner = atof(argv[i]);
 			else if (strcmp(argv[i], "-mg") == 0 ||
 					strcmp(argv[i], "--multigroup") == 0)
 				_multigroup = true;
@@ -361,26 +348,8 @@ bool Options::getLoo(){
 	return _loo;
 }
 
-bool Options::getTransient(){
-	return _transient;
-}
-
 bool Options::getDiffusion(){
 	return _diffusion;
 }
-
-double Options::getTimeEnd(){
-	return _time_end;
-}
-
-double Options::getTimeStepOuter(){
-	return _dt_outer;
-}
-
-double Options::getTimeStepInner(){
-	return _dt_inner;
-}
-
-
 
 

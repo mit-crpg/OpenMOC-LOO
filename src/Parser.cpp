@@ -376,6 +376,7 @@ void Parser::each_material(std::function<void(Material *)> callback) {
 void XMLCALL Parser_XMLCallback_Start(void *context,
 				      const XML_Char *name,
 				      const XML_Char **attrs) {
+	/* s is a stack, f is a frame */
 	struct stack *s;
 	struct frame *f;
 	enum frame_type type;

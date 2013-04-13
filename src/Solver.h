@@ -78,7 +78,7 @@ public:
 		   bool _update_flux, double keffConvThresh, 
 		   bool computePowers, bool runCmfd, bool runLoo, bool diffusion);
 	virtual ~Solver();
-	void zeroTrackFluxes();
+	void initializeTrackFluxes(double flux);
 	void oneFSRFluxes();
 	void zeroFSRFluxes();
 	void zeroMeshCells();
