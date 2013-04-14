@@ -1880,22 +1880,30 @@ void Cmfd::updateMOCFlux(int iteration){
 				old_flux = meshCell->getOldFlux()[0];
 				new_flux = meshCell->getNewFlux()[0];
 			}
-
-			log_printf(DEBUG, "Updating flux in meshCell: %i, flux ratio: %f", 
-					   i, new_flux / old_flux);
+			if (e == NUM_ENERGY_GROUPS - 1)
+			{
+				log_printf(NORMAL, "Update flux in Cell: %i,"
+						   " old = %f, new = %f, new/old = %f", 
+						   i, old_flux, new_flux, new_flux / old_flux);
+			}
 
 			/* loop over FRSs in mesh cell */
 			std::vector<int>::iterator iter;
 			for (iter = meshCell->getFSRs()->begin(); 
-				 iter != meshCell->getFSRs()->end(); ++iter) {
+				 iter != meshCell->getFSRs()->end(); ++iter) 
+			{
 				fsr = &_flat_source_regions[*iter];
 				/* get fsr flux */
 				flux = fsr->getOldFlux();
 				fsr_new_flux = new_flux / old_flux * flux[e];
 
-				log_printf(NORMAL, "Updating flux in FSR: %i, cell: %i,"
-						   " group: %i, ratio: %f", fsr->getId() ,i, e, 
-						   new_flux / old_flux);
+				if (e == NUM_ENERGY_GROUPS - 1)
+				{
+					log_printf(INFO, "Updating flux in FSR: %i, cell: %i,"
+							   " group: %i, old flux = %f, new flux = %f",
+							   " ratio: %f", fsr->getId() ,i, e, old_flux, 
+							   new_flux, new_flux / old_flux);
+				}
 
 				/* set new flux in FSR */
 				fsr->setFlux(e, fsr_new_flux);
