@@ -119,7 +119,7 @@ int main(int argc, char **argv) {
 	Solver solver(&geometry, &track_generator, &plotter, &cmfd, 
 				  opts.updateFlux(), opts.getKeffConvThresh(), 
 				  opts.computePinPowers(), opts.getCmfd(), opts.getLoo(),
-				  opts.getDiffusion());
+				  opts.getDiffusion(), opts.getKGuess());
 
 	/* Solve steady state problem */
 	timer.reset();

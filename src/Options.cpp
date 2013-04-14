@@ -21,7 +21,9 @@
  * @param argv a char array of command line arguments from console
  */
 Options::Options(int argc, char **argv) {
-	_cmfd = true; 					
+	_cmfd = true; 			
+	_k_guess = 0.738230;
+		
 	_loo = false;
 	_plot_quad_flux = false; 
 	/* Checks the working directory to set the relative path for input files
@@ -70,6 +72,8 @@ Options::Options(int argc, char **argv) {
 							_bit_dimension = atoi(argv[i]);
 			else if (LAST("--verbosity") || LAST("-v"))
 				_verbosity = strdup(argv[i]);
+			else if (LAST("--kguess") || LAST("-k"))
+				_k_guess = atof(argv[i]);
 			else if (strcmp(argv[i], "-dg") == 0 ||
 					strcmp(argv[i], "--dumpgeometry") == 0)
 				_dump_geometry = true;
@@ -195,6 +199,9 @@ double Options::getTrackSpacing(){
     return _track_spacing;
 }
 
+double Options::getKGuess(){
+	return _k_guess;
+}
 
 /**
  * Returns the verbosity logging level. By default this will return NORMAL if not set

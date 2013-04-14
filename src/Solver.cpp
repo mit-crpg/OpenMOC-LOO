@@ -18,7 +18,7 @@
 Solver::Solver(Geometry* geom, TrackGenerator* track_generator, 
 			   Plotter* plotter, Cmfd* cmfd, bool updateFlux, 
 			   double keffConvThresh, bool computePowers, 
-			   bool runCmfd, bool runLoo, bool diffusion) {
+			   bool runCmfd, bool runLoo, bool diffusion, double k_guess) {
 
 	_geom = geom;
 	_quad = new Quadrature(TABUCHI);
@@ -33,8 +33,10 @@ Solver::Solver(Geometry* geom, TrackGenerator* track_generator,
 	_compute_powers = computePowers;
 	_run_cmfd = runCmfd;
 	_run_loo = runLoo;
-	_k_eff = 0.0;
 	_diffusion = diffusion;
+	/* Initialize keff to be  */
+	_k_eff = k_guess;
+
 
 	try{
 		_flat_source_regions = new FlatSourceRegion[_num_FSRs];

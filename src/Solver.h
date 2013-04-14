@@ -76,7 +76,8 @@ public:
 	Solver(Geometry* geom, TrackGenerator* track_generator, 
 		   Plotter* plotter, Cmfd* cmfd,
 		   bool _update_flux, double keffConvThresh, 
-		   bool computePowers, bool runCmfd, bool runLoo, bool diffusion);
+		   bool computePowers, bool runCmfd, bool runLoo, bool diffusion, 
+		   double k_guess);
 	virtual ~Solver();
 	void initializeTrackFluxes(double flux);
 	void oneFSRFluxes();

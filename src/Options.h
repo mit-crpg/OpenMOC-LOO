@@ -45,6 +45,7 @@ private:
 	bool _diffusion;
 	double _keff_conv_thresh;
 	int _cmfd_level;
+	double _k_guess;
 public:
     Options(int argc, char **argv);
     ~Options(void);
@@ -67,6 +68,7 @@ public:
 	bool plotKeff();
 	bool updateFlux();
 	double getKeffConvThresh();
+	double getKGuess();
 	bool getGroupStructure();
 	bool getPrintMatrices();
 	int getCmfdLevel();
