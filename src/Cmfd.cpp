@@ -1917,7 +1917,7 @@ void Cmfd::updateMOCFlux(int iteration){
 double Cmfd::computeDiffCorrect(double d, double h){
 
 	/* compute correction - F */
-	double alpha, mu, expon;
+	/* double alpha, mu, expon;
 	double rho, F;
 	rho = 0.0;
 	for (int p = 0; p < NUM_POLAR_ANGLES; p++){
@@ -1928,8 +1928,9 @@ double Cmfd::computeDiffCorrect(double d, double h){
 	}
 
     F = 1 + h * rho / (2 * d);
+	*/
 
-	return F;
+	return 1.0;
 
 }
 
