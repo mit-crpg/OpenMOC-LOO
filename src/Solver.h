@@ -80,6 +80,8 @@ public:
 		   double k_guess);
 	virtual ~Solver();
 	void initializeTrackFluxes(double flux);
+	void normalizeFlux();
+ 	void updateSource();
 	void oneFSRFluxes();
 	void zeroFSRFluxes();
 	void zeroMeshCells();
@@ -95,7 +97,6 @@ public:
  	void checkNeutBal(Mesh* mesh);
  	void renormCurrents(Mesh* mesh, double keff);
  	double getEps(Mesh* mesh, double keff, double renorm_factor);
- 	void initializeSource();
  	FlatSourceRegion* getFSRs();
  	void setOldFSRFlux();
 	void tallyLooForwardFlux(Track *track, segment *segment, 

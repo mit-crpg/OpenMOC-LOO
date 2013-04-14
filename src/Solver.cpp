@@ -1068,7 +1068,7 @@ void Solver::MOCsweep(int max_iterations) {
 			}
 		}
 
-		/* Check for convergence if max_iterations > 1 */
+		/* If more than one sweep of MOC is requested, check for convergence */
 		if (max_iterations > 1) {
 			bool converged = true;
 			#if USE_OPENMP
@@ -1102,17 +1102,13 @@ void Solver::MOCsweep(int max_iterations) {
 }
 
 
-/* initialize the source and renormalize the fsr and track fluxes */
-void Solver::initializeSource(){
+/* initialize the sources */
+void Solver::normalizeFlux(){
 			
-	double scatter_source, fission_source = 0, total_vol = 0;
+	double fission_source = 0, total_vol = 0;
 	double renorm_factor, volume;
 	double* nu_sigma_f;
-	double* sigma_s;
-	double* chi;
 	double* scalar_flux;
-	double* source;
-	double* mat_mult;
 	FlatSourceRegion* fsr;
 	Material* material;
 	int start_index, end_index;
@@ -1153,11 +1149,20 @@ void Solver::initializeSource(){
 		for (int j = 0; j < _num_tracks[i]; j++)
 			_tracks[i][j].normalizeFluxes(renorm_factor);
 	}
+}
 
-	/*********************************************************************
-	 * Compute the source for each region
-	 *********************************************************************/
-
+/* Compute the source for each region */
+void Solver::updateSource(){
+	double scatter_source, fission_source = 0;
+	double* nu_sigma_f;
+	double* sigma_s;
+	double* chi;
+	double* scalar_flux;
+	double* source;
+	double* mat_mult;
+	FlatSourceRegion* fsr;
+	Material* material;
+	int start_index, end_index;
 	/* For all regions, find the source */
 	for (int r = 0; r < _num_FSRs; r++) {
 
@@ -1217,7 +1222,7 @@ double Solver::kernel(int max_iterations) {
 	checkTrackSpacing();
 
 	/* Initial guess */
-	_old_k_effs.push(1.0);
+	_old_k_effs.push(_k_eff);
 
 	/* Set scalar flux to unity for each region */
 	oneFSRFluxes();
@@ -1241,8 +1246,12 @@ double Solver::kernel(int max_iterations) {
 
 		log_printf(INFO, "Iteration %d: k_eff = %f", i, _k_eff);
 
-		/* initialize the source and renormalize fsr and track fluxes */
-		initializeSource();
+		/* Normalizes the FSR scalar flux and each track's angular flux 
+		 * to such that total fission source adds up to volume. 
+		 */
+		normalizeFlux();
+		/* Then computes new Q for each FSR */
+		updateSource();
 
 		/* Iterate on the flux with the new source */
 		MOCsweep(1);
@@ -1251,8 +1260,8 @@ double Solver::kernel(int max_iterations) {
 		if (_run_cmfd){
 
 			setOldFSRFlux();
-			initializeSource();
-			MOCsweep(1);
+			normalizeFlux();
+			updateSource();
 
 			/* compute cross sections and diffusion coefficients */
 			_cmfd->computeXS(_flat_source_regions);
@@ -1276,10 +1285,10 @@ double Solver::kernel(int max_iterations) {
 		if (_run_loo){
 
 			setOldFSRFlux();
-			initializeSource();
+			normalizeFlux();
+			updateSource();
 
 			_cmfd->storePreMOCMeshSource(_flat_source_regions);
-			MOCsweep(1);
 
 			/* LOO Method 1: assume constant Sigma in each mesh. 
 			   Computes cross sections */
