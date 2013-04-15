@@ -1223,8 +1223,12 @@ void Cmfd::computeQuadSrc()
 	}
 }	 
 
-/* Computes the flux in each mesh cell using power iteration with Petsc's 
- * GMRES numerical inversion */
+/*
+* CMFD solver that solves the diffusion problem
+* @param solve methed - either diffusion or cmfd (acceleration)
+* @param iteration number of in MOC solver - used for plotting
+* @return k-effective
+*/
 double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter){
 
 	log_printf(INFO, "Running diffusion solver...");
@@ -1271,11 +1275,7 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter){
 	petsc_err = VecCreateSeq(PETSC_COMM_WORLD, ch*cw*ng, &res);
 	CHKERRQ(petsc_err);
 
-	size1 = 1;
-	petsc_err = VecSet(_phi_new, size1);
-	CHKERRQ(petsc_err);
-
-	/* assembly vectors and matrices */
+	/* Assemblies vectors and matrices */
 	petsc_err = VecAssemblyBegin(phi_old);
 	petsc_err = VecAssemblyEnd(phi_old);
 	petsc_err = VecAssemblyBegin(_phi_new);
@@ -1287,13 +1287,14 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter){
 	petsc_err = VecAssemblyBegin(res);
 	petsc_err = VecAssemblyEnd(res);
 	CHKERRQ(petsc_err);
-
-	petsc_err = VecCopy(phi_old, _phi_new);
-
 	petsc_err = MatAssemblyBegin(_A, MAT_FINAL_ASSEMBLY);
 	petsc_err = MatAssemblyEnd(_A, MAT_FINAL_ASSEMBLY);
 	petsc_err = MatAssemblyBegin(_M, MAT_FINAL_ASSEMBLY);
 	petsc_err = MatAssemblyEnd(_M, MAT_FINAL_ASSEMBLY);
+	CHKERRQ(petsc_err);
+
+	/* Sets _phi_new to phi_old */
+	petsc_err = VecCopy(phi_old, _phi_new);
 	CHKERRQ(petsc_err);
 
 	/* Initializes KSP solver */
@@ -1317,8 +1318,8 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter){
 	CHKERRQ(petsc_err);
 
 	/* Normalizes initial source */
-	//petsc_err = MatMult(_M, _phi_new, sold);
-	//petsc_err = VecSum(sold, &sumold);
+	petsc_err = MatMult(_M, _phi_new, sold);
+	petsc_err = VecSum(sold, &sumold);
 	scale_val = (cw * ch * ng) / sumold;
 	petsc_err = VecScale(sold, scale_val);
 	CHKERRQ(petsc_err);
@@ -1333,20 +1334,22 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter){
 		petsc_err = VecSum(snew, &sumnew);
 		CHKERRQ(petsc_err);
 
+		/* Computes the new keff */
 		_keff = sumnew / sumold;
 		log_printf(INFO, "CMFD iter: %i, keff: %f", iter + 1, _keff);
 		petsc_err = VecScale(sold, _keff);
+
+		/* Computes the L2 norm of source error: eps */
 		scale_val = 1e-15;
 		petsc_err = VecShift(snew, scale_val);
 		petsc_err = VecPointwiseDivide(res, sold, snew);
 		scale_val = -1;
 		petsc_err = VecShift(res, scale_val);
 		CHKERRQ(petsc_err);
-
 		petsc_err = VecNorm(res, NORM_2, &eps);
 
-		//eps = eps / (cw * ch * ng);
-
+		/* Scales the fissino source such that vector sum is \# cells x ng */
+		eps = eps / (cw * ch * ng);
 		scale_val = (cw * ch * ng) / sumnew;
 		petsc_err = VecScale(snew, scale_val);
 		CHKERRQ(petsc_err);
@@ -1360,18 +1363,7 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter){
 	}
 
 	/* Rescales the new and old flux */
-	/*
-	petsc_err = VecSum(_phi_new, &sumnew);
-	scale_val = (cw*ch*ng) / sumnew;
-	petsc_err = VecScale(_phi_new, scale_val);
-	petsc_err = VecSum(phi_old, &sumold);
-	scale_val = (cw*ch*ng) / sumold;
-	petsc_err = VecScale(phi_old, scale_val);
-	CHKERRQ(petsc_err);
-	*/
-	
 	double factor = 1;
-
 	petsc_err = MatMult(_M, phi_old, sold);
 	petsc_err = VecSum(sold, &sumold);
 	scale_val = factor * (cw * ch * ng) / sumold;
@@ -1385,13 +1377,12 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter){
 	CHKERRQ(petsc_err);
 
 
+	/* Passes new and old flux into Mesh Cell to set flux */
 	PetscScalar *old_phi;
 	PetscScalar *new_phi;
-
 	petsc_err = VecGetArray(phi_old, &old_phi);
 	petsc_err = VecGetArray(_phi_new, &new_phi);
 	CHKERRQ(petsc_err);
-
 	for (int i = 0; i < cw*ch; i++)
 	{
 		meshCell = _mesh->getCells(i);
