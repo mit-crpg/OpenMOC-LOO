@@ -122,7 +122,8 @@ void Cmfd::computeXS(FlatSourceRegion* fsrs){
 				material = fsr->getMaterial();
 				chi = material->getChi()[e];
 				volume = fsr->getVolume();
-				flux = fsr->getOldFlux()[e];
+				//flux = fsr->getOldFlux()[e];
+				flux = fsr->getFlux()[e];
 				abs = material->getSigmaA()[e];
 				tot = material->getSigmaT()[e];
 				nu_fis = material->getNuSigmaF()[e];
@@ -1239,7 +1240,7 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter){
 	PetscScalar sumold, sumnew, scale_val, eps;
 	PetscReal rtol = 1e-10;
 	PetscReal atol = 1e-10;
-	double criteria = 1e-6;
+	double criteria = FLUX_CONVERGENCE_THRESH;
 	Vec sold, snew, res;
 	int max_outer = 100;
 
@@ -1344,7 +1345,7 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter){
 
 		petsc_err = VecNorm(res, NORM_2, &eps);
 
-		eps = eps / (cw * ch * ng);
+		//eps = eps / (cw * ch * ng);
 
 		scale_val = (cw * ch * ng) / sumnew;
 		petsc_err = VecScale(snew, scale_val);
@@ -1902,7 +1903,7 @@ void Cmfd::updateMOCFlux(int iteration){
 	/* initialize variables */
 	MeshCell* meshCell;
 	FlatSourceRegion* fsr;
-	double old_flux, new_flux, fsr_new_flux;
+	double old_flux, new_flux;//, fsr_new_flux;
 	double* flux;
 
 	int cw = _mesh->getCellWidth();
@@ -1941,8 +1942,9 @@ void Cmfd::updateMOCFlux(int iteration){
 			{
 				fsr = &_flat_source_regions[*iter];
 				/* get fsr flux */
-				flux = fsr->getOldFlux();
-				fsr_new_flux = new_flux / old_flux * flux[e];
+				//flux = fsr->getOldFlux();
+				flux = fsr->getFlux();
+				//fsr_new_flux = new_flux / old_flux * flux[e];
 
 				if (e == NUM_ENERGY_GROUPS - 1)
 				{
@@ -1953,7 +1955,8 @@ void Cmfd::updateMOCFlux(int iteration){
 				}
 
 				/* set new flux in FSR */
-				fsr->setFlux(e, fsr_new_flux);
+				//fsr->setFlux(e, fsr_new_flux);
+				flux[e] = new_flux / old_flux * flux[e];
 			}
 		}
 	}

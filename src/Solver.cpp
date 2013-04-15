@@ -1262,7 +1262,7 @@ double Solver::kernel(int max_iterations) {
 		if (_run_cmfd){
 
 			/* Copies the current FSR Fluxes into old FSR Fluxes */
-			setOldFSRFlux();
+			//setOldFSRFlux();
 
 			/* Normalizes the FSR scalar flux and each track's angular flux */
 			normalizeFlux();

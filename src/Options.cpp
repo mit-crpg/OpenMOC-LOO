@@ -21,6 +21,8 @@
  * @param argv a char array of command line arguments from console
  */
 Options::Options(int argc, char **argv) {
+	_keff_conv_thresh = 1e-12;			/* Default will set keff conv thresh to 1e-6 */
+
 	_cmfd = true; 			
 	_k_guess = 0.738230;
 		
@@ -49,7 +51,7 @@ Options::Options(int argc, char **argv) {
 	_update_flux = true;  				/* Default will not use CMFD to update flux */
 	_plot_current = false;				/* Default will not plot cmfd currents */
 	_plot_diffusion = true;			/* Default will not plot diffusion flux */
-	_keff_conv_thresh = 1e-12;			/* Default will set keff conv thresh to 1e-6 */
+
 	_multigroup = true;				/* Default sets CMFD to one group structure */
 	_print_matrices = false;			/* Default will not print matrices */
 	_cmfd_level = 1;					/* Default cmfd level is 1 (hightest level) */
