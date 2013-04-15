@@ -1370,7 +1370,7 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter){
 	CHKERRQ(petsc_err);
 	*/
 	
-	double factor = 1E10;
+	double factor = 1;
 
 	petsc_err = MatMult(_M, phi_old, sold);
 	petsc_err = VecSum(sold, &sumold);

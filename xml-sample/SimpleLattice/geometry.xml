@@ -8,23 +8,23 @@
 
 <!-- Definition of Cells -->
   <cell id="1" universe="0" fill="5" surfaces="1 -2 3 -4" />
-  <cell id="201" universe="2" material="1" surfaces=""/>
+  <cell id="201" universe="1" material="1"/>
 <!-- Definition of Lattices -->
   <lattice id="5">
     <type>rectangular</type>
     <dimension>2 2</dimension>
-    <width>100.0 100.0</width>
+    <width>2.0 2.0</width>
     <universes>
-      2 2
-      2 2
+      1 1
+      1 1
     </universes>
   </lattice>
 
 <!-- Definition of Surfaces -->
-  <surface id="1" type="x-plane" coeffs="-100.0" boundary="reflective"/>
-  <surface id="2" type="x-plane" coeffs="100.0"  boundary="reflective"/>
-  <surface id="3" type="y-plane" coeffs="-100.0" boundary="reflective" />
-  <surface id="4" type="y-plane" coeffs="100.0"  boundary="reflective"/>
+  <surface id="1" type="x-plane" coeffs="-2.0" boundary="reflective"/>
+  <surface id="2" type="x-plane" coeffs="2.0"  boundary="reflective"/>
+  <surface id="3" type="y-plane" coeffs="-2.0" boundary="reflective" />
+  <surface id="4" type="y-plane" coeffs="2.0"  boundary="reflective"/>
   <surface id="5" type="circle"  coeffs="0.0 0.0 0.25" />
   <surface id="6" type="circle"  coeffs="0.0 0.0 0.28" />
 </geometry>

@@ -21,10 +21,10 @@
  * @param argv a char array of command line arguments from console
  */
 Options::Options(int argc, char **argv) {
-	_keff_conv_thresh = 1e-12;			/* Default will set keff conv thresh to 1e-6 */
+	_keff_conv_thresh = 1e-6;			/* Default will set keff conv thresh to 1e-6 */
 
 	_cmfd = true; 			
-	_k_guess = 0.738230;
+	_k_guess = 1.0;
 		
 	_loo = false;
 	_plot_quad_flux = false; 
