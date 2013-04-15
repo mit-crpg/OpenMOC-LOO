@@ -412,7 +412,8 @@ void Solver::updateKeff(int iteration) {
 	#pragma omp for private(fsr, material, sigma_a, nu_sigma_f, flux, abs, 
 							fission)
 	#endif
-	for (int r = 0; r < _num_FSRs; r++) {
+	for (int r = 0; r < _num_FSRs; r++) 
+	{
 		abs = 0;
 		fission = 0;
 		fsr = &_flat_source_regions[r];
@@ -423,7 +424,8 @@ void Solver::updateKeff(int iteration) {
 		nu_sigma_f = material->getNuSigmaF();
 		flux = fsr->getFlux();
 
-		for (int e = 0; e < NUM_ENERGY_GROUPS; e++) {
+		for (int e = 0; e < NUM_ENERGY_GROUPS; e++) 
+		{
 			abs += sigma_a[e] * flux[e] * fsr->getVolume() * mat_mult_a[e];
 			for (int g = 0; g < NUM_ENERGY_GROUPS; g++){
 				fission += chi[e] * nu_sigma_f[g] * flux[g] * fsr->getVolume();
@@ -461,7 +463,7 @@ void Solver::updateKeff(int iteration) {
 		iteration, _k_eff, _cmfd->getKeff());
 
 		if (_update_flux){
-			_k_eff = _cmfd->getKeff();
+	        _k_eff = _cmfd->getKeff();
             _cmfd->updateMOCFlux(iteration);
 		}
 	}
@@ -1250,7 +1252,7 @@ double Solver::kernel(int max_iterations) {
 		 * to such that total fission source adds up to volume. 
 		 */
 		normalizeFlux();
-		/* Then computes new Q for each FSR */
+		/* Updates Q for each FSR based on new scalar flux */
 		updateSource();
 
 		/* Iterate on the flux with the new source */
@@ -1259,8 +1261,12 @@ double Solver::kernel(int max_iterations) {
 		/* Run CMFD acceleration */
 		if (_run_cmfd){
 
+			/* Copies the current FSR Fluxes into old FSR Fluxes */
 			setOldFSRFlux();
+
+			/* Normalizes the FSR scalar flux and each track's angular flux */
 			normalizeFlux();
+			/* Update Q's. FIXME: should not need it here. */
 			updateSource();
 
 			/* compute cross sections and diffusion coefficients */
