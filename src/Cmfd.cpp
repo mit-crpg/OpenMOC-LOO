@@ -1906,21 +1906,10 @@ void Cmfd::updateMOCFlux(int iteration){
 				 iter != meshCell->getFSRs()->end(); ++iter) 
 			{
 				fsr = &_flat_source_regions[*iter];
+
 				/* get fsr flux */
-				//flux = fsr->getOldFlux();
 				flux = fsr->getFlux();
-				//fsr_new_flux = new_flux / old_flux * flux[e];
 
-				if (e == NUM_ENERGY_GROUPS - 1)
-				{
-					log_printf(INFO, "Updating flux in FSR: %i, cell: %i,"
-							   " group: %i, old flux = %f, new flux = %f",
-							   " ratio: %f", fsr->getId() ,i, e, old_flux, 
-							   new_flux, new_flux / old_flux);
-				}
-
-				/* set new flux in FSR */
-				//fsr->setFlux(e, fsr_new_flux);
 				flux[e] = new_flux / old_flux * flux[e];
 			}
 		}

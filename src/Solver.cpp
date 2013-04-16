@@ -1022,7 +1022,7 @@ void Solver::MOCsweep(int max_iterations) {
 
 					if (_run_cmfd)
 						tallyCmfdBackwardCurrent(track, segment, meshSurfaces);
-
+						
 					/* Increments the scalar flux for this FSR */
 					fsr->incrementFlux(fsr_flux);
 				}
@@ -1273,9 +1273,9 @@ double Solver::kernel(int max_iterations) {
 		if (_run_cmfd){
 
 			/* Normalizes the FSR scalar flux and each track's angular flux */
-			normalizeFlux();
+			//normalizeFlux();
 			/* Update Q's. FIXME: should not need it here. */
-			updateSource();
+			//updateSource();
 
 			/* compute cross sections and diffusion coefficients */
 			_cmfd->computeXS(_flat_source_regions);
@@ -1343,8 +1343,11 @@ double Solver::kernel(int max_iterations) {
 			}
 
 			/* plot CMFD flux and xs */
-			if (_run_cmfd && _plotter->plotCurrent()){
-				_plotter->plotDHats(_geom->getMesh(), 0);
+			if (_run_cmfd && _plotter->plotCurrent())
+			{
+	            _cmfd->computeXS(_flat_source_regions);
+	            _cmfd->computeDs();
+	            _plotter->plotDHats(_geom->getMesh(), 0);
 				_plotter->plotNetCurrents(_geom->getMesh());
 				_plotter->plotXS(_geom->getMesh(), 0);
 			}
@@ -1394,9 +1397,6 @@ double Solver::kernel(int max_iterations) {
 
 	log_printf(WARNING, "Unable to converge the source after %d iterations",
 															max_iterations);
-
-	/* Converge the scalar flux spatially within geometry to plot */
-	MOCsweep(1000);
 
 	return _k_eff;
 }
