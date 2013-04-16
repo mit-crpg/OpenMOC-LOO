@@ -320,11 +320,21 @@ void Mesh::splitCorners(){
 	MeshCell* meshCell;
 	MeshCell* meshCellNext;
 	MeshSurface* surfaceSideNext;
+	double currents1[NUM_ENERGY_GROUPS];
+	double currents2[NUM_ENERGY_GROUPS];
 
 	for (int x = 0; x < cell_width; x++){
 		for (int y = 0; y < cell_height; y++){
 
-			/* corner 4 */
+			/* split the LEFT BOTTOM CORNER */
+			for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
+			{
+				currents1[e] = 0.0;
+				currents2[e] = 0.0;
+			}
+
+			/* if cell is no on the left or bottom geometry edge give to bottom
+			   surface and left surface of mesh cell below */
 			if (x > 0 && y < cell_height - 1){
 				meshCell = &_cells[y*cell_width + x];
 				surfaceSide = meshCell->getMeshSurfaces(1);
@@ -333,24 +343,40 @@ void Mesh::splitCorners(){
 				surfaceSideNext = meshCellNext->getMeshSurfaces(0);
 
 				for (int group = 0; group < NUM_ENERGY_GROUPS; group++){
-					surfaceSide->incrementCurrent(surfaceCorner1->getCurrent(group), group);
-					surfaceSideNext->incrementCurrent(surfaceCorner1->getCurrent(group), group);
+					//surfaceSide->incrementCurrent(surfaceCorner1->getCurrent(group), group);
+					//surfaceSideNext->incrementCurrent(surfaceCorner1->getCurrent(group), group);
+					currents1[group] += surfaceCorner1->getCurrent(group);
+					currents2[group] += surfaceCorner1->getCurrent(group);
 				}
 			}
-			else{
+			else /* If cell is on the left or bottom geometry edge, give to
+				  * bottom surface and left surface */
+			{
 				meshCell = &_cells[y*cell_width + x];
 				surfaceSide = meshCell->getMeshSurfaces(1);
 				surfaceCorner1 = meshCell->getMeshSurfaces(4);
 				surfaceSideNext = meshCell->getMeshSurfaces(0);
 
 				for (int group = 0; group < NUM_ENERGY_GROUPS; group++){
-					surfaceSide->incrementCurrent(surfaceCorner1->getCurrent(group), group);
-					surfaceSideNext->incrementCurrent(surfaceCorner1->getCurrent(group), group);
+					//surfaceSide->incrementCurrent(surfaceCorner1->getCurrent(group), group);
+					//surfaceSideNext->incrementCurrent(surfaceCorner1->getCurrent(group), group);
+					currents1[group] += surfaceCorner1->getCurrent(group);
+					currents2[group] += surfaceCorner1->getCurrent(group);
 				}
 			}
 
+			surfaceSide->incrementCurrent(currents1);
+			surfaceSideNext->incrementCurrent(currents2); 
+			
+			/* split the RIGHT BOTTOM CORNER */
+			
+			for (int e = 0; e < NUM_ENERGY_GROUPS; e++){
+				currents1[e] = 0.0;
+				currents2[e] = 0.0;
+			}
 
-			/* corner 5 */
+			/* if cell is not on right or bottom geometry edge
+			 * give to bottom surface and right surface of mesh cell below */ 
 			if (x < cell_width - 1 && y < cell_height - 1){
 				meshCell = &_cells[y*cell_width + x];
 				surfaceSide = meshCell->getMeshSurfaces(1);
@@ -358,9 +384,13 @@ void Mesh::splitCorners(){
 				meshCellNext = &_cells[(y+1)*cell_width + x];
 				surfaceSideNext = meshCellNext->getMeshSurfaces(2);
 
-				for (int group = 0; group < NUM_ENERGY_GROUPS; group++){
-					surfaceSide->incrementCurrent(surfaceCorner1->getCurrent(group), group);
-					surfaceSideNext->incrementCurrent(surfaceCorner1->getCurrent(group), group);
+				for (int group = 0; group < NUM_ENERGY_GROUPS; group++)
+				{
+					//surfaceSide->incrementCurrent(surfaceCorner1->getCurrent(group), group);
+					//surfaceSideNext->incrementCurrent(surfaceCorner1->getCurrent(group), group);
+					currents1[group] += surfaceCorner1->getCurrent(group);
+					currents2[group] += surfaceCorner1->getCurrent(group);	
+
 				}
 			}
 			else{
@@ -370,13 +400,23 @@ void Mesh::splitCorners(){
 				surfaceSideNext = meshCell->getMeshSurfaces(2);
 
 				for (int group = 0; group < NUM_ENERGY_GROUPS; group++){
-					surfaceSide->incrementCurrent(surfaceCorner1->getCurrent(group), group);
-					surfaceSideNext->incrementCurrent(surfaceCorner1->getCurrent(group), group);
+					//surfaceSide->incrementCurrent(surfaceCorner1->getCurrent(group), group);
+					//surfaceSideNext->incrementCurrent(surfaceCorner1->getCurrent(group), group);
+					currents1[group] += surfaceCorner1->getCurrent(group);
+					currents2[group] += surfaceCorner1->getCurrent(group);
 				}
 			}
+			surfaceSide->incrementCurrent(currents1);
+			surfaceSideNext->incrementCurrent(currents2);
 
-
-			/* corner 6 */
+			/* split the RIGHT TOP CORNER */
+			for (int e = 0; e < NUM_ENERGY_GROUPS; e++){
+				currents1[e] = 0.0;
+				currents2[e] = 0.0;
+			}
+			
+			/* if cell is not on right or top geometry edge give to right 
+			 * surface and top surface of mesh cell to the right */ 
 			if (x < cell_width - 1 && y > 0){
 				meshCell = &_cells[y*cell_width + x];
 				surfaceSide = meshCell->getMeshSurfaces(2);
@@ -385,8 +425,10 @@ void Mesh::splitCorners(){
 				surfaceSideNext = meshCellNext->getMeshSurfaces(3);
 
 					for (int group = 0; group < NUM_ENERGY_GROUPS; group++){
-						surfaceSide->incrementCurrent(surfaceCorner1->getCurrent(group), group);
-						surfaceSideNext->incrementCurrent(surfaceCorner1->getCurrent(group), group);
+						//surfaceSide->incrementCurrent(surfaceCorner1->getCurrent(group), group);
+						//surfaceSideNext->incrementCurrent(surfaceCorner1->getCurrent(group), group);
+						currents1[group] += surfaceCorner1->getCurrent(group);
+						currents2[group] += surfaceCorner1->getCurrent(group); 
 					}
 			}
 			else{
@@ -396,13 +438,24 @@ void Mesh::splitCorners(){
 				surfaceSideNext = meshCell->getMeshSurfaces(3);
 
 					for (int group = 0; group < NUM_ENERGY_GROUPS; group++){
-						surfaceSide->incrementCurrent(surfaceCorner1->getCurrent(group), group);
-						surfaceSideNext->incrementCurrent(surfaceCorner1->getCurrent(group), group);
+						//surfaceSide->incrementCurrent(surfaceCorner1->getCurrent(group), group);
+						//surfaceSideNext->incrementCurrent(surfaceCorner1->getCurrent(group), group);
+						currents1[group] += surfaceCorner1->getCurrent(group);
+						currents2[group] += surfaceCorner1->getCurrent(group); 
 					}
 			}
 
+			surfaceSide->incrementCurrent(currents1);
+			surfaceSideNext->incrementCurrent(currents2);
+			
+			/* split the LEFT TOP CORNER */
+			for (int e = 0; e < NUM_ENERGY_GROUPS; e++){
+				currents1[e] = 0.0;
+				currents2[e] = 0.0;
+			}
 
-			/* corner 7 */
+			/* if cell is not on left or top geometry edge
+			 * give to left surface and top surface of mesh cell to the left */ 
 			if (x > 0 && y > 0){
 				meshCell = &_cells[y*cell_width + x];
 				surfaceSide = meshCell->getMeshSurfaces(0);
@@ -411,8 +464,10 @@ void Mesh::splitCorners(){
 				surfaceSideNext = meshCellNext->getMeshSurfaces(3);
 
 				for (int group = 0; group < NUM_ENERGY_GROUPS; group++){
-					surfaceSide->incrementCurrent(surfaceCorner1->getCurrent(group), group);
-					surfaceSideNext->incrementCurrent(surfaceCorner1->getCurrent(group), group);
+					//surfaceSide->incrementCurrent(surfaceCorner1->getCurrent(group), group);
+					//surfaceSideNext->incrementCurrent(surfaceCorner1->getCurrent(group), group);
+						currents1[group] += surfaceCorner1->getCurrent(group);
+						currents2[group] += surfaceCorner1->getCurrent(group);
 				}
 			}
 			else{
@@ -422,10 +477,15 @@ void Mesh::splitCorners(){
 				surfaceSideNext = meshCell->getMeshSurfaces(3);
 
 				for (int group = 0; group < NUM_ENERGY_GROUPS; group++){
-					surfaceSide->incrementCurrent(surfaceCorner1->getCurrent(group), group);
-					surfaceSideNext->incrementCurrent(surfaceCorner1->getCurrent(group), group);
+					//surfaceSide->incrementCurrent(surfaceCorner1->getCurrent(group), group);
+					//surfaceSideNext->incrementCurrent(surfaceCorner1->getCurrent(group), group);
+						currents1[group] += surfaceCorner1->getCurrent(group);
+						currents2[group] += surfaceCorner1->getCurrent(group);
 				}
 			}
+
+			surfaceSide->incrementCurrent(currents1);
+			surfaceSideNext->incrementCurrent(currents2);
 		}
 	}
 }

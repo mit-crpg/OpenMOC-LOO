@@ -14,6 +14,8 @@ MeshSurface::MeshSurface(){
 		_d_hat[e]    = 0.0;
 		_current[e]  = 0.0;
 		
+		_d_dif[e] = 0.0;
+
 		/* Assumes 4 quadrature flux per surface, so 2 on each side */
 		for (int ind = 0; ind < 2; ind++){
 			_flux[e][ind] = 0.0;
@@ -33,8 +35,9 @@ double MeshSurface::getCurrent(int group){
 	return _current[group];
 }
 
-void MeshSurface::incrementCurrent(double current, int group){
-	_current[group] += current;
+void MeshSurface::incrementCurrent(double* current){
+	for (int group = 0; group < NUM_ENERGY_GROUPS; group++)
+		_current[group] += current[group];
 }
 
 void MeshSurface::setFlux(double flux, int group, int index){

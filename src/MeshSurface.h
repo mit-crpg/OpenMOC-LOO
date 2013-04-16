@@ -49,7 +49,7 @@ public:
 	void makeCurrents();
 	void setCurrent(double current, int group);
 	double getCurrent(int group);
-	void incrementCurrent(double current, int group);
+	void incrementCurrent(double *current);
 	void setDHat(double dHat, int e);
 	double* getDHat();
 	void setDTilde(double dTilde, int e);

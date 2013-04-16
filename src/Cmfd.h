@@ -74,6 +74,8 @@ public:
  	Vec getPhiNew();
  	int createAMPhi(PetscInt size1, PetscInt size2, int cells);
  	double getKeff();
+	void setOldFSRFlux();
+	void setFSRs(FlatSourceRegion *fsrs);
 	/* LOO */
 	void storePreMOCMeshSource(FlatSourceRegion* fsrs);
 	void computeQuadSrc();

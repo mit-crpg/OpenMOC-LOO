@@ -46,6 +46,12 @@ Cmfd::~Cmfd() {
 }
 
 
+/**
+ * Create the loss matrix (A), fission matrix (A), and flux vector (phi)
+ * @param number of columns needed in A matrix
+ * @param number of rows needed in A matrix and M matrix
+ * @param number of rows needed in phi vector
+ */ 
 int Cmfd::createAMPhi(PetscInt size1, PetscInt size2, int cells){
 
 	int petsc_err = 0;
@@ -59,7 +65,13 @@ int Cmfd::createAMPhi(PetscInt size1, PetscInt size2, int cells){
 	return petsc_err;
 }
 
-/* Computes the homogenized cross section for all MeshCells in the Mesh */
+/** Computes the cross section for all MeshCells in the Mesh 
+ * Create cross sections and fluxes for each cmfd cell by
+ * energy condensing and volume averaging cross sections from
+ * the MOC sweep.
+ * @param pointer to an array of fsrs 
+ *
+ */
 void Cmfd::computeXS(FlatSourceRegion* fsrs){
 
 	_mesh->splitCorners();
@@ -596,45 +608,6 @@ void Cmfd::computeDs(){
 				meshCell->getMeshSurfaces(3)->setDHat(d_hat, e);
 				meshCell->getMeshSurfaces(3)->setDTilde(d_tilde, e);
 			}
-		}
-	}
-
-
-	/* compute fis and abs rates based on tallied fluxes an XSs */
-	double fis_tot = 0;
-	double abs_tot = 0;
-	double leak = 0;
-
-	for (int i = 0; i < _mesh->getCellWidth() * _mesh->getCellHeight(); i++){
-		meshCell = _mesh->getCells(i);
-		for (int e = 0; e < ng; e++){
-			for (int g = 0; g < ng; g++){
-				fis_tot += meshCell->getChi()[e]*meshCell->getNuSigmaF()[g]*meshCell->getOldFlux()[g]*meshCell->getVolume();
-			}
-			abs_tot += meshCell->getSigmaA()[e]*meshCell->getOldFlux()[e]*meshCell->getVolume();
-
-			/* leakage */
-			for (int s = 0; s < 4; s++){
-				if (meshCell->getMeshSurfaces(s)->getBoundary() == VACUUM){
-					if (s == 0){
-						leak += meshCell->getMeshSurfaces(s)->getDHat()[e] * meshCell->getOldFlux()[e]*meshCell->getHeight();
-						leak += meshCell->getMeshSurfaces(s)->getDTilde()[e] * meshCell->getOldFlux()[e]*meshCell->getHeight();
-					}
-					else if (s == 2){
-						leak += meshCell->getMeshSurfaces(s)->getDHat()[e] * meshCell->getOldFlux()[e]*meshCell->getHeight();
-						leak -= meshCell->getMeshSurfaces(s)->getDTilde()[e] * meshCell->getOldFlux()[e]*meshCell->getHeight();
-					}
-					else if (s == 1){
-						leak += meshCell->getMeshSurfaces(s)->getDHat()[e] * meshCell->getOldFlux()[e]*meshCell->getWidth();
-						leak -= meshCell->getMeshSurfaces(s)->getDTilde()[e] * meshCell->getOldFlux()[e]*meshCell->getWidth();
-					}
-					else if (s == 3){
-						leak += meshCell->getMeshSurfaces(s)->getDHat()[e] * meshCell->getOldFlux()[e]*meshCell->getWidth();
-						leak += meshCell->getMeshSurfaces(s)->getDTilde()[e] * meshCell->getOldFlux()[e]*meshCell->getWidth();
-					}
-				}
-			}
-
 		}
 	}
 }
@@ -1733,19 +1706,18 @@ int Cmfd::constructAMPhi(Mat A, Mat M, Vec phi_old, solveType solveMethod){
 
 				/* get old flux */
 				indice1 = int((y*cw + x)*ng+e);
-				value = 1.0;
 				petsc_err = VecSetValues(phi_old, 1, &indice1, &meshCell->getOldFlux()[e], INSERT_VALUES);
-//				petsc_err = VecSetValues(phi_old, 1, &indice1, &value, INSERT_VALUES);
+
 				CHKERRQ(petsc_err);
 
-				/* diagonal - A */
+				/* diagonal - A: add outscattering term to diagonal */
 				value = meshCell->getSigmaA()[e] * meshCell->getVolume();
 				indice1 = (y*cw + x)*ng + e;
 				indice2 = (y*cw + x)*ng + e;
 				petsc_err = MatSetValues(A, 1, &indice1, 1, &indice2, &value, ADD_VALUES);
 				CHKERRQ(petsc_err);
 
-				/* scattering out */
+				/* add out-scattering term to diagonal */
 				for (int g = 0; g < ng; g++){
 					if (e != g){
 						value = meshCell->getSigmaS()[e*ng + g] * meshCell->getVolume();
@@ -1757,7 +1729,7 @@ int Cmfd::constructAMPhi(Mat A, Mat M, Vec phi_old, solveType solveMethod){
 				}
 
 
-				/* diagonal - M */
+				/* diagonal - M: add fission terms to diagonal in M */
 				for (int g = 0; g < ng; g++){
 					value = meshCell->getChi()[e] * meshCell->getNuSigmaF()[g] * meshCell->getVolume();
 					indice1 = (y*cw + x)*ng+e;
@@ -1886,7 +1858,9 @@ int Cmfd::constructAMPhi(Mat A, Mat M, Vec phi_old, solveType solveMethod){
 }
 
 /* Updates the MOC flux in each FSR based on results from the acceleration
- * steps; we use the ratio of the cell averaged flux to update the FSR flux */
+ * steps; we use the ratio of the cell averaged flux to update the FSR flux
+ * @param MOC iteration number
+ */
 void Cmfd::updateMOCFlux(int iteration){
 
 	log_printf(INFO, "Updating MOC flux using form func from acceleration...");
@@ -1904,7 +1878,7 @@ void Cmfd::updateMOCFlux(int iteration){
 	/* loop over mesh cells */
 	for (int i = 0; i < cw * ch; i++){
 
-		/* get mesh cell and flux values */
+		/* get pointer to current mesh cell */
 		meshCell = _mesh->getCells(i);
 
 		for (int e = 0; e < ng; e++){
@@ -2049,5 +2023,34 @@ void Cmfd::storePreMOCMeshSource(FlatSourceRegion* fsrs)
 	}
 }
 
+/* Set the old flux for each FSR equal to FSR flux */
+void Cmfd::setOldFSRFlux()
+{
+	/* initialize variables */
+	FlatSourceRegion* fsr;
+	int num_fsrs = _geom->getNumFSRs();
 
+	/* Compute total fission source for this region */
+	for (int r = 0; r < num_fsrs; r++) 
+	{
+		/* Get pointers to important data structures */
+		fsr = &_flat_source_regions[r];
+	  
+		/* loop over energy groups */
+		for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
+		{
+			fsr->setOldFlux(e, fsr->getFlux()[e]);
+		  
+		}
+	}
+}
+
+
+/* set pointer to array of fsrs
+ * @param pointer to arrary of fsrs
+ */
+void Cmfd::setFSRs(FlatSourceRegion* fsrs)
+{
+  _flat_source_regions = fsrs;
+} 
 

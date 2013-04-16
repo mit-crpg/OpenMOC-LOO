@@ -754,12 +754,17 @@ void Solver::tallyCmfdForwardCurrent(Track *track, segment *segment,
 	 * where azi weight takes into accout the spacing between tracks */
 	double *weights = track->getPolarWeights();
 	double *polar_fluxes = track->getPolarFluxes();
+	double currents[NUM_ENERGY_GROUPS];
+
 
 	if (segment->_mesh_surface_fwd != -1)
 	{
 		meshSurface = meshSurfaces[segment->_mesh_surface_fwd];
 		/* set polar angle * energy group to 0 */
 		pe = 0;
+
+		for (e = 0; e < NUM_ENERGY_GROUPS; e++)
+			currents[e] = 0.0;
 
 		/* loop over energy groups */
 		for (e = 0; e < NUM_ENERGY_GROUPS; e++) 
@@ -768,11 +773,11 @@ void Solver::tallyCmfdForwardCurrent(Track *track, segment *segment,
 			for (p = 0; p < NUM_POLAR_ANGLES; p++)
 			{
 				/* increment current (polar flux times polar weights); */
-				meshSurface->incrementCurrent
-					(polar_fluxes[pe]*weights[p]/2.0, e);
+			    currents[e] += polar_fluxes[pe]*weights[p]/2.0;
 				pe++;
 			}
 		}
+		meshSurface->incrementCurrent(currents);
 	}
 	return;
 }
@@ -783,10 +788,13 @@ void Solver::tallyCmfdBackwardCurrent(Track *track, segment *segment,
 	MeshSurface *meshSurface;
 	double *weights = track->getPolarWeights();
 	double *polar_fluxes = track->getPolarFluxes();
+	double currents[NUM_ENERGY_GROUPS];
 
 	if (segment->_mesh_surface_bwd != -1){
-		meshSurface = 
-			meshSurfaces[segment->_mesh_surface_bwd];
+		meshSurface = meshSurfaces[segment->_mesh_surface_bwd];
+		
+		for (e = 0; e < NUM_ENERGY_GROUPS; e++)
+			currents[e] = 0.0;
 
 		/* set polar angle * energy group to 
 		   num groups * num angles */
@@ -795,11 +803,11 @@ void Solver::tallyCmfdBackwardCurrent(Track *track, segment *segment,
 		/* Tallies current (polar & azimuthal weighted flux) for CMFD */
 		for (e = 0; e < NUM_ENERGY_GROUPS; e++) {
 			for (p = 0; p < NUM_POLAR_ANGLES; p++){
-				meshSurface->incrementCurrent
-					(polar_fluxes[pe]*weights[p]/2.0, e);
+			    currents[e] += polar_fluxes[pe]*weights[p]/2.0;
 				pe++;
 			}
 		}
+		meshSurface->incrementCurrent(currents);
 	}
 	return;
 }
@@ -824,7 +832,6 @@ void Solver::MOCsweep(int max_iterations) {
 	int t, j, k, s, p, e, pe;
 	int num_threads = _num_azim / 2;
 	MeshSurface **meshSurfaces = _geom->getMesh()->getSurfaces();
-	//MeshSurface* meshSurface;
 
 #if !STORE_PREFACTORS
 	double sigma_t_l;
@@ -852,15 +859,15 @@ void Solver::MOCsweep(int max_iterations) {
 		 * wrap into cycles on each other */
 		#if USE_OPENMP && STORE_PREFACTORS
 		#pragma omp parallel for num_threads(num_threads) \
-				private(t, k, j, i, s, p, e, pe, track, segments, \
-						num_segments, weights, polar_fluxes,\
-						segment, fsr, ratios, delta, fsr_flux)
+			private(t, k, j, i, s, p, e, pe, track, segments,	\
+			num_segments, weights, polar_fluxes,				\
+			segment, fsr, ratios, delta, fsr_flux, currents)
 		#elif USE_OPENMP && !STORE_PREFACTORS
 		#pragma omp parallel for num_threads(num_threads) \
 				private(t, k, j, i, s, p, e, pe, track, segments, \
 						num_segments, weights, polar_fluxes,\
 						segment, fsr, ratios, delta, fsr_flux,\
-						sigma_t_l, index)
+						sigma_t_l, index, currents)
 		#endif
 		/* Loop over each thread */
 		for (t=0; t < num_threads; t++) {
@@ -1220,6 +1227,10 @@ double Solver::kernel(int max_iterations) {
 
 	double cmfd_keff = 0.0, loo_keff = 0.0;
 
+	/* Gives cmfd a pointer to the FSRs */
+	if (_run_cmfd)
+		_cmfd->setFSRs(_flat_source_regions);
+
 	/* Check that each FSR has at least one segment crossing it */
 	checkTrackSpacing();
 
@@ -1261,9 +1272,6 @@ double Solver::kernel(int max_iterations) {
 		/* Run CMFD acceleration */
 		if (_run_cmfd){
 
-			/* Copies the current FSR Fluxes into old FSR Fluxes */
-			//setOldFSRFlux();
-
 			/* Normalizes the FSR scalar flux and each track's angular flux */
 			normalizeFlux();
 			/* Update Q's. FIXME: should not need it here. */
@@ -1290,7 +1298,6 @@ double Solver::kernel(int max_iterations) {
 		/* Run LOO acceleration */
 		if (_run_loo){
 
-			setOldFSRFlux();
 			normalizeFlux();
 			updateSource();
 
@@ -1329,14 +1336,6 @@ double Solver::kernel(int max_iterations) {
 
 			/* Converge the flux */
 			MOCsweep(1000);
-
-			/* FIXME: why do we need to do this again when already converged? */
-			if (_run_cmfd){
-				_cmfd->computeXS(_flat_source_regions);
-				_cmfd->computeDs();
-				cmfd_keff = _cmfd->computeCMFDFluxPower(CMFD, i);
-				updateKeff(2000);
-			}
 
 			/* plot pin powers */
 			if (_compute_powers == true){
