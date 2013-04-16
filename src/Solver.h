@@ -80,6 +80,7 @@ public:
 		   double k_guess);
 	virtual ~Solver();
 	void initializeTrackFluxes(double flux);
+	void initializeSource();
 	void normalizeFlux();
  	void updateSource();
 	void oneFSRFluxes();

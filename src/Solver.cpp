@@ -1110,6 +1110,114 @@ void Solver::MOCsweep(int max_iterations) {
 	return;
 }
 
+/* initialize the source and renormalize the fsr and track fluxes */
+void Solver::initializeSource(){
+
+	double scatter_source, fission_source;
+
+	double renorm_factor, volume;
+	double* nu_sigma_f;
+	double* sigma_s;
+	double* chi;
+	double* scalar_flux;
+	double* source;
+	double* mat_mult;
+	FlatSourceRegion* fsr;
+	Material* material;
+	int start_index, end_index;
+
+
+	/*********************************************************************
+	 * Renormalize scalar and boundary fluxes
+	 *********************************************************************/
+
+	/* Initialize fission source to zero */
+	fission_source = 0;
+
+	/* Compute total fission source for this region */
+	for (int r = 0; r < _num_FSRs; r++) {
+
+		/* Get pointers to important data structures */
+		fsr = &_flat_source_regions[r];
+		material = fsr->getMaterial();
+		nu_sigma_f = material->getNuSigmaF();
+		scalar_flux = fsr->getFlux();
+		volume = fsr->getVolume();
+
+		start_index = fsr->getMaterial()->getNuSigmaFStart();
+		end_index = fsr->getMaterial()->getNuSigmaFEnd();
+
+		for (int e = start_index; e < end_index; e++)
+			fission_source += nu_sigma_f[e] * scalar_flux[e] * volume;
+	}
+
+	/* Renormalize scalar fluxes in each region */
+	renorm_factor = 1.0 / fission_source;
+
+	#if USE_OPENMP
+	#pragma omp parallel for
+	#endif
+	for (int r = 0; r < _num_FSRs; r++)
+		_flat_source_regions[r].normalizeFluxes(renorm_factor);
+
+	/* Renormalization angular boundary fluxes for each track */
+	#if USE_OPENMP
+	#pragma omp parallel for
+	#endif
+	for (int i = 0; i < _num_azim; i++) {
+		for (int j = 0; j < _num_tracks[i]; j++)
+			_tracks[i][j].normalizeFluxes(renorm_factor);
+	}
+
+
+	/*********************************************************************
+	 * Compute the source for each region
+	 *********************************************************************/
+
+	/* For all regions, find the source */
+	for (int r = 0; r < _num_FSRs; r++) {
+
+		fsr = &_flat_source_regions[r];
+		material = fsr->getMaterial();
+
+		/* Initialize the fission source to zero for this region */
+		fission_source = 0;
+		scalar_flux = fsr->getFlux();
+		source = fsr->getSource();
+		material = fsr->getMaterial();
+		nu_sigma_f = material->getNuSigmaF();
+		chi = material->getChi();
+		sigma_s = material->getSigmaS();
+		mat_mult = fsr->getMatMult();
+
+		start_index = material->getNuSigmaFStart();
+		end_index = material->getNuSigmaFEnd();
+
+		/* Compute total fission source for current region */
+		for (int e = start_index; e < end_index; e++)
+			fission_source += scalar_flux[e] * nu_sigma_f[e];
+
+		/* Compute total scattering source for group G */
+		for (int G = 0; G < NUM_ENERGY_GROUPS; G++) {
+
+			scatter_source = 0;
+			start_index = material->getSigmaSStart(G);
+			end_index = material->getSigmaSEnd(G);
+
+			for (int g = start_index; g < end_index; g++)
+				scatter_source += sigma_s[G*NUM_ENERGY_GROUPS + g]
+				                          * scalar_flux[g]*mat_mult[G*NUM_ENERGY_GROUPS + g];
+
+			/* Set the total source for region r in group G */
+			source[G] = ((1.0 / (_old_k_effs.front())) * fission_source *
+							chi[G] + scatter_source) * ONE_OVER_FOUR_PI;
+		}
+	}
+
+	/* Update pre-computed source / sigma_t ratios */
+	computeRatios();
+}
+
 
 /* initialize the sources */
 void Solver::normalizeFlux(){
@@ -1229,7 +1337,12 @@ double Solver::kernel(int max_iterations) {
 
 	/* Gives cmfd a pointer to the FSRs */
 	if (_run_cmfd)
+	{
 		_cmfd->setFSRs(_flat_source_regions);
+	}
+	else
+		log_printf(ERROR, "Did not give CMFD pointers to FSRs");
+
 
 	/* Check that each FSR has at least one segment crossing it */
 	checkTrackSpacing();
@@ -1262,12 +1375,13 @@ double Solver::kernel(int max_iterations) {
 		/* Normalizes the FSR scalar flux and each track's angular flux 
 		 * to such that total fission source adds up to volume. 
 		 */
-		normalizeFlux();
+		//normalizeFlux();
 		/* Updates Q for each FSR based on new scalar flux */
-		updateSource();
+		//updateSource();
+		initializeSource();
 
 		/* Iterate on the flux with the new source */
-		MOCsweep(1);
+		MOCsweep(100);
 
 		/* Run CMFD acceleration */
 		if (_run_cmfd){
