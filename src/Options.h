@@ -43,7 +43,7 @@ private:
 	bool _multigroup;
 	bool _print_matrices;
 	bool _diffusion;
-	double _keff_conv_thresh;
+	double _l2_norm_conv_thresh;
 	int _cmfd_level;
 	double _k_guess;
 public:
@@ -67,7 +67,7 @@ public:
 	bool plotDiffusion();
 	bool plotKeff();
 	bool updateFlux();
-	double getKeffConvThresh();
+	double getL2NormConvThresh();
 	double getKGuess();
 	bool getGroupStructure();
 	bool getPrintMatrices();

@@ -21,7 +21,7 @@
  * @param argv a char array of command line arguments from console
  */
 Options::Options(int argc, char **argv) {
-	_keff_conv_thresh = 1e-6;			/* Default will set keff conv thresh to 1e-6 */
+	_l2_norm_conv_thresh = 1e-6;			/* Default will set keff conv thresh to 1e-6 */
 
 	_cmfd = true; 			
 	_k_guess = 1.0;
@@ -126,8 +126,8 @@ Options::Options(int argc, char **argv) {
 			else if (strcmp(argv[i], "-pd") == 0 ||
 					strcmp(argv[i], "--plotdiffusion") == 0)
 				_plot_diffusion = true;
-			else if (LAST("--keffconv") || LAST("-kc"))
-				_keff_conv_thresh = atof(argv[i]);
+			else if (LAST("--fluxconv") || LAST("-fc"))
+				_l2_norm_conv_thresh = atof(argv[i]);
 			else if (strcmp(argv[i], "-mg") == 0 ||
 					strcmp(argv[i], "--multigroup") == 0)
 				_multigroup = true;
@@ -324,8 +324,8 @@ bool Options::updateFlux(){
  * Returns the keff convergence threshold
  * @return keff convergence threshold
  */
-double Options::getKeffConvThresh() {
-	return _keff_conv_thresh;
+double Options::getL2NormConvThresh() {
+	return _l2_norm_conv_thresh;
 }
 
 /**

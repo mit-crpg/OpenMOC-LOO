@@ -63,7 +63,7 @@ private:
 	int _pre_factor_max_index;
 	double _pre_factor_spacing;
 	bool _update_flux;
-	double _keff_conv_thresh;
+	double _l2_norm_conv_thresh;
 	bool _compute_powers;
 	bool _run_cmfd;
 	bool _run_loo;
@@ -75,7 +75,7 @@ private:
 public:
 	Solver(Geometry* geom, TrackGenerator* track_generator, 
 		   Plotter* plotter, Cmfd* cmfd,
-		   bool _update_flux, double keffConvThresh, 
+		   bool _update_flux, double l2NormConvThresh, 
 		   bool computePowers, bool runCmfd, bool runLoo, bool diffusion, 
 		   double k_guess);
 	virtual ~Solver();

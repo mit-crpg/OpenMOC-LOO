@@ -92,7 +92,8 @@ int main(int argc, char **argv) {
 		plotter.makeFSRMap();
 
 	/* plot CMFD mesh */
-	if (opts.plotSpecs() && opts.getCmfd()){
+	if (opts.plotSpecs() && opts.getCmfd())
+	{
 		plotter.plotCMFDMesh(geometry.getMesh());
 	}
 
@@ -117,7 +118,7 @@ int main(int argc, char **argv) {
 
 	/* Creat Solver class */
 	Solver solver(&geometry, &track_generator, &plotter, &cmfd, 
-				  opts.updateFlux(), opts.getKeffConvThresh(), 
+				  opts.updateFlux(), opts.getL2NormConvThresh(), 
 				  opts.computePinPowers(), opts.getCmfd(), opts.getLoo(),
 				  opts.getDiffusion(), opts.getKGuess());
 

@@ -17,7 +17,7 @@
  */
 Solver::Solver(Geometry* geom, TrackGenerator* track_generator, 
 			   Plotter* plotter, Cmfd* cmfd, bool updateFlux, 
-			   double keffConvThresh, bool computePowers, 
+			   double l2NormConvThresh, bool computePowers, 
 			   bool runCmfd, bool runLoo, bool diffusion, double k_guess) {
 
 	_geom = geom;
@@ -29,7 +29,7 @@ Solver::Solver(Geometry* geom, TrackGenerator* track_generator,
 	_plotter = plotter;
 	_update_flux = updateFlux;
 	_cmfd = cmfd;
-	_keff_conv_thresh = keffConvThresh;
+	_l2_norm_conv_thresh = l2NormConvThresh;
 	_compute_powers = computePowers;
 	_run_cmfd = runCmfd;
 	_run_loo = runLoo;
@@ -151,7 +151,7 @@ void Solver::precomputeFactors() {
 	log_printf(NORMAL, "Making Prefactor array...");
 
 	/* set size of prefactor array */
-	int num_array_values = 10 * sqrt(1 / (8 * _keff_conv_thresh));
+	int num_array_values = 10 * sqrt(1 / (8 * _l2_norm_conv_thresh));
 	_pre_factor_spacing = 10.0 / num_array_values;
 	_pre_factor_array_size = 2 * NUM_POLAR_ANGLES * num_array_values;
 	_pre_factor_max_index = _pre_factor_array_size - 2*NUM_POLAR_ANGLES - 1;
@@ -1374,13 +1374,12 @@ double Solver::kernel(int max_iterations) {
 		/* Normalizes the FSR scalar flux and each track's angular flux 
 		 * to such that total fission source adds up to volume. 
 		 */
-		//normalizeFlux();
+		normalizeFlux();
 		/* Updates Q for each FSR based on new scalar flux */
-		//updateSource();
-		initializeSource();
+		updateSource();
 
 		/* Iterate on the flux with the new source */
-		MOCsweep(100);
+		MOCsweep(2);
 
 		/* Run CMFD acceleration */
 		if (_run_cmfd){
@@ -1421,20 +1420,7 @@ double Solver::kernel(int max_iterations) {
 			/* Computes _quad_src based on (m+1/2) results  */
 			_cmfd->computeQuadSrc();
 
-			#if 0
-			/* Check for neutron balance */
-			checkNeutBal(_geom->getMesh());
-
-			/* Run diffusion problem on initial geometry */
-			if (i == 0 && _diffusion == true){
-	            loo_keff = _cmfd->computeCMFDFluxPower(DIFFUSION, i);
-            }
-
-			/* Run CMFD diffusion problem */
-			loo_keff = _cmfd->computeCMFDFluxPower(CMFD, i);
-			#endif
-
-			/* FIXME: Performs low order MOC */
+			/* Performs low order MOC */
 			loo_keff =_cmfd->computeLooFluxPower(LOO, i);
 			loo_keff = loo_keff;
 		}
@@ -1443,7 +1429,7 @@ double Solver::kernel(int max_iterations) {
         updateKeff(i);
 
 		/* If k_eff converged, return k_eff */
-		if ((i >=1) && (_cmfd->getL2Norm() < _keff_conv_thresh)){
+		if ((i >= 1) && (_cmfd->getL2Norm() < _l2_norm_conv_thresh)){
 
 			/* Converge the flux */
 			MOCsweep(1000);
