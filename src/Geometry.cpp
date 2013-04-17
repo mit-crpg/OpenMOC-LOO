@@ -1730,11 +1730,6 @@ Cell* Geometry::findNextCell(LocalCoords* coords, double angle) {
  */
 void Geometry::segmentize(Track* track) {
 
-
-	if (track->getStart()->getX() == 0.0 && track->getStart()->getY() == -2.0 && track->getPhi() == 3*M_PI/4) {
-
-	};
-
 	/* Track starting point coordinates and azimuthal angle */
 	double x0 = track->getStart()->getX();
 	double y0 = track->getStart()->getY();

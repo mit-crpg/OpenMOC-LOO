@@ -574,6 +574,11 @@ void TrackGenerator::segmentize() {
 	bitMapFSR->color_type = RANDOM;
 	bitMap->color_type = RANDOM;
 
+#if USE_OPENMP
+#pragma omp parallel for private(i, j, k, phi,\
+								 sin_phi, cos_phi, track,	\
+								 x0, y0, x1, y1, num_segments)
+#endif
 	/* Loop over all tracks */
 	for (int i = 0; i < _num_azim; i++) {
 		phi = _tracks[i][0].getPhi();

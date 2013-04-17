@@ -33,8 +33,9 @@ MeshCell::MeshCell(){
 		_sigma_a[e]     = 0.0;
 		_sigma_t[e]     = 0.0;
 		_diffusivity[e] = 0.0;
-		_old_flux[e]    = 0.0;
-		_new_flux[e]    = 0.0;
+		/* Initializes mesh cell scalar fluxes to be ones. */
+		_old_flux[e]    = 1.0;
+		_new_flux[e]    = 1.0;
 		for (int g = 0; g < NUM_ENERGY_GROUPS; g++)
 		{
 			_sigma_s[e*NUM_ENERGY_GROUPS + g] = 0.0;

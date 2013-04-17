@@ -14,13 +14,16 @@
  * @param geom pointer to the geometry
  * @param track_generator pointer to the trackgenerator
  */
-Cmfd::Cmfd(Geometry* geom, Plotter* plotter, Mesh* mesh, bool updateFlux, bool runCmfd) {
+Cmfd::Cmfd(Geometry* geom, Plotter* plotter, Mesh* mesh, bool runCmfd, TrackGenerator *track_generator) {
 
 	_geom = geom;
 	_plotter = plotter;
 	_mesh = mesh;
-	_update_flux = updateFlux;
 	_quad = new Quadrature(TABUCHI);
+
+	_num_azim = track_generator->getNumAzim();
+	_spacing = track_generator->getSpacing();
+	_l2_norm = 1.0;
 
 	if (runCmfd){
 
@@ -60,6 +63,7 @@ int Cmfd::createAMPhi(PetscInt size1, PetscInt size2, int cells){
 	size2 = size2 - 4;
 	petsc_err = MatCreateSeqAIJ(PETSC_COMM_WORLD, size1, size1, size2, PETSC_NULL, &_M);
 	petsc_err = VecCreateSeq(PETSC_COMM_WORLD, cells, &_phi_new);
+	petsc_err = VecCreateSeq(PETSC_COMM_WORLD, cells, &_source_old);
 	CHKERRQ(petsc_err);
 
 	return petsc_err;
@@ -72,23 +76,22 @@ int Cmfd::createAMPhi(PetscInt size1, PetscInt size2, int cells){
  * @param pointer to an array of fsrs 
  *
  */
-void Cmfd::computeXS(FlatSourceRegion* fsrs){
+void Cmfd::computeXS(){
 
 	/* split corner currents to side surfaces */
 	_mesh->splitCorners();
 
-	/* set pointer to fsr ids */
-	_flat_source_regions = fsrs;
-
 	/* initialize variables */
 	double volume, flux, abs, tot, nu_fis, chi;
 	double* scat;
-	double* mat_mult;
-	double* mat_mult_a;
-	double abs_tally_group, nu_fis_tally_group, dif_tally_group, rxn_tally_group, vol_tally_group, tot_tally_group;
-	double nu_fis_tally = 0, dif_tally = 0, rxn_tally = 0, abs_tally = 0, tot_tally = 0;
+	double abs_tally_group, nu_fis_tally_group, dif_tally_group, 
+		rxn_tally_group, vol_tally_group, tot_tally_group;
+	double nu_fis_tally = 0, dif_tally = 0, rxn_tally = 0, abs_tally = 0, 
+		tot_tally = 0;
 	double scat_tally_group[NUM_ENERGY_GROUPS];
-	double sigma_s_group;
+
+	std::vector<int>::iterator iter;
+	int i,e,g;
 
 	/* create pointers to objects */
 	MeshCell* meshCell;
@@ -96,7 +99,14 @@ void Cmfd::computeXS(FlatSourceRegion* fsrs){
 	Material* material;
 
 	/* loop over mesh cells */
-	for (int i = 0; i < _mesh->getCellWidth() * _mesh->getCellHeight(); i++){
+#if USE_OPENMP
+#pragma omp parallel for private(i, e, g, volume, flux, abs, tot, nu_fis, \
+    chi, scat, abs_tally_group, nu_fis_tally_group, \
+    dif_tally_group, rxn_tally_group, vol_tally_group, tot_tally_group, \
+    nu_fis_tally, dif_tally, rxn_tally, abs_tally, tot_tally, \
+    scat_tally_group, iter, meshCell, fsr, material)
+#endif 
+	for (i = 0; i < _mesh->getCellWidth() * _mesh->getCellHeight(); i++){
 		meshCell = _mesh->getCells(i);
 
 		/* if single group, zero tallies */
@@ -109,8 +119,7 @@ void Cmfd::computeXS(FlatSourceRegion* fsrs){
 		}
 
 		/* loop over energy groups */
-		std::vector<int>::iterator iter;
-		for (int e = 0; e < NUM_ENERGY_GROUPS; e++) {
+		for (e = 0; e < NUM_ENERGY_GROUPS; e++) {
 
 			/* zero tallies for this group */
 			abs_tally_group = 0;
@@ -121,15 +130,14 @@ void Cmfd::computeXS(FlatSourceRegion* fsrs){
 			tot_tally_group = 0;
 
 			/* zero each group to group scattering tally */
-			for (int g = 0; g < NUM_ENERGY_GROUPS; g++){
+			for (g = 0; g < NUM_ENERGY_GROUPS; g++){
 				scat_tally_group[g] = 0;
 			}
 
 			/* loop over FSRs in mesh cell */
-			for (iter = meshCell->getFSRs()->begin(); iter != meshCell->getFSRs()->end(); ++iter){
+			for (iter = meshCell->getFSRs()->begin(); 
+				 iter != meshCell->getFSRs()->end(); ++iter){
 				fsr = &_flat_source_regions[*iter];
-
-				sigma_s_group = 0.0;
 
 				/* Gets FSR specific data. */
 				material = fsr->getMaterial();
@@ -140,28 +148,22 @@ void Cmfd::computeXS(FlatSourceRegion* fsrs){
 				tot = material->getSigmaT()[e];
 				nu_fis = material->getNuSigmaF()[e];
 				scat = material->getSigmaS();
-				mat_mult = fsr->getMatMult();
-				mat_mult_a = fsr->getMatMultA();
+
 
 				/* increment tallies for this group */
-				abs_tally_group += abs * flux * volume * mat_mult_a[e];
+				abs_tally_group += abs * flux * volume;
 				tot_tally_group += tot * flux * volume;
 				nu_fis_tally_group += nu_fis * flux * volume;
 				rxn_tally_group += flux * volume;
 				vol_tally_group += volume;
+				dif_tally_group += flux * volume / (3.0 * tot);
 
 				/* increment group to group scattering tallies */
-				for (int g = 0; g < NUM_ENERGY_GROUPS; g++){
-					scat_tally_group[g] += scat[g*NUM_ENERGY_GROUPS + e] * flux * volume * mat_mult[g*NUM_ENERGY_GROUPS + e];
-					sigma_s_group += scat[g*NUM_ENERGY_GROUPS + e];
-					log_printf(DEBUG, "scattering from group %i to %i: %f", e, g, scat[g*NUM_ENERGY_GROUPS + e]);
-				}
-
-				if (nu_fis > 0.0){
-					dif_tally_group += flux  * volume / (3.0 * tot);
-				}
-				else{
-					dif_tally_group += flux  * volume / (3.0 * (tot - 2.0/3.0 * sigma_s_group));
+				for (g = 0; g < NUM_ENERGY_GROUPS; g++){
+					scat_tally_group[g] += scat[g*NUM_ENERGY_GROUPS + e] 
+						* flux * volume;
+					log_printf(DEBUG, "scattering from group %i to %i: %f", 
+							   e, g, scat[g*NUM_ENERGY_GROUPS + e]);
 				}
 
 				/* choose a chi for this group */
@@ -180,7 +182,8 @@ void Cmfd::computeXS(FlatSourceRegion* fsrs){
 				meshCell->setOldFlux(rxn_tally_group / vol_tally_group, e);
 
 				for (int g = 0; g < NUM_ENERGY_GROUPS; g++){
-					meshCell->setSigmaS(scat_tally_group[g] / rxn_tally_group,e,g);
+					meshCell->setSigmaS(scat_tally_group[g] / rxn_tally_group,
+										e, g);
 				}
 			}
 			/* if single group, add group-wise tallies to group independent tallies */
@@ -209,7 +212,8 @@ void Cmfd::computeXS(FlatSourceRegion* fsrs){
 
 
 void Cmfd::computeDsxDirection(double x, double y, int e, MeshCell *meshCell, 
-							   double d, double f, double flux, int cell_width)
+							   double d, double f, double flux, int cell_width, 
+							   double dt_weight)
 {
 	/* initialize variables */
 	double d_next = 0, d_hat = 0, d_tilde = 0, 
@@ -298,6 +302,8 @@ void Cmfd::computeDsxDirection(double x, double y, int e, MeshCell *meshCell,
 			   y*cell_width + x, e, current, d_hat, d_tilde);
 
 	/* set d_hat and d_tilde */
+	d_tilde = meshCell->getMeshSurfaces(0)->getDTilde()[e] 
+		* (1 - dt_weight) + dt_weight * d_tilde;
 	meshCell->getMeshSurfaces(0)->setDHat(d_hat, e);
 	meshCell->getMeshSurfaces(0)->setDTilde(d_tilde, e);
 }
@@ -311,6 +317,7 @@ void Cmfd::computeDs(){
 	MeshCell* meshCell;
 	MeshCell* meshCellNext;
 	int ng = NUM_ENERGY_GROUPS;
+	int x, y, e;
 
 	if (_mesh->getMultigroup() == false){
 		ng = 1;
@@ -320,15 +327,21 @@ void Cmfd::computeDs(){
 	/* set cell width and height */
 	int cell_height = _mesh->getCellHeight();
 	int cell_width = _mesh->getCellWidth();
+	double dt_weight = 0.66;
 
 	/* loop over all mesh cells */
-	for (int y = 0; y < cell_height; y++)
+#if USE_OPENMP
+#pragma omp parallel for private(meshCell, x, y, e, \
+    d, flux, f, d_hat, d_tilde, current, d_next, \
+    flux_next, meshCellNext)
+#endif 
+	for (y = 0; y < cell_height; y++)
 	{
-		for (int x = 0; x < cell_width; x++)
+		for (x = 0; x < cell_width; x++)
 		{
 			meshCell = _mesh->getCells(y*cell_width + x);
 
-			for (int e = 0; e < ng; e++)
+			for (e = 0; e < ng; e++)
 			{
 
 				/* get diffusivity and flux for mesh cell */
@@ -340,7 +353,8 @@ void Cmfd::computeDs(){
 				f = 1.0;
 
 				/* LEFT */
-				computeDsxDirection(x, y, e, meshCell, d, f, flux, cell_width);
+				computeDsxDirection(x, y, e, meshCell, d, f, flux, cell_width,
+					dt_weight);
 
 				/* RIGHT */
 				/* if cell on right side, set d_hat and d_tilde to 0 */
@@ -415,6 +429,8 @@ void Cmfd::computeDs(){
 				}
 
 				/* set d_hat and d_tilde */
+				d_tilde = meshCell->getMeshSurfaces(2)->getDTilde()[e] 
+					* (1 - dt_weight) + dt_weight * d_tilde;
 				meshCell->getMeshSurfaces(2)->setDHat(d_hat, e);
 				meshCell->getMeshSurfaces(2)->setDTilde(d_tilde, e);
 
@@ -497,6 +513,8 @@ void Cmfd::computeDs(){
 				}
 
 				/* set d_hat and d_tilde */
+				d_tilde = meshCell->getMeshSurfaces(1)->getDTilde()[e] 
+					* (1 - dt_weight) + dt_weight * d_tilde;
 				meshCell->getMeshSurfaces(1)->setDHat(d_hat, e);
 				meshCell->getMeshSurfaces(1)->setDTilde(d_tilde, e);
 
@@ -576,6 +594,8 @@ void Cmfd::computeDs(){
 				}
 
 				/* set d_hat and d_tilde */
+				d_tilde = meshCell->getMeshSurfaces(3)->getDTilde()[e] 
+					* (1 - dt_weight) + dt_weight * d_tilde;
 				meshCell->getMeshSurfaces(3)->setDHat(d_hat, e);
 				meshCell->getMeshSurfaces(3)->setDTilde(d_tilde, e);
 			}
@@ -1189,7 +1209,7 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter){
 	PetscScalar sumold, sumnew, scale_val, eps;
 	PetscReal rtol = 1e-10;
 	PetscReal atol = 1e-10;
-	double criteria = 1e-8;
+	double criteria = 1e-12;
 	Vec sold, snew, res;
 	std::string string;
 
@@ -1232,6 +1252,8 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter){
 	petsc_err = VecAssemblyEnd(phi_old);
 	petsc_err = VecAssemblyBegin(_phi_new);
 	petsc_err = VecAssemblyEnd(_phi_new);
+	petsc_err = VecAssemblyBegin(_source_old);
+	petsc_err = VecAssemblyEnd(_source_old);
 	petsc_err = VecAssemblyBegin(sold);
 	petsc_err = VecAssemblyEnd(sold);
 	petsc_err = VecAssemblyBegin(snew);
@@ -1342,6 +1364,16 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter){
 
 	petsc_err = VecRestoreArray(phi_old, &old_phi);
 	petsc_err = VecRestoreArray(_phi_new, &new_phi);
+	CHKERRQ(petsc_err);
+
+	/* Computes L2 norm */
+	if (moc_iter > 0)
+	{
+		petsc_err = fisSourceNorm(snew, moc_iter);
+	}
+
+    /* Copies source new to source old */
+	petsc_err = VecCopy(snew, _source_old);
 	CHKERRQ(petsc_err);
 
 	/* compute the residual */
@@ -1849,20 +1881,27 @@ void Cmfd::updateMOCFlux(int iteration){
 	/* initialize variables */
 	MeshCell* meshCell;
 	FlatSourceRegion* fsr;
-	double old_flux, new_flux;//, fsr_new_flux;
+	double old_flux, new_flux;
 	double* flux;
 	int cw = _mesh->getCellWidth();
 	int ch = _mesh->getCellHeight();
 	int ng = NUM_ENERGY_GROUPS;
+	int i, e;
+	std::vector<int>::iterator iter;
+
 
 	/* loop over mesh cells */
-	for (int i = 0; i < cw * ch; i++){
+#if USE_OPENMP
+#pragma omp parallel for private(meshCell, i, e, \
+    new_flux, old_flux, flux, fsr, iter)
+#endif 
+	for (i = 0; i < cw * ch; i++){
 
 		/* get pointer to current mesh cell */
 		meshCell = _mesh->getCells(i);
 
 		/* loop over groups */
-		for (int e = 0; e < ng; e++){
+		for (e = 0; e < ng; e++){
 
 			/* get the old and new meshCell flux */
 			if (_mesh->getMultigroup() == true){
@@ -1882,8 +1921,8 @@ void Cmfd::updateMOCFlux(int iteration){
 			}
 
 			/* loop over FRSs in mesh cell */
-			std::vector<int>::iterator iter;
-			for (iter = meshCell->getFSRs()->begin(); iter != meshCell->getFSRs()->end(); ++iter) {
+			for (iter = meshCell->getFSRs()->begin(); 
+				 iter != meshCell->getFSRs()->end(); ++iter) {
 				fsr = &_flat_source_regions[*iter];
 
 				/* get fsr flux */
@@ -1893,7 +1932,9 @@ void Cmfd::updateMOCFlux(int iteration){
 				/* set new flux in FSR */
 				flux[e] = new_flux / old_flux * flux[e];
 
-				log_printf(INFO, "Updating flux in FSR: %i, cell: %i, group: %i, ratio: %f", fsr->getId() ,i, e, new_flux / old_flux);
+				log_printf(INFO, "Updating flux in FSR: %i, cell: %i,"
+						   " group: %i, ratio: %f", fsr->getId() , i, e, 
+						   new_flux / old_flux);
 			}
 		}
 	}
@@ -1919,6 +1960,60 @@ double Cmfd::computeDiffCorrect(double d, double h){
 
 	return 1.0;
 
+}
+
+/* compute the L2 norm of consecutive fission sources
+ * @retun L2 norm
+ */
+int Cmfd::fisSourceNorm(Vec snew, int iter){
+
+	int ch = _mesh->getCellHeight();
+	int cw = _mesh->getCellWidth();
+	int ng = NUM_ENERGY_GROUPS;
+	_l2_norm = 0.0;
+	int petsc_err = 0;
+	PetscScalar *old_source;
+	PetscScalar *new_source;
+	petsc_err = VecGetArray(_source_old, &old_source);
+	petsc_err = VecGetArray(snew, &new_source);
+	CHKERRQ(petsc_err);
+
+	for (int i = 0; i < cw*ch; i++)
+	{
+		for (int e = 0; e < ng; e++)
+		{
+			if (new_source[i*ng+e] != 0.0)
+				_l2_norm += pow(new_source[i*ng+e] / old_source[i*ng+e] - 1.0, 2);
+		}
+	}
+	_l2_norm = pow(_l2_norm, 0.5);
+
+	petsc_err = VecRestoreArray(_source_old, &old_source);
+	petsc_err = VecRestoreArray(snew, &new_source);
+	CHKERRQ(petsc_err);
+
+	std::ofstream logfile;
+	std::stringstream string;
+	string << "l2_norm_" << (_num_azim*2) << "_" <<  _spacing << ".txt";
+	std::string title_str = string.str();
+
+	/* Write the message to the output file */
+	if (iter == 1){
+		logfile.open(title_str.c_str(), std::fstream::trunc);
+		logfile << "iteration, l2_norm, keff" << std::endl;
+	}
+	else{
+		logfile.open(title_str.c_str(), std::ios::app);
+		logfile << iter << " " << _l2_norm << " " << _keff << std::endl;
+	}
+
+    logfile.close();
+
+	return petsc_err;
+} 
+
+double Cmfd::getL2Norm(){
+	return _l2_norm;
 }
 
 Mat Cmfd::getA(){

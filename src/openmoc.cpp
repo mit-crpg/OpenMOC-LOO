@@ -112,14 +112,16 @@ int main(int argc, char **argv) {
 	timer.recordSplit("Segmenting tracks");
 
 	/* Create CMFD class */
-	Cmfd cmfd(&geometry, &plotter, geometry.getMesh(), opts.updateFlux(), 
-			  opts.getCmfd());
+	Cmfd cmfd(&geometry, &plotter, geometry.getMesh(), opts.getCmfd(),
+			  &track_generator);
 
 	/* Creat Solver class */
 	Solver solver(&geometry, &track_generator, &plotter, &cmfd, 
 				  opts.updateFlux(), opts.getKeffConvThresh(), 
 				  opts.computePinPowers(), opts.getCmfd(), opts.getLoo(),
 				  opts.getDiffusion(), opts.getKGuess());
+
+	cmfd.setFSRs(solver.getFSRs());
 
 	/* Solve steady state problem */
 	timer.reset();

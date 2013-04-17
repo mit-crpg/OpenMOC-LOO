@@ -56,7 +56,10 @@ Solver::Solver(Geometry* geom, TrackGenerator* track_generator,
 
 	/* Pre-compute exponential pre-factors */
 	precomputeFactors();
+
+	/* Initializes FSRs */
 	initializeFSRs();
+	oneFSRFluxes();
 }
 
 
@@ -357,10 +360,7 @@ void Solver::zeroMeshCells() {
 
 			/* loop over energy groups */
 			for (int group = 0; group < NUM_ENERGY_GROUPS; group++){
-
-				/* set mesh cell fluxes to 0 */
-				meshCell->setOldFlux(0, group);
-				meshCell->setNewFlux(0, group);
+				/* meshCell constructor sets the oldflux and newflux to 1.0 */
 
 				/* set current to zero */
 				meshCell->getMeshSurfaces(surface)->setCurrent(0, group);
@@ -410,7 +410,7 @@ void Solver::updateKeff(int iteration) {
 #pragma omp parallel shared(tot_abs, tot_fission)
 {
 	#pragma omp for private(fsr, material, sigma_a, nu_sigma_f, flux, abs, 
-							fission)
+	fission, chi)
 	#endif
 	for (int r = 0; r < _num_FSRs; r++) 
 	{
@@ -1343,7 +1343,6 @@ double Solver::kernel(int max_iterations) {
 	else
 		log_printf(ERROR, "Did not give CMFD pointers to FSRs");
 
-
 	/* Check that each FSR has at least one segment crossing it */
 	checkTrackSpacing();
 
@@ -1388,11 +1387,9 @@ double Solver::kernel(int max_iterations) {
 
 			/* Normalizes the FSR scalar flux and each track's angular flux */
 			//normalizeFlux();
-			/* Update Q's. FIXME: should not need it here. */
-			//updateSource();
 
 			/* compute cross sections and diffusion coefficients */
-			_cmfd->computeXS(_flat_source_regions);
+		    _cmfd->computeXS();
 			_cmfd->computeDs();
 
 			/* Check for neutron balance */
@@ -1419,7 +1416,7 @@ double Solver::kernel(int max_iterations) {
 
 			/* LOO Method 1: assume constant Sigma in each mesh. 
 			   Computes cross sections */
-			_cmfd->computeXS(_flat_source_regions);
+			_cmfd->computeXS();
 
 			/* Computes _quad_src based on (m+1/2) results  */
 			_cmfd->computeQuadSrc();
@@ -1446,7 +1443,7 @@ double Solver::kernel(int max_iterations) {
         updateKeff(i);
 
 		/* If k_eff converged, return k_eff */
-		if (fabs(_old_k_effs.back() - _k_eff) < _keff_conv_thresh){
+		if ((i >=1) && (_cmfd->getL2Norm() < _keff_conv_thresh)){
 
 			/* Converge the flux */
 			MOCsweep(1000);
@@ -1459,7 +1456,7 @@ double Solver::kernel(int max_iterations) {
 			/* plot CMFD flux and xs */
 			if (_run_cmfd && _plotter->plotCurrent())
 			{
-	            _cmfd->computeXS(_flat_source_regions);
+		        _cmfd->computeXS();
 	            _cmfd->computeDs();
 	            _plotter->plotDHats(_geom->getMesh(), 0);
 				_plotter->plotNetCurrents(_geom->getMesh());

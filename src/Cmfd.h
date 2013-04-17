@@ -17,6 +17,9 @@
 #include <string>
 #include <sstream>
 #include <queue>
+#include <iostream>
+#include <fstream>
+#include "TrackGenerator.h"
 #include "Geometry.h"
 #include "Quadrature.h"
 #include "FlatSourceRegion.h"
@@ -30,6 +33,11 @@
 #include "Surface.h"
 #include "petsc.h"
 #include <petscmat.h>
+
+#if USE_OPENMP
+#include <omp.h>
+#endif
+
 
 /**
  * Surface types
@@ -50,21 +58,24 @@ private:
 	FlatSourceRegion* _flat_source_regions;
 	double _k_eff;
 	Plotter* _plotter;
-	bool _update_flux;
 	Mat _A;
 	Mat _M;
 	Vec _phi_new;
+	Vec _source_old;
 	double _keff;
+	double _l2_norm;
+	double _spacing;
+	int _num_azim;
 
 public:
-	Cmfd(Geometry* geom, Plotter* plotter, Mesh* mesh, bool updateFlux, 
-		 bool runCmfd);
+	Cmfd(Geometry* geom, Plotter* plotter, Mesh* mesh, bool runCmfd, TrackGenerator *track_generator);
 	virtual ~Cmfd();
  	void computeDs();
 	void computeDsBackup();
 	void computeDsxDirection(double x, double y, int e, MeshCell *meshCell, 
-							 double d, double f, double flux, int cell_width);
- 	void computeXS(FlatSourceRegion* fsrs);
+							 double d, double f, double flux, int cell_width, 
+							 double dt_weight);
+ 	void computeXS();
  	double computeDiffCorrect(double d, double h);
  	void updateMOCFlux(int iteration);
  	int constructAMPhi(Mat A, Mat B, Vec phi_old, solveType solveMethod);
@@ -76,11 +87,12 @@ public:
  	double getKeff();
 	void setOldFSRFlux();
 	void setFSRs(FlatSourceRegion *fsrs);
+	int fisSourceNorm(Vec snew, int iter);
+	double getL2Norm();
 	/* LOO */
 	void storePreMOCMeshSource(FlatSourceRegion* fsrs);
 	void computeQuadSrc();
 	double computeLooFluxPower(solveType solveMethod, int moc_iter);
-	//void oneTrack(double **sum_quad_flux, double flux, int i, int g);
 };
 
 #endif /* CMFD_H_ */
