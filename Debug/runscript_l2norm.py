@@ -7,8 +7,8 @@ import os
 
 #geometries = ['geometry_c5g7_wo_refl.xml', 'geometry_c5g7.xml', 'geometry_UO2.xml', 'geometry_MOX.xml', 'geometry_simple.xml']
 #materials = ['material_c5g7.xml', 'material_c5g7.xml', 'material_c5g7.xml', 'material_c5g7.xml', 'material_simple.xml']
-geometries = ['geometry_simple.xml']
-materials = ['material_simple.xml']
+geometries = ['geometry_LRA.xml']
+materials = ['material_LRA.xml']
 #ts = [.2, .1, .05, .025, .01]
 
 ts = [.2, .05]
@@ -31,7 +31,6 @@ for i, geometry in enumerate(geometries):
 						  + ' -na ' + str(angle) 
 						  + ' -ts ' + str(spacing) 
 						  + ' -fc 1e-5 -uf -mg')
-
 
     # list of l2_norm files
     l2_norm_files = []

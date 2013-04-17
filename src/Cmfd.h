@@ -66,9 +66,11 @@ private:
 	double _l2_norm;
 	double _spacing;
 	int _num_azim;
+	bool _use_diffusion_correction;
 
 public:
-	Cmfd(Geometry* geom, Plotter* plotter, Mesh* mesh, bool runCmfd, TrackGenerator *track_generator);
+	Cmfd(Geometry* geom, Plotter* plotter, Mesh* mesh, bool runCmfd, 
+		 bool useDiffusionCorrection, TrackGenerator *track_generator);
 	virtual ~Cmfd();
  	void computeDs();
 	void computeDsBackup();

@@ -14,7 +14,8 @@
  * @param geom pointer to the geometry
  * @param track_generator pointer to the trackgenerator
  */
-Cmfd::Cmfd(Geometry* geom, Plotter* plotter, Mesh* mesh, bool runCmfd, TrackGenerator *track_generator) {
+Cmfd::Cmfd(Geometry* geom, Plotter* plotter, Mesh* mesh, bool runCmfd, 
+		   bool useDiffusionCorrection, TrackGenerator *track_generator) {
 
 	_geom = geom;
 	_plotter = plotter;
@@ -24,6 +25,7 @@ Cmfd::Cmfd(Geometry* geom, Plotter* plotter, Mesh* mesh, bool runCmfd, TrackGene
 	_num_azim = track_generator->getNumAzim();
 	_spacing = track_generator->getSpacing();
 	_l2_norm = 1.0;
+	_use_diffusion_correction = useDiffusionCorrection;
 
 	if (runCmfd){
 
@@ -38,7 +40,6 @@ Cmfd::Cmfd(Geometry* geom, Plotter* plotter, Mesh* mesh, bool runCmfd, TrackGene
 		size1 = cw*ch*ng;
 		size2 = 4 + ng;
 		cw = createAMPhi(size1, size2, ch*cw*ng);
-
 	}
 }
 
@@ -217,7 +218,7 @@ void Cmfd::computeDsxDirection(double x, double y, int e, MeshCell *meshCell,
 {
 	/* initialize variables */
 	double d_next = 0, d_hat = 0, d_tilde = 0, 
-		current = 0, flux_next = 0;
+		current = 0, flux_next = 0, f_next = 0;
 	MeshSurface *surf;
 	MeshCell* meshCellNext;
 
@@ -257,12 +258,12 @@ void Cmfd::computeDsxDirection(double x, double y, int e, MeshCell *meshCell,
 						 + meshCellNext->getWidth() * d_next), e);
 
 		/* get diffusion correction term for meshCellNext */
-		//f_next = computeDiffCorrect(d_next, meshCellNext->getWidth());
+		f_next = computeDiffCorrect(d_next, meshCellNext->getWidth());
 
 		/* compute d_hat */
-		d_hat = 2.0 * d*f * d_next / 
+		d_hat = 2.0 * d*f * d_next * f_next / 
 			(meshCell->getWidth() * d * f 
-			 + meshCellNext->getWidth() * d_next);
+			 + meshCellNext->getWidth() * d_next * f_next);
 
 		/* Computes current: increment by outwards current on 
 		 * next cell's RHS, decrement by outward current on LHS */
@@ -313,7 +314,7 @@ void Cmfd::computeDs(){
 
 	/* initialize variables */
 	double d = 0, d_next = 0, d_hat = 0, d_tilde = 0, 
-		current = 0, flux = 0, flux_next = 0, f = 1; //, f_next = 1;
+		current = 0, flux = 0, flux_next = 0, f = 1, f_next = 1;
 	MeshCell* meshCell;
 	MeshCell* meshCellNext;
 	int ng = NUM_ENERGY_GROUPS;
@@ -389,12 +390,12 @@ void Cmfd::computeDs(){
 					meshCell->getMeshSurfaces(2)->setDDif(2.0 * d * d_next / (meshCell->getWidth() * d + meshCellNext->getWidth() * d_next), e);
 
 					/* get diffusion correction term for meshCellNext */
-					//f_next = computeDiffCorrect(d_next, meshCellNext->getWidth());
+					f_next = computeDiffCorrect(d_next, meshCellNext->getWidth());
 
 					/* compute d_hat */
-					d_hat = 2.0 * d * f * d_next / 
+					d_hat = 2.0 * d * f * d_next * f_next / 
 						(meshCell->getWidth() * d * f 
-						 + meshCellNext->getWidth() * d_next);
+						 + meshCellNext->getWidth() * d_next * f_next);
 
 					/* get net outward current across surface */
 					current = 0.0;
@@ -474,12 +475,12 @@ void Cmfd::computeDs(){
 					meshCell->getMeshSurfaces(1)->setDDif(2.0 * d * d_next / (meshCell->getHeight() * d + meshCellNext->getHeight() * d_next), e);
 
 					/* get diffusion correction term for meshCellNext */
-					//f_next = computeDiffCorrect(d_next, meshCellNext->getHeight());
+					f_next = computeDiffCorrect(d_next, meshCellNext->getHeight());
 
 					/* compute d_hat */
-					d_hat = 2.0 * d*f * d_next / 
+					d_hat = 2.0 * d * f * d_next * f_next / 
 						(meshCell->getHeight() * d * f 
-						 + meshCellNext->getHeight() * d_next);
+						 + meshCellNext->getHeight() * d_next * f_next);
 
 					/* get net outward current across surface */
 					current = 0.0;
@@ -556,12 +557,12 @@ void Cmfd::computeDs(){
 					meshCell->getMeshSurfaces(3)->setDDif(2.0 * d * d_next / (meshCell->getHeight() * d + meshCellNext->getHeight() * d_next), e);
 
 					/* get diffusion correction term for meshCellNext */
-					//f_next = computeDiffCorrect(d_next, meshCellNext->getHeight());
+					f_next = computeDiffCorrect(d_next, meshCellNext->getHeight());
 
 					/* compute d_hat */
-					d_hat = 2.0 * d*f * d_next / 
+					d_hat = 2.0 * d * f * d_next * f_next / 
 						(meshCell->getHeight() * d * f 
-						 + meshCellNext->getHeight() * d_next);
+						 + meshCellNext->getHeight() * d_next * f_next);
 
 					/* get net outward current across surface */
 					current = 0.0;
@@ -677,9 +678,9 @@ void Cmfd::computeDsBackup(){
 												meshCellNext->getWidth());
 
 					/* compute d_hat */
-					d_hat = 2.0 * d*f * d_next*f_next / 
+					d_hat = 2.0 * d * f * d_next * f_next / 
 						(meshCell->getWidth() * d * f 
-						 + meshCellNext->getWidth() * d_next*f_next);
+						 + meshCellNext->getWidth() * d_next * f_next);
 
 					/* Computes current: increment by outwards current on 
 					 * next cell's RHS, decrement by outward current on LHS */
@@ -761,7 +762,9 @@ void Cmfd::computeDsBackup(){
 					f_next = computeDiffCorrect(d_next, meshCellNext->getHeight());
 
 					/* compute d_hat */
-					d_hat = 2.0 * d*f * d_next*f_next / (meshCell->getHeight() * d*f + meshCellNext->getHeight() * d_next*f_next);
+					d_hat = 2.0 * d*f * d_next* f_next 
+						/ (meshCell->getHeight() * d * f + 
+						   meshCellNext->getHeight() * d_next * f_next);
 
 					/* get net outward current across surface */
 					current = 0.0;
@@ -840,7 +843,9 @@ void Cmfd::computeDsBackup(){
 					f_next = computeDiffCorrect(d_next, meshCellNext->getWidth());
 
 					/* compute d_hat */
-					d_hat = 2.0 * d*f * d_next*f_next / (meshCell->getWidth() * d*f + meshCellNext->getWidth() * d_next*f_next);
+					d_hat = 2.0 * d*f * d_next * f_next 
+						/ (meshCell->getWidth() * d * f 
+						   + meshCellNext->getWidth() * d_next * f_next);
 
 					/* get net outward current across surface */
 					current = 0.0;
@@ -918,7 +923,9 @@ void Cmfd::computeDsBackup(){
 					f_next = computeDiffCorrect(d_next, meshCellNext->getHeight());
 
 					/* compute d_hat */
-					d_hat = 2.0 * d*f * d_next*f_next / (meshCell->getHeight() * d*f + meshCellNext->getHeight() * d_next*f_next);
+					d_hat = 2.0 * d*f * d_next * f_next 
+						/ (meshCell->getHeight() * d * f 
+						   + meshCellNext->getHeight() * d_next * f_next);
 
 					/* get net outward current across surface */
 					current = 0.0;
@@ -1940,21 +1947,26 @@ void Cmfd::updateMOCFlux(int iteration){
 
 double Cmfd::computeDiffCorrect(double d, double h){
 
-	/* compute correction - F */
-	/* double alpha, mu, expon;
-	double rho, F;
-	rho = 0.0;
-	for (int p = 0; p < NUM_POLAR_ANGLES; p++){
-		mu = std::cos(std::asin(_quad->getSinTheta(p)));
-		expon = exp(- h / (3 * d * mu));
-		alpha = (1 + expon) / (1 - expon) - 2 * mu / h;
-		rho += mu * _quad->getWeight(p) * alpha;
+	if (_use_diffusion_correction == false)
+	{
+		return 1.0;
 	}
+	else
+	{
+		/* compute correction - F */
+		double alpha, mu, expon;
+		double rho, F;
+		rho = 0.0;
+		for (int p = 0; p < NUM_POLAR_ANGLES; p++){
+			mu = std::cos(std::asin(_quad->getSinTheta(p)));
+			expon = exp(- h / (3 * d * mu));
+			alpha = (1 + expon) / (1 - expon) - 2 * mu / h;
+			rho += mu * _quad->getWeight(p) * alpha;
+		}
 
-    F = 1 + h * rho / (2 * d);
-	*/
-
-	return 1.0;
+		F = 1 + h * rho / (2 * d);
+		return F;
+	}
 
 }
 

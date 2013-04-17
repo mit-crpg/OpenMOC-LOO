@@ -46,6 +46,7 @@ private:
 	double _l2_norm_conv_thresh;
 	int _cmfd_level;
 	double _k_guess;
+	bool _diffusion_correction;
 public:
     Options(int argc, char **argv);
     ~Options(void);
@@ -75,6 +76,7 @@ public:
 	bool getCmfd();
 	bool getLoo();
 	bool getDiffusion();
+	bool getDiffusionCorrection();
 };
 
 #endif

@@ -114,7 +114,7 @@ int main(int argc, char **argv) {
 
 	/* Create CMFD class */
 	Cmfd cmfd(&geometry, &plotter, geometry.getMesh(), opts.getCmfd(),
-			  &track_generator);
+			  opts.getDiffusionCorrection(), &track_generator);
 
 	/* Creat Solver class */
 	Solver solver(&geometry, &track_generator, &plotter, &cmfd, 

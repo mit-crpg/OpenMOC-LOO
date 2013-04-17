@@ -28,6 +28,7 @@ Options::Options(int argc, char **argv) {
 		
 	_loo = false;
 	_plot_quad_flux = false; 
+
 	/* Checks the working directory to set the relative path for input files
 	 * This is important so that default input files work when program is run
 	 * from both eclipse and the console */
@@ -57,6 +58,8 @@ Options::Options(int argc, char **argv) {
 	_cmfd_level = 1;					/* Default cmfd level is 1 (hightest level) */
 	_plot_keff = false;					/* Default will not plot keff */
 	_diffusion = false;					/* Default will not solve diffusion problem */
+
+	_diffusion_correction = false; 
 
 	for (int i = 0; i < argc; i++) {
 		if (i > 0) {
@@ -136,6 +139,9 @@ Options::Options(int argc, char **argv) {
 				_print_matrices = true;
 			else if (LAST("--cmfdlevel") || LAST("-cl"))
 				_cmfd_level = atoi(argv[i]);
+			else if (strcmp(argv[i], "-dc")==0 || 
+					 strcmp(argv[i], "--diffusioncorrection") == 0)
+				_diffusion_correction = true;
 		}
 	}
 }
@@ -361,4 +367,6 @@ bool Options::getDiffusion(){
 	return _diffusion;
 }
 
-
+bool Options::getDiffusionCorrection(){
+	return _diffusion_correction;
+}
