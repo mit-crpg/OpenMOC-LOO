@@ -1209,7 +1209,7 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter){
 	PetscScalar sumold, sumnew, scale_val, eps;
 	PetscReal rtol = 1e-10;
 	PetscReal atol = 1e-10;
-	double criteria = 1e-12;
+	double criteria = 1e-10;
 	Vec sold, snew, res;
 	std::string string;
 
@@ -1915,8 +1915,8 @@ void Cmfd::updateMOCFlux(int iteration){
 
 			if (e == NUM_ENERGY_GROUPS - 1)
 			{
-				log_printf(NORMAL, "Update flux in Cell: %i,"
-						   " old =  %f, new = %f, new/old = %f", 
+				log_printf(INFO, "Update flux in Cell: %i,"
+						   " old =  %e, new = %e, new/old = %f", 
 						   i, old_flux, new_flux, new_flux / old_flux);
 			}
 
@@ -1931,10 +1931,6 @@ void Cmfd::updateMOCFlux(int iteration){
 
 				/* set new flux in FSR */
 				flux[e] = new_flux / old_flux * flux[e];
-
-				log_printf(INFO, "Updating flux in FSR: %i, cell: %i,"
-						   " group: %i, ratio: %f", fsr->getId() , i, e, 
-						   new_flux / old_flux);
 			}
 		}
 	}

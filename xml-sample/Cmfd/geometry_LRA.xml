@@ -1,0 +1,159 @@
+<?xml version="1.0"?>
+
+<!-- 2x2 nested lattice of 2x2 lattices, each with three types of pin cells.
+Each lattice cell is 1cm x 1cm and the pins have diameters of 0.2cm,
+0.3cm and 0.4cm. This geometry is identical to 'Lattice' but uses
+a nested structure instead.
+-->
+
+<geometry>
+    
+    <!-- Definition of Cells -->
+    <cell id="1" fill="7" surfaces="1 -2 3 -4" />
+    <cell id="101" universe="1" material="1"/>
+    <cell id="102" universe="2" material="2"/>
+    <cell id="201" universe="3" material="3"/>
+    <cell id="202" universe="4" material="4"/>
+    <cell id="301" universe="5" material="6"/>
+    <cell id="302" universe="6" material="5"/>
+    
+
+    <!-- ASSEMBLIES -->
+    
+    <!-- material 1 -->
+    <cell id="31" universe="11" fill="21" surfaces="" />
+    
+    <!-- material 2 -->
+    <cell id="32" universe="12" fill="22" surfaces="" />
+
+    <!-- material 3 -->
+    <cell id="33" universe="13" fill="23" surfaces="" />
+
+    <!-- material 4 -->
+    <cell id="34" universe="14" fill="24" surfaces="" />
+    
+    <!-- material 6 -->
+    <cell id="35" universe="15" fill="25" surfaces="" />
+    
+    <!-- material 5 -->
+    <cell id="36" universe="16" fill="26" surfaces="" />
+    
+    <!-- material 1 bundle -->
+    <lattice id="21">
+        <type>rectangular</type>
+        <dimension>5 5</dimension>
+        <width>3 3</width>
+        <universes>
+            1 1 1 1 1
+            1 1 1 1 1
+            1 1 1 1 1
+            1 1 1 1 1
+            1 1 1 1 1
+        </universes>
+    </lattice>
+    
+    
+    <!-- material 2 bundle -->
+    <lattice id="22">
+        <type>rectangular</type>
+        <dimension>5 5</dimension>
+        <width>3 3</width>
+        <universes>
+            2 2 2 2 2
+            2 2 2 2 2
+            2 2 2 2 2
+            2 2 2 2 2
+            2 2 2 2 2
+        </universes>
+    </lattice>
+    
+
+    <!-- material 3 bundle -->
+    <lattice id="23">
+        <type>rectangular</type>
+        <dimension>5 5</dimension>
+        <width>3 3</width>
+        <universes>
+            3 3 3 3 3
+            3 3 3 3 3
+            3 3 3 3 3
+            3 3 3 3 3
+            3 3 3 3 3
+        </universes>
+    </lattice>
+
+    
+    <!-- material 4 bundle -->
+    <lattice id="24">
+        <type>rectangular</type>
+        <dimension>5 5</dimension>
+        <width>3 3</width>
+        <universes>
+            4 4 4 4 4
+            4 4 4 4 4
+            4 4 4 4 4
+            4 4 4 4 4
+            4 4 4 4 4
+        </universes>
+    </lattice>
+
+
+    <!-- material 5 bundle -->
+    <lattice id="26">
+        <type>rectangular</type>
+        <dimension>5 5</dimension>
+        <width>3 3</width>
+        <universes>
+            6 6 6 6 6
+            6 6 6 6 6
+            6 6 6 6 6
+            6 6 6 6 6
+            6 6 6 6 6
+        </universes>
+    </lattice>
+    
+    
+    <!-- material 5 bundle -->
+    <lattice id="25">
+        <type>rectangular</type>
+        <dimension>5 5</dimension>
+        <width>3 3</width>
+        <universes>
+            5 5 5 5 5
+            5 5 5 5 5
+            5 5 5 5 5
+            5 5 5 5 5
+            5 5 5 5 5
+        </universes>
+    </lattice>
+    
+    
+    
+    <!-- 11 x 11 core -->
+    <lattice id="7">
+        <type>rectangular</type>
+        <dimension>11 11</dimension>
+        <width>15.0 15.0</width>
+        <universes>
+            15 15 15 15 15 15 15 15 15 15 15
+            15 15 15 15 15 15 15 15 15 15 15
+            13 13 13 13 13 13 13 15 15 15 15
+            13 13 13 13 13 13 13 14 15 15 15
+            12 11 11 11 11 12 12 16 16 15 15
+            12 11 11 11 11 12 12 16 16 15 15
+            11 11 11 11 11 11 11 13 13 15 15
+            11 11 11 11 11 11 11 13 13 15 15
+            11 11 11 11 11 11 11 13 13 15 15
+            11 11 11 11 11 11 11 13 13 15 15
+            12 11 11 11 11 12 12 13 13 15 15
+        </universes>
+    </lattice>
+    
+    
+    <!-- Definition of Surfaces -->
+    <surface id="1" type="x-plane" coeffs="-82.5" boundary="reflective" />
+    <surface id="2" type="x-plane" coeffs="82.5" boundary="vacuum" />
+    <surface id="3" type="y-plane" coeffs="-82.5" boundary="reflective" />
+    <surface id="4" type="y-plane" coeffs="82.5" boundary="vacuum"/>
+
+</geometry>

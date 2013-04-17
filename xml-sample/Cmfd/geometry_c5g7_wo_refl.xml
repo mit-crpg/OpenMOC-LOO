@@ -144,21 +144,20 @@ simulated by a large neutron absorber.
     <!-- 3 x 3 core -->
     <lattice id="18">
         <type>rectangular</type>
-        <dimension>3 3</dimension>
+        <dimension>2 2</dimension>
         <width>21.42 21.42</width>
         <universes>
-            10 11 12
-            11 10 12
-            12 12 12
+            10 11
+            11 10
         </universes>
     </lattice>
     
     
     <!-- Definition of Surfaces -->
-    <surface id="1" type="x-plane" coeffs="-32.13" boundary="reflective" />
-    <surface id="2" type="x-plane" coeffs="32.13" boundary="vacuum" />
-    <surface id="3" type="y-plane" coeffs="-32.13" boundary="vacuum" />
-    <surface id="4" type="y-plane" coeffs="32.13" boundary="reflective"/>
+    <surface id="1" type="x-plane" coeffs="-21.42" boundary="reflective" />
+    <surface id="2" type="x-plane" coeffs="21.42" boundary="reflective" />
+    <surface id="3" type="y-plane" coeffs="-21.42" boundary="reflective" />
+    <surface id="4" type="y-plane" coeffs="21.42" boundary="reflective"/>
     <surface id="5" type="circle" coeffs="0.0 0.0 0.54" />
     <surface id="6" type="circle" coeffs="0.0 0.0 0.57" />
     <surface id="7" type="circle" coeffs="0.0 0.0 0.60" />
@@ -166,5 +165,3 @@ simulated by a large neutron absorber.
     <surface id="9" type="circle" coeffs="0.0 0.0 0.66" />
     
 </geometry>
-
-
