@@ -1455,12 +1455,15 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter){
 	}
 
 	/* Pre-compute factors that do not change between iterations */
-	double **sum_quad_flux, **quad_xs, **ratio, **expo, **tau;
+	double **sum_quad_flux, **quad_xs, **ratio, **expo, **tau, **new_src;
+	double **new_quad_src;
 	sum_quad_flux = new double*[cw*ch];
 	quad_xs = new double*[cw*ch];
 	ratio = new double*[cw*ch];
 	expo = new double*[cw*ch];
 	tau = new double*[cw*ch];
+	new_src = new double*[cw*ch];
+	new_quad_src = new double*[cw*ch];
 
 	double l = _mesh->getCells(0)->getL();
 
@@ -1471,6 +1474,8 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter){
 		ratio[i] = new double[NUM_ENERGY_GROUPS];
 		expo[i] = new double[NUM_ENERGY_GROUPS];
 		tau[i] = new double[NUM_ENERGY_GROUPS];
+		new_src[i] = new double[NUM_ENERGY_GROUPS];
+		new_quad_src[i] = new double[8 * NUM_ENERGY_GROUPS];
 		
 		for (int e = 0; e < ng; e++)
 		{
@@ -1490,17 +1495,28 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter){
 	for (iter = 0; iter < max_outer; iter++)
 	{
 		old_keff = _keff;
-
+		
+		/* Resets terms to zeros */
+		for (int i = 0; i < cw * ch; i++)
+		{
+			for (int e = 0; e < ng; e++)
+			{
+				sum_quad_flux[i][e] = 0.0;
+				new_src[i][e] = 0.0;
+				for (int g = 0; g < 8; g++)
+				{
+					int d = e * ng + g;
+					new_quad_src[i][d] = 0.0;
+				}
+			}
+		}
+		
 		/* Computes new cell averaged source, looping over energy groups */
-		double **new_src;
-		new_src = new double*[cw*ch];
 		for (int i = 0; i < cw * ch; i++)
 		{
 			meshCell = _mesh->getCells(i);
-			new_src[i] = new double[NUM_ENERGY_GROUPS];
 			for (int e = 0; e < ng; e++)
 			{
-				new_src[i][e] = 0.0;
 				for (int g = 0; g < ng; g++)
 				{
 					new_src[i][e] += meshCell->getSigmaS()[e*ng+g];
@@ -1508,18 +1524,15 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter){
 						* meshCell->getNuSigmaF()[g] / _keff;
 				}
 				new_src[i][e] *= meshCell->getNewFlux()[e];
-				log_printf(DEBUG, "Cell averaged source for cell %d, energy %d"
+				log_printf(NORMAL, "Cell averaged source for cell %d, energy %d"
 						   " is %e", i, e, new_src[i][e]);
 			}
 		}
 
 		/* Updates 8 quadrature sources based on form function */
-		double **new_quad_src;
-		new_quad_src = new double*[cw*ch];
 		for (int i = 0; i < cw * ch; i++)
 		{
 			meshCell = _mesh->getCells(i);
-			new_quad_src[i] = new double[8 * NUM_ENERGY_GROUPS];
 			for (int e = 0; e < ng; e++)
 			{
 				for (int g = 0; g < 8; g++)
@@ -1550,6 +1563,7 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter){
 			int g_array2[] = {0,2,7,2,4,6,3,6};
 
 			/* 1st loop */
+			/* Get the initial angular flux */
 			flux = _mesh->getCells(2)->getQuadFlux()[e*ng + 0];		
 			for (int x = 0; x < 8; x++)
 			{
@@ -1558,13 +1572,17 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter){
 					i = i_array[x];
 					g = g_array[y];
 					d = e * ng + g;
+					/* Accumulate angular flux to $\bar{\psi}_g^{8,(n+1)}$ */
 					sum_quad_flux[i][e] += flux * ratio[i][e] + 
 						new_quad_src[i][d] * l * ratio[i][e];
+					/* Update angular flux: $\psi_{out} = \psi_{in} *
+					 * e^{-\Sigma L} + Q/\Sigma (1 - e^{-\Sigma L}) */
 					flux = expo[i][e] * flux + new_quad_src[i][d] * l 
 						* ratio[i][e];
 				}
 			}
 			_mesh->getCells(2)->setQuadFlux(flux, e, 0);
+
 			flux = _mesh->getCells(2)->getQuadFlux()[e*ng + 7];		
 			for (int x = 7; x >=0 ; x--)
 			{
@@ -1598,6 +1616,7 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter){
 				}
 			}
 			_mesh->getCells(3)->setQuadFlux(flux, e, 0);
+
 			flux = _mesh->getCells(3)->getQuadFlux()[e*ng + 7];		
 			for (int x = 7; x >=0 ; x--)
 			{
@@ -1627,8 +1646,7 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter){
 			}
 		}
 
-		/* Checks for convergence */
-		/* Computes keff assuming zero leakage */
+		/* Checks for convergence: computes keff assuming zero leakage */
 		double fis_tot = 0, abs_tot = 0;
 		for (int i = 0; i < cw * ch; i++)
 		{
@@ -1647,7 +1665,8 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter){
 			}
 		}
 		_keff = fis_tot / abs_tot; 
-		log_printf(NORMAL, "%d-th LOO iteration k = %f", iter, _keff);
+		log_printf(NORMAL, "%d-th LOO iteration k = %f / %f = %f", 
+				   iter, fis_tot, abs_tot,_keff);
 
 		if ((iter > 5) && (fabs(_keff - old_keff) / _keff < 1e-6))
 		{

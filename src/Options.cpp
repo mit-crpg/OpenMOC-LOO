@@ -23,10 +23,10 @@
 Options::Options(int argc, char **argv) {
 	_l2_norm_conv_thresh = 1e-5;			/* Default will set keff conv thresh to 1e-6 */
 
-	_cmfd = true; 			
+	_cmfd = false; 			
 	_k_guess = 1.0;
 		
-	_loo = false;
+	_loo = true;
 	_plot_quad_flux = false; 
 
 	/* Checks the working directory to set the relative path for input files

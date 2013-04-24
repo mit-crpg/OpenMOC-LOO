@@ -2235,7 +2235,7 @@ void Geometry::defineMesh(Mesh* mesh, Universe* univ, int depth, int* meshCellNu
 						findFSRs(curr, mesh->getCells(*meshCellNum), &fsr_id);
 						double w = lattice->getWidthX();
 						double h = lattice->getWidthY();
-						double l = 0.5 * sqrt(w * w + h * h);
+						double l = 0.5 * sqrt(w * w + h * h) / SIN_THETA_45;
 						mesh->getCells(*meshCellNum)->setWidth(w);
 						mesh->getCells(*meshCellNum)->setHeight(h);
 						mesh->getCells(*meshCellNum)->setL(l);
@@ -2260,7 +2260,7 @@ void Geometry::defineMesh(Mesh* mesh, Universe* univ, int depth, int* meshCellNu
 					findFSRs(curr, mesh->getCells(*meshCellNum), &fsr_id);
 					double w = lattice->getWidthX();
 					double h = lattice->getWidthY();
-					double l = 0.5 * sqrt(w * w + h * h);	
+					double l = 0.5 * sqrt(w * w + h * h) / SIN_THETA_45;	
 					mesh->getCells(*meshCellNum)->setWidth(w);
 					mesh->getCells(*meshCellNum)->setHeight(h);
 					mesh->getCells(*meshCellNum)->setL(l);

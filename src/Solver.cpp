@@ -1077,8 +1077,8 @@ void Solver::MOCsweep(int max_iterations) {
 			}
 		}
 
-		/* If more than one sweep of MOC is requested, check for convergence */
-		if (max_iterations > 1) {
+		/* If more than two sweep of MOC is requested, check for convergence */
+		if (max_iterations > 2) {
 			bool converged = true;
 			#if USE_OPENMP
 			#pragma omp parallel for private(fsr, scalar_flux, old_scalar_flux)
@@ -1104,7 +1104,7 @@ void Solver::MOCsweep(int max_iterations) {
 		}
 	}
 
-	if (max_iterations > 1)
+	if (max_iterations > 2)
 		log_printf(WARNING, "Scalar flux did not converge after %d iterations",
 															max_iterations);
 	return;
@@ -1326,17 +1326,16 @@ void Solver::updateSource(){
 
 
 double Solver::kernel(int max_iterations) {
+	FlatSourceRegion* fsr;
+	int i;
+	double* source;
+	double* old_source;
+	double cmfd_keff = 1.0, loo_keff = 1.0;
 
 	log_printf(NORMAL, "Starting kernel ...");
 
-	double* source;
-	double* old_source;
-	FlatSourceRegion* fsr;
-
-	double cmfd_keff = 0.0, loo_keff = 0.0;
-
 	/* Gives cmfd a pointer to the FSRs */
-	if (_run_cmfd)
+	if ((_run_cmfd) || (_run_loo))
 	{
 		_cmfd->setFSRs(_flat_source_regions);
 	}
@@ -1348,6 +1347,7 @@ double Solver::kernel(int max_iterations) {
 
 	/* Initial guess */
 	_old_k_effs.push(_k_eff);
+	log_printf(NORMAL, "Starting guess of k_eff = %f", _k_eff);
 
 	/* Set scalar flux to unity for each region */
 	oneFSRFluxes();
@@ -1365,8 +1365,6 @@ double Solver::kernel(int max_iterations) {
 	}
 
 	/* Source iteration loop */
-	int i;
-	log_printf(NORMAL, "Starting guess of k_eff = %f", _k_eff);
 	for (i = 0; i < max_iterations; i++) {
 
 		log_printf(INFO, "Iteration %d: k_eff = %f", i, _k_eff);
@@ -1382,8 +1380,8 @@ double Solver::kernel(int max_iterations) {
 		MOCsweep(2);
 
 		/* Run CMFD acceleration */
-		if (_run_cmfd){
-
+		if (_run_cmfd)
+		{
 			/* Normalizes the FSR scalar flux and each track's angular flux */
 			//normalizeFlux();
 
@@ -1406,10 +1404,11 @@ double Solver::kernel(int max_iterations) {
 		}
 
 		/* Run LOO acceleration */
-		if (_run_loo){
-
-			normalizeFlux();
-			updateSource();
+		if (_run_loo)
+		{
+	
+	//normalizeFlux();
+	//updateSource();
 
 			_cmfd->storePreMOCMeshSource(_flat_source_regions);
 
@@ -1462,7 +1461,8 @@ double Solver::kernel(int max_iterations) {
 				/* Load fluxes into FSR to flux map */
 				for (int r=0; r < _num_FSRs; r++) {
 					double* fluxes = _flat_source_regions[r].getFlux();
-					for (int e=0; e < NUM_ENERGY_GROUPS; e++){
+					for (int e=0; e < NUM_ENERGY_GROUPS; e++)
+					{
 						_FSRs_to_fluxes[e][r] = fluxes[e];
 						_FSRs_to_fluxes[NUM_ENERGY_GROUPS][r] =
 							_FSRs_to_fluxes[NUM_ENERGY_GROUPS][r] + fluxes[e];
