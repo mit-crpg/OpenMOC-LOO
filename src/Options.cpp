@@ -21,7 +21,7 @@
  * @param argv a char array of command line arguments from console
  */
 Options::Options(int argc, char **argv) {
-	_l2_norm_conv_thresh = 1e-6;			/* Default will set keff conv thresh to 1e-6 */
+	_l2_norm_conv_thresh = 1e-5;			/* Default will set keff conv thresh to 1e-6 */
 
 	_cmfd = true; 			
 	_k_guess = 1.0;
@@ -37,8 +37,8 @@ Options::Options(int argc, char **argv) {
 	else
 		_relative_path = "";
 
-	_geometry_file = _relative_path + "xml-sample/SimpleLattice/geometry.xml"; 	 /* Default geometry input file */
-	_material_file = _relative_path + "xml-sample/SimpleLattice/material.xml";    /* Default material input file */
+	_geometry_file = _relative_path + "xml-sample/Cmfd/geometry_simple.xml"; 	 /* Default geometry input file */
+	_material_file = _relative_path + "xml-sample/Cmfd/material_simple.xml";    /* Default material input file */
 	_track_spacing = 0.1;				/* Default track spacing */
 	_num_azim = 16;						/* Default number of azimuthal angles */
 	_bit_dimension = 1000;				/* y dimension of tracks and segments plots */

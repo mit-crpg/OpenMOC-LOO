@@ -1210,14 +1210,13 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter){
 	int ch = _mesh->getCellHeight();
 	int cw = _mesh->getCellWidth();
 	int petsc_err;
-	Vec phi_old;
-	PetscInt size1;
+	Vec phi_old, sold, snew, res;
+	PetscInt size;
 	int max_outer, iter = 0;
 	PetscScalar sumold, sumnew, scale_val, eps;
 	PetscReal rtol = 1e-10;
 	PetscReal atol = 1e-10;
 	double criteria = 1e-10;
-	Vec sold, snew, res;
 	std::string string;
 
 	/* if single group, set ng (number of groups) to 1 */
@@ -1226,8 +1225,10 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter){
 	}
 
 	/* create petsc array to store old flux */
-	size1 = cw*ch*ng;
-	petsc_err = VecCreateSeq(PETSC_COMM_WORLD, size1, &phi_old);
+	petsc_err = VecCreate(PETSC_COMM_WORLD, &phi_old);
+	size = ch*cw*ng;
+	petsc_err = VecSetSizes(phi_old, PETSC_DECIDE, size);
+	petsc_err = VecSetFromOptions(phi_old);
 	CHKERRQ(petsc_err);
 
 	/* zero out and construct memory efficient versions of
@@ -1722,14 +1723,17 @@ int Cmfd::constructAMPhi(Mat A, Mat M, Vec phi_old, solveType solveMethod){
 				meshCell = _mesh->getCells(y*cw + x);
 
 				/* get old flux */
-				indice1 = int((y*cw + x)*ng+e);
-				petsc_err = VecSetValues(phi_old, 1, &indice1, &meshCell->getOldFlux()[e], INSERT_VALUES);
+				indice1 = (PetscInt) ((y * cw + x) * ng + e);
+				value = (PetscScalar) meshCell->getOldFlux()[e];
+				petsc_err = VecSetValues(phi_old, 1, &indice1, 
+										 &value, INSERT_VALUES);
 				CHKERRQ(petsc_err);
 
 				/* diagonal - A */
 
 				/* add absorption term to diagonal */
-				value = meshCell->getSigmaA()[e] * meshCell->getVolume();
+				value = (PetscScalar) 
+					meshCell->getSigmaA()[e] * meshCell->getVolume();
 				indice1 = (y*cw + x)*ng + e;
 				indice2 = (y*cw + x)*ng + e;
 				petsc_err = MatSetValues(A, 1, &indice1, 1, &indice2, &value, ADD_VALUES);
