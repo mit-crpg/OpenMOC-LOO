@@ -1524,7 +1524,7 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter){
 						* meshCell->getNuSigmaF()[g] / _keff;
 				}
 				new_src[i][e] *= meshCell->getNewFlux()[e];
-				log_printf(NORMAL, "Cell averaged source for cell %d, energy %d"
+				log_printf(DEBUG, "Cell averaged source for cell %d, energy %d"
 						   " is %e", i, e, new_src[i][e]);
 			}
 		}
@@ -1574,10 +1574,10 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter){
 					d = e * ng + g;
 					/* Accumulate angular flux to $\bar{\psi}_g^{8,(n+1)}$ */
 					sum_quad_flux[i][e] += flux * ratio[i][e] + 
-						new_quad_src[i][d] * l * ratio[i][e];
+						new_quad_src[i][d] * (1- ratio[i][e]) / quad_xs[i][e];
 					/* Update angular flux: $\psi_{out} = \psi_{in} *
 					 * e^{-\Sigma L} + Q/\Sigma (1 - e^{-\Sigma L}) */
-					flux = expo[i][e] * flux + new_quad_src[i][d] * l 
+					flux -= (flux * tau[i][e] - new_quad_src[i][d] * l) 
 						* ratio[i][e];
 				}
 			}
@@ -1591,9 +1591,12 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter){
 					i = i_array[x];
 					g = g_array[y];
 					d = e * ng + g;
+					/* Accumulate angular flux to $\bar{\psi}_g^{8,(n+1)}$ */
 					sum_quad_flux[i][e] += flux * ratio[i][e] + 
-						new_quad_src[i][d] * l * ratio[i][e];
-					flux = expo[i][e] * flux + new_quad_src[i][d] * l 
+						new_quad_src[i][d] * (1- ratio[i][e]) / quad_xs[i][e];
+					/* Update angular flux: $\psi_{out} = \psi_{in} *
+					 * e^{-\Sigma L} + Q/\Sigma (1 - e^{-\Sigma L}) */
+					flux -= (flux * tau[i][e] - new_quad_src[i][d] * l) 
 						* ratio[i][e];
 				}
 			}
@@ -1609,9 +1612,12 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter){
 					i = i_array2[x];
 					g = g_array2[y];
 					d = e * ng + g;
+					/* Accumulate angular flux to $\bar{\psi}_g^{8,(n+1)}$ */
 					sum_quad_flux[i][e] += flux * ratio[i][e] + 
-						new_quad_src[i][d] * l * ratio[i][e];
-					flux = expo[i][e] * flux + new_quad_src[i][d] * l 
+						new_quad_src[i][d] * (1- ratio[i][e]) / quad_xs[i][e];
+					/* Update angular flux: $\psi_{out} = \psi_{in} *
+					 * e^{-\Sigma L} + Q/\Sigma (1 - e^{-\Sigma L}) */
+					flux -= (flux * tau[i][e] - new_quad_src[i][d] * l) 
 						* ratio[i][e];
 				}
 			}
@@ -1625,9 +1631,12 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter){
 					i = i_array2[x];
 					g = g_array2[y];
 					d = e * ng + g;
+					/* Accumulate angular flux to $\bar{\psi}_g^{8,(n+1)}$ */
 					sum_quad_flux[i][e] += flux * ratio[i][e] + 
-						new_quad_src[i][d] * l * ratio[i][e];
-					flux = expo[i][e] * flux + new_quad_src[i][d] * l 
+						new_quad_src[i][d] * (1- ratio[i][e]) / quad_xs[i][e];
+					/* Update angular flux: $\psi_{out} = \psi_{in} *
+					 * e^{-\Sigma L} + Q/\Sigma (1 - e^{-\Sigma L}) */
+					flux -= (flux * tau[i][e] - new_quad_src[i][d] * l) 
 						* ratio[i][e];
 				}
 			}

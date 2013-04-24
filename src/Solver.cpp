@@ -469,8 +469,7 @@ void Solver::updateKeff(int iteration) {
 	}
 
 	if (_run_loo){
-		_geom->getMesh()->setKeffMOC(tot_fission/(tot_abs + leakage), 
-									 iteration);
+		_geom->getMesh()->setKeffMOC(_k_eff, iteration);
 
 		log_printf(NORMAL, "LOO k_eff: %f, MOC k_eff = %f", _cmfd->getKeff(), 
 				   tot_fission/(tot_abs + leakage));
@@ -929,7 +928,7 @@ void Solver::MOCsweep(int max_iterations) {
 					for (e = 0; e < NUM_ENERGY_GROUPS; e++) {
 						for (p = 0; p < NUM_POLAR_ANGLES; p++) {
 							delta = (polar_fluxes[pe] -ratios[e]) *
-													segment->_prefactors[e][p];
+								segment->_prefactors[e][p];
 							fsr_flux[e] += delta * weights[p];
 							polar_fluxes[pe] -= delta;
 							pe++;
