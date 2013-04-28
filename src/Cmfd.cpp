@@ -1431,7 +1431,7 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter){
 /* Computes the flux in each mesh cell using LOO */
 double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter){
 	log_printf(INFO, "Running low order MOC solver...");
-	int iter, max_outer = 1000; 
+	int iter, max_outer = 100; 
 	if (solveMethod == DIFFUSION){
 		max_outer = 1000;
 	}
@@ -1521,10 +1521,10 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter){
 				{
 					new_src[i][e] += meshCell->getSigmaS()[e*ng+g];
 					new_src[i][e] += meshCell->getChi()[e] 
-						* meshCell->getNuSigmaF()[g] / _keff;
+						* meshCell->getNuSigmaF()[g];
 				}
 				new_src[i][e] *= meshCell->getNewFlux()[e];
-				log_printf(DEBUG, "Cell averaged source for cell %d, energy %d"
+				log_printf(INFO, "Cell averaged source for cell %d, energy %d"
 						   " is %e", i, e, new_src[i][e]);
 			}
 		}
@@ -1633,7 +1633,7 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter){
 					d = e * ng + g;
 					/* Accumulate angular flux to $\bar{\psi}_g^{8,(n+1)}$ */
 					sum_quad_flux[i][e] += flux * ratio[i][e] + 
-						new_quad_src[i][d] * (1- ratio[i][e]) / quad_xs[i][e];
+						new_quad_src[i][d] * (1 - ratio[i][e]) / quad_xs[i][e];
 					/* Update angular flux: $\psi_{out} = \psi_{in} *
 					 * e^{-\Sigma L} + Q/\Sigma (1 - e^{-\Sigma L}) */
 					flux -= (flux * tau[i][e] - new_quad_src[i][d] * l) 
@@ -1649,9 +1649,11 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter){
 			meshCell = _mesh->getCells(i);
 			for (int e = 0; e < ng; e++) 
 			{
-				meshCell->setNewFlux(meshCell->getOldFlux()[e] 
-									 * sum_quad_flux[i][e] 
-									 / meshCell->getSumQuadFlux()[e], e);
+				double ratio =  sum_quad_flux[i][e] 
+					/ meshCell->getSumQuadFlux()[e];
+				meshCell->setNewFlux(meshCell->getOldFlux()[e] * ratio, e);
+				log_printf(INFO, "Update the cell-averaged scalar flux by "
+						   "factor of %f", ratio);
 			}
 		}
 
@@ -1676,6 +1678,16 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter){
 		_keff = fis_tot / abs_tot; 
 		log_printf(NORMAL, "%d-th LOO iteration k = %f / %f = %f", 
 				   iter, fis_tot, abs_tot,_keff);
+
+		/* Normalizes flux based on fission source FIXME: update? */
+		for (int i = 0; i < cw * ch; i++)
+		{
+			meshCell = _mesh->getCells(i);
+			for (int e = 0; e < ng; e++)
+			{
+				meshCell->setNewFlux(meshCell->getNewFlux()[e] / fis_tot, e);
+			}
+		}		
 
 		if ((iter > 5) && (fabs(_keff - old_keff) / _keff < 1e-6))
 		{
