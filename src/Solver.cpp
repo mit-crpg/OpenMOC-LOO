@@ -1114,13 +1114,12 @@ void Solver::initializeSource(){
 
 	double scatter_source, fission_source;
 
-	double renorm_factor, volume;
+	double renorm_factor, volume, tot_vol;
 	double* nu_sigma_f;
 	double* sigma_s;
 	double* chi;
 	double* scalar_flux;
 	double* source;
-	double* mat_mult;
 	FlatSourceRegion* fsr;
 	Material* material;
 	int start_index, end_index;
@@ -1132,6 +1131,7 @@ void Solver::initializeSource(){
 
 	/* Initialize fission source to zero */
 	fission_source = 0;
+	tot_vol = 0;
 
 	/* Compute total fission source for this region */
 	for (int r = 0; r < _num_FSRs; r++) {
@@ -1147,11 +1147,14 @@ void Solver::initializeSource(){
 		end_index = fsr->getMaterial()->getNuSigmaFEnd();
 
 		for (int e = start_index; e < end_index; e++)
+		{
 			fission_source += nu_sigma_f[e] * scalar_flux[e] * volume;
+			tot_vol += volume;
+		}
 	}
 
 	/* Renormalize scalar fluxes in each region */
-	renorm_factor = 1.0 / fission_source;
+	renorm_factor = tot_vol / fission_source;
 
 	#if USE_OPENMP
 	#pragma omp parallel for
@@ -1187,7 +1190,6 @@ void Solver::initializeSource(){
 		nu_sigma_f = material->getNuSigmaF();
 		chi = material->getChi();
 		sigma_s = material->getSigmaS();
-		mat_mult = fsr->getMatMult();
 
 		start_index = material->getNuSigmaFStart();
 		end_index = material->getNuSigmaFEnd();
@@ -1205,7 +1207,7 @@ void Solver::initializeSource(){
 
 			for (int g = start_index; g < end_index; g++)
 				scatter_source += sigma_s[G*NUM_ENERGY_GROUPS + g]
-				                          * scalar_flux[g]*mat_mult[G*NUM_ENERGY_GROUPS + g];
+					* scalar_flux[g];
 
 			/* Set the total source for region r in group G */
 			source[G] = ((1.0 / (_old_k_effs.front())) * fission_source *
@@ -1275,7 +1277,6 @@ void Solver::updateSource(){
 	double* chi;
 	double* scalar_flux;
 	double* source;
-	double* mat_mult;
 	FlatSourceRegion* fsr;
 	Material* material;
 	int start_index, end_index;
@@ -1293,7 +1294,6 @@ void Solver::updateSource(){
 		nu_sigma_f = material->getNuSigmaF();
 		chi = material->getChi();
 		sigma_s = material->getSigmaS();
-		mat_mult = fsr->getMatMult();
 
 		start_index = material->getNuSigmaFStart();
 		end_index = material->getNuSigmaFEnd();
@@ -1310,8 +1310,7 @@ void Solver::updateSource(){
 
 			for (int g = start_index; g < end_index; g++)
 				scatter_source += sigma_s[G*NUM_ENERGY_GROUPS + g]
-				                          * scalar_flux[g] * 
-					mat_mult[G*NUM_ENERGY_GROUPS + g];
+					* scalar_flux[g];
 
 			/* Set the total source for region r in group G */
 			source[G] = ((1.0 / (_old_k_effs.front())) * fission_source *
@@ -1338,8 +1337,6 @@ double Solver::kernel(int max_iterations) {
 	if ((_run_cmfd) || (_run_loo)) {
 		_cmfd->setFSRs(_flat_source_regions);
 	}
-	//else
-	//	log_printf(ERROR, "Did not give CMFD pointers to FSRs");
 
 	/* Check that each FSR has at least one segment crossing it */
 	checkTrackSpacing();
@@ -1382,9 +1379,6 @@ double Solver::kernel(int max_iterations) {
 		/* Run CMFD acceleration */
 		if (_run_cmfd)
 		{
-			/* Normalizes the FSR scalar flux and each track's angular flux */
-			//normalizeFlux();
-
 			/* compute cross sections and diffusion coefficients */
 			_cmfd->computeXS();
 			_cmfd->computeDs();
@@ -1424,7 +1418,7 @@ double Solver::kernel(int max_iterations) {
 		updateKeff(i);
 
 		/* If flux converged, return k_eff */
-		if ((_run_cmfd) || (_run_loo))
+		if (_run_cmfd)
 		{
 			if (_cmfd->getL2Norm() < _l2_norm_conv_thresh) {
 	
@@ -1475,7 +1469,7 @@ double Solver::kernel(int max_iterations) {
 				return _k_eff;
 			}
 		}
-		else /* if no acceleration is on */
+		else /* if no acceleration is on or LOO is on */
 		{
 			if (fabs(_old_k_effs.back() - _k_eff) < _l2_norm_conv_thresh){
 				/* Converge the flux */

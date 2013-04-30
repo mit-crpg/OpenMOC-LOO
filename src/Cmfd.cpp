@@ -1178,7 +1178,7 @@ void Cmfd::computeQuadSrc()
 			for (int e = 0; e < ng; e++)
 			{
 				double xs = meshCell->getSigmaT()[e];
-				double ex = exp(-xs * l);
+				double ex = exp(- xs * l);
 				double sum_quad_flux = 0;
 
 				for (int i = 0; i < 8; i++)
@@ -1521,7 +1521,7 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter){
 				{
 					new_src[i][e] += meshCell->getSigmaS()[e*ng+g];
 					new_src[i][e] += meshCell->getChi()[e] 
-						* meshCell->getNuSigmaF()[g];
+						* meshCell->getNuSigmaF()[g] / _keff;
 				}
 				new_src[i][e] *= meshCell->getNewFlux()[e];
 				log_printf(INFO, "Cell averaged source for cell %d, energy %d"
