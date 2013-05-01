@@ -109,7 +109,8 @@ void Solver::precomputeFactors() {
 			azim_weight = curr_track->getAzimuthalWeight();
 
 			for (int p = 0; p < NUM_POLAR_ANGLES; p++)
-				curr_track->setPolarWeight(p, azim_weight*_quad->getMultiple(p) * FOUR_PI);
+				curr_track->setPolarWeight(p, 
+		azim_weight * _quad->getMultiple(p) * FOUR_PI);
 		}
 	}
 
@@ -698,7 +699,8 @@ void Solver::tallyLooForwardFlux(Track *track, segment *segment,
 			for (p = 0; p < NUM_POLAR_ANGLES; p++)
 			{
 				/* increment flux by polar flux times polar flux weights */
-				meshSurface->incrementFlux(polar_fluxes[pe] * weights[p], 
+				meshSurface->incrementFlux(polar_fluxes[pe] * weights[p] 
+										   / 2.0 / sin(phi), 
 										   e, index);
 				pe++;
 			}
@@ -736,7 +738,8 @@ void Solver::tallyLooBackwardFlux(Track *track, segment *segment,
 		{
 			for (p = 0; p < NUM_POLAR_ANGLES; p++)
 			{
-				meshSurface->incrementFlux(polar_fluxes[pe] * weights[p], 
+				meshSurface->incrementFlux(polar_fluxes[pe] * weights[p] / 
+										   2.0 / sin(phi), 
 										   e, index);
 				pe++;
 			}

@@ -1524,8 +1524,9 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter){
 						* meshCell->getNuSigmaF()[g] / _keff;
 				}
 				new_src[i][e] *= meshCell->getNewFlux()[e];
-				log_printf(INFO, "Cell averaged source for cell %d, energy %d"
-						   " is %e", i, e, new_src[i][e]);
+				if (e == ng - 1)
+					log_printf(NORMAL, "Cell averaged source for cell %d,"
+							   " energy %d is %e", i, e, new_src[i][e]);
 			}
 		}
 
@@ -1564,7 +1565,7 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter){
 
 			/* 1st loop */
 			/* Get the initial angular flux */
-			flux = _mesh->getCells(2)->getQuadFlux()[e*ng + 0];		
+			flux = _mesh->getCells(2)->getQuadFlux()[e * ng + 0];		
 			for (int x = 0; x < 8; x++)
 			{
 				for (int y = 0; y < 8; y++)
@@ -1676,10 +1677,12 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter){
 			}
 		}
 		_keff = fis_tot / abs_tot; 
+
 		log_printf(NORMAL, "%d-th LOO iteration k = %f / %f = %f", 
 				   iter, fis_tot, abs_tot,_keff);
 
 		/* Normalizes flux based on fission source FIXME: update? */
+		/*
 		for (int i = 0; i < cw * ch; i++)
 		{
 			meshCell = _mesh->getCells(i);
@@ -1687,9 +1690,10 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter){
 			{
 				meshCell->setNewFlux(meshCell->getNewFlux()[e] / fis_tot, e);
 			}
-		}		
+		}
+		*/
 
-		if ((iter > 5) && (fabs(_keff - old_keff) / _keff < 1e-6))
+		if ((iter > 5) && (fabs(_keff - old_keff) / _keff < 1e-5))
 		{
 			/* new flux is already in place */
 			/* just need to print stuff */
