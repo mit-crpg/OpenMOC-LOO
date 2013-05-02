@@ -355,7 +355,7 @@ void Cmfd::computeDs(){
 
 				/* LEFT */
 				computeDsxDirection(x, y, e, meshCell, d, f, flux, cell_width,
-					dt_weight);
+									dt_weight);
 
 				/* RIGHT */
 				/* if cell on right side, set d_hat and d_tilde to 0 */

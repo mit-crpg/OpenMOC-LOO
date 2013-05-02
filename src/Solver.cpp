@@ -459,10 +459,11 @@ void Solver::updateKeff(int iteration) {
 	_k_eff = tot_fission/(tot_abs + leakage);
 
 	/* Update keff for MOC sweep */
-	if (_run_cmfd){
+	if (_run_cmfd)
+	{
 		_geom->getMesh()->setKeffMOC(_k_eff, iteration);
 
-		log_printf(NORMAL, "Iteration %d, MOC k_eff: %f, CMFD k_eff = %f", 
+		log_printf(NORMAL, "Iteration %d, MOC k_eff = %f, CMFD k_eff = %f", 
 		iteration, _k_eff, _cmfd->getKeff());
 
 		if (_update_flux){
@@ -470,18 +471,20 @@ void Solver::updateKeff(int iteration) {
             _cmfd->updateMOCFlux(iteration);
 		}
 	}
-
-	if (_run_loo){
+	else if (_run_loo)
+	{
 		_geom->getMesh()->setKeffMOC(_k_eff, iteration);
 
-		log_printf(NORMAL, "LOO k_eff: %f, MOC k_eff = %f", _cmfd->getKeff(), 
-				   tot_fission/(tot_abs + leakage));
+		log_printf(NORMAL, "Iteration %d, MOC k_eff = %f, LOO k_eff = %f", 
+				   iteration, _k_eff, _cmfd->getKeff());
 
 		if (_update_flux){
 			_k_eff = _cmfd->getKeff();
             _cmfd->updateMOCFlux(iteration);
 		}
 	}
+	else
+		log_printf(NORMAL, "Iteration %d, MOC k_eff = %f", iteration, _k_eff); 
 
 	return;
 }
@@ -758,7 +761,7 @@ void Solver::tallyCmfdForwardCurrent(Track *track, segment *segment,
 	double *polar_fluxes = track->getPolarFluxes();
 	double currents[NUM_ENERGY_GROUPS];
 	//double phi = track->getPhi();
-    double proj = 1; //fabs(cos(phi));
+    //double proj = fabs(cos(phi));
 
 	if (segment->_mesh_surface_fwd != -1)
 	{
@@ -776,8 +779,9 @@ void Solver::tallyCmfdForwardCurrent(Track *track, segment *segment,
 			for (p = 0; p < NUM_POLAR_ANGLES; p++)
 			{
 				/* increment current (polar flux times polar weights); */
-				/* FIXME: experimenting with fabs(cos(phi)) */
-			    currents[e] += polar_fluxes[pe]*weights[p]*proj/2.0;
+				/* FIXME: originally polar flux * weights / 2.0 */
+			    currents[e] += polar_fluxes[pe]*weights[p]/2.0;
+			    //currents[e] += polar_fluxes[pe]*weights[p]*proj;
 				pe++;
 			}
 		}
@@ -794,7 +798,7 @@ void Solver::tallyCmfdBackwardCurrent(Track *track, segment *segment,
 	double *polar_fluxes = track->getPolarFluxes();
 	double currents[NUM_ENERGY_GROUPS];
 	//double phi = track->getPhi();
-    double proj = 1; //fabs(cos(phi));
+    //double proj = fabs(cos(phi));
 
 	if (segment->_mesh_surface_bwd != -1){
 		meshSurface = meshSurfaces[segment->_mesh_surface_bwd];
@@ -809,7 +813,9 @@ void Solver::tallyCmfdBackwardCurrent(Track *track, segment *segment,
 		/* Tallies current (polar & azimuthal weighted flux) for CMFD */
 		for (e = 0; e < NUM_ENERGY_GROUPS; e++) {
 			for (p = 0; p < NUM_POLAR_ANGLES; p++){
-			    currents[e] += polar_fluxes[pe]*weights[p]*proj/2.0;
+			    /* FIXME */
+				currents[e] += polar_fluxes[pe]*weights[p]/2.0;
+				//currents[e] += polar_fluxes[pe]*weights[p]*proj;
 				pe++;
 			}
 		}
@@ -1380,12 +1386,11 @@ double Solver::kernel(int max_iterations) {
 		/* Updates Q for each FSR based on new scalar flux */
 		updateSource();
 
-		/* Iterate on the flux with the new source */
-		MOCsweep(2);
-
 		/* Run CMFD acceleration */
 		if (_run_cmfd)
 		{
+			MOCsweep(2);
+
 			/* compute cross sections and diffusion coefficients */
 			_cmfd->computeXS();
 			_cmfd->computeDs();
@@ -1403,10 +1408,10 @@ double Solver::kernel(int max_iterations) {
 			/* FIXME: a hack: cmfd_keff set but not used */
 			cmfd_keff = cmfd_keff;
 		}
-		
-		/* Run LOO acceleration */
-		if (_run_loo)
+		else if (_run_loo)
 		{
+			MOCsweep(2);
+
 			_cmfd->storePreMOCMeshSource(_flat_source_regions);
 	
 			/* LOO Method 1: assume constant Sigma in each mesh. 
@@ -1420,6 +1425,8 @@ double Solver::kernel(int max_iterations) {
 			loo_keff =_cmfd->computeLooFluxPower(LOO, i);
 			loo_keff = loo_keff;
 		}
+		else 
+			MOCsweep(1);
 
 		/* Update k_eff */
 		updateKeff(i);
@@ -1444,14 +1451,6 @@ double Solver::kernel(int max_iterations) {
 					_cmfd->computeXS();
 					_cmfd->computeDs();
 					_plotter->plotDHats(_geom->getMesh(), 0);
-					_plotter->plotNetCurrents(_geom->getMesh());
-					_plotter->plotXS(_geom->getMesh(), 0);
-				}
-
-				/* plot LOO flux and xs */
-				if (_run_loo && _plotter->plotQuadFluxFlag())
-				{
-					_plotter->plotQuadFlux(_geom->getMesh(), i);
 					_plotter->plotNetCurrents(_geom->getMesh());
 					_plotter->plotXS(_geom->getMesh(), 0);
 				}
@@ -1485,16 +1484,6 @@ double Solver::kernel(int max_iterations) {
 				/* plot pin powers */
 				if (_compute_powers == true){
 					computePinPowers();
-				}
-
-				/* plot CMFD flux and xs */
-				if (_run_cmfd && _plotter->plotCurrent())
-				{
-					_cmfd->computeXS();
-					_cmfd->computeDs();
-					_plotter->plotDHats(_geom->getMesh(), 0);
-					_plotter->plotNetCurrents(_geom->getMesh());
-					_plotter->plotXS(_geom->getMesh(), 0);
 				}
 
 				/* plot LOO flux and xs */

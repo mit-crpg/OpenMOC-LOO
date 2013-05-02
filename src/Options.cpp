@@ -26,7 +26,7 @@ Options::Options(int argc, char **argv) {
 	_cmfd = false; 			
 	_k_guess = 1.0;
 		
-	_loo = true;
+	_loo = false;
 	_plot_quad_flux = false; 
 
 	/* Checks the working directory to set the relative path for input files
