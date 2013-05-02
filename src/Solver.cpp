@@ -1418,6 +1418,9 @@ double Solver::kernel(int max_iterations) {
 			   Computes cross sections */
 			_cmfd->computeXS();
 
+			/* Computes _quad_flux based on _quad_current */
+			_cmfd->computeQuadFlux();
+
 			/* Computes _quad_src based on (m+1/2) results  */
 			_cmfd->computeQuadSrc();
 			 

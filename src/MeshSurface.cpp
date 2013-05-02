@@ -19,6 +19,7 @@ MeshSurface::MeshSurface(){
 		/* Assumes 4 quadrature flux per surface, so 2 on each side */
 		for (int ind = 0; ind < 2; ind++){
 			_quad_current[e][ind] = 0.0;
+			_quad_flux[e][ind] = 0.0;
 		}
 	}
 
@@ -46,6 +47,14 @@ void MeshSurface::setQuadCurrent(double quad_current, int group, int index){
 
 double MeshSurface::getQuadCurrent(int group, int index){
 	return _quad_current[group][index];
+}
+
+void MeshSurface::setQuadFlux(double quad_flux, int group, int index){
+	_quad_flux[group][index] = quad_flux;
+}
+
+double MeshSurface::getQuadFlux(int group, int index){
+	return _quad_flux[group][index];
 }
 
 void MeshSurface::incrementQuadCurrent(double quad_current, int group, int index){

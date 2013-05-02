@@ -27,6 +27,7 @@ class MeshSurface {
 private:
 	double _current[NUM_ENERGY_GROUPS];
 	double _quad_current[NUM_ENERGY_GROUPS][2];
+	double _quad_flux[NUM_ENERGY_GROUPS][2];
 	double _d_hat[NUM_ENERGY_GROUPS];
 	double _d_tilde[NUM_ENERGY_GROUPS];
 	double _d_dif[NUM_ENERGY_GROUPS];
@@ -44,6 +45,8 @@ public:
 	void setQuadCurrent(double quad_current, int group, int index);
 	void incrementQuadCurrent(double quad_current, int group, int index);
 	double getQuadCurrent(int group, int index);
+	void setQuadFlux(double quad_current, int group, int index);
+	double getQuadFlux(int group, int index);
 
 	/* CMFD Only */
 	void makeCurrents();

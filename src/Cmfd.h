@@ -94,6 +94,7 @@ public:
 	/* LOO */
 	void storePreMOCMeshSource(FlatSourceRegion* fsrs);
 	void computeQuadSrc();
+	void computeQuadFlux();
 	double computeLooFluxPower(solveType solveMethod, int moc_iter);
 };
 
