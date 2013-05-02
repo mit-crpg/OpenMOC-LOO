@@ -18,7 +18,7 @@ MeshSurface::MeshSurface(){
 
 		/* Assumes 4 quadrature flux per surface, so 2 on each side */
 		for (int ind = 0; ind < 2; ind++){
-			_flux[e][ind] = 0.0;
+			_quad_current[e][ind] = 0.0;
 		}
 	}
 
@@ -40,16 +40,17 @@ void MeshSurface::incrementCurrent(double* current){
 		_current[group] += current[group];
 }
 
-void MeshSurface::setFlux(double flux, int group, int index){
-	_flux[group][index] = flux;
+void MeshSurface::setQuadCurrent(double quad_current, int group, int index){
+	_quad_current[group][index] = quad_current;
 }
 
-double MeshSurface::getFlux(int group, int index){
-	return _flux[group][index];
+double MeshSurface::getQuadCurrent(int group, int index){
+	return _quad_current[group][index];
 }
 
-void MeshSurface::incrementFlux(double flux, int group, int index){
-	_flux[group][index] += flux;
+void MeshSurface::incrementQuadCurrent(double quad_current, int group, int index){
+	
+	_quad_current[group][index] += quad_current;
 }
 
 void MeshSurface::setDHat(double dHat, int e){
@@ -61,7 +62,6 @@ double* MeshSurface::getDHat(){
 }
 
 void MeshSurface::setDTilde(double dTilde, int e){
-	/* FIXME */
 	_d_tilde[e] = dTilde;
 }
 

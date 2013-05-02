@@ -366,9 +366,11 @@ void Solver::zeroMeshCells() {
 				/* set current to zero */
 				meshCell->getMeshSurfaces(surface)->setCurrent(0, group);
 
-				/* set flux to zero */
+				/* set quad currents to zero */
 				for (int index = 0; index < 2; index++){
-				meshCell->getMeshSurfaces(surface)->setFlux(0,group,index);
+				meshCell->getMeshSurfaces(surface)->setQuadCurrent(0, 
+																   group,
+																   index);
                 }
             }
 		}
@@ -699,9 +701,8 @@ void Solver::tallyLooForwardFlux(Track *track, segment *segment,
 			for (p = 0; p < NUM_POLAR_ANGLES; p++)
 			{
 				/* increment flux by polar flux times polar flux weights */
-				meshSurface->incrementFlux(polar_fluxes[pe] * weights[p] 
-										   / 2.0 / sin(phi), 
-										   e, index);
+				meshSurface->incrementQuadCurrent(polar_fluxes[pe] * weights[p] 
+												  / 2.0, e, index);
 				pe++;
 			}
 		}
@@ -738,9 +739,8 @@ void Solver::tallyLooBackwardFlux(Track *track, segment *segment,
 		{
 			for (p = 0; p < NUM_POLAR_ANGLES; p++)
 			{
-				meshSurface->incrementFlux(polar_fluxes[pe] * weights[p] / 
-										   2.0 / sin(phi), 
-										   e, index);
+				meshSurface->incrementQuadCurrent(polar_fluxes[pe] 
+												  * weights[p] / 2.0, e, index);
 				pe++;
 			}
 		}

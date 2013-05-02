@@ -1036,25 +1036,25 @@ void Cmfd::computeQuadSrc()
 
 			for (int e = 0; e < ng; e++)
 			{
-				out[e][0] = s[2]->getFlux(e,0);
-				out[e][1] = s[1]->getFlux(e,0);
-				out[e][2] = s[3]->getFlux(e,1);
-				out[e][3] = s[2]->getFlux(e,1);
-				out[e][4] = s[0]->getFlux(e,0);
-				out[e][5] = s[3]->getFlux(e,0);
-				out[e][6] = s[1]->getFlux(e,1);
-				out[e][7] = s[0]->getFlux(e,1);
+				out[e][0] = s[2]->getQuadCurrent(e,0);
+				out[e][1] = s[1]->getQuadCurrent(e,0);
+				out[e][2] = s[3]->getQuadCurrent(e,1);
+				out[e][3] = s[2]->getQuadCurrent(e,1);
+				out[e][4] = s[0]->getQuadCurrent(e,0);
+				out[e][5] = s[3]->getQuadCurrent(e,0);
+				out[e][6] = s[1]->getQuadCurrent(e,1);
+				out[e][7] = s[0]->getQuadCurrent(e,1);
 			}
 
 
 			log_printf(DEBUG, "Cell (x,y) = (%d, %d), surface[0].flux[0] = %f",
-					   x, y, s[0]->getFlux(0, 0));
+					   x, y, s[0]->getQuadCurrent(0, 0));
 			log_printf(DEBUG, "Cell (x,y) = (%d, %d), surface[0].flux[1] = %f",
-					   x,y, s[0]->getFlux(0, 1));
+					   x,y, s[0]->getQuadCurrent(0, 1));
 			log_printf(DEBUG, "Cell (x,y) = (%d, %d), surface[2].flux[0] = %f",
-					   x,y, s[2]->getFlux(0, 0));
+					   x,y, s[2]->getQuadCurrent(0, 0));
 			log_printf(DEBUG, "Cell (x,y) = (%d, %d), surface[2].flux[1] = %f",
-					   x,y, s[2]->getFlux(0, 1));
+					   x,y, s[2]->getQuadCurrent(0, 1));
 
 			if (x == 0)
 			{
@@ -1062,8 +1062,8 @@ void Cmfd::computeQuadSrc()
 				{
 					for (int e = 0; e < ng; e++)
 					{
-						in[e][5] = s[0]->getFlux(e,1);
-						in[e][6] = s[0]->getFlux(e,0);
+						in[e][5] = s[0]->getQuadCurrent(e,1);
+						in[e][6] = s[0]->getQuadCurrent(e,0);
 					}
 				}
 				else if (_mesh->getBoundary(0) == VACUUM)
@@ -1080,8 +1080,8 @@ void Cmfd::computeQuadSrc()
 				meshCellNext = _mesh->getCells(y*cell_width + x - 1);
 				for (int e = 0; e < ng; e++)
 				{
-					in[e][5] = meshCellNext->getMeshSurfaces(2)->getFlux(e,0);
-					in[e][6] = meshCellNext->getMeshSurfaces(2)->getFlux(e,1);
+					in[e][5] = meshCellNext->getMeshSurfaces(2)->getQuadCurrent(e,0);
+					in[e][6] = meshCellNext->getMeshSurfaces(2)->getQuadCurrent(e,1);
 				}			
 			}
 
@@ -1092,8 +1092,8 @@ void Cmfd::computeQuadSrc()
 				{
 					for (int e = 0; e < ng; e++)
 					{
-						in[e][1] = s[2]->getFlux(e,1);
-						in[e][2] = s[2]->getFlux(e,0);
+						in[e][1] = s[2]->getQuadCurrent(e,1);
+						in[e][2] = s[2]->getQuadCurrent(e,0);
 					}
 				}
 				else if (_mesh->getBoundary(2) == VACUUM)
@@ -1110,8 +1110,8 @@ void Cmfd::computeQuadSrc()
 				meshCellNext = _mesh->getCells(y*cell_width + x + 1);
 				for (int e = 0; e < ng; e++)
 				{
-					in[e][1] = meshCellNext->getMeshSurfaces(0)->getFlux(e,0);
-					in[e][2] = meshCellNext->getMeshSurfaces(0)->getFlux(e,1);
+					in[e][1] = meshCellNext->getMeshSurfaces(0)->getQuadCurrent(e,0);
+					in[e][2] = meshCellNext->getMeshSurfaces(0)->getQuadCurrent(e,1);
 				}			
 			}			
 			
@@ -1121,8 +1121,8 @@ void Cmfd::computeQuadSrc()
 				{
 					for (int e = 0; e < ng; e++)
 					{
-						in[e][3] = s[3]->getFlux(e,0);
-						in[e][4] = s[3]->getFlux(e,1);
+						in[e][3] = s[3]->getQuadCurrent(e,0);
+						in[e][4] = s[3]->getQuadCurrent(e,1);
 					}
 				}
 				else if (_mesh->getBoundary(3) == VACUUM)
@@ -1139,8 +1139,8 @@ void Cmfd::computeQuadSrc()
 				meshCellNext = _mesh->getCells( (y - 1) * cell_width + x);
 				for (int e = 0; e < ng; e++)
 				{
-					in[e][3] = meshCellNext->getMeshSurfaces(1)->getFlux(e,1);
-					in[e][4] = meshCellNext->getMeshSurfaces(1)->getFlux(e,0);
+					in[e][3] = meshCellNext->getMeshSurfaces(1)->getQuadCurrent(e,1);
+					in[e][4] = meshCellNext->getMeshSurfaces(1)->getQuadCurrent(e,0);
 				}			
 			}
 
@@ -1150,8 +1150,8 @@ void Cmfd::computeQuadSrc()
 				{
 					for (int e = 0; e < ng; e++)
 					{
-						in[e][7] = s[1]->getFlux(e,0);
-						in[e][0] = s[1]->getFlux(e,1);
+						in[e][7] = s[1]->getQuadCurrent(e,0);
+						in[e][0] = s[1]->getQuadCurrent(e,1);
 					}
 				}
 				else if (_mesh->getBoundary(1) == VACUUM)
@@ -1168,8 +1168,8 @@ void Cmfd::computeQuadSrc()
 				meshCellNext = _mesh->getCells( (y + 1) * cell_width + x);
 				for (int e = 0; e < ng; e++)
 				{
-					in[e][7] = meshCellNext->getMeshSurfaces(3)->getFlux(e,1);
-					in[e][0] = meshCellNext->getMeshSurfaces(0)->getFlux(e,0);
+					in[e][7] = meshCellNext->getMeshSurfaces(3)->getQuadCurrent(e,1);
+					in[e][0] = meshCellNext->getMeshSurfaces(0)->getQuadCurrent(e,0);
 				}			
 			}
 
