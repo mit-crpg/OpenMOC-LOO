@@ -95,7 +95,7 @@ public:
 	void storePreMOCMeshSource(FlatSourceRegion* fsrs);
 	void computeQuadSrc();
 	void computeQuadFlux();
-	double computeLooFluxPower(solveType solveMethod, int moc_iter);
+	double computeLooFluxPower(solveType solveMethod, int moc_iter, double k);
 };
 
 #endif /* CMFD_H_ */

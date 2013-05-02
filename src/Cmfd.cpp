@@ -1245,7 +1245,8 @@ void Cmfd::computeQuadSrc()
 * @param iteration number of in MOC solver - used for plotting
 * @return k-effective
 */
-double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter){
+double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter)
+{
 
 	log_printf(INFO, "Running diffusion solver...");
 
@@ -1474,13 +1475,15 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter){
 
 
 /* Computes the flux in each mesh cell using LOO */
-double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter){
+double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter, 
+								 double k_MOC)
+{
 	log_printf(INFO, "Running low order MOC solver...");
 	int iter, max_outer = 100; 
 	if (solveMethod == DIFFUSION){
 		max_outer = 1000;
 	}
-	double old_keff = 1.0;
+	double old_keff = k_MOC;
 
 	/* Obtains info about the meshes */
 	MeshCell* meshCell;
@@ -1532,7 +1535,7 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter){
 		}
 	}
 
-	_keff = 1.0;
+	_keff = k_MOC;
 
 	/* Starts LOO acceleration iteration, we do not update src, quad_src, 
 	 * quad_flux, old_flux, as they are computed from the MOC step (i.e., 
@@ -1727,7 +1730,6 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter){
 				   iter, fis_tot, abs_tot,_keff);
 
 		/* Normalizes flux based on fission source FIXME: update? */
-		/*
 		for (int i = 0; i < cw * ch; i++)
 		{
 			meshCell = _mesh->getCells(i);
@@ -1736,7 +1738,6 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter){
 				meshCell->setNewFlux(meshCell->getNewFlux()[e] / fis_tot, e);
 			}
 		}
-		*/
 
 		if ((iter > 5) && (fabs(_keff - old_keff) / _keff < 1e-5))
 		{

@@ -1111,8 +1111,10 @@ void Solver::MOCsweep(int max_iterations) {
 				}
 			}
 
-			if (converged)
-				return;
+              if (converged){
+			log_printf(NORMAL, "MOC converges after %d sweeps to %f");
+			    return;
+		    }
 		}
 	}
 
@@ -1410,7 +1412,7 @@ double Solver::kernel(int max_iterations) {
 		}
 		else if (_run_loo)
 		{
-			MOCsweep(2);
+			MOCsweep(10000);
 
 			_cmfd->storePreMOCMeshSource(_flat_source_regions);
 	
@@ -1425,7 +1427,7 @@ double Solver::kernel(int max_iterations) {
 			_cmfd->computeQuadSrc();
 			 
 			/* Performs low order MOC */
-			loo_keff =_cmfd->computeLooFluxPower(LOO, i);
+			loo_keff =_cmfd->computeLooFluxPower(LOO, i, _k_eff);
 			loo_keff = loo_keff;
 		}
 		else 
