@@ -757,7 +757,8 @@ void Solver::tallyCmfdForwardCurrent(Track *track, segment *segment,
 	double *weights = track->getPolarWeights();
 	double *polar_fluxes = track->getPolarFluxes();
 	double currents[NUM_ENERGY_GROUPS];
-
+	//double phi = track->getPhi();
+    double proj = 1; //fabs(cos(phi));
 
 	if (segment->_mesh_surface_fwd != -1)
 	{
@@ -775,7 +776,8 @@ void Solver::tallyCmfdForwardCurrent(Track *track, segment *segment,
 			for (p = 0; p < NUM_POLAR_ANGLES; p++)
 			{
 				/* increment current (polar flux times polar weights); */
-			    currents[e] += polar_fluxes[pe]*weights[p]/2.0;
+				/* FIXME: experimenting with fabs(cos(phi)) */
+			    currents[e] += polar_fluxes[pe]*weights[p]*proj/2.0;
 				pe++;
 			}
 		}
@@ -791,13 +793,15 @@ void Solver::tallyCmfdBackwardCurrent(Track *track, segment *segment,
 	double *weights = track->getPolarWeights();
 	double *polar_fluxes = track->getPolarFluxes();
 	double currents[NUM_ENERGY_GROUPS];
+	//double phi = track->getPhi();
+    double proj = 1; //fabs(cos(phi));
 
 	if (segment->_mesh_surface_bwd != -1){
 		meshSurface = meshSurfaces[segment->_mesh_surface_bwd];
 		
 		for (e = 0; e < NUM_ENERGY_GROUPS; e++)
 			currents[e] = 0.0;
-
+		
 		/* set polar angle * energy group to 
 		   num groups * num angles */
 		pe = GRP_TIMES_ANG;
@@ -805,7 +809,7 @@ void Solver::tallyCmfdBackwardCurrent(Track *track, segment *segment,
 		/* Tallies current (polar & azimuthal weighted flux) for CMFD */
 		for (e = 0; e < NUM_ENERGY_GROUPS; e++) {
 			for (p = 0; p < NUM_POLAR_ANGLES; p++){
-			    currents[e] += polar_fluxes[pe]*weights[p]/2.0;
+			    currents[e] += polar_fluxes[pe]*weights[p]*proj/2.0;
 				pe++;
 			}
 		}

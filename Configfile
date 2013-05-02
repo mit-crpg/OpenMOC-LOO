@@ -10,6 +10,7 @@ COMPILEOPTS += -I/usr/include/petsc/linux-gnu-cxx-opt/include
 COMPILEOPTS += -g
 
 BINARIES    += openmoc
+LINKOPTS	+= -lm
 LINKOPTS    += -lexpat
 LINKOPTS    += -lsilo
 LINKOPTS	+= -larmadillo

@@ -1525,7 +1525,7 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter){
 				}
 				new_src[i][e] *= meshCell->getNewFlux()[e];
 				if (e == ng - 1)
-					log_printf(NORMAL, "Cell averaged source for cell %d,"
+					log_printf(INFO, "Cell averaged source for cell %d,"
 							   " energy %d is %e", i, e, new_src[i][e]);
 			}
 		}
