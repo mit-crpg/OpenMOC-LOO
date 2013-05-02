@@ -34,14 +34,14 @@ int main(int argc, char **argv) {
 	double k_eff;
 	Timer timer;
 
+	/* Create an options class to parse command line options */
+	Options opts(argc, argv);
+
 	/* initialize Petsc */
 	int petsc_err = 0;
 	CHKERRQ(petsc_err);
-	PetscInitialize(&argc, &argv, 0, 0);
+	PetscInitialize(&(opts.extra_argc), &(opts.extra_argv), 0, 0);
 	CHKERRQ(petsc_err);
-
-	/* Create an options class to parse command line options */
-	Options opts(argc, argv);
 
 	/* Set the verbosity */
 	log_setlevel(opts.getVerbosity());

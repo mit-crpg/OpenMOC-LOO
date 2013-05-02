@@ -61,6 +61,13 @@ Options::Options(int argc, char **argv) {
 
 	_diffusion_correction = false; 
 
+	/* All extra options get placed into this array, which can be used
+	 * to call sub-initializers (petsc, for instance) */
+	this->extra_argc = 0;
+	this->extra_argv = (char **)malloc(sizeof(*this->extra_argv) * argc);
+	for (int i = 0 ; i < argc; i++)
+		this->extra_argv[i] = NULL;
+
 	for (int i = 0; i < argc; i++) {
 		if (i > 0) {
 			if (LAST("--geometryfile") || LAST("-g")) {
@@ -142,6 +149,8 @@ Options::Options(int argc, char **argv) {
 			else if (strcmp(argv[i], "-dc")==0 || 
 					 strcmp(argv[i], "--diffusioncorrection") == 0)
 				_diffusion_correction = true;
+			else
+				this->extra_argv[this->extra_argc++] = strdup(argv[i]);
 		}
 	}
 }

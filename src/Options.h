@@ -50,6 +50,8 @@ private:
 public:
     Options(int argc, char **argv);
     ~Options(void);
+	int extra_argc;
+	char **extra_argv;
     const char *getGeometryFile() const;
     const char *getMaterialFile() const;
     bool dumpGeometry();
