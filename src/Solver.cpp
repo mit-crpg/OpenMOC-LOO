@@ -456,7 +456,7 @@ void Solver::updateKeff(int iteration) {
 			leakage += _geom->getSurface(s)->getLeakage()[e];
 		}
 	}
-    
+    log_printf(INFO, " MOC leakage  = %f", leakage);
 	_k_eff = tot_fission/(tot_abs + leakage);
 
 	/* Update keff for MOC sweep */

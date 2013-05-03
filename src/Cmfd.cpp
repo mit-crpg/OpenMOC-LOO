@@ -1021,7 +1021,7 @@ void Cmfd::computeQuadFlux()
 	int cell_width = _mesh->getCellWidth();
 
 	/* the factor that we devide everyone by is cos(45degree) * surface len */
-	double scale = SIN_THETA_45 * _mesh->getCells(0)->getWidth();
+	double scale = _mesh->getCells(0)->getWidth() * SIN_THETA_45;
 
 	/* loop over all mesh cells */
 	for (int y = 0; y < cell_height; y++)
@@ -1063,10 +1063,8 @@ void Cmfd::computeQuadSrc()
 	int ng = NUM_ENERGY_GROUPS;
 	double out[ng][8], in[ng][8];
 
-	if (_mesh->getMultigroup() == false){
+	if (_mesh->getMultigroup() == false)
 		ng = 1;
-		//_mesh->computeTotCurrents();
-	}
 
 	/* set cell width and height */
 	int cell_height = _mesh->getCellHeight();
@@ -1224,6 +1222,7 @@ void Cmfd::computeQuadSrc()
 
 			/* Now that we have all the in's and out's, computes src */
 			double l = meshCell->getL();
+			log_printf(NORMAL, " l = %f", l);
 			for (int e = 0; e < ng; e++)
 			{
 				double xs = meshCell->getSigmaT()[e];
