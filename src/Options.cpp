@@ -54,7 +54,7 @@ Options::Options(int argc, char **argv) {
 	_plot_current = false;				/* Default will not plot cmfd currents */
 	_plot_diffusion = true;			/* Default will not plot diffusion flux */
 
-	_multigroup = true;				/* Default sets CMFD to one group structure */
+	_multigroup = false;				/* Default sets CMFD to one group structure */
 	_print_matrices = false;			/* Default will not print matrices */
 	_cmfd_level = 1;					/* Default cmfd level is 1 (hightest level) */
 	_plot_keff = false;					/* Default will not plot keff */

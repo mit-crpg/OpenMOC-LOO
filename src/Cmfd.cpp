@@ -88,7 +88,7 @@ void Cmfd::computeXS(){
 	double abs_tally_group, nu_fis_tally_group, dif_tally_group, 
 		rxn_tally_group, vol_tally_group, tot_tally_group;
 	double nu_fis_tally = 0, dif_tally = 0, rxn_tally = 0, abs_tally = 0, 
-		tot_tally = 0;
+		tot_tally = 0, scat_tally = 0;
 	double scat_tally_group[NUM_ENERGY_GROUPS];
 
 	std::vector<int>::iterator iter;
@@ -117,6 +117,7 @@ void Cmfd::computeXS(){
 			dif_tally = 0.0;
 			tot_tally = 0.0;
 			rxn_tally = 0.0;
+			scat_tally = 0.0;
 		}
 
 		/* loop over energy groups */
@@ -194,6 +195,8 @@ void Cmfd::computeXS(){
 				nu_fis_tally += nu_fis_tally_group;
 				dif_tally += dif_tally_group;
 				rxn_tally += rxn_tally_group;
+				for (int g = 0; g < NUM_ENERGY_GROUPS; g++)
+					scat_tally += scat_tally_group[g];
 			}
 		}
 
@@ -205,7 +208,8 @@ void Cmfd::computeXS(){
 			meshCell->setNuSigmaF(nu_fis_tally / rxn_tally, 0);
 			meshCell->setDiffusivity(dif_tally / rxn_tally, 0);
 			meshCell->setOldFlux(rxn_tally / vol_tally_group, 0);
-			meshCell->setChi(1,0);
+			meshCell->setChi(1, 0);
+			meshCell->setSigmaS(scat_tally / rxn_tally, 0, 0);
 		}
 	}
 }
@@ -1485,11 +1489,13 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 	int iter, max_outer = 100; 
 
 	/* FIXME */
-	max_outer = 1;
+	//max_outer = 2;
 
 	if (solveMethod == DIFFUSION){
 		max_outer = 1000;
 	}
+
+	_keff = k_MOC;
 	double old_keff = k_MOC;
 
 	/* Obtains info about the meshes */
@@ -1497,6 +1503,7 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 	int ch = _mesh->getCellHeight();
 	int cw = _mesh->getCellWidth();
 	int ng = NUM_ENERGY_GROUPS;
+
 	if (_mesh->getMultigroup() == false){
 		ng = 1;
 	}
@@ -1544,7 +1551,6 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 		}
 	}
 
-	_keff = k_MOC;
 
 	/* Starts LOO acceleration iteration, we do not update src, quad_src, 
 	 * quad_flux, old_flux, as they are computed from the MOC step (i.e., 
@@ -1572,19 +1578,37 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 		for (int i = 0; i < cw * ch; i++)
 		{
 			meshCell = _mesh->getCells(i);
+			double fission_source = 0, scatter_source = 0;
+			double *scalar_flux = meshCell->getNewFlux();
+			double *nu_sigma_f = meshCell->getNuSigmaF();
+			double *sigma_s = meshCell->getSigmaS();
+			double *chi = meshCell->getChi();
+
+					/*
+					  new_src[i][e] += meshCell->getSigmaS()[e*ng+g] 
+					  * meshCell->getNewFlux()[g];
+					  new_src[i][e] += meshCell->getChi()[e] *
+					  meshCell->getNuSigmaF()[g] / _keff 
+					  * meshCell->getNewFlux()[g] ;
+					  */
+
+			for (int e = 0; e < ng; e++)
+				fission_source += nu_sigma_f[e] * scalar_flux[e];
 
 			for (int e = 0; e < ng; e++)
 			{
-				for (int g = 0; g < ng; g++)
-				{
-					new_src[i][e] += meshCell->getSigmaS()[e*ng+g] 
-						* meshCell->getNewFlux()[g];
-					new_src[i][e] += meshCell->getChi()[e] 
-						* meshCell->getNuSigmaF()[g] / _keff 
-						* meshCell->getNewFlux()[g] ;
-				}
+				scatter_source = 0;
 
-				new_src[i][e] /= FOUR_PI;
+				if (_mesh->getMultigroup() == true)
+				{
+					for (int g = 0; g < ng; g++)
+						scatter_source += sigma_s[e*ng+g] * scalar_flux[g];		
+				}
+				else
+					scatter_source += sigma_s[0] * scalar_flux[0];
+				
+				new_src[i][e] = (fission_source * chi[e] / _keff 
+								 + scatter_source) * ONE_OVER_FOUR_PI;
  
 				if (e == ng - 1)
 					log_printf(INFO, "Cell averaged source for cell %d,"

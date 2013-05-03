@@ -1497,11 +1497,14 @@ double Solver::kernel(int max_iterations) {
 		{
 			if (fabs(_old_k_effs.back() - _k_eff) < _l2_norm_conv_thresh){
 				/* Converge the flux further */
-				MOCsweep(1000);
+				//MOCsweep(1000);
 	
 				/* Run one steps of LOO if it is requested to do so */
 				if (_loo_after_MOC_converge)
+				{
+					updateSource();
 					runLoo(1000);
+				}
 
 				/* plot pin powers */
 				if (_compute_powers == true)
