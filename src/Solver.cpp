@@ -16,26 +16,27 @@
  * @param track_generator pointer to the trackgenerator
  */
 Solver::Solver(Geometry* geom, TrackGenerator* track_generator, 
-			   Plotter* plotter, Cmfd* cmfd, bool updateFlux, 
-			   double l2NormConvThresh, bool computePowers, 
-			   bool runCmfd, bool runLoo, bool diffusion, double k_guess) {
-	
-	_geom = geom;
+			   Plotter* plotter, Cmfd* cmfd, Options* opts)
+{
+    _geom = geom;
 	_quad = new Quadrature(TABUCHI);
 	_num_FSRs = geom->getNumFSRs();
 	_tracks = track_generator->getTracks();
 	_num_tracks = track_generator->getNumTracks();
 	_num_azim = track_generator->getNumAzim();
 	_plotter = plotter;
-	_update_flux = updateFlux;
-	_cmfd = cmfd;
-	_l2_norm_conv_thresh = l2NormConvThresh;
-	_compute_powers = computePowers;
-	_run_cmfd = runCmfd;
-	_run_loo = runLoo;
-	_diffusion = diffusion;
+    _cmfd = cmfd;
+
+/* Options */
+	_update_flux = opts->updateFlux();
+_l2_norm_conv_thresh = opts->getL2NormConvThresh();
+    _compute_powers = opts->computePinPowers();
+    _run_cmfd = opts->getCmfd();
+_run_loo = opts->getLoo();
+_diffusion = opts->getDiffusion();
+_loo_after_MOC_converge = opts->getLooAfterMOCConverge();
 	/* Initialize keff to be  */
-	_k_eff = k_guess;
+_k_eff = opts->getKGuess();
 
 
 	try{
@@ -471,7 +472,7 @@ void Solver::updateKeff(int iteration) {
             _cmfd->updateMOCFlux(iteration);
 		}
 	}
-	else if (_run_loo)
+	else if ((_run_loo) && !(_loo_after_MOC_converge))
 	{
 		_geom->getMesh()->setKeffMOC(_k_eff, iteration);
 
@@ -1112,7 +1113,7 @@ void Solver::MOCsweep(int max_iterations) {
 			}
 
               if (converged){
-			log_printf(NORMAL, "MOC converges after %d sweeps to %f");
+				  log_printf(NORMAL, "MOC converges after %d sweeps", i);
 			    return;
 		    }
 		}
@@ -1338,20 +1339,69 @@ void Solver::updateSource(){
 }
 
 
+void Solver::runLoo(int i)
+{
+	double loo_keff;
+
+	MOCsweep(2);
+	
+	_cmfd->storePreMOCMeshSource(_flat_source_regions);
+	
+	/* LOO Method 1: assume constant Sigma in each mesh. 
+	   Computes cross sections */
+	_cmfd->computeXS();
+
+	/* Computes _quad_flux based on _quad_current */
+	_cmfd->computeQuadFlux();
+
+	/* Computes _quad_src based on (m+1/2) results  */
+	_cmfd->computeQuadSrc();
+			 
+	/* Performs low order MOC */
+	loo_keff =_cmfd->computeLooFluxPower(LOO, i, _k_eff);
+	loo_keff = loo_keff;
+
+	return;
+}
+
+void Solver::runCmfd(int i)
+{
+	double cmfd_keff;
+
+	MOCsweep(2);
+
+	/* compute cross sections and diffusion coefficients */
+	_cmfd->computeXS();
+	_cmfd->computeDs();
+
+	/* Check for neutron balance */
+	checkNeutBal(_geom->getMesh());
+
+	/* Run diffusion problem on initial geometry */
+	if (i == 0 && _diffusion == true){
+		cmfd_keff = _cmfd->computeCMFDFluxPower(DIFFUSION, i);
+	}
+
+	/* Run CMFD diffusion problem */
+	cmfd_keff = _cmfd->computeCMFDFluxPower(CMFD, i);
+	/* FIXME: a hack: cmfd_keff set but not used */
+	cmfd_keff = cmfd_keff;
+
+	return;
+}
+
+
 double Solver::kernel(int max_iterations) {
 	FlatSourceRegion* fsr;
 	int i;
 	double* source;
 	double* old_source;
-	double cmfd_keff = 1.0;
-	double loo_keff = 1.0;
 
 	log_printf(NORMAL, "Starting kernel ...");
 
 	/* Gives cmfd a pointer to the FSRs */
-	if ((_run_cmfd) || (_run_loo)) {
+	if ((_run_cmfd) || (_run_loo)) 
 		_cmfd->setFSRs(_flat_source_regions);
-	}
 
 	/* Check that each FSR has at least one segment crossing it */
 	checkTrackSpacing();
@@ -1388,52 +1438,18 @@ double Solver::kernel(int max_iterations) {
 		/* Updates Q for each FSR based on new scalar flux */
 		updateSource();
 
-		/* Run CMFD acceleration */
+		/* Perform one sweep for no acceleration, or call one of the 
+		 * acceleration function which performs two sweeps plus acceleration */
 		if (_run_cmfd)
-		{
-			MOCsweep(2);
-
-			/* compute cross sections and diffusion coefficients */
-			_cmfd->computeXS();
-			_cmfd->computeDs();
-
-			/* Check for neutron balance */
-			checkNeutBal(_geom->getMesh());
-
-			/* Run diffusion problem on initial geometry */
-			if (i == 0 && _diffusion == true){
-				cmfd_keff = _cmfd->computeCMFDFluxPower(DIFFUSION, i);
-			}
-
-			/* Run CMFD diffusion problem */
-			cmfd_keff = _cmfd->computeCMFDFluxPower(CMFD, i);
-			/* FIXME: a hack: cmfd_keff set but not used */
-			cmfd_keff = cmfd_keff;
-		}
-		else if (_run_loo)
-		{
-			MOCsweep(10000);
-
-			_cmfd->storePreMOCMeshSource(_flat_source_regions);
-	
-			/* LOO Method 1: assume constant Sigma in each mesh. 
-			   Computes cross sections */
-			_cmfd->computeXS();
-
-			/* Computes _quad_flux based on _quad_current */
-			_cmfd->computeQuadFlux();
-
-			/* Computes _quad_src based on (m+1/2) results  */
-			_cmfd->computeQuadSrc();
-			 
-			/* Performs low order MOC */
-			loo_keff =_cmfd->computeLooFluxPower(LOO, i, _k_eff);
-			loo_keff = loo_keff;
-		}
+			runCmfd(i);
+		else if ((_run_loo) && !(_loo_after_MOC_converge))
+			runLoo(i);
 		else 
 			MOCsweep(1);
 
-		/* Update k_eff */
+		/* Update k_eff: print out the keff from this iteration of MOC, 
+		 * then replace it with acceleration's keff, also update FSR's flux
+		 * using acceleration steps */
 		updateKeff(i);
 
 		/* If flux converged, return k_eff */
@@ -1446,9 +1462,7 @@ double Solver::kernel(int max_iterations) {
 
 				/* plot pin powers */
 				if (_compute_powers == true)
-				{
 					computePinPowers();
-				}
 
 				/* plot CMFD flux and xs */
 				if (_run_cmfd && _plotter->plotCurrent())
@@ -1469,8 +1483,7 @@ double Solver::kernel(int max_iterations) {
 						for (int e=0; e < NUM_ENERGY_GROUPS; e++)
 						{
 							_FSRs_to_fluxes[e][r] = fluxes[e];
-							_FSRs_to_fluxes[NUM_ENERGY_GROUPS][r] =
-								_FSRs_to_fluxes[NUM_ENERGY_GROUPS][r] + fluxes[e];
+							_FSRs_to_fluxes[NUM_ENERGY_GROUPS][r] += fluxes[e];
 						}
 					}
 
@@ -1480,34 +1493,38 @@ double Solver::kernel(int max_iterations) {
 				return _k_eff;
 			}
 		}
-		else /* if no acceleration is on or LOO is on */
+		else /* if no acceleration or LOO */
 		{
 			if (fabs(_old_k_effs.back() - _k_eff) < _l2_norm_conv_thresh){
-				/* Converge the flux */
+				/* Converge the flux further */
 				MOCsweep(1000);
 	
+				/* Run one steps of LOO if it is requested to do so */
+				if (_loo_after_MOC_converge)
+					runLoo(1000);
+
 				/* plot pin powers */
-				if (_compute_powers == true){
+				if (_compute_powers == true)
 					computePinPowers();
-				}
 
 				/* plot LOO flux and xs */
-				if (_run_loo && _plotter->plotQuadFluxFlag()){
+				if (_run_loo && _plotter->plotQuadFluxFlag())
+				{
 					_plotter->plotQuadFlux(_geom->getMesh(), i);
 					_plotter->plotNetCurrents(_geom->getMesh());
 					_plotter->plotXS(_geom->getMesh(), 0);
 				}
 
 				/* plot MOC flux */
-				if (_plotter->plotFlux() == true){
+				if (_plotter->plotFlux() == true)
+				{
 					/* Load fluxes into FSR to flux map */
 					for (int r=0; r < _num_FSRs; r++) {
 						double* fluxes = _flat_source_regions[r].getFlux();
-						for (int e=0; e < NUM_ENERGY_GROUPS; e++)
+						for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
 						{
 							_FSRs_to_fluxes[e][r] = fluxes[e];
-							_FSRs_to_fluxes[NUM_ENERGY_GROUPS][r] =
-								_FSRs_to_fluxes[NUM_ENERGY_GROUPS][r] + fluxes[e];
+							_FSRs_to_fluxes[NUM_ENERGY_GROUPS][r] += fluxes[e];
 						}
 					}
 

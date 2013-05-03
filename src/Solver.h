@@ -29,6 +29,7 @@
 #include "MeshCell.h"
 #include "Material.h"
 #include "Cmfd.h"
+#include "Options.h"
 #include "petsc.h"
 #include <petscmat.h>
 
@@ -68,16 +69,17 @@ private:
 	bool _run_cmfd;
 	bool _run_loo;
 	bool _diffusion;
+	bool _loo_after_MOC_converge;
 #endif
 	void precomputeFactors();
 	double computePreFactor(segment* seg, int energy, int angle);
 	void initializeFSRs();
 public:
 	Solver(Geometry* geom, TrackGenerator* track_generator, 
-		   Plotter* plotter, Cmfd* cmfd,
-		   bool _update_flux, double l2NormConvThresh, 
+		   Plotter* plotter, Cmfd* cmfd, Options* opts);
+/*		   bool _update_flux, double l2NormConvThresh, 
 		   bool computePowers, bool runCmfd, bool runLoo, bool diffusion, 
-		   double k_guess);
+		   double k_guess); */
 	virtual ~Solver();
 	void initializeTrackFluxes(double flux);
 	void initializeSource();
@@ -108,6 +110,8 @@ public:
 							 MeshSurface **meshSurfaces);
 	void tallyCmfdBackwardCurrent(Track *track, segment *segment, 
 							  MeshSurface **meshSurfaces);
+	void runLoo(int i);
+	void runCmfd(int i);
 };
 
 #endif /* SOLVER_H_ */

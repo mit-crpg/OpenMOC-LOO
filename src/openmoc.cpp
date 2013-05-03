@@ -117,10 +117,7 @@ int main(int argc, char **argv) {
 			  opts.getDiffusionCorrection(), &track_generator);
 
 	/* Creat Solver class */
-	Solver solver(&geometry, &track_generator, &plotter, &cmfd, 
-				  opts.updateFlux(), opts.getL2NormConvThresh(), 
-				  opts.computePinPowers(), opts.getCmfd(), opts.getLoo(),
-				  opts.getDiffusion(), opts.getKGuess());
+	Solver solver(&geometry, &track_generator, &plotter, &cmfd, &opts);
 
 	cmfd.setFSRs(solver.getFSRs());
 

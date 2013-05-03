@@ -26,8 +26,9 @@ Options::Options(int argc, char **argv) {
 	_cmfd = false; 			
 	_k_guess = 1.0;
 		
-	_loo = false;
-	_plot_quad_flux = false; 
+	_loo = true;
+	_loo_after_MOC_converge = true;
+	_plot_quad_flux = true; 
 
 	/* Checks the working directory to set the relative path for input files
 	 * This is important so that default input files work when program is run
@@ -378,4 +379,8 @@ bool Options::getDiffusion(){
 
 bool Options::getDiffusionCorrection(){
 	return _diffusion_correction;
+}
+
+bool Options::getLooAfterMOCConverge(){
+	return _loo_after_MOC_converge;
 }
