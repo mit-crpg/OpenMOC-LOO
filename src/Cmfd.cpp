@@ -164,8 +164,6 @@ void Cmfd::computeXS(){
 				for (g = 0; g < NUM_ENERGY_GROUPS; g++){
 					scat_tally_group[g] += scat[g*NUM_ENERGY_GROUPS + e] 
 						* flux * volume;
-					log_printf(DEBUG, "scattering from group %i to %i: %f", 
-							   e, g, scat[g*NUM_ENERGY_GROUPS + e]);
 				}
 
 				/* choose a chi for this group */
@@ -185,7 +183,7 @@ void Cmfd::computeXS(){
 
 				for (int g = 0; g < NUM_ENERGY_GROUPS; g++){
 					meshCell->setSigmaS(scat_tally_group[g] / rxn_tally_group,
-										e, g);
+										g, e);
 				}
 			}
 			/* if single group, add group-wise tallies to group independent tallies */
@@ -1489,7 +1487,7 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 	int iter, max_outer = 100; 
 
 	/* FIXME */
-	//max_outer = 2;
+	max_outer = 2;
 
 	if (solveMethod == DIFFUSION){
 		max_outer = 1000;
@@ -1599,13 +1597,8 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 			{
 				scatter_source = 0;
 
-				if (_mesh->getMultigroup() == true)
-				{
-					for (int g = 0; g < ng; g++)
-						scatter_source += sigma_s[e*ng+g] * scalar_flux[g];		
-				}
-				else
-					scatter_source += sigma_s[0] * scalar_flux[0];
+				for (int g = 0; g < ng; g++)
+					scatter_source += sigma_s[e*ng+g] * scalar_flux[g];		
 				
 				new_src[i][e] = (fission_source * chi[e] / _keff 
 								 + scatter_source) * ONE_OVER_FOUR_PI;
@@ -1625,7 +1618,7 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 				for (int g = 0; g < 8; g++)
 				{
 					int d = e * ng + g;
-					/* Notice getSrc()[e] returns the $\bar{Q}_g^{(m)}$ */
+					/* getSrc()[e] returns the $\bar{Q}_g^{(m)}$ */
 					new_quad_src[i][d] = meshCell->getQuadSrc()[d] 
 						* new_src[i][e] / meshCell->getSrc()[e];	
 					log_printf(DEBUG, "Old Mesh Averaged Source = %e", 
