@@ -500,16 +500,15 @@ void Plotter::plotNetCurrents(Mesh* mesh){
 		}
 	}
 
-
 	/* create filename with correct extension */
 	if (_extension == "tiff" || _extension == "jpg" || _extension == "png"){
-		plot(bitMap, "cmfd_current", _extension);
-		plot(bitMap2, "cmfd_current_total", _extension);
+		plot(bitMap, "current", _extension);
+		plot(bitMap2, "current_1G", _extension);
 	}
 	else{
 		log_printf(WARNING, "Currents can only be plotted in tiff, jpg, and png. Plotting CMFD currents as png...");
-		plot(bitMap, "cmfd_current", "png");
-		plot(bitMap, "cmfd_current_total", "png");
+		plot(bitMap, "current", "png");
+		plot(bitMap2, "current_1G", "png");
 	}
 
 	deleteBitMap(bitMap);
@@ -761,7 +760,7 @@ void Plotter::plotQuadFlux(Mesh* mesh, int iter_num){
 	}
 
 	std::stringstream string;
-	string << "loo_quad_flux_" << iter_num << "_iter";
+	string << "loo_quad_flux_iter_" << iter_num;
 	std::string title_str = string.str();
 
 	/* create filename with correct extension */
@@ -849,7 +848,7 @@ void Plotter::plotXS(Mesh* mesh, int iter_num){
 	}
 
 	std::stringstream string;
-	string << "cmfd_xs_i_" << iter_num;
+	string << "xs_iter_" << iter_num;
 	std::string title_str = string.str();
 
 	/* create filename with correct extension */

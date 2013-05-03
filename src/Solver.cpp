@@ -1469,9 +1469,9 @@ double Solver::kernel(int max_iterations) {
 				{
 					_cmfd->computeXS();
 					_cmfd->computeDs();
-					_plotter->plotDHats(_geom->getMesh(), 0);
+					_plotter->plotDHats(_geom->getMesh(), i);
 					_plotter->plotNetCurrents(_geom->getMesh());
-					_plotter->plotXS(_geom->getMesh(), 0);
+					_plotter->plotXS(_geom->getMesh(), i);
 				}
 
 				/* plot MOC flux */
@@ -1512,7 +1512,7 @@ double Solver::kernel(int max_iterations) {
 				{
 					_plotter->plotQuadFlux(_geom->getMesh(), i);
 					_plotter->plotNetCurrents(_geom->getMesh());
-					_plotter->plotXS(_geom->getMesh(), 0);
+					_plotter->plotXS(_geom->getMesh(), i);
 				}
 
 				/* plot MOC flux */

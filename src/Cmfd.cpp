@@ -1041,6 +1041,10 @@ void Cmfd::computeQuadFlux()
 						s[i]->setQuadFlux(s[i]->getQuadCurrent(e, ind) / scale, 
 										  e, ind);
 					}
+					/* For debugging purpose, compute partial currents */
+					double current = s[i]->getQuadCurrent(e, 0) 
+						+ s[i]->getQuadCurrent(e, 1);
+					s[i]->setCurrent(current, e);
 				}
 			}
 		}
