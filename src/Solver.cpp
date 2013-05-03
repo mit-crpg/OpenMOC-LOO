@@ -1343,9 +1343,9 @@ void Solver::runLoo(int i)
 {
 	double loo_keff;
 
-	MOCsweep(2);
-	
 	_cmfd->storePreMOCMeshSource(_flat_source_regions);
+
+	MOCsweep(2);
 	
 	/* LOO Method 1: assume constant Sigma in each mesh. 
 	   Computes cross sections */

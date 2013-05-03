@@ -1222,7 +1222,6 @@ void Cmfd::computeQuadSrc()
 
 			/* Now that we have all the in's and out's, computes src */
 			double l = meshCell->getL();
-			log_printf(NORMAL, " l = %f", l);
 			for (int e = 0; e < ng; e++)
 			{
 				double xs = meshCell->getSigmaT()[e];
@@ -1234,7 +1233,7 @@ void Cmfd::computeQuadSrc()
 					double src = xs * (out[e][i] - ex * in[e][i]) / (1.0 - ex);
 					meshCell->setQuadSrc(src, e, i);
 
-					sum_quad_flux += src/xs - (out[e][i] - in[e][i])/(xs * l);
+					sum_quad_flux += src/xs + (in[e][i] - out[e][i])/(xs * l);
 				}
 				meshCell->setSumQuadFlux(sum_quad_flux, e);
 			}
@@ -1482,7 +1481,12 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 								 double k_MOC)
 {
 	log_printf(INFO, "Running low order MOC solver...");
+
 	int iter, max_outer = 100; 
+
+	/* FIXME */
+	max_outer = 1;
+
 	if (solveMethod == DIFFUSION){
 		max_outer = 1000;
 	}
@@ -1505,7 +1509,7 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 			meshCell->setNewFlux(meshCell->getOldFlux()[e], e);
 	}
 
-	/* Pre-compute factors that do not change between iterations */
+	/* Initializes terms internal to the LOO iterative solver */
 	double **sum_quad_flux, **quad_xs, **ratio, **expo, **tau, **new_src;
 	double **new_quad_src;
 	sum_quad_flux = new double*[cw*ch];
@@ -1532,6 +1536,8 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 		{
 			sum_quad_flux[i][e] = 0;
 			quad_xs[i][e] = _mesh->getCells(i)->getSigmaT()[e];
+			/* Pre-computes cross-section related terms because they do 
+			   not change between iterations */
 			tau[i][e] = quad_xs[i][e] * l;
 			expo[i][e] = exp(-tau[i][e]);
 			ratio[i][e] = (1 - expo[i][e]) / tau[i][e];
@@ -1547,7 +1553,7 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 	{
 		old_keff = _keff;
 		
-		/* Resets terms to zeros */
+		/* Resets terms to zeros for each LOO iteration */
 		for (int i = 0; i < cw * ch; i++)
 		{
 			for (int e = 0; e < ng; e++)
@@ -1566,15 +1572,20 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 		for (int i = 0; i < cw * ch; i++)
 		{
 			meshCell = _mesh->getCells(i);
+
 			for (int e = 0; e < ng; e++)
 			{
 				for (int g = 0; g < ng; g++)
 				{
-					new_src[i][e] += meshCell->getSigmaS()[e*ng+g];
+					new_src[i][e] += meshCell->getSigmaS()[e*ng+g] 
+						* meshCell->getNewFlux()[g];
 					new_src[i][e] += meshCell->getChi()[e] 
-						* meshCell->getNuSigmaF()[g] / _keff;
+						* meshCell->getNuSigmaF()[g] / _keff 
+						* meshCell->getNewFlux()[g] ;
 				}
-				new_src[i][e] *= meshCell->getNewFlux()[e];
+
+				new_src[i][e] /= FOUR_PI;
+ 
 				if (e == ng - 1)
 					log_printf(INFO, "Cell averaged source for cell %d,"
 							   " energy %d is %e", i, e, new_src[i][e]);
@@ -1595,10 +1606,10 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 						* new_src[i][e] / meshCell->getSrc()[e];	
 					log_printf(DEBUG, "Old Mesh Averaged Source = %e", 
 							   meshCell->getSrc()[e]);
-					log_printf(DEBUG, "Updated quadrature source for cell %d" 
-							   " energy %d, track %d is %f", i, e, g, 
-							   new_quad_src[i][d]);
 				}
+				log_printf(NORMAL, "Average source ratio for cell %d" 
+						   " energy %d, by %f", i, e, 
+						   new_src[i][e] / meshCell->getSrc()[e]);
 			}
 		}
 
