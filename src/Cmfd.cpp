@@ -1023,6 +1023,7 @@ void Cmfd::computeQuadFlux()
 	int cell_width = _mesh->getCellWidth();
 
 	/* the factor that we devide everyone by is cos(45degree) * surface len */
+	/* May need to fixme */
 	double scale = _mesh->getCells(0)->getWidth() * SIN_THETA_45;
 
 	/* loop over all mesh cells */
@@ -1047,6 +1048,13 @@ void Cmfd::computeQuadFlux()
 					double current = s[i]->getQuadCurrent(e, 0) 
 						+ s[i]->getQuadCurrent(e, 1);
 					s[i]->setCurrent(current, e);
+
+					/* Prints to screen quad current and quad flux */
+					log_printf(NORMAL, "cell %d surface %d energy %d's current"
+							   " is %f", y*cell_width+x, i, e, current);
+					log_printf(NORMAL, " its two quad flux are: %f %f",
+							   s[i]->getQuadFlux(e, 0), s[i]->getQuadFlux(e,1));
+			  
 				}
 			}
 		}
@@ -1429,7 +1437,7 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter)
 	petsc_err = VecRestoreArray(_phi_new, &new_phi);
 	CHKERRQ(petsc_err);
 
-	/* Computes L2 norm */
+	/* Computes L2 norm to decided whether outter MOC iteration should quit */
 	if (moc_iter > 0)
 	{
 		petsc_err = fisSourceNorm(snew, moc_iter);
@@ -1492,7 +1500,7 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 	int iter, max_outer = 100; 
 
 	/* FIXME */
-	max_outer = 2;
+	max_outer = 1;
 
 	if (solveMethod == DIFFUSION){
 		max_outer = 1000;
@@ -1581,19 +1589,25 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 		for (int i = 0; i < cw * ch; i++)
 		{
 			meshCell = _mesh->getCells(i);
+
+			for (int e = 0; e < ng; e++)
+			{
+				for (int g = 0; g < ng; g++)
+				{
+					new_src[i][e] += meshCell->getSigmaS()[e*ng+g] 
+						* meshCell->getNewFlux()[g] * ONE_OVER_FOUR_PI ;
+					new_src[i][e] += meshCell->getChi()[e] *
+						meshCell->getNuSigmaF()[g] / _keff 
+						* meshCell->getNewFlux()[g] * ONE_OVER_FOUR_PI ;
+				}
+			}
+
+/*
 			double fission_source = 0, scatter_source = 0;
 			double *scalar_flux = meshCell->getNewFlux();
 			double *nu_sigma_f = meshCell->getNuSigmaF();
 			double *sigma_s = meshCell->getSigmaS();
 			double *chi = meshCell->getChi();
-
-			/*
-			  new_src[i][e] += meshCell->getSigmaS()[e*ng+g] 
-			  * meshCell->getNewFlux()[g];
-			  new_src[i][e] += meshCell->getChi()[e] *
-			  meshCell->getNuSigmaF()[g] / _keff 
-			  * meshCell->getNewFlux()[g] ;
-			  */
 
 			for (int e = 0; e < ng; e++)
 				fission_source += nu_sigma_f[e] * scalar_flux[e];
@@ -1612,32 +1626,33 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 					log_printf(INFO, "Cell averaged source for cell %d,"
 							   " energy %d is %e", i, e, new_src[i][e]);
 			}
+*/
 		}
 
+		double src_ratio;
 		/* Updates 8 quadrature sources based on form function */
 		for (int i = 0; i < cw * ch; i++)
 		{
 			meshCell = _mesh->getCells(i);
 			for (int e = 0; e < ng; e++)
 			{
+				src_ratio = new_src[i][e] / meshCell->getSrc()[e];
+				/* FIXME */
+				src_ratio = 1.0;
 				for (int g = 0; g < 8; g++)
 				{
 					int d = e * ng + g;
 					/* getSrc()[e] returns the $\bar{Q}_g^{(m)}$ */
-					new_quad_src[i][d] = meshCell->getQuadSrc()[d] 
-						* new_src[i][e] / meshCell->getSrc()[e];	
+					new_quad_src[i][d] = meshCell->getQuadSrc()[d] * src_ratio;
 					log_printf(DEBUG, "Old Mesh Averaged Source = %e", 
 							   meshCell->getSrc()[e]);
 				}
 				log_printf(NORMAL, "Average source ratio for cell %d" 
-						   " energy %d, by %f", i, e, 
-						   new_src[i][e] / meshCell->getSrc()[e]);
+						   " energy %d, by %.10f", i, e, src_ratio);
 			}
 		}
 
 		/* Sweeps over geometry, solve LOO MOC */
-		/* FIXME: we do not really accumulate scalar flux as we do in the outter
-		 * MOC sweeps right? We only deal with angular flux in this case? */
 		for (int e = 0; e < ng; e++)
 		{
 			double flux;
@@ -1740,18 +1755,21 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 			log_printf(NORMAL, "  end with %f", flux);
 		}				
 
+		double phi_ratio;
 		/* Computes new cell-averaged scalar flux based on new_sum_quad_flux */
 		for (int i = 0; i < cw * ch; i++)
 		{
 			meshCell = _mesh->getCells(i);
 			for (int e = 0; e < ng; e++) 
 			{
-				/* FIXME: divide by 8 */
-				double ratio =  sum_quad_flux[i][e] 
+				/* The 1/8 is the weight on angular quadrature */
+				phi_ratio =  sum_quad_flux[i][e] 
 					/ meshCell->getSumQuadFlux()[e] / 8;
-				meshCell->setNewFlux(meshCell->getOldFlux()[e] * ratio, e);
+				meshCell->setNewFlux(meshCell->getOldFlux()[e] * phi_ratio, e);
+
 				log_printf(NORMAL, "Update the cell-averaged scalar flux by "
-						   "factor of %f", ratio);
+						   "factor of %.10f, old phi = %.10f", 
+						   phi_ratio, meshCell->getSumQuadFlux()[e]);
 			}
 		}
 
@@ -1777,7 +1795,7 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 		_keff = fis_tot / abs_tot; 
 
 		log_printf(NORMAL, "%d-th LOO iteration k = %f / %f = %f", 
-				   iter, fis_tot, abs_tot,_keff);
+				   iter, fis_tot, abs_tot, _keff);
 
 		/* Normalizes flux based on fission source FIXME: update? */
 		for (int i = 0; i < cw * ch; i++)
@@ -1789,6 +1807,8 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 									 * vol_tot/ fis_tot, e);
 			}
 		}
+		log_printf(NORMAL, "Normalize all scalar flux by %f", 
+				   vol_tot / fis_tot);
 
 		if ((iter > 5) && (fabs(_keff - old_keff) / _keff < 1e-5))
 		{

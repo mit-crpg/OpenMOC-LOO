@@ -419,10 +419,10 @@ void Mesh::splitCorners(){
 			 * surface and top surface of mesh cell to the right */ 
 			if (x < cell_width - 1 && y > 0){
 				meshCell = &_cells[y*cell_width + x];
-				surfaceSide = meshCell->getMeshSurfaces(2);
 				surfaceCorner1 = meshCell->getMeshSurfaces(6);
-				meshCellNext = &_cells[y*cell_width + x + 1];
-				surfaceSideNext = meshCellNext->getMeshSurfaces(3);
+				surfaceSide = meshCell->getMeshSurfaces(3); // was 2
+				meshCellNext = &_cells[(y-1)*cell_width + x]; // was x+1
+				surfaceSideNext = meshCellNext->getMeshSurfaces(2); // was 3
 
 					for (int group = 0; group < NUM_ENERGY_GROUPS; group++){
 						//surfaceSide->incrementCurrent(surfaceCorner1->getCurrent(group), group);

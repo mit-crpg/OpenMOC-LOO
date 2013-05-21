@@ -72,7 +72,7 @@ private:
 	bool _loo_after_MOC_converge;
 #endif
 	void precomputeFactors();
-	double computePreFactor(segment* seg, int energy, int angle);
+	double computePreFactor(segment* seg, int energyg, int angle);
 	void initializeFSRs();
 public:
 	Solver(Geometry* geom, TrackGenerator* track_generator, 
@@ -96,6 +96,8 @@ public:
 	double kernel(int max_iterations);
 	void plotFluxes(int iter_num);
 	void checkTrackSpacing();
+	void plotPinPowers();
+	void computeFsrPowers();
 	void computePinPowers();
  	void checkNeutBal(Mesh* mesh);
  	void renormCurrents(Mesh* mesh, double keff);
@@ -112,6 +114,7 @@ public:
 							  MeshSurface **meshSurfaces);
 	void runLoo(int i);
 	void runCmfd(int i);
+	double checkL2Norm(double *old_fsr_powers);
 };
 
 #endif /* SOLVER_H_ */

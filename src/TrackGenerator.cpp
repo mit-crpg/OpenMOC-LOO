@@ -150,6 +150,8 @@ void TrackGenerator::generateTracks() {
 			/* num intersections with x,y-axes */
 			_num_x[i] = (int) (fabs(width / _spacing * sin(phi))) + 1;
 			_num_y[i] = (int) (fabs(height / _spacing * cos(phi))) + 1;
+			log_printf(NORMAL, "For azimuthal angle %d, num_x = %d, num_y = %d",
+					   i, _num_x[i], _num_y[i]);
 
 			/* total num of tracks */
 			_num_tracks[i] = _num_x[i] + _num_y[i];

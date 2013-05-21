@@ -29,14 +29,14 @@ Solver::Solver(Geometry* geom, TrackGenerator* track_generator,
 
 /* Options */
 	_update_flux = opts->updateFlux();
-_l2_norm_conv_thresh = opts->getL2NormConvThresh();
+	_l2_norm_conv_thresh = opts->getL2NormConvThresh();
     _compute_powers = opts->computePinPowers();
     _run_cmfd = opts->getCmfd();
-_run_loo = opts->getLoo();
-_diffusion = opts->getDiffusion();
-_loo_after_MOC_converge = opts->getLooAfterMOCConverge();
+	_run_loo = opts->getLoo();
+	_diffusion = opts->getDiffusion();
+	_loo_after_MOC_converge = opts->getLooAfterMOCConverge();
 	/* Initialize keff to be  */
-_k_eff = opts->getKGuess();
+	_k_eff = opts->getKGuess();
 
 
 	try{
@@ -552,7 +552,7 @@ void Solver::checkTrackSpacing() {
 
 
 /**
- * Compute the fission rates in each FSR and save them in a map of
+ * Plot the fission rates in each FSR and save them in a map of
  * FSR ids to fission rates
  */
 void Solver::computePinPowers() {
@@ -594,7 +594,6 @@ void Solver::computePinPowers() {
 	 * pin power corresponding to each FSR id in FSR_to_pin_powers */
 	_geom->computePinPowers(_FSRs_to_powers, _FSRs_to_pin_powers);
 
-
 	/* Compute the total power based by accumulating the power of each unique
 	 * pin with a nonzero power */
 	for (int i=0; i < _num_FSRs; i++) {
@@ -629,6 +628,28 @@ void Solver::computePinPowers() {
 
 	return;
 }
+
+void Solver::computeFsrPowers() {
+
+	log_printf(NORMAL, "Computing pin powers...");
+
+	FlatSourceRegion* fsr;
+
+	/*double tot_pin_power = 0;
+	double avg_pin_power = 0;
+	double num_nonzero_pins = 0;
+	double curr_pin_power = 0;
+	double prev_pin_power = 0; */
+
+	/* Loop over all FSRs and compute the fission rate*/
+	for (int i=0; i < _num_FSRs; i++) {
+		fsr = &_flat_source_regions[i];
+		_FSRs_to_powers[i] = fsr->computeFissionRate();
+	}
+
+	return;
+}
+
 
 /*
  * Plot the fluxes for each FSR
@@ -761,8 +782,6 @@ void Solver::tallyCmfdForwardCurrent(Track *track, segment *segment,
 	double *weights = track->getPolarWeights();
 	double *polar_fluxes = track->getPolarFluxes();
 	double currents[NUM_ENERGY_GROUPS];
-	//double phi = track->getPhi();
-    //double proj = fabs(cos(phi));
 
 	if (segment->_mesh_surface_fwd != -1)
 	{
@@ -780,9 +799,11 @@ void Solver::tallyCmfdForwardCurrent(Track *track, segment *segment,
 			for (p = 0; p < NUM_POLAR_ANGLES; p++)
 			{
 				/* increment current (polar flux times polar weights); */
-				/* FIXME: originally polar flux * weights / 2.0 */
+				/* The cos theta needed for getting th direction to normal
+				 * is cancelled out with the 1/cos theta needed to get the 
+				 * track spacing now on the surface. The 1/2.0 takes into 
+				 * account half space. */
 			    currents[e] += polar_fluxes[pe]*weights[p]/2.0;
-			    //currents[e] += polar_fluxes[pe]*weights[p]*proj;
 				pe++;
 			}
 		}
@@ -798,8 +819,6 @@ void Solver::tallyCmfdBackwardCurrent(Track *track, segment *segment,
 	double *weights = track->getPolarWeights();
 	double *polar_fluxes = track->getPolarFluxes();
 	double currents[NUM_ENERGY_GROUPS];
-	//double phi = track->getPhi();
-    //double proj = fabs(cos(phi));
 
 	if (segment->_mesh_surface_bwd != -1){
 		meshSurface = meshSurfaces[segment->_mesh_surface_bwd];
@@ -816,7 +835,6 @@ void Solver::tallyCmfdBackwardCurrent(Track *track, segment *segment,
 			for (p = 0; p < NUM_POLAR_ANGLES; p++){
 			    /* FIXME */
 				currents[e] += polar_fluxes[pe]*weights[p]/2.0;
-				//currents[e] += polar_fluxes[pe]*weights[p]*proj;
 				pe++;
 			}
 		}
@@ -1296,6 +1314,7 @@ void Solver::updateSource(){
 	FlatSourceRegion* fsr;
 	Material* material;
 	int start_index, end_index;
+
 	/* For all regions, find the source */
 	for (int r = 0; r < _num_FSRs; r++) {
 
@@ -1390,6 +1409,22 @@ void Solver::runCmfd(int i)
 	return;
 }
 
+double checkL2Norm(double *old_fsr_powers)
+{
+	double l2_norm = 0.0;
+	//int ng = NUM_ENERGY_GROUPS;
+
+	/* FIXME: check what happens to energy? */
+	for (int i = 0; i < _num_FSRs; i++)
+	{
+		if (_FSRs_to_powers[i] != 0.0)
+			l2_norm += pow(_FSRs_to_powers[i] / old_fsr_powers[i] - 1.0, 2);
+	}
+	l2_norm = pow(l2_norm, 0.5);
+	
+	return l2_norm;
+}
+
 
 double Solver::kernel(int max_iterations) {
 	FlatSourceRegion* fsr;
@@ -1426,6 +1461,14 @@ double Solver::kernel(int max_iterations) {
 			fsr->setOldSource(e, 1.0);
 	}
 
+	double old_fsr_powers[_num_FSRs];
+
+	/* Computes initial FSR powers / fission rates */
+	computeFsrPowers();
+	for (int n = 0; n < _num_FSRs; n++)
+		old_fsr_powers[n] = _FSRs_to_powers[n];
+
+
 	/* Source iteration loop */
 	for (i = 0; i < max_iterations; i++) 
 	{
@@ -1437,6 +1480,7 @@ double Solver::kernel(int max_iterations) {
 		normalizeFlux();
 		/* Updates Q for each FSR based on new scalar flux */
 		updateSource();
+
 
 		/* Perform one sweep for no acceleration, or call one of the 
 		 * acceleration function which performs two sweeps plus acceleration */
@@ -1495,7 +1539,16 @@ double Solver::kernel(int max_iterations) {
 		}
 		else /* if no acceleration or LOO */
 		{
-			if (fabs(_old_k_effs.back() - _k_eff) < _l2_norm_conv_thresh){
+			/* Computes new FSR powers / fission rates */
+			computeFsrPowers();
+			/* Checks energy-integrated L2 norm of FSR powers / fission rates */
+			double eps = checkL2Norm(old_fsr_powers);
+			
+			/* Stores current FSR powers into old fsr powers */
+			for (int n = 0; n < _num_FSRs; n++)
+				old_fsr_powers[n] = _FSRs_to_powers[n];
+
+			if (eps < _l2_norm_conv_thresh){
 				/* Converge the flux further */
 				//MOCsweep(1000);
 	
@@ -1593,6 +1646,14 @@ void Solver::checkNeutBal(Mesh* mesh){
 
 			/* leakage */
 			for (int s = 0; s < 4; s++){
+				for (int e = 0; e < ng; e++){
+					log_printf(NORMAL, " CMFD mesh %d, surface %d, energy %d, "
+							   "partial current is %f", 
+							   y*cell_width + x, s, e, 
+							   meshCell->getMeshSurfaces(s)->getCurrent(e));
+				}
+
+
 				if (meshCell->getMeshSurfaces(s)->getBoundary() == VACUUM){
 					for (int e = 0; e < ng; e++){
 						if (s == 0){

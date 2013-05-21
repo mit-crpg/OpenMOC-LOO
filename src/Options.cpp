@@ -21,7 +21,7 @@
  * @param argv a char array of command line arguments from console
  */
 Options::Options(int argc, char **argv) {
-	_l2_norm_conv_thresh = 1e-5;			/* Default will set keff conv thresh to 1e-6 */
+	_l2_norm_conv_thresh = 1e-10;			/* Default will set keff conv thresh to 1e-6 */
 
 	_cmfd = false; 			
 	_k_guess = 1.0;
@@ -38,7 +38,7 @@ Options::Options(int argc, char **argv) {
 	else
 		_relative_path = "";
 
-	_geometry_file = _relative_path + "xml-sample/Cmfd/geometry_simple.xml"; 	 /* Default geometry input file */
+	_geometry_file = _relative_path + "xml-sample/Cmfd/geometry_pin.xml"; 	 /* Default geometry input file */
 	_material_file = _relative_path + "xml-sample/Cmfd/material_simple.xml";    /* Default material input file */
 	_track_spacing = 0.05;				/* Default track spacing */
 	_num_azim = 32;						/* Default number of azimuthal angles */
@@ -92,6 +92,8 @@ Options::Options(int argc, char **argv) {
 				_dump_geometry = true;
 			else if (LAST("--extension") || LAST("-ex"))
 							_extension = argv[i];
+			else if (LAST("-noconv"))
+				_loo_after_MOC_converge = false;
 			else if (strcmp(argv[i], "-ps") == 0 ||
 					strcmp(argv[i], "--plotspecs") == 0)
 				_plot_specs = true;
