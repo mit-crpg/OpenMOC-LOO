@@ -1409,7 +1409,7 @@ void Solver::runCmfd(int i)
 	return;
 }
 
-double checkL2Norm(double *old_fsr_powers)
+double Solver::computeL2Norm(double *old_fsr_powers)
 {
 	double l2_norm = 0.0;
 	//int ng = NUM_ENERGY_GROUPS;
@@ -1465,6 +1465,8 @@ double Solver::kernel(int max_iterations) {
 
 	/* Computes initial FSR powers / fission rates */
 	computeFsrPowers();
+
+	/* Stores the initial FSR powers into old_fsr_powers */
 	for (int n = 0; n < _num_FSRs; n++)
 		old_fsr_powers[n] = _FSRs_to_powers[n];
 
@@ -1541,10 +1543,11 @@ double Solver::kernel(int max_iterations) {
 		{
 			/* Computes new FSR powers / fission rates */
 			computeFsrPowers();
+
 			/* Checks energy-integrated L2 norm of FSR powers / fission rates */
-			double eps = checkL2Norm(old_fsr_powers);
+			double eps = computeL2Norm(old_fsr_powers);
 			
-			/* Stores current FSR powers into old fsr powers */
+			/* Stores current FSR powers into old fsr powers for next iter */
 			for (int n = 0; n < _num_FSRs; n++)
 				old_fsr_powers[n] = _FSRs_to_powers[n];
 
