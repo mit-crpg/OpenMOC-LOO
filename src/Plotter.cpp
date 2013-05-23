@@ -636,9 +636,9 @@ void Plotter::plotDHats(Mesh* mesh, int iter_num){
 	deleteBitMap(bitMap);
 }
 
-void Plotter::plotQuadFlux(Mesh* mesh, int iter_num){
-	log_printf(NORMAL, "plotting quadrature fluxes for %d-th iteration ...", 
-			   iter_num);
+void Plotter::plotGeometry(Mesh* mesh)
+{
+	log_printf(INFO, "plotting geometry for debugging ...");
 
 	/* set up bitMap */
 	BitMap<int>* bitMap = new BitMap<int>;
@@ -668,93 +668,197 @@ void Plotter::plotQuadFlux(Mesh* mesh, int iter_num){
 	std::string text;
 
 	/* plot mesh currents next to surface */
-	for (int cellY = 0; cellY < mesh->getCellHeight(); cellY++){
-		for (int cellX = 0; cellX < mesh->getCellWidth(); cellX++){
+	for (int cellY = 0; cellY < mesh->getCellHeight(); cellY++)
+{
+		for (int cellX = 0; cellX < mesh->getCellWidth(); cellX++)
+		{
+			/* FIXME: should be cellX * mesh->getCellHeight() + cellY? */
 			meshCell = mesh->getCells(cellY * mesh->getCellWidth() + cellX);
 
-			/* SIDE 0 */
 			/* get midpoint of mesh surface */
-			x_mid = convertToPixelX(meshCell->getBounds()[0]);
+			x_mid = convertToPixelX((meshCell->getBounds()[0] + 
+									meshCell->getBounds()[2]) / 2.0);
+
 			y_mid = convertToPixelY((meshCell->getBounds()[1] + 
 									 meshCell->getBounds()[3]) / 2.0);
 
 			/* create string and draw on bitMap */
-			/* getQuadCurrent(group, index) */
-			text_stream << "surf[0].flux[1]: " << 
-				meshCell->getMeshSurfaces(0)->getQuadCurrent(0,1);
+			text_stream << "Mesh Cell Index: (" << 
+				x_mid << y_mid << ")";
 			text = text_stream.str();
 			text_stream.str("");
-			drawText(bitMap, text, x_mid - 140, y_mid - 20.0);
+			drawText(bitMap, text, x_mid, y_mid);
+			text.clear();
+		}
+	}
+
+	std::stringstream string;
+	string << "mesh-cell-index";
+	std::string title_str = string.str();
+
+	/* create filename with correct extension */
+	if (_extension == "tiff" || _extension == "jpg" || _extension == "png"){
+		plot(bitMap, title_str, _extension);
+	}
+	else{
+		log_printf(WARNING, "Mesh cell index can only be plotted in tiff, jpg,"
+				   " and png. Plotting LOO Quad Flux as png...");
+		plot(bitMap, title_str, "png");
+	}
+
+	deleteBitMap(bitMap);
+}
+
+
+void Plotter::plotQuadFlux(Mesh* mesh, int iter_num){
+	log_printf(NORMAL, "plotting quadrature fluxes for %d-th iteration ...", 
+			   iter_num);
+
+	/* set up bitMap */
+	BitMap<int>* bitMap = new BitMap<int>;
+	bitMap->pixel_x = _bit_length_x;
+	bitMap->pixel_y = _bit_length_y;
+	initialize(bitMap);
+	bitMap->geom_x = _width;
+	bitMap->geom_y = _height;
+	bitMap->color_type = SCALED;
+
+	double x_global;
+	double y_global;
+
+	/* find meshCell for each pixel */
+	for (int y = 0; y < _bit_length_y; y++){
+		for (int x =  0 ; x < _bit_length_x; x++){
+			x_global = convertToGeometryX(x);
+			y_global = convertToGeometryY(y);
+			bitMap->pixels[y * _bit_length_x + x] = 
+				mesh->findMeshCell(x_global, y_global);
+		}
+	}
+
+	double x_mid, y_mid;
+	double x_min = 0.0, y_min = 0.0;
+	double x_max, y_max;
+	MeshCell* meshCell;
+	std::stringstream text_stream;
+	std::string text;
+
+	text_stream.precision(10);
+	
+	double scale = 1;
+	/* y_max correponds to (0, max_y)'s bottom surface (surface 3) */
+	y_max = convertToPixelX(mesh->getCells(mesh->getCellWidth() - 1)
+							->getBounds()[3]);
+	/* x_max corresponds to (max_x, 0)'s right surface (surface 2) */
+	x_max = y_max;
+		/*convertToPixelX(mesh->getCells((mesh->getCellHeight() - 1)
+										   * mesh->getCellWidth())
+										   ->getBounds()[2]); */
+	log_printf(NORMAL, "x_max = %f, y_max = %f", x_max, y_max);
+
+	/* plot mesh currents next to surface */
+	for (int cellY = 0; cellY < mesh->getCellHeight(); cellY++){
+		for (int cellX = 0; cellX < mesh->getCellWidth(); cellX++){
+			/* FIXME: should be cellX * mesh->getCellHeight() + cellY? */
+			meshCell = mesh->getCells(cellY * mesh->getCellWidth() + cellX);
+
+			/* SIDE 0 */
+			/* get midpoint of mesh surface */
+			x_mid = convertToPixelX(meshCell->getBounds()[0]) - 170.0;
+			y_mid = convertToPixelY((meshCell->getBounds()[1] + 
+									 meshCell->getBounds()[3]) / 2.0);
+
+			
+			if (x_mid < x_min)
+				x_mid = convertToPixelX(meshCell->getBounds()[0]) + 20.0;
+
+			/* create string and draw on bitMap */
+			/* getQuadCurrent(group, index) */
+			text_stream << "surf[0].flux[1]: " << 
+				scale * meshCell->getMeshSurfaces(0)->getQuadCurrent(0,1);
+			text = text_stream.str();
+			text_stream.str("");
+			drawText(bitMap, text, x_mid, y_mid - 20.0);
 			text.clear();
 
 			text_stream << "surf[0].flux[0]: " << 
-				meshCell->getMeshSurfaces(0)->getQuadCurrent(0,0);
+				scale *meshCell->getMeshSurfaces(0)->getQuadCurrent(0,0);
 			text = text_stream.str();
 			text_stream.str("");
-			drawText(bitMap, text, x_mid - 140, y_mid + 20.0);
+			drawText(bitMap, text, x_mid, y_mid + 20.0);
 			text.clear();
+
+			/* SIDE 2 */
+			/* get midpoint of mesh surface */
+			x_mid = convertToPixelX(meshCell->getBounds()[2]) + 40.0;
+			y_mid = convertToPixelY((meshCell->getBounds()[1] 
+									 + meshCell->getBounds()[3]) / 2.0);
+
+			if (x_mid > x_max)
+				x_mid = convertToPixelX(meshCell->getBounds()[2]) - 180.0;
+
+			/* create string and draw on bitMap */
+			text_stream << "surf[2].flux[0]: " << 
+				scale *meshCell->getMeshSurfaces(2)->getQuadCurrent(0,0);
+			text = text_stream.str();
+			text_stream.str("");
+			drawText(bitMap, text, x_mid, y_mid - 20);
+			text.clear();
+
+			text_stream << "surf[2].flux[1]: " << 
+				scale *meshCell->getMeshSurfaces(2)->getQuadCurrent(0,1);
+			text = text_stream.str();
+			text_stream.str("");
+			drawText(bitMap, text, x_mid, y_mid + 20);
+			text.clear();
+
 
 			/* SIDE 1 */
 			/* get midpoint of mesh surface */
 			x_mid = convertToPixelX((meshCell->getBounds()[0] 
 									 + meshCell->getBounds()[2]) / 2.0);
-			y_mid = convertToPixelY(meshCell->getBounds()[1]);
+			y_mid = convertToPixelY(meshCell->getBounds()[1]) + 20.0;
+
+			if (y_mid > y_max)
+				y_mid -= 40.0;
 
 			/* create string and draw on bitMap */
 			text_stream << "surf[1].flux[0]: " << 
-				meshCell->getMeshSurfaces(1)->getQuadCurrent(0,0);
+				scale *meshCell->getMeshSurfaces(1)->getQuadCurrent(0,0);
 			text = text_stream.str();
 			text_stream.str("");
-			drawText(bitMap, text, x_mid - 120, y_mid + 20.0);
+			drawText(bitMap, text, x_mid - 200, y_mid);
 			text.clear();
 
 			text_stream << "surf[1].flux[1]: " << 
-				meshCell->getMeshSurfaces(1)->getQuadCurrent(0,1);
+				scale *meshCell->getMeshSurfaces(1)->getQuadCurrent(0,1);
 			text = text_stream.str();
 			text_stream.str("");
-			drawText(bitMap, text, x_mid + 20, y_mid + 20.0);
-			text.clear();
-
-			/* SIDE 2 */
-			/* get midpoint of mesh surface */
-			x_mid = convertToPixelX(meshCell->getBounds()[2]);
-			y_mid = convertToPixelY((meshCell->getBounds()[1] 
-									 + meshCell->getBounds()[3]) / 2.0);
-
-			/* create string and draw on bitMap */
-			text_stream << "surf[2].flux[0]: " << 
-				meshCell->getMeshSurfaces(2)->getQuadCurrent(0,0);
-			text = text_stream.str();
-			text_stream.str("");
-			drawText(bitMap, text, x_mid + 20, y_mid - 20);
-			text.clear();
-
-			text_stream << "surf[2].flux[1]: " << 
-				meshCell->getMeshSurfaces(2)->getQuadCurrent(0,1);
-			text = text_stream.str();
-			text_stream.str("");
-			drawText(bitMap, text, x_mid + 20, y_mid + 20);
+			drawText(bitMap, text, x_mid + 20, y_mid);
 			text.clear();
 
 			/* SIDE 3 */
 			/* get midpoint of mesh surface */
 			x_mid = convertToPixelX((meshCell->getBounds()[0] 
 									 + meshCell->getBounds()[2]) / 2.0);
-			y_mid = convertToPixelY(meshCell->getBounds()[3]);
+			y_mid = convertToPixelY(meshCell->getBounds()[3]) - 20.0;
+
+			if (y_mid < y_min)
+				y_mid += 40.0;
 
 			/* create string and draw on bitMap */
 			text_stream << "surf[3].flux[1]: " << 
-				meshCell->getMeshSurfaces(3)->getQuadCurrent(0,1);
+				scale *meshCell->getMeshSurfaces(3)->getQuadCurrent(0,1);
 			text = text_stream.str();
 			text_stream.str("");
-			drawText(bitMap, text, x_mid - 120, y_mid - 20.0);
+			drawText(bitMap, text, x_mid - 200, y_mid);
 			text.clear();
 
 			text_stream << "surf[3].flux[0]: " << 
-				meshCell->getMeshSurfaces(3)->getQuadCurrent(0,0);
+				scale *meshCell->getMeshSurfaces(3)->getQuadCurrent(0,0);
 			text = text_stream.str();
 			text_stream.str("");
-			drawText(bitMap, text, x_mid + 20, y_mid - 20.0);
+			drawText(bitMap, text, x_mid + 20, y_mid);
 			text.clear();
 		}
 	}
@@ -817,11 +921,18 @@ void Plotter::plotXS(Mesh* mesh, int iter_num){
 			x_mid = convertToPixelY((meshCell->getBounds()[0] + meshCell->getBounds()[2]) / 2.0);
 			y_mid = convertToPixelY((meshCell->getBounds()[1] + meshCell->getBounds()[3]) / 2.0);
 
+			/* Cell Index */
+			text_stream << "Cell Index: ("<< cellX << " , " << cellY << ")";
+			text = text_stream.str();
+			text_stream.str("");
+			drawText(bitMap, text, x_mid - 50, y_mid - 30);
+			text.clear();			
+
 			/* Sigma A */
 			text_stream << "SigmaA: " << meshCell->getSigmaA()[e];
 			text = text_stream.str();
 			text_stream.str("");
-			drawText(bitMap, text, x_mid - 50, y_mid + 45);
+			drawText(bitMap, text, x_mid - 50, y_mid + 30);
 			text.clear();
 
 			/* Sigma S */
@@ -842,7 +953,7 @@ void Plotter::plotXS(Mesh* mesh, int iter_num){
 			text_stream << "Diffusivity: " << meshCell->getDiffusivity()[e];
 			text = text_stream.str();
 			text_stream.str("");
-			drawText(bitMap, text, x_mid - 50, y_mid - 30);
+			drawText(bitMap, text, x_mid - 50, y_mid - 15);
 			text.clear();
 		}
 	}

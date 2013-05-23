@@ -406,7 +406,6 @@ void Solver::updateKeff(int iteration) {
 	double* nu_sigma_f;
 	double* flux;
 	double* chi;
-	double* mat_mult_a;
 	Material* material;
 	FlatSourceRegion* fsr;
 
@@ -423,14 +422,13 @@ void Solver::updateKeff(int iteration) {
 		fsr = &_flat_source_regions[r];
 		material = fsr->getMaterial();
 		sigma_a = material->getSigmaA();
-		mat_mult_a = fsr->getMatMultA();
 		chi = material->getChi();
 		nu_sigma_f = material->getNuSigmaF();
 		flux = fsr->getFlux();
 
 		for (int e = 0; e < NUM_ENERGY_GROUPS; e++) 
 		{
-			abs += sigma_a[e] * flux[e] * fsr->getVolume() * mat_mult_a[e];
+	        abs += sigma_a[e] * flux[e] * fsr->getVolume();
 			for (int g = 0; g < NUM_ENERGY_GROUPS; g++){
 				fission += chi[e] * nu_sigma_f[g] * flux[g] * fsr->getVolume();
 			}
@@ -457,14 +455,14 @@ void Solver::updateKeff(int iteration) {
 		}
 	}
     log_printf(INFO, " MOC leakage  = %f", leakage);
-	_k_eff = tot_fission/(tot_abs + leakage);
+	_k_eff = tot_fission / (tot_abs + leakage);
 
 	/* Update keff for MOC sweep */
 	if (_run_cmfd)
 	{
 		_geom->getMesh()->setKeffMOC(_k_eff, iteration);
 
-		log_printf(NORMAL, "Iteration %d, MOC k_eff = %f, CMFD k_eff = %f", 
+		log_printf(NORMAL, "Iteration %d, MOC k = %f, CMFD k = %f", 
 		iteration, _k_eff, _cmfd->getKeff());
 
 		if (_update_flux){
@@ -476,7 +474,7 @@ void Solver::updateKeff(int iteration) {
 	{
 		_geom->getMesh()->setKeffMOC(_k_eff, iteration);
 
-		log_printf(NORMAL, "Iteration %d, MOC k_eff = %f, LOO k_eff = %f", 
+		log_printf(NORMAL, "Iteration %d, MOC k = %f, LOO k = %f", 
 				   iteration, _k_eff, _cmfd->getKeff());
 
 		if (_update_flux){
@@ -485,7 +483,11 @@ void Solver::updateKeff(int iteration) {
 		}
 	}
 	else
-		log_printf(NORMAL, "Iteration %d, MOC k_eff = %f", iteration, _k_eff); 
+	{
+	log_printf(NORMAL, "Iteration %d, MOC k = %f", iteration, _k_eff);
+	log_printf(DEBUG, "Iteration %d, MOC k = %f / (%f + %f) =  %f", 
+		iteration, tot_fission,  tot_abs, leakage, _k_eff); 
+    }
 
 	return;
 }
@@ -555,9 +557,9 @@ void Solver::checkTrackSpacing() {
  * Plot the fission rates in each FSR and save them in a map of
  * FSR ids to fission rates
  */
-void Solver::computePinPowers() {
+void Solver::plotPinPowers() {
 
-	log_printf(NORMAL, "Computing pin powers...");
+	log_printf(INFO, "Computing pin powers...");
 
 	FlatSourceRegion* fsr;
 	double tot_pin_power = 0;
@@ -631,7 +633,7 @@ void Solver::computePinPowers() {
 
 void Solver::computeFsrPowers() {
 
-	log_printf(NORMAL, "Computing pin powers...");
+	log_printf(INFO, "Computing pin powers...");
 
 	FlatSourceRegion* fsr;
 
@@ -680,7 +682,8 @@ void Solver::plotFluxes(int iter_num){
 		std::string title_str = string.str();
 
 		log_printf(DEBUG, "Plotting group %d flux...", (i+1));
-		_plotter->makeRegionMap(bitMapFSR->pixels, bitMap->pixels, _FSRs_to_fluxes[i]);
+		_plotter->makeRegionMap(bitMapFSR->pixels, bitMap->pixels, 
+								_FSRs_to_fluxes[i]);
 		plot(bitMap, title_str, _plotter->getExtension());
 	}
 
@@ -690,7 +693,8 @@ void Solver::plotFluxes(int iter_num){
 	std::string title_str = string.str();
 
 	log_printf(DEBUG, "Plotting total flux...");
-	_plotter->makeRegionMap(bitMapFSR->pixels, bitMap->pixels, _FSRs_to_fluxes[NUM_ENERGY_GROUPS]);
+	_plotter->makeRegionMap(bitMapFSR->pixels, bitMap->pixels, 
+							_FSRs_to_fluxes[NUM_ENERGY_GROUPS]);
 	plot(bitMap, title_str, _plotter->getExtension());
 
 	/* delete bitMaps */
@@ -853,7 +857,6 @@ void Solver::MOCsweep(int max_iterations) {
 	segment* segment;
 	double* polar_fluxes;
 	double* scalar_flux;
-	double* old_scalar_flux;
 	double* sigma_t;
 	FlatSourceRegion* fsr;
 	double fsr_flux[NUM_ENERGY_GROUPS];
@@ -1109,23 +1112,27 @@ void Solver::MOCsweep(int max_iterations) {
 		}
 
 		/* If more than two sweep of MOC is requested, check for convergence */
-		if (max_iterations > 2) {
+		/* 
+		   double *old_scalar_flux;
+		if (max_iterations > 2) 
+		{
 			bool converged = true;
 			#if USE_OPENMP
 			#pragma omp parallel for private(fsr, scalar_flux, old_scalar_flux)
  shared(converged)
 			#endif
-			for (int r = 0; r < _num_FSRs; r++) {
+			for (int r = 0; r < _num_FSRs; r++) 
+			{
 				fsr = &_flat_source_regions[r];
 				scalar_flux = fsr->getFlux();
 				old_scalar_flux = fsr->getOldFlux();
 
-				for (int e = 0; e < NUM_ENERGY_GROUPS; e++) {
+				for (int e = 0; e < NUM_ENERGY_GROUPS; e++) 
+				{
 					if (fabs((scalar_flux[e] - old_scalar_flux[e]) /
 							old_scalar_flux[e]) > FLUX_CONVERGENCE_THRESH )
 						converged = false;
 
-					/* Update old scalar flux */
 					old_scalar_flux[e] = scalar_flux[e];
 				}
 			}
@@ -1135,11 +1142,14 @@ void Solver::MOCsweep(int max_iterations) {
 			    return;
 		    }
 		}
+*/
 	}
 
+    /* 
 	if (max_iterations > 2)
 		log_printf(WARNING, "Scalar flux did not converge after %d iterations",
 															max_iterations);
+*/
 	return;
 }
 
@@ -1421,7 +1431,7 @@ double Solver::computeL2Norm(double *old_fsr_powers)
 			l2_norm += pow(_FSRs_to_powers[i] / old_fsr_powers[i] - 1.0, 2);
 	}
 	l2_norm = pow(l2_norm, 0.5);
-	
+	log_printf(DEBUG, "L2 norm = %e", l2_norm);
 	return l2_norm;
 }
 
@@ -1508,7 +1518,7 @@ double Solver::kernel(int max_iterations) {
 
 				/* plot pin powers */
 				if (_compute_powers == true)
-					computePinPowers();
+					plotPinPowers();
 
 				/* plot CMFD flux and xs */
 				if (_run_cmfd && _plotter->plotCurrent())
@@ -1564,7 +1574,7 @@ double Solver::kernel(int max_iterations) {
 
 				/* plot pin powers */
 				if (_compute_powers == true)
-					computePinPowers();
+					plotPinPowers();
 
 				/* plot LOO flux and xs */
 				if (_run_loo && _plotter->plotQuadFluxFlag())

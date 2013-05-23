@@ -21,7 +21,7 @@
  * @param argv a char array of command line arguments from console
  */
 Options::Options(int argc, char **argv) {
-	_l2_norm_conv_thresh = 1e-10;			/* Default will set keff conv thresh to 1e-6 */
+	_l2_norm_conv_thresh = 1e-8;			/* Default will set keff conv thresh to 1e-6 */
 
 	_cmfd = false; 			
 	_k_guess = 1.0;
@@ -29,6 +29,7 @@ Options::Options(int argc, char **argv) {
 	_loo = true;
 	_loo_after_MOC_converge = true;
 	_plot_quad_flux = true; 
+	_plot_fluxes = false;				/* plot colors, not values*/
 
 	/* Checks the working directory to set the relative path for input files
 	 * This is important so that default input files work when program is run
@@ -40,14 +41,13 @@ Options::Options(int argc, char **argv) {
 
 	_geometry_file = _relative_path + "xml-sample/Cmfd/geometry_pin.xml"; 	 /* Default geometry input file */
 	_material_file = _relative_path + "xml-sample/Cmfd/material_simple.xml";    /* Default material input file */
-	_track_spacing = 0.05;				/* Default track spacing */
-	_num_azim = 32;						/* Default number of azimuthal angles */
+	_track_spacing = 0.5;				/* Default track spacing: 0.05 */
+	_num_azim = 4;						/* Default \# azimuthal angles: 32 */
 	_bit_dimension = 1000;				/* y dimension of tracks and segments plots */
 	_verbosity = "NORMAL";				/* Default logging level */
 	_dump_geometry = false;				/* Default will not dump geometry */
 	_extension = "png";					/* Default will plot png */
 	_plot_specs = false;            	/* Default will not plot materials, cells, FSRs, tracks, or segments */
-	_plot_fluxes = false;				/* Default will not plot fluxes */
 	_compute_pin_powers = false;		/* Default will not compute pin powers */
 	_compress_cross_sections = false;	/* Default will not compress cross-sections */
 	_update_flux = true;  				/* Default will not use CMFD to update flux */

@@ -96,9 +96,8 @@ public:
 	double kernel(int max_iterations);
 	void plotFluxes(int iter_num);
 	void checkTrackSpacing();
-	void plotPinPowers();
 	void computeFsrPowers();
-	void computePinPowers();
+	void plotPinPowers();
  	void checkNeutBal(Mesh* mesh);
  	void renormCurrents(Mesh* mesh, double keff);
  	double getEps(Mesh* mesh, double keff, double renorm_factor);

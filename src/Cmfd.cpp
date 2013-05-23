@@ -107,21 +107,21 @@ void Cmfd::computeXS(){
     nu_fis_tally, dif_tally, rxn_tally, abs_tally, tot_tally, \
     scat_tally_group, iter, meshCell, fsr, material)
 #endif 
+
 	for (i = 0; i < _mesh->getCellWidth() * _mesh->getCellHeight(); i++){
 		meshCell = _mesh->getCells(i);
 
 		/* if single group, zero tallies */
-		if (_mesh->getMultigroup() == false){
-			abs_tally = 0.0;
-			nu_fis_tally = 0.0;
-			dif_tally = 0.0;
-			tot_tally = 0.0;
-			rxn_tally = 0.0;
-			scat_tally = 0.0;
-		}
+		abs_tally = 0.0;
+		nu_fis_tally = 0.0;
+		dif_tally = 0.0;
+		tot_tally = 0.0;
+		rxn_tally = 0.0;
+		scat_tally = 0.0;
 
 		/* loop over energy groups */
-		for (e = 0; e < NUM_ENERGY_GROUPS; e++) {
+		for (e = 0; e < NUM_ENERGY_GROUPS; e++) 
+		{
 
 			/* zero tallies for this group */
 			abs_tally_group = 0;
@@ -132,20 +132,22 @@ void Cmfd::computeXS(){
 			tot_tally_group = 0;
 
 			/* zero each group to group scattering tally */
-			for (g = 0; g < NUM_ENERGY_GROUPS; g++){
+			for (g = 0; g < NUM_ENERGY_GROUPS; g++)
+			{
 				scat_tally_group[g] = 0;
 			}
 
 			/* loop over FSRs in mesh cell */
 			for (iter = meshCell->getFSRs()->begin(); 
-				 iter != meshCell->getFSRs()->end(); ++iter){
+				 iter != meshCell->getFSRs()->end(); ++iter)
+			{
 				fsr = &_flat_source_regions[*iter];
 
 				/* Gets FSR specific data. */
-				material = fsr->getMaterial();
-				chi = material->getChi()[e];
 				volume = fsr->getVolume();
 				flux = fsr->getFlux()[e];
+				material = fsr->getMaterial();
+				chi = material->getChi()[e];
 				abs = material->getSigmaA()[e];
 				tot = material->getSigmaT()[e];
 				nu_fis = material->getNuSigmaF()[e];
@@ -186,7 +188,7 @@ void Cmfd::computeXS(){
 										g, e);
 				}
 			}
-			/* if single group, add group-wise tallies to group independent tallies */
+			/* if single group, add group-wise tallies up */
 			else{
 				abs_tally += abs_tally_group;
 				tot_tally += tot_tally_group;
@@ -206,13 +208,15 @@ void Cmfd::computeXS(){
 			meshCell->setNuSigmaF(nu_fis_tally / rxn_tally, 0);
 			meshCell->setDiffusivity(dif_tally / rxn_tally, 0);
 			meshCell->setOldFlux(rxn_tally / vol_tally_group, 0);
+			log_printf(NORMAL, "mesh = %d, rxn tally = %.10f, vol = %.10f,"
+					   " mesh's old flux = %.10f", 
+					   i, rxn_tally, vol_tally_group, 
+					   meshCell->getOldFlux()[0]);
 			meshCell->setChi(1, 0);
 			meshCell->setSigmaS(scat_tally / rxn_tally, 0, 0);
 		}
 	}
 }
-
-
 
 void Cmfd::computeDsxDirection(double x, double y, int e, MeshCell *meshCell, 
 							   double d, double f, double flux, int cell_width, 
@@ -1051,10 +1055,9 @@ void Cmfd::computeQuadFlux()
 
 					/* Prints to screen quad current and quad flux */
 					log_printf(NORMAL, "cell %d surface %d energy %d's current"
-							   " is %f", y*cell_width+x, i, e, current);
-					log_printf(NORMAL, " its two quad flux are: %f %f",
+							   " is %.10f, quad fluxes = %.10f %.10f", 
+							   y*cell_width+x, i, e, current,
 							   s[i]->getQuadFlux(e, 0), s[i]->getQuadFlux(e,1));
-			  
 				}
 			}
 		}
@@ -1765,11 +1768,15 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 				/* The 1/8 is the weight on angular quadrature */
 				phi_ratio =  sum_quad_flux[i][e] 
 					/ meshCell->getSumQuadFlux()[e] / 8;
+
+				/* FIXME */
+				phi_ratio = 1.0;
+
 				meshCell->setNewFlux(meshCell->getOldFlux()[e] * phi_ratio, e);
 
 				log_printf(NORMAL, "Update the cell-averaged scalar flux by "
 						   "factor of %.10f, old phi = %.10f", 
-						   phi_ratio, meshCell->getSumQuadFlux()[e]);
+						   phi_ratio, meshCell->getOldFlux()[e]);
 			}
 		}
 
@@ -1783,7 +1790,9 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 			{
 				for (int g = 0; g < ng; g++)
 				{
-					/* FIXME: should there be a chi on the top of k? */
+					/* FIXME: should there be a chi on the top of k? 
+					 * getChi()[e] does not seem to make a difference */
+					/* Volume doe not seem to make a difference */
 					fis_tot += meshCell->getChi()[e]
 						* meshCell->getNuSigmaF()[g]
 						* meshCell->getNewFlux()[g] * meshCell->getVolume();
@@ -1809,6 +1818,7 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 		}
 		log_printf(NORMAL, "Normalize all scalar flux by %f", 
 				   vol_tot / fis_tot);
+
 
 		if ((iter > 5) && (fabs(_keff - old_keff) / _keff < 1e-5))
 		{
