@@ -1481,10 +1481,13 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter)
 		_plotter->plotCMFDKeff(_mesh, moc_iter);
 	}
 
+	/* comments out plotting current for each iteration */
+	/*
 	if (_plotter->plotCurrent()){
 		string = "cmfd";
 		_plotter->plotCMFDflux(_mesh, string, moc_iter);
 	}
+	*/
 
 	if (solveMethod == CMFD){
 		_mesh->setKeffCMFD(_keff, moc_iter);

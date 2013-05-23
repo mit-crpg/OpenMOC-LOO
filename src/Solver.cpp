@@ -1511,7 +1511,8 @@ double Solver::kernel(int max_iterations) {
 		/* If flux converged, return k_eff */
 		if (_run_cmfd)
 		{
-			if (_cmfd->getL2Norm() < _l2_norm_conv_thresh) {
+			if (_cmfd->getL2Norm() < _l2_norm_conv_thresh) 
+			{
 	
 				/* Converge the flux */
 				MOCsweep(1000);

@@ -51,7 +51,7 @@ Options::Options(int argc, char **argv) {
 	_compute_pin_powers = false;		/* Default will not compute pin powers */
 	_compress_cross_sections = false;	/* Default will not compress cross-sections */
 	_update_flux = true;  				/* Default will not use CMFD to update flux */
-	_plot_current = false;				/* Default will not plot cmfd currents */
+	_plot_current = true;				/* Default will not plot cmfd currents */
 	_plot_diffusion = true;			/* Default will not plot diffusion flux */
 
 	_multigroup = false;				/* Default sets CMFD to one group structure */

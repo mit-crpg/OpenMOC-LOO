@@ -385,6 +385,8 @@ void Plotter::plotNetCurrents(Mesh* mesh){
 	std::string text;
 	double current0, current1, current2, current3;
 
+	text_stream.precision(10);
+
 	/* plot mesh currents next to surface */
 	for (int cellY = 0; cellY < mesh->getCellHeight(); cellY++){
 		for (int cellX = 0; cellX < mesh->getCellWidth(); cellX++){
@@ -454,7 +456,7 @@ void Plotter::plotNetCurrents(Mesh* mesh){
 			y_mid = convertToPixelY((meshCell->getBounds()[1] + meshCell->getBounds()[3]) / 2.0);
 
 			/* create string and draw on bitMap */
-			text_stream << "tally: " << current0;
+			text_stream << "1G current: " << current0;
 			text = text_stream.str();
 			text_stream.str("");
 			drawText(bitMap2, text, x_mid + 20, y_mid);
@@ -466,7 +468,7 @@ void Plotter::plotNetCurrents(Mesh* mesh){
 			y_mid = convertToPixelY(meshCell->getBounds()[1]);
 
 			/* create string and draw on bitMap */
-			text_stream << "tally: " << current1;
+			text_stream << "1G current: " << current1;
 			text = text_stream.str();
 			text_stream.str("");
 			drawText(bitMap2, text, x_mid - 20, y_mid - 10);
@@ -478,10 +480,10 @@ void Plotter::plotNetCurrents(Mesh* mesh){
 			y_mid = convertToPixelY((meshCell->getBounds()[1] + meshCell->getBounds()[3]) / 2.0);
 
 			/* create string and draw on bitMap */
-			text_stream << "tally: " << current2;
+			text_stream << "1G current: " << current2;
 			text = text_stream.str();
 			text_stream.str("");
-			drawText(bitMap2, text, x_mid - 80, y_mid);
+			drawText(bitMap2, text, x_mid - 150, y_mid);
 			text.clear();
 
 			/* SIDE 3 */
@@ -490,7 +492,7 @@ void Plotter::plotNetCurrents(Mesh* mesh){
 			y_mid = convertToPixelY(meshCell->getBounds()[3]);
 
 			/* create string and draw on bitMap */
-			text_stream << "tally: " << current3;
+			text_stream << "1G current: " << current3;
 			text = text_stream.str();
 			text_stream.str("");
 			drawText(bitMap2, text, x_mid - 20, y_mid + 15);
