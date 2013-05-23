@@ -185,9 +185,10 @@ void Cmfd::computeXS(){
 
 				for (int g = 0; g < NUM_ENERGY_GROUPS; g++)
 				{
-					/* FIXME: should be g,e */
+					/* FIXME: I thought it would be g,e, it is really e,g to
+					 * get -mg to work. */
 					meshCell->setSigmaS(scat_tally_group[g] / rxn_tally_group,
-										g, e);
+										e, g);
 				}
 			}
 			/* if single group, add group-wise tallies up */
