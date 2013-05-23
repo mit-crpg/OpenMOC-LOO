@@ -374,8 +374,10 @@ void Plotter::plotNetCurrents(Mesh* mesh){
 		for (int x = 0; x < _bit_length_x; x++){
 			x_global = convertToGeometryX(x);
 			y_global = convertToGeometryY(y);
-			bitMap->pixels[y * _bit_length_x + x] = mesh->findMeshCell(x_global, y_global);
-			bitMap2->pixels[y * _bit_length_x + x] = mesh->findMeshCell(x_global, y_global);
+			bitMap->pixels[y * _bit_length_x + x] = 
+				mesh->findMeshCell(x_global, y_global);
+			bitMap2->pixels[y * _bit_length_x + x] = 
+				mesh->findMeshCell(x_global, y_global);
 		}
 	}
 
@@ -404,42 +406,49 @@ void Plotter::plotNetCurrents(Mesh* mesh){
 				/* SIDE 0 */
 				/* get midpoint of mesh surface */
 				x_mid = convertToPixelX(meshCell->getBounds()[0]);
-				y_mid = convertToPixelY((meshCell->getBounds()[1] + meshCell->getBounds()[3]) / 2.0);
+				y_mid = convertToPixelY((meshCell->getBounds()[1] + 
+										 meshCell->getBounds()[3]) / 2.0);
 
 				/* create string and draw on bitMap */
 				text_stream << meshCell->getMeshSurfaces(0)->getCurrent(group);
 				text = text_stream.str();
 				text_stream.str("");
-				drawText(bitMap, text, x_mid + 20, y_mid - 10 * (NUM_ENERGY_GROUPS / 2.0 - group));
+				drawText(bitMap, text, x_mid + 20, y_mid - 10 * 
+						 (NUM_ENERGY_GROUPS / 2.0 - group));
 				text.clear();
 
 				/* SIDE 1 */
 				/* get midpoint of mesh surface */
-				x_mid = convertToPixelX((meshCell->getBounds()[0] + meshCell->getBounds()[2]) / 2.0);
+				x_mid = convertToPixelX((meshCell->getBounds()[0] + 
+										 meshCell->getBounds()[2]) / 2.0);
 				y_mid = convertToPixelY(meshCell->getBounds()[1]);
 
 				/* create string and draw on bitMap */
 				text_stream << meshCell->getMeshSurfaces(1)->getCurrent(group);
 				text = text_stream.str();
 				text_stream.str("");
-				drawText(bitMap, text, x_mid - 20, y_mid - 10 * (NUM_ENERGY_GROUPS - group));
+				drawText(bitMap, text, x_mid - 20, y_mid - 10 * 
+						 (NUM_ENERGY_GROUPS - group));
 				text.clear();
 
 				/* SIDE 2 */
 				/* get midpoint of mesh surface */
 				x_mid = convertToPixelX(meshCell->getBounds()[2]);
-				y_mid = convertToPixelY((meshCell->getBounds()[1] + meshCell->getBounds()[3]) / 2.0);
+				y_mid = convertToPixelY((meshCell->getBounds()[1] + 
+										 meshCell->getBounds()[3]) / 2.0);
 
 				/* create string and draw on bitMap */
 				text_stream << meshCell->getMeshSurfaces(2)->getCurrent(group);
 				text = text_stream.str();
 				text_stream.str("");
-				drawText(bitMap, text, x_mid - 80, y_mid - 10 * (NUM_ENERGY_GROUPS / 2.0 - group));
+				drawText(bitMap, text, x_mid - 80, y_mid - 10 * 
+						 (NUM_ENERGY_GROUPS / 2.0 - group));
 				text.clear();
 
 				/* SIDE 3 */
 				/* get midpoint of mesh surface */
-				x_mid = convertToPixelX((meshCell->getBounds()[0] + meshCell->getBounds()[2]) / 2.0);
+				x_mid = convertToPixelX((meshCell->getBounds()[0] + 
+										 meshCell->getBounds()[2]) / 2.0);
 				y_mid = convertToPixelY(meshCell->getBounds()[3]);
 
 				/* create string and draw on bitMap */
@@ -453,7 +462,8 @@ void Plotter::plotNetCurrents(Mesh* mesh){
 			/* SIDE 0 */
 			/* get midpoint of mesh surface */
 			x_mid = convertToPixelX(meshCell->getBounds()[0]);
-			y_mid = convertToPixelY((meshCell->getBounds()[1] + meshCell->getBounds()[3]) / 2.0);
+			y_mid = convertToPixelY((meshCell->getBounds()[1] + 
+									 meshCell->getBounds()[3]) / 2.0);
 
 			/* create string and draw on bitMap */
 			text_stream << "1G current: " << current0;

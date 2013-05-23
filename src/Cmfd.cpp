@@ -183,7 +183,9 @@ void Cmfd::computeXS(){
 				meshCell->setDiffusivity(dif_tally_group / rxn_tally_group, e);
 				meshCell->setOldFlux(rxn_tally_group / vol_tally_group, e);
 
-				for (int g = 0; g < NUM_ENERGY_GROUPS; g++){
+				for (int g = 0; g < NUM_ENERGY_GROUPS; g++)
+				{
+					/* FIXME: should be g,e */
 					meshCell->setSigmaS(scat_tally_group[g] / rxn_tally_group,
 										g, e);
 				}
@@ -208,7 +210,7 @@ void Cmfd::computeXS(){
 			meshCell->setNuSigmaF(nu_fis_tally / rxn_tally, 0);
 			meshCell->setDiffusivity(dif_tally / rxn_tally, 0);
 			meshCell->setOldFlux(rxn_tally / vol_tally_group, 0);
-			log_printf(NORMAL, "mesh = %d, rxn tally = %.10f, vol = %.10f,"
+			log_printf(INFO, "mesh = %d, rxn tally = %.10f, vol = %.10f,"
 					   " mesh's old flux = %.10f", 
 					   i, rxn_tally, vol_tally_group, 
 					   meshCell->getOldFlux()[0]);
@@ -1596,6 +1598,7 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 		{
 			meshCell = _mesh->getCells(i);
 
+/*
 			for (int e = 0; e < ng; e++)
 			{
 				for (int g = 0; g < ng; g++)
@@ -1607,8 +1610,8 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 						* meshCell->getNewFlux()[g] * ONE_OVER_FOUR_PI ;
 				}
 			}
+*/
 
-/*
 			double fission_source = 0, scatter_source = 0;
 			double *scalar_flux = meshCell->getNewFlux();
 			double *nu_sigma_f = meshCell->getNuSigmaF();
@@ -1622,9 +1625,15 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 			{
 				scatter_source = 0;
 
-				for (int g = 0; g < ng; g++)
-					scatter_source += sigma_s[e*ng+g] * scalar_flux[g];		
-				
+				if (_mesh->getMultigroup() == true)
+				{
+					for (int g = 0; g < ng; g++)
+						scatter_source += sigma_s[e*ng+g] * scalar_flux[g];		
+				}
+				else
+					scatter_source += sigma_s[0] * scalar_flux[0];
+
+
 				new_src[i][e] = (fission_source * chi[e] / _keff 
 								 + scatter_source) * ONE_OVER_FOUR_PI;
  
@@ -1632,7 +1641,7 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 					log_printf(INFO, "Cell averaged source for cell %d,"
 							   " energy %d is %e", i, e, new_src[i][e]);
 			}
-*/
+
 		}
 
 		double src_ratio;

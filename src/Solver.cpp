@@ -27,7 +27,7 @@ Solver::Solver(Geometry* geom, TrackGenerator* track_generator,
 	_plotter = plotter;
     _cmfd = cmfd;
 
-/* Options */
+    /* Options */
 	_update_flux = opts->updateFlux();
 	_l2_norm_conv_thresh = opts->getL2NormConvThresh();
     _compute_powers = opts->computePinPowers();
@@ -465,8 +465,9 @@ void Solver::updateKeff(int iteration) {
 		log_printf(NORMAL, "Iteration %d, MOC k = %f, CMFD k = %f", 
 		iteration, _k_eff, _cmfd->getKeff());
 
-		if (_update_flux){
-	        _k_eff = _cmfd->getKeff();
+		if (_update_flux)
+		{
+	//_k_eff = _cmfd->getKeff();
             _cmfd->updateMOCFlux(iteration);
 		}
 	}
@@ -1387,7 +1388,7 @@ void Solver::runLoo(int i)
 	_cmfd->computeQuadSrc();
 			 
 	/* Performs low order MOC */
-	loo_keff =_cmfd->computeLooFluxPower(LOO, i, _k_eff);
+	loo_keff = _cmfd->computeLooFluxPower(LOO, i, _k_eff);
 	loo_keff = loo_keff;
 
 	return;
@@ -1515,7 +1516,7 @@ double Solver::kernel(int max_iterations) {
 			{
 	
 				/* Converge the flux */
-				MOCsweep(1000);
+				//MOCsweep(1000);
 
 				/* plot pin powers */
 				if (_compute_powers == true)
@@ -1661,7 +1662,9 @@ void Solver::checkNeutBal(Mesh* mesh){
 			/* leakage */
 			for (int s = 0; s < 4; s++){
 				for (int e = 0; e < ng; e++){
-					log_printf(NORMAL, " CMFD mesh %d, surface %d, energy %d, "
+					/* FIXME: the partial current here do not agree with
+					 * plotting? */
+					log_printf(INFO, " CMFD mesh %d, surface %d, energy %d, "
 							   "partial current is %f", 
 							   y*cell_width + x, s, e, 
 							   meshCell->getMeshSurfaces(s)->getCurrent(e));
@@ -1671,20 +1674,36 @@ void Solver::checkNeutBal(Mesh* mesh){
 				if (meshCell->getMeshSurfaces(s)->getBoundary() == VACUUM){
 					for (int e = 0; e < ng; e++){
 						if (s == 0){
-							leak += meshCell->getMeshSurfaces(s)->getDHat()[e] * meshCell->getOldFlux()[e]*meshCell->getHeight();
-							leak += meshCell->getMeshSurfaces(s)->getDTilde()[e] * meshCell->getOldFlux()[e]*meshCell->getHeight();
+							leak += meshCell->getMeshSurfaces(s)->getDHat()[e] 
+								* meshCell->getOldFlux()[e]
+								* meshCell->getHeight();
+							leak += meshCell->getMeshSurfaces(s)->getDTilde()[e]
+								* meshCell->getOldFlux()[e]
+								* meshCell->getHeight();
 						}
 						else if (s == 2){
-							leak += meshCell->getMeshSurfaces(s)->getDHat()[e] * meshCell->getOldFlux()[e]*meshCell->getHeight();
-							leak -= meshCell->getMeshSurfaces(s)->getDTilde()[e] * meshCell->getOldFlux()[e]*meshCell->getHeight();
+							leak += meshCell->getMeshSurfaces(s)->getDHat()[e] 
+								* meshCell->getOldFlux()[e]
+								* meshCell->getHeight();
+							leak -= meshCell->getMeshSurfaces(s)->getDTilde()[e]
+								* meshCell->getOldFlux()[e]
+								* meshCell->getHeight();
 						}
 						else if (s == 1){
-							leak += meshCell->getMeshSurfaces(s)->getDHat()[e] * meshCell->getOldFlux()[e]*meshCell->getWidth();
-							leak -= meshCell->getMeshSurfaces(s)->getDTilde()[e] * meshCell->getOldFlux()[e]*meshCell->getWidth();
+							leak += meshCell->getMeshSurfaces(s)->getDHat()[e] 
+								* meshCell->getOldFlux()[e]
+								* meshCell->getWidth();
+							leak -= meshCell->getMeshSurfaces(s)->getDTilde()[e]
+								* meshCell->getOldFlux()[e]
+								* meshCell->getWidth();
 						}
 						else if (s == 3){
-							leak += meshCell->getMeshSurfaces(s)->getDHat()[e] * meshCell->getOldFlux()[e]*meshCell->getWidth();
-							leak += meshCell->getMeshSurfaces(s)->getDTilde()[e] * meshCell->getOldFlux()[e]*meshCell->getWidth();
+							leak += meshCell->getMeshSurfaces(s)->getDHat()[e] 
+								* meshCell->getOldFlux()[e]
+								* meshCell->getWidth();
+							leak += meshCell->getMeshSurfaces(s)->getDTilde()[e]
+								* meshCell->getOldFlux()[e]
+								* meshCell->getWidth();
 						}
 					}
 				}
@@ -1692,15 +1711,18 @@ void Solver::checkNeutBal(Mesh* mesh){
 
 			/* compute absorb and fis rates */
 			for (int e = 0; e < ng; e ++){
-				absorb += meshCell->getSigmaA()[e]*meshCell->getVolume()*meshCell->getOldFlux()[e];
-				fis    += meshCell->getNuSigmaF()[e]*meshCell->getVolume()*meshCell->getOldFlux()[e];
+				absorb += meshCell->getSigmaA()[e] * meshCell->getVolume() * 
+					meshCell->getOldFlux()[e];
+				fis += meshCell->getNuSigmaF()[e] * meshCell->getVolume()
+					* meshCell->getOldFlux()[e];
 			}
 
 		}
 	}
 
 	/* compute total residual and average ratio */
-	log_printf(INFO, "CMFD fis: %f, absorb: %f, leak: %f, keff: %f", fis, absorb, leak, fis/(leak + absorb));
+	log_printf(INFO, "CMFD fis: %f, absorb: %f, leak: %f, keff: %f", 
+			   fis, absorb, leak, fis / (leak + absorb));
 }
 
 

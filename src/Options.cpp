@@ -26,10 +26,12 @@ Options::Options(int argc, char **argv) {
 	_cmfd = false; 			
 	_k_guess = 1.0;
 		
-	_loo = true;
-	_loo_after_MOC_converge = true;
-	_plot_quad_flux = true; 
+	_loo = false;
+	_loo_after_MOC_converge = false;
+	_plot_quad_flux = false; 
 	_plot_fluxes = false;				/* plot colors, not values*/
+	_plot_current = false;				/* plot cmfd currents */
+	_multigroup = false;				/* sets CMFD to one group structure */
 
 	/* Checks the working directory to set the relative path for input files
 	 * This is important so that default input files work when program is run
@@ -51,10 +53,9 @@ Options::Options(int argc, char **argv) {
 	_compute_pin_powers = false;		/* Default will not compute pin powers */
 	_compress_cross_sections = false;	/* Default will not compress cross-sections */
 	_update_flux = true;  				/* Default will not use CMFD to update flux */
-	_plot_current = true;				/* Default will not plot cmfd currents */
-	_plot_diffusion = true;			/* Default will not plot diffusion flux */
+	_plot_diffusion = false;			/* Default will not plot diffusion flux */
 
-	_multigroup = false;				/* Default sets CMFD to one group structure */
+
 	_print_matrices = false;			/* Default will not print matrices */
 	_cmfd_level = 1;					/* Default cmfd level is 1 (hightest level) */
 	_plot_keff = false;					/* Default will not plot keff */
