@@ -764,7 +764,7 @@ void Plotter::plotQuadFlux(Mesh* mesh, int iter_num){
 
 			/* SIDE 0 */
 			/* get midpoint of mesh surface */
-			x_mid = convertToPixelX(meshCell->getBounds()[0]) - 170.0;
+			x_mid = convertToPixelX(meshCell->getBounds()[0]) + 20.0; // was -170
 			y_mid = convertToPixelY((meshCell->getBounds()[1] + 
 									 meshCell->getBounds()[3]) / 2.0);
 
@@ -790,7 +790,7 @@ void Plotter::plotQuadFlux(Mesh* mesh, int iter_num){
 
 			/* SIDE 2 */
 			/* get midpoint of mesh surface */
-			x_mid = convertToPixelX(meshCell->getBounds()[2]) + 40.0;
+			x_mid = convertToPixelX(meshCell->getBounds()[2]) - 180.0;//was 40
 			y_mid = convertToPixelY((meshCell->getBounds()[1] 
 									 + meshCell->getBounds()[3]) / 2.0);
 
@@ -817,7 +817,7 @@ void Plotter::plotQuadFlux(Mesh* mesh, int iter_num){
 			/* get midpoint of mesh surface */
 			x_mid = convertToPixelX((meshCell->getBounds()[0] 
 									 + meshCell->getBounds()[2]) / 2.0);
-			y_mid = convertToPixelY(meshCell->getBounds()[1]) + 20.0;
+			y_mid = convertToPixelY(meshCell->getBounds()[1]) - 20.0;//was +40
 
 			if (y_mid > y_max)
 				y_mid -= 40.0;
@@ -841,7 +841,7 @@ void Plotter::plotQuadFlux(Mesh* mesh, int iter_num){
 			/* get midpoint of mesh surface */
 			x_mid = convertToPixelX((meshCell->getBounds()[0] 
 									 + meshCell->getBounds()[2]) / 2.0);
-			y_mid = convertToPixelY(meshCell->getBounds()[3]) - 20.0;
+			y_mid = convertToPixelY(meshCell->getBounds()[3]) + 20.0;//was -20
 
 			if (y_mid < y_min)
 				y_mid += 40.0;
