@@ -112,12 +112,15 @@ void Cmfd::computeXS(){
 		meshCell = _mesh->getCells(i);
 
 		/* if single group, zero tallies */
-		abs_tally = 0.0;
-		nu_fis_tally = 0.0;
-		dif_tally = 0.0;
-		tot_tally = 0.0;
-		rxn_tally = 0.0;
-		scat_tally = 0.0;
+		if (_mesh->getMultigroup() == false)
+		{
+			abs_tally = 0.0;
+			nu_fis_tally = 0.0;
+			dif_tally = 0.0;
+			tot_tally = 0.0;
+			rxn_tally = 0.0;
+			scat_tally = 0.0;
+		}
 
 		/* loop over energy groups */
 		for (e = 0; e < NUM_ENERGY_GROUPS; e++) 
@@ -217,6 +220,7 @@ void Cmfd::computeXS(){
 					   meshCell->getOldFlux()[0]);
 			meshCell->setChi(1, 0);
 			meshCell->setSigmaS(scat_tally / rxn_tally, 0, 0);
+			meshCell->setSigmaS(0.0, 0, 0);
 		}
 	}
 }
@@ -1295,7 +1299,7 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter)
 
 	/* create petsc array to store old flux */
 	petsc_err = VecCreate(PETSC_COMM_WORLD, &phi_old);
-	size = ch*cw*ng;
+	size = ch * cw * ng;
 	petsc_err = VecSetSizes(phi_old, PETSC_DECIDE, size);
 	petsc_err = VecSetFromOptions(phi_old);
 	CHKERRQ(petsc_err);
@@ -1509,7 +1513,7 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 	int iter, max_outer = 100; 
 
 	/* FIXME */
-	max_outer = 1;
+	max_outer = 10;
 
 	if (solveMethod == DIFFUSION){
 		max_outer = 1000;
@@ -1632,9 +1636,11 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 						scatter_source += sigma_s[e*ng+g] * scalar_flux[g];		
 				}
 				else
+				{
+					/* FIXME: scattering source = 0 for 1G? */
 					scatter_source += sigma_s[0] * scalar_flux[0];
-
-
+					//scatter_source = 0.0;
+				}
 				new_src[i][e] = (fission_source * chi[e] / _keff 
 								 + scatter_source) * ONE_OVER_FOUR_PI;
  
@@ -1654,7 +1660,7 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 			{
 				src_ratio = new_src[i][e] / meshCell->getSrc()[e];
 				/* FIXME */
-				src_ratio = 1.0;
+				//src_ratio = 1.0;
 				for (int g = 0; g < 8; g++)
 				{
 					int d = e * ng + g;
