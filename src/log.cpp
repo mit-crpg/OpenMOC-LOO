@@ -30,6 +30,9 @@ void log_setlevel(logLevel newlevel) {
     	case INFO:
     		log_printf(INFO, "Logging level set to INFO");
     		break;
+	    case ACTIVE:
+			log_printf(INFO, "Logging level set to ACTIVE");
+			break;
     	case NORMAL:
     		log_printf(INFO, "Logging level set to NORMAL");
     		break;
@@ -109,6 +112,9 @@ void log_printf(logLevel level, const char *format, ...) {
     		case (INFO):
     			printf("[  INFO   ]  ");
     			break;
+		    case (ACTIVE):
+				printf("[  ACTIVE ]  ");
+				break;
     		case (NORMAL):
     			printf("[  NORMAL ]  ");
     			break;

@@ -20,6 +20,7 @@
 typedef enum logLevels {
 	DEBUG,
 	INFO,
+	ACTIVE,
 	NORMAL,
 	WARNING,
 	CRITICAL,
