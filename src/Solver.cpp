@@ -713,7 +713,7 @@ void Solver::tallyLooForwardFlux(Track *track, segment *segment,
 	double phi = track->getPhi();
 
 	/* Defines index */
-	if (phi > PI/2)
+	if (phi >= PI/2.0)
 		index = 1;
 
 	/* get the ID of the surface that the segment ends on */
@@ -722,6 +722,10 @@ void Solver::tallyLooForwardFlux(Track *track, segment *segment,
 	if (surfID != -1)
 	{
 		meshSurface = meshSurfaces[surfID];
+		log_printf(DEBUG, "forward, phi = %f, index = %d, surface ID = %d",
+				   phi, index, 
+				   meshSurface->getId());
+
 		/* set polar angle * energy group to 0 */
 		pe = 0;
 		/* loop over energy groups */
@@ -749,7 +753,7 @@ void Solver::tallyLooBackwardFlux(Track *track, segment *segment,
 	double phi = track->getPhi();
 
 	/* Defines index */
-	if (phi > PI/2)
+	if (phi >= PI/2.0)
 		index = 1;
 	
 	/* get the ID of the surface that the segment starts on */
@@ -759,6 +763,9 @@ void Solver::tallyLooBackwardFlux(Track *track, segment *segment,
 	{
 		/* Obtains the surface that the segment crosses */
 		meshSurface = meshSurfaces[surfID];
+		log_printf(DEBUG, "backward, phi = %f, index = %d, surface ID = %d", 
+				   phi, index, 
+				   meshSurface->getId());
 
 		/* Set polar angle * energy group to 
 		   num groups * num angles */

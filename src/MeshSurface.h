@@ -25,12 +25,12 @@
 
 class MeshSurface {
 private:
-	double _current[NUM_ENERGY_GROUPS];
-	double _quad_current[NUM_ENERGY_GROUPS][2];
-	double _quad_flux[NUM_ENERGY_GROUPS][2];
-	double _d_hat[NUM_ENERGY_GROUPS];
-	double _d_tilde[NUM_ENERGY_GROUPS];
-	double _d_dif[NUM_ENERGY_GROUPS];
+	double *_current;
+	double **_quad_current;
+	double **_quad_flux;
+	double *_d_hat;
+	double *_d_tilde;
+	double *_d_dif;
 
 	/* Surface ID could be 0,1,2,3 and is later set in MeshCell.cpp */
 	int _id; 

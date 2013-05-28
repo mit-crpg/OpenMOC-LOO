@@ -777,7 +777,6 @@ void Plotter::plotQuadFlux(Mesh* mesh, int iter_num){
 	/* plot mesh currents next to surface */
 	for (int cellY = 0; cellY < mesh->getCellHeight(); cellY++){
 		for (int cellX = 0; cellX < mesh->getCellWidth(); cellX++){
-			/* FIXME: should be cellX * mesh->getCellHeight() + cellY? */
 			meshCell = mesh->getCells(cellY * mesh->getCellWidth() + cellX);
 
 			/* SIDE 0 */
