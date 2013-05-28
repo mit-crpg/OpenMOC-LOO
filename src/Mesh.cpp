@@ -49,7 +49,6 @@ MeshCell* Mesh::getCells(int cell){
 	return &_cells[cell];
 }
 
-
 void Mesh::setMultigroup(bool multigroup){
 	_multigroup = multigroup;
 }
@@ -67,33 +66,31 @@ bool Mesh::getPrintMatrices(){
 }
 
 /* given an x,y coordinate, find what mesh cell the point is in */
+
+
 int Mesh::findMeshCell(double pointX, double pointY){
 
-	double left;
-	double top = _height / 2.0;
-	bool flag = false;
-	int cell = 0;
+	double left = - _width / 2.0;
+	double bottom = - _height / 2.0;
+	double height, width;
 
 	for (int y = 0; y < _cell_height; y++){
-		left = - _width / 2.0;
-		cell = y * _cell_width;
-		if (pointY <= top && pointY >= top - getCells(cell)->getHeight()){
-			for (int x = 0; x < _cell_width; x++){
-				cell = y * _cell_width + x;
-				if (pointX >= left && pointX <= left + getCells(cell)->getWidth()){
-					flag = true;
-					break;
-				}
-				left = left + getCells(cell)->getWidth();
-			}
-			if (flag == true){
-				break;
+		height = getCells(y * _cell_width)->getHeight();
+
+		if (pointY >= bottom && pointY <= bottom + height)
+		{
+			for (int x = 0; x < _cell_width; x++)
+			{
+				width = getCells(y * _cell_width + x)->getWidth();
+				if (pointX >= left && pointX <= left + width)
+					return y * _cell_width + x;
+				left += width;
 			}
 		}
-		top = top - getCells(cell)->getHeight();
+		bottom += height;
 	}
 
-	return cell;
+	return -1;
 }
 
 void Mesh::setWidth(double width){

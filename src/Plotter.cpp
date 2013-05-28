@@ -145,28 +145,34 @@ bool Plotter::plotQuadFluxFlag(){
  * Convert an x value our from geometry coordinates to Bitmap coordinates.
  */
 double Plotter::convertToGeometryX(int x){
-	return double((x - _bit_length_x/2.0) / _x_pixel);
+	return double( (x - _bit_length_x / 2.0) / _x_pixel);
 }
 
 /**
  * Convert an y value our from geometry coordinates to Bitmap coordinates.
+ * when there is a negative sign here, the origin is top-right corner; 
+ * when no negative sign here, the origin is bottom-left corner. 
  */
-double Plotter::convertToGeometryY(int y){
-	return double(-(y - _bit_length_y/2.0) / _y_pixel);
+double Plotter::convertToGeometryY(int y)
+{
+	return double (- (y - _bit_length_y / 2.0 ) / _y_pixel);
+	//return double ((y - _bit_length_y / 2.0 ) / _y_pixel);
 }
 
 /**
  * Convert an x value our from geometry coordinates to Bitmap coordinates.
  */
 int Plotter::convertToPixelX(double x){
-	return int(((x + _width / 2.0) / _width) * _bit_length_x);
+	//return int(((x + _width / 2.0) / _width) * _bit_length_x);
+	return int(( x / _width + 0.50) * _bit_length_x);
 }
 
 /**
  * Convert an y value our from geometry coordinates to Bitmap coordinates.
  */
 int Plotter::convertToPixelY(double y){
-	return int((1.0 - (y + _height / 2.0) / _height) * _bit_length_y);
+	return int((- y / _height + 0.50) * _bit_length_y);
+	//return int((y / _height + 0.50) * _bit_length_y);
 }
 
 
@@ -913,7 +919,8 @@ void Plotter::plotXS(Mesh* mesh, int iter_num){
 		for (int x = 0; x < _bit_length_x; x++){
 			x_global = convertToGeometryX(x);
 			y_global = convertToGeometryY(y);
-			bitMap->pixels[y * _bit_length_x + x] = mesh->findMeshCell(x_global, y_global);
+			bitMap->pixels[y * _bit_length_x + x] = 
+				mesh->findMeshCell(x_global, y_global);
 		}
 	}
 
@@ -930,8 +937,10 @@ void Plotter::plotXS(Mesh* mesh, int iter_num){
 			meshCell = mesh->getCells(cellY * mesh->getCellWidth() + cellX);
 
 			/* find middle of cell */
-			x_mid = convertToPixelY((meshCell->getBounds()[0] + meshCell->getBounds()[2]) / 2.0);
-			y_mid = convertToPixelY((meshCell->getBounds()[1] + meshCell->getBounds()[3]) / 2.0);
+			x_mid = convertToPixelY((meshCell->getBounds()[0] + 
+									 meshCell->getBounds()[2]) / 2.0);
+			y_mid = convertToPixelY((meshCell->getBounds()[1] + 
+									 meshCell->getBounds()[3]) / 2.0);
 
 			/* Cell Index */
 			text_stream << "Cell Index: ("<< cellX << " , " << cellY << ")";

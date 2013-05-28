@@ -24,13 +24,16 @@ Options::Options(int argc, char **argv) {
 	_l2_norm_conv_thresh = 1e-8;			/* Default will set keff conv thresh to 1e-6 */
 
 	_cmfd = false; 			
-	_k_guess = 1.0;
 		
-	_loo = false;
-	_loo_after_MOC_converge = false;
-	_plot_quad_flux = false; 
+	_loo = true;
+	_loo_after_MOC_converge = true;
+
+
+	_plot_quad_flux = true;             /* Plots quad flux, net current, xs */
 	_plot_fluxes = false;				/* plot colors, not values*/
 	_plot_current = false;				/* plot cmfd currents */
+	_plot_diffusion = false;			/* FIXME: does nothing now */
+
 	_multigroup = false;				/* sets CMFD to one group structure */
 
 	/* Checks the working directory to set the relative path for input files
@@ -43,6 +46,8 @@ Options::Options(int argc, char **argv) {
 
 	_geometry_file = _relative_path + "xml-sample/Cmfd/geometry_pin.xml"; 	 /* Default geometry input file */
 	_material_file = _relative_path + "xml-sample/Cmfd/material_simple.xml";    /* Default material input file */
+	_k_guess = 1.0;
+
 	_track_spacing = 0.5;				/* Default track spacing: 0.05 */
 	_num_azim = 4;						/* Default \# azimuthal angles: 32 */
 	_bit_dimension = 1000;				/* y dimension of tracks and segments plots */
@@ -53,7 +58,6 @@ Options::Options(int argc, char **argv) {
 	_compute_pin_powers = false;		/* Default will not compute pin powers */
 	_compress_cross_sections = false;	/* Default will not compress cross-sections */
 	_update_flux = true;  				/* Default will not use CMFD to update flux */
-	_plot_diffusion = false;			/* Default will not plot diffusion flux */
 
 
 	_print_matrices = false;			/* Default will not print matrices */

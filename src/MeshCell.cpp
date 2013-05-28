@@ -25,7 +25,6 @@ MeshCell::MeshCell(){
 	_mesh_surfaces[6].setId(6);		/* top right */
 	_mesh_surfaces[7].setId(7);		/* top left */
 
-
 	for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
 	{
 		_chi[e]         = 0.0;
@@ -33,6 +32,7 @@ MeshCell::MeshCell(){
 		_sigma_a[e]     = 0.0;
 		_sigma_t[e]     = 0.0;
 		_diffusivity[e] = 0.0;
+
 		/* Initializes mesh cell scalar fluxes to be ones. */
 		_old_flux[e]    = 1.0;
 		_new_flux[e]    = 1.0;
