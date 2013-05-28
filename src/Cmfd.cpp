@@ -1061,7 +1061,7 @@ void Cmfd::computeQuadFlux()
 					s[i]->setCurrent(current, e);
 
 					/* Prints to screen quad current and quad flux */
-					log_printf(NORMAL, "cell %d surface %d energy %d's current"
+					log_printf(ACTIVE, "cell %d surface %d energy %d's current"
 							   " is %.10f, quad fluxes = %.10f %.10f", 
 							   y*cell_width+x, i, e, current,
 							   s[i]->getQuadFlux(e, 0), s[i]->getQuadFlux(e,1));
@@ -1669,7 +1669,7 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 					log_printf(DEBUG, "Old Mesh Averaged Source = %e", 
 							   meshCell->getSrc()[e]);
 				}
-				log_printf(NORMAL, "Average source ratio for cell %d" 
+				log_printf(ACTIVE, "Average source ratio for cell %d" 
 						   " energy %d, by %.10f", i, e, src_ratio);
 			}
 		}
@@ -1689,7 +1689,7 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 			/* 1st loop */
 			/* Get the initial angular flux */
 			flux = _mesh->getCells(2)->getMeshSurfaces(1)->getQuadFlux(e,0);	
-			log_printf(NORMAL, " Forward, begin with %f", flux);
+			log_printf(ACTIVE, " Forward, begin with %f", flux);
 			for (int x = 0; x < 8; x++)
 			{
 				for (int y = 0; y < 8; y++)
@@ -1707,10 +1707,10 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 				}
 			}
 			_mesh->getCells(2)->getMeshSurfaces(1)->setQuadFlux(flux, e, 0);
-			log_printf(NORMAL, "  end with %f", flux);
+			log_printf(ACTIVE, "  end with %f", flux);
 
 			flux = _mesh->getCells(2)->getMeshSurfaces(1)->getQuadFlux(e,1); 
-			log_printf(NORMAL, " Backward, begin with %f", flux);
+			log_printf(ACTIVE, " Backward, begin with %f", flux);
 			for (int x = 7; x >=0 ; x--)
 			{
 				for (int y = 7; y >= 0; y--)
@@ -1728,13 +1728,13 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 				}
 			}
 			_mesh->getCells(2)->getMeshSurfaces(1)->setQuadFlux(flux, e, 1);
-			log_printf(NORMAL, "  end with %f", flux);
+			log_printf(ACTIVE, "  end with %f", flux);
 
 
 
 			/* 2nd loop */
 			flux = _mesh->getCells(3)->getMeshSurfaces(1)->getQuadFlux(e, 0);
-			log_printf(NORMAL, " Forward, loop 2, begin with %f", flux);
+			log_printf(ACTIVE, " Forward, loop 2, begin with %f", flux);
 
 			for (int x = 0; x < 8; x++)
 			{
@@ -1753,10 +1753,10 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 				}
 			}
 			_mesh->getCells(3)->getMeshSurfaces(1)->setQuadFlux(flux, e, 0);
-			log_printf(NORMAL, "  end with %f", flux);
+			log_printf(ACTIVE, "  end with %f", flux);
 
 			flux = _mesh->getCells(3)->getMeshSurfaces(1)->getQuadFlux(e, 1);
-			log_printf(NORMAL, " Backward, loop 2, begin with %f", flux);
+			log_printf(ACTIVE, " Backward, loop 2, begin with %f", flux);
 			for (int x = 7; x >=0 ; x--)
 			{
 				for (int y = 7; y >= 0; y--)
@@ -1774,7 +1774,7 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 				}
 			}
 			_mesh->getCells(3)->getMeshSurfaces(1)->setQuadFlux(flux, e, 1);
-			log_printf(NORMAL, "  end with %f", flux);
+			log_printf(ACTIVE, "  end with %f", flux);
 		}				
 
 		double phi_ratio;
@@ -1789,11 +1789,11 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 					/ meshCell->getSumQuadFlux()[e] / 8;
 
 				/* FIXME */
-				phi_ratio = 1.0;
+				//phi_ratio = 1.0;
 
 				meshCell->setNewFlux(meshCell->getOldFlux()[e] * phi_ratio, e);
 
-				log_printf(NORMAL, "Update the cell-averaged scalar flux by "
+				log_printf(ACTIVE, "Update the cell-averaged scalar flux by "
 						   "factor of %.10f, old phi = %.10f", 
 						   phi_ratio, meshCell->getOldFlux()[e]);
 			}
@@ -1835,7 +1835,7 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 									 * vol_tot/ fis_tot, e);
 			}
 		}
-		log_printf(NORMAL, "Normalize all scalar flux by %f", 
+		log_printf(ACTIVE, "Normalize all scalar flux by %f", 
 				   vol_tot / fis_tot);
 
 
