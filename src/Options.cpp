@@ -22,6 +22,7 @@
  */
 Options::Options(int argc, char **argv) {
 	_l2_norm_conv_thresh = 1e-8;			/* Default will set keff conv thresh to 1e-6 */
+	_moc_conv_thresh = _l2_norm_conv_thresh;
 
 	_cmfd = false; 			
 		
@@ -344,12 +345,21 @@ bool Options::updateFlux(){
 }
 
 /**
- * Returns the keff convergence threshold
- * @return keff convergence threshold
+ * Returns the fission source convergence threshold for acceleration iteration
+ * @return fission source convergence threshold innter iteration
  */
 double Options::getL2NormConvThresh() {
 	return _l2_norm_conv_thresh;
 }
+
+/**
+ * Returns the fission source convergence threshold for MOC outter iteration
+ * @return fission source convergence threshold for outter iteration
+ */
+double Options::getMOCConvThresh() {
+	return _moc_conv_thresh;
+}
+
 
 /**
  * Returns bool telling us cmfd group structure

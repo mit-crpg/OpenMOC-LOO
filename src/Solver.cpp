@@ -30,6 +30,7 @@ Solver::Solver(Geometry* geom, TrackGenerator* track_generator,
     /* Options */
 	_update_flux = opts->updateFlux();
 	_l2_norm_conv_thresh = opts->getL2NormConvThresh();
+	_moc_conv_thresh = opts->getMOCConvThresh();
     _compute_powers = opts->computePinPowers();
     _run_cmfd = opts->getCmfd();
 	_run_loo = opts->getLoo();
@@ -467,7 +468,7 @@ void Solver::updateKeff(int iteration) {
 
 		if (_update_flux)
 		{
-	//_k_eff = _cmfd->getKeff();
+			_k_eff = _cmfd->getKeff();
             _cmfd->updateMOCFlux(iteration);
 		}
 	}
@@ -479,7 +480,7 @@ void Solver::updateKeff(int iteration) {
 				   iteration, _k_eff, _cmfd->getKeff());
 
 		if (_update_flux){
-	//_k_eff = _cmfd->getKeff();
+			_k_eff = _cmfd->getKeff();
             _cmfd->updateMOCFlux(iteration);
 		}
 	}
@@ -1430,7 +1431,6 @@ void Solver::runCmfd(int i)
 double Solver::computeL2Norm(double *old_fsr_powers)
 {
 	double l2_norm = 0.0;
-	//int ng = NUM_ENERGY_GROUPS;
 
 	/* FIXME: check what happens to energy? */
 	for (int i = 0; i < _num_FSRs; i++)
@@ -1488,7 +1488,6 @@ double Solver::kernel(int max_iterations) {
 	for (int n = 0; n < _num_FSRs; n++)
 		old_fsr_powers[n] = _FSRs_to_powers[n];
 
-
 	/* Source iteration loop */
 	for (i = 0; i < max_iterations; i++) 
 	{
@@ -1500,7 +1499,6 @@ double Solver::kernel(int max_iterations) {
 		normalizeFlux();
 		/* Updates Q for each FSR based on new scalar flux */
 		updateSource();
-
 
 		/* Perform one sweep for no acceleration, or call one of the 
 		 * acceleration function which performs two sweeps plus acceleration */
@@ -1516,102 +1514,71 @@ double Solver::kernel(int max_iterations) {
 		 * using acceleration steps */
 		updateKeff(i);
 
-		/* If flux converged, return k_eff */
-		if (_run_cmfd)
-		{
-			if (_cmfd->getL2Norm() < _l2_norm_conv_thresh) 
-			{
-	
-				/* Converge the flux */
-				//MOCsweep(1000);
+		/* Computes new FSR powers / fission rates */
+		computeFsrPowers();
 
-				/* plot pin powers */
-				if (_compute_powers == true)
-					plotPinPowers();
-
-				/* plot CMFD flux and xs */
-				if (_run_cmfd && _plotter->plotCurrent())
-				{
-					_cmfd->computeXS();
-					_cmfd->computeDs();
-					_plotter->plotDHats(_geom->getMesh(), i);
-					_plotter->plotNetCurrents(_geom->getMesh());
-					_plotter->plotXS(_geom->getMesh(), i);
-				}
-
-				/* plot MOC flux */
-				if (_plotter->plotFlux() == true)
-				{
-					/* Load fluxes into FSR to flux map */
-					for (int r=0; r < _num_FSRs; r++) {
-						double* fluxes = _flat_source_regions[r].getFlux();
-						for (int e=0; e < NUM_ENERGY_GROUPS; e++)
-						{
-							_FSRs_to_fluxes[e][r] = fluxes[e];
-							_FSRs_to_fluxes[NUM_ENERGY_GROUPS][r] += fluxes[e];
-						}
-					}
-
-					plotFluxes(i+1);
-				}
-
-				return _k_eff;
-			}
-		}
-		else /* if no acceleration or LOO */
-		{
-			/* Computes new FSR powers / fission rates */
-			computeFsrPowers();
-
-			/* Checks energy-integrated L2 norm of FSR powers / fission rates */
-			double eps = computeL2Norm(old_fsr_powers);
+		/* Checks energy-integrated L2 norm of FSR powers / fission rates */
+		double eps = computeL2Norm(old_fsr_powers);
 			
-			/* Stores current FSR powers into old fsr powers for next iter */
-			for (int n = 0; n < _num_FSRs; n++)
-				old_fsr_powers[n] = _FSRs_to_powers[n];
+		/* Stores current FSR powers into old fsr powers for next iter */
+		for (int n = 0; n < _num_FSRs; n++)
+			old_fsr_powers[n] = _FSRs_to_powers[n];
 
-			if (eps < _l2_norm_conv_thresh){
-				/* Converge the flux further */
-				//MOCsweep(1000);
-	
-				/* Run one steps of LOO if it is requested to do so */
-				if (_loo_after_MOC_converge)
-				{
-					updateSource();
-					runLoo(1000);
-				}
+        /* Alternative: if (_cmfd->getL2Norm() < _moc_conv_thresh) */
+		if (eps < _moc_conv_thresh) 
+		{
+			/* Converge the flux further */
+			//MOCsweep(5);
 
-				/* plot pin powers */
-				if (_compute_powers == true)
-					plotPinPowers();
+			/* plot pin powers */
+			if (_compute_powers)
+				plotPinPowers();
 
-				/* plot LOO flux and xs */
-				if (_run_loo && _plotter->plotQuadFluxFlag())
-				{
-					_plotter->plotQuadFlux(_geom->getMesh(), i);
-					_plotter->plotNetCurrents(_geom->getMesh());
-					_plotter->plotXS(_geom->getMesh(), i);
-				}
-
-				/* plot MOC flux */
-				if (_plotter->plotFlux() == true)
-				{
-					/* Load fluxes into FSR to flux map */
-					for (int r=0; r < _num_FSRs; r++) {
-						double* fluxes = _flat_source_regions[r].getFlux();
-						for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
-						{
-							_FSRs_to_fluxes[e][r] = fluxes[e];
-							_FSRs_to_fluxes[NUM_ENERGY_GROUPS][r] += fluxes[e];
-						}
-					}
-
-					plotFluxes(i+1);
-				}
-
-				return _k_eff;
+			/* plot CMFD flux and xs */
+			if (_run_cmfd && _plotter->plotCurrent() )
+			{
+				_cmfd->computeXS();
+				_cmfd->computeDs();
+				_plotter->plotDHats(_geom->getMesh(), i);
+				_plotter->plotNetCurrents(_geom->getMesh());
+				_plotter->plotXS(_geom->getMesh(), i);
 			}
-		}	
+
+			/* Run one steps of LOO if it is requested to do so */
+			if ( _run_loo && _loo_after_MOC_converge)
+			{
+				updateSource();
+				runLoo(1000);
+			}
+
+			/* plot LOO flux and xs */
+			if (_run_loo && _plotter->plotQuadFluxFlag())
+			{
+				_plotter->plotQuadFlux(_geom->getMesh(), i);
+				_plotter->plotNetCurrents(_geom->getMesh());
+				_plotter->plotXS(_geom->getMesh(), i);
+			}
+
+			/* plot MOC flux */
+			if (_plotter->plotFlux())
+			{
+				/* Load fluxes into FSR to flux map */
+				for (int r=0; r < _num_FSRs; r++) {
+					double* fluxes = _flat_source_regions[r].getFlux();
+					for (int e=0; e < NUM_ENERGY_GROUPS; e++)
+					{
+						_FSRs_to_fluxes[e][r] = fluxes[e];
+						_FSRs_to_fluxes[NUM_ENERGY_GROUPS][r] += fluxes[e];
+					}
+				}
+
+				plotFluxes(i+1);
+			}
+
+			return _k_eff;
+		}
+
+
 
 		/* If not converged, save old k_eff and pop off old_keff from 
 		   the previous iteration */

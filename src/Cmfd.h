@@ -64,13 +64,15 @@ private:
 	Vec _source_old;
 	double _keff;
 	double _l2_norm;
+	double _l2_norm_conv_thresh;
 	double _spacing;
 	int _num_azim;
 	bool _use_diffusion_correction;
 
 public:
 	Cmfd(Geometry* geom, Plotter* plotter, Mesh* mesh, bool runCmfd, 
-		 bool useDiffusionCorrection, TrackGenerator *track_generator);
+		 bool useDiffusionCorrection, double l2_norm_conv_thresh,
+		 TrackGenerator *track_generator);
 	virtual ~Cmfd();
  	void computeDs();
 	void computeDsBackup();

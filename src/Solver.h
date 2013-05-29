@@ -65,6 +65,7 @@ private:
 	double _pre_factor_spacing;
 	bool _update_flux;
 	double _l2_norm_conv_thresh;
+	double _moc_conv_thresh;
 	bool _compute_powers;
 	bool _run_cmfd;
 	bool _run_loo;

@@ -15,7 +15,8 @@
  * @param track_generator pointer to the trackgenerator
  */
 Cmfd::Cmfd(Geometry* geom, Plotter* plotter, Mesh* mesh, bool runCmfd, 
-		   bool useDiffusionCorrection, TrackGenerator *track_generator) {
+		   bool useDiffusionCorrection, double l2_norm_conv_thresh,
+		   TrackGenerator *track_generator) {
 
 	_geom = geom;
 	_plotter = plotter;
@@ -25,6 +26,7 @@ Cmfd::Cmfd(Geometry* geom, Plotter* plotter, Mesh* mesh, bool runCmfd,
 	_num_azim = track_generator->getNumAzim();
 	_spacing = track_generator->getSpacing();
 	_l2_norm = 1.0;
+	_l2_norm_conv_thresh = l2_norm_conv_thresh;
 	_use_diffusion_correction = useDiffusionCorrection;
 
 	if (runCmfd){
@@ -1289,7 +1291,6 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter)
 	PetscScalar sumold, sumnew, scale_val, eps;
 	PetscReal rtol = 1e-10;
 	PetscReal atol = 1e-10;
-	double criteria = 1e-10;
 	std::string string;
 
 	/* if single group, set ng (number of groups) to 1 */
@@ -1412,8 +1413,11 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter)
 		petsc_err = VecCopy(snew, sold);
 		CHKERRQ(petsc_err);
 
-		/* check for convergence */
-		if (iter > 5 && eps < criteria){
+		/* check for convergence for the CMFD iterative solver using 
+		 * _l2_norm_conv_thresh as criteria */
+		if (iter > 5 && eps < _l2_norm_conv_thresh)
+		{
+			log_printf(DEBUG, " CMFD converges in %d iterations", iter);
 			break;
 		}
 	}
@@ -1428,6 +1432,9 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter)
 	scale_val = (cw * ch * ng) / sumold;
 	petsc_err = VecScale(phi_old, scale_val);
 	CHKERRQ(petsc_err);
+
+	log_printf(NORMAL, " CMFD total fission source = %f", sumnew);
+
 
 	PetscScalar *old_phi;
 	PetscScalar *new_phi;
@@ -1447,7 +1454,9 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter)
 	petsc_err = VecRestoreArray(_phi_new, &new_phi);
 	CHKERRQ(petsc_err);
 
-	/* Computes L2 norm to decided whether outter MOC iteration should quit */
+	/* Computes L2 norm between the source that enters the CMFD acceleration 
+	 * step and the one coming out of converged CMFD step to decided whether 
+	 * the outter MOC iteration / source iteration should quit */
 	if (moc_iter > 0)
 	{
 		petsc_err = fisSourceNorm(snew, moc_iter);
@@ -1502,7 +1511,6 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter)
 
 	return _keff;
 }
-
 
 /* Computes the flux in each mesh cell using LOO */
 double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter, 
@@ -1661,7 +1669,7 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 							   " energy %d is %e", i, e, new_src[i][e]);
 			}
 
-		}
+		} /* finishing looping over i; exit to iter level */
 
 		double src_ratio;
 		/* Updates 8 quadrature sources based on form function */
@@ -1684,7 +1692,7 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 				log_printf(ACTIVE, "Average source ratio for cell %d" 
 						   " energy %d, by %.10f", i, e, src_ratio);
 			}
-		}
+		} /* finish iterating over i; exit to iter level */
 
 		/* Sweeps over geometry, solve LOO MOC */
 		for (int e = 0; e < ng; e++)
@@ -1778,7 +1786,7 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 			}
 			_mesh->getCells(i_array2[0])->getMeshSurfaces(1)->setQuadFlux(flux, e, 1);
 			log_printf(ACTIVE, "  end with %f", flux);
-		}				
+		} /* finish looping over energy; exit to iter level */				
 
 		double phi_ratio;
 		/* Computes new cell-averaged scalar flux based on new_sum_quad_flux */
@@ -1802,7 +1810,7 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 			}
 		}
 
-		/* Checks for convergence: computes keff assuming zero leakage */
+		/* Computes keff assuming zero leakage */
 		double fis_tot = 0, abs_tot = 0, vol_tot = 0;
 		for (int i = 0; i < cw * ch; i++)
 		{
@@ -1817,17 +1825,14 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 					/* Volume doe not seem to make a difference */
 					fis_tot += meshCell->getChi()[e]
 						* meshCell->getNuSigmaF()[g]
-						* meshCell->getNewFlux()[g] * meshCell->getVolume();
+						* meshCell->getNewFlux()[g];
 				}
-				abs_tot += meshCell->getSigmaA()[e] * meshCell->getNewFlux()[e]
-					* meshCell->getVolume();
+				abs_tot += meshCell->getSigmaA()[e] * meshCell->getNewFlux()[e];
 			}
 		}
 		_keff = fis_tot / abs_tot; 
 
-		log_printf(NORMAL, "%d-th LOO iteration k = %f / %f = %f", 
-				   iter, fis_tot, abs_tot, _keff);
-
+		double normalize_factor = 1.0 / fis_tot * cw * ch * ng;
 		/* Normalizes flux based on fission source FIXME: update? */
 		for (int i = 0; i < cw * ch; i++)
 		{
@@ -1835,14 +1840,36 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 			for (int e = 0; e < ng; e++)
 			{
 				meshCell->setNewFlux(meshCell->getNewFlux()[e] 
-									 * vol_tot/ fis_tot, e);
+									 * normalize_factor, e);
 			}
 		}
-		log_printf(ACTIVE, "Normalize all scalar flux by %f", 
-				   vol_tot / fis_tot);
+		log_printf(ACTIVE, "Normalize all scalar flux by %f", normalize_factor);
 
+		/* Computes the L2 norm of point-wise-division of energy-integrated
+		 * fission source of mesh cells */
+		double eps = 0.0;
+		double of, nf, xs;
+		for (int i = 0; i < cw * ch; i++)
+		{
+		    meshCell = _mesh->getCells(i);
+			of = 0;
+			nf = 0;
+			/* integrates over energy */
+			for (int e = 0; e < ng; e ++)
+			{
+				xs = meshCell->getNuSigmaF()[e];
+				of += xs * meshCell->getOldFlux()[e];
+				nf += xs * meshCell->getNewFlux()[e];
+			} 
+			eps += pow(nf / of - 1.0, 2);
+		}
+		eps = pow(eps, 0.5);
+	  
+		log_printf(NORMAL, "%d-th LOO iteration k = %f / %f = %f, eps = %e", 
+				   iter, fis_tot, abs_tot, _keff, eps);
 
-		if ((iter > 5) && (fabs(_keff - old_keff) / _keff < 1e-5))
+		/* If LOO iterative solver converges */
+		if ((iter > 5) && (eps < _l2_norm_conv_thresh))
 		{
 			/* new flux is already in place */
 			/* just need to print stuff */
@@ -1875,7 +1902,8 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 		}
 	}
 	
-	log_printf(WARNING, "Keff not converging after %d iterations", max_outer);
+	log_printf(WARNING, "Keff not converging after %d iter", 
+			   max_outer);
 
 	/* Cleaning up; FIXME: more cleaning */
 	for (int i = 0; i < cw * ch; i++)
@@ -2195,7 +2223,6 @@ int Cmfd::fisSourceNorm(Vec snew, int iter){
 	int ch = _mesh->getCellHeight();
 	int cw = _mesh->getCellWidth();
 	int ng = NUM_ENERGY_GROUPS;
-	_l2_norm = 0.0;
 	int petsc_err = 0;
 	PetscScalar *old_source;
 	PetscScalar *new_source;
@@ -2203,12 +2230,14 @@ int Cmfd::fisSourceNorm(Vec snew, int iter){
 	petsc_err = VecGetArray(snew, &new_source);
 	CHKERRQ(petsc_err);
 
+	_l2_norm = 0.0;
 	for (int i = 0; i < cw*ch; i++)
 	{
 		for (int e = 0; e < ng; e++)
 		{
 			if (new_source[i*ng+e] != 0.0)
-				_l2_norm += pow(new_source[i*ng+e] / old_source[i*ng+e] - 1.0, 2);
+				_l2_norm += pow(new_source[i * ng + e] / old_source[i * ng + e]
+								- 1.0, 2);
 		}
 	}
 	_l2_norm = pow(_l2_norm, 0.5);
