@@ -479,7 +479,7 @@ void Solver::updateKeff(int iteration) {
 				   iteration, _k_eff, _cmfd->getKeff());
 
 		if (_update_flux){
-			_k_eff = _cmfd->getKeff();
+	//_k_eff = _cmfd->getKeff();
             _cmfd->updateMOCFlux(iteration);
 		}
 	}

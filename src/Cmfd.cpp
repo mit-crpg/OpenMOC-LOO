@@ -1513,7 +1513,7 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 	int iter, max_outer = 100; 
 
 	/* FIXME */
-	max_outer = 10;
+	//max_outer = 10;
 
 	if (solveMethod == DIFFUSION){
 		max_outer = 1000;
@@ -1540,31 +1540,44 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 			meshCell->setNewFlux(meshCell->getOldFlux()[e], e);
 	}
 
-	/* Initializes terms internal to the LOO iterative solver */
-	double **sum_quad_flux, **quad_xs, **ratio, **expo, **tau, **new_src;
-	double **new_quad_src;
-	sum_quad_flux = new double*[cw*ch];
-	quad_xs = new double*[cw*ch];
-	ratio = new double*[cw*ch];
-	expo = new double*[cw*ch];
-	tau = new double*[cw*ch];
-	new_src = new double*[cw*ch];
-	new_quad_src = new double*[cw*ch];
 
 	double l = _mesh->getCells(0)->getL();
 
+	/* Allocate memories for terms internal to the LOO iterative solver */
+	double **sum_quad_flux, **quad_xs, **ratio, **expo, **tau, **new_src;
+	double **new_quad_src;
+	try
+	{
+		sum_quad_flux = new double*[cw*ch];
+		quad_xs = new double*[cw*ch];
+		ratio = new double*[cw*ch];
+		expo = new double*[cw*ch];
+		tau = new double*[cw*ch];
+		new_src = new double*[cw*ch];
+		new_quad_src = new double*[cw*ch];
+
+		for (int i = 0; i < cw * ch; i++)
+		{
+			sum_quad_flux[i] = new double[NUM_ENERGY_GROUPS];
+			quad_xs[i] = new double[NUM_ENERGY_GROUPS];
+			ratio[i] = new double[NUM_ENERGY_GROUPS];
+			expo[i] = new double[NUM_ENERGY_GROUPS];
+			tau[i] = new double[NUM_ENERGY_GROUPS];
+			new_src[i] = new double[NUM_ENERGY_GROUPS];
+			new_quad_src[i] = new double[8 * NUM_ENERGY_GROUPS];
+		}
+	}
+	catch (std::exception &e)
+	{
+		log_error("Unable to allocate memory for variables inside loo. "
+				   "Backtrace: \n%s", e.what());
+	}
+
 	for (int i = 0; i < cw * ch; i++)
 	{
-		sum_quad_flux[i] = new double[NUM_ENERGY_GROUPS];
-		quad_xs[i] = new double[NUM_ENERGY_GROUPS];
-		ratio[i] = new double[NUM_ENERGY_GROUPS];
-		expo[i] = new double[NUM_ENERGY_GROUPS];
-		tau[i] = new double[NUM_ENERGY_GROUPS];
-		new_src[i] = new double[NUM_ENERGY_GROUPS];
-		new_quad_src[i] = new double[8 * NUM_ENERGY_GROUPS];
-		
 		for (int e = 0; e < ng; e++)
 		{
+			new_src[i][e] = 0.0;
 			sum_quad_flux[i][e] = 0;
 			quad_xs[i][e] = _mesh->getCells(i)->getSigmaT()[e];
 			/* Pre-computes cross-section related terms because they do 
@@ -1573,6 +1586,8 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 			expo[i][e] = exp(-tau[i][e]);
 			ratio[i][e] = (1 - expo[i][e]) / tau[i][e];
 		}
+		for (int e = 0; e < 8 * ng; e++)
+			new_quad_src[i][e] = 0.0;
 	}
 
 
@@ -1873,7 +1888,27 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 	}
 	
 	log_printf(WARNING, "Keff not converging after %d iterations", max_outer);
-	return 1.0;
+
+	/* Cleaning up; FIXME: more cleaning */
+	for (int i = 0; i < cw * ch; i++)
+	{
+		delete[] sum_quad_flux[i];
+		delete[] quad_xs[i];
+		delete[] ratio[i];
+		delete[] expo[i];
+		delete[] tau[i];
+		delete[] new_src[i];
+		delete[] new_quad_src[i];
+	}
+	delete[] sum_quad_flux;
+	delete[] quad_xs;
+	delete[] ratio;
+	delete[] tau;
+	delete[] new_src;
+	delete[] new_quad_src;
+
+
+	return _keff;
 }
 
 

@@ -142,3 +142,8 @@ void log_printf(logLevel level, const char *format, ...) {
     	abort();
     }
 }
+
+void log_error(const char *format, ...) {
+	printf("[  EXIT   ]  Exiting program...\n");
+	abort();
+}	
