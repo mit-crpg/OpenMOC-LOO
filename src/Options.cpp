@@ -21,13 +21,13 @@
  * @param argv a char array of command line arguments from console
  */
 Options::Options(int argc, char **argv) {
-	_l2_norm_conv_thresh = 1e-8;			/* Default will set keff conv thresh to 1e-6 */
-	_moc_conv_thresh = _l2_norm_conv_thresh;
+	_l2_norm_conv_thresh = 1e-5;			/* Default will set keff conv thresh to 1e-6 */
+	_moc_conv_thresh = 1e-8;
 
 	_cmfd = false; 			
 		
 	_loo = false;
-	_loo_after_MOC_converge = false;
+	_loo_after_MOC_converge = true;
 
 
 	_plot_quad_flux = true;             /* Plots quad flux, net current, xs */

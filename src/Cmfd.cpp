@@ -169,7 +169,8 @@ void Cmfd::computeXS(){
 
 				/* increment group to group scattering tallies */
 				for (g = 0; g < NUM_ENERGY_GROUPS; g++){
-					scat_tally_group[g] += scat[g*NUM_ENERGY_GROUPS + e] 
+					/* scattering from group e into g */
+					scat_tally_group[g] += scat[ g * NUM_ENERGY_GROUPS + e] 
 						* flux * volume;
 				}
 
@@ -180,7 +181,7 @@ void Cmfd::computeXS(){
 			}
 
 			/* if multigroup, set the multigroup parameters */
-			if (_mesh->getMultigroup() == true){
+			if (_mesh->getMultigroup()){
 				meshCell->setVolume(vol_tally_group);
 				meshCell->setSigmaA(abs_tally_group / rxn_tally_group, e);
 				meshCell->setSigmaT(tot_tally_group / rxn_tally_group, e);
@@ -190,8 +191,7 @@ void Cmfd::computeXS(){
 
 				for (int g = 0; g < NUM_ENERGY_GROUPS; g++)
 				{
-					/* FIXME: I thought it would be g,e, it is really e,g to
-					 * get -mg to work. */
+					/* This means SigmaS[e * ng + g] = $\Sigma_{s,e\to g}$. */
 					meshCell->setSigmaS(scat_tally_group[g] / rxn_tally_group,
 										e, g);
 				}
@@ -203,8 +203,6 @@ void Cmfd::computeXS(){
 				nu_fis_tally += nu_fis_tally_group;
 				dif_tally += dif_tally_group;
 				rxn_tally += rxn_tally_group;
-				for (int g = 0; g < NUM_ENERGY_GROUPS; g++)
-					scat_tally += scat_tally_group[g];
 			}
 		}
 
@@ -221,7 +219,7 @@ void Cmfd::computeXS(){
 					   i, rxn_tally, vol_tally_group, 
 					   meshCell->getOldFlux()[0]);
 			meshCell->setChi(1, 0);
-			meshCell->setSigmaS(scat_tally / rxn_tally, 0, 0);
+			/* FIXME: SG means no scattering xs right? */
 			meshCell->setSigmaS(0.0, 0, 0);
 		}
 	}
@@ -1255,12 +1253,12 @@ void Cmfd::computeQuadSrc()
 				double ex = exp(- xs * l);
 				double sum_quad_flux = 0;
 
-				for (int i = 0; i < 8; i++)
+				for (int t = 0; t < 8; t++)
 				{
-					double src = xs * (out[e][i] - ex * in[e][i]) / (1.0 - ex);
-					meshCell->setQuadSrc(src, e, i);
+					double src = xs * (out[e][t] - ex * in[e][t]) / (1.0 - ex);
+					meshCell->setQuadSrc(src, e, t);
 
-					sum_quad_flux += src/xs + (in[e][i] - out[e][i])/(xs * l);
+					sum_quad_flux += src/xs + (in[e][t] - out[e][t])/(xs * l);
 				}
 				meshCell->setSumQuadFlux(sum_quad_flux, e);
 			}
@@ -1591,8 +1589,8 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 			expo[i][e] = exp(-tau[i][e]);
 			ratio[i][e] = (1 - expo[i][e]) / tau[i][e];
 		}
-		for (int e = 0; e < 8 * ng; e++)
-			new_quad_src[i][e] = 0.0;
+		for (int t = 0; t < 8 * ng; t++)
+			new_quad_src[i][t] = 0.0;
 	}
 
 
@@ -1610,9 +1608,9 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 			{
 				sum_quad_flux[i][e] = 0.0;
 				new_src[i][e] = 0.0;
-				for (int g = 0; g < 8; g++)
+				for (int t = 0; t < 8; t++)
 				{
-					int d = e * ng + g;
+					int d = e * 8 + t;
 					new_quad_src[i][d] = 0.0;
 				}
 			}
@@ -1650,17 +1648,12 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 			{
 				scatter_source = 0;
 
-				if (_mesh->getMultigroup() == true)
+				if (_mesh->getMultigroup())
 				{
 					for (int g = 0; g < ng; g++)
-						scatter_source += sigma_s[e*ng+g] * scalar_flux[g];		
+						scatter_source += sigma_s[g*ng+e] * scalar_flux[g];		
 				}
-				else
-				{
-					/* FIXME: scattering source = 0 for 1G? */
-					scatter_source += sigma_s[0] * scalar_flux[0];
-					//scatter_source = 0.0;
-				}
+	   
 				new_src[i][e] = (fission_source * chi[e] / _keff 
 								 + scatter_source) * ONE_OVER_FOUR_PI;
  
@@ -1678,19 +1671,20 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 			meshCell = _mesh->getCells(i);
 			for (int e = 0; e < ng; e++)
 			{
+				/* getSrc()[e] returns the $\bar{Q}_g^{(m)}$ */
 				src_ratio = new_src[i][e] / meshCell->getSrc()[e];
+				log_printf(DEBUG, "Old Mesh Averaged Source = %e", 
+						   meshCell->getSrc()[e]);
 				/* FIXME */
 				//src_ratio = 1.0;
-				for (int g = 0; g < 8; g++)
+				for (int t = 0; t < 8; t++)
 				{
-					int d = e * ng + g;
-					/* getSrc()[e] returns the $\bar{Q}_g^{(m)}$ */
+					int d = e * 8 + t;
 					new_quad_src[i][d] = meshCell->getQuadSrc()[d] * src_ratio;
-					log_printf(DEBUG, "Old Mesh Averaged Source = %e", 
-							   meshCell->getSrc()[e]);
 				}
-				log_printf(ACTIVE, "Average source ratio for cell %d" 
-						   " energy %d, by %.10f", i, e, src_ratio);
+				if (i == 0)
+					log_printf(ACTIVE, "Average source ratio for cell %d" 
+							   " energy %d, by %.10f", i, e, src_ratio);
 			}
 		} /* finish iterating over i; exit to iter level */
 
@@ -1698,16 +1692,16 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 		for (int e = 0; e < ng; e++)
 		{
 			double flux;
-			int i, g, d;
+			int i, t, d;
 			/* Forward direction, i_array[] contains cell #, g_array[] contains
 			 * track # */
 			int i_array[]  = {2,3,1,1,1,0,2,2};
 			//int i_array[]  = {3,2,0,0,0,1,3,3};
-			int g_array[]  = {0,5,0,2,4,1,4,6};
+			int t_array[]  = {0,5,0,2,4,1,4,6};
 		
 			int i_array2[] = {3,3,1,0,0,0,2,3};
 			//int i_array2[] = {2,2,0,1,1,1,3,2};
-			int g_array2[] = {0,2,7,2,4,6,3,6};
+			int t_array2[] = {0,2,7,2,4,6,3,6};
 
 			/* 1st loop */
 			/* Get the initial angular flux */
@@ -1716,8 +1710,8 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 			for (int x = 0; x < 8; x++)
 			{
 				i = i_array[x];
-				g = g_array[x];
-				d = e * ng + g;
+				t = t_array[x];
+				d = e * 8 + t;
 				/* Accumulate angular flux to $\bar{\psi}_g^{8,(n+1)}$ */
 				sum_quad_flux[i][e] += flux * ratio[i][e] + 
 					new_quad_src[i][d] * (1- ratio[i][e]) / quad_xs[i][e];
@@ -1734,8 +1728,8 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 			for (int x = 7; x >=0 ; x--)
 			{
 				i = i_array[x];
-				g = g_array[x];
-				d = e * ng + g;
+				t = t_array[x];
+				d = e * 8 + t;
 				/* Accumulate angular flux to $\bar{\psi}_g^{8,(n+1)}$ */
 				sum_quad_flux[i][e] += flux * ratio[i][e] + 
 					new_quad_src[i][d] * (1- ratio[i][e]) / quad_xs[i][e];
@@ -1756,8 +1750,8 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 			for (int x = 0; x < 8; x++)
 			{
 				i = i_array2[x];
-				g = g_array2[x];
-				d = e * ng + g;
+				t = t_array2[x];
+				d = e * 8 + t;
 				/* Accumulate angular flux to $\bar{\psi}_g^{8,(n+1)}$ */
 				sum_quad_flux[i][e] += flux * ratio[i][e] + 
 					new_quad_src[i][d] * (1- ratio[i][e]) / quad_xs[i][e];
@@ -1774,8 +1768,8 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 			for (int x = 7; x >=0 ; x--)
 			{
 				i = i_array2[x];
-				g = g_array2[x];
-				d = e * ng + g;
+				t = t_array2[x];
+				d = e * 8 + t;
 				/* Accumulate angular flux to $\bar{\psi}_g^{8,(n+1)}$ */
 				sum_quad_flux[i][e] += flux * ratio[i][e] + 
 					new_quad_src[i][d] * (1 - ratio[i][e]) / quad_xs[i][e];
@@ -1820,19 +1814,18 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 			{
 				for (int g = 0; g < ng; g++)
 				{
-					/* FIXME: should there be a chi on the top of k? 
-					 * getChi()[e] does not seem to make a difference */
-					/* Volume doe not seem to make a difference */
 					fis_tot += meshCell->getChi()[e]
 						* meshCell->getNuSigmaF()[g]
-						* meshCell->getNewFlux()[g];
+						* meshCell->getNewFlux()[g] ;//* meshCell->getVolume();
 				}
-				abs_tot += meshCell->getSigmaA()[e] * meshCell->getNewFlux()[e];
+		    
+				abs_tot += meshCell->getSigmaA()[e] * meshCell->getNewFlux()[e]
+					;//* meshCell->getVolume();
 			}
 		}
 		_keff = fis_tot / abs_tot; 
 
-		double normalize_factor = 1.0 / fis_tot * cw * ch * ng;
+		double normalize_factor = vol_tot / fis_tot;
 		/* Normalizes flux based on fission source FIXME: update? */
 		for (int i = 0; i < cw * ch; i++)
 		{
@@ -1843,6 +1836,9 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 									 * normalize_factor, e);
 			}
 		}
+		fis_tot *= normalize_factor; 
+		abs_tot *= normalize_factor;
+
 		log_printf(ACTIVE, "Normalize all scalar flux by %f", normalize_factor);
 
 		/* Computes the L2 norm of point-wise-division of energy-integrated
@@ -1855,7 +1851,7 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 			of = 0;
 			nf = 0;
 			/* integrates over energy */
-			for (int e = 0; e < ng; e ++)
+			for (int e = 0; e < ng; e++)
 			{
 				xs = meshCell->getNuSigmaF()[e];
 				of += xs * meshCell->getOldFlux()[e];

@@ -259,7 +259,7 @@ void MeshCell::setMaterial(Material* material){
 }
 
 void MeshCell::setQuadFlux(double quadFlux, int e, int index){
-	_quad_flux[e*NUM_ENERGY_GROUPS + index] = quadFlux;
+	_quad_flux[e * 8 + index] = quadFlux;
 }
 
 double* MeshCell::getQuadFlux(){
@@ -267,7 +267,7 @@ double* MeshCell::getQuadFlux(){
 }
 
 void MeshCell::setQuadSrc(double quadSrc, int e, int index){
-	_quad_src[e*NUM_ENERGY_GROUPS + index] = quadSrc;
+	_quad_src[e * 8 + index] = quadSrc;
 }
 
 double* MeshCell::getQuadSrc(){
