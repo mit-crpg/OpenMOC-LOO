@@ -220,6 +220,7 @@ void Cmfd::computeXS(){
 					   meshCell->getOldFlux()[0]);
 			meshCell->setChi(1, 0);
 			/* FIXME: SG means no scattering xs right? */
+			meshCell->setSigmaS(scat_tally / rxn_tally, 0, 0);
 			meshCell->setSigmaS(0.0, 0, 0);
 		}
 	}
@@ -293,8 +294,8 @@ void Cmfd::computeDsxDirection(double x, double y, int e, MeshCell *meshCell,
 	/* if abs(d_tilde) > abs(d_hat), make them equal in magnitude */
 	if (fabs(d_tilde) > fabs(d_hat))
 	{
-		log_printf(DEBUG, "correcting Ds: LEFT group: %i, x: %i,"
-				   " y: %i, dh: %f, dt: %f, c:%f", 
+		log_printf(DEBUG, "correcting Ds: LEFT group: %i, x: %f,"
+				   " y: %f, dh: %f, dt: %f, c:%f", 
 				   e, x, y, d_hat, d_tilde, current);
 
 		/* d_tilde is positive */
@@ -311,7 +312,7 @@ void Cmfd::computeDsxDirection(double x, double y, int e, MeshCell *meshCell,
 	}
 
 
-	log_printf(DEBUG, "cell: %i, group: %i, side: LEFT,"
+	log_printf(DEBUG, "cell: %f, group: %i, side: LEFT,"
 			   " current: %f, dhat: %f, dtilde: %f", 
 			   y*cell_width + x, e, current, d_hat, d_tilde);
 
@@ -1523,7 +1524,6 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 	}
 
 	_keff = k_MOC;
-	double old_keff;
 
 	/* Obtains info about the meshes */
 	MeshCell* meshCell;
@@ -1599,7 +1599,7 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 	 * order m+1/2) and should not be updated during acceleration step. */
 	for (iter = 0; iter < max_outer; iter++)
 	{
-		old_keff = _keff;
+		//old_keff = _keff;
 		
 		/* Resets terms to zeros for each LOO iteration */
 		for (int i = 0; i < cw * ch; i++)
