@@ -27,7 +27,7 @@ Options::Options(int argc, char **argv) {
 	_cmfd = false; 			
 		
 	_loo = false;
-	_loo_after_MOC_converge = true;
+	_loo_after_MOC_converge = false;
 
 
 	_plot_quad_flux = true;             /* Plots quad flux, net current, xs */

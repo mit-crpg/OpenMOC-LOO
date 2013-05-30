@@ -1621,20 +1621,20 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 		{
 			meshCell = _mesh->getCells(i);
 
-/*
 			for (int e = 0; e < ng; e++)
 			{
 				for (int g = 0; g < ng; g++)
 				{
-					new_src[i][e] += meshCell->getSigmaS()[e*ng+g] 
+					new_src[i][e] += meshCell->getSigmaS()[g*ng+e] 
 						* meshCell->getNewFlux()[g] * ONE_OVER_FOUR_PI ;
 					new_src[i][e] += meshCell->getChi()[e] *
 						meshCell->getNuSigmaF()[g] / _keff 
 						* meshCell->getNewFlux()[g] * ONE_OVER_FOUR_PI ;
 				}
 			}
-*/
 
+
+			/*
 			double fission_source = 0, scatter_source = 0;
 			double *scalar_flux = meshCell->getNewFlux();
 			double *nu_sigma_f = meshCell->getNuSigmaF();
@@ -1661,6 +1661,8 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 					log_printf(INFO, "Cell averaged source for cell %d,"
 							   " energy %d is %e", i, e, new_src[i][e]);
 			}
+			*/
+
 
 		} /* finishing looping over i; exit to iter level */
 
@@ -1789,9 +1791,9 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 			meshCell = _mesh->getCells(i);
 			for (int e = 0; e < ng; e++) 
 			{
-				/* The 1/8 is the weight on angular quadrature */
+				/* FIXME: 1/8 is the weight on angular quadrature */
 				phi_ratio =  sum_quad_flux[i][e] 
-					/ meshCell->getSumQuadFlux()[e] / 8;
+					/ meshCell->getSumQuadFlux()[e]; //  / 8;
 
 				/* FIXME */
 				//phi_ratio = 1.0;
@@ -1825,7 +1827,7 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 		}
 		_keff = fis_tot / abs_tot; 
 
-		double normalize_factor = vol_tot / fis_tot;
+		double normalize_factor = 1.0 / fis_tot * ch * cw;
 		/* Normalizes flux based on fission source FIXME: update? */
 		for (int i = 0; i < cw * ch; i++)
 		{
