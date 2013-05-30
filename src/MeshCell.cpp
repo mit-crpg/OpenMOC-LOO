@@ -190,8 +190,8 @@ double* MeshCell::getSigmaS(){
 	return _sigma_s;
 }
 
-void MeshCell::setSigmaS(double sigmaS, int e, int ep){
-	_sigma_s[e*NUM_ENERGY_GROUPS + ep] = sigmaS;
+void MeshCell::setSigmaS(double sigmaS, int e, int g){
+	_sigma_s[e*NUM_ENERGY_GROUPS + g] = sigmaS;
 }
 
 double* MeshCell::getNuSigmaF(){
