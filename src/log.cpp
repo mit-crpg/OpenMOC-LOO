@@ -68,6 +68,10 @@ void log_setlevel(const char* newlevel) {
 		log_level = INFO;
 		log_printf(INFO, "Logging level set to INFO");
 	}
+	else if (strcmp("ACTIVE", newlevel) == 0) {
+		log_level = ACTIVE;
+		log_printf(INFO, "Logging level set to ACTIVE");
+	}
 	else if (strcmp("NORMAL", newlevel) == 0) {
 		log_level = NORMAL;
 		log_printf(INFO, "Logging level set to NORMAL");
