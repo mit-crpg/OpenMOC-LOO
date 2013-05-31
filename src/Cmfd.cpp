@@ -1864,11 +1864,14 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 		}
 		eps = pow(eps, 0.5);
 	  
-		log_printf(NORMAL, "%d-th LOO iteration k = %f / %f = %f, eps = %e", 
-				   iter, fis_tot, abs_tot, _keff, eps);
+		log_printf(NORMAL, " %d-th LOO iteration k = %f, eps = %e", 
+				   iter, _keff, eps);
+		log_printf(ACTIVE, "  fission source = %f, abs source = %f", 
+				   fis_tot, abs_tot);
 
 		/* If LOO iterative solver converges */
-		if ((iter > 5) && (eps < _l2_norm_conv_thresh))
+		/* FIXME: previous version forces LOO to run at least 5 times */
+		if (eps < _l2_norm_conv_thresh)
 		{
 			/* new flux is already in place */
 			/* just need to print stuff */

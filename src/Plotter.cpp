@@ -772,7 +772,8 @@ void Plotter::plotQuadFlux(Mesh* mesh, int iter_num){
 		/*convertToPixelX(mesh->getCells((mesh->getCellHeight() - 1)
 										   * mesh->getCellWidth())
 										   ->getBounds()[2]); */
-	log_printf(NORMAL, "x_max = %f, y_max = %f", x_max, y_max);
+	log_printf(DEBUG, " In plotting quad flux, x_max = %f, y_max = %f", 
+			   x_max, y_max);
 
 	/* plot mesh currents next to surface */
 	for (int cellY = 0; cellY < mesh->getCellHeight(); cellY++){
