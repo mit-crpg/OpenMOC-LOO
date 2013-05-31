@@ -189,7 +189,7 @@ void Cmfd::computeXS(){
 				meshCell->setDiffusivity(dif_tally_group / rxn_tally_group, e);
 				meshCell->setOldFlux(rxn_tally_group / vol_tally_group, e);
 
-				for (int g = 0; g < NUM_ENERGY_GROUPS; g++)
+				for (g = 0; g < NUM_ENERGY_GROUPS; g++)
 				{
 					/* This means SigmaS[e * ng + g] = $\Sigma_{s,e\to g}$. */
 					meshCell->setSigmaS(scat_tally_group[g] / rxn_tally_group,
@@ -203,6 +203,8 @@ void Cmfd::computeXS(){
 				nu_fis_tally += nu_fis_tally_group;
 				dif_tally += dif_tally_group;
 				rxn_tally += rxn_tally_group;
+				for (g = 0; g < NUM_ENERGY_GROUPS; g++)
+					scat_tally += scat_tally_group[g];
 			}
 		}
 
@@ -219,9 +221,8 @@ void Cmfd::computeXS(){
 					   i, rxn_tally, vol_tally_group, 
 					   meshCell->getOldFlux()[0]);
 			meshCell->setChi(1, 0);
-			/* FIXME: SG means no scattering xs right? */
+			/* FIXME: SG needs to add up all scattering */
 			meshCell->setSigmaS(scat_tally / rxn_tally, 0, 0);
-			meshCell->setSigmaS(0.0, 0, 0);
 		}
 	}
 }
