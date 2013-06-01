@@ -1433,7 +1433,7 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter)
 	petsc_err = VecScale(phi_old, scale_val);
 	CHKERRQ(petsc_err);
 
-	log_printf(NORMAL, " CMFD total fission source = %f", sumnew);
+	log_printf(INFO, " CMFD total fission source = %f", sumnew);
 
 
 	PetscScalar *old_phi;
