@@ -22,12 +22,12 @@
  */
 Options::Options(int argc, char **argv) {
 	_l2_norm_conv_thresh = 1e-10; /* Default will set keff conv thresh to 1e-6 */
-	_moc_conv_thresh = 1e-5;
+	_moc_conv_thresh = 1e-10;
 
 	_cmfd = false; 			
 		
-	_loo = false;
-	_loo_after_MOC_converge = false;
+	_loo = true;
+	_loo_after_MOC_converge = true;
 
 
 	_plot_quad_flux = true;             /* Plots quad flux, net current, xs */

@@ -1685,9 +1685,8 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 					int d = e * 8 + t;
 					new_quad_src[i][d] = meshCell->getQuadSrc()[d] * src_ratio;
 				}
-				if (i == 0)
-					log_printf(ACTIVE, "Average source ratio for cell %d" 
-							   " energy %d, by %.10f", i, e, src_ratio);
+				log_printf(ACTIVE, "Average source ratio for cell %d" 
+						   " energy %d, by %.10f", i, e, src_ratio);
 			}
 		} /* finish iterating over i; exit to iter level */
 
