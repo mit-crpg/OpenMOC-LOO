@@ -38,7 +38,8 @@ Solver::Solver(Geometry* geom, TrackGenerator* track_generator,
 	_loo_after_MOC_converge = opts->getLooAfterMOCConverge();
 	/* Initialize keff to be  */
 	_k_eff = opts->getKGuess();
-
+	_cmfd_k = _k_eff;
+	_loo_k = _k_eff;
 
 	try{
 		_flat_source_regions = new FlatSourceRegion[_num_FSRs];
@@ -464,12 +465,12 @@ void Solver::updateKeff(int iteration) {
 		_geom->getMesh()->setKeffMOC(_k_eff, iteration);
 
 		log_printf(NORMAL, "Iteration %d, MOC k = %f, CMFD k = %f", 
-		iteration, _k_eff, _cmfd->getKeff());
+		iteration, _k_eff, _cmfd_k);
 
 		if (_update_flux)
 		{
-			_k_eff = _cmfd->getKeff();
-            _cmfd->updateMOCFlux(iteration);
+	     _k_eff = _cmfd_k;
+	     _cmfd->updateMOCFlux(iteration);
 		}
 	}
 	else if ((_run_loo) && !(_loo_after_MOC_converge))
@@ -477,10 +478,10 @@ void Solver::updateKeff(int iteration) {
 		_geom->getMesh()->setKeffMOC(_k_eff, iteration);
 
 		log_printf(NORMAL, "Iteration %d, MOC k = %f, LOO k = %f", 
-				   iteration, _k_eff, _cmfd->getKeff());
+		iteration, _k_eff, _loo_k);
 
 		if (_update_flux){
-			_k_eff = _cmfd->getKeff();
+	_k_eff = _loo_k;
             _cmfd->updateMOCFlux(iteration);
 		}
 	}
@@ -1377,7 +1378,7 @@ void Solver::updateSource(){
 }
 
 
-void Solver::runLoo(int i)
+double Solver::runLoo(int i)
 {
 	double loo_keff;
 
@@ -1397,12 +1398,11 @@ void Solver::runLoo(int i)
 			 
 	/* Performs low order MOC */
 	loo_keff = _cmfd->computeLooFluxPower(LOO, i, _k_eff);
-	loo_keff = loo_keff;
 
-	return;
+	return loo_keff;
 }
 
-void Solver::runCmfd(int i)
+double Solver::runCmfd(int i)
 {
 	double cmfd_keff;
 
@@ -1422,10 +1422,8 @@ void Solver::runCmfd(int i)
 
 	/* Run CMFD diffusion problem */
 	cmfd_keff = _cmfd->computeCMFDFluxPower(CMFD, i);
-	/* FIXME: a hack: cmfd_keff set but not used */
-	cmfd_keff = cmfd_keff;
 
-	return;
+	return cmfd_keff;
 }
 
 double Solver::computeL2Norm(double *old_fsr_powers)
@@ -1503,9 +1501,9 @@ double Solver::kernel(int max_iterations) {
 		/* Perform one sweep for no acceleration, or call one of the 
 		 * acceleration function which performs two sweeps plus acceleration */
 		if (_run_cmfd)
-			runCmfd(i);
+			_cmfd_k = runCmfd(i);
 		else if ((_run_loo) && !(_loo_after_MOC_converge))
-			runLoo(i);
+			_loo_k = runLoo(i);
 		else 
 			MOCsweep(1);
 

@@ -82,6 +82,7 @@ int Cmfd::createAMPhi(PetscInt size1, PetscInt size2, int cells){
 void Cmfd::computeXS(){
 
 	/* split corner currents to side surfaces */
+	/* FIXME: implement splitcorners for quad currents for LOO */
 	_mesh->splitCorners();
 
 	/* initialize variables */

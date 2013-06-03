@@ -54,6 +54,8 @@ private:
 	double *_FSRs_to_absorption[NUM_ENERGY_GROUPS + 1];
 	double *_FSRs_to_pin_absorption[NUM_ENERGY_GROUPS + 1];
 	double _k_eff;
+	double _cmfd_k;
+	double _loo_k;
 	std::queue<double> _old_k_effs;
 	Plotter* _plotter;
 	float* _pix_map_total_flux;
@@ -112,8 +114,8 @@ public:
 							 MeshSurface **meshSurfaces);
 	void tallyCmfdBackwardCurrent(Track *track, segment *segment, 
 							  MeshSurface **meshSurfaces);
-	void runLoo(int i);
-	void runCmfd(int i);
+	double runLoo(int i);
+	double runCmfd(int i);
 	double computeL2Norm(double *old_fsr_powers);
 };
 
