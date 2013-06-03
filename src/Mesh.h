@@ -59,6 +59,7 @@ public:
 	void printBounds();
 	void printCurrents();
 	void computeTotCurrents();
+	void computeTotQuadCurrents();
 	void splitCorners();
 	void setMultigroup(bool multigroup);
 	bool getMultigroup();

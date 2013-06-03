@@ -486,6 +486,46 @@ void Mesh::computeTotCurrents(){
 	}
 }
 
+void Mesh::computeTotQuadCurrents(){
+
+	MeshCell* meshCell;
+	MeshSurface* surfaceSide;
+	double sum_cur;
+
+	int cell_width = getCellWidth();
+	int cell_height = getCellHeight();
+
+	/* loop over cells */
+	for (int i = 0; i < cell_width*cell_height; i++){
+
+		/* get mesh cell */
+		meshCell = &_cells[i];
+
+		/* loop over surfaces*/
+		for (int i = 0; i < 4; i++){
+
+			/* get mesh surface */
+			surfaceSide = meshCell->getMeshSurfaces(i);
+
+			/* loop over index, energy groups */
+			for (int j = 0; j < 2; j++)
+			{
+				/* set current tally to 0 */
+				sum_cur = 0.0;
+
+				for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
+					sum_cur += surfaceSide->getQuadCurrent(e, j);
+
+				/* set current at group 0 to total current */
+				surfaceSide->setQuadCurrent(sum_cur, 0, j);
+			}
+
+
+
+		}
+	}
+}
+
 void Mesh::setKeffCMFD(double keff, int iter){
 	_keff_cmfd[iter] = keff;
 }

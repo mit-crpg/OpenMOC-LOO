@@ -2138,7 +2138,7 @@ void Geometry::findFSRs(Universe* univ, MeshCell* meshCell, int *fsr_id){
 				log_printf(DEBUG, "pushing back fsr id: %i", *fsr_id);
 				meshCell->addFSR(*fsr_id);
 				log_printf(DEBUG, "size of fsr list: %i", 
-						   meshCell->getFSRs()->size());
+						   (int) meshCell->getFSRs()->size());
 				*fsr_id += 1;
 			}
 

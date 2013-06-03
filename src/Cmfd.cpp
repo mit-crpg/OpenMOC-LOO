@@ -1029,6 +1029,7 @@ void Cmfd::computeQuadFlux()
 
 	if (_mesh->getMultigroup() == false){
 		ng = 1;
+		_mesh->computeTotQuadCurrents();
 	}
 
 	/* set cell width and height */
