@@ -155,7 +155,7 @@ void Solver::precomputeFactors() {
 	log_printf(NORMAL, "Making Prefactor array...");
 
 	/* set size of prefactor array */
-	int num_array_values = 10 * sqrt(1 / (8 * _l2_norm_conv_thresh));
+	int num_array_values = 10 * sqrt(1 / (8 * _moc_conv_thresh));
 	_pre_factor_spacing = 10.0 / num_array_values;
 	_pre_factor_array_size = 2 * NUM_POLAR_ANGLES * num_array_values;
 	_pre_factor_max_index = _pre_factor_array_size - 2*NUM_POLAR_ANGLES - 1;
