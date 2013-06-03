@@ -1030,6 +1030,8 @@ void Cmfd::computeQuadFlux()
 	if (_mesh->getMultigroup() == false){
 		ng = 1;
 		_mesh->computeTotQuadCurrents();
+		// FIXME: debug
+		_mesh->computeTotCurrents();
 	}
 
 	/* set cell width and height */
@@ -1061,6 +1063,11 @@ void Cmfd::computeQuadFlux()
 					/* For debugging purpose, compute partial currents */
 					double current = s[i]->getQuadCurrent(e, 0) 
 						+ s[i]->getQuadCurrent(e, 1);
+					log_printf(ACTIVE, "cmfd generates %.10f,"
+							   " LOO generates %.10f",
+							   s[i]->getCurrent(e), current);
+
+
 					s[i]->setCurrent(current, e);
 
 					/* Prints to screen quad current and quad flux */
@@ -1595,6 +1602,21 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 			new_quad_src[i][t] = 0.0;
 	}
 
+	double eps = 0.0;
+	double old_flux[cw*ch], new_flux[cw*ch], xs;
+	for (int i = 0; i < cw * ch; i++)
+	{
+		meshCell = _mesh->getCells(i);
+		old_flux[i] = 0;
+		/* integrates over energy */
+		for (int e = 0; e < ng; e++)
+		{
+			xs = meshCell->getNuSigmaF()[e];
+			old_flux[i] += xs * meshCell->getOldFlux()[e];
+		} 
+	}
+
+
 
 	/* Starts LOO acceleration iteration, we do not update src, quad_src, 
 	 * quad_flux, old_flux, as they are computed from the MOC step (i.e., 
@@ -1846,24 +1868,25 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 
 		/* Computes the L2 norm of point-wise-division of energy-integrated
 		 * fission source of mesh cells */
-		double eps = 0.0;
-		double of, nf, xs;
+		eps = 0;
 		for (int i = 0; i < cw * ch; i++)
 		{
 		    meshCell = _mesh->getCells(i);
-			of = 0;
-			nf = 0;
+			new_flux[i] = 0;
 			/* integrates over energy */
 			for (int e = 0; e < ng; e++)
 			{
 				xs = meshCell->getNuSigmaF()[e];
-				of += xs * meshCell->getOldFlux()[e];
-				nf += xs * meshCell->getNewFlux()[e];
+				new_flux[i] += xs * meshCell->getNewFlux()[e];
 			} 
-			eps += pow(nf / of - 1.0, 2);
+			eps += pow(new_flux[i] / old_flux[i] - 1.0, 2);
 		}
 		eps = pow(eps, 0.5);
 	  
+		for (int i = 0; i < cw * ch; i++)
+			old_flux[i] = new_flux[i];
+		
+
 		log_printf(NORMAL, " %d-th LOO iteration k = %f, eps = %e", 
 				   iter, _keff, eps);
 		log_printf(ACTIVE, "  fission source = %f, abs source = %f", 

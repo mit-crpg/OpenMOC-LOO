@@ -984,7 +984,11 @@ void Solver::MOCsweep(int max_iterations) {
 					/* if segment crosses a surface in fwd direction, 
 					   tally current/weight */
 					if (_run_loo)
+					{
 						tallyLooForwardFlux(track, segment, meshSurfaces);
+						// FIXME: debug
+						tallyCmfdForwardCurrent(track, segment, meshSurfaces);
+					}
 
 					if (_run_cmfd)
 						tallyCmfdForwardCurrent(track, segment, meshSurfaces);
@@ -1062,7 +1066,11 @@ void Solver::MOCsweep(int max_iterations) {
 					/* if segment crosses a surface in bwd direction, 
 					   tally quadrature flux for LOO acceleration */
 					if (_run_loo)
+					{
 						tallyLooBackwardFlux(track, segment, meshSurfaces);
+						// FIXME: debug
+						tallyCmfdBackwardCurrent(track, segment, meshSurfaces);
+					}
 
 					if (_run_cmfd)
 						tallyCmfdBackwardCurrent(track, segment, meshSurfaces);
