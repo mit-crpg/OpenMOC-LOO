@@ -315,7 +315,7 @@ void Cmfd::computeDsxDirection(double x, double y, int e, MeshCell *meshCell,
 
 
 	log_printf(DEBUG, "cell: %f, group: %i, side: LEFT,"
-			   " current: %f, dhat: %f, dtilde: %f", 
+			   " current: %.10f, dhat: %f, dtilde: %f", 
 			   y*cell_width + x, e, current, d_hat, d_tilde);
 
 	/* set d_hat and d_tilde */
@@ -366,8 +366,7 @@ void Cmfd::computeDs(){
 				flux = meshCell->getOldFlux()[e];
 
 				/* get diffusion correction term for meshCell */
-				//f = computeDiffCorrect(d, meshCell->getWidth());
-				f = 1.0;
+				f = computeDiffCorrect(d, meshCell->getWidth());
 
 				/* LEFT */
 				computeDsxDirection(x, y, e, meshCell, d, f, flux, cell_width,
