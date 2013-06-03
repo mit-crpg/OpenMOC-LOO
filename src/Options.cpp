@@ -98,7 +98,7 @@ Options::Options(int argc, char **argv) {
 				_dump_geometry = true;
 			else if (LAST("--extension") || LAST("-ex"))
 							_extension = argv[i];
-			else if (strcmp(argv[i], "-noconv"))
+			else if (strcmp(argv[i], "-noconv") == 0)
 				_loo_after_MOC_converge = false;
 			else if (strcmp(argv[i], "-ps") == 0 ||
 					strcmp(argv[i], "--plotspecs") == 0)
