@@ -83,7 +83,7 @@ void Cmfd::computeXS(){
 
 	/* split corner currents to side surfaces */
 	/* FIXME: implement splitcorners for quad currents for LOO */
-	_mesh->splitCorners();
+	//_mesh->splitCorners();
 
 	/* initialize variables */
 	double volume, flux, abs, tot, nu_fis, chi;
@@ -1063,7 +1063,7 @@ void Cmfd::computeQuadFlux()
 					/* For debugging purpose, compute partial currents */
 					double current = s[i]->getQuadCurrent(e, 0) 
 						+ s[i]->getQuadCurrent(e, 1);
-					log_printf(ACTIVE, "cmfd generates %.10f,"
+					log_printf(DEBUG, "cmfd generates %.10f,"
 							   " LOO generates %.10f",
 							   s[i]->getCurrent(e), current);
 
@@ -1850,6 +1850,9 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 		}
 		_keff = fis_tot / abs_tot; 
 
+
+
+
 		double normalize_factor = 1.0 / fis_tot * ch * cw;
 		/* Normalizes flux based on fission source FIXME: update? */
 		for (int i = 0; i < cw * ch; i++)
@@ -1885,9 +1888,13 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 	  
 		for (int i = 0; i < cw * ch; i++)
 			old_flux[i] = new_flux[i];
-		
 
-		log_printf(NORMAL, " %d-th LOO iteration k = %f, eps = %e", 
+		/* In DEBUG mode (loo after MOC converges), moc_iter = 1000 */
+		if (moc_iter == 1000)
+			log_printf(NORMAL, " %d-th LOO iteration k = %f, eps = %e", 
+					   iter, _keff, eps);
+
+		log_printf(ACTIVE, " %d-th LOO iteration k = %f, eps = %e", 
 				   iter, _keff, eps);
 		log_printf(ACTIVE, "  fission source = %f, abs source = %f", 
 				   fis_tot, abs_tot);
@@ -1927,8 +1934,7 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 		}
 	}
 	
-	log_printf(WARNING, "Keff not converging after %d iter", 
-			   max_outer);
+	//log_printf(WARNING, "Keff not converging after %d iter", max_outer);
 
 	/* Cleaning up; FIXME: more cleaning */
 	for (int i = 0; i < cw * ch; i++)

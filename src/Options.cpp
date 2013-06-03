@@ -21,7 +21,7 @@
  * @param argv a char array of command line arguments from console
  */
 Options::Options(int argc, char **argv) {
-	_l2_norm_conv_thresh = 1e-5; /* Default will set keff conv thresh to 1e-5 */
+	_l2_norm_conv_thresh = 1e-10; /* Default will set keff conv thresh to 1e-5 */
 	_moc_conv_thresh = 1e-10;
 
 	_cmfd = false; 			
@@ -100,6 +100,8 @@ Options::Options(int argc, char **argv) {
 							_extension = argv[i];
 			else if (strcmp(argv[i], "-noconv") == 0)
 				_loo_after_MOC_converge = false;
+			else if (strcmp(argv[i], "-db") == 0)
+				_loo_after_MOC_converge = true;
 			else if (strcmp(argv[i], "-ps") == 0 ||
 					strcmp(argv[i], "--plotspecs") == 0)
 				_plot_specs = true;
