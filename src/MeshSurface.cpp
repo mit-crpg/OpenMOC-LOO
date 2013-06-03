@@ -72,7 +72,9 @@ double MeshSurface::getCurrent(int group){
 
 void MeshSurface::incrementCurrent(double* current){
 	for (int group = 0; group < NUM_ENERGY_GROUPS; group++)
+	{
 		_current[group] += current[group];
+	}
 }
 
 void MeshSurface::setQuadCurrent(double quad_current, int group, int index){

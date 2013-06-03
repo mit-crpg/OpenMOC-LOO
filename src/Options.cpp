@@ -146,7 +146,7 @@ Options::Options(int argc, char **argv) {
 					strcmp(argv[i], "--plotdiffusion") == 0)
 				_plot_diffusion = true;
 			else if (LAST("--fluxconv") || LAST("-fc"))
-				_l2_norm_conv_thresh = atof(argv[i]);
+				_moc_conv_thresh = atof(argv[i]);
 			else if (strcmp(argv[i], "-mg") == 0 ||
 					strcmp(argv[i], "--multigroup") == 0)
 				_multigroup = true;
