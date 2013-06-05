@@ -26,8 +26,8 @@ Options::Options(int argc, char **argv) {
 
 	_cmfd = false; 			
 		
-	_loo = true;
-	_loo_after_MOC_converge = true;
+	_loo = false;
+	_loo_after_MOC_converge = false;
 
 
 	_plot_quad_flux = true;             /* Plots quad flux, net current, xs */
@@ -100,7 +100,7 @@ Options::Options(int argc, char **argv) {
 							_extension = argv[i];
 			else if (strcmp(argv[i], "-noconv") == 0)
 				_loo_after_MOC_converge = false;
-			else if (strcmp(argv[i], "-db") == 0)
+			else if (strcmp(argv[i], "-debug") == 0)
 				_loo_after_MOC_converge = true;
 			else if (strcmp(argv[i], "-ps") == 0 ||
 					strcmp(argv[i], "--plotspecs") == 0)

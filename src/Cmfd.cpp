@@ -1096,10 +1096,10 @@ void Cmfd::computeQuadSrc()
 	MeshCell* meshCell;
 	MeshCell* meshCellNext;
 	int ng = NUM_ENERGY_GROUPS;
-	double out[ng][8], in[ng][8];
-
 	if (_mesh->getMultigroup() == false)
 		ng = 1;
+
+	double out[ng][8], in[ng][8];
 
 	/* set cell width and height */
 	int cell_height = _mesh->getCellHeight();
@@ -1110,12 +1110,14 @@ void Cmfd::computeQuadSrc()
 	{
 		for (int x = 0; x < cell_width; x++)
 		{
-			meshCell = _mesh->getCells(y*cell_width + x);
+			meshCell = _mesh->getCells(y * cell_width + x);
 
 			/* get four surfaces */
 			for (int i = 0; i < 4; i++) 
 				s[i] = meshCell->getMeshSurfaces(i);
 
+			/* copy the 8 outgoing quad flux associated with this mesh cell to
+			 * corresponding intermediate outgoing flux */
 			for (int e = 0; e < ng; e++)
 			{
 				out[e][0] = s[2]->getQuadFlux(e,0);
@@ -1544,14 +1546,14 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 		ng = 1;
 	}
 
-	/* Copies old fluxes into new fluxes */
+	/* Copies old fluxes into new fluxes; old mesh fluxes means order 
+	 * m+1/2 which were computed from MOC transport solve */
 	for (int i = 0; i < cw * ch; i++)
 	{
 		meshCell = _mesh->getCells(i);
 		for (int e = 0; e < ng; e++) 
 			meshCell->setNewFlux(meshCell->getOldFlux()[e], e);
 	}
-
 
 	double l = _mesh->getCells(0)->getL();
 
@@ -1570,13 +1572,13 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 
 		for (int i = 0; i < cw * ch; i++)
 		{
-			sum_quad_flux[i] = new double[NUM_ENERGY_GROUPS];
-			quad_xs[i] = new double[NUM_ENERGY_GROUPS];
-			ratio[i] = new double[NUM_ENERGY_GROUPS];
-			expo[i] = new double[NUM_ENERGY_GROUPS];
-			tau[i] = new double[NUM_ENERGY_GROUPS];
-			new_src[i] = new double[NUM_ENERGY_GROUPS];
-			new_quad_src[i] = new double[8 * NUM_ENERGY_GROUPS];
+			new_src[i] = new double[ng];
+			sum_quad_flux[i] = new double[ng];
+			quad_xs[i] = new double[ng];
+			tau[i] = new double[ng];
+			expo[i] = new double[ng];
+			ratio[i] = new double[ng];
+			new_quad_src[i] = new double[8 * ng];
 		}
 	}
 	catch (std::exception &e)
@@ -1603,20 +1605,18 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 	}
 
 	double eps = 0.0;
-	double old_flux[cw*ch], new_flux[cw*ch], xs;
+	double old_power[cw*ch], new_power[cw*ch], xs;
 	for (int i = 0; i < cw * ch; i++)
 	{
 		meshCell = _mesh->getCells(i);
-		old_flux[i] = 0;
+		old_power[i] = 0;
 		/* integrates over energy */
 		for (int e = 0; e < ng; e++)
 		{
 			xs = meshCell->getNuSigmaF()[e];
-			old_flux[i] += xs * meshCell->getOldFlux()[e];
+			old_power[i] += xs * meshCell->getOldFlux()[e];
 		} 
 	}
-
-
 
 	/* Starts LOO acceleration iteration, we do not update src, quad_src, 
 	 * quad_flux, old_flux, as they are computed from the MOC step (i.e., 
@@ -1633,10 +1633,7 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 				sum_quad_flux[i][e] = 0.0;
 				new_src[i][e] = 0.0;
 				for (int t = 0; t < 8; t++)
-				{
-					int d = e * 8 + t;
-					new_quad_src[i][d] = 0.0;
-				}
+					new_quad_src[i][e * 8 + t] = 0.0;
 			}
 		}
 		
@@ -1649,7 +1646,7 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 			{
 				for (int g = 0; g < ng; g++)
 				{
-					new_src[i][e] += meshCell->getSigmaS()[g*ng+e] 
+					new_src[i][e] += meshCell->getSigmaS()[g * ng + e] 
 						* meshCell->getNewFlux()[g] * ONE_OVER_FOUR_PI ;
 					new_src[i][e] += meshCell->getChi()[e] *
 						meshCell->getNuSigmaF()[g] / _keff 
@@ -1721,11 +1718,9 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 			/* Forward direction, i_array[] contains cell #, g_array[] contains
 			 * track # */
 			int i_array[]  = {2,3,1,1,1,0,2,2};
-			//int i_array[]  = {3,2,0,0,0,1,3,3};
 			int t_array[]  = {0,5,0,2,4,1,4,6};
 		
 			int i_array2[] = {3,3,1,0,0,0,2,3};
-			//int i_array2[] = {2,2,0,1,1,1,3,2};
 			int t_array2[] = {0,2,7,2,4,6,3,6};
 
 			/* 1st loop */
@@ -1808,6 +1803,7 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 		} /* finish looping over energy; exit to iter level */				
 
 		double phi_ratio;
+		double new_flux = 0, damp = 1.0;
 		/* Computes new cell-averaged scalar flux based on new_sum_quad_flux */
 		for (int i = 0; i < cw * ch; i++)
 		{
@@ -1820,8 +1816,9 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 
 				/* FIXME */
 				//phi_ratio = 1.0;
-
-				meshCell->setNewFlux(meshCell->getOldFlux()[e] * phi_ratio, e);
+				new_flux = meshCell->getOldFlux()[e] * (1 - damp + 
+														damp * phi_ratio);
+				meshCell->setNewFlux(new_flux, e);
 
 				log_printf(ACTIVE, "Update the cell-averaged scalar flux by "
 						   "factor of %.10f, old phi = %.10f", 
@@ -1848,10 +1845,9 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 					;//* meshCell->getVolume();
 			}
 		}
+
+		/* FIXME: this assumes no leakage; may need to handle leakage */
 		_keff = fis_tot / abs_tot; 
-
-
-
 
 		double normalize_factor = 1.0 / fis_tot * ch * cw;
 		/* Normalizes flux based on fission source FIXME: update? */
@@ -1875,19 +1871,19 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 		for (int i = 0; i < cw * ch; i++)
 		{
 		    meshCell = _mesh->getCells(i);
-			new_flux[i] = 0;
+			new_power[i] = 0;
 			/* integrates over energy */
 			for (int e = 0; e < ng; e++)
 			{
 				xs = meshCell->getNuSigmaF()[e];
-				new_flux[i] += xs * meshCell->getNewFlux()[e];
+				new_power[i] += xs * meshCell->getNewFlux()[e];
 			} 
-			eps += pow(new_flux[i] / old_flux[i] - 1.0, 2);
+			eps += pow(new_power[i] / old_power[i] - 1.0, 2);
 		}
 		eps = pow(eps, 0.5);
 	  
 		for (int i = 0; i < cw * ch; i++)
-			old_flux[i] = new_flux[i];
+			old_power[i] = new_power[i];
 
 		/* In DEBUG mode (loo after MOC converges), moc_iter = 1000 */
 		if (moc_iter == 1000)
@@ -1934,8 +1930,6 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 		}
 	}
 	
-	//log_printf(WARNING, "Keff not converging after %d iter", max_outer);
-
 	/* Cleaning up; FIXME: more cleaning */
 	for (int i = 0; i < cw * ch; i++)
 	{
@@ -1953,7 +1947,6 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 	delete[] tau;
 	delete[] new_src;
 	delete[] new_quad_src;
-
 
 	return _keff;
 }
@@ -2169,6 +2162,10 @@ void Cmfd::updateMOCFlux(int iteration){
 	int cw = _mesh->getCellWidth();
 	int ch = _mesh->getCellHeight();
 	int ng = NUM_ENERGY_GROUPS;
+
+	if (_mesh->getMultigroup() == false)
+		ng = 1;
+
 	int i, e;
 	std::vector<int>::iterator iter;
 
@@ -2185,16 +2182,8 @@ void Cmfd::updateMOCFlux(int iteration){
 
 		/* loop over groups */
 		for (e = 0; e < ng; e++){
-
-			/* get the old and new meshCell flux */
-			if (_mesh->getMultigroup() == true){
-				old_flux = meshCell->getOldFlux()[e];
-				new_flux = meshCell->getNewFlux()[e];
-			}
-			else {
-				old_flux = meshCell->getOldFlux()[0];
-				new_flux = meshCell->getNewFlux()[0];
-			}
+			old_flux = meshCell->getOldFlux()[e];
+			new_flux = meshCell->getNewFlux()[e];
 
 			if (e == NUM_ENERGY_GROUPS - 1)
 			{
@@ -2210,7 +2199,6 @@ void Cmfd::updateMOCFlux(int iteration){
 
 				/* get fsr flux */
 				flux = fsr->getFlux();
-
 
 				/* set new flux in FSR */
 				flux[e] = new_flux / old_flux * flux[e];
@@ -2339,7 +2327,7 @@ void Cmfd::storePreMOCMeshSource(FlatSourceRegion* fsrs)
 	{
 		meshCell = _mesh->getCells(i);
 
-		/* Zeroes tallies for this energy group */
+		/* Zeroes tallies for this mesh */
 		source_tally = 0;
 
 		/* Computes flux weighted xs for each energy group */
@@ -2372,6 +2360,11 @@ void Cmfd::storePreMOCMeshSource(FlatSourceRegion* fsrs)
 		/* For homogenized one energy group, set xs after all e's are done */
 		if (_mesh->getMultigroup() == false)
 			meshCell->setSrc(source_tally / vol_tally_cell, 0);
+
+		log_printf(DEBUG, "As tracked volume of this mesh is %.10f", 
+				   vol_tally_cell);
+		log_printf(DEBUG, "Source in this mesh for the last energy group is"
+				   " %.10f", source_tally_cell);
 	}
 }
 
@@ -2390,10 +2383,7 @@ void Cmfd::setOldFSRFlux()
 	  
 		/* loop over energy groups */
 		for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
-		{
 			fsr->setOldFlux(e, fsr->getFlux()[e]);
-		  
-		}
 	}
 }
 

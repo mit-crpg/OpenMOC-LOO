@@ -384,10 +384,10 @@ void Solver::zeroMeshCells() {
 
 void Solver::zeroLeakage(){
 
-	for (int s = 1; s < 5; s++){
-		for (int e = 0; e < NUM_ENERGY_GROUPS; e++){
+	for (int s = 1; s < 5; s++)
+	{
+		for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
 			_geom->getSurface(s)->setLeakage(0.0,e);
-		}
 	}
 }
 
@@ -481,7 +481,7 @@ void Solver::updateKeff(int iteration) {
 		iteration, _k_eff, _loo_k);
 
 		if (_update_flux){
-	_k_eff = _loo_k;
+	        _k_eff = _loo_k;
             _cmfd->updateMOCFlux(iteration);
 		}
 	}
@@ -1438,7 +1438,6 @@ double Solver::computeL2Norm(double *old_fsr_powers)
 {
 	double l2_norm = 0.0;
 
-	/* FIXME: check what happens to energy? */
 	for (int i = 0; i < _num_FSRs; i++)
 	{
 		if (_FSRs_to_powers[i] != 0.0)
@@ -1525,7 +1524,11 @@ double Solver::kernel(int max_iterations) {
 
 		/* Checks energy-integrated L2 norm of FSR powers / fission rates */
 		double eps = computeL2Norm(old_fsr_powers);
-			
+		// FIXME
+		//if (i < 2998)
+		//	   eps = 1;
+
+
 		/* Stores current FSR powers into old fsr powers for next iter */
 		for (int n = 0; n < _num_FSRs; n++)
 			old_fsr_powers[n] = _FSRs_to_powers[n];
