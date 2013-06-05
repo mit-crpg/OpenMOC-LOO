@@ -20,9 +20,9 @@
   </lattice>
 
 <!-- Definition of Surfaces -->
-  <surface id="1" type="x-plane" coeffs="-1.26" boundary="reflective"/>
-  <surface id="2" type="x-plane" coeffs="1.26"  boundary="reflective"/>
-  <surface id="3" type="y-plane" coeffs="-1.26" boundary="reflective" />
-  <surface id="4" type="y-plane" coeffs="1.26"  boundary="reflective"/>
+  <surface id="1" type="x-plane" coeffs="-1.26" boundary="vacuum"/>
+  <surface id="2" type="x-plane" coeffs="1.26"  boundary="vacuum"/>
+  <surface id="3" type="y-plane" coeffs="-1.26" boundary="vacuum" />
+  <surface id="4" type="y-plane" coeffs="1.26"  boundary="vacuum"/>
   <surface id="5" type="circle"  coeffs="0.0 0.0 0.56" />
 </geometry>
