@@ -325,15 +325,15 @@ void Mesh::splitCornerCurrents()
 	double f = 0.5; 
 
 	int min_x[] = {0, -1, -1, 0};
-	int max_x[] = {cw, cw-1, cw-1, cw};
-	int min_y[] = {-1, -1, 0, 0};
-	int max_y[] = {ch-1, ch-1, ch, ch};
+	int max_x[] = {cw, cw, cw, cw};
+	int min_y[] = {-1, -1, -1, -1};
+	int max_y[] = {ch, ch-1, ch-1, ch};
 
-	int next_x[] = {0, 0, 1, -1};
-	int next_y[] = {1, 1, -1, 0};
+	int next_x[] = {-1, 1, 1, -1};
+	int next_y[] = { 0, 0, 0, 0};
 
-	int surf[] = {1, 1, 2, 0};
-	int next_surf[] = {0, 2, 3, 3};
+	int surf[]      = {0, 2, 2, 0};
+	int next_surf[] = {1, 1, 3, 3};
 
 	for (int x = 0; x < cw; x++){
 		for (int y = 0; y < ch; y++){
@@ -366,6 +366,62 @@ void Mesh::splitCornerCurrents()
 
 				surfaceSide->incrementCurrent(currents);
 				surfaceSideNext->incrementCurrent(currents); 			
+			}
+		}
+	}
+}
+
+void Mesh::splitCornerQuadCurrents()
+{
+	MeshSurface* surfaceCorner;
+	MeshSurface* surfaceSide;
+	MeshSurface* surfaceSideNext;
+
+	int cw = getCellWidth();
+	int ch = getCellHeight();
+	MeshCell* meshCell;
+	MeshCell* meshCellNext;
+	double current;
+	double f = 0.5; 
+
+	int min_x[] = {0, -1, -1, 0};
+	int max_x[] = {cw, cw, cw, cw};
+	int min_y[] = {-1, -1, -1, -1};
+	int max_y[] = {ch, ch-1, ch-1, ch};
+
+	int next_x[] = {-1, 1, 1, -1};
+	int next_y[] = { 0, 0, 0, 0};
+
+	int surf[]      = {0, 2, 2, 0};
+	int next_surf[] = {1, 1, 3, 3};
+
+	for (int x = 0; x < cw; x++)
+	{
+		for (int y = 0; y < ch; y++)
+		{
+			meshCell = &_cells[y * cw + x];
+			for (int i = 0; i < 4; i++)
+			{
+				if (x > min_x[i] &&  x < max_x[i] && 
+					y > min_y[i] && y < max_y[i])
+					meshCellNext = 
+						&_cells[(y + next_y[i]) * cw + x + next_x[i]];
+				else 
+					meshCellNext = meshCell;
+
+				surfaceSide = meshCell->getMeshSurfaces(surf[i]);
+				surfaceSideNext = meshCellNext->getMeshSurfaces(next_surf[i]);
+				surfaceCorner = meshCell->getMeshSurfaces(i+4);
+
+				for (int g = 0; g < NUM_ENERGY_GROUPS; g++)
+				{
+					for (int j = 0; j < 2; j++)
+					{
+						current = f * surfaceCorner->getQuadCurrent(g, j);
+						surfaceSide->incrementQuadCurrent(current, g, j);
+						surfaceSideNext->incrementQuadCurrent(current, g, j);
+					}
+				}
 			}
 		}
 	}

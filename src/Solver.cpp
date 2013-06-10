@@ -355,30 +355,26 @@ void Solver::zeroMeshCells() {
 	MeshCell* meshCell;
 
 	/* loop over mesh cells */
-	for (int i = 0; i < mesh->getCellHeight()*mesh->getCellWidth(); i++){
-		log_printf(INFO, "getting cell...");
+	for (int i = 0; i < mesh->getCellHeight() * mesh->getCellWidth(); i++)
+	{
 		meshCell = mesh->getCells(i);
 
 		/* loop over mesh surfaces in mesh cell */
-		for (int surface = 0; surface < 8; surface++){
-
+		for (int surface = 0; surface < 8; surface++)
+		{
 			/* loop over energy groups */
-			for (int group = 0; group < NUM_ENERGY_GROUPS; group++){
-				/* meshCell constructor sets the oldflux and newflux to 1.0 */
-
+			for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
+			{
 				/* set current to zero */
-				meshCell->getMeshSurfaces(surface)->setCurrent(0, group);
+				meshCell->getMeshSurfaces(surface)->setCurrent(0, e);
 
 				/* set quad currents to zero */
-				for (int index = 0; index < 2; index++){
-				meshCell->getMeshSurfaces(surface)->setQuadCurrent(0, 
-																   group,
-																   index);
-                }
+				for (int j = 0; j < 2; j++)
+					meshCell->getMeshSurfaces(surface)->setQuadCurrent(0, e, j);
             }
 		}
 	}
-
+	return;
 }
 
 
@@ -705,38 +701,43 @@ void Solver::plotFluxes(int iter_num){
 	deleteBitMap(bitMap);
 }
 
-void Solver::tallyLooForwardFlux(Track *track, segment *segment, 
-								 MeshSurface **meshSurfaces){
-	int index = 0, pe, p, e, surfID;
+void Solver::tallyLooCurrent(Track *track, segment *segment, 
+							 MeshSurface **meshSurfaces, int direction){
+	int index = 0, pe = 0, pe_initial = 0, p, e, surfID;
 	MeshSurface *meshSurface;
-	/* notice this is polar flux weights, more than just polar weights */
-	double *weights = track->getPolarWeights();
-	double *polar_fluxes = track->getPolarFluxes();
-	double phi = track->getPhi();
+	double *weights, *polar_fluxes;
 
-	/* Defines index */
-	if (phi >= PI/2.0)
-		index = 1;
-
-	/* get the ID of the surface that the segment ends on */
-	surfID = segment->_mesh_surface_fwd;
+    /* Get the ID of the surface that the segment ends on (forward), starts
+	 * on (backwards)*/
+	if (direction == 1)
+		surfID = segment->_mesh_surface_fwd;
+	else 
+	{
+	    surfID = segment->_mesh_surface_bwd;
+        pe_initial = GRP_TIMES_ANG;
+    }
 
 	if (surfID != -1)
 	{
+		/* notice this is polar flux weights, more than just polar weights */
+		weights = track->getPolarWeights();
+		polar_fluxes = track->getPolarFluxes();
+
+		/* Defines index */
+		if (track->getPhi() >= PI/2.0)
+			index = 1;
+
+		/* Obtains the surface that the segment crosses */
 		meshSurface = meshSurfaces[surfID];
-		log_printf(DEBUG, "forward, phi = %f, index = %d, surface ID = %d",
-				   phi, index, 
+		log_printf(DEBUG, " phi = %f, index = %d, surface ID = %d",
+				   track->getPhi(), index, 
 				   meshSurface->getId());
 
-		/* set polar angle * energy group to 0 */
-		pe = 0;
-		/* loop over energy groups */
+		pe = pe_initial;
 		for (e = 0; e < NUM_ENERGY_GROUPS; e++) 
 		{
-			/* loop over polar angles */
 			for (p = 0; p < NUM_POLAR_ANGLES; p++)
 			{
-				/* increment flux by polar flux times polar flux weights */
 				meshSurface->incrementQuadCurrent(polar_fluxes[pe] * weights[p] 
 												  / 2.0, e, index);
 				pe++;
@@ -746,63 +747,31 @@ void Solver::tallyLooForwardFlux(Track *track, segment *segment,
 	return;
 }
 
-void Solver::tallyLooBackwardFlux(Track *track, segment *segment, 
-								  MeshSurface **meshSurfaces){
-	int index = 0, pe, p, e, surfID;
+void Solver::tallyCmfdCurrent(Track *track, segment *segment, 
+							  MeshSurface **meshSurfaces, int direction){
 	MeshSurface *meshSurface;
-	double *weights = track->getPolarWeights();
-	double *polar_fluxes = track->getPolarFluxes();
-	double phi = track->getPhi();
-
-	/* Defines index */
-	if (phi >= PI/2.0)
-		index = 1;
+	int pe = 0, pe_initial = 0, p, e, surfID;
+	/* polar weights should be azi weight x sin(theta) x polar weight x 4 pi, 
+	 * where azi weight takes into accout the spacing between tracks */
+	double *weights, *polar_fluxes;
+	double currents[NUM_ENERGY_GROUPS];
 	
-	/* get the ID of the surface that the segment starts on */
-	surfID = segment->_mesh_surface_bwd;
+	if (direction == 1) 
+		surfID = segment->_mesh_surface_fwd;
+	else
+	{
+		surfID = segment->_mesh_surface_bwd;
+		pe_initial = GRP_TIMES_ANG;
+	}
 
 	if (surfID != -1)
 	{
-		/* Obtains the surface that the segment crosses */
+
+		weights = track->getPolarWeights();
+		polar_fluxes = track->getPolarFluxes();
+
 		meshSurface = meshSurfaces[surfID];
-		log_printf(DEBUG, "backward, phi = %f, index = %d, surface ID = %d", 
-				   phi, index, 
-				   meshSurface->getId());
-
-		/* Set polar angle * energy group to 
-		   num groups * num angles */
-		pe = GRP_TIMES_ANG;
-
-		/* Tallies Quadrature Flux */
-		for (e = 0; e < NUM_ENERGY_GROUPS; e++) 
-		{
-			for (p = 0; p < NUM_POLAR_ANGLES; p++)
-			{
-				meshSurface->incrementQuadCurrent(polar_fluxes[pe] 
-												  * weights[p] / 2.0, e, index);
-				pe++;
-			}
-		}
-	}
-	return;
-}
-
-void Solver::tallyCmfdForwardCurrent(Track *track, segment *segment, 
-									 MeshSurface **meshSurfaces){
-	MeshSurface *meshSurface;
-	int pe, p, e;
-	/* polar weights should be azi weight x sin(theta) x polar weight x 4 pi, 
-	 * where azi weight takes into accout the spacing between tracks */
-	double *weights = track->getPolarWeights();
-	double *polar_fluxes = track->getPolarFluxes();
-	double currents[NUM_ENERGY_GROUPS];
-
-	if (segment->_mesh_surface_fwd != -1)
-	{
-		meshSurface = meshSurfaces[segment->_mesh_surface_fwd];
-		/* set polar angle * energy group to 0 */
-		pe = 0;
-
+		pe = pe_initial;
 		for (e = 0; e < NUM_ENERGY_GROUPS; e++)
 			currents[e] = 0.0;
 
@@ -817,38 +786,7 @@ void Solver::tallyCmfdForwardCurrent(Track *track, segment *segment,
 				 * is cancelled out with the 1/cos theta needed to get the 
 				 * track spacing now on the surface. The 1/2.0 takes into 
 				 * account half space. */
-			    currents[e] += polar_fluxes[pe]*weights[p]/2.0;
-				pe++;
-			}
-		}
-		meshSurface->incrementCurrent(currents);
-	}
-	return;
-}
-
-void Solver::tallyCmfdBackwardCurrent(Track *track, segment *segment, 
-									  MeshSurface **meshSurfaces){
-	int pe, p, e;
-	MeshSurface *meshSurface;
-	double *weights = track->getPolarWeights();
-	double *polar_fluxes = track->getPolarFluxes();
-	double currents[NUM_ENERGY_GROUPS];
-
-	if (segment->_mesh_surface_bwd != -1){
-		meshSurface = meshSurfaces[segment->_mesh_surface_bwd];
-		
-		for (e = 0; e < NUM_ENERGY_GROUPS; e++)
-			currents[e] = 0.0;
-		
-		/* set polar angle * energy group to 
-		   num groups * num angles */
-		pe = GRP_TIMES_ANG;
-
-		/* Tallies current (polar & azimuthal weighted flux) for CMFD */
-		for (e = 0; e < NUM_ENERGY_GROUPS; e++) {
-			for (p = 0; p < NUM_POLAR_ANGLES; p++){
-			    /* FIXME */
-				currents[e] += polar_fluxes[pe]*weights[p]/2.0;
+			    currents[e] += polar_fluxes[pe] * weights[p]/2.0;
 				pe++;
 			}
 		}
@@ -985,13 +923,13 @@ void Solver::MOCsweep(int max_iterations) {
 					   tally current/weight */
 					if (_run_loo)
 					{
-						tallyLooForwardFlux(track, segment, meshSurfaces);
+						tallyLooCurrent(track, segment, meshSurfaces, 1);
 						// FIXME: debug
-						tallyCmfdForwardCurrent(track, segment, meshSurfaces);
+						tallyCmfdCurrent(track, segment, meshSurfaces, 1);
 					}
 
 					if (_run_cmfd)
-						tallyCmfdForwardCurrent(track, segment, meshSurfaces);
+						tallyCmfdCurrent(track, segment, meshSurfaces, 1);
 
 					/* Increments the scalar flux for this FSR */
 					fsr->incrementFlux(fsr_flux);
@@ -1067,13 +1005,13 @@ void Solver::MOCsweep(int max_iterations) {
 					   tally quadrature flux for LOO acceleration */
 					if (_run_loo)
 					{
-						tallyLooBackwardFlux(track, segment, meshSurfaces);
+						tallyLooCurrent(track, segment, meshSurfaces, -1);
 						// FIXME: debug
-						tallyCmfdBackwardCurrent(track, segment, meshSurfaces);
+						tallyCmfdCurrent(track, segment, meshSurfaces, -1);
 					}
 
 					if (_run_cmfd)
-						tallyCmfdBackwardCurrent(track, segment, meshSurfaces);
+						tallyCmfdCurrent(track, segment, meshSurfaces, -1);
 						
 					/* Increments the scalar flux for this FSR */
 					fsr->incrementFlux(fsr_flux);

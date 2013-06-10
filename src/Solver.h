@@ -106,14 +106,10 @@ public:
  	double getEps(Mesh* mesh, double keff, double renorm_factor);
  	FlatSourceRegion* getFSRs();
  	void setOldFSRFlux();
-	void tallyLooForwardFlux(Track *track, segment *segment, 
-							 MeshSurface **meshSurfaces);
-	void tallyLooBackwardFlux(Track *track, segment *segment, 
-							  MeshSurface **meshSurfaces);
-	void tallyCmfdForwardCurrent(Track *track, segment *segment, 
-							 MeshSurface **meshSurfaces);
-	void tallyCmfdBackwardCurrent(Track *track, segment *segment, 
-							  MeshSurface **meshSurfaces);
+	void tallyLooCurrent(Track *track, segment *segment, 
+						 MeshSurface **meshSurfaces, int dir);
+	void tallyCmfdCurrent(Track *track, segment *segment, 
+						 MeshSurface **meshSurfaces, int dir);
 	double runLoo(int i);
 	double runCmfd(int i);
 	double computeL2Norm(double *old_fsr_powers);

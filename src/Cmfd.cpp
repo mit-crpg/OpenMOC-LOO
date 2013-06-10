@@ -93,7 +93,7 @@ void Cmfd::computeXS(){
 	if (_run_loo)
 	{
 		_mesh->splitCornerCurrents();
-		//_mesh->splitCornerQuadCurrents();
+		_mesh->splitCornerQuadCurrents();
 	}
 
 	/* initialize variables */

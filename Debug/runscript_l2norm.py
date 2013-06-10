@@ -18,20 +18,20 @@ na = [32, 128]
 for i, geometry in enumerate(geometries):
     for spacing in ts:
         for angle in na:
-            if geometry != 'geometry_simple.xml':
+            if geometry != 'geometry_pin.xml':
                 os.system('../bin/openmoc'
 						  + ' -m ../xml-sample/Cmfd/' + materials[i]
 						  + ' -g ../xml-sample/Cmfd/' + geometry 
 						  + ' -na ' + str(angle) 
 						  + ' -ts ' + str(spacing) 
-						  + ' -fc 1e-5 -uf -mg -cl 2')
+						  + ' -fc 1e-5 -uf -wc -mg -cl 2')
             else:
                 os.system('../bin/openmoc'
 						  + ' -m ../xml-sample/Cmfd/' + materials[i]
 						  + ' -g ../xml-sample/Cmfd/' + geometry 
 						  + ' -na ' + str(angle) 
 						  + ' -ts ' + str(spacing) 
-						  + ' -fc 1e-5 -uf -mg')
+						  + ' -fc 1e-5 -uf -mg -wc')
 
     # list of l2_norm files
     l2_norm_files = []
