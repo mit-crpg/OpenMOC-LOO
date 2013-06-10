@@ -113,7 +113,8 @@ int main(int argc, char **argv) {
 	timer.recordSplit("Segmenting tracks");
 
 	/* Create CMFD class */
-	Cmfd cmfd(&geometry, &plotter, geometry.getMesh(), opts.getCmfd(),
+	Cmfd cmfd(&geometry, &plotter, geometry.getMesh(), 
+			  opts.getCmfd(), opts.getLoo(),
 			  opts.getDiffusionCorrection(), opts.getL2NormConvThresh(),
 			  &track_generator);
 

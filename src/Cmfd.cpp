@@ -14,7 +14,8 @@
  * @param geom pointer to the geometry
  * @param track_generator pointer to the trackgenerator
  */
-Cmfd::Cmfd(Geometry* geom, Plotter* plotter, Mesh* mesh, bool runCmfd, 
+Cmfd::Cmfd(Geometry* geom, Plotter* plotter, Mesh* mesh, 
+		   bool runCmfd, bool runLoo,
 		   bool useDiffusionCorrection, double l2_norm_conv_thresh,
 		   TrackGenerator *track_generator) {
 
@@ -29,8 +30,9 @@ Cmfd::Cmfd(Geometry* geom, Plotter* plotter, Mesh* mesh, bool runCmfd,
 	_l2_norm_conv_thresh = l2_norm_conv_thresh;
 	_use_diffusion_correction = useDiffusionCorrection;
 
+	_run_cmfd = false;
 	if (runCmfd){
-
+		_run_cmfd = true;
 		PetscInt size1, size2;
 		int ng = NUM_ENERGY_GROUPS;
 		if (_mesh->getMultigroup() == false){
@@ -43,6 +45,10 @@ Cmfd::Cmfd(Geometry* geom, Plotter* plotter, Mesh* mesh, bool runCmfd,
 		size2 = 4 + ng;
 		cw = createAMPhi(size1, size2, ch*cw*ng);
 	}
+
+	_run_loo = false;
+	if (runLoo)
+		_run_loo = true;
 }
 
 /**
@@ -82,8 +88,13 @@ int Cmfd::createAMPhi(PetscInt size1, PetscInt size2, int cells){
 void Cmfd::computeXS(){
 
 	/* split corner currents to side surfaces */
-	/* FIXME: implement splitcorners for quad currents for LOO */
-	//_mesh->splitCorners();
+	if (_run_cmfd)
+		_mesh->splitCornerCurrents();
+	if (_run_loo)
+	{
+		_mesh->splitCornerCurrents();
+		//_mesh->splitCornerQuadCurrents();
+	}
 
 	/* initialize variables */
 	double volume, flux, abs, tot, nu_fis, chi;
@@ -1063,18 +1074,16 @@ void Cmfd::computeQuadFlux()
 					/* For debugging purpose, compute partial currents */
 					double current = s[i]->getQuadCurrent(e, 0) 
 						+ s[i]->getQuadCurrent(e, 1);
-					log_printf(DEBUG, "cmfd generates %.10f,"
-							   " LOO generates %.10f",
-							   s[i]->getCurrent(e), current);
-
-
-					s[i]->setCurrent(current, e);
 
 					/* Prints to screen quad current and quad flux */
-					log_printf(ACTIVE, "cell %d surface %d energy %d's current"
+					log_printf(ACTIVE, "cell %d surface %d energy %d's "
+							   " LOO current is %.10f, cmfd generated current"
 							   " is %.10f, quad fluxes = %.10f %.10f", 
-							   y*cell_width+x, i, e, current,
+							   y*cell_width+x, i, e, current, 
+							   s[i]->getCurrent(e), 
 							   s[i]->getQuadFlux(e, 0), s[i]->getQuadFlux(e,1));
+
+					s[i]->setCurrent(current, e);
 				}
 			}
 		}

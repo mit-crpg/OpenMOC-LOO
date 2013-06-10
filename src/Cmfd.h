@@ -40,7 +40,7 @@
 
 
 /**
- * Surface types
+ * Solver types
  */
 enum solveType {
 	DIFFUSION,
@@ -68,9 +68,11 @@ private:
 	double _spacing;
 	int _num_azim;
 	bool _use_diffusion_correction;
-
+	bool _run_loo;
+	bool _run_cmfd;
 public:
-	Cmfd(Geometry* geom, Plotter* plotter, Mesh* mesh, bool runCmfd, 
+	Cmfd(Geometry* geom, Plotter* plotter, Mesh* mesh, 
+		 bool runCmfd, bool runLoo,
 		 bool useDiffusionCorrection, double l2_norm_conv_thresh,
 		 TrackGenerator *track_generator);
 	virtual ~Cmfd();
