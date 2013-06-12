@@ -1041,7 +1041,7 @@ void Cmfd::computeQuadFlux()
 	if (_mesh->getMultigroup() == false){
 		ng = 1;
 		_mesh->computeTotQuadCurrents();
-		// FIXME: debug
+		/* FIXME: debugging purpose */
 		_mesh->computeTotCurrents();
 	}
 
@@ -1058,7 +1058,7 @@ void Cmfd::computeQuadFlux()
 	{
 		for (int x = 0; x < cell_width; x++)
 		{
-			meshCell = _mesh->getCells(y*cell_width + x);
+			meshCell = _mesh->getCells(y * cell_width + x);
 
 			/* get four surfaces */
 			for (int i = 0; i < 4; i++) 
@@ -1066,22 +1066,27 @@ void Cmfd::computeQuadFlux()
 				s[i] = meshCell->getMeshSurfaces(i);
 				for (int e = 0; e < ng; e++)
 				{
-					for (int ind = 0; ind < 2; ind ++)
+					for (int j = 0; j < 2; j++)
 					{
-						s[i]->setQuadFlux(s[i]->getQuadCurrent(e, ind) / scale, 
-										  e, ind);
+						s[i]->setQuadFlux(s[i]->getQuadCurrent(e, j) / scale, 
+										  e, j);
 					}
+
 					/* For debugging purpose, compute partial currents */
 					double current = s[i]->getQuadCurrent(e, 0) 
 						+ s[i]->getQuadCurrent(e, 1);
 
-					/* Prints to screen quad current and quad flux */
-					log_printf(ACTIVE, "cell %d surface %d energy %d's "
-							   " LOO current is %.10f, cmfd generated current"
-							   " is %.10f, quad fluxes = %.10f %.10f", 
-							   y*cell_width+x, i, e, current, 
-							   s[i]->getCurrent(e), 
-							   s[i]->getQuadFlux(e, 0), s[i]->getQuadFlux(e,1));
+					if (e == 0)
+					{
+						/* Prints to screen quad current and quad flux */
+						log_printf(ACTIVE, "cell %d surface %d energy %d's "
+								   " cmfd current: %.10f, loo current:"
+								   " %.10f, quad fluxes: %.10f %.10f", 
+								   y * cell_width + x, i, e, 
+								   s[i]->getCurrent(e), current, 
+								   s[i]->getQuadFlux(e, 0), 
+								   s[i]->getQuadFlux(e,1));
+					}
 
 					s[i]->setCurrent(current, e);
 				}

@@ -339,7 +339,6 @@ void Solver::zeroFSRFluxes() {
 			fsr->setFlux(e, 0.0);
 	}
 
-
 	return;
 }
 

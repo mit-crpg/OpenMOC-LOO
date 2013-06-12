@@ -94,8 +94,8 @@ double MeshSurface::getQuadFlux(int group, int index){
 }
 
 void MeshSurface::incrementQuadCurrent(double quad_current, int group, 
-									   int index){
-	
+									   int index)
+{	
 	_quad_current[group][index] += quad_current;
 }
 

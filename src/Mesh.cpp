@@ -348,9 +348,6 @@ void Mesh::splitCornerCurrents()
 					   
 			for (int i = 0; i < 4; i++)
 			{
-				for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
-					currents[e] = 0.0;
-
 				if (x > min_x[i] &&  x < max_x[i] && 
 					y > min_y[i] && y < max_y[i])
 					meshCellNext = &_cells[(y + next_y[i]) * cw 
@@ -362,13 +359,14 @@ void Mesh::splitCornerCurrents()
 				surfaceSideNext = meshCellNext->getMeshSurfaces(next_surf[i]);
 				surfaceCorner = meshCell->getMeshSurfaces(i+4);
 				for (int group = 0; group < NUM_ENERGY_GROUPS; group++)
-					currents[group] += f * surfaceCorner->getCurrent(group);
+					currents[group] = f * surfaceCorner->getCurrent(group);
 
 				surfaceSide->incrementCurrent(currents);
 				surfaceSideNext->incrementCurrent(currents); 			
 			}
 		}
 	}
+	return;
 }
 
 void Mesh::splitCornerQuadCurrents()
@@ -425,6 +423,7 @@ void Mesh::splitCornerQuadCurrents()
 			}
 		}
 	}
+	return;
 }
 
 void Mesh::computeTotCurrents(){
