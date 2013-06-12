@@ -1727,20 +1727,22 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 		/* Sweeps over geometry, solve LOO MOC */
 		for (int e = 0; e < ng; e++)
 		{
-			double flux;
+			double flux, initial_flux, delta;
 			int i, t, d;
 			/* Forward direction, i_array[] contains cell #, g_array[] contains
 			 * track # */
 			int i_array[]  = {2,3,1,1,1,0,2,2};
 			int t_array[]  = {0,5,0,2,4,1,4,6};
-		
+			int t_arrayb[] = {1,4,1,3,5,0,5,7};
+
 			int i_array2[] = {3,3,1,0,0,0,2,3};
 			int t_array2[] = {0,2,7,2,4,6,3,6};
+			int t_array2b[]= {1,3,6,3,5,7,2,7};
 
 			/* 1st loop */
 			/* Get the initial angular flux */
 			flux = _mesh->getCells(i_array[0])->getMeshSurfaces(1)->getQuadFlux(e,0);	
-			log_printf(ACTIVE, " Forward, begin with %f", flux);
+			initial_flux = flux;
 			for (int x = 0; x < 8; x++)
 			{
 				i = i_array[x];
@@ -1755,32 +1757,34 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 					* ratio[i][e];
 			}
 			_mesh->getCells(i_array[0])->getMeshSurfaces(1)->setQuadFlux(flux, e, 0);
-			log_printf(ACTIVE, "  end with %f", flux);
+			log_printf(ACTIVE, "  Energy %d, loop 1, fwd, %f -> %f", 
+					   e, initial_flux, flux);
 
 			flux = _mesh->getCells(i_array[0])->getMeshSurfaces(1)->getQuadFlux(e,1); 
-			log_printf(ACTIVE, " Backward, begin with %f", flux);
-			for (int x = 7; x >=0 ; x--)
+			initial_flux = flux;
+			for (int x = 7; x > -1; x--)
 			{
 				i = i_array[x];
-				t = t_array[x];
+				t = t_arrayb[x];
 				d = e * 8 + t;
 				/* Accumulate angular flux to $\bar{\psi}_g^{8,(n+1)}$ */
-				sum_quad_flux[i][e] += flux * ratio[i][e] + 
-					new_quad_src[i][d] * (1- ratio[i][e]) / quad_xs[i][e];
+				//sum_quad_flux[i][e] += flux * ratio[i][e] + 
+				//	new_quad_src[i][d] * (1- ratio[i][e]) / quad_xs[i][e];
 				/* Update angular flux: $\psi_{out} = \psi_{in} *
 				 * e^{-\Sigma L} + Q/\Sigma (1 - e^{-\Sigma L}) */
-				flux -= (flux * tau[i][e] - new_quad_src[i][d] * l) 
+				delta = (flux * tau[i][e] - new_quad_src[i][d] * l) 
 					* ratio[i][e];
+				sum_quad_flux[i][e] += delta / tau[i][e] 
+					+ new_quad_src[i][d]/ quad_xs[i][e];
+				flux -= delta;
 			}
 			_mesh->getCells(i_array[0])->getMeshSurfaces(1)->setQuadFlux(flux, e, 1);
-			log_printf(ACTIVE, "  end with %f", flux);
-
-
+			log_printf(ACTIVE, "  Energy %d, loop 1, bwd, %f -> %f", 
+					   e, initial_flux, flux);
 
 			/* 2nd loop */
 			flux = _mesh->getCells(i_array2[0])->getMeshSurfaces(1)->getQuadFlux(e, 0);
-			log_printf(ACTIVE, " Forward, loop 2, begin with %f", flux);
-
+			initial_flux = flux;
 			for (int x = 0; x < 8; x++)
 			{
 				i = i_array2[x];
@@ -1795,14 +1799,15 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 					* ratio[i][e];
 			}
 			_mesh->getCells(i_array2[0])->getMeshSurfaces(1)->setQuadFlux(flux, e, 0);
-			log_printf(ACTIVE, "  end with %f", flux);
+			log_printf(ACTIVE, "  Energy %d, loop 2, fwd, %f -> %f", 
+					   e, initial_flux, flux);
 
 			flux = _mesh->getCells(i_array2[0])->getMeshSurfaces(1)->getQuadFlux(e, 1);
-			log_printf(ACTIVE, " Backward, loop 2, begin with %f", flux);
-			for (int x = 7; x >=0 ; x--)
+			initial_flux = flux; 
+			for (int x = 7; x > -1; x--)
 			{
 				i = i_array2[x];
-				t = t_array2[x];
+				t = t_array2b[x];
 				d = e * 8 + t;
 				/* Accumulate angular flux to $\bar{\psi}_g^{8,(n+1)}$ */
 				sum_quad_flux[i][e] += flux * ratio[i][e] + 
@@ -1813,7 +1818,8 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 					* ratio[i][e];
 			}
 			_mesh->getCells(i_array2[0])->getMeshSurfaces(1)->setQuadFlux(flux, e, 1);
-			log_printf(ACTIVE, "  end with %f", flux);
+			log_printf(ACTIVE, "  Energy %d, loop 2, bwd, %f -> %f", 
+					   e, initial_flux, flux);
 		} /* finish looping over energy; exit to iter level */				
 
 		double phi_ratio;
