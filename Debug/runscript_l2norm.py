@@ -31,7 +31,7 @@ for i, geometry in enumerate(geometries):
 						  + ' -g ../xml-sample/Cmfd/' + geometry 
 						  + ' -na ' + str(angle) 
 						  + ' -ts ' + str(spacing) 
-						  + ' -fc 1e-5 -uf -mg -wc')
+						  + ' -fc 1e-5 -uf -wc -mg')
 
     # list of l2_norm files
     l2_norm_files = []

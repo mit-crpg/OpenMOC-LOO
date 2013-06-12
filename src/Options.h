@@ -40,7 +40,7 @@ private:
 	bool _plot_current;
 	bool _plot_diffusion;
 	bool _plot_keff;
-	bool _update_flux;
+	bool _update_keff;
 	bool _multigroup;
 	bool _print_matrices;
 	bool _diffusion;
@@ -71,7 +71,7 @@ public:
 	bool plotCurrent();
 	bool plotDiffusion();
 	bool plotKeff();
-	bool updateFlux();
+	bool updateKeff();
 	double getL2NormConvThresh();
 	double getMOCConvThresh();
 	double getKGuess();

@@ -65,7 +65,7 @@ private:
 	int _pre_factor_array_size;
 	int _pre_factor_max_index;
 	double _pre_factor_spacing;
-	bool _update_flux;
+	bool _update_keff;
 	double _l2_norm_conv_thresh;
 	double _moc_conv_thresh;
 	bool _compute_powers;
@@ -80,9 +80,6 @@ private:
 public:
 	Solver(Geometry* geom, TrackGenerator* track_generator, 
 		   Plotter* plotter, Cmfd* cmfd, Options* opts);
-/*		   bool _update_flux, double l2NormConvThresh, 
-		   bool computePowers, bool runCmfd, bool runLoo, bool diffusion, 
-		   double k_guess); */
 	virtual ~Solver();
 	void initializeTrackFluxes(double flux);
 	void initializeSource();
@@ -93,7 +90,8 @@ public:
 	void zeroMeshCells();
 	void zeroLeakage();
 	void computeRatios();
-	void updateKeff(int iteration);
+	void updateFlux(int iteration);
+	void printKeff(int iteration, double eps);
 	double** getFSRtoFluxMap();
 	void MOCsweep(int max_iterations);
 	double kernel(int max_iterations);

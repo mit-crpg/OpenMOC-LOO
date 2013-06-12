@@ -58,7 +58,7 @@ Options::Options(int argc, char **argv) {
 	_plot_specs = false;            	/* Default will not plot materials, cells, FSRs, tracks, or segments */
 	_compute_pin_powers = false;		/* Default will not compute pin powers */
 	_compress_cross_sections = false;	/* Default will not compress cross-sections */
-	_update_flux = true;  				/* Default will not use CMFD to update flux */
+	_update_keff = true;  				/* Default will not use CMFD to update flux */
 
 
 	_print_matrices = false;			/* Default will not print matrices */
@@ -114,9 +114,9 @@ Options::Options(int argc, char **argv) {
 			else if (strcmp(argv[i], "-cxs") == 0 ||
 					strcmp(argv[i], "--compressxs") == 0)
 				_compress_cross_sections = true;
-			else if (strcmp(argv[i], "-uf") == 0 ||
-					strcmp(argv[i], "--updateflux") == 0)
-				_update_flux = true;
+			else if (strcmp(argv[i], "-uk") == 0 ||
+					strcmp(argv[i], "--updatekeff") == 0)
+				_update_keff = true;
 			else if (strcmp(argv[i], "-nc") == 0 ||
 					strcmp(argv[i], "--nocmfd") == 0)
 				_cmfd = false;
@@ -342,8 +342,8 @@ bool Options::plotKeff(){
  * Returns a boolean representing whether or not to use CMFD to update flux
  * @return whether or not to use CMFD to update flux
  */
-bool Options::updateFlux(){
-	return _update_flux;
+bool Options::updateKeff(){
+	return _update_keff;
 }
 
 /**

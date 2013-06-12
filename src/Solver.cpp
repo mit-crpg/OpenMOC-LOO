@@ -28,7 +28,7 @@ Solver::Solver(Geometry* geom, TrackGenerator* track_generator,
     _cmfd = cmfd;
 
     /* Options */
-	_update_flux = opts->updateFlux();
+	_update_keff = opts->updateKeff();
 	_l2_norm_conv_thresh = opts->getL2NormConvThresh();
 	_moc_conv_thresh = opts->getMOCConvThresh();
     _compute_powers = opts->computePinPowers();
@@ -392,7 +392,7 @@ void Solver::zeroLeakage(){
  * Compute k_eff from the new and old source and the value of k_eff from
  * the previous iteration
  */
-void Solver::updateKeff(int iteration) {
+void Solver::updateFlux(int iteration) {
 
 	double tot_abs = 0.0;
 	double tot_fission = 0.0;
@@ -454,42 +454,51 @@ void Solver::updateKeff(int iteration) {
     log_printf(INFO, " MOC leakage  = %f", leakage);
 	_k_eff = tot_fission / (tot_abs + leakage);
 
-	/* Update keff for MOC sweep */
+	/* Update Scalar Fluxes for each FSR */
 	if (_run_cmfd)
 	{
 		_geom->getMesh()->setKeffMOC(_k_eff, iteration);
-
-		log_printf(NORMAL, "Iteration %d, MOC k = %f, CMFD k = %f", 
-		iteration, _k_eff, _cmfd_k);
-
-		if (_update_flux)
-		{
-	     _k_eff = _cmfd_k;
-	     _cmfd->updateMOCFlux(iteration);
-		}
+		_cmfd->updateMOCFlux(iteration);
 	}
 	else if ((_run_loo) && !(_loo_after_MOC_converge))
 	{
 		_geom->getMesh()->setKeffMOC(_k_eff, iteration);
+		_cmfd->updateMOCFlux(iteration);
+	}
 
-		log_printf(NORMAL, "Iteration %d, MOC k = %f, LOO k = %f", 
-		iteration, _k_eff, _loo_k);
+	return;
+}
 
-		if (_update_flux)
-		{
-	       _k_eff = _loo_k;
-	       _cmfd->updateMOCFlux(iteration);
-        }
+void Solver::printKeff(int iteration, double eps)
+{
+	/* Prints & Update keff for MOC sweep */
+	if (_run_cmfd)
+	{
+	log_printf(NORMAL, "Iteration %d, MOC k = %f, CMFD k = %f, eps = %.4e", 
+		iteration, _k_eff, _cmfd_k, eps);
+
+	if (_update_keff)
+		_k_eff = _cmfd_k;
+	}
+	else if ((_run_loo) && !(_loo_after_MOC_converge))
+	{
+		log_printf(NORMAL, "Iteration %d, MOC k = %f, LOO k = %f, eps = %.4e", 
+		iteration, _k_eff, _loo_k, eps);
+
+		if (_update_keff)
+			_k_eff = _loo_k;
 	}
 	else
 	{
-	log_printf(NORMAL, "Iteration %d, MOC k = %f", iteration, _k_eff);
-	log_printf(DEBUG, "Iteration %d, MOC k = %f / (%f + %f) =  %f", 
-		iteration, tot_fission,  tot_abs, leakage, _k_eff); 
+		log_printf(NORMAL, "Iteration %d, MOC k = %f, eps = %e", 
+		iteration, _k_eff, eps);
     }
 
 	return;
 }
+
+
+
 
 
 /**
@@ -636,14 +645,9 @@ void Solver::computeFsrPowers() {
 
 	FlatSourceRegion* fsr;
 
-	/*double tot_pin_power = 0;
-	double avg_pin_power = 0;
-	double num_nonzero_pins = 0;
-	double curr_pin_power = 0;
-	double prev_pin_power = 0; */
-
 	/* Loop over all FSRs and compute the fission rate*/
-	for (int i=0; i < _num_FSRs; i++) {
+	for (int i=0; i < _num_FSRs; i++) 
+	{
 		fsr = &_flat_source_regions[i];
 		_FSRs_to_powers[i] = fsr->computeFissionRate();
 	}
@@ -1452,20 +1456,18 @@ double Solver::kernel(int max_iterations) {
 		else 
 			MOCsweep(1);
 
-		/* Update k_eff: print out the keff from this iteration of MOC, 
-		 * then replace it with acceleration's keff, also update FSR's flux
+		/* Computes _k_eff for for each MOC sweep, then update FSR's flux
 		 * using acceleration steps */
-		updateKeff(i);
+		updateFlux(i);
 
-		/* Computes new FSR powers / fission rates */
+		/* Computes new FSR powers / fission rates into _FSRs_to_powers[n] */
 		computeFsrPowers();
 
 		/* Checks energy-integrated L2 norm of FSR powers / fission rates */
 		double eps = computeL2Norm(old_fsr_powers);
-		// FIXME
-		//if (i < 2998)
-		//	   eps = 1;
 
+		/* Prints out keff & eps, may update keff too based on _update_keff */
+		printKeff(i, eps);
 
 		/* Stores current FSR powers into old fsr powers for next iter */
 		for (int n = 0; n < _num_FSRs; n++)

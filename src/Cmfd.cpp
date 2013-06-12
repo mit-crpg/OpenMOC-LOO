@@ -264,7 +264,7 @@ void Cmfd::computeDsxDirection(double x, double y, int e, MeshCell *meshCell,
 			/* set d_dif */
 			surf->setDDif(2 * d / meshCell->getWidth() / 
 						  (1 + 4 * d / meshCell->getWidth()), e);
-			d_hat = 2 * d*f / meshCell->getWidth() 
+			d_hat = 2 * d * f / meshCell->getWidth() 
 				/ (1 + 4 * d*f / meshCell->getWidth());
 			d_tilde = - (d_hat * flux + current 
 						 / meshCell->getHeight()) / flux;
@@ -355,7 +355,8 @@ void Cmfd::computeDs(){
 	/* set cell width and height */
 	int cell_height = _mesh->getCellHeight();
 	int cell_width = _mesh->getCellWidth();
-	double dt_weight = 0.66;
+	/* Under-relaxation factor, dt_weight = 1.0 means no under-relaxation */
+	double dt_weight = 0.66; // optimal: 0.66
 
 	/* loop over all mesh cells */
 #if USE_OPENMP
@@ -1338,14 +1339,12 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter)
 
 	/* if solve method is DIFFUSION, set max_outer to large number
 	 * to allow solver to fully converge */
-	if (solveMethod == DIFFUSION){
+	if (solveMethod == DIFFUSION)
 		max_outer = 1000;
-	}
 	/* if solve method is CMFD, set max_outer such that flux
 	 * partially converges */
-	else{
-		max_outer = 100;
-	}
+	else
+		max_outer = 5;
 
 	/* create old source and residual vectors */
 	petsc_err = VecCreateSeq(PETSC_COMM_WORLD, ch*cw*ng, &sold);
@@ -1482,9 +1481,7 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter)
 	 * step and the one coming out of converged CMFD step to decided whether 
 	 * the outter MOC iteration / source iteration should quit */
 	if (moc_iter > 0)
-	{
 		petsc_err = fisSourceNorm(snew, moc_iter);
-	}
 
     /* Copies source new to source old */
 	petsc_err = VecCopy(snew, _source_old);
@@ -1507,7 +1504,6 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter)
 	petsc_err = VecDestroy(&res);
 	petsc_err = KSPDestroy(&ksp);
 	CHKERRQ(petsc_err);
-
 
 	/* plot flux, current, and k_eff */
 	if (solveMethod == DIFFUSION){
@@ -1542,7 +1538,7 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 {
 	log_printf(INFO, "Running low order MOC solver...");
 
-	int iter, max_outer = 10; 
+	int iter, max_outer = 3; 
 
 	if (solveMethod == DIFFUSION){
 		max_outer = 1000;
@@ -1885,7 +1881,7 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 			eps += pow(new_power[i] / old_power[i] - 1.0, 2);
 		}
 		eps = pow(eps, 0.5);
-	  
+
 		for (int i = 0; i < cw * ch; i++)
 			old_power[i] = new_power[i];
 
@@ -1926,13 +1922,47 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 			}
 
 			if (solveMethod == CMFD)
-			{
 				_mesh->setKeffCMFD(_keff, moc_iter);
-			}
 
-			return _keff;
+			break;
 		}
 	}
+
+	/* Computes the L2 norm of point-wise-division of energy-integrated
+	 * fission source of mesh cells relative to (m+1/2) */
+	eps = 0;
+	for (int i = 0; i < cw * ch; i++)
+	{
+		meshCell = _mesh->getCells(i);
+		old_power[i] = 0;
+		/* integrates over energy */
+		for (int e = 0; e < ng; e++)
+		{
+			xs = meshCell->getNuSigmaF()[e];
+			old_power[i] += xs * meshCell->getOldFlux()[e];
+		} 
+		eps += pow(new_power[i] / old_power[i] - 1.0, 2);
+	}
+	_l2_norm = pow(eps, 0.5);
+
+	std::ofstream logfile;
+	std::stringstream string;
+	string << "l2_norm_" << (_num_azim*2) << "_" <<  _spacing << ".txt";
+	std::string title_str = string.str();
+
+	/* Write the message to the output file */
+	if (moc_iter == 1)
+	{
+		logfile.open(title_str.c_str(), std::fstream::trunc);
+		logfile << "iteration, l2_norm, keff" << std::endl;
+	}
+	else
+	{
+		logfile.open(title_str.c_str(), std::ios::app);
+		logfile << moc_iter << " " << _l2_norm << " " << _keff << std::endl;
+	}
+
+    logfile.close();
 	
 	/* Cleaning up; FIXME: more cleaning */
 	for (int i = 0; i < cw * ch; i++)
@@ -2205,7 +2235,7 @@ void Cmfd::updateMOCFlux(int iteration){
 				flux = fsr->getFlux();
 
 				/* set new flux in FSR */
-				flux[e] = new_flux / old_flux * flux[e];
+				fsr->setFlux(e, new_flux / old_flux * flux[e]);
 			}
 		}
 	}
