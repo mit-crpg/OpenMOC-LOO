@@ -1267,7 +1267,7 @@ void Cmfd::computeQuadSrc()
 				for (int e = 0; e < ng; e++)
 				{
 					in[e][7] = meshCellNext->getMeshSurfaces(3)->getQuadFlux(e,1);
-					in[e][0] = meshCellNext->getMeshSurfaces(0)->getQuadFlux(e,0);
+					in[e][0] = meshCellNext->getMeshSurfaces(3)->getQuadFlux(e,0);
 				}			
 			}
 
@@ -1710,14 +1710,16 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 			{
 				/* getSrc()[e] returns the $\bar{Q}_g^{(m)}$ */
 				src_ratio = new_src[i][e] / meshCell->getSrc()[e];
-				log_printf(DEBUG, "Old Mesh Averaged Source = %e", 
-						   meshCell->getSrc()[e]);
+
 				/* FIXME */
 				//src_ratio = 1.0;
 				for (int t = 0; t < 8; t++)
 				{
 					int d = e * 8 + t;
 					new_quad_src[i][d] = meshCell->getQuadSrc()[d] * src_ratio;
+					log_printf(ACTIVE, " Cell %d, Energy %d, Track %d,"
+							   " quad source %f", 
+							   i, e, t, new_quad_src[i][d]);
 				}
 				log_printf(ACTIVE, "Average source ratio for cell %d" 
 						   " energy %d, by %.10f", i, e, src_ratio);
@@ -1783,7 +1785,7 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 				flux = _mesh->getCells(i_array[8 * j])->getMeshSurfaces(1)
     				->getQuadFlux(e, 0);
 				initial_flux = flux; 
-				for (int x = 8 * j + 7; x > -1; x--)
+				for (int x = 8 * j + 7; x > 8 * j -1; x--)
 				{
 					i = i_array[x];
 					t = t_arrayb[x];
