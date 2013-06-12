@@ -1498,7 +1498,6 @@ double Solver::kernel(int max_iterations) {
 			{
 				updateSource();
 				_loo_k = runLoo(1000);
-				//log_printf(NORMAL, " LOO k = %f", _loo_k); 
 			}
 
 			/* plot LOO flux and xs */

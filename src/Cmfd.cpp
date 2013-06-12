@@ -1935,16 +1935,20 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 	{
 		meshCell = _mesh->getCells(i);
 		old_power[i] = 0;
+		new_power[i] = 0;
 		/* integrates over energy */
 		for (int e = 0; e < ng; e++)
 		{
 			xs = meshCell->getNuSigmaF()[e];
 			old_power[i] += xs * meshCell->getOldFlux()[e];
+			new_power[i] += xs * meshCell->getNewFlux()[e];
 		} 
 		eps += pow(new_power[i] / old_power[i] - 1.0, 2);
 	}
 	_l2_norm = pow(eps, 0.5);
-
+	log_printf(DEBUG, " iteration %d, L2 norm of cell power error = %e", 
+			   moc_iter, _l2_norm);
+	
 	std::ofstream logfile;
 	std::stringstream string;
 	string << "l2_norm_" << (_num_azim*2) << "_" <<  _spacing << ".txt";
