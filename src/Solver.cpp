@@ -475,10 +475,11 @@ void Solver::updateKeff(int iteration) {
 		log_printf(NORMAL, "Iteration %d, MOC k = %f, LOO k = %f", 
 		iteration, _k_eff, _loo_k);
 
-		if (_update_flux){
-	        _k_eff = _loo_k;
-            _cmfd->updateMOCFlux(iteration);
-		}
+		if (_update_flux)
+		{
+	       _k_eff = _loo_k;
+	       _cmfd->updateMOCFlux(iteration);
+        }
 	}
 	else
 	{
