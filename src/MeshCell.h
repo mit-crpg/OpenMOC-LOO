@@ -44,7 +44,8 @@ private:
 	double _temp;
 	/* for LOO */
 	double _l;
-	double _src[NUM_ENERGY_GROUPS]; /* averaged source */
+	double _old_src[NUM_ENERGY_GROUPS]; /* $\bar{Q}^{(m)}$ */
+	double _src[NUM_ENERGY_GROUPS]; /* $\bar{Q}^{(m+1/2)}$ */
 	double _sum_quad_flux[NUM_ENERGY_GROUPS];
 	double _quad_flux[8*NUM_ENERGY_GROUPS];
 	double _quad_src[8*NUM_ENERGY_GROUPS];
@@ -93,6 +94,8 @@ public:
 	/* LOO */
 	void setSrc(double src, int e);
 	double* getSrc();
+	void setOldSrc(double src, int e);
+	double* getOldSrc();
 	void setQuadFlux(double quadFlux, int e, int index);
 	double* getQuadFlux();
 	void setQuadSrc(double quadSrc, int e, int index);

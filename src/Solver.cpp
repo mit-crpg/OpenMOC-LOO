@@ -386,14 +386,12 @@ void Solver::zeroLeakage(){
 	}
 }
 
-
-
 /**
  * Compute k_eff from the new and old source and the value of k_eff from
  * the previous iteration
  */
-void Solver::updateFlux(int iteration) {
-
+double Solver::computeKeff(int iteration) 
+{
 	double tot_abs = 0.0;
 	double tot_fission = 0.0;
 	double leakage = 0.0;
@@ -453,19 +451,19 @@ void Solver::updateFlux(int iteration) {
 	}
     log_printf(INFO, " MOC leakage  = %f", leakage);
 	_k_eff = tot_fission / (tot_abs + leakage);
+	_geom->getMesh()->setKeffMOC(_k_eff, iteration);
+	return _k_eff;
+}
 
-	/* Update Scalar Fluxes for each FSR */
-	if (_run_cmfd)
-	{
-		_geom->getMesh()->setKeffMOC(_k_eff, iteration);
-		_cmfd->updateMOCFlux(iteration);
-	}
-	else if ((_run_loo) && !(_loo_after_MOC_converge))
-	{
-		_geom->getMesh()->setKeffMOC(_k_eff, iteration);
-		_cmfd->updateMOCFlux(iteration);
-	}
 
+/**
+ * Update FSR's scalar fluxes, normalize them and update the source
+ */
+void Solver::updateFlux(int iteration) {
+	_cmfd->updateMOCFlux(iteration);
+	normalizeFlux();
+	updateSource();
+	
 	return;
 }
 
@@ -893,7 +891,7 @@ void Solver::MOCsweep(int max_iterations) {
 
 						fsr_flux[e] = 0;
 						sigma_t_l = sigma_t[e] * segment->_length;
-						sigma_t_l = std::min(sigma_t_l,10.0);
+						//sigma_t_l = std::min(sigma_t_l,10.0);
 						index = sigma_t_l / _pre_factor_spacing;
 						index = std::min(index * 2 * NUM_POLAR_ANGLES,
 												_pre_factor_max_index);
@@ -978,7 +976,7 @@ void Solver::MOCsweep(int max_iterations) {
 
 						fsr_flux[e] = 0;
 						sigma_t_l = sigma_t[e] * segment->_length;
-						sigma_t_l = std::min(sigma_t_l,10.0);
+						//sigma_t_l = std::min(sigma_t_l,10.0);
 						index = sigma_t_l / _pre_factor_spacing;
 						index = std::min(index * 2 * NUM_POLAR_ANGLES,
 												_pre_factor_max_index);
@@ -1071,6 +1069,11 @@ void Solver::MOCsweep(int max_iterations) {
 			}
 		}
 
+		/* Normalize scalar fluxes and computes Q for each FSR */
+		normalizeFlux();
+		updateSource();
+		_k_eff = computeKeff(i);
+
 		/* If more than two sweep of MOC is requested, check for convergence */
 		/* 
 		   double *old_scalar_flux;
@@ -1116,14 +1119,10 @@ void Solver::MOCsweep(int max_iterations) {
 /* initialize the source and renormalize the fsr and track fluxes */
 void Solver::initializeSource(){
 
-	double scatter_source, fission_source;
-
+	double fission_source;
 	double renorm_factor, volume, tot_vol;
 	double* nu_sigma_f;
-	double* sigma_s;
-	double* chi;
 	double* scalar_flux;
-	double* source;
 	FlatSourceRegion* fsr;
 	Material* material;
 	int start_index, end_index;
@@ -1175,56 +1174,12 @@ void Solver::initializeSource(){
 			_tracks[i][j].normalizeFluxes(renorm_factor);
 	}
 
-
-	/*********************************************************************
-	 * Compute the source for each region
-	 *********************************************************************/
-
-	/* For all regions, find the source */
-	for (int r = 0; r < _num_FSRs; r++) {
-
-		fsr = &_flat_source_regions[r];
-		material = fsr->getMaterial();
-
-		/* Initialize the fission source to zero for this region */
-		fission_source = 0;
-		scalar_flux = fsr->getFlux();
-		source = fsr->getSource();
-		material = fsr->getMaterial();
-		nu_sigma_f = material->getNuSigmaF();
-		chi = material->getChi();
-		sigma_s = material->getSigmaS();
-
-		start_index = material->getNuSigmaFStart();
-		end_index = material->getNuSigmaFEnd();
-
-		/* Compute total fission source for current region */
-		for (int e = start_index; e < end_index; e++)
-			fission_source += scalar_flux[e] * nu_sigma_f[e];
-
-		/* Compute total scattering source for group G */
-		for (int G = 0; G < NUM_ENERGY_GROUPS; G++) {
-
-			scatter_source = 0;
-			start_index = material->getSigmaSStart(G);
-			end_index = material->getSigmaSEnd(G);
-
-			for (int g = start_index; g < end_index; g++)
-				scatter_source += sigma_s[G*NUM_ENERGY_GROUPS + g]
-					* scalar_flux[g];
-
-			/* Set the total source for region r in group G */
-			source[G] = ((1.0 / (_old_k_effs.front())) * fission_source *
-							chi[G] + scatter_source) * ONE_OVER_FOUR_PI;
-		}
-	}
-
-	/* Update pre-computed source / sigma_t ratios */
-	computeRatios();
+	updateSource();
 }
 
 
-/* initialize the sources */
+/* Normalizes the scalar flux in each FSR and angular flux track to that total 
+ * volume-integrated fission source add up to the total volume. */
 void Solver::normalizeFlux(){
 			
 	double fission_source = 0, total_vol = 0;
@@ -1271,6 +1226,10 @@ void Solver::normalizeFlux(){
 		for (int j = 0; j < _num_tracks[i]; j++)
 			_tracks[i][j].normalizeFluxes(renorm_factor);
 	}
+
+	/* FIXME: add in normalize tally too? */
+
+	return;
 }
 
 /* Compute the source for each region */
@@ -1300,8 +1259,12 @@ void Solver::updateSource(){
 		chi = material->getChi();
 		sigma_s = material->getSigmaS();
 
-		start_index = material->getNuSigmaFStart();
-		end_index = material->getNuSigmaFEnd();
+		/* Debug */
+		//start_index = material->getNuSigmaFStart();
+		//end_index = material->getNuSigmaFEnd();
+		start_index = 0;
+		end_index = NUM_ENERGY_GROUPS;
+
 
 		/* Compute total fission source for current region */
 		for (int e = start_index; e < end_index; e++)
@@ -1310,18 +1273,27 @@ void Solver::updateSource(){
 		/* Compute total scattering source for group G */
 		for (int G = 0; G < NUM_ENERGY_GROUPS; G++) {
 			scatter_source = 0;
-			start_index = material->getSigmaSStart(G);
-			end_index = material->getSigmaSEnd(G);
+
+			/* DEBUG */
+			//start_index = material->getSigmaSStart(G);
+			//end_index = material->getSigmaSEnd(G);
+			start_index = 0;
+			end_index = NUM_ENERGY_GROUPS;
 
 			for (int g = start_index; g < end_index; g++)
-				scatter_source += sigma_s[G*NUM_ENERGY_GROUPS + g]
+				scatter_source += sigma_s[G * NUM_ENERGY_GROUPS + g]
 					* scalar_flux[g];
 
 			/* Set the total source for region r in group G */
 			source[G] = ((1.0 / (_old_k_effs.front())) * fission_source *
 							chi[G] + scatter_source) * ONE_OVER_FOUR_PI;
+			//source[G] = (1.0 / _k_eff * fission_source *
+			//				chi[G] + scatter_source) * ONE_OVER_FOUR_PI;
 		}
 	}
+
+	log_printf(ACTIVE, " old k = %.10f, new k = %.10f",
+			   _old_k_effs.front(), _k_eff);
 
 	/* Update pre-computed source / sigma_t ratios */
 	computeRatios();
@@ -1332,10 +1304,10 @@ double Solver::runLoo(int i)
 {
 	double loo_keff;
 
+
+	MOCsweep(1);
 	_cmfd->storePreMOCMeshSource(_flat_source_regions);
 
-	MOCsweep(2);
-	
 	/* LOO Method 1: assume constant Sigma in each mesh. 
 	   Computes cross sections */
 	_cmfd->computeXS();
@@ -1347,7 +1319,7 @@ double Solver::runLoo(int i)
 	_cmfd->computeQuadSrc();
 			 
 	/* Performs low order MOC */
-	loo_keff = _cmfd->computeLooFluxPower(LOO, i, _k_eff);
+	loo_keff = _cmfd->computeLooFluxPower(LOO, i, _old_k_effs.front());
 
 	return loo_keff;
 }
@@ -1385,6 +1357,8 @@ double Solver::computeL2Norm(double *old_fsr_powers)
 		if (_FSRs_to_powers[i] != 0.0)
 			l2_norm += pow(_FSRs_to_powers[i] / old_fsr_powers[i] - 1.0, 2);
 	}
+	/* FIXME: should divide by # FSRs */
+
 	l2_norm = pow(l2_norm, 0.5);
 	log_printf(DEBUG, "L2 norm = %e", l2_norm);
 	return l2_norm;
@@ -1426,6 +1400,9 @@ double Solver::kernel(int max_iterations) {
 			fsr->setOldSource(e, 1.0);
 	}
 
+	normalizeFlux();
+	updateSource();
+
 	double old_fsr_powers[_num_FSRs];
 
 	/* Computes initial FSR powers / fission rates */
@@ -1440,12 +1417,8 @@ double Solver::kernel(int max_iterations) {
 	{
 		log_printf(INFO, "Iteration %d: k_eff = %f", i, _k_eff);
 
-		/* Normalizes the FSR scalar flux and each track's angular flux 
-		 * to such that total fission source adds up to volume. 
-		 */
-		normalizeFlux();
-		/* Updates Q for each FSR based on new scalar flux */
-		updateSource();
+		//normalizeFlux();
+		//updateSource();
 
 		/* Perform one sweep for no acceleration, or call one of the 
 		 * acceleration function which performs two sweeps plus acceleration */
@@ -1456,9 +1429,10 @@ double Solver::kernel(int max_iterations) {
 		else 
 			MOCsweep(1);
 
-		/* Computes _k_eff for for each MOC sweep, then update FSR's flux
-		 * using acceleration steps */
-		updateFlux(i);
+		/* Update FSR's flux based on cell-averaged flux coming from the
+		 * acceleration steps */
+		if ((_run_cmfd) || ((_run_loo) && !(_loo_after_MOC_converge)))
+			updateFlux(i);
 
 		/* Computes new FSR powers / fission rates into _FSRs_to_powers[n] */
 		computeFsrPowers();
@@ -1472,6 +1446,22 @@ double Solver::kernel(int max_iterations) {
 		/* Stores current FSR powers into old fsr powers for next iter */
 		for (int n = 0; n < _num_FSRs; n++)
 			old_fsr_powers[n] = _FSRs_to_powers[n];
+
+		/* If not converged, save old k_eff and pop off old_keff from 
+		   the previous iteration */
+		_old_k_effs.push(_k_eff);
+		if (_old_k_effs.size() == NUM_KEFFS_TRACKED)
+			_old_k_effs.pop();
+
+		/* Update old source in each FSR */
+		for (int r = 0; r < _num_FSRs; r++) {
+			fsr = &_flat_source_regions[r];
+			source = fsr->getSource();
+			old_source = fsr->getOldSource();
+
+			for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
+				old_source[e] = source[e];
+		}
 
         /* Alternative: if (_cmfd->getL2Norm() < _moc_conv_thresh) */
 		if (eps < _moc_conv_thresh) 
@@ -1496,6 +1486,7 @@ double Solver::kernel(int max_iterations) {
 			/* Run one steps of LOO if it is requested to do so */
 			if ( _run_loo && _loo_after_MOC_converge)
 			{
+				normalizeFlux();
 				updateSource();
 				_loo_k = runLoo(1000);
 			}
@@ -1526,25 +1517,8 @@ double Solver::kernel(int max_iterations) {
 
 			return _k_eff;
 		}
-
-
-
-		/* If not converged, save old k_eff and pop off old_keff from 
-		   the previous iteration */
-		_old_k_effs.push(_k_eff);
-		if (_old_k_effs.size() == NUM_KEFFS_TRACKED)
-			_old_k_effs.pop();
-
-		/* Update sources in each FSR */
-		for (int r = 0; r < _num_FSRs; r++) {
-			fsr = &_flat_source_regions[r];
-			source = fsr->getSource();
-			old_source = fsr->getOldSource();
-
-			for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
-				old_source[e] = source[e];
-		}
 	}
+
 
 	log_printf(WARNING, "Unable to converge the source after %d iterations",
 		   max_iterations);

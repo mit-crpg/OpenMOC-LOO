@@ -49,8 +49,8 @@ Options::Options(int argc, char **argv) {
 	_material_file = _relative_path + "xml-sample/Cmfd/material_simple.xml";    /* Default material input file */
 	_k_guess = 1.0;
 
-	_track_spacing = 0.5;				/* Default track spacing: 0.05 */
-	_num_azim = 4;						/* Default \# azimuthal angles: 32 */
+	_track_spacing = 0.05;				/* Default track spacing: 0.05 */
+	_num_azim = 128;						/* Default \# azimuthal angles: 32 */
 	_bit_dimension = 1000;				/* y dimension of tracks and segments plots */
 	_verbosity = "NORMAL";				/* Default logging level */
 	_dump_geometry = false;				/* Default will not dump geometry */

@@ -105,6 +105,8 @@ void Cmfd::computeXS(){
 		tot_tally = 0, scat_tally = 0;
 	double scat_tally_group[NUM_ENERGY_GROUPS];
 
+	double src_tally = 0, src_tally_group = 0;
+
 	std::vector<int>::iterator iter;
 	int i,e,g;
 
@@ -134,6 +136,7 @@ void Cmfd::computeXS(){
 			tot_tally = 0.0;
 			rxn_tally = 0.0;
 			scat_tally = 0.0;
+			src_tally = 0.0;
 		}
 
 		/* loop over energy groups */
@@ -147,12 +150,11 @@ void Cmfd::computeXS(){
 			rxn_tally_group = 0;
 			vol_tally_group = 0;
 			tot_tally_group = 0;
+			src_tally_group = 0;
 
 			/* zero each group to group scattering tally */
 			for (g = 0; g < NUM_ENERGY_GROUPS; g++)
-			{
 				scat_tally_group[g] = 0;
-			}
 
 			/* loop over FSRs in mesh cell */
 			for (iter = meshCell->getFSRs()->begin(); 
@@ -170,7 +172,6 @@ void Cmfd::computeXS(){
 				nu_fis = material->getNuSigmaF()[e];
 				scat = material->getSigmaS();
 
-
 				/* increment tallies for this group */
 				abs_tally_group += abs * flux * volume;
 				tot_tally_group += tot * flux * volume;
@@ -178,11 +179,12 @@ void Cmfd::computeXS(){
 				rxn_tally_group += flux * volume;
 				vol_tally_group += volume;
 				dif_tally_group += flux * volume / (3.0 * tot);
+				src_tally_group += fsr->getSource()[e] * volume;
 
 				/* increment group to group scattering tallies */
 				for (g = 0; g < NUM_ENERGY_GROUPS; g++){
 					/* scattering from group e into g */
-					scat_tally_group[g] += scat[ g * NUM_ENERGY_GROUPS + e] 
+					scat_tally_group[g] += scat[g * NUM_ENERGY_GROUPS + e] 
 						* flux * volume;
 				}
 
@@ -193,13 +195,15 @@ void Cmfd::computeXS(){
 			}
 
 			/* if multigroup, set the multigroup parameters */
-			if (_mesh->getMultigroup()){
+			if (_mesh->getMultigroup())
+			{
 				meshCell->setVolume(vol_tally_group);
 				meshCell->setSigmaA(abs_tally_group / rxn_tally_group, e);
 				meshCell->setSigmaT(tot_tally_group / rxn_tally_group, e);
 				meshCell->setNuSigmaF(nu_fis_tally_group / rxn_tally_group, e);
 				meshCell->setDiffusivity(dif_tally_group / rxn_tally_group, e);
 				meshCell->setOldFlux(rxn_tally_group / vol_tally_group, e);
+				meshCell->setSrc(src_tally_group / vol_tally_group, e);
 
 				for (g = 0; g < NUM_ENERGY_GROUPS; g++)
 				{
@@ -209,7 +213,8 @@ void Cmfd::computeXS(){
 				}
 			}
 			/* if single group, add group-wise tallies up */
-			else{
+			else
+			{
 				abs_tally += abs_tally_group;
 				tot_tally += tot_tally_group;
 				nu_fis_tally += nu_fis_tally_group;
@@ -217,6 +222,7 @@ void Cmfd::computeXS(){
 				rxn_tally += rxn_tally_group;
 				for (g = 0; g < NUM_ENERGY_GROUPS; g++)
 					scat_tally += scat_tally_group[g];
+				src_tally += src_tally_group;
 			}
 		}
 
@@ -233,8 +239,9 @@ void Cmfd::computeXS(){
 					   i, rxn_tally, vol_tally_group, 
 					   meshCell->getOldFlux()[0]);
 			meshCell->setChi(1, 0);
-			/* FIXME: SG needs to add up all scattering */
+			/* SG needs to add up all in-group scattering */
 			meshCell->setSigmaS(scat_tally / rxn_tally, 0, 0);
+			meshCell->setSrc(src_tally / vol_tally_group, 0);
 		}
 	}
 }
@@ -1080,7 +1087,7 @@ void Cmfd::computeQuadFlux()
 					if (e == 0)
 					{
 						/* Prints to screen quad current and quad flux */
-						log_printf(ACTIVE, "cell %d surface %d energy %d's "
+						log_printf(DEBUG, "cell %d surface %d energy %d's "
 								   " cmfd current: %.10f, loo current:"
 								   " %.10f, quad fluxes: %.10f %.10f", 
 								   y * cell_width + x, i, e, 
@@ -1391,7 +1398,7 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter)
 	petsc_err = VecSum(snew, &sumnew);
 	petsc_err = MatMult(_A, _phi_new, sold);
 	petsc_err = VecSum(sold, &sumold);
-	_keff = float(sumnew)/float(sumold);
+	_keff = double(sumnew) / double(sumold);
 	log_printf(INFO, "CMFD iter: %i, keff: %f", iter, _keff);
 	CHKERRQ(petsc_err);
 
@@ -1633,7 +1640,6 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 	 * order m+1/2) and should not be updated during acceleration step. */
 	for (iter = 0; iter < max_outer; iter++)
 	{
-		//old_keff = _keff;
 		
 		/* Resets terms to zeros for each LOO iteration */
 		for (int i = 0; i < cw * ch; i++)
@@ -1647,6 +1653,8 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 			}
 		}
 		
+		log_printf(ACTIVE, "k passed into LOO = %.10f", _keff);
+
 		/* Computes new cell averaged source, looping over energy groups */
 		for (int i = 0; i < cw * ch; i++)
 		{
@@ -1658,10 +1666,18 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 				{
 					new_src[i][e] += meshCell->getSigmaS()[g * ng + e] 
 						* meshCell->getNewFlux()[g] * ONE_OVER_FOUR_PI ;
+					/* FIXME: double check what this k here should be */
 					new_src[i][e] += meshCell->getChi()[e] *
 						meshCell->getNuSigmaF()[g] / _keff 
 						* meshCell->getNewFlux()[g] * ONE_OVER_FOUR_PI ;
 				}
+
+				if (e == 0)
+					log_printf(ACTIVE, " cell %d Q^(m) = %.10f, "
+							   " Q^(n) = %.10f, %.10f", 
+							   i, meshCell->getOldSrc()[0], 
+							   new_src[i][0], meshCell->getSrc()[0]);
+
 			}
 
 
@@ -1704,8 +1720,8 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 			meshCell = _mesh->getCells(i);
 			for (int e = 0; e < ng; e++)
 			{
-				/* getSrc()[e] returns the $\bar{Q}_g^{(m)}$ */
-				src_ratio = new_src[i][e] / meshCell->getSrc()[e];
+				/* getOldSrc()[e] returns the $\bar{Q}_g^{(m)}$ */
+				src_ratio = new_src[i][e] / meshCell->getOldSrc()[e];
 
 				/* FIXME */
 				//src_ratio = 1.0;
@@ -1713,9 +1729,6 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 				{
 					int d = e * 8 + t;
 					new_quad_src[i][d] = meshCell->getQuadSrc()[d] * src_ratio;
-					log_printf(ACTIVE, " Cell %d, Energy %d, Track %d,"
-							   " quad source %f", 
-							   i, e, t, new_quad_src[i][d]);
 				}
 				log_printf(ACTIVE, "Average source ratio for cell %d" 
 						   " energy %d, by %.10f", i, e, src_ratio);
@@ -1763,8 +1776,8 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 				}
 				_mesh->getCells(i_array[8 * j])->getMeshSurfaces(1)
 					->setQuadFlux(flux, e, 1);
-				log_printf(ACTIVE, "  Energy %d, loop %d, fwd, %f -> %f", 
-						   e, j, initial_flux, flux);
+				log_printf(ACTIVE, "  Energy %d, loop %d, fwd, %f -> %f, %.10f",
+						   e, j, initial_flux, flux, flux / initial_flux);
 			}
 
 			/*
@@ -1796,8 +1809,8 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 				}
 				_mesh->getCells(i_array[8 * j])->getMeshSurfaces(1)
 					->setQuadFlux(flux, e, 0);
-				log_printf(ACTIVE, "  Energy %d, loop %d, bwd, %f -> %f", 
-						   e, j, initial_flux, flux);
+				log_printf(ACTIVE, "  Energy %d, loop %d, bwd, %f -> %f, %.10f",
+						   e, j, initial_flux, flux, flux / initial_flux);
 			}
 		} /* finish looping over energy; exit to iter level */				
 
@@ -1820,8 +1833,8 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 				meshCell->setNewFlux(new_flux, e);
 
 				log_printf(ACTIVE, "Update cell %d energy %d scalar flux by "
-						   "%.10f, old phi = %.10f", 
-						   i, e, phi_ratio, meshCell->getOldFlux()[e]);
+						   "%.10f",
+						   i, e, phi_ratio);
 			}
 		}
 
@@ -1845,11 +1858,11 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 			}
 		}
 
-		/* FIXME: this assumes no leakage; may need to handle leakage */
+		/* FIXME: this assumes no leakage; may need to handle lakage */
 		_keff = fis_tot / abs_tot; 
 
 		/* Normalizes flux based on fission source */
-		double normalize_factor = 1.0 / fis_tot * vol_tot;
+		double normalize_factor = 1.0 ;/// fis_tot * vol_tot;
 			//* ch * cw * _mesh->getCells(0)->getVolume();
 		for (int i = 0; i < cw * ch; i++)
 		{
@@ -2348,8 +2361,6 @@ double Cmfd::getKeff(){
 /* Store the mesh cell averaged source before a MOC sweep */
 void Cmfd::storePreMOCMeshSource(FlatSourceRegion* fsrs)
 {
-	_flat_source_regions = fsrs;
-
 	/* initialize variables */
 	double volume, source;
 	double vol_tally_cell;
@@ -2379,31 +2390,39 @@ void Cmfd::storePreMOCMeshSource(FlatSourceRegion* fsrs)
 			for (iter = meshCell->getFSRs()->begin(); 
 				 iter != meshCell->getFSRs()->end(); ++iter)
 			{
-				fsr = &_flat_source_regions[*iter];
+				fsr = &fsrs[*iter];
 				volume = fsr->getVolume();
-				source = fsr->getSource()[e];
+				source = fsr->getSource()[e]; 
 
 				source_tally_cell += source * volume;
 				vol_tally_cell += volume;
+
+				if (e == 0)
+					log_printf(DEBUG, "fsr in cell %d has src %.10f, vol %f", 
+							   i, source, volume);
+
 			} 
 
 			/* For multi energy groups, we go ahead and set the xs for this 
 			 * energy group */
 			if (_mesh->getMultigroup() == true)
-				meshCell->setSrc(source_tally_cell / vol_tally_cell, e);
+			{
+				meshCell->setOldSrc(source_tally_cell / vol_tally_cell, e);
+				log_printf(DEBUG, " cell %d Q_%d^(m) = %.10f", 
+						   i, e, source_tally_cell / vol_tally_cell);
+			}
 			else /* For homogenized one energy group, we tally over all e's */
 				source_tally += source_tally_cell;
 		}
 
 		/* For homogenized one energy group, set xs after all e's are done */
 		if (_mesh->getMultigroup() == false)
-			meshCell->setSrc(source_tally / vol_tally_cell, 0);
+			meshCell->setOldSrc(source_tally / vol_tally_cell, 0);
 
 		log_printf(DEBUG, "As tracked volume of this mesh is %.10f", 
 				   vol_tally_cell);
-		log_printf(DEBUG, "Source in this mesh for the last energy group is"
-				   " %.10f", source_tally_cell);
 	}
+	return;
 }
 
 /* Set the old flux for each FSR equal to FSR flux */

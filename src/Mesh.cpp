@@ -322,7 +322,7 @@ void Mesh::splitCornerCurrents()
 	MeshCell* meshCell;
 	MeshCell* meshCellNext;
 	double currents[NUM_ENERGY_GROUPS];
-	double f = 0.5; 
+	double f = 1.0; 
 
 	int min_x[] = {0, -1, -1, 0};
 	int max_x[] = {cw, cw, cw, cw};
@@ -380,7 +380,7 @@ void Mesh::splitCornerQuadCurrents()
 	MeshCell* meshCell;
 	MeshCell* meshCellNext;
 	double current;
-	double f = 0.5; 
+	double f = 1.0; 
 
 	int min_x[] = {0, -1, -1, 0};
 	int max_x[] = {cw, cw, cw, cw};

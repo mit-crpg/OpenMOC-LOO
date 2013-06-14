@@ -24,14 +24,14 @@ for i, geometry in enumerate(geometries):
 						  + ' -g ../xml-sample/Cmfd/' + geometry 
 						  + ' -na ' + str(angle) 
 						  + ' -ts ' + str(spacing) 
-						  + ' -fc 1e-5 -uf -wc -mg -cl 2')
+						  + ' -fc 1e-5 -uk -wc -mg -cl 2')
             else:
                 os.system('../bin/openmoc'
 						  + ' -m ../xml-sample/Cmfd/' + materials[i]
 						  + ' -g ../xml-sample/Cmfd/' + geometry 
 						  + ' -na ' + str(angle) 
 						  + ' -ts ' + str(spacing) 
-						  + ' -fc 1e-5 -uf -wc -mg')
+						  + ' -fc 1e-5 -uk -wl -mg')
 
     # list of l2_norm files
     l2_norm_files = []

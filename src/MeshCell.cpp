@@ -42,7 +42,8 @@ MeshCell::MeshCell(){
 		}
 
 		/* LOO */
-		_src[e] = 0.0;
+		_src[e] = 0.0; /* FIXME: no need to keep this around */
+		_old_src[e] = 0.0;
 		_sum_quad_flux[e] = 0.0;
 		for (int k = 0; k < 8; k++) 
 		{
@@ -226,6 +227,13 @@ void MeshCell::setNewFlux(double flux, int e){
 	_new_flux[e] = flux;
 }
 
+double* MeshCell::getOldSrc(){
+	return _old_src;
+}
+
+void MeshCell::setOldSrc(double flux, int e){
+	_old_src[e] = flux;
+}
 double* MeshCell::getSrc(){
 	return _src;
 }

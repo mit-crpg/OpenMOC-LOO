@@ -34,7 +34,7 @@
 #define STORE_PREFACTORS false
 
 /* Number of significant digits for computing hashmap exponential prefactors */
-#define FSR_HASHMAP_PRECISION 6
+#define FSR_HASHMAP_PRECISION 12
 
 /* If this machine has OpenMP installed, define as true for parallel speedup */
 #define USE_OPENMP false

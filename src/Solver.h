@@ -92,6 +92,7 @@ public:
 	void computeRatios();
 	void updateFlux(int iteration);
 	void printKeff(int iteration, double eps);
+	double computeKeff(int iteration);
 	double** getFSRtoFluxMap();
 	void MOCsweep(int max_iterations);
 	double kernel(int max_iterations);
