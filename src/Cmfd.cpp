@@ -1545,11 +1545,10 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 {
 	log_printf(INFO, "Running low order MOC solver...");
 
-	int iter, max_outer = 3; 
+	int iter, max_outer = 100; 
 
-	if (solveMethod == DIFFUSION){
+	if (solveMethod == DIFFUSION)
 		max_outer = 1000;
-	}
 
 	_keff = k_MOC;
 
@@ -1862,7 +1861,7 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 		_keff = fis_tot / abs_tot; 
 
 		/* Normalizes flux based on fission source */
-		double normalize_factor = 1.0 ;/// fis_tot * vol_tot;
+		double normalize_factor = 1.0;// / fis_tot * vol_tot;
 			//* ch * cw * _mesh->getCells(0)->getVolume();
 		for (int i = 0; i < cw * ch; i++)
 		{

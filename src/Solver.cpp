@@ -826,16 +826,16 @@ void Solver::MOCsweep(int max_iterations) {
 			"# threads = %d", max_iterations, num_threads);
 
 	/* Loop for until converged or max_iterations is reached */
-	for (int i = 0; i < max_iterations; i++) {
+	for (int i = 0; i < max_iterations; i++)
+	{
 
 		/* Initialize flux in each region to zero */
 		zeroFSRFluxes();
 		zeroLeakage();
 
 		/* Initializes mesh cells if ANY acceleration is on */
-		if (_run_cmfd || _run_loo){
+		if (_run_cmfd || _run_loo)
 			zeroMeshCells();
-		}
 
 		/* Loop over azimuthal each thread and azimuthal angle*
 		 * If we are using OpenMP then we create a separate thread
@@ -1069,10 +1069,30 @@ void Solver::MOCsweep(int max_iterations) {
 			}
 		}
 
+
+		/* computes new _k_eff; it is important that we compute new k 
+		 * before normalizing flux and compute new source */
+		_k_eff = computeKeff(i);
+		_old_k_effs.push(_k_eff);
+		if (_old_k_effs.size() == NUM_KEFFS_TRACKED)
+			_old_k_effs.pop();
+
 		/* Normalize scalar fluxes and computes Q for each FSR */
 		normalizeFlux();
 		updateSource();
-		_k_eff = computeKeff(i);
+		computeFsrPowers();
+
+		/* Book-keeping: update old source in each FSR */
+		double *source, *old_source;
+		for (int r = 0; r < _num_FSRs; r++) 
+		{
+			fsr = &_flat_source_regions[r];
+			source = fsr->getSource();
+			old_source = fsr->getOldSource();
+
+			for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
+				old_source[e] = source[e];
+		}
 
 		/* If more than two sweep of MOC is requested, check for convergence */
 		/* 
@@ -1105,14 +1125,14 @@ void Solver::MOCsweep(int max_iterations) {
 			    return;
 		    }
 		}
-*/
-	}
+		*/
+	} /* exit iteration loops */
 
     /* 
 	if (max_iterations > 2)
 		log_printf(WARNING, "Scalar flux did not converge after %d iterations",
-															max_iterations);
-*/
+															max_iterations); 
+	*/
 	return;
 }
 
@@ -1287,13 +1307,8 @@ void Solver::updateSource(){
 			/* Set the total source for region r in group G */
 			source[G] = ((1.0 / (_old_k_effs.front())) * fission_source *
 							chi[G] + scatter_source) * ONE_OVER_FOUR_PI;
-			//source[G] = (1.0 / _k_eff * fission_source *
-			//				chi[G] + scatter_source) * ONE_OVER_FOUR_PI;
 		}
 	}
-
-	log_printf(ACTIVE, " old k = %.10f, new k = %.10f",
-			   _old_k_effs.front(), _k_eff);
 
 	/* Update pre-computed source / sigma_t ratios */
 	computeRatios();
@@ -1304,12 +1319,11 @@ double Solver::runLoo(int i)
 {
 	double loo_keff;
 
-
-	MOCsweep(1);
+	MOCsweep(2);
 	_cmfd->storePreMOCMeshSource(_flat_source_regions);
 
 	/* LOO Method 1: assume constant Sigma in each mesh. 
-	   Computes cross sections */
+	 * Computes cross sections */
 	_cmfd->computeXS();
 
 	/* Computes _quad_flux based on _quad_current */
@@ -1319,6 +1333,9 @@ double Solver::runLoo(int i)
 	_cmfd->computeQuadSrc();
 			 
 	/* Performs low order MOC */
+	log_printf(DEBUG, "size = %d, front = %.10f, back = %.10f",
+				   (int) _old_k_effs.size(), 
+				   _old_k_effs.front(), _old_k_effs.back());
 	loo_keff = _cmfd->computeLooFluxPower(LOO, i, _old_k_effs.front());
 
 	return loo_keff;
@@ -1368,8 +1385,6 @@ double Solver::computeL2Norm(double *old_fsr_powers)
 double Solver::kernel(int max_iterations) {
 	FlatSourceRegion* fsr;
 	int i;
-	double* source;
-	double* old_source;
 
 	log_printf(NORMAL, "Starting kernel ...");
 
@@ -1434,9 +1449,6 @@ double Solver::kernel(int max_iterations) {
 		if ((_run_cmfd) || ((_run_loo) && !(_loo_after_MOC_converge)))
 			updateFlux(i);
 
-		/* Computes new FSR powers / fission rates into _FSRs_to_powers[n] */
-		computeFsrPowers();
-
 		/* Checks energy-integrated L2 norm of FSR powers / fission rates */
 		double eps = computeL2Norm(old_fsr_powers);
 
@@ -1446,22 +1458,6 @@ double Solver::kernel(int max_iterations) {
 		/* Stores current FSR powers into old fsr powers for next iter */
 		for (int n = 0; n < _num_FSRs; n++)
 			old_fsr_powers[n] = _FSRs_to_powers[n];
-
-		/* If not converged, save old k_eff and pop off old_keff from 
-		   the previous iteration */
-		_old_k_effs.push(_k_eff);
-		if (_old_k_effs.size() == NUM_KEFFS_TRACKED)
-			_old_k_effs.pop();
-
-		/* Update old source in each FSR */
-		for (int r = 0; r < _num_FSRs; r++) {
-			fsr = &_flat_source_regions[r];
-			source = fsr->getSource();
-			old_source = fsr->getOldSource();
-
-			for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
-				old_source[e] = source[e];
-		}
 
         /* Alternative: if (_cmfd->getL2Norm() < _moc_conv_thresh) */
 		if (eps < _moc_conv_thresh) 
@@ -1473,6 +1469,10 @@ double Solver::kernel(int max_iterations) {
 			if (_compute_powers)
 				plotPinPowers();
 
+			/* Run one steps of LOO if it is requested to do so */
+			if ( _run_loo && _loo_after_MOC_converge)
+				_loo_k = runLoo(1000);
+
 			/* plot CMFD flux and xs */
 			if (_run_cmfd && _plotter->plotCurrent() )
 			{
@@ -1481,14 +1481,6 @@ double Solver::kernel(int max_iterations) {
 				_plotter->plotDHats(_geom->getMesh(), i);
 				_plotter->plotNetCurrents(_geom->getMesh());
 				_plotter->plotXS(_geom->getMesh(), i);
-			}
-
-			/* Run one steps of LOO if it is requested to do so */
-			if ( _run_loo && _loo_after_MOC_converge)
-			{
-				normalizeFlux();
-				updateSource();
-				_loo_k = runLoo(1000);
 			}
 
 			/* plot LOO flux and xs */
