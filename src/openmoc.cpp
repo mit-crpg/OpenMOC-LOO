@@ -129,7 +129,7 @@ int main(int argc, char **argv) {
 	k_eff = solver.kernel(MAX_ITERATIONS);
 	timer.stop();
 	timer.recordSplit("Fixed source iteration");
-	log_printf(RESULT, "k_eff = %f", k_eff);
+	log_printf(RESULT, "k_eff = %.10f", k_eff);
 
 	/* Finalize petsc */
 	PetscFinalize();

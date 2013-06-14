@@ -49,6 +49,8 @@ Cmfd::Cmfd(Geometry* geom, Plotter* plotter, Mesh* mesh,
 	_run_loo = false;
 	if (runLoo)
 		_run_loo = true;
+
+	_num_iter_to_conv = 0;
 }
 
 /**
@@ -1447,10 +1449,11 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter)
 		 * _l2_norm_conv_thresh as criteria */
 		if (iter > 5 && eps < _l2_norm_conv_thresh)
 		{
-			log_printf(DEBUG, " CMFD converges in %d iterations", iter);
+			_num_iter_to_conv = iter + 1;
 			break;
 		}
 	}
+	_num_iter_to_conv = iter + 1;
 
 	/* rescale the new and old flux */
 	petsc_err = MatMult(_M, _phi_new, snew);
@@ -1678,38 +1681,6 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 							   new_src[i][0], meshCell->getSrc()[0]);
 
 			}
-
-
-			/*
-			double fission_source = 0, scatter_source = 0;
-			double *scalar_flux = meshCell->getNewFlux();
-			double *nu_sigma_f = meshCell->getNuSigmaF();
-			double *sigma_s = meshCell->getSigmaS();
-			double *chi = meshCell->getChi();
-
-			for (int e = 0; e < ng; e++)
-				fission_source += nu_sigma_f[e] * scalar_flux[e];
-
-			for (int e = 0; e < ng; e++)
-			{
-				scatter_source = 0;
-
-				if (_mesh->getMultigroup())
-				{
-					for (int g = 0; g < ng; g++)
-						scatter_source += sigma_s[g*ng+e] * scalar_flux[g];		
-				}
-	   
-				new_src[i][e] = (fission_source * chi[e] / _keff 
-								 + scatter_source) * ONE_OVER_FOUR_PI;
- 
-				if (e == ng - 1)
-					log_printf(INFO, "Cell averaged source for cell %d,"
-							   " energy %d is %e", i, e, new_src[i][e]);
-			}
-			*/
-
-
 		} /* finishing looping over i; exit to iter level */
 
 		double src_ratio;
@@ -1742,17 +1713,15 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 			}
 		} /* finish iterating over i; exit to iter level */
 
+		/* i_array[] contains cell #, g_array[] contains track # */
+		int i_array[]  = {2,3,1,1,1,0,2,2, 3,3,1,0,0,0,2,3};
+		int t_array[]  = {0,5,0,2,4,1,4,6, 0,2,7,2,4,6,3,6};
+		int t_arrayb[] = {1,4,1,3,5,0,5,7, 1,3,6,3,5,7,2,7};
 		/* Sweeps over geometry, solve LOO MOC */
 		for (int e = 0; e < ng; e++)
 		{
 			double flux, initial_flux; //, delta;
 			int i, t, d;
-			/* Forward direction, i_array[] contains cell #, g_array[] contains
-			 * track # */
-			int i_array[]  = {2,3,1,1,1,0,2,2, 3,3,1,0,0,0,2,3};
-			int t_array[]  = {0,5,0,2,4,1,4,6, 0,2,7,2,4,6,3,6};
-			int t_arrayb[] = {1,4,1,3,5,0,5,7, 1,3,6,3,5,7,2,7};
-
 			/* Forward Directions */
 			for (int j = 0; j < 2; j++)
 			{
@@ -1815,7 +1784,7 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 
 		double phi_ratio;
 		double new_flux = 0, damp = 1.0;
-		/* Computes new cell-averaged scalar flux based on new_sum_quad_flux */
+		/* Computs new cell-averaged scalar flux based on new_sum_quad_flux */
 		for (int i = 0; i < cw * ch; i++)
 		{
 			meshCell = _mesh->getCells(i);
@@ -1823,11 +1792,9 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 			{
 				/* FIXME: 1/8 is the weight on angular quadrature */
 				phi_ratio =  sum_quad_flux[i][e] 
-					/ meshCell->getSumQuadFlux()[e]; //  / 8;
+					/ meshCell->getSumQuadFlux()[e] ;/// 8;
 
-				/* FIXME */
-				//phi_ratio = 1.0;
-				new_flux = meshCell->getOldFlux()[e] * (1 - damp + 
+				new_flux = meshCell->getOldFlux()[e] * (1.0 - damp + 
 														damp * phi_ratio);
 				meshCell->setNewFlux(new_flux, e);
 
@@ -1861,8 +1828,9 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 		_keff = fis_tot / abs_tot; 
 
 		/* Normalizes flux based on fission source */
-		double normalize_factor = 1.0;// / fis_tot * vol_tot;
-			//* ch * cw * _mesh->getCells(0)->getVolume();
+		double normalize_factor = 1.0 / fis_tot * vol_tot;
+		//double normalize_factor = (double)(ch * cw * ng) / fis_tot;
+
 		for (int i = 0; i < cw * ch; i++)
 		{
 			meshCell = _mesh->getCells(i);
@@ -1872,10 +1840,20 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 									 * normalize_factor, e);
 			}
 		}
-		fis_tot *= normalize_factor; 
-		abs_tot *= normalize_factor;
-
-		log_printf(ACTIVE, "Normalize all scalar flux by %f", normalize_factor);
+		
+		for (int e = 0; e < ng; e++)
+		{
+			for (int j = 0; j < 2; j++)
+			{
+				for (int jj = 0; jj < 2; jj++)
+				{
+					double flux = _mesh->getCells(i_array[8 * j])
+						->getMeshSurfaces(1)->getQuadFlux(e, jj);
+					_mesh->getCells(i_array[8 * j])->getMeshSurfaces(1)
+						->setQuadFlux(flux * normalize_factor, e, jj);
+				}
+			}
+		}
 
 		/* Computes the L2 norm of point-wise-division of energy-integrated
 		 * fission source of mesh cells */
@@ -1899,18 +1877,18 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 
 		/* In DEBUG mode (loo after MOC converges), moc_iter = 1000 */
 		if (moc_iter == 1000)
-			log_printf(NORMAL, " %d-th LOO iteration k = %f, eps = %e", 
+			log_printf(NORMAL, " %d-th LOO iteration k = %.10f, eps = %e", 
 					   iter, _keff, eps);
 		else
-			log_printf(ACTIVE, " %d-th LOO iteration k = %f, eps = %e", 
+			log_printf(ACTIVE, " %d-th LOO iteration k = %.10f, eps = %e", 
 					   iter, _keff, eps);
-		log_printf(ACTIVE, "  fission source = %f, abs source = %f", 
+		log_printf(DEBUG, "  fission source = %f, abs source = %f", 
 				   fis_tot, abs_tot);
 
 		/* If LOO iterative solver converges */
-		/* FIXME: previous version forces LOO to run at least 5 times */
 		if (eps < _l2_norm_conv_thresh)
 		{
+			_num_iter_to_conv = iter + 1;
 			/* new flux is already in place */
 			/* just need to print stuff */
 			std::string string;
@@ -1939,7 +1917,35 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 			break;
 		}
 	}
+	_num_iter_to_conv = iter + 1;
 
+	/*
+	for (int i = 0; i < cw * ch; i++)
+	{
+		meshCell = _mesh->getCells(i);
+		vol_tot += meshCell->getVolume();
+		for (int e = 0; e < ng; e++)
+		{
+			for (int g = 0; g < ng; g++)
+			{
+				fis_tot += meshCell->getChi()[e]
+					* meshCell->getNuSigmaF()[g]
+					* meshCell->getNewFlux()[g] * meshCell->getVolume();
+			}
+		}
+	}
+	normalize_factor = 1.0 / fis_tot * vol_tot;
+	for (int i = 0; i < cw * ch; i++)
+	{
+		meshCell = _mesh->getCells(i);
+		for (int e = 0; e < ng; e++)
+		{
+			double flux = meshCell->getNewFlux()[e];
+			meshCell->setNewFlux(flux * normalize_factor, e);
+		}
+	}
+	*/
+		
 	/* Computes the L2 norm of point-wise-division of energy-integrated
 	 * fission source of mesh cells relative to (m+1/2) */
 	eps = 0;
@@ -2219,6 +2225,7 @@ void Cmfd::updateMOCFlux(int iteration){
 	int i, e;
 	std::vector<int>::iterator iter;
 
+	double under_relax = 1.0;
 
 	/* loop over mesh cells */
 #if USE_OPENMP
@@ -2235,12 +2242,9 @@ void Cmfd::updateMOCFlux(int iteration){
 			old_flux = meshCell->getOldFlux()[e];
 			new_flux = meshCell->getNewFlux()[e];
 
-			if (e == NUM_ENERGY_GROUPS - 1)
-			{
-				log_printf(INFO, "Update flux in Cell: %i,"
-						   " old =  %e, new = %e, new/old = %f", 
-						   i, old_flux, new_flux, new_flux / old_flux);
-			}
+			log_printf(NORMAL, "Cell %d flux,"
+					   " old =  %f, new = %f, new/old = %f", 
+					   i, old_flux, new_flux, new_flux / old_flux);
 
 			/* loop over FRSs in mesh cell */
 			for (iter = meshCell->getFSRs()->begin(); 
@@ -2251,10 +2255,12 @@ void Cmfd::updateMOCFlux(int iteration){
 				flux = fsr->getFlux();
 
 				/* set new flux in FSR */
-				fsr->setFlux(e, new_flux / old_flux * flux[e]);
+				fsr->setFlux(e, under_relax * new_flux / old_flux * flux[e]
+							 + (1.0 - under_relax) * flux[e]);
 			}
 		}
 	}
+	return;
 }
 
 
@@ -2452,3 +2458,8 @@ void Cmfd::setFSRs(FlatSourceRegion* fsrs)
 	_flat_source_regions = fsrs;
 } 
 
+
+int Cmfd::getNumIterToConv()
+{
+	return _num_iter_to_conv;
+}

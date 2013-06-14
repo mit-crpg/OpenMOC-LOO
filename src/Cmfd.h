@@ -70,6 +70,7 @@ private:
 	bool _use_diffusion_correction;
 	bool _run_loo;
 	bool _run_cmfd;
+	int _num_iter_to_conv;
 public:
 	Cmfd(Geometry* geom, Plotter* plotter, Mesh* mesh, 
 		 bool runCmfd, bool runLoo,
@@ -100,6 +101,7 @@ public:
 	void computeQuadSrc();
 	void computeQuadFlux();
 	double computeLooFluxPower(solveType solveMethod, int moc_iter, double k);
+	int getNumIterToConv();
 };
 
 #endif /* CMFD_H_ */

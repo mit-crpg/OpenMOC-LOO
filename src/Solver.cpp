@@ -472,23 +472,25 @@ void Solver::printKeff(int iteration, double eps)
 	/* Prints & Update keff for MOC sweep */
 	if (_run_cmfd)
 	{
-	log_printf(NORMAL, "Iteration %d, MOC k = %f, CMFD k = %f, eps = %.4e", 
-		iteration, _k_eff, _cmfd_k, eps);
+	log_printf(NORMAL, "Iteration %d, MOC k = %.10f, CMFD k = %.10f,"
+		" eps = %.4e, #CMFD = %d", 
+		iteration, _k_eff, _cmfd_k, eps, _cmfd->getNumIterToConv());
 
 	if (_update_keff)
 		_k_eff = _cmfd_k;
 	}
 	else if ((_run_loo) && !(_loo_after_MOC_converge))
 	{
-		log_printf(NORMAL, "Iteration %d, MOC k = %f, LOO k = %f, eps = %.4e", 
-		iteration, _k_eff, _loo_k, eps);
+		log_printf(NORMAL, "Iter %d, MOC k = %.10f, LOO k = %.10f,"
+		" eps = %.4e, #LOO = %d", 
+		iteration, _k_eff, _loo_k, eps, _cmfd->getNumIterToConv());
 
 		if (_update_keff)
 			_k_eff = _loo_k;
 	}
 	else
 	{
-		log_printf(NORMAL, "Iteration %d, MOC k = %f, eps = %e", 
+		log_printf(NORMAL, "Iter %d, MOC k = %.10f, eps = %e", 
 		iteration, _k_eff, eps);
     }
 
@@ -1319,8 +1321,10 @@ double Solver::runLoo(int i)
 {
 	double loo_keff;
 
-	MOCsweep(2);
+	normalizeFlux();
+	updateSource();
 	_cmfd->storePreMOCMeshSource(_flat_source_regions);
+	MOCsweep(2);
 
 	/* LOO Method 1: assume constant Sigma in each mesh. 
 	 * Computes cross sections */
@@ -1333,7 +1337,7 @@ double Solver::runLoo(int i)
 	_cmfd->computeQuadSrc();
 			 
 	/* Performs low order MOC */
-	log_printf(DEBUG, "size = %d, front = %.10f, back = %.10f",
+	log_printf(ACTIVE, "size = %d, front = %.10f, back = %.10f",
 				   (int) _old_k_effs.size(), 
 				   _old_k_effs.front(), _old_k_effs.back());
 	loo_keff = _cmfd->computeLooFluxPower(LOO, i, _old_k_effs.front());
@@ -1371,8 +1375,10 @@ double Solver::computeL2Norm(double *old_fsr_powers)
 
 	for (int i = 0; i < _num_FSRs; i++)
 	{
-		if (_FSRs_to_powers[i] != 0.0)
-			l2_norm += pow(_FSRs_to_powers[i] / old_fsr_powers[i] - 1.0, 2);
+		if (_FSRs_to_powers[i] > 0.0)
+			l2_norm += pow((double)_FSRs_to_powers[i] 
+						   / (double) old_fsr_powers[i] 
+						   - 1.0, 2.0);
 	}
 	/* FIXME: should divide by # FSRs */
 
@@ -1510,7 +1516,6 @@ double Solver::kernel(int max_iterations) {
 			return _k_eff;
 		}
 	}
-
 
 	log_printf(WARNING, "Unable to converge the source after %d iterations",
 		   max_iterations);

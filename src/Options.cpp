@@ -58,7 +58,7 @@ Options::Options(int argc, char **argv) {
 	_plot_specs = false;            	/* Default will not plot materials, cells, FSRs, tracks, or segments */
 	_compute_pin_powers = false;		/* Default will not compute pin powers */
 	_compress_cross_sections = false;	/* Default will not compress cross-sections */
-	_update_keff = true;  				/* Default will not use CMFD to update flux */
+	_update_keff = false;  				/* Default will not use CMFD to update flux */
 
 
 	_print_matrices = false;			/* Default will not print matrices */
