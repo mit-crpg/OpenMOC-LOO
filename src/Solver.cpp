@@ -472,12 +472,12 @@ void Solver::printKeff(int iteration, double eps)
 	/* Prints & Update keff for MOC sweep */
 	if (_run_cmfd)
 	{
-	log_printf(NORMAL, "Iteration %d, MOC k = %.10f, CMFD k = %.10f,"
-		" eps = %.4e, #CMFD = %d", 
-		iteration, _k_eff, _cmfd_k, eps, _cmfd->getNumIterToConv());
+		log_printf(NORMAL, "Iteration %d, MOC k = %.10f, CMFD k = %.10f,"
+				   " eps = %.4e, #CMFD = %d", 
+				   iteration, _k_eff, _cmfd_k, eps, _cmfd->getNumIterToConv());
 
-	if (_update_keff)
-		_k_eff = _cmfd_k;
+		if (_update_keff)
+			_k_eff = _cmfd_k;
 	}
 	else if ((_run_loo) && !(_loo_after_MOC_converge))
 	{
@@ -1307,7 +1307,7 @@ void Solver::updateSource(){
 					* scalar_flux[g];
 
 			/* Set the total source for region r in group G */
-			source[G] = ((1.0 / (_old_k_effs.front())) * fission_source *
+			source[G] = ((1.0 / (_old_k_effs.back())) * fission_source *
 							chi[G] + scatter_source) * ONE_OVER_FOUR_PI;
 		}
 	}
@@ -1326,6 +1326,10 @@ double Solver::runLoo(int i)
 	_cmfd->storePreMOCMeshSource(_flat_source_regions);
 	MOCsweep(2);
 
+	normalizeFlux();
+	updateSource();
+
+
 	/* LOO Method 1: assume constant Sigma in each mesh. 
 	 * Computes cross sections */
 	_cmfd->computeXS();
@@ -1340,7 +1344,7 @@ double Solver::runLoo(int i)
 	log_printf(ACTIVE, "size = %d, front = %.10f, back = %.10f",
 				   (int) _old_k_effs.size(), 
 				   _old_k_effs.front(), _old_k_effs.back());
-	loo_keff = _cmfd->computeLooFluxPower(LOO, i, _old_k_effs.front());
+	loo_keff = _cmfd->computeLooFluxPower(LOO, i, _old_k_effs.back());
 
 	return loo_keff;
 }
@@ -1369,18 +1373,22 @@ double Solver::runCmfd(int i)
 	return cmfd_keff;
 }
 
-double Solver::computeL2Norm(double *old_fsr_powers)
+double Solver::computeFsrL2Norm(double *old_fsr_powers)
 {
 	double l2_norm = 0.0;
+	int num_counted = 0;
 
 	for (int i = 0; i < _num_FSRs; i++)
 	{
 		if (_FSRs_to_powers[i] > 0.0)
+		{
 			l2_norm += pow((double)_FSRs_to_powers[i] 
-						   / (double) old_fsr_powers[i] 
-						   - 1.0, 2.0);
+						   / (double) old_fsr_powers[i] - 1.0, 2.0);
+			num_counted += 1;
+		}
 	}
-	/* FIXME: should divide by # FSRs */
+	/* Divide the L2 norm by # FSRs */
+	l2_norm /= (double) num_counted;
 
 	l2_norm = pow(l2_norm, 0.5);
 	log_printf(DEBUG, "L2 norm = %e", l2_norm);
@@ -1391,6 +1399,7 @@ double Solver::computeL2Norm(double *old_fsr_powers)
 double Solver::kernel(int max_iterations) {
 	FlatSourceRegion* fsr;
 	int i;
+
 
 	log_printf(NORMAL, "Starting kernel ...");
 
@@ -1419,6 +1428,24 @@ double Solver::kernel(int max_iterations) {
 
 		for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
 			fsr->setOldSource(e, 1.0);
+
+		Material *material = fsr->getMaterial();
+		double chi_tot = 0;
+		double chi[NUM_ENERGY_GROUPS];
+		for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
+		{
+			double chi = material->getChi()[e];
+			chi_tot += chi;
+		}
+		log_printf(ACTIVE, "chi totl = %.10f", chi_tot);
+		for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
+		{
+			if (chi_tot != 0)
+				chi[e] = material->getChi()[e] / chi_tot;
+		}
+		if (chi_tot != 0)
+			material->setChi(chi);
+	 
 	}
 
 	normalizeFlux();
@@ -1446,6 +1473,7 @@ double Solver::kernel(int max_iterations) {
 		if (_run_cmfd)
 			_cmfd_k = runCmfd(i);
 		else if ((_run_loo) && !(_loo_after_MOC_converge))
+			//else if ((_run_loo)) && (iter > 100))
 			_loo_k = runLoo(i);
 		else 
 			MOCsweep(1);
@@ -1456,14 +1484,14 @@ double Solver::kernel(int max_iterations) {
 			updateFlux(i);
 
 		/* Checks energy-integrated L2 norm of FSR powers / fission rates */
-		double eps = computeL2Norm(old_fsr_powers);
-
-		/* Prints out keff & eps, may update keff too based on _update_keff */
-		printKeff(i, eps);
+		double eps = computeFsrL2Norm(old_fsr_powers);
 
 		/* Stores current FSR powers into old fsr powers for next iter */
 		for (int n = 0; n < _num_FSRs; n++)
 			old_fsr_powers[n] = _FSRs_to_powers[n];
+
+		/* Prints out keff & eps, may update keff too based on _update_keff */
+		printKeff(i, eps);
 
         /* Alternative: if (_cmfd->getL2Norm() < _moc_conv_thresh) */
 		if (eps < _moc_conv_thresh) 

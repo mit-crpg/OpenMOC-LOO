@@ -21,8 +21,8 @@
  * @param argv a char array of command line arguments from console
  */
 Options::Options(int argc, char **argv) {
-	_l2_norm_conv_thresh = 1e-10; /* Default will set keff conv thresh to 1e-5 */
-	_moc_conv_thresh = 1e-10;
+	_l2_norm_conv_thresh = 1e-14; /* Default will set keff conv thresh to 1e-5 */
+	_moc_conv_thresh = 1e-12;
 
 	_cmfd = false; 			
 		

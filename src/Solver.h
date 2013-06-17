@@ -111,7 +111,7 @@ public:
 						 MeshSurface **meshSurfaces, int dir);
 	double runLoo(int i);
 	double runCmfd(int i);
-	double computeL2Norm(double *old_fsr_powers);
+	double computeFsrL2Norm(double *old_fsr_powers);
 };
 
 #endif /* SOLVER_H_ */

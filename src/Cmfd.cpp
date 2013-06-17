@@ -185,7 +185,6 @@ void Cmfd::computeXS(){
 
 				/* increment group to group scattering tallies */
 				for (g = 0; g < NUM_ENERGY_GROUPS; g++){
-					/* scattering from group e into g */
 					scat_tally_group[g] += scat[g * NUM_ENERGY_GROUPS + e] 
 						* flux * volume;
 				}
@@ -1468,7 +1467,6 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter)
 
 	log_printf(INFO, " CMFD total fission source = %f", sumnew);
 
-
 	PetscScalar *old_phi;
 	PetscScalar *new_phi;
 	petsc_err = VecGetArray(phi_old, &old_phi);
@@ -1516,28 +1514,20 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter)
 	CHKERRQ(petsc_err);
 
 	/* plot flux, current, and k_eff */
-	if (solveMethod == DIFFUSION){
-		if (_plotter->plotDiffusion() == true){
+	if (solveMethod == DIFFUSION)
+	{
+		if (_plotter->plotDiffusion() == true)
+		{
 			string = "diff";
 			_plotter->plotCMFDflux(_mesh, string, moc_iter);
 		}
 	}
 
-	if (_plotter->plotKeff()){
+	if (_plotter->plotKeff())
 		_plotter->plotCMFDKeff(_mesh, moc_iter);
-	}
 
-	/* comments out plotting current for each iteration */
-	/*
-	if (_plotter->plotCurrent()){
-		string = "cmfd";
-		_plotter->plotCMFDflux(_mesh, string, moc_iter);
-	}
-	*/
-
-	if (solveMethod == CMFD){
+	if (solveMethod == CMFD)
 		_mesh->setKeffCMFD(_keff, moc_iter);
-	}
 
 	return _keff;
 }
@@ -1676,7 +1666,7 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 
 				if (e == 0)
 					log_printf(ACTIVE, " cell %d Q^(m) = %.10f, "
-							   " Q^(n) = %.10f, %.10f", 
+							   " Q^(n) = %.10f, %e", 
 							   i, meshCell->getOldSrc()[0], 
 							   new_src[i][0], meshCell->getSrc()[0]);
 
@@ -1701,7 +1691,7 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 					new_quad_src[i][d] = meshCell->getQuadSrc()[d] * src_ratio;
 				}
 				log_printf(ACTIVE, "Average source ratio for cell %d" 
-						   " energy %d, by %.10f", i, e, src_ratio);
+						   " energy %d, by %e", i, e, src_ratio - 1.0);
 				/* 
 				log_printf(ACTIVE, " vol = %.10f, as-tracked-vol = %.10f,"
 						   " ratio = %.10f",
@@ -1744,8 +1734,8 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 				}
 				_mesh->getCells(i_array[8 * j])->getMeshSurfaces(1)
 					->setQuadFlux(flux, e, 1);
-				log_printf(ACTIVE, "  Energy %d, loop %d, fwd, %f -> %f, %.10f",
-						   e, j, initial_flux, flux, flux / initial_flux);
+				log_printf(ACTIVE, "  Energy %d, loop %d, fwd, %f -> %f, %e",
+						   e, j, initial_flux, flux, flux / initial_flux - 1.0);
 			}
 
 			/*
@@ -1777,13 +1767,14 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 				}
 				_mesh->getCells(i_array[8 * j])->getMeshSurfaces(1)
 					->setQuadFlux(flux, e, 0);
-				log_printf(ACTIVE, "  Energy %d, loop %d, bwd, %f -> %f, %.10f",
-						   e, j, initial_flux, flux, flux / initial_flux);
+				log_printf(ACTIVE, "  Energy %d, loop %d, bwd, %f -> %f, %e",
+						   e, j, initial_flux, flux, flux / initial_flux - 1.0);
 			}
 		} /* finish looping over energy; exit to iter level */				
 
 		double phi_ratio;
-		double new_flux = 0, damp = 1.0;
+		double new_flux = 0, damp = 0.5;
+
 		/* Computs new cell-averaged scalar flux based on new_sum_quad_flux */
 		for (int i = 0; i < cw * ch; i++)
 		{
@@ -1799,8 +1790,7 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 				meshCell->setNewFlux(new_flux, e);
 
 				log_printf(ACTIVE, "Update cell %d energy %d scalar flux by "
-						   "%.10f",
-						   i, e, phi_ratio);
+						   "%e", i, e, phi_ratio - 1.0);
 			}
 		}
 
@@ -1812,24 +1802,20 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 			vol_tot += meshCell->getVolume();
 			for (int e = 0; e < ng; e++)
 			{
-				for (int g = 0; g < ng; g++)
-				{
-					fis_tot += meshCell->getChi()[e]
-						* meshCell->getNuSigmaF()[g]
-						* meshCell->getNewFlux()[g] * meshCell->getVolume();
-				}
-		    
+				fis_tot += meshCell->getNuSigmaF()[e]
+					* meshCell->getNewFlux()[e] * meshCell->getVolume();
+				
 				abs_tot += meshCell->getSigmaA()[e] * meshCell->getNewFlux()[e]
 					* meshCell->getVolume();
 			}
 		}
 
-		/* FIXME: this assumes no leakage; may need to handle lakage */
+		/* This assumes no leakage; may need to handle leakage */
 		_keff = fis_tot / abs_tot; 
 
 		/* Normalizes flux based on fission source */
 		double normalize_factor = 1.0 / fis_tot * vol_tot;
-		//double normalize_factor = (double)(ch * cw * ng) / fis_tot;
+		log_printf(ACTIVE, "normalize_factor = %.10f", normalize_factor);
 
 		for (int i = 0; i < cw * ch; i++)
 		{
@@ -1856,8 +1842,9 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 		}
 
 		/* Computes the L2 norm of point-wise-division of energy-integrated
-		 * fission source of mesh cells */
+		 * fission source of mesh cells between LOO iterations */
 		eps = 0;
+		int num_counted = 0;
 		for (int i = 0; i < cw * ch; i++)
 		{
 		    meshCell = _mesh->getCells(i);
@@ -1867,9 +1854,11 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 			{
 				xs = meshCell->getNuSigmaF()[e];
 				new_power[i] += xs * meshCell->getNewFlux()[e];
+				num_counted++;
 			} 
 			eps += pow(new_power[i] / old_power[i] - 1.0, 2);
 		}
+		eps /= (double) num_counted;
 		eps = pow(eps, 0.5);
 
 		for (int i = 0; i < cw * ch; i++)
@@ -1888,22 +1877,18 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 		/* If LOO iterative solver converges */
 		if (eps < _l2_norm_conv_thresh)
 		{
-			_num_iter_to_conv = iter + 1;
-			/* new flux is already in place */
-			/* just need to print stuff */
 			std::string string;
 			if (solveMethod == DIFFUSION)
 			{
-				if (_plotter->plotDiffusion() == true){
+				if (_plotter->plotDiffusion() == true)
+				{
 					string = "diff";
 					_plotter->plotCMFDflux(_mesh, string, moc_iter);
 				}
 			}
 
 			if (_plotter->plotKeff())
-			{
 				_plotter->plotCMFDKeff(_mesh, moc_iter);
-			}
 
 			if (_plotter->plotCurrent())
 			{
@@ -1919,33 +1904,6 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 	}
 	_num_iter_to_conv = iter + 1;
 
-	/*
-	for (int i = 0; i < cw * ch; i++)
-	{
-		meshCell = _mesh->getCells(i);
-		vol_tot += meshCell->getVolume();
-		for (int e = 0; e < ng; e++)
-		{
-			for (int g = 0; g < ng; g++)
-			{
-				fis_tot += meshCell->getChi()[e]
-					* meshCell->getNuSigmaF()[g]
-					* meshCell->getNewFlux()[g] * meshCell->getVolume();
-			}
-		}
-	}
-	normalize_factor = 1.0 / fis_tot * vol_tot;
-	for (int i = 0; i < cw * ch; i++)
-	{
-		meshCell = _mesh->getCells(i);
-		for (int e = 0; e < ng; e++)
-		{
-			double flux = meshCell->getNewFlux()[e];
-			meshCell->setNewFlux(flux * normalize_factor, e);
-		}
-	}
-	*/
-		
 	/* Computes the L2 norm of point-wise-division of energy-integrated
 	 * fission source of mesh cells relative to (m+1/2) */
 	eps = 0;
@@ -1976,7 +1934,7 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 	if (moc_iter == 1)
 	{
 		logfile.open(title_str.c_str(), std::fstream::trunc);
-		logfile << "iteration, l2_norm, keff" << std::endl;
+		logfile << "iteration, l2_norm (m+1, m+1/2), keff" << std::endl;
 	}
 	else
 	{
@@ -2293,8 +2251,8 @@ double Cmfd::computeDiffCorrect(double d, double h){
 /* compute the L2 norm of consecutive fission sources
  * @retun L2 norm
  */
-int Cmfd::fisSourceNorm(Vec snew, int iter){
-
+int Cmfd::fisSourceNorm(Vec snew, int iter)
+{
 	int ch = _mesh->getCellHeight();
 	int cw = _mesh->getCellWidth();
 	int ng = NUM_ENERGY_GROUPS;
@@ -2306,15 +2264,20 @@ int Cmfd::fisSourceNorm(Vec snew, int iter){
 	CHKERRQ(petsc_err);
 
 	_l2_norm = 0.0;
+	int num_counted;
 	for (int i = 0; i < cw*ch; i++)
 	{
 		for (int e = 0; e < ng; e++)
 		{
-			if (new_source[i*ng+e] != 0.0)
+			if (new_source[i * ng + e] != 0.0)
+			{
 				_l2_norm += pow(new_source[i * ng + e] / old_source[i * ng + e]
 								- 1.0, 2);
+				num_counted ++;
+			}
 		}
 	}
+	_l2_norm /= (double) num_counted; 
 	_l2_norm = pow(_l2_norm, 0.5);
 
 	petsc_err = VecRestoreArray(_source_old, &old_source);
@@ -2323,15 +2286,17 @@ int Cmfd::fisSourceNorm(Vec snew, int iter){
 
 	std::ofstream logfile;
 	std::stringstream string;
-	string << "l2_norm_" << (_num_azim*2) << "_" <<  _spacing << ".txt";
+	string << "l2_norm_" << (_num_azim * 2) << "_" <<  _spacing << ".txt";
 	std::string title_str = string.str();
 
 	/* Write the message to the output file */
-	if (iter == 1){
+	if (iter == 1)
+	{
 		logfile.open(title_str.c_str(), std::fstream::trunc);
-		logfile << "iteration, l2_norm, keff" << std::endl;
+		logfile << "iteration, l2_norm (m+1, m+1/2), keff" << std::endl;
 	}
-	else{
+	else
+	{
 		logfile.open(title_str.c_str(), std::ios::app);
 		logfile << iter << " " << _l2_norm << " " << _keff << std::endl;
 	}
