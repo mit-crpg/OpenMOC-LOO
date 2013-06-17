@@ -1422,7 +1422,7 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter)
 
 		/* compute and set keff */
 		_keff = sumnew / sumold;
-		log_printf(INFO, "CMFD iter: %i, keff: %f", iter + 1, _keff);
+
 		petsc_err = VecScale(sold, _keff);
 
 		/* compute the L2 norm of source error */
@@ -1433,9 +1433,17 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter)
 		petsc_err = VecShift(res, scale_val);
 		CHKERRQ(petsc_err);
 		petsc_err = VecNorm(res, NORM_2, &eps);
-
-		/* compute error */
 		eps = eps / (cw * ch * ng);
+
+		/* prints keff and error */
+		if (moc_iter == 10000)
+			log_printf(NORMAL, " %d-th CMFD iteration k = %.10f, eps = %e", 
+					   iter, _keff, eps);
+		else
+			log_printf(ACTIVE, " %d-th CMFD iteration k = %.10f, eps = %e", 
+					   iter, _keff, eps);
+
+		/* normalizes source */
 		scale_val = (cw * ch * ng) / sumnew;
 		petsc_err = VecScale(snew, scale_val);
 		CHKERRQ(petsc_err);
@@ -1864,8 +1872,8 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 		for (int i = 0; i < cw * ch; i++)
 			old_power[i] = new_power[i];
 
-		/* In DEBUG mode (loo after MOC converges), moc_iter = 1000 */
-		if (moc_iter == 1000)
+		/* In DEBUG mode (loo after MOC converges), moc_iter = 10000 */
+		if (moc_iter == 10000)
 			log_printf(NORMAL, " %d-th LOO iteration k = %.10f, eps = %e", 
 					   iter, _keff, eps);
 		else
@@ -2264,7 +2272,7 @@ int Cmfd::fisSourceNorm(Vec snew, int iter)
 	CHKERRQ(petsc_err);
 
 	_l2_norm = 0.0;
-	int num_counted;
+	int num_counted = 0;
 	for (int i = 0; i < cw*ch; i++)
 	{
 		for (int e = 0; e < ng; e++)

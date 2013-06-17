@@ -72,7 +72,7 @@ private:
 	bool _run_cmfd;
 	bool _run_loo;
 	bool _diffusion;
-	bool _loo_after_MOC_converge;
+	bool _acc_after_MOC_converge;
 #endif
 	void precomputeFactors();
 	double computePreFactor(segment* seg, int energyg, int angle);

@@ -35,7 +35,7 @@ private:
 	bool _compress_cross_sections;
 	bool _cmfd;
 	bool _loo;
-	bool _loo_after_MOC_converge;
+	bool _acc_after_MOC_converge;
 	bool _plot_quad_flux;
 	bool _plot_current;
 	bool _plot_diffusion;
@@ -82,7 +82,7 @@ public:
 	bool getLoo();
 	bool getDiffusion();
 	bool getDiffusionCorrection();
-	bool getLooAfterMOCConverge();
+	bool getAccAfterMOCConverge();
 
 };
 

@@ -35,7 +35,7 @@ Solver::Solver(Geometry* geom, TrackGenerator* track_generator,
     _run_cmfd = opts->getCmfd();
 	_run_loo = opts->getLoo();
 	_diffusion = opts->getDiffusion();
-	_loo_after_MOC_converge = opts->getLooAfterMOCConverge();
+	_acc_after_MOC_converge = opts->getAccAfterMOCConverge();
 	/* Initialize keff to be  */
 	_k_eff = opts->getKGuess();
 	_cmfd_k = _k_eff;
@@ -470,7 +470,7 @@ void Solver::updateFlux(int iteration) {
 void Solver::printKeff(int iteration, double eps)
 {
 	/* Prints & Update keff for MOC sweep */
-	if (_run_cmfd)
+	if ((_run_cmfd) && !(_acc_after_MOC_converge))
 	{
 		log_printf(NORMAL, "Iteration %d, MOC k = %.10f, CMFD k = %.10f,"
 				   " eps = %.4e, #CMFD = %d", 
@@ -479,7 +479,7 @@ void Solver::printKeff(int iteration, double eps)
 		if (_update_keff)
 			_k_eff = _cmfd_k;
 	}
-	else if ((_run_loo) && !(_loo_after_MOC_converge))
+	else if ((_run_loo) && !(_acc_after_MOC_converge))
 	{
 		log_printf(NORMAL, "Iter %d, MOC k = %.10f, LOO k = %.10f,"
 		" eps = %.4e, #LOO = %d", 
@@ -1071,7 +1071,6 @@ void Solver::MOCsweep(int max_iterations) {
 			}
 		}
 
-
 		/* computes new _k_eff; it is important that we compute new k 
 		 * before normalizing flux and compute new source */
 		_k_eff = computeKeff(i);
@@ -1249,13 +1248,12 @@ void Solver::normalizeFlux(){
 			_tracks[i][j].normalizeFluxes(renorm_factor);
 	}
 
-	/* FIXME: add in normalize tally too? */
-
 	return;
 }
 
 /* Compute the source for each region */
-void Solver::updateSource(){
+void Solver::updateSource()
+{
 	double scatter_source, fission_source = 0;
 	double* nu_sigma_f;
 	double* sigma_s;
@@ -1281,12 +1279,8 @@ void Solver::updateSource(){
 		chi = material->getChi();
 		sigma_s = material->getSigmaS();
 
-		/* Debug */
-		//start_index = material->getNuSigmaFStart();
-		//end_index = material->getNuSigmaFEnd();
-		start_index = 0;
-		end_index = NUM_ENERGY_GROUPS;
-
+		start_index = material->getNuSigmaFStart();
+		end_index = material->getNuSigmaFEnd();
 
 		/* Compute total fission source for current region */
 		for (int e = start_index; e < end_index; e++)
@@ -1296,11 +1290,8 @@ void Solver::updateSource(){
 		for (int G = 0; G < NUM_ENERGY_GROUPS; G++) {
 			scatter_source = 0;
 
-			/* DEBUG */
-			//start_index = material->getSigmaSStart(G);
-			//end_index = material->getSigmaSEnd(G);
-			start_index = 0;
-			end_index = NUM_ENERGY_GROUPS;
+			start_index = material->getSigmaSStart(G);
+			end_index = material->getSigmaSEnd(G);
 
 			for (int g = start_index; g < end_index; g++)
 				scatter_source += sigma_s[G * NUM_ENERGY_GROUPS + g]
@@ -1400,7 +1391,6 @@ double Solver::kernel(int max_iterations) {
 	FlatSourceRegion* fsr;
 	int i;
 
-
 	log_printf(NORMAL, "Starting kernel ...");
 
 	/* Gives cmfd a pointer to the FSRs */
@@ -1428,24 +1418,6 @@ double Solver::kernel(int max_iterations) {
 
 		for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
 			fsr->setOldSource(e, 1.0);
-
-		Material *material = fsr->getMaterial();
-		double chi_tot = 0;
-		double chi[NUM_ENERGY_GROUPS];
-		for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
-		{
-			double chi = material->getChi()[e];
-			chi_tot += chi;
-		}
-		log_printf(ACTIVE, "chi totl = %.10f", chi_tot);
-		for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
-		{
-			if (chi_tot != 0)
-				chi[e] = material->getChi()[e] / chi_tot;
-		}
-		if (chi_tot != 0)
-			material->setChi(chi);
-	 
 	}
 
 	normalizeFlux();
@@ -1470,9 +1442,9 @@ double Solver::kernel(int max_iterations) {
 
 		/* Perform one sweep for no acceleration, or call one of the 
 		 * acceleration function which performs two sweeps plus acceleration */
-		if (_run_cmfd)
+		if ((_run_cmfd) && !(_acc_after_MOC_converge))
 			_cmfd_k = runCmfd(i);
-		else if ((_run_loo) && !(_loo_after_MOC_converge))
+		else if ((_run_loo) && !(_acc_after_MOC_converge))
 			//else if ((_run_loo)) && (iter > 100))
 			_loo_k = runLoo(i);
 		else 
@@ -1480,7 +1452,7 @@ double Solver::kernel(int max_iterations) {
 
 		/* Update FSR's flux based on cell-averaged flux coming from the
 		 * acceleration steps */
-		if ((_run_cmfd) || ((_run_loo) && !(_loo_after_MOC_converge)))
+		if ((_run_cmfd || _run_loo) && !(_acc_after_MOC_converge))
 			updateFlux(i);
 
 		/* Checks energy-integrated L2 norm of FSR powers / fission rates */
@@ -1503,9 +1475,14 @@ double Solver::kernel(int max_iterations) {
 			if (_compute_powers)
 				plotPinPowers();
 
-			/* Run one steps of LOO if it is requested to do so */
-			if ( _run_loo && _loo_after_MOC_converge)
-				_loo_k = runLoo(1000);
+			/* Run one steps of acceleration if it is requested to do so */
+			if (_acc_after_MOC_converge)
+			{
+				if (_run_loo)
+					_loo_k = runLoo(10000);
+				if (_run_cmfd)
+					_cmfd_k = runCmfd(10000);
+			}
 
 			/* plot CMFD flux and xs */
 			if (_run_cmfd && _plotter->plotCurrent() )

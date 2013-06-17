@@ -20,14 +20,15 @@
  * @param argc the number of command line arguments from console
  * @param argv a char array of command line arguments from console
  */
-Options::Options(int argc, char **argv) {
+Options::Options(int argc, char **argv) 
+{
 	_l2_norm_conv_thresh = 1e-14; /* Default will set keff conv thresh to 1e-5 */
 	_moc_conv_thresh = 1e-12;
 
 	_cmfd = false; 			
 		
 	_loo = false;
-	_loo_after_MOC_converge = false;
+	_acc_after_MOC_converge = false;
 
 
 	_plot_quad_flux = true;             /* Plots quad flux, net current, xs */
@@ -99,9 +100,9 @@ Options::Options(int argc, char **argv) {
 			else if (LAST("--extension") || LAST("-ex"))
 							_extension = argv[i];
 			else if (strcmp(argv[i], "-noconv") == 0)
-				_loo_after_MOC_converge = false;
+				_acc_after_MOC_converge = false;
 			else if (strcmp(argv[i], "-debug") == 0)
-				_loo_after_MOC_converge = true;
+				_acc_after_MOC_converge = true;
 			else if (strcmp(argv[i], "-ps") == 0 ||
 					strcmp(argv[i], "--plotspecs") == 0)
 				_plot_specs = true;
@@ -149,6 +150,8 @@ Options::Options(int argc, char **argv) {
 				_plot_diffusion = true;
 			else if (LAST("--fluxconv") || LAST("-fc"))
 				_moc_conv_thresh = atof(argv[i]);
+			else if (LAST("--l2normconv") || LAST("-lc"))
+				_l2_norm_conv_thresh = atof(argv[i]);
 			else if (strcmp(argv[i], "-mg") == 0 ||
 					strcmp(argv[i], "--multigroup") == 0)
 				_multigroup = true;
@@ -400,6 +403,6 @@ bool Options::getDiffusionCorrection(){
 	return _diffusion_correction;
 }
 
-bool Options::getLooAfterMOCConverge(){
-	return _loo_after_MOC_converge;
+bool Options::getAccAfterMOCConverge(){
+	return _acc_after_MOC_converge;
 }
