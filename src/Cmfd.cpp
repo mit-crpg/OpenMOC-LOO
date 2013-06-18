@@ -1453,7 +1453,7 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter)
 
 		/* check for convergence for the CMFD iterative solver using 
 		 * _l2_norm_conv_thresh as criteria */
-		if (iter > 5 && eps < _l2_norm_conv_thresh)
+		if (iter > 0 && eps < _l2_norm_conv_thresh)
 		{
 			_num_iter_to_conv = iter + 1;
 			break;
@@ -1496,7 +1496,7 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter)
 	 * step and the one coming out of converged CMFD step to decided whether 
 	 * the outter MOC iteration / source iteration should quit */
 	if (moc_iter > 0)
-		petsc_err = fisSourceNorm(snew, moc_iter);
+		petsc_err = fisSourceNorm(snew, moc_iter, _num_iter_to_conv);
 
     /* Copies source new to source old */
 	petsc_err = VecCopy(snew, _source_old);
@@ -1932,11 +1932,11 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 	
 	std::ofstream logfile;
 	std::stringstream string;
-	string << "l2_norm_" << (_num_azim*2) << "_" <<  _spacing << ".txt";
+	string << "l2_norm_" << (_num_azim*2) << "_" <<  _spacing << "_loo.txt";
 	std::string title_str = string.str();
 
 	/* Write the message to the output file */
-	if (moc_iter == 0)
+	if (moc_iter == 1)
 	{
 		logfile.open(title_str.c_str(), std::fstream::trunc);
 		logfile << "# iteration, l2_norm (m+1, m+1/2), keff, # loo iterations "
@@ -2258,7 +2258,7 @@ double Cmfd::computeDiffCorrect(double d, double h){
 /* compute the L2 norm of consecutive fission sources
  * @retun L2 norm
  */
-int Cmfd::fisSourceNorm(Vec snew, int iter)
+int Cmfd::fisSourceNorm(Vec snew, int moc_iter, int num_cmfd_iteration)
 {
 	int ch = _mesh->getCellHeight();
 	int cw = _mesh->getCellWidth();
@@ -2293,19 +2293,21 @@ int Cmfd::fisSourceNorm(Vec snew, int iter)
 
 	std::ofstream logfile;
 	std::stringstream string;
-	string << "l2_norm_" << (_num_azim * 2) << "_" <<  _spacing << ".txt";
+	string << "l2_norm_" << (_num_azim * 2) << "_" <<  _spacing << "_cmfd.txt";
 	std::string title_str = string.str();
 
 	/* Write the message to the output file */
-	if (iter == 1)
+	if (moc_iter == 0)
 	{
 		logfile.open(title_str.c_str(), std::fstream::trunc);
-		logfile << "iteration, l2_norm (m+1, m+1/2), keff" << std::endl;
+		logfile << "iteration, l2_norm (m+1, m+1/2), keff, # CMFD iterations" 
+				<< std::endl;
 	}
 	else
 	{
 		logfile.open(title_str.c_str(), std::ios::app);
-		logfile << iter << " " << _l2_norm << " " << _keff << std::endl;
+		logfile << moc_iter << " " << _l2_norm << " " << _keff 
+				<< " " << num_cmfd_iteration << std::endl;
 	}
 
     logfile.close();

@@ -94,7 +94,7 @@ public:
  	double getKeff();
 	void setOldFSRFlux();
 	void setFSRs(FlatSourceRegion *fsrs);
-	int fisSourceNorm(Vec snew, int iter);
+	int fisSourceNorm(Vec snew, int iter, int num_cmfd_iteration);
 	double getL2Norm();
 	/* LOO */
 	void storePreMOCMeshSource(FlatSourceRegion* fsrs);

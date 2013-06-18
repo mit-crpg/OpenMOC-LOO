@@ -36,7 +36,7 @@ Options::Options(int argc, char **argv)
 	_plot_current = false;				/* plot cmfd currents */
 	_plot_diffusion = false;			/* FIXME: does nothing now */
 
-	_multigroup = false;				/* sets CMFD to one group structure */
+	_multigroup = true;				/* sets CMFD to one group structure */
 
 	/* Checks the working directory to set the relative path for input files
 	 * This is important so that default input files work when program is run
@@ -46,7 +46,7 @@ Options::Options(int argc, char **argv)
 	else
 		_relative_path = "";
 
-	_geometry_file = _relative_path + "xml-sample/Cmfd/geometry_pin.xml"; 	 /* Default geometry input file */
+	_geometry_file = _relative_path + "xml-sample/Cmfd/geometry_pin2.xml"; 	 /* Default geometry input file */
 	_material_file = _relative_path + "xml-sample/Cmfd/material_simple.xml";    /* Default material input file */
 	_k_guess = 1.0;
 
