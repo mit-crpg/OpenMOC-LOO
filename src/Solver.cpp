@@ -400,7 +400,6 @@ double Solver::computeKeff(int iteration)
 	double* sigma_a;
 	double* nu_sigma_f;
 	double* flux;
-	double* chi;
 	Material* material;
 	FlatSourceRegion* fsr;
 
@@ -408,7 +407,7 @@ double Solver::computeKeff(int iteration)
 #pragma omp parallel shared(tot_abs, tot_fission)
 {
 	#pragma omp for private(fsr, material, sigma_a, nu_sigma_f, flux, abs, 
-	fission, chi)
+	fission)
 	#endif
 	for (int r = 0; r < _num_FSRs; r++) 
 	{
@@ -417,16 +416,13 @@ double Solver::computeKeff(int iteration)
 		fsr = &_flat_source_regions[r];
 		material = fsr->getMaterial();
 		sigma_a = material->getSigmaA();
-		chi = material->getChi();
 		nu_sigma_f = material->getNuSigmaF();
 		flux = fsr->getFlux();
 
 		for (int e = 0; e < NUM_ENERGY_GROUPS; e++) 
 		{
 	        abs += sigma_a[e] * flux[e] * fsr->getVolume();
-			for (int g = 0; g < NUM_ENERGY_GROUPS; g++){
-				fission += chi[e] * nu_sigma_f[g] * flux[g] * fsr->getVolume();
-			}
+			fission += nu_sigma_f[e] * flux[e] * fsr->getVolume();
 		}
 
 			#if USE_OPENMP
@@ -1454,6 +1450,11 @@ double Solver::kernel(int max_iterations) {
 		 * acceleration steps */
 		if ((_run_cmfd || _run_loo) && !(_acc_after_MOC_converge))
 			updateFlux(i);
+
+		_k_eff = computeKeff(i);
+		_old_k_effs.push(_k_eff);
+		if (_old_k_effs.size() == NUM_KEFFS_TRACKED)
+			_old_k_effs.pop();
 
 		/* Checks energy-integrated L2 norm of FSR powers / fission rates */
 		double eps = computeFsrL2Norm(old_fsr_powers);

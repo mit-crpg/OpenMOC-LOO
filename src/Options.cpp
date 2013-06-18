@@ -23,7 +23,7 @@
 Options::Options(int argc, char **argv) 
 {
 	_l2_norm_conv_thresh = 1e-14; /* convergence on acceleration iteration */
-	_moc_conv_thresh = 1e-12;     /* convergence on MOC sweeps */
+	_moc_conv_thresh = 1e-7;     /* convergence on MOC sweeps */
 
 	_cmfd = false; 			
 		
@@ -51,7 +51,7 @@ Options::Options(int argc, char **argv)
 	_k_guess = 1.0;
 
 	_track_spacing = 0.05;				/* Default track spacing: 0.05 */
-	_num_azim = 128;						/* Default \# azimuthal angles: 32 */
+	_num_azim = 64;						/* Default \# azimuthal angles: 32 */
 	_bit_dimension = 1000;				/* y dimension of tracks and segments plots */
 	_verbosity = "NORMAL";				/* Default logging level */
 	_dump_geometry = false;				/* Default will not dump geometry */
