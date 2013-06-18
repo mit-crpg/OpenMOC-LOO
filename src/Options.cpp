@@ -22,16 +22,16 @@
  */
 Options::Options(int argc, char **argv) 
 {
-	_l2_norm_conv_thresh = 1e-14; /* Default will set keff conv thresh to 1e-5 */
-	_moc_conv_thresh = 1e-12;
+	_l2_norm_conv_thresh = 1e-14; /* convergence on acceleration iteration */
+	_moc_conv_thresh = 1e-12;     /* convergence on MOC sweeps */
 
 	_cmfd = false; 			
 		
 	_loo = false;
 	_acc_after_MOC_converge = false;
 
-
-	_plot_quad_flux = true;             /* Plots quad flux, net current, xs */
+	/* plotting options */
+	_plot_quad_flux = false;             /* Plots quad flux, net current, xs */
 	_plot_fluxes = false;				/* plot colors, not values*/
 	_plot_current = false;				/* plot cmfd currents */
 	_plot_diffusion = false;			/* FIXME: does nothing now */

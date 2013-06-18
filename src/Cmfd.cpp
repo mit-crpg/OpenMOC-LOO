@@ -184,15 +184,14 @@ void Cmfd::computeXS(){
 				src_tally_group += fsr->getSource()[e] * volume;
 
 				/* increment group to group scattering tallies */
-				for (g = 0; g < NUM_ENERGY_GROUPS; g++){
+				for (g = 0; g < NUM_ENERGY_GROUPS; g++)
+				{
 					scat_tally_group[g] += scat[g * NUM_ENERGY_GROUPS + e] 
 						* flux * volume;
 				}
-
 				/* choose a chi for this group */
-				if (chi >= meshCell->getChi()[e]){
+				if (chi >= meshCell->getChi()[e])
 					meshCell->setChi(chi,e);
-				}
 			}
 
 			/* if multigroup, set the multigroup parameters */
@@ -208,7 +207,6 @@ void Cmfd::computeXS(){
 
 				for (g = 0; g < NUM_ENERGY_GROUPS; g++)
 				{
-					/* This means SigmaS[e * ng + g] = $\Sigma_{s,e\to g}$. */
 					meshCell->setSigmaS(scat_tally_group[g] / rxn_tally_group,
 										e, g);
 				}
@@ -228,7 +226,8 @@ void Cmfd::computeXS(){
 		}
 
 		/* if single group, set single group parameters */
-		if (_mesh->getMultigroup() == false){
+		if (_mesh->getMultigroup() == false)
+		{
 			meshCell->setVolume(vol_tally_group);
 			meshCell->setSigmaT(tot_tally / rxn_tally, 0);
 			meshCell->setSigmaA(abs_tally / rxn_tally, 0);
@@ -1793,8 +1792,8 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 				phi_ratio =  sum_quad_flux[i][e] 
 					/ meshCell->getSumQuadFlux()[e] ;/// 8;
 
-				new_flux = meshCell->getOldFlux()[e] * (1.0 - damp + 
-														damp * phi_ratio);
+				new_flux = meshCell->getOldFlux()[e] 
+					* (1.0 - damp + damp * phi_ratio);
 				meshCell->setNewFlux(new_flux, e);
 
 				log_printf(ACTIVE, "Update cell %d energy %d scalar flux by "
@@ -1810,15 +1809,12 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 			vol_tot += meshCell->getVolume();
 			for (int e = 0; e < ng; e++)
 			{
-				fis_tot += meshCell->getNuSigmaF()[e]
-					* meshCell->getNewFlux()[e] * meshCell->getVolume();
-				
-				abs_tot += meshCell->getSigmaA()[e] * meshCell->getNewFlux()[e]
-					* meshCell->getVolume();
+				double flux = meshCell->getNewFlux()[e];
+				double vol = meshCell->getVolume();
+				fis_tot += meshCell->getNuSigmaF()[e] * flux * vol;
+				abs_tot += meshCell->getSigmaA()[e] * flux * vol;
 			}
 		}
-
-		/* This assumes no leakage; may need to handle leakage */
 		_keff = fis_tot / abs_tot; 
 
 		/* Normalizes flux based on fission source */
@@ -1872,7 +1868,8 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 		for (int i = 0; i < cw * ch; i++)
 			old_power[i] = new_power[i];
 
-		/* In DEBUG mode (loo after MOC converges), moc_iter = 10000 */
+		/* In DEBUG mode (run CMFD or LOO after MOC converges), 
+		 * moc_iter = 10000 */
 		if (moc_iter == 10000)
 			log_printf(NORMAL, " %d-th LOO iteration k = %.10f, eps = %e", 
 					   iter, _keff, eps);
@@ -1939,15 +1936,17 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 	std::string title_str = string.str();
 
 	/* Write the message to the output file */
-	if (moc_iter == 1)
+	if (moc_iter == 0)
 	{
 		logfile.open(title_str.c_str(), std::fstream::trunc);
-		logfile << "iteration, l2_norm (m+1, m+1/2), keff" << std::endl;
+		logfile << "# iteration, l2_norm (m+1, m+1/2), keff, # loo iterations "
+				<< std::endl;
 	}
 	else
 	{
 		logfile.open(title_str.c_str(), std::ios::app);
-		logfile << moc_iter << " " << _l2_norm << " " << _keff << std::endl;
+		logfile << moc_iter << " " << _l2_norm << " " << _keff 
+				<< " " << _num_iter_to_conv << std::endl;
 	}
 
     logfile.close();
@@ -2208,7 +2207,7 @@ void Cmfd::updateMOCFlux(int iteration){
 			old_flux = meshCell->getOldFlux()[e];
 			new_flux = meshCell->getNewFlux()[e];
 
-			log_printf(NORMAL, "Cell %d flux,"
+			log_printf(ACTIVE, "Cell %d flux,"
 					   " old =  %f, new = %f, new/old = %f", 
 					   i, old_flux, new_flux, new_flux / old_flux);
 
