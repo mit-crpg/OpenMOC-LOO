@@ -458,6 +458,11 @@ double Solver::computeKeff(int iteration)
 void Solver::updateFlux(int iteration) {
 	_cmfd->updateMOCFlux(iteration);
 	normalizeFlux();
+	_k_eff = computeKeff(iteration);
+	_geom->getMesh()->setKeffMOC(_k_eff, iteration);
+	_old_k_effs.push(_k_eff);
+	if (_old_k_effs.size() == NUM_KEFFS_TRACKED)
+		_old_k_effs.pop();
 	updateSource();
 	
 	return;
@@ -486,8 +491,10 @@ void Solver::printKeff(int iteration, double eps)
 	}
 	else
 	{
-		log_printf(NORMAL, "Iter %d, MOC k = %.10f, eps = %e", 
-		iteration, _k_eff, eps);
+		log_printf(NORMAL, "Iter %d, MOC k = %.10f, FS eps = %e, k eps = %e", 
+				   iteration, _k_eff, eps, 
+				   (_old_k_effs.back() - _old_k_effs.front()) 
+				   / _old_k_effs.back());
     }
 
 	return;
@@ -1363,21 +1370,31 @@ double Solver::runCmfd(int i)
 double Solver::computeFsrL2Norm(double *old_fsr_powers)
 {
 	double l2_norm = 0.0;
-	int num_counted = 0;
 
+	/*
+	int num_counted = 0;
+	for (int i = 0; i < _num_FSRs; i++)
+	{
+		if (old_fsr_powers[i] > 0.0)
+		{
+			l2_norm += pow(_FSRs_to_powers[i] 
+						   / old_fsr_powers[i] - 1.0, 2.0);
+			num_counted += 1;
+		}
+	}
+	l2_norm /= (double) num_counted;
+	l2_norm = pow(l2_norm, 0.5);
+	*/
+	double new_norm = 0.0;
 	for (int i = 0; i < _num_FSRs; i++)
 	{
 		if (_FSRs_to_powers[i] > 0.0)
 		{
-			l2_norm += pow((double)_FSRs_to_powers[i] 
-						   / (double) old_fsr_powers[i] - 1.0, 2.0);
-			num_counted += 1;
+			new_norm = fabs((double) old_fsr_powers[i] / 
+							((double) _FSRs_to_powers[i]) - 1.0);
+			l2_norm = fmax(new_norm, l2_norm);
 		}
 	}
-	/* Divide the L2 norm by # FSRs */
-	l2_norm /= (double) num_counted;
-
-	l2_norm = pow(l2_norm, 0.5);
 	log_printf(DEBUG, "L2 norm = %e", l2_norm);
 	return l2_norm;
 }
@@ -1433,9 +1450,6 @@ double Solver::kernel(int max_iterations) {
 	{
 		log_printf(INFO, "Iteration %d: k_eff = %f", i, _k_eff);
 
-		//normalizeFlux();
-		//updateSource();
-
 		/* Perform one sweep for no acceleration, or call one of the 
 		 * acceleration function which performs two sweeps plus acceleration */
 		if ((_run_cmfd) && !(_acc_after_MOC_converge))
@@ -1449,12 +1463,10 @@ double Solver::kernel(int max_iterations) {
 		/* Update FSR's flux based on cell-averaged flux coming from the
 		 * acceleration steps */
 		if ((_run_cmfd || _run_loo) && !(_acc_after_MOC_converge))
+		{
 			updateFlux(i);
-
-		_k_eff = computeKeff(i);
-		_old_k_effs.push(_k_eff);
-		if (_old_k_effs.size() == NUM_KEFFS_TRACKED)
-			_old_k_effs.pop();
+			computeFsrPowers();
+		}
 
 		/* Checks energy-integrated L2 norm of FSR powers / fission rates */
 		double eps = computeFsrL2Norm(old_fsr_powers);

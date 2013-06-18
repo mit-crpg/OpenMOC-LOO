@@ -576,6 +576,8 @@ void TrackGenerator::segmentize() {
 	bitMapFSR->color_type = RANDOM;
 	bitMap->color_type = RANDOM;
 
+	int total_num_segments = 0;
+
 #if USE_OPENMP
 #pragma omp parallel for private(i, j, k, phi,\
 								 sin_phi, cos_phi, track,	\
@@ -591,6 +593,7 @@ void TrackGenerator::segmentize() {
 
 			_geom->segmentize(track);
 			log_printf(DEBUG, "Segmented track phi: %f...", phi);
+			total_num_segments += track->getNumSegments();
 
 			/* plot segments */
 			if (_plotter->plotSpecs() == true){
@@ -609,7 +612,8 @@ void TrackGenerator::segmentize() {
 		}
 	}
 
-	log_printf(DEBUG, "Done segmenting...");
+	log_printf(NORMAL, "Generated %d number of segments...", 
+			   total_num_segments);
 
 	if (_plotter->plotSpecs() == true){
 		/* plot segments, FSRs, cells, and materials */
