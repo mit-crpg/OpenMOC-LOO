@@ -1970,11 +1970,11 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 	std::stringstream string;
 	string << "l2_norm_" << (_num_azim*2) << "_" <<  _spacing << "_loo.txt";
 	std::string title_str = string.str();
-	logfile.open(title_str.c_str(), std::fstream::trunc);
 
 	/* Write the message to the output file */
 	if (moc_iter == 0)
 	{
+		logfile.open(title_str.c_str(), std::fstream::trunc);
 		logfile << "# iteration, l2_norm (m+1, m+1/2), keff, # loo iterations "
 				<< std::endl;
 	}
@@ -2367,11 +2367,11 @@ int Cmfd::fisSourceNorm(Vec snew, int moc_iter, int num_cmfd_iteration)
 	std::stringstream string;
 	string << "l2_norm_" << (_num_azim * 2) << "_" <<  _spacing << "_cmfd.txt";
 	std::string title_str = string.str();
-	logfile.open(title_str.c_str(), std::fstream::trunc);
 
 	/* Write the message to the output file */
 	if (moc_iter == 0)
 	{
+		logfile.open(title_str.c_str(), std::fstream::trunc);
 		logfile << "iteration, l2_norm (m+1, m+1/2), keff, # CMFD iterations" 
 				<< std::endl;
 	}
