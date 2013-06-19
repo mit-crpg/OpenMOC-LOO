@@ -36,8 +36,9 @@ Solver::Solver(Geometry* geom, TrackGenerator* track_generator,
 	_run_loo = opts->getLoo();
 	_diffusion = opts->getDiffusion();
 	_acc_after_MOC_converge = opts->getAccAfterMOCConverge();
-	/* Initialize keff to be  */
 	_k_eff = opts->getKGuess();
+	_geometry_file = opts->getGeometryFile();
+
 	_cmfd_k = _k_eff;
 	_loo_k = _k_eff;
 
@@ -450,8 +451,6 @@ double Solver::computeKeff(int iteration)
 		}
 	}
     log_printf(INFO, " MOC leakage  = %f", leakage);
-	log_printf(NORMAL, " MOC tot fission = %f, tot abs = %f", 
-		tot_fission, tot_abs);
 	_k_eff = tot_fission / (tot_abs + leakage);
 	_geom->getMesh()->setKeffMOC(_k_eff, iteration);
 	return _k_eff;
@@ -464,11 +463,13 @@ double Solver::computeKeff(int iteration)
 void Solver::updateFlux(int iteration) {
 	_cmfd->updateMOCFlux(iteration);
 	normalizeFlux();
-	_k_eff = computeKeff(iteration);
+	/*
+	  _k_eff = computeKeff(iteration);
 	_geom->getMesh()->setKeffMOC(_k_eff, iteration);
 	_old_k_effs.push(_k_eff);
 	if (_old_k_effs.size() == NUM_KEFFS_TRACKED)
 		_old_k_effs.pop();
+	*/
 	updateSource();
 	
 	return;
@@ -1541,12 +1542,25 @@ double Solver::kernel(int max_iterations) {
 				plotFluxes(i+1);
 			}
 
+			std::ofstream logfile;
+			std::stringstream string;
+			string << "benchmark.txt";
+			std::string title_str = string.str();
+			logfile.open(title_str.c_str(), std::fstream::app);
+			logfile << _geometry_file << " " 
+					<<  std::setprecision(10) <<  _k_eff;
+			logfile << " " << i+1 << std::endl;
+			logfile.close();
+
 			return _k_eff;
 		}
 	}
 
 	log_printf(WARNING, "Unable to converge the source after %d iterations",
 		   max_iterations);
+
+
+
 
 	return _k_eff;
 }

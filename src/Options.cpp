@@ -252,6 +252,10 @@ std::string Options::getExtension(){
     return _extension;
 }
 
+std::string Options::getGeometryFile(){
+	return _geometry_file;
+}
+
 /**
  * Returns a boolean representing whether or not to plot the specs.
  *  If true, the specs will be plotted in a file of _extension type

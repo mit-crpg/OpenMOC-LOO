@@ -72,6 +72,7 @@ public:
 	bool plotDiffusion();
 	bool plotKeff();
 	bool updateKeff();
+	std::string getGeometryFile();
 	double getL2NormConvThresh();
 	double getMOCConvThresh();
 	double getKGuess();

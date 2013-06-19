@@ -60,6 +60,8 @@ private:
 	Plotter* _plotter;
 	float* _pix_map_total_flux;
 	Cmfd* _cmfd;
+	std::string _geometry_file;
+
 #if !STORE_PREFACTORS
 	double* _pre_factor_array;
 	int _pre_factor_array_size;

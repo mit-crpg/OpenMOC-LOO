@@ -3,8 +3,9 @@ import numpy as np
 import os
 
 # run OpenMOC
-geometries = ['geometry_pin.xml']
-materials = ['material_simple.xml']
+geometries = ['geometry_pin2.xml', 'geometry_pin3.xml', 
+			  'geometry_pin4.xml']
+materials = ['material_simple.xml', 'material_simple.xml','material_simple.xml' ]
 
 #geometries = ['geometry_c5g7_wo_refl.xml', 'geometry_c5g7.xml', 'geometry_UO2.xml', 'geometry_MOX.xml', 'geometry_pin.xml']
 #materials = ['material_c5g7.xml', 'material_c5g7.xml', 'material_c5g7.xml', 'material_c5g7.xml', 'material_simple.xml']
@@ -12,26 +13,34 @@ materials = ['material_simple.xml']
 #materials = ['material_LRA.xml']
 #ts = [.2, .1, .05, .025, .01]
 
-ts = [.2, .05]
-na = [32, 128]
+#ts = [.2, .05]
+#na = [32, 128]
+
+ts = [0.01]
+na = [128]
 
 for i, geometry in enumerate(geometries):
     for spacing in ts:
         for angle in na:
-            if geometry != 'geometry_pin.xml':
                 os.system('../bin/openmoc'
 						  + ' -m ../xml-sample/Cmfd/' + materials[i]
 						  + ' -g ../xml-sample/Cmfd/' + geometry 
 						  + ' -na ' + str(angle) 
 						  + ' -ts ' + str(spacing) 
-						  + ' -fc 1e-5 -uk -wc -mg -cl 2')
-            else:
+						  + ' -fc 1e-7')
                 os.system('../bin/openmoc'
 						  + ' -m ../xml-sample/Cmfd/' + materials[i]
 						  + ' -g ../xml-sample/Cmfd/' + geometry 
 						  + ' -na ' + str(angle) 
 						  + ' -ts ' + str(spacing) 
-						  + ' -fc 1e-5 -uk -wl -mg')
+						  + ' -fc 1e-7 -wc')
+                os.system('../bin/openmoc'
+						  + ' -m ../xml-sample/Cmfd/' + materials[i]
+						  + ' -g ../xml-sample/Cmfd/' + geometry 
+						  + ' -na ' + str(angle) 
+						  + ' -ts ' + str(spacing) 
+						  + ' -fc 1e-7 -wl')
+
 
     # list of l2_norm files
     l2_norm_files = []
