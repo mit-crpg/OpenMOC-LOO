@@ -1321,8 +1321,8 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter)
 	PetscInt size;
 	int max_outer, iter = 0;
 	PetscScalar sumold, sumnew, scale_val, eps;
-	PetscReal rtol = 1e-10;
-	PetscReal atol = 1e-10;
+	PetscReal rtol = 1e-15;
+	PetscReal atol = 1e-15;
 	std::string string;
 
 	/* if single group, set ng (number of groups) to 1 */
@@ -1351,7 +1351,7 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter)
 	/* if solve method is CMFD, set max_outer such that flux
 	 * partially converges */
 	else
-		max_outer = 5;
+		max_outer = 10;
 
 	/* create old source and residual vectors */
 	petsc_err = VecCreateSeq(PETSC_COMM_WORLD, ch*cw*ng, &sold);
@@ -1387,7 +1387,7 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter)
 	petsc_err = KSPCreate(PETSC_COMM_WORLD, &ksp);
 	petsc_err = KSPSetTolerances(ksp, rtol, atol, PETSC_DEFAULT, PETSC_DEFAULT);
 	petsc_err = KSPSetType(ksp, KSPGMRES);
-	petsc_err = KSPSetInitialGuessNonzero(ksp, PETSC_TRUE);
+	//petsc_err = KSPSetInitialGuessNonzero(ksp, PETSC_TRUE);
 	petsc_err = KSPSetOperators(ksp, _A, _A, SAME_NONZERO_PATTERN);
 	petsc_err = KSPSetUp(ksp);
 	petsc_err = KSPSetFromOptions(ksp);
@@ -1399,30 +1399,47 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter)
 	petsc_err = MatMult(_A, _phi_new, sold);
 	petsc_err = VecSum(sold, &sumold);
 	_keff = double(sumnew) / double(sumold);
-	log_printf(INFO, "CMFD iter: %i, keff: %f", iter, _keff);
+	log_printf(ACTIVE, "Before starting CMFD, the xs collapsed from the %i-MOC"
+			   " produce a keff of %.10f", moc_iter, _keff);
 	CHKERRQ(petsc_err);
+
+	double tot_vol = 0.0;
+	for (int i = 0; i < cw * ch; i++)
+		tot_vol +=  _mesh->getCells(i)->getVolume();
 
 	/* recompute and normalize initial source */
-	petsc_err = MatMult(_M, _phi_new, sold);
-	petsc_err = VecSum(sold, &sumold);
-	scale_val = (cw * ch * ng) / sumold;
+	VecCopy(snew, sold);
+	sumold = sumnew;
+	//petsc_err = MatMult(_M, _phi_new, sold);
+	//petsc_err = VecSum(sold, &sumold);
+
+	//VecScale(sold, 1.0 / (double)_keff);
+	/*
+	scale_val = tot_vol / sumold;
+	petsc_err = VecScale(_phi_new, scale_val);
 	petsc_err = VecScale(sold, scale_val);
-	sumold = cw * ch * ng;
-	CHKERRQ(petsc_err);
-
+	petsc_err = VecSum(sold, &sumold);
+	*/
 	/* diffusion solver */
-	for (iter = 0; iter < max_outer; iter++){
-
+	for (iter = 0; iter < max_outer; iter++)
+	{
 		/* Solve x = A_inverse * b problem and compute new source */
 		petsc_err = KSPSolve(ksp, sold, _phi_new);
-		petsc_err = MatMult(_M, _phi_new, snew);
-		petsc_err = VecSum(snew, &sumnew);
 		CHKERRQ(petsc_err);
 
 		/* compute and set keff */
-		_keff = sumnew / sumold;
+		petsc_err = MatMult(_M, _phi_new, snew);
+		petsc_err = VecSum(snew, &sumnew);
+		//petsc_err = MatMult(_A, _phi_new, sold);
+		//petsc_err = VecSum(sold, &sumold);
+		_keff = (double) sumnew / (double) sumold;
 
-		petsc_err = VecScale(sold, _keff);
+		/* normalizes the new source source */
+		scale_val = tot_vol / sumnew;
+		petsc_err = VecScale(_phi_new, scale_val);
+		petsc_err = VecScale(snew, scale_val);
+		sumnew *= scale_val;
+		CHKERRQ(petsc_err);
 
 		/* compute the L2 norm of source error */
 		scale_val = 1e-20;
@@ -1434,30 +1451,45 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter)
 		petsc_err = VecNorm(res, NORM_2, &eps);
 		eps = eps / (cw * ch * ng);
 
-		/* prints keff and error */
-		if (moc_iter == 10000)
-			log_printf(NORMAL, " %d-th CMFD iteration k = %.10f, eps = %e", 
-					   iter, _keff, eps);
-		else
-			log_printf(ACTIVE, " %d-th CMFD iteration k = %.10f, eps = %e", 
-					   iter, _keff, eps);
-
-		/* normalizes source */
-		scale_val = (cw * ch * ng) / sumnew;
-		petsc_err = VecScale(snew, scale_val);
-		CHKERRQ(petsc_err);
-
 		/* set old source to new source */
 		petsc_err = VecCopy(snew, sold);
 		CHKERRQ(petsc_err);
 
+		/* prints keff and error */
+		if (moc_iter == 10000)
+		{
+			log_printf(NORMAL, " %d-th CMFD iteration k = %.10f, eps = %e", 
+					   iter, _keff, eps);
+
+			PetscScalar *old_phi;
+			PetscScalar *new_phi;
+			petsc_err = VecGetArray(phi_old, &old_phi);
+			petsc_err = VecGetArray(_phi_new, &new_phi);
+			
+			for (int i = 0; i < cw*ch; i++)
+			{
+				meshCell = _mesh->getCells(i);
+				for (int e = 0; e < ng; e++)
+				{
+					log_printf(ACTIVE, " Relative to (m+1/2): %.10f",
+							   (double)(old_phi[i*ng + e]) 
+							   / (double)(new_phi[i*ng + e]));
+				}
+			}			
+			petsc_err = VecRestoreArray(phi_old, &old_phi);
+			petsc_err = VecRestoreArray(_phi_new, &new_phi);
+		}
+		else
+		{
+			log_printf(ACTIVE, " %d-th CMFD iteration k = %.10f, eps = %e", 
+					   iter, _keff, eps);
+		}
+
+
 		/* check for convergence for the CMFD iterative solver using 
 		 * _l2_norm_conv_thresh as criteria */
 		if (iter > 0 && eps < _l2_norm_conv_thresh)
-		{
-			_num_iter_to_conv = iter + 1;
 			break;
-		}
 	}
 	_num_iter_to_conv = iter + 1;
 
@@ -1480,11 +1512,15 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter)
 	petsc_err = VecGetArray(_phi_new, &new_phi);
 	CHKERRQ(petsc_err);
 
+	log_printf(ACTIVE, "CMFD Converged to updating scalar flux:");
 	for (int i = 0; i < cw*ch; i++){
 		meshCell = _mesh->getCells(i);
 		for (int e = 0; e < ng; e++){
 			meshCell->setOldFlux(double(old_phi[i*ng + e]), e);
 			meshCell->setNewFlux(double(new_phi[i*ng + e]), e);
+			log_printf(ACTIVE, " Relative to (m+1/2): %.10f",
+					   (double)(old_phi[i*ng + e]) 
+					   / (double)(new_phi[i*ng + e]));
 		}
 	}
 
@@ -2024,18 +2060,33 @@ int Cmfd::constructAMPhi(Mat A, Mat M, Vec phi_old, solveType solveMethod)
 										 ADD_VALUES);
 				CHKERRQ(petsc_err);
 
-				/* add outscattering term to diagonal */
+				/* add out-scattering term to diagonal of A */
+				value = 0.0;
 				for (int g = 0; g < ng; g++)
 				{
-//					if (e != g){
-						value = meshCell->getSigmaS()[e*ng + g] 
+					if (e != g)
+						value += meshCell->getSigmaS()[e*ng + g];
+				}
+				value *= meshCell->getVolume();
+				indice1 = (y*cw + x)*ng + e;
+				indice2 = (y*cw + x)*ng + e;
+				petsc_err = MatSetValues(A, 1, &indice1, 1, &indice2, 
+										 &value, ADD_VALUES);
+				CHKERRQ(petsc_err);
+
+				/* add in-scattering terms to off-diagonals of A */
+				for (int g = 0; g < ng; g++)
+				{
+					if (e != g)
+					{
+						value = - meshCell->getSigmaS()[g*ng + e] 
 							* meshCell->getVolume();
-						indice1 = (y*cw + x)*ng+e;
-						indice2 = (y*cw + x)*ng+e;
+						indice1 = (y*cw + x)*ng + e;
+						indice2 = (y*cw + x)*ng + g;
 						petsc_err = MatSetValues(A, 1, &indice1, 1, &indice2, 
 												 &value, ADD_VALUES);
 						CHKERRQ(petsc_err);
-//					}
+					}
 				}
 
 				/* add fission terms to diagonal of M */
@@ -2047,83 +2098,85 @@ int Cmfd::constructAMPhi(Mat A, Mat M, Vec phi_old, solveType solveMethod)
 					indice2 = (y*cw + x)*ng + g;
 					petsc_err = MatSetValues(M, 1, &indice1, 1, &indice2, 
 											 &value, INSERT_VALUES);
-				CHKERRQ(petsc_err);
-				}
-
-
-				/* add in scattering terms to off diagonals in A */
-				for (int g = 0; g < ng; g++)
-				{
-//					if (e != g){
-						value = - meshCell->getSigmaS()[g*ng + e] 
-							* meshCell->getVolume();
-						indice1 = (y*cw + x)*ng + e;
-						indice2 = (y*cw + x)*ng + g;
-						petsc_err = MatSetValues(A, 1, &indice1, 1, &indice2, 
-												 &value, ADD_VALUES);
-						CHKERRQ(petsc_err);
-//					}
+					CHKERRQ(petsc_err);
 				}
 
 				/* RIGHT SURFACE */
 
 				/* set transport term on diagonal */
 				if (solveMethod == CMFD)
-					value = (meshCell->getMeshSurfaces(2)->getDHat()[e]      - meshCell->getMeshSurfaces(2)->getDTilde()[e]) * meshCell->getHeight();
+					value = (meshCell->getMeshSurfaces(2)->getDHat()[e]      
+							 - meshCell->getMeshSurfaces(2)->getDTilde()[e]) 
+						* meshCell->getHeight();
 				else if (solveMethod == DIFFUSION)
-					value = meshCell->getMeshSurfaces(2)->getDDif()[e] * meshCell->getHeight();
+					value = meshCell->getMeshSurfaces(2)->getDDif()[e] 
+						* meshCell->getHeight();
 
 				indice1 = (y*cw + x)*ng + e;
 				indice2 = (y*cw + x)*ng + e;
-				petsc_err = MatSetValues(A, 1, &indice1,1 , &indice2, &value, ADD_VALUES);
+				petsc_err = MatSetValues(A, 1, &indice1,1 , &indice2, &value, 
+										 ADD_VALUES);
 				CHKERRQ(petsc_err);
 
 				/* set transport terms on off diagonals */
 				if (x != cw - 1){
 					if (solveMethod == CMFD)
-						value = - (meshCell->getMeshSurfaces(2)->getDHat()[e] + meshCell->getMeshSurfaces(2)->getDTilde()[e]) * meshCell->getHeight();
+						value = - (meshCell->getMeshSurfaces(2)->getDHat()[e] + 
+								   meshCell->getMeshSurfaces(2)->getDTilde()[e])
+								   * meshCell->getHeight();
 					else if (solveMethod == DIFFUSION)
-						value = - meshCell->getMeshSurfaces(2)->getDDif()[e] * meshCell->getHeight();
+						value = - meshCell->getMeshSurfaces(2)->getDDif()[e] 
+							* meshCell->getHeight();
 
 					indice1 = (y*cw + x)*ng + e;
 					indice2 = (y*cw + x + 1)*ng + e;
-					petsc_err = MatSetValues(A, 1, &indice1, 1, &indice2, &value, ADD_VALUES);
+					petsc_err = MatSetValues(A, 1, &indice1, 1, &indice2, 
+											 &value, ADD_VALUES);
 					CHKERRQ(petsc_err);
 				}
 
 				/* LEFT SURFACE */
-
 				/* set transport term on diagonal */
 				if (solveMethod == CMFD)
-					value = (meshCell->getMeshSurfaces(0)->getDHat()[e]      + meshCell->getMeshSurfaces(0)->getDTilde()[e]) * meshCell->getHeight();
+					value = (meshCell->getMeshSurfaces(0)->getDHat()[e] + 
+							 meshCell->getMeshSurfaces(0)->getDTilde()[e]) 
+						* meshCell->getHeight();
 				else if (solveMethod == DIFFUSION)
-					value = meshCell->getMeshSurfaces(0)->getDDif()[e] * meshCell->getHeight();
+					value = meshCell->getMeshSurfaces(0)->getDDif()[e] 
+						* meshCell->getHeight();
 
 				indice1 = (y*cw + x)*ng + e;
 				indice2 = (y*cw + x)*ng + e;
-				petsc_err = MatSetValues(A, 1, &indice1, 1, &indice2, &value, ADD_VALUES);
+				petsc_err = MatSetValues(A, 1, &indice1, 1, &indice2, 
+										 &value, ADD_VALUES);
 				CHKERRQ(petsc_err);
 
 				/* set transport terms on off diagonals */
 				if (x != 0){
 					if (solveMethod == CMFD)
-						value = - (meshCell->getMeshSurfaces(0)->getDHat()[e] - meshCell->getMeshSurfaces(0)->getDTilde()[e]) * meshCell->getHeight();
+						value = - (meshCell->getMeshSurfaces(0)->getDHat()[e] -
+								   meshCell->getMeshSurfaces(0)->getDTilde()[e])
+							* meshCell->getHeight();
 					else if (solveMethod == DIFFUSION)
-						value = - meshCell->getMeshSurfaces(0)->getDDif()[e] * meshCell->getHeight();
+						value = - meshCell->getMeshSurfaces(0)->getDDif()[e] 
+							* meshCell->getHeight();
 
 					indice1 = (y*cw + x)*ng + e;
 					indice2 = (y*cw + x - 1)*ng + e;
-					petsc_err = MatSetValues(A, 1, &indice1, 1, &indice2, &value, ADD_VALUES);
+					petsc_err = MatSetValues(A, 1, &indice1, 1, &indice2, 
+											 &value, ADD_VALUES);
 					CHKERRQ(petsc_err);
 				}
 
 				/* BOTTOM SURFACE */
-
 				/* set transport term on diagonal */
 				if (solveMethod == CMFD)
-					value = (meshCell->getMeshSurfaces(1)->getDHat()[e]      - meshCell->getMeshSurfaces(1)->getDTilde()[e]) * meshCell->getWidth();
+					value = (meshCell->getMeshSurfaces(1)->getDHat()[e] - 
+							 meshCell->getMeshSurfaces(1)->getDTilde()[e]) 
+						* meshCell->getWidth();
 				else if (solveMethod == DIFFUSION)
-					value = meshCell->getMeshSurfaces(1)->getDDif()[e] * meshCell->getWidth();
+					value = meshCell->getMeshSurfaces(1)->getDDif()[e] 
+						* meshCell->getWidth();
 
 				indice1 = (y*cw + x)*ng + e;
 				indice2 = (y*cw + x)*ng + e;
@@ -2133,39 +2186,50 @@ int Cmfd::constructAMPhi(Mat A, Mat M, Vec phi_old, solveType solveMethod)
 				/* set transport terms on off diagonals */
 				if (y != ch - 1){
 					if (solveMethod == CMFD)
-						value = - (meshCell->getMeshSurfaces(1)->getDHat()[e] + meshCell->getMeshSurfaces(1)->getDTilde()[e]) * meshCell->getWidth();
+						value = - (meshCell->getMeshSurfaces(1)->getDHat()[e] +
+								   meshCell->getMeshSurfaces(1)->getDTilde()[e])
+							* meshCell->getWidth();
 					else if (solveMethod == DIFFUSION)
-						value = - meshCell->getMeshSurfaces(1)->getDDif()[e] * meshCell->getWidth();
+						value = - meshCell->getMeshSurfaces(1)->getDDif()[e] 
+							* meshCell->getWidth();
 
 					indice1 = (y*cw + x)*ng + e;
 					indice2 = ((y+1)*cw + x)*ng + e;
-					petsc_err = MatSetValues(A, 1, &indice1, 1, &indice2, &value, ADD_VALUES);
+					petsc_err = MatSetValues(A, 1, &indice1, 1, &indice2, 
+											 &value, ADD_VALUES);
 					CHKERRQ(petsc_err);
 				}
 
 				/* TOP SURFACE */
-
 				/* set transport term on diagonal */
 				if (solveMethod == CMFD)
-					value = (meshCell->getMeshSurfaces(3)->getDHat()[e]      + meshCell->getMeshSurfaces(3)->getDTilde()[e]) * meshCell->getWidth();
+					value = (meshCell->getMeshSurfaces(3)->getDHat()[e] + 
+							 meshCell->getMeshSurfaces(3)->getDTilde()[e]) 
+						* meshCell->getWidth();
 				else if (solveMethod == DIFFUSION)
-					value = meshCell->getMeshSurfaces(3)->getDDif()[e] * meshCell->getWidth();
+					value = meshCell->getMeshSurfaces(3)->getDDif()[e] 
+						* meshCell->getWidth();
 
 				indice1 = (y*cw + x)*ng + e;
 				indice2 =  (y*cw + x)*ng + e;
-				petsc_err = MatSetValues(A, 1, &indice1, 1, &indice2, &value, ADD_VALUES);
+				petsc_err = MatSetValues(A, 1, &indice1, 1, &indice2, 
+										 &value, ADD_VALUES);
 				CHKERRQ(petsc_err);
 
 				/* set transport terms on off diagonals */
 				if (y != 0){
 					if (solveMethod == CMFD)
-						value = - (meshCell->getMeshSurfaces(3)->getDHat()[e] - meshCell->getMeshSurfaces(3)->getDTilde()[e]) * meshCell->getWidth();
+						value = - (meshCell->getMeshSurfaces(3)->getDHat()[e] -
+								   meshCell->getMeshSurfaces(3)->getDTilde()[e])
+							* meshCell->getWidth();
 					else if (solveMethod == DIFFUSION)
-						value = - meshCell->getMeshSurfaces(3)->getDDif()[e] * meshCell->getWidth();
+						value = - meshCell->getMeshSurfaces(3)->getDDif()[e] 
+							* meshCell->getWidth();
 
 					indice1 = (y*cw + x)*ng + e;
 					indice2 = ((y-1)*cw + x)*ng + e;
-					petsc_err = MatSetValues(A, 1, &indice1, 1, &indice2, &value, ADD_VALUES);
+					petsc_err = MatSetValues(A, 1, &indice1, 1, &indice2, 
+											 &value, ADD_VALUES);
 					CHKERRQ(petsc_err);
 				}
 			}
