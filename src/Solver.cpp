@@ -1548,7 +1548,7 @@ double Solver::kernel(int max_iterations) {
 			std::string title_str = string.str();
 			logfile.open(title_str.c_str(), std::fstream::app);
 			logfile << _geometry_file << " " 
-					<<  std::setprecision(10) <<  _k_eff;
+					<<  std::setprecision(11) <<  _k_eff;
 			logfile << " " << i+1 << std::endl;
 			logfile.close();
 

@@ -1425,7 +1425,7 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter)
 		petsc_err = VecScale(sold, _keff);
 
 		/* compute the L2 norm of source error */
-		scale_val = 1e-15;
+		scale_val = 1e-20;
 		petsc_err = VecShift(snew, scale_val);
 		petsc_err = VecPointwiseDivide(res, sold, snew);
 		scale_val = -1;
@@ -1980,8 +1980,8 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
  * @param solve methed - either DIFFUSION or CMFD
  * @return petsc error indicator
  */
-int Cmfd::constructAMPhi(Mat A, Mat M, Vec phi_old, solveType solveMethod){
-
+int Cmfd::constructAMPhi(Mat A, Mat M, Vec phi_old, solveType solveMethod)
+{
 	/* initialized variables */
 	int ch = _mesh->getCellHeight();
 	int cw = _mesh->getCellWidth();
@@ -1992,21 +1992,20 @@ int Cmfd::constructAMPhi(Mat A, Mat M, Vec phi_old, solveType solveMethod){
 	PetscScalar value;
 
 	/* if single group, set ng (number of groups) to 1 */
-	if (_mesh->getMultigroup() == false){
+	if (_mesh->getMultigroup() == false)
 		ng = 1;
-	}
 
 	/* loop over mesh cells in y direction */
-	for (int y = 0; y < ch; y++){
-
+	for (int y = 0; y < ch; y++)
+	{
 		/* loop over mesh cells in x direction */
-		for (int x = 0; x < cw; x++){
-
+		for (int x = 0; x < cw; x++)
+		{
 			/* loop over energy groups */
-			for (int e = 0; e < ng; e++){
-
+			for (int e = 0; e < ng; e++)
+			{
 				/* get mesh cell */
-				meshCell = _mesh->getCells(y*cw + x);
+				meshCell = _mesh->getCells(y * cw + x);
 
 				/* get old flux */
 				indice1 = (PetscInt) ((y * cw + x) * ng + e);
@@ -2016,45 +2015,54 @@ int Cmfd::constructAMPhi(Mat A, Mat M, Vec phi_old, solveType solveMethod){
 				CHKERRQ(petsc_err);
 
 				/* diagonal - A */
-
 				/* add absorption term to diagonal */
 				value = (PetscScalar) 
 					meshCell->getSigmaA()[e] * meshCell->getVolume();
 				indice1 = (y*cw + x)*ng + e;
 				indice2 = (y*cw + x)*ng + e;
-				petsc_err = MatSetValues(A, 1, &indice1, 1, &indice2, &value, ADD_VALUES);
+				petsc_err = MatSetValues(A, 1, &indice1, 1, &indice2, &value, 
+										 ADD_VALUES);
 				CHKERRQ(petsc_err);
 
 				/* add outscattering term to diagonal */
-				for (int g = 0; g < ng; g++){
-					if (e != g){
-						value = meshCell->getSigmaS()[e*ng + g] * meshCell->getVolume();
+				for (int g = 0; g < ng; g++)
+				{
+//					if (e != g){
+						value = meshCell->getSigmaS()[e*ng + g] 
+							* meshCell->getVolume();
 						indice1 = (y*cw + x)*ng+e;
 						indice2 = (y*cw + x)*ng+e;
-						petsc_err = MatSetValues(A, 1, &indice1, 1, &indice2, &value, ADD_VALUES);
+						petsc_err = MatSetValues(A, 1, &indice1, 1, &indice2, 
+												 &value, ADD_VALUES);
 						CHKERRQ(petsc_err);
-					}
+//					}
 				}
 
-				/* add fission terms to diagonal in M */
-				for (int g = 0; g < ng; g++){
-					value = meshCell->getChi()[e] * meshCell->getNuSigmaF()[g] * meshCell->getVolume();
-					indice1 = (y*cw + x)*ng+e;
+				/* add fission terms to diagonal of M */
+				for (int g = 0; g < ng; g++)
+				{
+					value = meshCell->getChi()[e] * meshCell->getNuSigmaF()[g] 
+						* meshCell->getVolume();
+					indice1 = (y*cw + x)*ng + e;
 					indice2 = (y*cw + x)*ng + g;
-					petsc_err = MatSetValues(M, 1, &indice1, 1, &indice2, &value, INSERT_VALUES);
+					petsc_err = MatSetValues(M, 1, &indice1, 1, &indice2, 
+											 &value, INSERT_VALUES);
 				CHKERRQ(petsc_err);
 				}
 
 
 				/* add in scattering terms to off diagonals in A */
-				for (int g = 0; g < ng; g++){
-					if (e != g){
-						value = - meshCell->getSigmaS()[g*ng + e] * meshCell->getVolume();
-						indice1 = (y*cw + x)*ng+e;
+				for (int g = 0; g < ng; g++)
+				{
+//					if (e != g){
+						value = - meshCell->getSigmaS()[g*ng + e] 
+							* meshCell->getVolume();
+						indice1 = (y*cw + x)*ng + e;
 						indice2 = (y*cw + x)*ng + g;
-						petsc_err = MatSetValues(A, 1, &indice1, 1, &indice2, &value, ADD_VALUES);
+						petsc_err = MatSetValues(A, 1, &indice1, 1, &indice2, 
+												 &value, ADD_VALUES);
 						CHKERRQ(petsc_err);
-					}
+//					}
 				}
 
 				/* RIGHT SURFACE */

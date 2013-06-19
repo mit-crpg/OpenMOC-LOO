@@ -155,6 +155,9 @@ Options::Options(int argc, char **argv)
 			else if (strcmp(argv[i], "-mg") == 0 ||
 					strcmp(argv[i], "--multigroup") == 0)
 				_multigroup = true;
+			else if (strcmp(argv[i], "-sg") == 0 ||
+					strcmp(argv[i], "--singlegroup") == 0)
+				_multigroup = false;			
 			else if (strcmp(argv[i], "-pm") == 0 ||
 					strcmp(argv[i], "--printmatrices") == 0)
 				_print_matrices = true;
