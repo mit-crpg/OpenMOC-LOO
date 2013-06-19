@@ -224,8 +224,8 @@ void Solver::computeRatios() {
  * increasing id, setting the material for each FSR, and assigning a volume
  * based on the cumulative length of all of the segments inside the FSR.
  */
-void Solver::initializeFSRs() {
-
+void Solver::initializeFSRs() 
+{
 	log_printf(NORMAL, "Initializing FSRs...");
 
 	CellBasic* cell;
@@ -237,14 +237,18 @@ void Solver::initializeFSRs() {
 
 	/* Set each FSR's volume by accumulating the total length of all
 	   tracks inside the FSR. Loop over azimuthal angle, track and segment */
-	for (int i = 0; i < _num_azim; i++) {
-		for (int j = 0; j < _num_tracks[i]; j++) {
+	for (int i = 0; i < _num_azim; i++) 
+	{
+		for (int j = 0; j < _num_tracks[i]; j++) 
+		{
 			track = &_tracks[i][j];
 
-			for (int s = 0; s < track->getNumSegments(); s++) {
+			for (int s = 0; s < track->getNumSegments(); s++) 
+			{
 				seg = track->getSegment(s);
 				fsr =&_flat_source_regions[seg->_region_id];
-				fsr->incrementVolume(seg->_length * track->getAzimuthalWeight());
+				fsr->incrementVolume(seg->_length * 
+									 track->getAzimuthalWeight());
 			}
 		}
 	}
@@ -446,6 +450,8 @@ double Solver::computeKeff(int iteration)
 		}
 	}
     log_printf(INFO, " MOC leakage  = %f", leakage);
+	log_printf(NORMAL, " MOC tot fission = %f, tot abs = %f", 
+		tot_fission, tot_abs);
 	_k_eff = tot_fission / (tot_abs + leakage);
 	_geom->getMesh()->setKeffMOC(_k_eff, iteration);
 	return _k_eff;
@@ -553,10 +559,14 @@ void Solver::checkTrackSpacing() {
 	for (int i=0; i < _num_FSRs; i++) {
 		if (FSR_segment_tallies[i] == 0) {
 			cell = _geom->findCell(i);
-			log_printf(ERROR, "No tracks were tallied inside FSR id = %d which "
-					"is cell id = %d. Please reduce your track spacing,"
-					" increase the number of azimuthal angles, or increase the"
-					" size of the flat source regions", i, cell->getId());
+			log_printf(ERROR, 
+					   "No tracks were tallied inside FSR id = %d inside "
+					   " cell id = %d. This is not going to run because"
+					   " the as-tracked vol of this FSR is zero."
+					   " Please reduce your track spacing,"
+					   " increase the number of azimuthal angles, or increase"
+					   " the size of the flat source regions", 
+					   i, cell->getId());
 		}
 	}
 
@@ -803,8 +813,8 @@ void Solver::tallyCmfdCurrent(Track *track, segment *segment,
 }
 
 /* Performs MOC sweep(s), could be just one sweep or till convergance */
-void Solver::MOCsweep(int max_iterations) {
-
+void Solver::MOCsweep(int max_iterations) 
+{
 	Track* track;
 	int num_segments;
 	std::vector<segment*> segments;

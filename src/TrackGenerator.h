@@ -12,6 +12,8 @@
 
 #define _USE_MATH_DEFINES
 #include <math.h>
+#include <iostream>
+#include <fstream>
 #include "Point.h"
 #include "Track.h"
 #include "Geometry.h"

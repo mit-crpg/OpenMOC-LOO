@@ -229,8 +229,22 @@ void TrackGenerator::generateTracks() {
 		}
 
 		/* Recalibrate track start and end points to geometry global origin */
-		//FIXME: This could be more efficiently done when start/end points are set
-		for (int i = 0; i < _num_azim; i++) {
+		//FIXME: This could be more efficient when start/end points are set
+#if 0
+		std::ofstream file;
+		std::stringstream string;
+		string << "characteristic_na_" << _num_azim << "_ts_" << _spacing 
+			   << ".txt";
+		std::string title_str = string.str();
+		file.open(title_str.c_str(), std::fstream::trunc);
+		file << "Note: reporting start point coordinate, end point coordinate,"
+			" and length for each characteristics" << std::endl;
+#endif
+		for (int i = 0; i < _num_azim; i++) 
+		{
+#if 0	
+			file << " azimuthal angle: " << _tracks[i][0].getPhi() << std::endl;
+#endif
 			for (int j = 0; j < _num_tracks[i]; j++) {
 				double x0 = _tracks[i][j].getStart()->getX();
 				double y0 = _tracks[i][j].getStart()->getY();
@@ -242,14 +256,21 @@ void TrackGenerator::generateTracks() {
 				double new_y1 = y1 - _geom->getHeight()/2.0;
 				double phi = _tracks[i][j].getPhi();
 				_tracks[i][j].setValues(new_x0, new_y0, new_x1, new_y1, phi);
-
+#if 0
+				file << "(" << new_x0 << ", " << new_y0 <<"), (" 
+					 << new_x1 << ", "<< new_y1 <<"), " << 
+					sqrt((new_x1 - new_x0)*(new_x1 - new_x0) 
+						 + (new_y1 - new_y0) * (new_y1 - new_y0)) << std::endl;
+#endif
 				/* Add line to segments bitmap */
 				if (_plotter->plotSpecs() == true){
 					drawLine(bitMap, new_x0, new_y0, new_x1, new_y1, 1);
 				}
 			}
 		}
-
+#if 0
+		file.close();
+#endif
 		if (_plotter->plotSpecs() == true){
 			plot(bitMap, "tracks", _plotter->getExtension());
 		}
@@ -584,6 +605,17 @@ void TrackGenerator::segmentize() {
 								 x0, y0, x1, y1, num_segments)
 #endif
 	/* Loop over all tracks */
+
+#if 0	
+	std::ofstream file;
+	std::stringstream string;
+	string << "track_na_" << _num_azim << "_ts_" << _spacing 
+		   << ".txt";
+	std::string title_str = string.str();
+	file.open(title_str.c_str(), std::fstream::trunc);
+	file << "Note: reporting start point coordinate, end point coordinate, and length for each track" << std::endl;
+#endif
+
 	for (int i = 0; i < _num_azim; i++) {
 		phi = _tracks[i][0].getPhi();
 		sin_phi = sin(phi);
@@ -604,13 +636,22 @@ void TrackGenerator::segmentize() {
 					log_printf(DEBUG, "Segmented segment: %i...", k);
 					x1 = x0 + cos_phi * track->getSegment(k)->_length;
 					y1 = y0 + sin_phi * track->getSegment(k)->_length;
-					drawLine(bitMap, x0, y0, x1, y1, track->getSegment(k)->_region_id);
+					drawLine(bitMap, x0, y0, x1, y1, 
+							 track->getSegment(k)->_region_id);
+					#if 0
+					file << "(" << x0 << ", " << y0 << "), (" << x1 << ", "
+						 << y1 << "), " << track->getSegment(k)->_length 
+						 << std::endl;
+					#endif
 					x0 = x1;
 					y0 = y1;
 				}
 			}
 		}
 	}
+#if 0
+	file.close();
+#endif
 
 	log_printf(NORMAL, "Generated %d number of segments...", 
 			   total_num_segments);
