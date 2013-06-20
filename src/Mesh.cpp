@@ -323,10 +323,16 @@ void Mesh::splitCornerCurrents()
 	double currents[NUM_ENERGY_GROUPS];
 	double f = 1.0; 
 
+	/*
 	int min_x[] = {0, -1, -1, 0};
 	int max_x[] = {cw, cw-1, cw-1, cw};
 	int min_y[] = {-1, -1, 0, 0};
 	int max_y[] = {ch-1, ch-1, ch, ch};
+	*/
+	int min_x[] = {-1,   -1,   -1,   0};
+	int max_x[] = {cw,   cw,   cw-1, cw};
+	int min_y[] = {-1,   -1,   -1,    -1};
+	int max_y[] = {ch-1, ch-1, ch,   ch};
 
 	int next_x[] = {0, 0, 1, -1};
 	int next_y[] = {1, 1, 0, 0};
@@ -382,6 +388,7 @@ void Mesh::splitCornerQuadCurrents()
 	double current;
 	double f = 1.0; 
 
+	/*
 	int min_x[] = {0, -1, -1, 0};
 	int max_x[] = {cw, cw, cw, cw};
 	int min_y[] = {-1, -1, -1, -1};
@@ -389,9 +396,19 @@ void Mesh::splitCornerQuadCurrents()
 
 	int next_x[] = {-1, 1, 1, -1};
 	int next_y[] = { 0, 0, 0, 0};
-
 	int surf[]      = {0, 2, 2, 0};
 	int next_surf[] = {1, 1, 3, 3};
+	*/
+	int min_x[] = {-1,   -1,   -1,   0};
+	int max_x[] = {cw,   cw,   cw-1, cw};
+	int min_y[] = {-1,   -1,   -1,    -1};
+	int max_y[] = {ch-1, ch-1, ch,   ch};
+
+	int next_x[]    = {0, 0, 1, -1};
+	int next_y[]    = {1, 1, 0, 0};
+	int surf[]      = {1, 1, 2, 0};
+	int crn[]       = {4, 5, 6, 7};
+	int next_surf[] = {0, 2, 3, 3};
 
 	for (int x = 0; x < cw; x++)
 	{
@@ -409,7 +426,7 @@ void Mesh::splitCornerQuadCurrents()
 
 				surfaceSide = meshCell->getMeshSurfaces(surf[i]);
 				surfaceSideNext = meshCellNext->getMeshSurfaces(next_surf[i]);
-				surfaceCorner = meshCell->getMeshSurfaces(i+4);
+				surfaceCorner = meshCell->getMeshSurfaces(crn[i]);
 
 				for (int g = 0; g < NUM_ENERGY_GROUPS; g++)
 				{
