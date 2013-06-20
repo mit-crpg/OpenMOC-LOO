@@ -78,31 +78,35 @@ public:
 		 bool useDiffusionCorrection, double l2_norm_conv_thresh,
 		 TrackGenerator *track_generator);
 	virtual ~Cmfd();
+	int getNumIterToConv();
+	double getL2Norm();
+ 	double getKeff();
+
+	/* Shared by two methods */
+ 	void computeXS();
+ 	void updateMOCFlux(int iteration);
+
+	/* CMFD */
  	void computeDs();
 	void computeDsBackup();
 	void computeDsxDirection(double x, double y, int e, MeshCell *meshCell, 
 							 double d, double f, double flux, int cell_width, 
 							 double dt_weight);
- 	void computeXS();
  	double computeDiffCorrect(double d, double h);
- 	void updateMOCFlux(int iteration);
  	int constructAMPhi(Mat A, Mat B, Vec phi_old, solveType solveMethod);
  	double computeCMFDFluxPower(solveType solveMethod, int moc_iter);
  	Mat getA();
  	Mat getM();
  	Vec getPhiNew();
  	int createAMPhi(PetscInt size1, PetscInt size2, int cells);
- 	double getKeff();
 	void setOldFSRFlux();
 	void setFSRs(FlatSourceRegion *fsrs);
 	int fisSourceNorm(Vec snew, int iter, int num_cmfd_iteration);
-	double getL2Norm();
 	/* LOO */
 	void storePreMOCMeshSource(FlatSourceRegion* fsrs);
 	void computeQuadSrc();
 	void computeQuadFlux();
 	double computeLooFluxPower(solveType solveMethod, int moc_iter, double k);
-	int getNumIterToConv();
 };
 
 #endif /* CMFD_H_ */
