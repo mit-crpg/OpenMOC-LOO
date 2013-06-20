@@ -81,7 +81,8 @@ void Track::setPolarFluxes(reflectType direction, int start_index,
 
 	if (direction != REFL_TRUE && direction != REFL_FALSE && direction != VAC_TRUE && direction != VAC_FALSE)
 		log_printf(ERROR, "Tried to set this track's polar flux in a direction"
-				"which does not exist: direction = %b", direction);
+				   "which does not exist;"
+				   " supported ones are: reflective, vacuume");
 
 	if (direction == REFL_TRUE || direction == REFL_FALSE){
 		int start = direction * GRP_TIMES_ANG;
@@ -293,7 +294,7 @@ segment* Track::getSegment(int segment) {
 	/* If track doesn't contain this segment, exits program */
 	else
 		log_printf(ERROR, "Attempted to retrieve segment s = %d but track only"
-				"has %d segments", segment, _segments.size());
+				   "has %d segments", segment, (int)_segments.size());
 	exit(1);
 }
 

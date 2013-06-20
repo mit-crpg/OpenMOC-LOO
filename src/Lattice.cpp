@@ -219,8 +219,8 @@ void Lattice::adjustKeys() {
 		}
 	}
 	catch (std::exception &e) {
-		log_printf(ERROR, "Unable to adjust the keys for lattice id = %s. "
-				"Backtrace:\n%s", _id, e.what());
+		log_printf(ERROR, "Unable to adjust the keys for lattice id = %d. "
+				   "Backtrace:\n%s", _id, e.what());
 	}
 
 	/* Delete old universes index by ids and set universes container to the

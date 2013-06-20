@@ -1035,8 +1035,8 @@ void Geometry::addLattice(Lattice* lattice) {
 			/* If the universe does not exist */
 			if (_universes.find(universe_id) == _universes.end())
 				log_printf(ERROR, "Attempted to create lattice containing "
-						"universe with id = %d, but universe does not exist",
-						lattice->getUniverses().at(i).at(j));
+						   "universe with id = %d, but universe does not exist",
+						   std::get<0>(lattice->getUniverses().at(i).at(j)));
 
 			/* Set the universe pointer */
 			else	int findFSRId(LocalCoords* coords);

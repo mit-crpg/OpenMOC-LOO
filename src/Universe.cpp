@@ -48,11 +48,11 @@ void Universe::addCell(Cell* cell) {
 	try {
 		_cells.insert(std::pair<int, Cell*>(cell->getId(), cell));
 		log_printf(INFO, "Added cell with id = %d to universe with id = %d",
-				cell->getId(), _id);
+				   cell->getId(), _id);
 	}
 	catch (std::exception &e) {
 		log_printf(ERROR, "Unable to add cell with id = %d to universe with"
-				" id = %d. Backtrace:\n%s", cell, _id, e.what());
+				   " id = %d. Backtrace:\n%s", cell->getId(), _id, e.what());
 	}
 }
 

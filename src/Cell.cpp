@@ -95,17 +95,19 @@ void Cell::setSurfacePointer(Surface* surface) {
 				"surface id = %d", _id, surface->getId());
 
 		if (surface->getType() == XPLANE){
-			log_printf(INFO, "Surface %i has x = %f", surface->getId(), surface->getXMin());
+			log_printf(INFO, "Surface %i has x = %f", 
+					   surface->getId(), surface->getXMin());
 		}
 		else if (surface->getType() == YPLANE){
-			log_printf(INFO, "Surface %i has y = %f", surface->getId(), surface->getYMin());
+			log_printf(INFO, "Surface %i has y = %f", 
+					   surface->getId(), surface->getYMin());
 		}
 
 	}
 	catch (std::exception &e) {
 		log_printf(ERROR, 
-			   "Unable to add surface with id = %d to cell with id = %d. "
-			   "Backtrace:\n%s", surface, _id, e.what());
+				   "Unable to add surface with id = %d to cell with id = %d. "
+				   "Backtrace:\n%s", surface->getId(), _id, e.what());
 	}
 }
 
