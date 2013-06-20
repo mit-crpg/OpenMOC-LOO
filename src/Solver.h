@@ -61,6 +61,8 @@ private:
 	float* _pix_map_total_flux;
 	Cmfd* _cmfd;
 	std::string _geometry_file;
+	double _damp_factor;
+	double _track_spacing;
 
 #if !STORE_PREFACTORS
 	double* _pre_factor_array;

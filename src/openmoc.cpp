@@ -114,7 +114,7 @@ int main(int argc, char **argv) {
 
 	/* Create CMFD class */
 	Cmfd cmfd(&geometry, &plotter, geometry.getMesh(), 
-			  opts.getCmfd(), opts.getLoo(),
+			  opts.getCmfd(), opts.getLoo(), opts.getDampFactor(),
 			  opts.getDiffusionCorrection(), opts.getL2NormConvThresh(),
 			  &track_generator);
 

@@ -15,7 +15,7 @@
  * @param track_generator pointer to the trackgenerator
  */
 Cmfd::Cmfd(Geometry* geom, Plotter* plotter, Mesh* mesh, 
-		   bool runCmfd, bool runLoo,
+		   bool runCmfd, bool runLoo, double damp, 
 		   bool useDiffusionCorrection, double l2_norm_conv_thresh,
 		   TrackGenerator *track_generator) {
 
@@ -29,6 +29,8 @@ Cmfd::Cmfd(Geometry* geom, Plotter* plotter, Mesh* mesh,
 	_l2_norm = 1.0;
 	_l2_norm_conv_thresh = l2_norm_conv_thresh;
 	_use_diffusion_correction = useDiffusionCorrection;
+
+	_damp = damp;
 
 	_run_cmfd = false;
 	if (runCmfd){
@@ -338,7 +340,7 @@ void Cmfd::computeDsxDirection(double x, double y, int e, MeshCell *meshCell,
 
 	/* set d_hat and d_tilde */
 	d_tilde = meshCell->getMeshSurfaces(0)->getDTilde()[e] 
-		* (1 - dt_weight) + dt_weight * d_tilde;
+		* (1.0 - dt_weight) + dt_weight * d_tilde;
 	meshCell->getMeshSurfaces(0)->setDHat(d_hat, e);
 	meshCell->getMeshSurfaces(0)->setDTilde(d_tilde, e);
 }
@@ -362,8 +364,7 @@ void Cmfd::computeDs(){
 	/* set cell width and height */
 	int cell_height = _mesh->getCellHeight();
 	int cell_width = _mesh->getCellWidth();
-	/* Under-relaxation factor, dt_weight = 1.0 means no under-relaxation */
-	double dt_weight = 0.66; // optimal: 0.66
+	double dt_weight = _damp;
 
 	/* loop over all mesh cells */
 #if USE_OPENMP
@@ -465,7 +466,7 @@ void Cmfd::computeDs(){
 
 				/* set d_hat and d_tilde */
 				d_tilde = meshCell->getMeshSurfaces(2)->getDTilde()[e] 
-					* (1 - dt_weight) + dt_weight * d_tilde;
+					* (1.0 - dt_weight) + dt_weight * d_tilde;
 				meshCell->getMeshSurfaces(2)->setDHat(d_hat, e);
 				meshCell->getMeshSurfaces(2)->setDTilde(d_tilde, e);
 
@@ -549,7 +550,7 @@ void Cmfd::computeDs(){
 
 				/* set d_hat and d_tilde */
 				d_tilde = meshCell->getMeshSurfaces(1)->getDTilde()[e] 
-					* (1 - dt_weight) + dt_weight * d_tilde;
+					* (1.0 - dt_weight) + dt_weight * d_tilde;
 				meshCell->getMeshSurfaces(1)->setDHat(d_hat, e);
 				meshCell->getMeshSurfaces(1)->setDTilde(d_tilde, e);
 
@@ -630,7 +631,7 @@ void Cmfd::computeDs(){
 
 				/* set d_hat and d_tilde */
 				d_tilde = meshCell->getMeshSurfaces(3)->getDTilde()[e] 
-					* (1 - dt_weight) + dt_weight * d_tilde;
+					* (1.0 - dt_weight) + dt_weight * d_tilde;
 				meshCell->getMeshSurfaces(3)->setDHat(d_hat, e);
 				meshCell->getMeshSurfaces(3)->setDTilde(d_tilde, e);
 			}
@@ -1816,7 +1817,7 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 		} /* finish looping over energy; exit to iter level */				
 
 		double phi_ratio;
-		double new_flux = 0, damp = 0.5;
+		double new_flux = 0;
 
 		/* Computs new cell-averaged scalar flux based on new_sum_quad_flux */
 		for (int i = 0; i < cw * ch; i++)
@@ -1829,7 +1830,7 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 					/ meshCell->getSumQuadFlux()[e] ;/// 8;
 
 				new_flux = meshCell->getOldFlux()[e] 
-					* (1.0 - damp + damp * phi_ratio);
+					* (1.0 - _damp + _damp * phi_ratio);
 				meshCell->setNewFlux(new_flux, e);
 
 				log_printf(ACTIVE, "Update cell %d energy %d scalar flux by "
@@ -1965,27 +1966,6 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 	_l2_norm = pow(eps, 0.5);
 	log_printf(DEBUG, " iteration %d, L2 norm of cell power error = %e", 
 			   moc_iter, _l2_norm);
-	
-	std::ofstream logfile;
-	std::stringstream string;
-	string << "l2_norm_" << (_num_azim*2) << "_" <<  _spacing << "_loo.txt";
-	std::string title_str = string.str();
-
-	/* Write the message to the output file */
-	if (moc_iter == 0)
-	{
-		logfile.open(title_str.c_str(), std::fstream::trunc);
-		logfile << "# iteration, l2_norm (m+1, m+1/2), keff, # loo iterations "
-				<< std::endl;
-	}
-	else
-	{
-		logfile.open(title_str.c_str(), std::ios::app);
-		logfile << moc_iter << " " << _l2_norm << " " << _keff 
-				<< " " << _num_iter_to_conv << std::endl;
-	}
-
-    logfile.close();
 	
 	/* Cleaning up; FIXME: more cleaning */
 	for (int i = 0; i < cw * ch; i++)
@@ -2362,27 +2342,6 @@ int Cmfd::fisSourceNorm(Vec snew, int moc_iter, int num_cmfd_iteration)
 	petsc_err = VecRestoreArray(_source_old, &old_source);
 	petsc_err = VecRestoreArray(snew, &new_source);
 	CHKERRQ(petsc_err);
-
-	std::ofstream logfile;
-	std::stringstream string;
-	string << "l2_norm_" << (_num_azim * 2) << "_" <<  _spacing << "_cmfd.txt";
-	std::string title_str = string.str();
-
-	/* Write the message to the output file */
-	if (moc_iter == 0)
-	{
-		logfile.open(title_str.c_str(), std::fstream::trunc);
-		logfile << "iteration, l2_norm (m+1, m+1/2), keff, # CMFD iterations" 
-				<< std::endl;
-	}
-	else
-	{
-		logfile.open(title_str.c_str(), std::ios::app);
-		logfile << moc_iter << " " << _l2_norm << " " << _keff 
-				<< " " << num_cmfd_iteration << std::endl;
-	}
-
-    logfile.close();
 
 	return petsc_err;
 } 

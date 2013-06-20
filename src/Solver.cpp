@@ -38,6 +38,8 @@ Solver::Solver(Geometry* geom, TrackGenerator* track_generator,
 	_acc_after_MOC_converge = opts->getAccAfterMOCConverge();
 	_k_eff = opts->getKGuess();
 	_geometry_file = opts->getGeometryFile();
+	_damp_factor = opts->getDampFactor();
+	_track_spacing = opts->getTrackSpacing();
 
 	_cmfd_k = _k_eff;
 	_loo_k = _k_eff;
@@ -1488,6 +1490,52 @@ double Solver::kernel(int max_iterations) {
 
 		/* Prints out keff & eps, may update keff too based on _update_keff */
 		printKeff(i, eps);
+
+		std::ofstream logfile;
+		std::stringstream string;
+		if (_run_cmfd)
+		{
+			string << "l2_norm_" << (_num_azim*2) << "_" 
+				   <<  _track_spacing
+				   << "_" << _damp_factor << "_cmfd.txt";
+		}
+		else if (_run_loo)
+		{
+			string << "l2_norm_" << (_num_azim*2) << "_" 
+				   <<  _track_spacing
+				   << "_" << _damp_factor << "_loo.txt";
+		}			
+		else
+		{
+			string << "l2_norm_" << (_num_azim*2) << "_" 
+				   <<  _track_spacing
+				   << "_" << _damp_factor << "_unacc.txt";
+		}
+
+		std::string title_str = string.str();
+
+		/* Write the message to the output file */
+		if (i == 0)
+		{
+			logfile.open(title_str.c_str(), std::fstream::trunc);
+			logfile << "# iteration, mesh l2_norm (m+1, m+1/2),"
+					<< " fsr max relative change (m+1, m+1/2),"
+					<< " keff relative change"
+					<< ", # loo iterations "
+					<< std::endl;
+		}
+		else
+		{
+			logfile.open(title_str.c_str(), std::ios::app);
+			logfile << i << " " << _cmfd->getL2Norm() 
+					<< " "  << eps
+					<< " " << (_old_k_effs.back() - _old_k_effs.front()) 
+				/ _old_k_effs.back()
+					<< " " << _cmfd->getNumIterToConv() << std::endl;
+		}
+
+		logfile.close();
+
 
         /* Alternative: if (_cmfd->getL2Norm() < _moc_conv_thresh) */
 		if (eps < _moc_conv_thresh) 

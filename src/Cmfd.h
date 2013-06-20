@@ -62,6 +62,7 @@ private:
 	Mat _M;
 	Vec _phi_new;
 	Vec _source_old;
+	double _damp;
 	double _keff;
 	double _l2_norm;
 	double _l2_norm_conv_thresh;
@@ -73,7 +74,7 @@ private:
 	int _num_iter_to_conv;
 public:
 	Cmfd(Geometry* geom, Plotter* plotter, Mesh* mesh, 
-		 bool runCmfd, bool runLoo,
+		 bool runCmfd, bool runLoo, double damp,
 		 bool useDiffusionCorrection, double l2_norm_conv_thresh,
 		 TrackGenerator *track_generator);
 	virtual ~Cmfd();

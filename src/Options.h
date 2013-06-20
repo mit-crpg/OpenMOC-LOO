@@ -49,6 +49,7 @@ private:
 	int _cmfd_level;
 	double _k_guess;
 	bool _diffusion_correction;
+	double _damp_factor;
 public:
     Options(int argc, char **argv);
     ~Options(void);
@@ -84,7 +85,7 @@ public:
 	bool getDiffusion();
 	bool getDiffusionCorrection();
 	bool getAccAfterMOCConverge();
-
+	double getDampFactor();
 };
 
 #endif

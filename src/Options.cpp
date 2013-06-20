@@ -25,10 +25,10 @@ Options::Options(int argc, char **argv)
 	_l2_norm_conv_thresh = 1e-10; /* convergence on acceleration iteration */
 	_moc_conv_thresh = 1e-8;     /* convergence on MOC sweeps */
 
-	_cmfd = false; 			
-		
-	_loo = false;
 	_acc_after_MOC_converge = false;
+	_cmfd = false; 					
+	_loo = false;
+	_damp_factor = 1.0;
 
 	/* plotting options */
 	_plot_quad_flux = false;             /* Plots quad flux, net current, xs */
@@ -88,6 +88,8 @@ Options::Options(int argc, char **argv)
 				_track_spacing = atof(argv[i]);
 			else if (LAST("--numazimuthal") || LAST("-na"))
 				_num_azim = atoi(argv[i]);
+			else if (LAST("--dampfactor") || LAST("-df"))
+				_damp_factor = atof(argv[i]);
 			else if (LAST("--bitdimension") || LAST("-bd"))
 							_bit_dimension = atoi(argv[i]);
 			else if (LAST("--verbosity") || LAST("-v"))
@@ -126,6 +128,7 @@ Options::Options(int argc, char **argv)
 			{
 				_cmfd = true;
 				_loo = false;
+				_damp_factor = 0.66;
 			}
 			else if (strcmp(argv[i], "-nl") == 0 ||
 					strcmp(argv[i], "--noloo") == 0)
@@ -135,6 +138,7 @@ Options::Options(int argc, char **argv)
 			{
 				_loo = true;
 				_cmfd = false;
+				_damp_factor = 0.50;
 			}
 			else if (strcmp(argv[i], "-pc") == 0 ||
 					strcmp(argv[i], "--plotcurrent") == 0)
@@ -412,4 +416,9 @@ bool Options::getDiffusionCorrection(){
 
 bool Options::getAccAfterMOCConverge(){
 	return _acc_after_MOC_converge;
+}
+
+double Options::getDampFactor()
+{
+	return _damp_factor;
 }
