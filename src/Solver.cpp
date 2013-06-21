@@ -1624,47 +1624,35 @@ double Solver::kernel(int max_iterations) {
 /*
  * check neutron balance in each mesh cell
  */
-void Solver::checkNeutBal(Mesh* mesh){
-
+void Solver::checkNeutBal(Mesh* mesh)
+{
 	log_printf(INFO, "Checking neutron balance...");
-
-	/* residual = leakage + absorption - fission */
-
 	double leak = 0, absorb = 0, fis = 0;
-
 	MeshCell* meshCell;
-
 	int cell_height = mesh->getCellHeight();
 	int cell_width = mesh->getCellWidth();
 	int ng = NUM_ENERGY_GROUPS;
-	if (mesh->getMultigroup() == false){
+	if (mesh->getMultigroup() == false)
 		ng = 1;
-	}
 
 	/* loop over mesh cells in y direction */
-	for (int y = 0; y < cell_height; y++){
-
+	for (int y = 0; y < cell_height; y++)
+	{
 		/* loop over mesh cells in x direction */
-		for (int x = 0; x < cell_width; x++){
-
+		for (int x = 0; x < cell_width; x++)
+		{
 			/* get mesh cell */
 			meshCell = mesh->getCells(y*cell_width + x);
 
 			/* leakage */
-			for (int s = 0; s < 4; s++){
-				for (int e = 0; e < ng; e++){
-					/* FIXME: the partial current here do not agree with
-					 * plotting? */
-					log_printf(INFO, " CMFD mesh %d, surface %d, energy %d, "
-							   "partial current is %f", 
-							   y*cell_width + x, s, e, 
-							   meshCell->getMeshSurfaces(s)->getCurrent(e));
-				}
-
-
-				if (meshCell->getMeshSurfaces(s)->getBoundary() == VACUUM){
-					for (int e = 0; e < ng; e++){
-						if (s == 0){
+			for (int s = 0; s < 4; s++)
+			{
+				if (meshCell->getMeshSurfaces(s)->getBoundary() == VACUUM)
+				{
+					for (int e = 0; e < ng; e++)
+					{
+						if (s == 0)
+						{
 							leak += meshCell->getMeshSurfaces(s)->getDHat()[e] 
 								* meshCell->getOldFlux()[e]
 								* meshCell->getHeight();
@@ -1701,7 +1689,8 @@ void Solver::checkNeutBal(Mesh* mesh){
 			}
 
 			/* compute absorb and fis rates */
-			for (int e = 0; e < ng; e ++){
+			for (int e = 0; e < ng; e ++)
+			{
 				absorb += meshCell->getSigmaA()[e] * meshCell->getVolume() * 
 					meshCell->getOldFlux()[e];
 				fis += meshCell->getNuSigmaF()[e] * meshCell->getVolume()
@@ -1712,8 +1701,11 @@ void Solver::checkNeutBal(Mesh* mesh){
 	}
 
 	/* compute total residual and average ratio */
-	log_printf(INFO, "CMFD fis: %f, absorb: %f, leak: %f, keff: %f", 
-			   fis, absorb, leak, fis / (leak + absorb));
+	/* residual = leakage + absorption - fission */
+	double residual = leak + absorb - fis;
+	log_printf(INFO, "CMFD residual %.10f"
+			   " fis: %.10f, absorb: %.10f, leak: %.10f, keff: %.10f", 
+			   residual, fis, absorb, leak, fis / (leak + absorb));
 }
 
 

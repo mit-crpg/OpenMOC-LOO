@@ -88,7 +88,6 @@ public:
 
 	/* CMFD */
  	void computeDs();
-	void computeDsBackup();
 	void computeDsxDirection(double x, double y, int e, MeshCell *meshCell, 
 							 double d, double f, double flux, int cell_width, 
 							 double dt_weight);
