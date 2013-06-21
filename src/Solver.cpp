@@ -453,9 +453,10 @@ double Solver::computeKeff(int iteration)
 		}
 	}
     log_printf(INFO, " MOC leakage  = %f", leakage);
-	_k_eff = tot_fission / (tot_abs + leakage);
-	_geom->getMesh()->setKeffMOC(_k_eff, iteration);
-	return _k_eff;
+	double k;
+	k = tot_fission / (tot_abs + leakage);
+	//_geom->getMesh()->setKeffMOC(_k_eff, iteration);
+	return k;
 }
 
 
@@ -465,9 +466,11 @@ double Solver::computeKeff(int iteration)
 void Solver::updateFlux(int iteration) {
 	_cmfd->updateMOCFlux(iteration);
 	normalizeFlux();
-	  _k_eff = computeKeff(iteration);
-	_geom->getMesh()->setKeffMOC(_k_eff, iteration);
-	_old_k_effs.push(_k_eff);
+
+	double k;
+	k = computeKeff(iteration);
+	_geom->getMesh()->setKeffMOC(k, iteration);
+	_old_k_effs.push(k);
 	if (_old_k_effs.size() == NUM_KEFFS_TRACKED)
 		_old_k_effs.pop();
 	updateSource();
@@ -1483,6 +1486,13 @@ double Solver::kernel(int max_iterations) {
 			updateFlux(i);
 			computeFsrPowers();
 		}
+		else
+		{
+			computeKeff(i);
+			_old_k_effs.push(_k_eff);
+			if (_old_k_effs.size() == NUM_KEFFS_TRACKED)
+				_old_k_effs.pop();
+		}
 
 		/* Checks energy-integrated L2 norm of FSR powers / fission rates */
 		double eps = computeFsrL2Norm(old_fsr_powers);
@@ -1537,7 +1547,7 @@ double Solver::kernel(int max_iterations) {
 					<< " " << (_old_k_effs.back() - _old_k_effs.front()) 
 				/ _old_k_effs.back()
 					<< " " << _cmfd->getNumIterToConv() 
-					<< " " << _old_k_effs.back()
+					<< " " << std::setprecision(11) << _old_k_effs.back()
 					<< std::endl;
 		}
 
@@ -1613,9 +1623,6 @@ double Solver::kernel(int max_iterations) {
 
 	log_printf(WARNING, "Unable to converge the source after %d iterations",
 		   max_iterations);
-
-
-
 
 	return _k_eff;
 }
