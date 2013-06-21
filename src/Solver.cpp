@@ -465,13 +465,11 @@ double Solver::computeKeff(int iteration)
 void Solver::updateFlux(int iteration) {
 	_cmfd->updateMOCFlux(iteration);
 	normalizeFlux();
-	/*
 	  _k_eff = computeKeff(iteration);
 	_geom->getMesh()->setKeffMOC(_k_eff, iteration);
 	_old_k_effs.push(_k_eff);
 	if (_old_k_effs.size() == NUM_KEFFS_TRACKED)
 		_old_k_effs.pop();
-	*/
 	updateSource();
 	
 	return;
@@ -1090,9 +1088,14 @@ void Solver::MOCsweep(int max_iterations)
 		/* computes new _k_eff; it is important that we compute new k 
 		 * before normalizing flux and compute new source */
 		_k_eff = computeKeff(i);
+		
+		/* This $k^{(m+1/2)}$ is sort of an intermediate results; we store it
+		 * as _k_eff but do not actually push it */
+		/*
 		_old_k_effs.push(_k_eff);
 		if (_old_k_effs.size() == NUM_KEFFS_TRACKED)
 			_old_k_effs.pop();
+		*/
 
 		/* Normalize scalar fluxes and computes Q for each FSR */
 		normalizeFlux();
@@ -1314,7 +1317,7 @@ void Solver::updateSource()
 					* scalar_flux[g];
 
 			/* Set the total source for region r in group G */
-			source[G] = ((1.0 / (_old_k_effs.back())) * fission_source *
+			source[G] = ((1.0 / _k_eff) * fission_source *
 							chi[G] + scatter_source) * ONE_OVER_FOUR_PI;
 		}
 	}
@@ -1351,7 +1354,7 @@ double Solver::runLoo(int i)
 	log_printf(ACTIVE, "size = %d, front = %.10f, back = %.10f",
 				   (int) _old_k_effs.size(), 
 				   _old_k_effs.front(), _old_k_effs.back());
-	loo_keff = _cmfd->computeLooFluxPower(LOO, i, _old_k_effs.back());
+	loo_keff = _cmfd->computeLooFluxPower(LOO, i, _k_eff);
 
 	return loo_keff;
 }
@@ -1522,16 +1525,20 @@ double Solver::kernel(int max_iterations) {
 					<< " fsr max relative change (m+1, m+1/2),"
 					<< " keff relative change"
 					<< ", # loo iterations "
+					<< ", keff"
 					<< std::endl;
 		}
 		else
 		{
 			logfile.open(title_str.c_str(), std::ios::app);
-			logfile << i << " " << _cmfd->getL2Norm() 
+			logfile << i 
+					<< " " << _cmfd->getL2Norm() 
 					<< " "  << eps
 					<< " " << (_old_k_effs.back() - _old_k_effs.front()) 
 				/ _old_k_effs.back()
-					<< " " << _cmfd->getNumIterToConv() << std::endl;
+					<< " " << _cmfd->getNumIterToConv() 
+					<< " " << _old_k_effs.back()
+					<< std::endl;
 		}
 
 		logfile.close();
