@@ -1366,14 +1366,18 @@ double Solver::runCmfd(int i)
 {
 	double cmfd_keff;
 
+	normalizeFlux();
+	updateSource();
 	MOCsweep(2);
+	normalizeFlux();
+	updateSource();
 
 	/* compute cross sections and diffusion coefficients */
 	_cmfd->computeXS();
 	_cmfd->computeDs();
 
 	/* Check for neutron balance */
-	checkNeutBal(_geom->getMesh());
+	//checkNeutBal(_geom->getMesh());
 
 	/* Run diffusion problem on initial geometry */
 	if (i == 0 && _diffusion == true){
@@ -1389,8 +1393,6 @@ double Solver::runCmfd(int i)
 double Solver::computeFsrL2Norm(double *old_fsr_powers)
 {
 	double l2_norm = 0.0;
-
-	/*
 	int num_counted = 0;
 	for (int i = 0; i < _num_FSRs; i++)
 	{
@@ -1403,7 +1405,13 @@ double Solver::computeFsrL2Norm(double *old_fsr_powers)
 	}
 	l2_norm /= (double) num_counted;
 	l2_norm = pow(l2_norm, 0.5);
-	*/
+   
+	return l2_norm;
+}
+
+double Solver::computeFsrLinf(double *old_fsr_powers)
+{
+	double l2_norm = 0.0;
 	double new_norm = 0.0;
 	for (int i = 0; i < _num_FSRs; i++)
 	{
@@ -1495,14 +1503,15 @@ double Solver::kernel(int max_iterations) {
 		}
 
 		/* Checks energy-integrated L2 norm of FSR powers / fission rates */
-		double eps = computeFsrL2Norm(old_fsr_powers);
+		double eps_inf = computeFsrLinf(old_fsr_powers);
+		double eps_2 = computeFsrL2Norm(old_fsr_powers);
 
 		/* Stores current FSR powers into old fsr powers for next iter */
 		for (int n = 0; n < _num_FSRs; n++)
 			old_fsr_powers[n] = _FSRs_to_powers[n];
 
 		/* Prints out keff & eps, may update keff too based on _update_keff */
-		printKeff(i, eps);
+		printKeff(i, eps_inf);
 
 		std::ofstream logfile;
 		std::stringstream string;
@@ -1531,8 +1540,9 @@ double Solver::kernel(int max_iterations) {
 		if (i == 0)
 		{
 			logfile.open(title_str.c_str(), std::fstream::trunc);
-			logfile << "# iteration, mesh l2_norm (m+1, m+1/2),"
-					<< " fsr max relative change (m+1, m+1/2),"
+			logfile << "# iteration, mesh cell l2 norm (m+1, m+1/2),"
+					<< " fsr l-inf norm (m+1, m+1/2),"
+				    << " fsr l-2 norm (m+1, m+1/2)," 
 					<< " keff relative change"
 					<< ", # loo iterations "
 					<< ", keff"
@@ -1543,7 +1553,8 @@ double Solver::kernel(int max_iterations) {
 			logfile.open(title_str.c_str(), std::ios::app);
 			logfile << i 
 					<< " " << _cmfd->getL2Norm() 
-					<< " "  << eps
+					<< " " << eps_inf
+					<< " " << eps_2
 					<< " " << (_old_k_effs.back() - _old_k_effs.front()) 
 				/ _old_k_effs.back()
 					<< " " << _cmfd->getNumIterToConv() 
@@ -1555,7 +1566,7 @@ double Solver::kernel(int max_iterations) {
 
 
         /* Alternative: if (_cmfd->getL2Norm() < _moc_conv_thresh) */
-		if (eps < _moc_conv_thresh) 
+		if (eps_inf < _moc_conv_thresh) 
 		{
 			/* Converge the flux further */
 			//MOCsweep(5);

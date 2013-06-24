@@ -116,6 +116,7 @@ public:
 	double runLoo(int i);
 	double runCmfd(int i);
 	double computeFsrL2Norm(double *old_fsr_powers);
+	double computeFsrLinf(double *old_fsr_powers);
 };
 
 #endif /* SOLVER_H_ */
