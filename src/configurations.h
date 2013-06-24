@@ -18,17 +18,13 @@
 #define NUM_ENERGY_GROUPS 7
 #define GRP_TIMES_ANG NUM_POLAR_ANGLES*NUM_ENERGY_GROUPS
 
-/* Convergence threshold for scalar flux in each region during fixed source
- * iteration */
-#define FLUX_CONVERGENCE_THRESH 1E-10
-
 /* The number of old k_eff values which will be stored. Keeping track of more
  * than just the most recent k_eff is intended to prevent from prematurely
  * exiting fixed source iteration at a local minimum or maximum */
 #define NUM_KEFFS_TRACKED 3
 
 /** Maximum number of fixed source iterations allowed */
-#define MAX_ITERATIONS 3E+3
+#define MAX_ITERATIONS 1E+3
 
 /* Precompute and store exponential pre-factors in transport equation */
 #define STORE_PREFACTORS false
