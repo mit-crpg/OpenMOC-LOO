@@ -60,7 +60,10 @@ public:
 	void printCurrents();
 	void computeTotCurrents();
 	void computeTotQuadCurrents();
+
 	void splitCornerCurrents();
+	void splitCornerCurrents_old();
+
 	void splitCornerQuadCurrents();
 	void setMultigroup(bool multigroup);
 	bool getMultigroup();
