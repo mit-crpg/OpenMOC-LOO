@@ -84,6 +84,7 @@ public:
 
 	/* Shared by two methods */
  	void computeXS();
+ 	void computeXS_old();	
  	void updateMOCFlux(int iteration);
 
 	/* CMFD */
@@ -101,6 +102,7 @@ public:
 	void setOldFSRFlux();
 	void setFSRs(FlatSourceRegion *fsrs);
 	int fisSourceNorm(Vec snew, int iter, int num_cmfd_iteration);
+
 	/* LOO */
 	void storePreMOCMeshSource(FlatSourceRegion* fsrs);
 	void computeQuadSrc();

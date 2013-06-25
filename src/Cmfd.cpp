@@ -72,9 +72,11 @@ int Cmfd::createAMPhi(PetscInt size1, PetscInt size2, int cells){
 
 	int petsc_err = 0;
 
-	petsc_err = MatCreateSeqAIJ(PETSC_COMM_WORLD, size1, size1, size2, PETSC_NULL, &_A);
+	petsc_err = MatCreateSeqAIJ(PETSC_COMM_WORLD, size1, size1, size2, 
+								PETSC_NULL, &_A);
 	size2 = size2 - 4;
-	petsc_err = MatCreateSeqAIJ(PETSC_COMM_WORLD, size1, size1, size2, PETSC_NULL, &_M);
+	petsc_err = MatCreateSeqAIJ(PETSC_COMM_WORLD, size1, size1, size2, 
+								PETSC_NULL, &_M);
 	petsc_err = VecCreateSeq(PETSC_COMM_WORLD, cells, &_phi_new);
 	petsc_err = VecCreateSeq(PETSC_COMM_WORLD, cells, &_source_old);
 	CHKERRQ(petsc_err);
@@ -89,16 +91,146 @@ int Cmfd::createAMPhi(PetscInt size1, PetscInt size2, int cells){
  * @param pointer to an array of fsrs 
  *
  */
-void Cmfd::computeXS(){
 
+void Cmfd::computeXS_old()
+{
 	/* split corner currents to side surfaces */
 	if (_run_cmfd)
 		_mesh->splitCornerCurrents();
 	if (_run_loo)
-	{
-		_mesh->splitCornerCurrents();
 		_mesh->splitCornerQuadCurrents();
+
+	/* initialize variables */
+	double volume, flux, abs, tot, nu_fis, chi;
+	double* scat;
+	double* mat_mult;
+	double* mat_mult_a;
+	double abs_tally_group, nu_fis_tally_group, dif_tally_group, rxn_tally_group, vol_tally_group, tot_tally_group;
+	double nu_fis_tally = 0, dif_tally = 0, rxn_tally = 0, abs_tally = 0, tot_tally = 0;
+	double scat_tally_group[NUM_ENERGY_GROUPS];
+	std::vector<int>::iterator iter;
+	int i, e, g;
+
+	/* create pointers to objects */
+	MeshCell* meshCell;
+	FlatSourceRegion* fsr;
+	Material* material;
+
+#if USE_OPENMP
+#pragma omp parallel for private(i, e, g, volume, flux, abs, tot, nu_fis, \
+		chi, scat, mat_mult, mat_mult_a, abs_tally_group, nu_fis_tally_group, \
+		dif_tally_group, rxn_tally_group, vol_tally_group, tot_tally_group, \
+		nu_fis_tally, dif_tally, rxn_tally, abs_tally, tot_tally, \
+		scat_tally_group, iter, meshCell, fsr, material)
+#endif
+	/* loop over mesh cells */
+	for (i = 0; i < _mesh->getCellWidth() * _mesh->getCellHeight(); i++){
+		meshCell = _mesh->getCells(i);
+
+		/* if single group, zero tallies */
+		if (_mesh->getMultigroup() == false){
+			abs_tally = 0.0;
+			nu_fis_tally = 0.0;
+			dif_tally = 0.0;
+			tot_tally = 0.0;
+			rxn_tally = 0.0;
+		}
+
+		/* loop over energy groups */
+		for (e = 0; e < NUM_ENERGY_GROUPS; e++) {
+
+			/* zero tallies for this group */
+			abs_tally_group = 0;
+			nu_fis_tally_group = 0;
+			dif_tally_group = 0;
+			rxn_tally_group = 0;
+			vol_tally_group = 0;
+			tot_tally_group = 0;
+
+			/* zero each group to group scattering tally */
+			for (g = 0; g < NUM_ENERGY_GROUPS; g++){
+				scat_tally_group[g] = 0;
+			}
+
+			/* loop over FSRs in mesh cell */
+			for (iter = meshCell->getFSRs()->begin(); iter != meshCell->getFSRs()->end(); ++iter){
+				fsr = &_flat_source_regions[*iter];
+
+				/* Gets FSR specific data. */
+				material = fsr->getMaterial();
+				chi = material->getChi()[e];
+				volume = fsr->getVolume();
+				flux = fsr->getFlux()[e];
+				abs = material->getSigmaA()[e];
+				tot = material->getSigmaT()[e];
+				nu_fis = material->getNuSigmaF()[e];
+				scat = material->getSigmaS();
+				mat_mult = fsr->getMatMult();
+				mat_mult_a = fsr->getMatMultA();
+
+				/* increment tallies for this group */
+				abs_tally_group += abs * flux * volume * mat_mult_a[e];
+				tot_tally_group += tot * flux * volume;
+				nu_fis_tally_group += nu_fis * flux * volume;
+				rxn_tally_group += flux * volume;
+				vol_tally_group += volume;
+				dif_tally_group += flux  * volume / (3.0 * tot);
+
+				/* increment group to group scattering tallies */
+				for (g = 0; g < NUM_ENERGY_GROUPS; g++){
+					scat_tally_group[g] += scat[g*NUM_ENERGY_GROUPS + e] * flux * volume * mat_mult[g*NUM_ENERGY_GROUPS + e];
+					log_printf(DEBUG, "scattering from group %i to %i: %f", e, g, scat[g*NUM_ENERGY_GROUPS + e]);
+				}
+
+				/* choose a chi for this group */
+				if (chi >= meshCell->getChi()[e]){
+					meshCell->setChi(chi,e);
+				}
+			}
+
+			/* if multigroup, set the multigroup parameters */
+			if (_mesh->getMultigroup() == true){
+				meshCell->setVolume(vol_tally_group);
+				meshCell->setSigmaA(abs_tally_group / rxn_tally_group, e);
+				meshCell->setSigmaT(tot_tally_group / rxn_tally_group, e);
+				meshCell->setNuSigmaF(nu_fis_tally_group / rxn_tally_group, e);
+				meshCell->setDiffusivity(dif_tally_group / rxn_tally_group, e);
+				meshCell->setOldFlux(rxn_tally_group / vol_tally_group, e);
+
+				for (int g = 0; g < NUM_ENERGY_GROUPS; g++){
+					meshCell->setSigmaS(scat_tally_group[g] / rxn_tally_group,e,g);
+				}
+			}
+			/* if single group, add group-wise tallies to group independent tallies */
+			else{
+				abs_tally += abs_tally_group;
+				tot_tally += tot_tally_group;
+				nu_fis_tally += nu_fis_tally_group;
+				dif_tally += dif_tally_group;
+				rxn_tally += rxn_tally_group;
+			}
+		}
+
+		/* if single group, set single group parameters */
+		if (_mesh->getMultigroup() == false){
+			meshCell->setVolume(vol_tally_group);
+			meshCell->setSigmaT(tot_tally / rxn_tally, 0);
+			meshCell->setSigmaA(abs_tally / rxn_tally, 0);
+			meshCell->setNuSigmaF(nu_fis_tally / rxn_tally, 0);
+			meshCell->setDiffusivity(dif_tally / rxn_tally, 0);
+			meshCell->setOldFlux(rxn_tally / vol_tally_group, 0);
+			meshCell->setChi(1,0);
+		}
 	}
+}
+
+void Cmfd::computeXS()
+{
+	/* split corner currents to side surfaces */
+	if (_run_cmfd)
+		_mesh->splitCornerCurrents();
+	if (_run_loo)
+		_mesh->splitCornerQuadCurrents();
 
 	/* initialize variables */
 	double volume, flux, abs, tot, nu_fis, chi;
@@ -346,8 +478,8 @@ void Cmfd::computeDsxDirection(double x, double y, int e, MeshCell *meshCell,
 }
 
 /* compute the xs for all MeshCells in the Mesh */
-void Cmfd::computeDs(){
-
+void Cmfd::computeDs()
+{
 	/* initialize variables */
 	double d = 0, d_next = 0, d_hat = 0, d_tilde = 0, 
 		current = 0, flux = 0, flux_next = 0, f = 1, f_next = 1;
@@ -650,8 +782,6 @@ void Cmfd::computeQuadFlux()
 	if (_mesh->getMultigroup() == false){
 		ng = 1;
 		_mesh->computeTotQuadCurrents();
-		/* FIXME: debugging purpose */
-		_mesh->computeTotCurrents();
 	}
 
 	/* set cell width and height */
@@ -681,23 +811,15 @@ void Cmfd::computeQuadFlux()
 										  e, j);
 					}
 
-					/* For debugging purpose, compute partial currents */
-					double current = s[i]->getQuadCurrent(e, 0) 
-						+ s[i]->getQuadCurrent(e, 1);
-
 					if (e == 0)
 					{
 						/* Prints to screen quad current and quad flux */
 						log_printf(DEBUG, "cell %d surface %d energy %d's "
-								   " cmfd current: %.10f, loo current:"
-								   " %.10f, quad fluxes: %.10f %.10f", 
+								   " quad fluxes: %.10f %.10f", 
 								   y * cell_width + x, i, e, 
-								   s[i]->getCurrent(e), current, 
 								   s[i]->getQuadFlux(e, 0), 
 								   s[i]->getQuadFlux(e,1));
 					}
-
-					s[i]->setCurrent(current, e);
 				}
 			}
 		}
@@ -917,13 +1039,12 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter)
 	int ng = NUM_ENERGY_GROUPS;
 	int ch = _mesh->getCellHeight();
 	int cw = _mesh->getCellWidth();
+	int max_outer, iter = 0;
 	int petsc_err;
 	Vec phi_old, sold, snew, res;
-	PetscInt size;
-	int max_outer, iter = 0;
+	PetscInt size, its;
 	PetscScalar sumold, sumnew, scale_val, eps;
-	PetscReal rtol = 1e-15;
-	PetscReal atol = 1e-15;
+	//PetscScalar rtol = 1e-10, atol = rtol;
 	std::string string;
 
 	/* if single group, set ng (number of groups) to 1 */
@@ -932,12 +1053,10 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter)
 	}
 
 	/* create petsc array to store old flux */
-	petsc_err = VecCreate(PETSC_COMM_WORLD, &phi_old);
 	size = ch * cw * ng;
-	petsc_err = VecSetSizes(phi_old, PETSC_DECIDE, size);
-	petsc_err = VecSetFromOptions(phi_old);
+	petsc_err = VecCreateSeq(PETSC_COMM_WORLD, size, &phi_old);
 	CHKERRQ(petsc_err);
-
+	
 	/* zero out and construct memory efficient versions of
 	 * A matrix, M matrix, and flux vector */
 	petsc_err = MatZeroEntries(_A);
@@ -979,6 +1098,10 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter)
 	petsc_err = MatAssemblyEnd(_M, MAT_FINAL_ASSEMBLY);
 	CHKERRQ(petsc_err);
 
+	PetscViewerSetFormat(PETSC_VIEWER_STDOUT_SELF, PETSC_VIEWER_ASCII_MATLAB);
+	//MatView(_A, PETSC_VIEWER_STDOUT_SELF);
+	//MatView(_M, PETSC_VIEWER_STDOUT_SELF);
+
 	/* set _phi_new to phi_old */
 	petsc_err = VecCopy(phi_old, _phi_new);
 	CHKERRQ(petsc_err);
@@ -986,12 +1109,15 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter)
 	/* initialize KSP solver */
 	KSP ksp;
 	petsc_err = KSPCreate(PETSC_COMM_WORLD, &ksp);
-	petsc_err = KSPSetTolerances(ksp, rtol, atol, PETSC_DEFAULT, PETSC_DEFAULT);
-	petsc_err = KSPSetType(ksp, KSPGMRES);
-	//petsc_err = KSPSetInitialGuessNonzero(ksp, PETSC_TRUE);
+	petsc_err = PetscObjectSetPrecision( (_p_PetscObject*) ksp, 
+										 PETSC_PRECISION_DOUBLE);
 	petsc_err = KSPSetOperators(ksp, _A, _A, SAME_NONZERO_PATTERN);
-	petsc_err = KSPSetUp(ksp);
+	//petsc_err = KSPSetTolerances(ksp, rtol, atol, PETSC_DEFAULT, PETSC_DEFAULT);
+	petsc_err = KSPSetInitialGuessNonzero(ksp, PETSC_TRUE);
+	/* from options must be called before KSPSetUp() */
 	petsc_err = KSPSetFromOptions(ksp);
+	petsc_err = KSPSetUp(ksp);
+	petsc_err = KSPSetType(ksp, KSPGMRES);
 	CHKERRQ(petsc_err);
 
 	/* get initial source and find initial k_eff */
@@ -999,68 +1125,50 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter)
 	petsc_err = VecSum(snew, &sumnew);
 	petsc_err = MatMult(_A, _phi_new, sold);
 	petsc_err = VecSum(sold, &sumold);
-	_keff = double(sumnew) / double(sumold);
-	log_printf(ACTIVE, "Before starting CMFD, the xs collapsed from the %i-MOC"
-			   " produce a keff of %.10f", moc_iter, _keff);
+	_keff = sumnew / sumold;
+	log_printf(DEBUG, "Before CMFD, xs collapsed from the %i-MOC"
+			   " produce keff of %.10f = %.10f / %.10f", 
+			   moc_iter, _keff, (double) sumnew, (double) sumold);
 	CHKERRQ(petsc_err);
-
-	double tot_vol = 0.0;
-	for (int i = 0; i < cw * ch; i++)
-		tot_vol +=  _mesh->getCells(i)->getVolume();
 
 	/* recompute and normalize initial source */
 	VecCopy(snew, sold);
-	sumold = sumnew;
-	//petsc_err = MatMult(_M, _phi_new, sold);
-	//petsc_err = VecSum(sold, &sumold);
+	VecScale(sold, 1/_keff);
+	sumold = sumnew / _keff;
+	//VecView(_phi_new, PETSC_VIEWER_STDOUT_SELF);
 
-	//VecScale(sold, 1.0 / (double)_keff);
-	/*
-	scale_val = tot_vol / sumold;
-	petsc_err = VecScale(_phi_new, scale_val);
-	petsc_err = VecScale(sold, scale_val);
-	petsc_err = VecSum(sold, &sumold);
-	*/
 	/* diffusion solver */
 	for (iter = 0; iter < max_outer; iter++)
 	{
 		/* Solve x = A_inverse * b problem and compute new source */
 		petsc_err = KSPSolve(ksp, sold, _phi_new);
-		CHKERRQ(petsc_err);
+		KSPGetIterationNumber(ksp,&its);
 
+		//VecView(sold, PETSC_VIEWER_STDOUT_SELF);
+		//VecView(_phi_new, PETSC_VIEWER_STDOUT_SELF);
+		CHKERRQ(petsc_err);
+		
 		/* compute and set keff */
 		petsc_err = MatMult(_M, _phi_new, snew);
 		petsc_err = VecSum(snew, &sumnew);
-		//petsc_err = MatMult(_A, _phi_new, sold);
-		//petsc_err = VecSum(sold, &sumold);
-		_keff = (double) sumnew / (double) sumold;
-
-		/* normalizes the new source source */
-		scale_val = tot_vol / sumnew;
-		petsc_err = VecScale(_phi_new, scale_val);
-		petsc_err = VecScale(snew, scale_val);
-		sumnew *= scale_val;
-		CHKERRQ(petsc_err);
+		_keff =  sumnew / sumold;
 
 		/* compute the L2 norm of source error */
-		scale_val = 1e-20;
-		petsc_err = VecShift(snew, scale_val);
+		petsc_err = VecScale(sold, _keff);
+		petsc_err = VecShift(snew, 1e-20);
 		petsc_err = VecPointwiseDivide(res, sold, snew);
 		scale_val = -1;
 		petsc_err = VecShift(res, scale_val);
-		CHKERRQ(petsc_err);
 		petsc_err = VecNorm(res, NORM_2, &eps);
-		eps = eps / (cw * ch * ng);
-
-		/* set old source to new source */
-		petsc_err = VecCopy(snew, sold);
 		CHKERRQ(petsc_err);
+
 
 		/* prints keff and error */
 		if (moc_iter == 10000)
 		{
-			log_printf(NORMAL, " %d-th CMFD iteration k = %.10f, eps = %e", 
-					   iter, _keff, eps);
+			log_printf(NORMAL, " %d-th CMFD iter k = %.10f = %.10f / %.10f,"
+					   " eps = %e, taking %d KSP iterations", 
+					   iter, _keff, sumnew, sumold, eps, (int)its);
 
 			PetscScalar *old_phi;
 			PetscScalar *new_phi;
@@ -1072,7 +1180,7 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter)
 				meshCell = _mesh->getCells(i);
 				for (int e = 0; e < ng; e++)
 				{
-					log_printf(ACTIVE, " Relative to (m+1/2): %.10f",
+					log_printf(NORMAL, " Relative to (m+1/2): %.10f",
 							   (double)(old_phi[i*ng + e]) 
 							   / (double)(new_phi[i*ng + e]));
 				}
@@ -1086,6 +1194,17 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter)
 					   iter, _keff, eps);
 		}
 
+		/* divide new RHS by keff for the next iteration */
+		//scale_val = tot_vol / sumnew;
+		scale_val = 1/_keff;
+		petsc_err = VecScale(snew, scale_val);
+		sumnew *= scale_val;
+		CHKERRQ(petsc_err);
+
+		/* set old source to new source */
+		petsc_err = VecCopy(snew, sold);
+		VecSum(sold, &sumold);
+		CHKERRQ(petsc_err);
 
 		/* check for convergence for the CMFD iterative solver using 
 		 * _l2_norm_conv_thresh as criteria */
@@ -1606,6 +1725,7 @@ int Cmfd::constructAMPhi(Mat A, Mat M, Vec phi_old, solveType solveMethod)
 	int petsc_err = 0;
 	PetscInt indice1, indice2;
 	PetscScalar value;
+	double vol; 
 
 	/* if single group, set ng (number of groups) to 1 */
 	if (_mesh->getMultigroup() == false)
@@ -1617,73 +1737,66 @@ int Cmfd::constructAMPhi(Mat A, Mat M, Vec phi_old, solveType solveMethod)
 		/* loop over mesh cells in x direction */
 		for (int x = 0; x < cw; x++)
 		{
+			/* get mesh cell */
+			meshCell = _mesh->getCells(y * cw + x);
+			vol = meshCell->getVolume();
+
 			/* loop over energy groups */
 			for (int e = 0; e < ng; e++)
 			{
-				/* get mesh cell */
-				meshCell = _mesh->getCells(y * cw + x);
-
-				/* get old flux */
+				/* this index will be used multiple times in this loop */
 				indice1 = (PetscInt) ((y * cw + x) * ng + e);
+
+				/* Construct flux */
 				value = (PetscScalar) meshCell->getOldFlux()[e];
 				petsc_err = VecSetValues(phi_old, 1, &indice1, 
 										 &value, INSERT_VALUES);
+				petsc_err = VecAssemblyBegin(phi_old);
+				petsc_err = VecAssemblyEnd(phi_old);
 				CHKERRQ(petsc_err);
 
 				/* diagonal - A */
-				/* add absorption term to diagonal */
-				value = (PetscScalar) 
-					meshCell->getSigmaA()[e] * meshCell->getVolume();
-				indice1 = (y*cw + x)*ng + e;
-				indice2 = (y*cw + x)*ng + e;
-				petsc_err = MatSetValues(A, 1, &indice1, 1, &indice2, &value, 
+				/* add absorption term to diagonals of A */
+				value = (PetscScalar) meshCell->getSigmaA()[e] * vol;
+				petsc_err = MatSetValues(A, 1, &indice1, 1, &indice1, &value, 
 										 ADD_VALUES);
+				petsc_err = MatAssemblyBegin(A, MAT_FLUSH_ASSEMBLY);
+				petsc_err = MatAssemblyEnd(A, MAT_FLUSH_ASSEMBLY);
 				CHKERRQ(petsc_err);
 
-				/* add out-scattering term to diagonal of A */
+				/* add out-scattering term to diagonals of A */
 				value = 0.0;
 				for (int g = 0; g < ng; g++)
-				{
-					if (e != g)
-						value += meshCell->getSigmaS()[e*ng + g];
-				}
-				value *= meshCell->getVolume();
-				indice1 = (y*cw + x)*ng + e;
-				indice2 = (y*cw + x)*ng + e;
-				petsc_err = MatSetValues(A, 1, &indice1, 1, &indice2, 
+					value += meshCell->getSigmaS()[e*ng + g] * vol;
+				petsc_err = MatSetValues(A, 1, &indice1, 1, &indice1, 
 										 &value, ADD_VALUES);
+				petsc_err = MatAssemblyBegin(A, MAT_FLUSH_ASSEMBLY);
+				petsc_err = MatAssemblyEnd(A, MAT_FLUSH_ASSEMBLY);
 				CHKERRQ(petsc_err);
 
 				/* add in-scattering terms to off-diagonals of A */
 				for (int g = 0; g < ng; g++)
 				{
-					if (e != g)
-					{
-						value = - meshCell->getSigmaS()[g*ng + e] 
-							* meshCell->getVolume();
-						indice1 = (y*cw + x)*ng + e;
-						indice2 = (y*cw + x)*ng + g;
-						petsc_err = MatSetValues(A, 1, &indice1, 1, &indice2, 
-												 &value, ADD_VALUES);
-						CHKERRQ(petsc_err);
-					}
-				}
-
-				/* add fission terms to diagonal of M */
-				for (int g = 0; g < ng; g++)
-				{
-					value = meshCell->getChi()[e] * meshCell->getNuSigmaF()[g] 
-						* meshCell->getVolume();
-					indice1 = (y*cw + x)*ng + e;
+					value = - meshCell->getSigmaS()[g*ng + e] * vol;
 					indice2 = (y*cw + x)*ng + g;
-					petsc_err = MatSetValues(M, 1, &indice1, 1, &indice2, 
-											 &value, INSERT_VALUES);
+					petsc_err = MatSetValues(A, 1, &indice1, 1, &indice2, 
+											 &value, ADD_VALUES);
 					CHKERRQ(petsc_err);
 				}
 
+				/* set fission terms to M */
+				for (int g = 0; g < ng; g++)
+				{
+					value = meshCell->getChi()[e] * meshCell->getNuSigmaF()[g] 
+						*vol;
+					indice2 = (y*cw + x)*ng + g;
+					petsc_err = MatSetValues(M, 1, &indice1, 1, &indice2, 
+											 &value, INSERT_VALUES);
+				}
+				CHKERRQ(petsc_err);
+				
 				/* RIGHT SURFACE */
-
-				/* set transport term on diagonal */
+				/* set transport-out term on diagonal of A */
 				if (solveMethod == CMFD)
 					value = (meshCell->getMeshSurfaces(2)->getDHat()[e]      
 							 - meshCell->getMeshSurfaces(2)->getDTilde()[e]) 
@@ -1691,29 +1804,29 @@ int Cmfd::constructAMPhi(Mat A, Mat M, Vec phi_old, solveType solveMethod)
 				else if (solveMethod == DIFFUSION)
 					value = meshCell->getMeshSurfaces(2)->getDDif()[e] 
 						* meshCell->getHeight();
-
-				indice1 = (y*cw + x)*ng + e;
-				indice2 = (y*cw + x)*ng + e;
-				petsc_err = MatSetValues(A, 1, &indice1,1 , &indice2, &value, 
+				petsc_err = MatSetValues(A, 1, &indice1,1 , &indice1, &value, 
 										 ADD_VALUES);
 				CHKERRQ(petsc_err);
 
-				/* set transport terms on off diagonals */
-				if (x != cw - 1){
+				/* set transport-in terms on off diagonals */
+				if (x != cw - 1)
+				{
 					if (solveMethod == CMFD)
+					{
 						value = - (meshCell->getMeshSurfaces(2)->getDHat()[e] + 
 								   meshCell->getMeshSurfaces(2)->getDTilde()[e])
 								   * meshCell->getHeight();
+					}
 					else if (solveMethod == DIFFUSION)
+					{
 						value = - meshCell->getMeshSurfaces(2)->getDDif()[e] 
 							* meshCell->getHeight();
-
-					indice1 = (y*cw + x)*ng + e;
+					}
 					indice2 = (y*cw + x + 1)*ng + e;
 					petsc_err = MatSetValues(A, 1, &indice1, 1, &indice2, 
 											 &value, ADD_VALUES);
-					CHKERRQ(petsc_err);
 				}
+				CHKERRQ(petsc_err);
 
 				/* LEFT SURFACE */
 				/* set transport term on diagonal */
@@ -1725,10 +1838,10 @@ int Cmfd::constructAMPhi(Mat A, Mat M, Vec phi_old, solveType solveMethod)
 					value = meshCell->getMeshSurfaces(0)->getDDif()[e] 
 						* meshCell->getHeight();
 
-				indice1 = (y*cw + x)*ng + e;
-				indice2 = (y*cw + x)*ng + e;
-				petsc_err = MatSetValues(A, 1, &indice1, 1, &indice2, 
+				petsc_err = MatSetValues(A, 1, &indice1, 1, &indice1, 
 										 &value, ADD_VALUES);
+				petsc_err = MatAssemblyBegin(A, MAT_FLUSH_ASSEMBLY);
+				petsc_err = MatAssemblyEnd(A, MAT_FLUSH_ASSEMBLY);
 				CHKERRQ(petsc_err);
 
 				/* set transport terms on off diagonals */
@@ -1741,7 +1854,6 @@ int Cmfd::constructAMPhi(Mat A, Mat M, Vec phi_old, solveType solveMethod)
 						value = - meshCell->getMeshSurfaces(0)->getDDif()[e] 
 							* meshCell->getHeight();
 
-					indice1 = (y*cw + x)*ng + e;
 					indice2 = (y*cw + x - 1)*ng + e;
 					petsc_err = MatSetValues(A, 1, &indice1, 1, &indice2, 
 											 &value, ADD_VALUES);
@@ -1751,29 +1863,37 @@ int Cmfd::constructAMPhi(Mat A, Mat M, Vec phi_old, solveType solveMethod)
 				/* BOTTOM SURFACE */
 				/* set transport term on diagonal */
 				if (solveMethod == CMFD)
-					value = (meshCell->getMeshSurfaces(1)->getDHat()[e] - 
+				{
+					value = (meshCell->getMeshSurfaces(1)->getDHat()[e] 
+							 -
 							 meshCell->getMeshSurfaces(1)->getDTilde()[e]) 
 						* meshCell->getWidth();
+				}
 				else if (solveMethod == DIFFUSION)
+				{
 					value = meshCell->getMeshSurfaces(1)->getDDif()[e] 
 						* meshCell->getWidth();
-
-				indice1 = (y*cw + x)*ng + e;
-				indice2 = (y*cw + x)*ng + e;
-				petsc_err = MatSetValues(A, 1, &indice1, 1, &indice2, &value, ADD_VALUES);
+				}
+				petsc_err = MatSetValues(A, 1, &indice1, 1, &indice1, &value, 
+										 ADD_VALUES);
 				CHKERRQ(petsc_err);
 
 				/* set transport terms on off diagonals */
-				if (y != ch - 1){
+				if (y != ch - 1)
+				{
 					if (solveMethod == CMFD)
-						value = - (meshCell->getMeshSurfaces(1)->getDHat()[e] +
+					{
+						value = - (meshCell->getMeshSurfaces(1)->getDHat()[e] 
+								   +
 								   meshCell->getMeshSurfaces(1)->getDTilde()[e])
 							* meshCell->getWidth();
+					}
 					else if (solveMethod == DIFFUSION)
+					{
 						value = - meshCell->getMeshSurfaces(1)->getDDif()[e] 
 							* meshCell->getWidth();
+					}
 
-					indice1 = (y*cw + x)*ng + e;
 					indice2 = ((y+1)*cw + x)*ng + e;
 					petsc_err = MatSetValues(A, 1, &indice1, 1, &indice2, 
 											 &value, ADD_VALUES);
@@ -1781,32 +1901,39 @@ int Cmfd::constructAMPhi(Mat A, Mat M, Vec phi_old, solveType solveMethod)
 				}
 
 				/* TOP SURFACE */
-				/* set transport term on diagonal */
+				/* set transport-out term on diagonal */
 				if (solveMethod == CMFD)
-					value = (meshCell->getMeshSurfaces(3)->getDHat()[e] + 
+				{
+					value = (meshCell->getMeshSurfaces(3)->getDHat()[e] 
+							 +
 							 meshCell->getMeshSurfaces(3)->getDTilde()[e]) 
 						* meshCell->getWidth();
+				}
 				else if (solveMethod == DIFFUSION)
+				{
 					value = meshCell->getMeshSurfaces(3)->getDDif()[e] 
 						* meshCell->getWidth();
+				}
 
-				indice1 = (y*cw + x)*ng + e;
-				indice2 =  (y*cw + x)*ng + e;
-				petsc_err = MatSetValues(A, 1, &indice1, 1, &indice2, 
+				petsc_err = MatSetValues(A, 1, &indice1, 1, &indice1, 
 										 &value, ADD_VALUES);
 				CHKERRQ(petsc_err);
 
 				/* set transport terms on off diagonals */
-				if (y != 0){
+				if (y != 0)
+				{
 					if (solveMethod == CMFD)
-						value = - (meshCell->getMeshSurfaces(3)->getDHat()[e] -
+					{
+						value = - (meshCell->getMeshSurfaces(3)->getDHat()[e] 
+								   -
 								   meshCell->getMeshSurfaces(3)->getDTilde()[e])
 							* meshCell->getWidth();
+					}
 					else if (solveMethod == DIFFUSION)
+					{
 						value = - meshCell->getMeshSurfaces(3)->getDDif()[e] 
 							* meshCell->getWidth();
-
-					indice1 = (y*cw + x)*ng + e;
+					}
 					indice2 = ((y-1)*cw + x)*ng + e;
 					petsc_err = MatSetValues(A, 1, &indice1, 1, &indice2, 
 											 &value, ADD_VALUES);
