@@ -130,7 +130,7 @@ Options::Options(int argc, char **argv)
 			{
 				_cmfd = true;
 				_loo = false;
-				_damp_factor = 1.0;//0.66;
+				_damp_factor = 0.66;
 			}
 			else if (strcmp(argv[i], "-nl") == 0 ||
 					strcmp(argv[i], "--noloo") == 0)
@@ -176,6 +176,12 @@ Options::Options(int argc, char **argv)
 				this->extra_argv[this->extra_argc++] = strdup(argv[i]);
 		}
 	}
+
+	/* If debug mode is on for CMFD, damping factor has to be 1.0 because 
+	 * otherwise D tilde is picking up 0.0 as old values */
+	if ((_acc_after_MOC_converge) && (_cmfd))
+		_damp_factor = 1.0;
+
 }
 
 Options::~Options(void) { }
