@@ -943,13 +943,8 @@ void Solver::MOCsweep(int max_iterations)
 					/* if segment crosses a surface in fwd direction, 
 					   tally current/weight */
 					if (_run_loo)
-					{
 						tallyLooCurrent(track, segment, meshSurfaces, 1);
-						// FIXME: debug
-						tallyCmfdCurrent(track, segment, meshSurfaces, 1);
-					}
-
-					if (_run_cmfd)
+					else if (_run_cmfd)
 						tallyCmfdCurrent(track, segment, meshSurfaces, 1);
 
 					/* Increments the scalar flux for this FSR */
@@ -1025,13 +1020,8 @@ void Solver::MOCsweep(int max_iterations)
 					/* if segment crosses a surface in bwd direction, 
 					   tally quadrature flux for LOO acceleration */
 					if (_run_loo)
-					{
 						tallyLooCurrent(track, segment, meshSurfaces, -1);
-						// FIXME: debug
-						tallyCmfdCurrent(track, segment, meshSurfaces, -1);
-					}
-
-					if (_run_cmfd)
+					else if (_run_cmfd)
 						tallyCmfdCurrent(track, segment, meshSurfaces, -1);
 						
 					/* Increments the scalar flux for this FSR */
@@ -1208,7 +1198,7 @@ void Solver::initializeSource(){
 	for (int r = 0; r < _num_FSRs; r++)
 		_flat_source_regions[r].normalizeFluxes(renorm_factor);
 
-	/* Renormalization angular boundary fluxes for each track */
+	/* Renormalize angular boundary fluxes for each track */
 	#if USE_OPENMP
 	#pragma omp parallel for
 	#endif
@@ -1261,13 +1251,33 @@ void Solver::normalizeFlux(){
 	for (int r = 0; r < _num_FSRs; r++)
 		_flat_source_regions[r].normalizeFluxes(renorm_factor);
 
-	/* Renormalization angular boundary fluxes for each track */
+	/* Renormalize angular boundary fluxes for each track */
 	#if USE_OPENMP
 	#pragma omp parallel for
 	#endif
 	for (int i = 0; i < _num_azim; i++) {
 		for (int j = 0; j < _num_tracks[i]; j++)
 			_tracks[i][j].normalizeFluxes(renorm_factor);
+	}
+
+	/* Renormalize tallied current on each surface */ 
+	int cw = _geom->getMesh()->getCellWidth();
+	int ch = _geom->getMesh()->getCellHeight();
+	int ng = NUM_ENERGY_GROUPS;
+	MeshCell *meshCell;
+
+	for (int i = 0; i < cw * ch; i++)
+	{
+		meshCell = _geom->getMesh()->getCells(i);
+		for (int s = 0; s < 4; s++)
+		{
+			for (int e = 0; e < ng; e++)
+			{
+				meshCell->getMeshSurfaces(s)->setCurrent(
+					meshCell->getMeshSurfaces(s)->getCurrent(e) * renorm_factor,
+					e);
+			}
+		}
 	}
 
 	return;
@@ -1366,18 +1376,15 @@ double Solver::runCmfd(int i)
 {
 	double cmfd_keff;
 
-	normalizeFlux();
-	updateSource();
 	MOCsweep(2);
-	normalizeFlux();
-	updateSource();
 
 	/* compute cross sections and diffusion coefficients */
 	_cmfd->computeXS();
 	_cmfd->computeDs();
 
 	/* Check for neutron balance */
-	//checkNeutBal(_geom->getMesh());
+	if (i == 10000)
+		checkNeutronBalance();
 
 	/* Run diffusion problem on initial geometry */
 	if (i == 0 && _diffusion == true){
@@ -1642,11 +1649,15 @@ double Solver::kernel(int max_iterations) {
 /*
  * check neutron balance in each mesh cell
  */
-void Solver::checkNeutBal(Mesh* mesh)
+void Solver::checkNeutronBalance()
 {
 	log_printf(INFO, "Checking neutron balance...");
 	double leak = 0, absorb = 0, fis = 0;
-	MeshCell* meshCell;
+	double tot_leak = 0, tot_absorb = 0, tot_fis = 0;
+	double flux, vol, residual;
+	MeshCell *meshCell, *meshCellNext;
+	MeshSurface* surf;
+	Mesh *mesh = _geom->getMesh();
 	int cell_height = mesh->getCellHeight();
 	int cell_width = mesh->getCellWidth();
 	int ng = NUM_ENERGY_GROUPS;
@@ -1656,74 +1667,167 @@ void Solver::checkNeutBal(Mesh* mesh)
 	/* loop over mesh cells in y direction */
 	for (int y = 0; y < cell_height; y++)
 	{
-		/* loop over mesh cells in x direction */
 		for (int x = 0; x < cell_width; x++)
 		{
+			leak = 0; 
+			absorb = 0;
+			fis = 0;
+
 			/* get mesh cell */
-			meshCell = mesh->getCells(y*cell_width + x);
+			meshCell = mesh->getCells(y * cell_width + x);
 
-			/* leakage */
-			for (int s = 0; s < 4; s++)
+			for (int e = 0; e < ng; e++)
 			{
-				if (meshCell->getMeshSurfaces(s)->getBoundary() == VACUUM)
+				flux = meshCell->getOldFlux()[e];
+				vol = meshCell->getVolume();
+				
+				absorb += meshCell->getSigmaA()[e] * flux * vol;
+				fis += meshCell->getNuSigmaF()[e] * flux * vol;
+
+				for (int s = 0; s < 4; s++)
 				{
-					for (int e = 0; e < ng; e++)
-					{
-						if (s == 0)
-						{
-							leak += meshCell->getMeshSurfaces(s)->getDHat()[e] 
-								* meshCell->getOldFlux()[e]
-								* meshCell->getHeight();
-							leak += meshCell->getMeshSurfaces(s)->getDTilde()[e]
-								* meshCell->getOldFlux()[e]
-								* meshCell->getHeight();
-						}
-						else if (s == 2){
-							leak += meshCell->getMeshSurfaces(s)->getDHat()[e] 
-								* meshCell->getOldFlux()[e]
-								* meshCell->getHeight();
-							leak -= meshCell->getMeshSurfaces(s)->getDTilde()[e]
-								* meshCell->getOldFlux()[e]
-								* meshCell->getHeight();
-						}
-						else if (s == 1){
-							leak += meshCell->getMeshSurfaces(s)->getDHat()[e] 
-								* meshCell->getOldFlux()[e]
-								* meshCell->getWidth();
-							leak -= meshCell->getMeshSurfaces(s)->getDTilde()[e]
-								* meshCell->getOldFlux()[e]
-								* meshCell->getWidth();
-						}
-						else if (s == 3){
-							leak += meshCell->getMeshSurfaces(s)->getDHat()[e] 
-								* meshCell->getOldFlux()[e]
-								* meshCell->getWidth();
-							leak += meshCell->getMeshSurfaces(s)->getDTilde()[e]
-								* meshCell->getOldFlux()[e]
-								* meshCell->getWidth();
-						}
-					}
+					surf = meshCell->getMeshSurfaces(s);
+					leak += surf->getCurrent(e);
 				}
-			}
 
-			/* compute absorb and fis rates */
-			for (int e = 0; e < ng; e ++)
-			{
-				absorb += meshCell->getSigmaA()[e] * meshCell->getVolume() * 
-					meshCell->getOldFlux()[e];
-				fis += meshCell->getNuSigmaF()[e] * meshCell->getVolume()
-					* meshCell->getOldFlux()[e];
-			}
+				if (x > 0)
+				{
+					meshCellNext = mesh->getCells(y * cell_width + x - 1);
+					leak -= meshCellNext->getMeshSurfaces(2)->getCurrent(e);
+				}
+				else
+					leak -= meshCell->getMeshSurfaces(0)->getCurrent(e);
+				
+				if (x < cell_width - 1)
+				{
+					meshCellNext = mesh->getCells(y * cell_width + x + 1);
+					leak -= meshCellNext->getMeshSurfaces(0)->getCurrent(e);
+				}
+				else
+					leak -= meshCell->getMeshSurfaces(2)->getCurrent(e);
 
+				if (y > 0)
+				{
+					meshCellNext = mesh->getCells((y - 1) * cell_width + x);
+					leak -= meshCellNext->getMeshSurfaces(1)->getCurrent(e);
+				}
+				else
+					leak -= meshCell->getMeshSurfaces(3)->getCurrent(e);
+
+				if (y < cell_height - 1)
+				{
+					meshCellNext = mesh->getCells((y + 1) * cell_width + x);
+					leak -= meshCellNext->getMeshSurfaces(3)->getCurrent(e);
+				}
+				else
+					leak -= meshCell->getMeshSurfaces(1)->getCurrent(e);
+			}	
+
+			/* compute total residual and average ratio */
+			/* residual = leakage + absorption - fission */
+			residual = leak + absorb - fis;
+			log_printf(DEBUG, "CMFD cell %d residual %.10f"
+					   " fis: %.10f, absorb: %.10f, leak: %.10f, keff: %.10f", 
+					   y * cell_width + x, 
+					   residual, fis, absorb, leak, fis / (leak + absorb));
+
+			tot_leak += leak;
+			tot_absorb += absorb;
+			tot_fis += fis;
 		}
 	}
 
-	/* compute total residual and average ratio */
-	/* residual = leakage + absorption - fission */
-	double residual = leak + absorb - fis;
-	log_printf(INFO, "CMFD residual %.10f"
-			   " fis: %.10f, absorb: %.10f, leak: %.10f, keff: %.10f", 
-			   residual, fis, absorb, leak, fis / (leak + absorb));
+	log_printf(NORMAL, "CMFD over all cell,"
+			   " keff: %.10f, fis: %f, absorb: %f, leak: %f", 
+			   tot_fis / (tot_leak + tot_absorb),
+			   tot_fis, tot_absorb, tot_leak);
+	
+	return;
+}
+
+
+
+void Solver::checkNeutronBalanceWithDs()
+{
+	log_printf(INFO, "Checking neutron balance...");
+	MeshCell *meshCell;
+	Mesh *mesh = _geom->getMesh();
+	double leak = 0, absorb = 0, fis = 0;
+	int cell_height = mesh->getCellHeight();
+	int cell_width = mesh->getCellWidth();
+	int ng = NUM_ENERGY_GROUPS;
+	if (mesh->getMultigroup() == false)
+		ng = 1;
+
+	/* loop over mesh cells in y direction */
+	for (int xy = 0; xy < cell_height * cell_width; xy++)
+	{
+		leak = 0; 
+		absorb = 0;
+		fis = 0;
+
+		/* get mesh cell */
+		meshCell = mesh->getCells(xy);
+
+		/* leakage */
+		for (int s = 0; s < 4; s++)
+		{
+			for (int e = 0; e < ng; e++)
+			{
+				if (s == 0)
+				{
+					leak += meshCell->getMeshSurfaces(s)->getDHat()[e] 
+						* meshCell->getOldFlux()[e]
+						* meshCell->getHeight();
+					leak += meshCell->getMeshSurfaces(s)->getDTilde()[e]
+						* meshCell->getOldFlux()[e]
+						* meshCell->getHeight();
+				}
+				else if (s == 2){
+					leak += meshCell->getMeshSurfaces(s)->getDHat()[e] 
+						* meshCell->getOldFlux()[e]
+						* meshCell->getHeight();
+					leak -= meshCell->getMeshSurfaces(s)->getDTilde()[e]
+						* meshCell->getOldFlux()[e]
+						* meshCell->getHeight();
+				}
+				else if (s == 1){
+					leak += meshCell->getMeshSurfaces(s)->getDHat()[e] 
+						* meshCell->getOldFlux()[e]
+						* meshCell->getWidth();
+					leak -= meshCell->getMeshSurfaces(s)->getDTilde()[e]
+						* meshCell->getOldFlux()[e]
+						* meshCell->getWidth();
+				}
+				else if (s == 3){
+					leak += meshCell->getMeshSurfaces(s)->getDHat()[e] 
+						* meshCell->getOldFlux()[e]
+						* meshCell->getWidth();
+					leak += meshCell->getMeshSurfaces(s)->getDTilde()[e]
+						* meshCell->getOldFlux()[e]
+						* meshCell->getWidth();
+				}
+			}
+		}
+			
+		/* compute absorb and fis rates */
+		for (int e = 0; e < ng; e ++)
+		{
+			absorb += meshCell->getSigmaA()[e] * meshCell->getVolume() * 
+				meshCell->getOldFlux()[e];
+			fis += meshCell->getNuSigmaF()[e] * meshCell->getVolume()
+				* meshCell->getOldFlux()[e];
+		}	
+
+        /* compute total residual and average ratio */
+        /* residual = leakage + absorption - fission */
+		double residual = leak + absorb - fis;
+		log_printf(NORMAL, "CMFD residual %.10f"
+				   " fis: %.10f, absorb: %.10f, leak: %.10f, keff: %.10f", 
+				   residual, fis, absorb, leak, fis / (leak + absorb));
+	} /* end of looping through cells */
+
+	return;
 }
 
 

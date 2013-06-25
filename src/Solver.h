@@ -104,7 +104,8 @@ public:
 	void checkTrackSpacing();
 	void computeFsrPowers();
 	void plotPinPowers();
- 	void checkNeutBal(Mesh* mesh);
+ 	void checkNeutronBalance();
+ 	void checkNeutronBalanceWithDs();
  	void renormCurrents(Mesh* mesh, double keff);
  	double getEps(Mesh* mesh, double keff, double renorm_factor);
  	FlatSourceRegion* getFSRs();
