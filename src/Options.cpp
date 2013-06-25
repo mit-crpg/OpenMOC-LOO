@@ -46,8 +46,10 @@ Options::Options(int argc, char **argv)
 	else
 		_relative_path = "";
 
-	_geometry_file = _relative_path + "xml-sample/Cmfd/geometry_pin.xml"; 	 /* Default geometry input file */
-	_material_file = _relative_path + "xml-sample/Cmfd/material_simple.xml";    /* Default material input file */
+    /* Default geometry input file */
+	_geometry_file = _relative_path + "xml-sample/Cmfd/geometry_pin5.xml"; 	 
+	_material_file = _relative_path + "xml-sample/Cmfd/material_simple.xml";
+	
 	_k_guess = 1.0;
 
 	_track_spacing = 0.01;				/* Default track spacing: 0.05 */
@@ -128,7 +130,7 @@ Options::Options(int argc, char **argv)
 			{
 				_cmfd = true;
 				_loo = false;
-				_damp_factor = 0.66;
+				_damp_factor = 1.0;//0.66;
 			}
 			else if (strcmp(argv[i], "-nl") == 0 ||
 					strcmp(argv[i], "--noloo") == 0)
@@ -146,7 +148,7 @@ Options::Options(int argc, char **argv)
 			else if (strcmp(argv[i], "-pk") == 0 ||
 					strcmp(argv[i], "--plotkeff") == 0)
 				_plot_keff = true;
-			else if (strcmp(argv[i], "-df") == 0 ||
+			else if (strcmp(argv[i], "-diff") == 0 ||
 					strcmp(argv[i], "--diffusion") == 0)
 				_diffusion = true;
 			else if (strcmp(argv[i], "-pd") == 0 ||

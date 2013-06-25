@@ -946,21 +946,20 @@ void Plotter::plotXS(Mesh* mesh, int iter_num){
 			text_stream << "Cell Index: ("<< cellX << " , " << cellY << ")";
 			text = text_stream.str();
 			text_stream.str("");
-			drawText(bitMap, text, x_mid - 50, y_mid - 30);
+			drawText(bitMap, text, x_mid - 50, y_mid - 45);
 			text.clear();			
 
-			/* Sigma A */
-			text_stream << "SigmaA: " << meshCell->getSigmaA()[e];
+			text_stream << "Phi: " << meshCell->getOldFlux()[e];
 			text = text_stream.str();
 			text_stream.str("");
-			drawText(bitMap, text, x_mid - 50, y_mid + 30);
+			drawText(bitMap, text, x_mid - 50, y_mid - 30);
 			text.clear();
 
-			/* Sigma S */
-			text_stream << "SigmaS: " << meshCell->getSigmaS()[e];
+			/* Diffusivity */
+			text_stream << "Diffusivity: " << meshCell->getDiffusivity()[e];
 			text = text_stream.str();
 			text_stream.str("");
-			drawText(bitMap, text, x_mid - 50, y_mid + 15);
+			drawText(bitMap, text, x_mid - 50, y_mid - 15);
 			text.clear();
 
 			/* Nu Sigma F */
@@ -970,11 +969,18 @@ void Plotter::plotXS(Mesh* mesh, int iter_num){
 			drawText(bitMap, text, x_mid - 50, y_mid);
 			text.clear();
 
-			/* Diffusivity */
-			text_stream << "Diffusivity: " << meshCell->getDiffusivity()[e];
+			/* Sigma S */
+			text_stream << "SigmaS: " << meshCell->getSigmaS()[e];
 			text = text_stream.str();
 			text_stream.str("");
-			drawText(bitMap, text, x_mid - 50, y_mid - 15);
+			drawText(bitMap, text, x_mid - 50, y_mid + 15);
+			text.clear();
+
+			/* Sigma A */
+			text_stream << "SigmaA: " << meshCell->getSigmaA()[e];
+			text = text_stream.str();
+			text_stream.str("");
+			drawText(bitMap, text, x_mid - 50, y_mid + 30);
 			text.clear();
 		}
 	}
