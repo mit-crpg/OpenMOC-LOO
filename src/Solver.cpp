@@ -1486,6 +1486,7 @@ double Solver::kernel(int max_iterations) {
 
 		/* Computes the new keff */
 		_k_eff = computeKeff(i);
+		updateSource();
 
 		/* We only store $k^{(m+1)}$; other intermediate keff does not matter */
 		_old_k_effs.push(_k_eff);
