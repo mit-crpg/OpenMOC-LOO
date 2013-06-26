@@ -484,7 +484,7 @@ void Solver::printKeff(int iteration, double eps)
 	if ((_run_cmfd) && !(_acc_after_MOC_converge))
 	{
 		log_printf(NORMAL, "Iteration %d, MOC k = %.10f, CMFD k = %.10f,"
-				   " eps = %.4e, #CMFD = %d", 
+				   " FS eps = %.4e,  k eps = %.4e, #CMFD = %d", 
 				   iteration, _k_eff, _cmfd_k, eps, _cmfd->getNumIterToConv());
 
 		if (_update_keff)
@@ -1260,22 +1260,26 @@ void Solver::normalizeFlux(){
 			_tracks[i][j].normalizeFluxes(renorm_factor);
 	}
 
-	/* Renormalize tallied current on each surface */ 
-	int cw = _geom->getMesh()->getCellWidth();
-	int ch = _geom->getMesh()->getCellHeight();
-	int ng = NUM_ENERGY_GROUPS;
-	MeshCell *meshCell;
-
-	for (int i = 0; i < cw * ch; i++)
+	/* Renormalize tallied current on each surface */
+	if (_run_cmfd)
 	{
-		meshCell = _geom->getMesh()->getCells(i);
-		for (int s = 0; s < 4; s++)
+		int cw = _geom->getMesh()->getCellWidth();
+		int ch = _geom->getMesh()->getCellHeight();
+		int ng = NUM_ENERGY_GROUPS;
+		MeshCell *meshCell;
+
+		for (int i = 0; i < cw * ch; i++)
 		{
-			for (int e = 0; e < ng; e++)
+			meshCell = _geom->getMesh()->getCells(i);
+			for (int s = 0; s < 4; s++)
 			{
-				meshCell->getMeshSurfaces(s)->setCurrent(
-					meshCell->getMeshSurfaces(s)->getCurrent(e) * renorm_factor,
-					e);
+				for (int e = 0; e < ng; e++)
+				{
+					meshCell->getMeshSurfaces(s)->setCurrent(
+						meshCell->getMeshSurfaces(s)->getCurrent(e) 
+						* renorm_factor,
+						e);
+				}
 			}
 		}
 	}
