@@ -463,18 +463,10 @@ double Solver::computeKeff(int iteration)
 /**
  * Update FSR's scalar fluxes, normalize them and update the source
  */
-void Solver::updateFlux(int iteration) {
+void Solver::updateFlux(int iteration) 
+{
 	_cmfd->updateMOCFlux(iteration);
 	normalizeFlux();
-
-	double k;
-	k = computeKeff(iteration);
-	_geom->getMesh()->setKeffMOC(k, iteration);
-	_old_k_effs.push(k);
-	if (_old_k_effs.size() == NUM_KEFFS_TRACKED)
-		_old_k_effs.pop();
-	updateSource();
-	
 	return;
 }
 
@@ -483,28 +475,32 @@ void Solver::printKeff(int iteration, double eps)
 	/* Prints & Update keff for MOC sweep */
 	if ((_run_cmfd) && !(_acc_after_MOC_converge))
 	{
-		log_printf(NORMAL, "Iteration %d, MOC k = %.10f, CMFD k = %.10f,"
-				   " FS eps = %.4e,  k eps = %.4e, #CMFD = %d", 
-				   iteration, _k_eff, _cmfd_k, eps, _cmfd->getNumIterToConv());
+		printf("Iteration %d, MOC k = %.10f, CMFD k = %.10f,"
+			   " FS eps = %.4e,  k eps = %.4e, #CMFD = %d\n", 
+			   iteration, _k_eff, _cmfd_k, eps, 
+			   (_old_k_effs.back() - _old_k_effs.front()) / _old_k_effs.back(),
+			   _cmfd->getNumIterToConv());
 
 		if (_update_keff)
 			_k_eff = _cmfd_k;
 	}
 	else if ((_run_loo) && !(_acc_after_MOC_converge))
 	{
-		log_printf(NORMAL, "Iter %d, MOC k = %.10f, LOO k = %.10f,"
-		" eps = %.4e, #LOO = %d", 
-		iteration, _k_eff, _loo_k, eps, _cmfd->getNumIterToConv());
+		printf("Iter %d, MOC k = %.10f, LOO k = %.10f,"
+			   " FS eps = %.4e, k eps = %.4e, #LOO = %d\n", 
+			   iteration, _k_eff, _loo_k, eps, 
+			   (_old_k_effs.back() - _old_k_effs.front()) / _old_k_effs.back(),
+			   _cmfd->getNumIterToConv());
 
 		if (_update_keff)
 			_k_eff = _loo_k;
 	}
 	else
 	{
-		log_printf(NORMAL, "Iter %d, MOC k = %.10f, FS eps = %e, k eps = %e", 
-				   iteration, _k_eff, eps, 
-				   (_old_k_effs.back() - _old_k_effs.front()) 
-				   / _old_k_effs.back());
+		printf("Iter %d, MOC k = %.10f, FS eps = %.4e, k eps = %.4e\n", 
+			   iteration, _k_eff, eps, 
+			   (_old_k_effs.back() - _old_k_effs.front()) 
+			   / _old_k_effs.back());
     }
 
 	return;
@@ -1082,14 +1078,6 @@ void Solver::MOCsweep(int max_iterations)
 		 * before normalizing flux and compute new source */
 		_k_eff = computeKeff(i);
 		
-		/* This $k^{(m+1/2)}$ is sort of an intermediate results; we store it
-		 * as _k_eff but do not actually push it */
-		/*
-		_old_k_effs.push(_k_eff);
-		if (_old_k_effs.size() == NUM_KEFFS_TRACKED)
-			_old_k_effs.pop();
-		*/
-
 		/* Normalize scalar fluxes and computes Q for each FSR */
 		normalizeFlux();
 		updateSource();
@@ -1348,14 +1336,8 @@ double Solver::runLoo(int i)
 {
 	double loo_keff;
 
-	normalizeFlux();
-	updateSource();
 	_cmfd->storePreMOCMeshSource(_flat_source_regions);
 	MOCsweep(2);
-
-	normalizeFlux();
-	updateSource();
-
 
 	/* LOO Method 1: assume constant Sigma in each mesh. 
 	 * Computes cross sections */
@@ -1493,7 +1475,6 @@ double Solver::kernel(int max_iterations) {
 		if ((_run_cmfd) && !(_acc_after_MOC_converge))
 			_cmfd_k = runCmfd(i);
 		else if ((_run_loo) && !(_acc_after_MOC_converge))
-			//else if ((_run_loo)) && (iter > 100))
 			_loo_k = runLoo(i);
 		else 
 			MOCsweep(1);
@@ -1501,19 +1482,18 @@ double Solver::kernel(int max_iterations) {
 		/* Update FSR's flux based on cell-averaged flux coming from the
 		 * acceleration steps */
 		if ((_run_cmfd || _run_loo) && !(_acc_after_MOC_converge))
-		{
 			updateFlux(i);
-			computeFsrPowers();
-		}
-		else
-		{
-			computeKeff(i);
-			_old_k_effs.push(_k_eff);
-			if (_old_k_effs.size() == NUM_KEFFS_TRACKED)
-				_old_k_effs.pop();
-		}
+
+		/* Computes the new keff */
+		_k_eff = computeKeff(i);
+
+		/* We only store $k^{(m+1)}$; other intermediate keff does not matter */
+		_old_k_effs.push(_k_eff);
+		if (_old_k_effs.size() == NUM_KEFFS_TRACKED)
+			_old_k_effs.pop();
 
 		/* Checks energy-integrated L2 norm of FSR powers / fission rates */
+		computeFsrPowers();
 		double eps_inf = computeFsrLinf(old_fsr_powers);
 		double eps_2 = computeFsrL2Norm(old_fsr_powers);
 
