@@ -36,3 +36,5 @@ latex/
 /missing
 /depcomp
 /src/openmoc
+/check
+*.gold

@@ -8,6 +8,10 @@ COMPILEOPTS += -I/usr/include/petsc
 COMPILEOPTS += -I/usr/include/petsc/linux-gnu-cxx-debug/include
 COMPILEOPTS += -I/usr/include/petsc/linux-gnu-cxx-opt/include
 COMPILEOPTS += -g
+COMPILEOPTS += `pkg-config Magick++ --cflags`
+COMPILEOPTS += -DPETSC_HAVE_MPI_WIN_CREATE
+
+LANGUAGES 	+= bash
 
 BINARIES    += openmoc
 LINKOPTS	+= -lm
@@ -17,6 +21,8 @@ LINKOPTS	+= -larmadillo
 LINKOPTS 	+= -lpetsc
 LINKOPTS 	+= -lmpi
 LINKOPTS    += `pkg-config Magick++ --libs`
-COMPILEOPTS += `pkg-config Magick++ --cflags`
-COMPILEOPTS += -DPETSC_HAVE_MPI_WIN_CREATE
 SOURCES     += openmoc.cpp
+
+TESTSRC 	+= unacc/pin5.bash
+TESTSRC 	+= cmfd/pin5.bash
+TESTSRC 	+= loo/pin5.bash
