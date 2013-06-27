@@ -38,3 +38,4 @@ latex/
 /src/openmoc
 /check
 *.gold
+*.txt
