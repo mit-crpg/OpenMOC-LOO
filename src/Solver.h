@@ -56,6 +56,7 @@ private:
 	double _k_eff;
 	double _cmfd_k;
 	double _loo_k;
+	double _k_half;
 	std::queue<double> _old_k_effs;
 	Plotter* _plotter;
 	float* _pix_map_total_flux;

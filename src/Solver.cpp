@@ -475,9 +475,11 @@ void Solver::printKeff(int iteration, double eps)
 	/* Prints & Update keff for MOC sweep */
 	if ((_run_cmfd) && !(_acc_after_MOC_converge))
 	{
-		printf("Iteration %d, MOC k = %.10f, CMFD k = %.10f,"
+		printf("Iteration %d, MOC k^(m+1) = %.10f, CMFD k = %.10f,"
+			   " MOC k^(m+1/2) = %.10f" 
 			   " FS eps = %.4e,  k eps = %.4e, #CMFD = %d\n", 
-			   iteration, _k_eff, _cmfd_k, eps, 
+			   iteration, _k_eff, _cmfd_k, _k_half,
+			   eps, 
 			   (_old_k_effs.back() - _old_k_effs.front()) / _old_k_effs.back(),
 			   _cmfd->getNumIterToConv());
 
@@ -486,9 +488,11 @@ void Solver::printKeff(int iteration, double eps)
 	}
 	else if ((_run_loo) && !(_acc_after_MOC_converge))
 	{
-		printf("Iter %d, MOC k = %.10f, LOO k = %.10f,"
+		printf("Iter %d, MOC k^(m+1) = %.10f, LOO k = %.10f,"
+			   " MOC k^(m+1/2) = %.10f"
 			   " FS eps = %.4e, k eps = %.4e, #LOO = %d\n", 
-			   iteration, _k_eff, _loo_k, eps, 
+			   iteration, _k_eff, _loo_k, _k_half,
+			   eps, 
 			   (_old_k_effs.back() - _old_k_effs.front()) / _old_k_effs.back(),
 			   _cmfd->getNumIterToConv());
 
@@ -1338,6 +1342,7 @@ double Solver::runLoo(int i)
 
 	_cmfd->storePreMOCMeshSource(_flat_source_regions);
 	MOCsweep(2);
+	_k_half = computeKeff(100);
 
 	/* LOO Method 1: assume constant Sigma in each mesh. 
 	 * Computes cross sections */
@@ -1363,6 +1368,7 @@ double Solver::runCmfd(int i)
 	double cmfd_keff;
 
 	MOCsweep(2);
+	_k_half = computeKeff(100);
 
 	/* compute cross sections and diffusion coefficients */
 	_cmfd->computeXS();
@@ -1486,6 +1492,8 @@ double Solver::kernel(int max_iterations) {
 
 		/* Computes the new keff */
 		_k_eff = computeKeff(i);
+
+		/* Computes new FSR source now we have new flux and new k */
 		updateSource();
 
 		/* We only store $k^{(m+1)}$; other intermediate keff does not matter */
