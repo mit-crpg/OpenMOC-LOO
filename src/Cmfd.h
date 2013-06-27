@@ -108,6 +108,8 @@ public:
 	void computeQuadSrc();
 	void computeQuadFlux();
 	double computeLooFluxPower(solveType solveMethod, int moc_iter, double k);
+	void generateTrack(int num_loop, int num_track, int *i_array, 
+					   int *t_array, int *t_arrayb);
 };
 
 #endif /* CMFD_H_ */

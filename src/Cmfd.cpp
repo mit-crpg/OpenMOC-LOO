@@ -1390,6 +1390,31 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 		} 
 	}
 
+	/* i_array[] contains cell #, g_array[] contains track # */
+	/*
+	  int i_array[]  = {2,3,1,1,1,0,2,2, 3,3,1,0,0,0,2,3};
+	  int t_array[]  = {0,5,0,2,4,1,4,6, 0,2,7,2,4,6,3,6};
+	  int t_arrayb[] = {1,4,1,3,5,0,5,7, 1,3,6,3,5,7,2,7};
+	*/
+	int num_loop = cw;
+	int num_track = 4 * cw; 
+	int i_array[num_track * num_loop], t_array[num_track * num_loop], 
+		t_arrayb[num_track * num_loop];
+
+	generateTrack(num_loop, num_track, i_array, t_array, t_arrayb);
+
+	/*
+	for (int iii = 0; iii < num_track * num_loop; iii++)
+		printf(" %d", i_array[iii]);
+	printf("\n");
+	for (int iii = 0; iii < num_track * num_loop; iii++)
+		printf(" %d", t_array[iii]);
+	printf("\n");
+	for (int iii = 0; iii < num_track * num_loop; iii++)
+		printf(" %d", t_arrayb[iii]);
+	printf("\n");
+	*/
+
 	/* Starts LOO acceleration iteration, we do not update src, quad_src, 
 	 * quad_flux, old_flux, as they are computed from the MOC step (i.e., 
 	 * order m+1/2) and should not be updated during acceleration step. */
@@ -1466,23 +1491,19 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 			}
 		} /* finish iterating over i; exit to iter level */
 
-		/* i_array[] contains cell #, g_array[] contains track # */
-		int i_array[]  = {2,3,1,1,1,0,2,2, 3,3,1,0,0,0,2,3};
-		int t_array[]  = {0,5,0,2,4,1,4,6, 0,2,7,2,4,6,3,6};
-		int t_arrayb[] = {1,4,1,3,5,0,5,7, 1,3,6,3,5,7,2,7};
 		/* Sweeps over geometry, solve LOO MOC */
 		for (int e = 0; e < ng; e++)
 		{
 			double flux, initial_flux; //, delta;
 			int i, t, d;
 			/* Forward Directions */
-			for (int j = 0; j < 2; j++)
+			for (int j = 0; j < num_loop; j++)
 			{
 				/* Get the initial angular flux */
-				flux = _mesh->getCells(i_array[8 * j])->getMeshSurfaces(1)
-					->getQuadFlux(e, 1);	
+				flux = _mesh->getCells(i_array[num_track * j])
+					->getMeshSurfaces(1)->getQuadFlux(e, 1);
 				initial_flux = flux;
-				for (int x = 8 * j; x < 8 * (j + 1); x++)
+				for (int x = num_track * j; x < num_track * (j + 1); x++)
 				{
 					i = i_array[x];
 					t = t_array[x];
@@ -1495,7 +1516,7 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 					flux -= (flux * tau[i][e] - new_quad_src[i][d] * l) 
 						* ratio[i][e];
 				}
-				_mesh->getCells(i_array[8 * j])->getMeshSurfaces(1)
+				_mesh->getCells(i_array[num_track * j])->getMeshSurfaces(1)
 					->setQuadFlux(flux, e, 1);
 				log_printf(ACTIVE, "  Energy %d, loop %d, fwd, %f -> %f, %e",
 						   e, j, initial_flux, flux, flux / initial_flux - 1.0);
@@ -1510,12 +1531,14 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 			*/
 
 			/* Backward Directions */
-			for (int j = 0; j < 2; j++)
+			for (int j = 0; j < num_loop; j++)
 			{
-				flux = _mesh->getCells(i_array[8 * j])->getMeshSurfaces(1)
+				flux = _mesh->getCells(i_array[num_track * j])
+					->getMeshSurfaces(1)
     				->getQuadFlux(e, 0);
 				initial_flux = flux; 
-				for (int x = 8 * j + 7; x > 8 * j -1; x--)
+				for (int x = num_track * j + num_track - 1; 
+					 x > num_track * j - 1; x--)
 				{
 					i = i_array[x];
 					t = t_arrayb[x];
@@ -1528,7 +1551,7 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 					flux -= (flux * tau[i][e] - new_quad_src[i][d] * l) 
 						* ratio[i][e];
 				}
-				_mesh->getCells(i_array[8 * j])->getMeshSurfaces(1)
+				_mesh->getCells(i_array[num_track * j])->getMeshSurfaces(1)
 					->setQuadFlux(flux, e, 0);
 				log_printf(ACTIVE, "  Energy %d, loop %d, bwd, %f -> %f, %e",
 						   e, j, initial_flux, flux, flux / initial_flux - 1.0);
@@ -1544,9 +1567,11 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 			meshCell = _mesh->getCells(i);
 			for (int e = 0; e < ng; e++) 
 			{
-				/* FIXME: 1/8 is the weight on angular quadrature */
 				phi_ratio =  sum_quad_flux[i][e] 
 					/ meshCell->getSumQuadFlux()[e] ;/// 8;
+
+				log_printf(ACTIVE, " %.10f", meshCell->getOldFlux()[e] /
+						   meshCell->getSumQuadFlux()[e]);
 
 				new_flux = meshCell->getOldFlux()[e] 
 					* (1.0 - _damp + _damp * phi_ratio);
@@ -1575,7 +1600,7 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 
 		/* Normalizes flux based on fission source */
 		double normalize_factor = 1.0 / fis_tot * vol_tot;
-		log_printf(ACTIVE, "normalize_factor = %.10f", normalize_factor);
+		//log_printf(NORMAL, "normalize_factor = %.10f", normalize_factor);
 
 		for (int i = 0; i < cw * ch; i++)
 		{
@@ -1589,17 +1614,18 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 		
 		for (int e = 0; e < ng; e++)
 		{
-			for (int j = 0; j < 2; j++)
+			for (int j = 0; j < num_loop; j++)
 			{
 				for (int jj = 0; jj < 2; jj++)
 				{
-					double flux = _mesh->getCells(i_array[8 * j])
+					double flux = _mesh->getCells(i_array[num_track * j])
 						->getMeshSurfaces(1)->getQuadFlux(e, jj);
-					_mesh->getCells(i_array[8 * j])->getMeshSurfaces(1)
+					_mesh->getCells(i_array[num_track * j])->getMeshSurfaces(1)
 						->setQuadFlux(flux * normalize_factor, e, jj);
 				}
 			}
 		}
+
 
 		/* Computes the L2 norm of point-wise-division of energy-integrated
 		 * fission source of mesh cells between LOO iterations */
@@ -1706,6 +1732,126 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 
 	return _keff;
 }
+
+void Cmfd::generateTrack(int num_loop, int num_track, int *i_array, 
+						 int *t_array, int *t_arrayb)
+{
+	int nl, nt, i;
+	int len1, len2; 
+	int ch = _mesh->getCellHeight();
+	int cw = _mesh->getCellWidth();
+	int nw = cw;
+	/*
+	int i_array[]  = {2,3,1,1,1,0,2,2, 3,3,1,0,0,0,2,3};
+	int t_array[]  = {0,5,0,2,4,1,4,6, 0,2,7,2,4,6,3,6};
+	int t_arrayb[] = {1,4,1,3,5,0,5,7, 1,3,6,3,5,7,2,7};
+	*/
+	int i_start; 
+
+	len1 = num_track / 2 - 1;
+	len2 = 1;
+	for (nl = 0; nl < num_loop; nl++)
+	{
+		i_start = (ch - 1) * cw + nl;
+
+		for (nt = 0; nt < num_track; nt++)
+		{
+			i = nl * num_track + nt; 
+			
+			/* First side: start with 0 index, goes like 0,5,0,5,... */
+			if (nt < len1)
+			{
+				if (nt % 2 == 1)
+					i_start += 1;
+				else if (nt != 0)
+					i_start -= nw;
+				i_array[i] = i_start;
+
+
+				if (nt % 2 == 0)
+				{
+					t_array[i] = 0;
+					t_arrayb[i] = 1;
+				}
+				else
+				{
+					t_array[i] = 5;
+					t_arrayb[i] = 4;
+				}
+			}
+			/* 2nd side: start with odd index, goes like 2,7,... */
+			else if (nt < len1 + len2)
+			{
+				if (nt % 2 == 0)
+					i_start -= nw;
+				else if (nt != len1)
+					i_start -= 1;
+				i_array[i] = i_start;
+
+				if (nt % 2 == 1)
+				{
+					t_array[i] = 2;
+					t_arrayb[i] = 3;
+				}
+				else
+				{
+					t_array[i] = 7;
+					t_arrayb[i] = 6;
+				}
+			}
+			/* 3rd side: start with even index, goes like 4,1,...*/
+			else if (nt < len1 + len2 + len1)
+			{
+				if (nt % 2 == 1)
+					i_start -= 1;
+				else if (nt != len1 + len2)
+					i_start += nw;
+				i_array[i] = i_start;
+
+				if (nt % 2 == 0)
+				{
+					t_array[i] = 4;
+					t_arrayb[i] = 5;
+				}
+				else
+				{
+					t_array[i] = 1;
+					t_arrayb[i] = 0;
+				}
+			}	
+			/* last side */
+			else
+			{
+				if (nt % 2 == 0)
+					i_start += nw;
+				else if (nt != len1 + len2 + len1)
+					i_start += 1;
+				i_array[i] = i_start;
+
+
+				if (nt % 2 == 1)
+				{
+					t_array[i] = 6;
+					t_arrayb[i] = 7;
+				}
+				else
+				{
+					t_array[i] = 3;
+					t_arrayb[i] = 2;
+				}
+			}
+		}
+
+		len1 -= 2;
+		len2 += 2;
+	}
+
+
+	
+
+	return;
+}
+
 
 
 /* Fill in the values in the A matrix, M matrix, and phi_old vector
