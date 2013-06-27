@@ -23,6 +23,11 @@ LINKOPTS 	+= -lmpi
 LINKOPTS    += `pkg-config Magick++ --libs`
 SOURCES     += openmoc.cpp
 
-TESTSRC 	+= unacc/pin5.bash
-TESTSRC 	+= cmfd/pin5.bash
-TESTSRC 	+= loo/pin5.bash
+TESTSRC		+= 1polar/unacc/pin5.bash
+TESTSRC		+= 1polar/cmfd/pin5.bash
+TESTSRC		+= 1polar/loo/pin5.bash
+
+# back to 3 polar angle cases
+#TESTSRC 	+= unacc/pin5.bash
+#TESTSRC 	+= cmfd/pin5.bash
+#TESTSRC 	+= loo/pin5.bash
