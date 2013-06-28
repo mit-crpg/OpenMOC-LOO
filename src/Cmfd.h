@@ -10,6 +10,8 @@
 #ifndef CMFD_H_
 #define CMFD_H_
 
+#define psi_update 1
+
 #include <utility>
 #include <math.h>
 #include <unordered_map>

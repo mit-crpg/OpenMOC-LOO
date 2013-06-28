@@ -1018,6 +1018,11 @@ void Cmfd::computeQuadSrc()
 					sum_quad_flux += src/xs + (in[e][t] - out[e][t])/(xs * l);
 				}
 				meshCell->setSumQuadFlux(sum_quad_flux, e);
+				log_printf(DEBUG, " cell %d e %d"
+						   " scalar flux / sum quad flux = %e", 
+						   y * cell_width + x, e,
+						   meshCell->getOldFlux()[e] 
+						   / meshCell->getSumQuadFlux()[e]);
 			}
 		}
 	}
@@ -1492,9 +1497,13 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 		} /* finish iterating over i; exit to iter level */
 
 		/* Sweeps over geometry, solve LOO MOC */
+#if psi_update
+#else		
+		double wt = 0.798184 * 2.0;
+#endif
 		for (int e = 0; e < ng; e++)
 		{
-			double flux, initial_flux; //, delta;
+			double flux, initial_flux, delta;
 			int i, t, d;
 			/* Forward Directions */
 			for (int j = 0; j < num_loop; j++)
@@ -1508,27 +1517,28 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 					i = i_array[x];
 					t = t_array[x];
 					d = e * 8 + t;
-					/* Accumulate angular flux to $\bar{\psi}_g^{8,(n+1)}$ */
+					/*
 					sum_quad_flux[i][e] += flux * ratio[i][e] + 
 						new_quad_src[i][d] * (1- ratio[i][e]) / quad_xs[i][e];
-					/* Update angular flux: $\psi_{out} = \psi_{in} *
-					 * e^{-\Sigma L} + Q/\Sigma (1 - e^{-\Sigma L}) */
 					flux -= (flux * tau[i][e] - new_quad_src[i][d] * l) 
+					* ratio[i][e];
+					*/
+					delta = (flux * tau[i][e] - new_quad_src[i][d] * l) 
 						* ratio[i][e];
+#if psi_update
+					sum_quad_flux[i][e] += delta / tau[i][e] 
+						+ new_quad_src[i][d]/ quad_xs[i][e];
+#else
+					sum_quad_flux[i][e] += delta * wt / tau[i][e] + 
+						new_quad_src[i][d] / quad_xs[i][e];
+#endif
+					flux -= delta;
 				}
 				_mesh->getCells(i_array[num_track * j])->getMeshSurfaces(1)
 					->setQuadFlux(flux, e, 1);
 				log_printf(ACTIVE, "  Energy %d, loop %d, fwd, %f -> %f, %e",
 						   e, j, initial_flux, flux, flux / initial_flux - 1.0);
 			}
-
-			/*
-			    delta = (flux * tau[i][e] - new_quad_src[i][d] * l) 
-					* ratio[i][e];
-				sum_quad_flux[i][e] += delta / tau[i][e] 
-					+ new_quad_src[i][d]/ quad_xs[i][e];
-				flux -= delta;
-			*/
 
 			/* Backward Directions */
 			for (int j = 0; j < num_loop; j++)
@@ -1543,13 +1553,22 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 					i = i_array[x];
 					t = t_arrayb[x];
 					d = e * 8 + t;
-					/* Accumulate angular flux to $\bar{\psi}_g^{8,(n+1)}$ */
-					sum_quad_flux[i][e] += flux * ratio[i][e] + 
-						new_quad_src[i][d] * (1 - ratio[i][e]) / quad_xs[i][e];
-					/* Update angular flux: $\psi_{out} = \psi_{in} *
-					 * e^{-\Sigma L} + Q/\Sigma (1 - e^{-\Sigma L}) */
-					flux -= (flux * tau[i][e] - new_quad_src[i][d] * l) 
+					/* 
+					   sum_quad_flux[i][e] += flux * ratio[i][e] + 
+					   new_quad_src[i][d] * (1 - ratio[i][e]) / quad_xs[i][e];
+					   flux -= (flux * tau[i][e] - new_quad_src[i][d] * l) 
+					   * ratio[i][e];
+					*/
+					delta = (flux * tau[i][e] - new_quad_src[i][d] * l) 
 						* ratio[i][e];
+#if psi_update
+					sum_quad_flux[i][e] += delta / tau[i][e] 
+						+ new_quad_src[i][d]/ quad_xs[i][e];
+#else
+					sum_quad_flux[i][e] += delta * wt / tau[i][e] + 
+						new_quad_src[i][d] / quad_xs[i][e];
+#endif
+					flux -= delta;
 				}
 				_mesh->getCells(i_array[num_track * j])->getMeshSurfaces(1)
 					->setQuadFlux(flux, e, 0);
@@ -1569,16 +1588,27 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 			{
 				phi_ratio =  sum_quad_flux[i][e] 
 					/ meshCell->getSumQuadFlux()[e] ;/// 8;
+				log_printf(ACTIVE, "Cell %d energy %d scalar flux update "
+						   " diverge from 1 by %e", i, e, phi_ratio - 1.0);
 
 				log_printf(ACTIVE, " %.10f", meshCell->getOldFlux()[e] /
 						   meshCell->getSumQuadFlux()[e]);
 
+#if psi_update
 				new_flux = meshCell->getOldFlux()[e] 
 					* (1.0 - _damp + _damp * phi_ratio);
-				meshCell->setNewFlux(new_flux, e);
+#else
+				new_flux = sum_quad_flux[i][e];					
+				//new_flux = FOUR_PI * sum_quad_flux[i][e];
+#endif
 
-				log_printf(ACTIVE, "Update cell %d energy %d scalar flux by "
-						   "%e", i, e, phi_ratio - 1.0);
+				meshCell->setNewFlux(new_flux, e);
+				log_printf(ACTIVE, "Cell %d energy %d scalar flux update "
+						   " by %e", i, e, 
+						   meshCell->getNewFlux()[e] / meshCell->getOldFlux()[e]
+					);
+
+
 			}
 		}
 
