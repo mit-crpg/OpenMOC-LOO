@@ -10,8 +10,7 @@
 #ifndef CMFD_H_
 #define CMFD_H_
 
-#define phi_balance 0
-#define psi_update 1
+#define phi_update 0
 
 #include <utility>
 #include <math.h>
@@ -73,11 +72,14 @@ private:
 	int _num_azim;
 	bool _use_diffusion_correction;
 	bool _run_loo;
+	bool _run_loo_psi;
+	bool _run_loo_phi;
 	bool _run_cmfd;
 	int _num_iter_to_conv;
 public:
 	Cmfd(Geometry* geom, Plotter* plotter, Mesh* mesh, 
-		 bool runCmfd, bool runLoo, double damp,
+		 bool runCmfd, bool runLoo, bool runLoo1, bool runLoo2,
+		 double damp,
 		 bool useDiffusionCorrection, double l2_norm_conv_thresh,
 		 TrackGenerator *track_generator);
 	virtual ~Cmfd();

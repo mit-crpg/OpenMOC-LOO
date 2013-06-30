@@ -35,6 +35,8 @@ private:
 	bool _compress_cross_sections;
 	bool _cmfd;
 	bool _loo;
+	bool _loo1; //update by psi
+	bool _loo2; //update by phi
 	bool _acc_after_MOC_converge;
 	bool _plot_quad_flux;
 	bool _plot_current;
@@ -82,6 +84,8 @@ public:
 	int getCmfdLevel();
 	bool getCmfd();
 	bool getLoo();
+	bool getLoo1();
+	bool getLoo2();
 	bool getDiffusion();
 	bool getDiffusionCorrection();
 	bool getAccAfterMOCConverge();

@@ -15,7 +15,8 @@
  * @param track_generator pointer to the trackgenerator
  */
 Cmfd::Cmfd(Geometry* geom, Plotter* plotter, Mesh* mesh, 
-		   bool runCmfd, bool runLoo, double damp, 
+		   bool runCmfd, bool runLoo, bool runLoo1, bool runLoo2,
+		   double damp, 
 		   bool useDiffusionCorrection, double l2_norm_conv_thresh,
 		   TrackGenerator *track_generator) {
 
@@ -49,8 +50,20 @@ Cmfd::Cmfd(Geometry* geom, Plotter* plotter, Mesh* mesh,
 	}
 
 	_run_loo = false;
+	_run_loo_psi = false;
+	_run_loo_phi = false;
 	if (runLoo)
 		_run_loo = true;
+	if (runLoo1)
+	{
+		_run_loo = true;
+		_run_loo_psi = true;
+	}
+	else
+	{
+		_run_loo = true;
+		_run_loo_phi = true;
+	}
 
 	_num_iter_to_conv = 0;
 }
@@ -1487,14 +1500,6 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 				}
 				log_printf(ACTIVE, "Average source ratio for cell %d" 
 						   " energy %d, by %e", i, e, src_ratio - 1.0);
-				/* 
-				log_printf(ACTIVE, " vol = %.10f, as-tracked-vol = %.10f,"
-						   " ratio = %.10f",
-						   meshCell->getWidth() * meshCell->getHeight(), 
-						   meshCell->getVolume(),
-						   meshCell->getWidth() * meshCell->getHeight() / 
-						   meshCell->getVolume());
-				*/
 			}
 		} /* finish iterating over i; exit to iter level */
 
@@ -1502,8 +1507,7 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 
 		/* weighting on net current */
 		double wc = 1.0; 
-#if psi_update
-#else		
+#if phi_update	
 		//double wp = 0.798184;
 		double wq = 1.0; //FOUR_PI;
 		double wt = 1.0 / 8.0; // * FOUR_PI;
@@ -1533,12 +1537,12 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 					*/
 					delta = (flux * tau[i][e] - new_quad_src[i][d] * l) 
 						* ratio[i][e];
-#if psi_update
-					sum_quad_flux[i][e] += delta / tau[i][e] 
-						+ new_quad_src[i][d]/ quad_xs[i][e];
+#if phi_update
+					sum_quad_flux[i][e] += wt * delta / tau[i][e] 
+						+ wq * new_quad_src[i][d]/ quad_xs[i][e];
 #else
-					sum_quad_flux[i][e] += wt * delta / tau[i][e] + 
-						wq * new_quad_src[i][d] / quad_xs[i][e];
+					sum_quad_flux[i][e] += delta / tau[i][e] + 
+						new_quad_src[i][d] / quad_xs[i][e];
 #endif
 					flux -= delta;
 
@@ -1571,12 +1575,12 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 					*/
 					delta = (flux * tau[i][e] - new_quad_src[i][d] * l) 
 						* ratio[i][e];
-#if psi_update
-					sum_quad_flux[i][e] += delta / tau[i][e] 
-						+ new_quad_src[i][d]/ quad_xs[i][e];
+#if phi_update
+					sum_quad_flux[i][e] += wt * delta / tau[i][e] 
+						+ wq * new_quad_src[i][d]/ quad_xs[i][e];
 #else
-					sum_quad_flux[i][e] += wt * delta / tau[i][e] + 
-						wq * new_quad_src[i][d] / quad_xs[i][e];
+					sum_quad_flux[i][e] += delta / tau[i][e] + 
+						new_quad_src[i][d] / quad_xs[i][e];
 #endif
 					flux -= delta;
 					net_current[i][e] -= wc * delta;
@@ -1591,57 +1595,60 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 		double new_flux = 0;
 
 		/* Computs new cell-averaged scalar flux based on new_sum_quad_flux */
-#if phi_balance
-		double leakage = 0;
-		for (int i = 0; i < cw * ch; i++)
+		if (_run_loo_phi)
 		{
-			meshCell = _mesh->getCells(i);
-			for (int e = 0; e < ng; e++)
+			double leakage = 0;
+			for (int i = 0; i < cw * ch; i++)
 			{
-				/* we multiple sin 45 degree to converge flux to current, then
-				 * divide by cell side length to get grad J */
-				leakage = net_current[i][e] * SIN_THETA_45 
-					/ meshCell->getWidth();
+				meshCell = _mesh->getCells(i);
+				for (int e = 0; e < ng; e++)
+				{
+					/* we multiple sin 45 degree to converge flux to current, 
+					 * divide by cell side length to get grad J */
+					leakage = net_current[i][e] * SIN_THETA_45 
+						/ meshCell->getWidth();
 
-				log_printf(ACTIVE, "%.10f, %.10f, %.10f", leakage, 
-						   meshCell->getSigmaA()[e] * meshCell->getOldFlux()[e],
-						   new_src[i][e]);
+					log_printf(ACTIVE, "%.10f, %.10f, %.10f", leakage, 
+							   meshCell->getSigmaA()[e] 
+							   * meshCell->getOldFlux()[e], new_src[i][e]);
 
-				new_flux = (FOUR_PI * new_src[i][e] - leakage) 
-					/ meshCell->getSigmaT()[e];
-				meshCell->setNewFlux(new_flux, e);
-				log_printf(ACTIVE, "Cell %d energy %d scalar flux update"
-						   " by (before normalization) %.10f", i, e, 
-						   meshCell->getNewFlux()[e] / meshCell->getOldFlux()[e]
-					);
+					new_flux = (FOUR_PI * new_src[i][e] - leakage) 
+						/ meshCell->getSigmaT()[e];
+					meshCell->setNewFlux(new_flux, e);
+					log_printf(ACTIVE, "Cell %d energy %d scalar flux update"
+							   " by (before normalization) %.10f", i, e, 
+							   meshCell->getNewFlux()[e] 
+							   / meshCell->getOldFlux()[e]
+						);
+				}
 			}
 		}
-#else
-		double phi_ratio;
-		for (int i = 0; i < cw * ch; i++)
+		else if (_run_loo_psi)
 		{
-			meshCell = _mesh->getCells(i);
-			for (int e = 0; e < ng; e++) 
+			double phi_ratio;
+			for (int i = 0; i < cw * ch; i++)
 			{
-				phi_ratio =  sum_quad_flux[i][e] 
-					/ meshCell->getSumQuadFlux()[e] ;/// 8;
-				log_printf(ACTIVE, "Cell %d energy %d scalar flux update "
-						   " diverge from 1 by %e", i, e, phi_ratio - 1.0);
+				meshCell = _mesh->getCells(i);
+				for (int e = 0; e < ng; e++) 
+				{
+					phi_ratio =  sum_quad_flux[i][e] 
+						/ meshCell->getSumQuadFlux()[e] ;/// 8;
+					log_printf(ACTIVE, "Cell %d energy %d scalar flux update "
+							   " diverge from 1 by %e", i, e, phi_ratio - 1.0);
 
-				log_printf(ACTIVE, " %.10f", meshCell->getOldFlux()[e] /
-						   meshCell->getSumQuadFlux()[e]);
+					log_printf(ACTIVE, " %.10f", meshCell->getOldFlux()[e] /
+							   meshCell->getSumQuadFlux()[e]);
 
-#if psi_update
-				new_flux = meshCell->getOldFlux()[e] 
-					* (1.0 - _damp + _damp * phi_ratio);
-#else
-				new_flux = sum_quad_flux[i][e];					
+					new_flux = meshCell->getOldFlux()[e] 
+						* (1.0 - _damp + _damp * phi_ratio);
+#if phi_update /* for debugging new feature */
+					new_flux = sum_quad_flux[i][e];					
 #endif
 
-				meshCell->setNewFlux(new_flux, e);
+					meshCell->setNewFlux(new_flux, e);
+				}
 			}
 		}
-#endif
 
 		/* Computes keff assuming zero leakage */
 		double fis_tot = 0, abs_tot = 0, vol_tot = 0;

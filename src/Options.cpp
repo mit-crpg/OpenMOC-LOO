@@ -28,6 +28,8 @@ Options::Options(int argc, char **argv)
 	_acc_after_MOC_converge = false;
 	_cmfd = false; 					
 	_loo = false;
+	_loo1 = false;
+	_loo2 = false;
 	_damp_factor = 1.0;
 
 	/* plotting options */
@@ -138,9 +140,28 @@ Options::Options(int argc, char **argv)
 			else if (strcmp(argv[i], "-wl") == 0 ||
 					strcmp(argv[i], "--withloo") == 0)
 			{
-				_loo = true;
 				_cmfd = false;
+				_loo = true;
+				_loo2 = true;
+				_damp_factor = 1.0;
+			}
+			else if (strcmp(argv[i], "-wl1") == 0 ||
+					strcmp(argv[i], "--withloo1") == 0)
+			{
+				_cmfd = false;
+				_loo = true;
+				_loo1 = true;
+				_loo2 = false;
 				_damp_factor = 0.50;
+			}
+			else if (strcmp(argv[i], "-wl2") == 0 ||
+					strcmp(argv[i], "--withloo2") == 0)
+			{
+				_cmfd = false;
+				_loo = true;
+				_loo1 = false;
+				_loo2 = true;
+				_damp_factor = 1.0;
 			}
 			else if (strcmp(argv[i], "-pc") == 0 ||
 					strcmp(argv[i], "--plotcurrent") == 0)
@@ -412,6 +433,14 @@ bool Options::getCmfd(){
 
 bool Options::getLoo(){
 	return _loo;
+}
+
+bool Options::getLoo1(){
+	return _loo1;
+}
+
+bool Options::getLoo2(){
+	return _loo2;
 }
 
 bool Options::getDiffusion(){
