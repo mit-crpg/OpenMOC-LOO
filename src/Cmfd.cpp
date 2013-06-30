@@ -1504,9 +1504,9 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 		double wc = 1.0; 
 #if psi_update
 #else		
-		double wp = 0.798184;
-		double wq = FOUR_PI;
-		double wt = PI / 2.0 * wp;
+		//double wp = 0.798184;
+		double wq = 1.0; //FOUR_PI;
+		double wt = 1.0 / 8.0; // * FOUR_PI;
 #endif
 
 		for (int e = 0; e < ng; e++)
@@ -1661,7 +1661,7 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 
 		/* Normalizes flux based on fission source */
 		double normalize_factor = 1.0 / fis_tot * vol_tot;
-		log_printf(NORMAL, "normalize_factor = %.10f", normalize_factor);
+		log_printf(ACTIVE, "normalize_factor = %.10f", normalize_factor);
 
 		for (int i = 0; i < cw * ch; i++)
 		{
@@ -1670,7 +1670,7 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 			{
 				meshCell->setNewFlux(meshCell->getNewFlux()[e] 
 									 * normalize_factor, e);
-				log_printf(NORMAL, "Cell %d energy %d scalar flux update"
+				log_printf(ACTIVE, "Cell %d energy %d scalar flux update"
 						   " by %.10f", i, e, 
 						   meshCell->getNewFlux()[e] / meshCell->getOldFlux()[e]
 					);

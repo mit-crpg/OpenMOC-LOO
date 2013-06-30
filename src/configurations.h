@@ -14,7 +14,7 @@
  ****************************** USER DEFINED **********************************
  *****************************************************************************/
 
-#define NUM_POLAR_ANGLES 1
+#define NUM_POLAR_ANGLES 3
 #define NUM_ENERGY_GROUPS 7
 #define GRP_TIMES_ANG NUM_POLAR_ANGLES*NUM_ENERGY_GROUPS
 
@@ -54,7 +54,7 @@
 
 /* Error threshold for determining how close the sum of sigma_a and sigma_s
  * must match that of sigma_t for each energy group */
-#define SIGMA_T_THRESH 1E-3
+#define SIGMA_T_THRESH 1E-7
 
 /* Error threshold for determining how close a point needs to be to a surface
  * to be considered on it */

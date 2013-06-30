@@ -400,13 +400,17 @@ void Material::checkSigmaT() {
 			calc_sigma_t += _sigma_s[j][i];
 
 		/* Check if the calculated and total match up to certain threshold */
+		/*
 		if (fabs(calc_sigma_t - _sigma_t[i]) > SIGMA_T_THRESH) {
-			log_printf(ERROR, "Material id = %d has a different total "
+			log_printf(WARNING, "Material id = %d has a different total "
 					"cross-section than the sum of its scattering and "
 					"absorption cross-sections for group %d: "
-					"sigma_t = %f, calc_sigma_t = %f", _id, i, _sigma_t[i],
+					"sigma_t = %.10f, calc_sigma_t = %.10f", 
+					   _id, i, _sigma_t[i],
 					   calc_sigma_t);
 		}
+		*/
+		_sigma_t[i] = calc_sigma_t;
 	}
 
 	return;
