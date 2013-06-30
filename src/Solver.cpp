@@ -1342,6 +1342,7 @@ double Solver::runLoo(int i)
 
 	_cmfd->storePreMOCMeshSource(_flat_source_regions);
 	MOCsweep(2);
+
 	_k_half = computeKeff(100);
 
 	/* LOO Method 1: assume constant Sigma in each mesh. 
@@ -1645,8 +1646,8 @@ double Solver::kernel(int max_iterations) {
 void Solver::checkNeutronBalance()
 {
 	log_printf(INFO, "Checking neutron balance...");
-	double leak = 0, absorb = 0, fis = 0;
-	double tot_leak = 0, tot_absorb = 0, tot_fis = 0;
+	double leak = 0, absorb = 0, fis = 0, src = 0;
+	double tot_leak = 0, tot_absorb = 0, tot_fis = 0, tot_src = 0;
 	double flux, vol, residual;
 	MeshCell *meshCell, *meshCellNext;
 	MeshSurface* surf;
@@ -1665,17 +1666,40 @@ void Solver::checkNeutronBalance()
 			leak = 0; 
 			absorb = 0;
 			fis = 0;
+			src = 0;
 
 			/* get mesh cell */
 			meshCell = mesh->getCells(y * cell_width + x);
 
 			for (int e = 0; e < ng; e++)
 			{
+				leak = 0;
+				absorb = 0;
+				fis = 0;
+				src = 0;
+
 				flux = meshCell->getOldFlux()[e];
 				vol = meshCell->getVolume();
 				
-				absorb += meshCell->getSigmaA()[e] * flux * vol;
-				fis += meshCell->getNuSigmaF()[e] * flux * vol;
+				absorb += meshCell->getSigmaA()[e] * flux;
+
+				double tmp_fis = 0.0;
+				for (int g = 0; g < ng; g++)
+				{
+					tmp_fis += meshCell->getNuSigmaF()[g] * 
+						meshCell->getOldFlux()[g];
+				}
+				fis += meshCell->getChi()[e] * tmp_fis;
+
+				for (int g = 0; g < ng; g++)
+				{
+					if (g != e)
+					{
+						src += meshCell->getSigmaS()[g * ng + e] * 
+							meshCell->getOldFlux()[g];
+					}
+				}
+				src += fis / _k_eff;
 
 				for (int s = 0; s < 4; s++)
 				{
@@ -1714,26 +1738,34 @@ void Solver::checkNeutronBalance()
 				}
 				else
 					leak -= meshCell->getMeshSurfaces(1)->getCurrent(e);
+
+				leak /= vol;
+
+				/* compute total residual and average ratio */
+				/* residual = leakage + absorption - fission */
+				residual = leak + absorb - src;
+				log_printf(NORMAL, "CMFD cell %d energy %d, residual %.10f"
+						   " leak: %.10f"
+						   " absorb: %.10f, src: %.10f,"
+						   "  fis: %.10f, keff: %.10f", 
+						   y * cell_width + x, e, 
+						   residual,
+						   leak,
+						   absorb, src, 
+						   fis, fis / (leak + absorb));
+				tot_leak += leak;
+				tot_absorb += absorb;
+				tot_fis += fis;
+				tot_src += src;
 			}	
-
-			/* compute total residual and average ratio */
-			/* residual = leakage + absorption - fission */
-			residual = leak + absorb - fis;
-			log_printf(DEBUG, "CMFD cell %d residual %.10f"
-					   " fis: %.10f, absorb: %.10f, leak: %.10f, keff: %.10f", 
-					   y * cell_width + x, 
-					   residual, fis, absorb, leak, fis / (leak + absorb));
-
-			tot_leak += leak;
-			tot_absorb += absorb;
-			tot_fis += fis;
 		}
 	}
 
-	log_printf(NORMAL, "CMFD over all cell,"
-			   " keff: %.10f, fis: %f, absorb: %f, leak: %f", 
+	log_printf(NORMAL, "CMFD over all cell, keff: %.10f"
+			   " fis: %f, absorb: %f, leak: %f, src = %f, res = %f", 
 			   tot_fis / (tot_leak + tot_absorb),
-			   tot_fis, tot_absorb, tot_leak);
+			   tot_fis, tot_absorb, tot_leak, 
+			   tot_src, tot_leak + tot_absorb - tot_src);
 	
 	return;
 }

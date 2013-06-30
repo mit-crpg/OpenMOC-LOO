@@ -10,6 +10,7 @@
 #ifndef CMFD_H_
 #define CMFD_H_
 
+#define phi_balance 1
 #define psi_update 1
 
 #include <utility>
