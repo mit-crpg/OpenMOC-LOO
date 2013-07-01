@@ -34,6 +34,8 @@ Solver::Solver(Geometry* geom, TrackGenerator* track_generator,
     _compute_powers = opts->computePinPowers();
     _run_cmfd = opts->getCmfd();
 	_run_loo = opts->getLoo();
+	_run_loo1 = opts->getLoo1();
+	_run_loo2 = opts->getLoo2();
 	_diffusion = opts->getDiffusion();
 	_acc_after_MOC_converge = opts->getAccAfterMOCConverge();
 	_k_eff = opts->getKGuess();
@@ -1522,17 +1524,23 @@ double Solver::kernel(int max_iterations) {
 				   <<  _track_spacing
 				   << "_" << _damp_factor << "_cmfd.txt";
 		}
-		else if (_run_loo)
+		else if (_run_loo1)
 		{
 			string << "l2_norm_" << (_num_azim*2) << "_" 
 				   <<  _track_spacing
-				   << "_" << _damp_factor << "_loo.txt";
+				   << "_" << _damp_factor << "_loo1.txt";
 		}			
+		else if (_run_loo2)
+		{
+			string << "l2_norm_" << (_num_azim*2) << "_" 
+				   <<  _track_spacing
+				   << "_" << _damp_factor << "_loo2.txt";
+		}
 		else
 		{
 			string << "l2_norm_" << (_num_azim*2) << "_" 
 				   <<  _track_spacing
-				   << "_" << _damp_factor << "_unacc.txt";
+				   << "_" << _damp_factor << "_unac.txt";
 		}
 
 		std::string title_str = string.str();

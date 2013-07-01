@@ -410,6 +410,11 @@ void Material::checkSigmaT() {
 					   calc_sigma_t);
 		}
 		*/
+
+		log_printf(DEBUG, " material %d energy %d has"
+				   "  calculated sigma_t = %.10f, "
+				   "given sigma_t = %.10f", 
+				   _id, i, calc_sigma_t, _sigma_t[i]);
 		_sigma_t[i] = calc_sigma_t;
 	}
 

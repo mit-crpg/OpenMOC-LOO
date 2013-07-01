@@ -76,6 +76,8 @@ private:
 	bool _compute_powers;
 	bool _run_cmfd;
 	bool _run_loo;
+	bool _run_loo1;
+	bool _run_loo2;
 	bool _diffusion;
 	bool _acc_after_MOC_converge;
 #endif

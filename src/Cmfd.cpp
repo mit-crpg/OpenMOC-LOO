@@ -1509,8 +1509,8 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 		double wc = 1.0; 
 #if phi_update	
 		//double wp = 0.798184;
-		double wq = 1.0; //FOUR_PI;
-		double wt = 1.0 / 8.0; // * FOUR_PI;
+		double wq = 1.0 * FOUR_PI;
+		double wt = 1.0 / 8.0 * FOUR_PI;
 #endif
 
 		for (int e = 0; e < ng; e++)
