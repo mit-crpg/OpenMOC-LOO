@@ -336,7 +336,7 @@ void Cmfd::computeXS()
 					scat_tally_group[g] += scat[g * NUM_ENERGY_GROUPS + e] 
 						* flux * volume;
 				}
-				/* choose a chi for this group */
+				/* FIXME: unconditional jump or move based on unitialized val*/
 				if (chi >= meshCell->getChi()[e])
 					meshCell->setChi(chi,e);
 			}
@@ -1020,7 +1020,7 @@ void Cmfd::computeQuadSrc()
 			for (int e = 0; e < ng; e++)
 			{
 				double xs = meshCell->getSigmaT()[e];
-				double ex = exp(- xs * l);
+				double ex = exp(-xs * l);
 				double sum_quad_flux = 0;
 
 				for (int t = 0; t < 8; t++)
@@ -1396,7 +1396,7 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 			   not change between iterations */
 			tau[i][e] = quad_xs[i][e] * l;
 			expo[i][e] = exp(-tau[i][e]);
-			ratio[i][e] = (1 - expo[i][e]) / tau[i][e];
+			ratio[i][e] = (1.0 - expo[i][e]) / tau[i][e];
 		}
 		for (int t = 0; t < 8 * ng; t++)
 			new_quad_src[i][t] = 0.0;
@@ -1491,8 +1491,6 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 				/* getOldSrc()[e] returns the $\bar{Q}_g^{(m)}$ */
 				src_ratio = new_src[i][e] / meshCell->getOldSrc()[e];
 
-				/* FIXME */
-				//src_ratio = 1.0;
 				for (int t = 0; t < 8; t++)
 				{
 					int d = e * 8 + t;
@@ -1506,9 +1504,9 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 		/* Sweeps over geometry, solve LOO MOC */
 
 		/* weighting on net current */
+		//double wp = 0.798184;
 		double wc = 1.0; 
 #if phi_update	
-		//double wp = 0.798184;
 		double wq = 1.0 * FOUR_PI;
 		double wt = 1.0 / 8.0 * FOUR_PI;
 #endif
@@ -1535,8 +1533,10 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 					flux -= (flux * tau[i][e] - new_quad_src[i][d] * l) 
 					* ratio[i][e];
 					*/
-					delta = (flux * tau[i][e] - new_quad_src[i][d] * l) 
-						* ratio[i][e];
+					//delta = (flux * tau[i][e] - new_quad_src[i][d] * l) 
+					//	* ratio[i][e];
+					delta = (flux - new_quad_src[i][d] / (double)quad_xs[i][e])
+						* (1 - expo[i][e]);
 #if phi_update
 					sum_quad_flux[i][e] += wt * delta / tau[i][e] 
 						+ wq * new_quad_src[i][d]/ quad_xs[i][e];
@@ -1573,8 +1573,10 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 					   flux -= (flux * tau[i][e] - new_quad_src[i][d] * l) 
 					   * ratio[i][e];
 					*/
-					delta = (flux * tau[i][e] - new_quad_src[i][d] * l) 
-						* ratio[i][e];
+					//delta = (flux * tau[i][e] - new_quad_src[i][d] * l) 
+					//	* ratio[i][e];
+					delta = (flux - new_quad_src[i][d] / quad_xs[i][e])
+						* (1.0 - expo[i][e]);
 #if phi_update
 					sum_quad_flux[i][e] += wt * delta / tau[i][e] 
 						+ wq * new_quad_src[i][d]/ quad_xs[i][e];
