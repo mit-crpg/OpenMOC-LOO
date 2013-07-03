@@ -70,6 +70,7 @@ private:
 	int _pre_factor_array_size;
 	int _pre_factor_max_index;
 	double _pre_factor_spacing;
+#endif
 	bool _update_keff;
 	double _l2_norm_conv_thresh;
 	double _moc_conv_thresh;
@@ -80,7 +81,6 @@ private:
 	bool _run_loo2;
 	bool _diffusion;
 	bool _acc_after_MOC_converge;
-#endif
 	void precomputeFactors();
 	double computePreFactor(segment* seg, int energyg, int angle);
 	void initializeFSRs();

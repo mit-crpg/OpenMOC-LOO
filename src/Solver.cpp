@@ -111,16 +111,23 @@ void Solver::precomputeFactors() {
 	#if USE_OPENMP
 	#pragma omp parallel for private(curr_track, azim_weight)
 	#endif
-	for (int i = 0; i < _num_azim; i++) {
-		for (int j = 0; j < _num_tracks[i]; j++) {
+	for (int i = 0; i < _num_azim; i++) 
+	{
+		for (int j = 0; j < _num_tracks[i]; j++) 
+		{
 			curr_track = &_tracks[i][j];
 			azim_weight = curr_track->getAzimuthalWeight();
 
 			for (int p = 0; p < NUM_POLAR_ANGLES; p++)
-				curr_track->setPolarWeight(p, 
-		azim_weight * _quad->getMultiple(p) * FOUR_PI);
-		}
-	}
+			{
+	            curr_track->setPolarWeight(p, 
+		          azim_weight * _quad->getMultiple(p) * FOUR_PI);
+            }
+        }
+     }
+
+	log_printf(DEBUG, "0 azi angle 0 track 0 polar angle omega_m = %.10f", 
+		(&_tracks[0][0])->getPolarWeights()[0]);
 
 
 /*Store pre-factors inside each segment */
@@ -1342,8 +1349,9 @@ double Solver::runLoo(int i)
 {
 	double loo_keff;
 
+	MOCsweep(3);
 	_cmfd->storePreMOCMeshSource(_flat_source_regions);
-	MOCsweep(2);
+	MOCsweep(1);
 
 	_k_half = computeKeff(100);
 
