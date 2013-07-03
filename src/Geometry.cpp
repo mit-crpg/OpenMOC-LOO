@@ -2236,7 +2236,7 @@ void Geometry::defineMesh(Mesh* mesh, Universe* univ, int depth, int* meshCellNu
 						double w = lattice->getWidthX();
 						double h = lattice->getWidthY();
 						double l = sqrt(w * w + h * h) / 2;
-						//l /= 0.798184;
+						l /= 0.798184;
 						mesh->getCells(*meshCellNum)->setWidth(w);
 						mesh->getCells(*meshCellNum)->setHeight(h);
 						mesh->getCells(*meshCellNum)->setL(l);

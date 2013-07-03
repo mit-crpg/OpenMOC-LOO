@@ -904,8 +904,8 @@ void Cmfd::computeQuadSrc()
 				{
 					for (int e = 0; e < ng; e++)
 					{
-						in[e][5] = s[0]->getQuadFlux(e,1);
-						in[e][6] = s[0]->getQuadFlux(e,0);
+						in[e][5] = out[e][7];
+						in[e][6] = out[e][4]; 
 					}
 				}
 				else if (_mesh->getBoundary(0) == VACUUM)
@@ -919,7 +919,7 @@ void Cmfd::computeQuadSrc()
 			}
 			else
 			{
-				meshCellNext = _mesh->getCells(y*cell_width + x - 1);
+				meshCellNext = _mesh->getCells(y * cell_width + x - 1);
 				for (int e = 0; e < ng; e++)
 				{
 					in[e][5] = meshCellNext->getMeshSurfaces(2)->getQuadFlux(e,0);
@@ -934,8 +934,8 @@ void Cmfd::computeQuadSrc()
 				{
 					for (int e = 0; e < ng; e++)
 					{
-						in[e][1] = s[2]->getQuadFlux(e,1);
-						in[e][2] = s[2]->getQuadFlux(e,0);
+						in[e][1] = out[e][3]; 
+						in[e][2] = out[e][0]; 
 					}
 				}
 				else if (_mesh->getBoundary(2) == VACUUM)
@@ -949,7 +949,7 @@ void Cmfd::computeQuadSrc()
 			}
 			else
 			{
-				meshCellNext = _mesh->getCells(y*cell_width + x + 1);
+				meshCellNext = _mesh->getCells(y * cell_width + x + 1);
 				for (int e = 0; e < ng; e++)
 				{
 					in[e][1] = meshCellNext->getMeshSurfaces(0)->getQuadFlux(e,0);
@@ -963,8 +963,8 @@ void Cmfd::computeQuadSrc()
 				{
 					for (int e = 0; e < ng; e++)
 					{
-						in[e][3] = s[3]->getQuadFlux(e,0);
-						in[e][4] = s[3]->getQuadFlux(e,1);
+						in[e][3] = out[e][5]; 
+						in[e][4] = out[e][2]; 
 					}
 				}
 				else if (_mesh->getBoundary(3) == VACUUM)
@@ -978,7 +978,7 @@ void Cmfd::computeQuadSrc()
 			}
 			else
 			{
-				meshCellNext = _mesh->getCells( (y - 1) * cell_width + x);
+				meshCellNext = _mesh->getCells((y - 1) * cell_width + x);
 				for (int e = 0; e < ng; e++)
 				{
 					in[e][3] = meshCellNext->getMeshSurfaces(1)->getQuadFlux(e,1);
@@ -992,8 +992,8 @@ void Cmfd::computeQuadSrc()
 				{
 					for (int e = 0; e < ng; e++)
 					{
-						in[e][7] = s[1]->getQuadFlux(e,0);
-						in[e][0] = s[1]->getQuadFlux(e,1);
+						in[e][7] = out[e][1]; 
+						in[e][0] = out[e][6]; 
 					}
 				}
 				else if (_mesh->getBoundary(1) == VACUUM)
@@ -1022,18 +1022,20 @@ void Cmfd::computeQuadSrc()
 				double xs = meshCell->getSigmaT()[e];
 				double ex = exp(-xs * l);
 				double sum_quad_flux = 0;
-
+				double tmp_src = 0;
 				for (int t = 0; t < 8; t++)
 				{
 					double src = xs * (out[e][t] - ex * in[e][t]) / (1.0 - ex);
 					meshCell->setQuadSrc(src, e, t);
-
+					tmp_src += src;
 					sum_quad_flux += src/xs + (in[e][t] - out[e][t])/(xs * l);
 				}
 				meshCell->setSumQuadFlux(sum_quad_flux, e);
-				log_printf(DEBUG, " cell %d e %d"
-						   " scalar flux / sum quad flux = %e", 
+
+				log_printf(ACTIVE, " cell %d e %d"
+						   " bar q / sum q = %.10f, phi / sum psi = %.10f", 
 						   y * cell_width + x, e,
+						   FOUR_PI * meshCell->getSrc()[e] / tmp_src,
 						   meshCell->getOldFlux()[e] 
 						   / meshCell->getSumQuadFlux()[e]);
 			}
@@ -1319,7 +1321,7 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 {
 	log_printf(INFO, "Running low order MOC solver...");
 
-	int iter, max_outer = 100; 
+	int iter, max_outer = 500; 
 
 	if (solveMethod == DIFFUSION)
 		max_outer = 1000;
@@ -1482,6 +1484,7 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 		} /* finishing looping over i; exit to iter level */
 
 		double src_ratio;
+		double tmp_src; 
 		/* Updates 8 quadrature sources based on form function */
 		for (int i = 0; i < cw * ch; i++)
 		{
@@ -1490,14 +1493,18 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 			{
 				/* getOldSrc()[e] returns the $\bar{Q}_g^{(m)}$ */
 				src_ratio = new_src[i][e] / meshCell->getOldSrc()[e];
-
+				tmp_src = 0.0;
 				for (int t = 0; t < 8; t++)
 				{
 					int d = e * 8 + t;
 					new_quad_src[i][d] = meshCell->getQuadSrc()[d] * src_ratio;
+					tmp_src += new_quad_src[i][d];
 				}
 				log_printf(ACTIVE, "Average source ratio for cell %d" 
 						   " energy %d, by %e", i, e, src_ratio - 1.0);
+				log_printf(ACTIVE, "Cell %d, energy %d, bar{q} / Sum q = %.10f",
+						   i, e, new_src[i][e] / tmp_src);			
+
 			}
 		} /* finish iterating over i; exit to iter level */
 
@@ -1505,7 +1512,6 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 
 		/* weighting on net current */
 		//double wp = 0.798184;
-		double wc = 1.0; 
 #if phi_update	
 		double wq = 1.0 * FOUR_PI;
 		double wt = 1.0 / 8.0 * FOUR_PI;
@@ -1546,7 +1552,7 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 #endif
 					flux -= delta;
 
-					net_current[i][e] -= wc * delta;
+					net_current[i][e] -= delta;
 				}
 				_mesh->getCells(i_array[num_track * j])->getMeshSurfaces(1)
 					->setQuadFlux(flux, e, 1);
@@ -1585,7 +1591,7 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 						new_quad_src[i][d] / quad_xs[i][e];
 #endif
 					flux -= delta;
-					net_current[i][e] -= wc * delta;
+					net_current[i][e] -= delta;
 				}
 				_mesh->getCells(i_array[num_track * j])->getMeshSurfaces(1)
 					->setQuadFlux(flux, e, 0);
@@ -1595,7 +1601,6 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 		} /* finish looping over energy; exit to iter level */				
 
 		double new_flux = 0;
-
 		/* Computs new cell-averaged scalar flux based on new_sum_quad_flux */
 		if (_run_loo_phi)
 		{
@@ -1607,7 +1612,7 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 				{
 					/* we multiple sin 45 degree to converge flux to current, 
 					 * divide by cell side length to get grad J */
-					leakage = net_current[i][e] * SIN_THETA_45 
+					leakage = net_current[i][e] * SIN_THETA_45
 						/ meshCell->getWidth();
 
 					log_printf(ACTIVE, "%.10f, %.10f, %.10f", leakage, 
@@ -1617,6 +1622,15 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 					new_flux = (FOUR_PI * new_src[i][e] - leakage) 
 						/ meshCell->getSigmaT()[e];
 					meshCell->setNewFlux(new_flux, e);
+
+					// DEBUG: back out leakage: 
+					log_printf(ACTIVE, "wc = %.10f",
+								(FOUR_PI * new_src[i][e] -
+								meshCell->getSigmaT()[e] * 
+								meshCell->getOldFlux()[e])
+							   / leakage
+							   );
+
 					log_printf(ACTIVE, "Cell %d energy %d scalar flux update"
 							   " by (before normalization) %.10f", i, e, 
 							   meshCell->getNewFlux()[e] 
@@ -2189,7 +2203,7 @@ void Cmfd::updateMOCFlux(int iteration){
 	int i, e;
 	std::vector<int>::iterator iter;
 
-	double under_relax = 1.0;
+	double under_relax = _damp;
 
 	/* loop over mesh cells */
 #if USE_OPENMP
