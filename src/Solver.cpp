@@ -42,9 +42,11 @@ Solver::Solver(Geometry* geom, TrackGenerator* track_generator,
 	_geometry_file = opts->getGeometryFile();
 	_damp_factor = opts->getDampFactor();
 	_track_spacing = opts->getTrackSpacing();
+	_boundary_iteration = opts->getBoundaryIteration();
 
 	_cmfd_k = _k_eff;
 	_loo_k = _k_eff;
+
 
 	try{
 		_flat_source_regions = new FlatSourceRegion[_num_FSRs];
@@ -89,8 +91,6 @@ Solver::~Solver() {
 #endif
 
 }
-
-
 
 /**
  * Pre-computes exponential pre-factors for each segment of each track for
@@ -1359,7 +1359,7 @@ double Solver::runLoo(int i)
 	double loo_keff;
 
 	//_cmfd->storePreMOCMeshSource(_flat_source_regions);
-	MOCsweep(4);
+	MOCsweep(_boundary_iteration + 1);
 
 	_k_half = computeKeff(100);
 
@@ -1386,7 +1386,7 @@ double Solver::runCmfd(int i)
 {
 	double cmfd_keff;
 
-	MOCsweep(4);
+	MOCsweep(_boundary_iteration + 1);
 	_k_half = computeKeff(100);
 
 	/* compute cross sections and diffusion coefficients */
@@ -1489,6 +1489,11 @@ double Solver::kernel(int max_iterations) {
 	/* Stores the initial FSR powers into old_fsr_powers */
 	for (int n = 0; n < _num_FSRs; n++)
 		old_fsr_powers[n] = _FSRs_to_powers[n];
+
+	if (_run_cmfd || _run_loo)
+		log_printf(NORMAL, "Acceleration is on with %d boundary iteration", 
+				   _boundary_iteration);
+
 
 	/* Source iteration loop */
 	for (i = 0; i < max_iterations; i++) 

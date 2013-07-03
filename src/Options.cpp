@@ -31,6 +31,8 @@ Options::Options(int argc, char **argv)
 	_loo1 = false;
 	_loo2 = false;
 	_damp_factor = 1.0;
+	_boundary_iteration = 2;
+
 
 	/* plotting options */
 	_plot_quad_flux = false;             /* Plots quad flux, net current, xs */
@@ -95,6 +97,8 @@ Options::Options(int argc, char **argv)
 				_track_spacing = atof(argv[i]);
 			else if (LAST("--numazimuthal") || LAST("-na"))
 				_num_azim = atoi(argv[i]);
+			else if (LAST("--boundaryiteration") || LAST("-bi"))
+				_boundary_iteration = atoi(argv[i]);
 			else if (LAST("--dampfactor") || LAST("-df"))
 				_damp_factor = atof(argv[i]);
 			else if (LAST("--bitdimension") || LAST("-bd"))
@@ -461,4 +465,9 @@ bool Options::getAccAfterMOCConverge(){
 double Options::getDampFactor()
 {
 	return _damp_factor;
+}
+
+int Options::getBoundaryIteration()
+{
+	return _boundary_iteration;
 }

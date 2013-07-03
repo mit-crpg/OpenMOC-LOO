@@ -52,6 +52,7 @@ private:
 	double _k_guess;
 	bool _diffusion_correction;
 	double _damp_factor;
+	int _boundary_iteration;
 public:
     Options(int argc, char **argv);
     ~Options(void);
@@ -90,6 +91,7 @@ public:
 	bool getDiffusionCorrection();
 	bool getAccAfterMOCConverge();
 	double getDampFactor();
+	int getBoundaryIteration();
 };
 
 #endif

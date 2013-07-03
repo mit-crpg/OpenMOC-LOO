@@ -64,6 +64,7 @@ private:
 	std::string _geometry_file;
 	double _damp_factor;
 	double _track_spacing;
+	int _boundary_iteration;
 
 #if !STORE_PREFACTORS
 	double* _pre_factor_array;
