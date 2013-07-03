@@ -882,271 +882,257 @@ void Solver::MOCsweep(int max_iterations)
 						sigma_t_l, index, currents)
 		#endif
 		/* Loop over each thread */
-		for (t=0; t < num_threads; t++) {
+		for (t=0; t < num_threads; t++) 
+		{
 
 			/* Loop over the pair of azimuthal angles for this thread */
 			j = t;
-			while (j < _num_azim) {
+			while (j < _num_azim) 
+			{
 
-			/* Loop over all tracks for this azimuthal angles */
-			for (k = 0; k < _num_tracks[j]; k++) {
+				/* Loop over all tracks for this azimuthal angles */
+				for (k = 0; k < _num_tracks[j]; k++) 
+				{
 
-				/* Initialize local pointers to important data structures */
-				track = &_tracks[j][k];
-				segments = track->getSegments();
-				num_segments = track->getNumSegments();
-				weights = track->getPolarWeights();
-				polar_fluxes = track->getPolarFluxes();
+					/* Initialize local pointers to important data structures */
+					track = &_tracks[j][k];
+					segments = track->getSegments();
+					num_segments = track->getNumSegments();
+					weights = track->getPolarWeights();
+					polar_fluxes = track->getPolarFluxes();
 
-				/* Loop over each segment in forward direction */
-				for (s = 0; s < num_segments; s++) {
-					segment = segments.at(s);
-					fsr = &_flat_source_regions[segment->_region_id];
-					ratios = fsr->getRatios();
+					/* Loop over each segment in forward direction */
+					for (s = 0; s < num_segments; s++) 
+					{
+						segment = segments.at(s);
+						fsr = &_flat_source_regions[segment->_region_id];
+						ratios = fsr->getRatios();
 
-					/* Zero out temporary FSR flux array */
-					for (e = 0; e < NUM_ENERGY_GROUPS; e++)
-						fsr_flux[e] = 0.0;
+						/* Zero out temporary FSR flux array */
+						for (e = 0; e < NUM_ENERGY_GROUPS; e++)
+							fsr_flux[e] = 0.0;
 
-					/* Initialize the polar angle and energy group counter */
-					pe = 0;
+						/* Initialize the polar angle, energy group counter */
+						pe = 0;
 
 #if !STORE_PREFACTORS
-					sigma_t = segment->_material->getSigmaT();
+						sigma_t = segment->_material->getSigmaT();
 
-					for (e = 0; e < NUM_ENERGY_GROUPS; e++)
+						for (e = 0; e < NUM_ENERGY_GROUPS; e++)
+						{
+
+							fsr_flux[e] = 0;
+							sigma_t_l = sigma_t[e] * segment->_length;
+							//sigma_t_l = std::min(sigma_t_l,10.0);
+							index = sigma_t_l / _pre_factor_spacing;
+							index = std::min(index * 2 * NUM_POLAR_ANGLES,
+											 _pre_factor_max_index);
+							
+							for (p = 0; p < NUM_POLAR_ANGLES; p++)
+							{
+								delta = (polar_fluxes[pe] - ratios[e]) *
+									(1 - (_pre_factor_array[index + 2 * p] 
+										  * sigma_t_l + 
+										  _pre_factor_array[index + 2 * p + 1]));
+								fsr_flux[e] += delta * weights[p];
+								polar_fluxes[pe] -= delta;
+								pe++;
+								
+							}
+						}
+
+#else
+						/* Loop over all polar angles and energy groups */
+						for (e = 0; e < NUM_ENERGY_GROUPS; e++) 
+						{
+							for (p = 0; p < NUM_POLAR_ANGLES; p++) 
+							{
+								delta = (polar_fluxes[pe] -ratios[e]) *
+									segment->_prefactors[e][p];
+								fsr_flux[e] += delta * weights[p];
+								polar_fluxes[pe] -= delta;
+								pe++;
+							}
+						}
+#endif
+
+						/* if segment crosses a surface in fwd direction, 
+						   tally current/weight */
+						if (_run_loo)
+							tallyLooCurrent(track, segment, meshSurfaces, 1);
+						else if (_run_cmfd)
+							tallyCmfdCurrent(track, segment, meshSurfaces, 1);
+
+						/* Increments the scalar flux for this FSR */
+						fsr->incrementFlux(fsr_flux);
+					}
+
+					/* Transfers flux to outgoing track */
+					track->getTrackOut()->setPolarFluxes(track->isReflOut(), 0, 
+														 polar_fluxes);
+
+					/* Tallys leakage */
+					pe = 0;
+					for (e = 0; e < NUM_ENERGY_GROUPS; e++) 
 					{
-
-						fsr_flux[e] = 0;
-						sigma_t_l = sigma_t[e] * segment->_length;
-						//sigma_t_l = std::min(sigma_t_l,10.0);
-						index = sigma_t_l / _pre_factor_spacing;
-						index = std::min(index * 2 * NUM_POLAR_ANGLES,
-												_pre_factor_max_index);
-
 						for (p = 0; p < NUM_POLAR_ANGLES; p++)
 						{
-							delta = (polar_fluxes[pe] - ratios[e]) *
-							(1 - (_pre_factor_array[index + 2 * p] * sigma_t_l
-							+ _pre_factor_array[index + 2 * p + 1]));
-							fsr_flux[e] += delta * weights[p];
-							polar_fluxes[pe] -= delta;
-							pe++;
-
-						}
-					}
-
-#else
-					/* Loop over all polar angles and energy groups */
-					for (e = 0; e < NUM_ENERGY_GROUPS; e++) {
-						for (p = 0; p < NUM_POLAR_ANGLES; p++) {
-							delta = (polar_fluxes[pe] -ratios[e]) *
-								segment->_prefactors[e][p];
-							fsr_flux[e] += delta * weights[p];
-							polar_fluxes[pe] -= delta;
+							_geom->getSurface(track->getSurfFwd())
+								->incrementLeakage(track->isReflOut(), 
+												   polar_fluxes[pe]*weights[p]/2.0,
+												   e);
 							pe++;
 						}
 					}
-#endif
 
-					/* if segment crosses a surface in fwd direction, 
-					   tally current/weight */
-					if (_run_loo)
-						tallyLooCurrent(track, segment, meshSurfaces, 1);
-					else if (_run_cmfd)
-						tallyCmfdCurrent(track, segment, meshSurfaces, 1);
-
-					/* Increments the scalar flux for this FSR */
-					fsr->incrementFlux(fsr_flux);
-				}
-
-				/* Transfers flux to outgoing track */
-				track->getTrackOut()->setPolarFluxes(track->isReflOut(), 0, 
-													 polar_fluxes);
-
-				/* Tallys leakage */
-				pe = 0;
-				for (e = 0; e < NUM_ENERGY_GROUPS; e++) 
-				{
-					for (p = 0; p < NUM_POLAR_ANGLES; p++)
+					/* Loops over each segment in the reverse direction */
+					for (s = num_segments-1; s > -1; s--) 
 					{
-						_geom->getSurface(track->getSurfFwd())
-							->incrementLeakage(track->isReflOut(), 
-											   polar_fluxes[pe]*weights[p]/2.0,
-											   e);
-						pe++;
-					}
-				}
+						segment = segments.at(s);
+						fsr = &_flat_source_regions[segment->_region_id];
+						ratios = fsr->getRatios();
 
-				/* Loops over each segment in the reverse direction */
-				for (s = num_segments-1; s > -1; s--) {
-					segment = segments.at(s);
-					fsr = &_flat_source_regions[segment->_region_id];
-					ratios = fsr->getRatios();
-
-					/* Zero out temporary FSR flux array */
-					for (e = 0; e < NUM_ENERGY_GROUPS; e++)
-						fsr_flux[e] = 0.0;
+						/* Zero out temporary FSR flux array */
+						for (e = 0; e < NUM_ENERGY_GROUPS; e++)
+							fsr_flux[e] = 0.0;
 
 
-					/* Initialize the polar angle and energy group counter */
-					pe = GRP_TIMES_ANG;
+						/* Initialize the polar angle, energy group counter */
+						pe = GRP_TIMES_ANG;
 
 #if !STORE_PREFACTORS
-					sigma_t = segment->_material->getSigmaT();
+						sigma_t = segment->_material->getSigmaT();
+						
+						for (e = 0; e < NUM_ENERGY_GROUPS; e++) 
+						{
+							fsr_flux[e] = 0;
+							sigma_t_l = sigma_t[e] * segment->_length;
+							//sigma_t_l = std::min(sigma_t_l,10.0);
+							index = sigma_t_l / _pre_factor_spacing;
+							index = std::min(index * 2 * NUM_POLAR_ANGLES,
+											 _pre_factor_max_index);
 
-					for (e = 0; e < NUM_ENERGY_GROUPS; e++) {
-
-						fsr_flux[e] = 0;
-						sigma_t_l = sigma_t[e] * segment->_length;
-						//sigma_t_l = std::min(sigma_t_l,10.0);
-						index = sigma_t_l / _pre_factor_spacing;
-						index = std::min(index * 2 * NUM_POLAR_ANGLES,
-												_pre_factor_max_index);
-
-						for (p = 0; p < NUM_POLAR_ANGLES; p++){
-							delta = (polar_fluxes[pe] - ratios[e]) *
-							(1 - (_pre_factor_array[index + 2 * p] * sigma_t_l
-							+ _pre_factor_array[index + 2 * p + 1]));
-							fsr_flux[e] += delta * weights[p];
-							polar_fluxes[pe] -= delta;
-							pe++;
+							for (p = 0; p < NUM_POLAR_ANGLES; p++)
+							{
+								delta = (polar_fluxes[pe] - ratios[e]) *
+									(1 - (_pre_factor_array[index + 2 * p] 
+										  * sigma_t_l
+										  + _pre_factor_array[index + 2 * p + 1]));
+								fsr_flux[e] += delta * weights[p];
+								polar_fluxes[pe] -= delta;
+								pe++;
+							}
 						}
-					}
 #else
-					/* Loop over all polar angles and energy groups */
-					for (e = 0; e < NUM_ENERGY_GROUPS; e++) {
-						for (p = 0; p < NUM_POLAR_ANGLES; p++) {
-							delta = (polar_fluxes[pe] - ratios[e]) *
-											segment->_prefactors[e][p];
-							fsr_flux[e] += delta * weights[p];
-							polar_fluxes[pe] -= delta;
-							pe++;
+						/* Loop over all polar angles and energy groups */
+						for (e = 0; e < NUM_ENERGY_GROUPS; e++) 
+						{
+							for (p = 0; p < NUM_POLAR_ANGLES; p++) 
+							{
+								delta = (polar_fluxes[pe] - ratios[e]) *
+									segment->_prefactors[e][p];
+								fsr_flux[e] += delta * weights[p];
+								polar_fluxes[pe] -= delta;
+								pe++;
+							}
 						}
-					}
 #endif
 
-					/* if segment crosses a surface in bwd direction, 
-					   tally quadrature flux for LOO acceleration */
-					if (_run_loo)
-						tallyLooCurrent(track, segment, meshSurfaces, -1);
-					else if (_run_cmfd)
-						tallyCmfdCurrent(track, segment, meshSurfaces, -1);
+						/* if segment crosses a surface in bwd direction, 
+						   tally quadrature flux for LOO acceleration */
+						if (_run_loo)
+							tallyLooCurrent(track, segment, meshSurfaces, -1);
+						else if (_run_cmfd)
+							tallyCmfdCurrent(track, segment, meshSurfaces, -1);
 						
-					/* Increments the scalar flux for this FSR */
-					fsr->incrementFlux(fsr_flux);
-				}
+						/* Increments the scalar flux for this FSR */
+						fsr->incrementFlux(fsr_flux);
+					}
 
-				/* Transfers flux to incoming track */
-				track->getTrackIn()->setPolarFluxes(track->isReflIn(), 
-													GRP_TIMES_ANG, 
-													polar_fluxes);
-
-				/* Tallies leakage */
-				pe = GRP_TIMES_ANG;
-				for (e = 0; e < NUM_ENERGY_GROUPS; e++) {
-					for (p = 0; p < NUM_POLAR_ANGLES; p++){
-						_geom->getSurface(track->getSurfBwd())
-							->incrementLeakage(track->isReflIn(), 
-											   polar_fluxes[pe]*weights[p]/2.0,
-											   e);
-						pe++;
+					/* Transfers flux to incoming track */
+					track->getTrackIn()->setPolarFluxes(track->isReflIn(), 
+														GRP_TIMES_ANG, 
+														polar_fluxes);
+					/* Tallies leakage */
+					pe = GRP_TIMES_ANG;
+					for (e = 0; e < NUM_ENERGY_GROUPS; e++) 
+					{
+						for (p = 0; p < NUM_POLAR_ANGLES; p++)
+						{
+							_geom->getSurface(track->getSurfBwd())
+								->incrementLeakage(track->isReflIn(), 
+												   polar_fluxes[pe]*weights[p]
+												   /2.0,
+												   e);
+							pe++;
+						}
 					}
 				}
-			}
 
-			/* Update the azimuthal angle index for this thread
-			 * such that the next azimuthal angle is the one that reflects
-			 * out of the current one. If instead this is the 2nd (final)
-			 * angle to be used by this thread, break loop */
-			if (j < num_threads)
-				j = _num_azim - j - 1;
-			else
-				break;
-
+				/* Update the azimuthal angle index for this thread
+				 * such that the next azimuthal angle is the one that reflects
+				 * out of the current one. If instead this is the 2nd (final)
+				 * angle to be used by this thread, break loop */
+				if (j < num_threads)
+					j = _num_azim - j - 1;
+				else
+					break;
 			}
 		}
-
+		
 		/* Add in source term and normalize flux to volume for each region */
 		/* Loop over flat source regions, energy groups */
 		#if USE_OPENMP
 		#pragma omp parallel for private(fsr, scalar_flux, ratios, \
 													sigma_t, volume)
 		#endif
-		for (int r = 0; r < _num_FSRs; r++) {
+		for (int r = 0; r < _num_FSRs; r++) 
+		{
 			fsr = &_flat_source_regions[r];
 			scalar_flux = fsr->getFlux();
 			ratios = fsr->getRatios();
 			sigma_t = fsr->getMaterial()->getSigmaT();
 			volume = fsr->getVolume();
 
-			for (int e = 0; e < NUM_ENERGY_GROUPS; e++) {
-				fsr->setFlux(e, scalar_flux[e] / 2.0);
-				fsr->setFlux(e, FOUR_PI * ratios[e] + (scalar_flux[e] /
-												(sigma_t[e] * volume)));
+			for (int e = 0; e < NUM_ENERGY_GROUPS; e++) 
+			{
+				fsr->setFlux(e, FOUR_PI * ratios[e] 
+							 + (scalar_flux[e] / (2.0 * sigma_t[e] * volume)));
 			}
 		}
-
-		/* computes new _k_eff; it is important that we compute new k 
-		 * before normalizing flux and compute new source */
-		_k_eff = computeKeff(i);
 		
-		/* Normalize scalar fluxes and computes Q for each FSR */
-		normalizeFlux();
-		updateSource();
-		computeFsrPowers();
-
-		/* Book-keeping: update old source in each FSR */
-		double *source, *old_source;
-		for (int r = 0; r < _num_FSRs; r++) 
+		/* If more than one iteration is requested, we only computes source for
+		 * the last iteration, all previous iterations are considered to be 
+		 * converging boundary fluxes */
+		if (i == max_iterations - 1)
 		{
-			fsr = &_flat_source_regions[r];
-			source = fsr->getSource();
-			old_source = fsr->getOldSource();
+			if (_run_loo)
+				_cmfd->storePreMOCMeshSource(_flat_source_regions);
 
-			for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
-				old_source[e] = source[e];
+      		/* computes new _k_eff; it is important that we compute new k 
+			 * before computing new source */
+		    _k_eff = computeKeff(i);
+
+		    /* Normalize scalar fluxes and computes Q for each FSR */
+		    normalizeFlux();
+			updateSource();
 		}
 
-		/* If more than two sweep of MOC is requested, check for convergence */
-		/* 
-		   double *old_scalar_flux;
-		if (max_iterations > 2) 
-		{
-			bool converged = true;
-			#if USE_OPENMP
-			#pragma omp parallel for private(fsr, scalar_flux, old_scalar_flux)
- shared(converged)
-			#endif
+			computeFsrPowers();
+
+			/* Book-keeping: update old source in each FSR */
+			double *source, *old_source;
 			for (int r = 0; r < _num_FSRs; r++) 
 			{
 				fsr = &_flat_source_regions[r];
-				scalar_flux = fsr->getFlux();
-				old_scalar_flux = fsr->getOldFlux();
-
-				for (int e = 0; e < NUM_ENERGY_GROUPS; e++) 
-				{
-					if (fabs((scalar_flux[e] - old_scalar_flux[e]) /
-							old_scalar_flux[e]) > FLUX_CONVERGENCE_THRESH )
-						converged = false;
-
-					old_scalar_flux[e] = scalar_flux[e];
-				}
+				source = fsr->getSource();
+				old_source = fsr->getOldSource();
+				
+				for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
+					old_source[e] = source[e];
 			}
-
-              if (converged){
-				  log_printf(NORMAL, "MOC converges after %d sweeps", i);
-			    return;
-		    }
-		}
-		*/
 	} /* exit iteration loops */
-
-    /* 
-	if (max_iterations > 2)
-		log_printf(WARNING, "Scalar flux did not converge after %d iterations",
-															max_iterations); 
-	*/
+		
 	return;
 }
 
@@ -1262,7 +1248,7 @@ void Solver::normalizeFlux(){
 	}
 
 	/* Renormalize tallied current on each surface */
-	if (_run_cmfd)
+	if ((_run_cmfd) && !(_acc_after_MOC_converge))
 	{
 		int cw = _geom->getMesh()->getCellWidth();
 		int ch = _geom->getMesh()->getCellHeight();
@@ -1278,11 +1264,34 @@ void Solver::normalizeFlux(){
 				{
 					meshCell->getMeshSurfaces(s)->setCurrent(
 						meshCell->getMeshSurfaces(s)->getCurrent(e) 
-						* renorm_factor,
-						e);
+						* renorm_factor, e);
 				}
 			}
 		}
+	}
+	else if ((_run_loo) && !(_acc_after_MOC_converge))
+	{
+		int cw = _geom->getMesh()->getCellWidth();
+		int ch = _geom->getMesh()->getCellHeight();
+		int ng = NUM_ENERGY_GROUPS;
+		MeshCell *meshCell;
+
+		for (int i = 0; i < cw * ch; i++)
+		{
+			meshCell = _geom->getMesh()->getCells(i);
+			for (int s = 0; s < 4; s++)
+			{
+				for (int e = 0; e < ng; e++)
+				{
+					for (int ind = 0; ind < 2; ind++)
+					{
+						meshCell->getMeshSurfaces(s)->setQuadFlux(
+							meshCell->getMeshSurfaces(s)->getQuadFlux(e, ind)
+							* renorm_factor, e, ind);
+					}
+				}
+			}
+		}		
 	}
 
 	return;
@@ -1349,9 +1358,8 @@ double Solver::runLoo(int i)
 {
 	double loo_keff;
 
-	MOCsweep(3);
-	_cmfd->storePreMOCMeshSource(_flat_source_regions);
-	MOCsweep(1);
+	//_cmfd->storePreMOCMeshSource(_flat_source_regions);
+	MOCsweep(4);
 
 	_k_half = computeKeff(100);
 
@@ -1378,7 +1386,7 @@ double Solver::runCmfd(int i)
 {
 	double cmfd_keff;
 
-	MOCsweep(2);
+	MOCsweep(4);
 	_k_half = computeKeff(100);
 
 	/* compute cross sections and diffusion coefficients */

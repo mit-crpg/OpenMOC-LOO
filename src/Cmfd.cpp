@@ -2367,16 +2367,11 @@ void Cmfd::storePreMOCMeshSource(FlatSourceRegion* fsrs)
 
 				source_tally_cell += source * volume;
 				vol_tally_cell += volume;
-
-				if (e == 0)
-					log_printf(DEBUG, "fsr in cell %d has src %.10f, vol %f", 
-							   i, source, volume);
-
 			} 
 
 			/* For multi energy groups, we go ahead and set the xs for this 
 			 * energy group */
-			if (_mesh->getMultigroup() == true)
+			if (_mesh->getMultigroup())
 			{
 				meshCell->setOldSrc(source_tally_cell / vol_tally_cell, e);
 				log_printf(DEBUG, " cell %d Q_%d^(m) = %.10f", 
