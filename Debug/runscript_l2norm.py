@@ -11,8 +11,6 @@ import os
 geometries=['geometry_pin5.xml']#, 'geometry_pin51.xml', 'geometry_pin52.xml']
 materials=['material_simple.xml','material_simple.xml','material_simple.xml']
 
-
-
 ts = [0.01]
 na = [128]
 
@@ -24,13 +22,25 @@ for i, geometry in enumerate(geometries):
                       + ' -g ../xml-sample/Cmfd/' + geometry 
                       + ' -na ' + str(angle) 
                       + ' -ts ' + str(spacing) 
-                      + ' -fc 1e-5 -wc')
+                      + ' -fc 1e-5 -wc -df 1.0')
             os.system('../bin/openmoc'
                       + ' -m ../xml-sample/Cmfd/' + materials[i]
                       + ' -g ../xml-sample/Cmfd/' + geometry 
                       + ' -na ' + str(angle) 
                       + ' -ts ' + str(spacing) 
-                      + ' -fc 1e-5 -wl')
+                      + ' -fc 1e-5 -wc -df 0.7')
+            os.system('../bin/openmoc'
+                      + ' -m ../xml-sample/Cmfd/' + materials[i]
+                      + ' -g ../xml-sample/Cmfd/' + geometry 
+                      + ' -na ' + str(angle) 
+                      + ' -ts ' + str(spacing) 
+                      + ' -fc 1e-5 -wl -df 1.0')
+            os.system('../bin/openmoc'
+                      + ' -m ../xml-sample/Cmfd/' + materials[i]
+                      + ' -g ../xml-sample/Cmfd/' + geometry 
+                      + ' -na ' + str(angle) 
+                      + ' -ts ' + str(spacing) 
+                      + ' -fc 1e-5 -wl -df 0.7')
 
     # list of l2_norm files
     l2_norm_files = []
@@ -52,6 +62,11 @@ for i, geometry in enumerate(geometries):
         for c_num, c in enumerate(file):
             if c == '_':
                 method = file[-8:-4]
+                break
+
+        for c_num, c in enumerate(file):
+            if c == '_':
+                damp = file[17:-9]
                 break
 
         # find number of lines in file
@@ -78,22 +93,26 @@ for i, geometry in enumerate(geometries):
                 #fit_coeff = np.polyfit(iteration, np.log(l2_norm), 1)
                 #fit_vals  = np.polyval(fit_coeff, iteration)
                 #plt.semilogy(iteration, np.exp(fit_vals))
-        plt.semilogy(iteration, l2_norm, '+', label = "method = %s" %(method))
+        plt.semilogy(iteration, l2_norm, '+', label = ("%s damp %s" %
+		(method, damp)))
         plt.xlim(0, iteration[num_lines-1] + 1)
         plt.legend(loc=1, ncol=3, shadow=False)
 		
         plt.figure(2)
-        plt.semilogy(iteration, linf, '+', label= "method = %s" %(method))
+        plt.semilogy(iteration, linf, '+', label=("%s damp %s" %
+		(method, damp)))
         plt.xlim(0, iteration[num_lines-1] + 1)
         plt.legend(loc=1, ncol=3, shadow=False)
 		
         plt.figure(3)
-        plt.plot(iteration, keff, '+', label= "method = %s" %(method))
+        plt.plot(iteration, keff, '+', label= ("%s damp %s" %
+		(method, damp)))
         plt.xlim(0, iteration[num_lines-1] + 1)
         plt.legend(loc=1, ncol=3, shadow=False)
 		
         plt.figure(4)
-        plt.plot(iteration, num, '+', label = "method = %s" %(method))
+        plt.plot(iteration, num, '+', label = ("%s damp %s" %
+		(method, damp)))
         plt.xlim(0, iteration[num_lines-1] + 1)
         plt.legend(loc=1, ncol=3, shadow=False)
 		
