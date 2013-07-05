@@ -1527,7 +1527,6 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 			}
 		} /* finish iterating over i; exit to iter level */
 
-		/* Sweeps over geometry, solve LOO MOC */
 
 		/* weighting on net current */
 		//double wp = 0.798184;
@@ -1535,8 +1534,9 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 		double wq = 1.0 * FOUR_PI;
 		double wt = 1.0 / 8.0 * FOUR_PI;
 #endif
-
 		double leak_tot = 0.0;
+
+		/* Sweeps over geometry, solve LOO MOC */
 		for (int e = 0; e < ng; e++)
 		{
 			double flux, initial_flux, delta;
@@ -1562,7 +1562,7 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 					d = e * 8 + t;
 
 					/* Set flux to zero if incoming from a vacuum boundary */
-					if (((bc[0] == VACUUM) && (t == 6) && (i % cw ==0))
+					if (((bc[0] == VACUUM) && (t == 6) && (i % cw == 0))
 						|| ((bc[1] == VACUUM) && (t == 0) 
 							&& (i >= cw * (ch - 1)))
 						|| ((bc[2] == VACUUM) && (t == 2)
@@ -1628,12 +1628,12 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 					t = t_arrayb[x];
 					d = e * 8 + t;
 
-					if (((bc[0] == VACUUM) && (t == 5) && (i % cw ==0))
-						|| ((bc[1] == VACUUM) && (t == 3) 
+					if (((bc[0] == VACUUM) && (t == 5) && (i % cw == 0))
+						|| ((bc[1] == VACUUM) && (t == 7) 
 							&& (i >= cw * (ch - 1)))
 						|| ((bc[2] == VACUUM) && (t == 1)
 							&& ((i + 1) % cw == 0))
-						|| ((bc[3] == VACUUM) && (t == 7)
+						|| ((bc[3] == VACUUM) && (t == 3)
 							&& (i < cw)))
 					{							
 						leak_tot += flux;
@@ -1749,6 +1749,7 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 				abs_tot += meshCell->getSigmaA()[e] * flux * vol;
 			}
 		}
+		leak_tot *= SIN_THETA_45 * _mesh->getCells(0)->getWidth();
 		_keff = fis_tot / (abs_tot + leak_tot); 
 
 		/* Normalizes flux based on fission source */
@@ -1811,7 +1812,7 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 		/* In DEBUG mode (run CMFD or LOO after MOC converges), 
 		 * moc_iter = 10000 */
 		if (moc_iter == 10000)
-			log_printf(ACTIVE, " %d-th LOO iteration k = %.10f, eps = %e", 
+			log_printf(NORMAL, " %d-th LOO iteration k = %.10f, eps = %e", 
 					   iter, _keff, eps);
 		else
 			log_printf(ACTIVE, " %d-th LOO iteration k = %.10f, eps = %e", 
