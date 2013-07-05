@@ -1064,7 +1064,7 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter)
 	Vec phi_old, sold, snew, res;
 	PetscInt size, its;
 	PetscScalar sumold, sumnew, scale_val, eps;
-	//PetscScalar rtol = 1e-10, atol = rtol;
+	PetscScalar rtol = 1e-10, atol = rtol;
 	std::string string;
 
 	/* if single group, set ng (number of groups) to 1 */
@@ -1091,7 +1091,7 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter)
 	/* if solve method is CMFD, set max_outer such that flux
 	 * partially converges */
 	else
-		max_outer = 10;
+		max_outer = 100;
 
 	/* create old source and residual vectors */
 	petsc_err = VecCreateSeq(PETSC_COMM_WORLD, ch*cw*ng, &sold);
@@ -1132,7 +1132,7 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter)
 	petsc_err = PetscObjectSetPrecision( (_p_PetscObject*) ksp, 
 										 PETSC_PRECISION_DOUBLE);
 	petsc_err = KSPSetOperators(ksp, _A, _A, SAME_NONZERO_PATTERN);
-	//petsc_err = KSPSetTolerances(ksp, rtol, atol, PETSC_DEFAULT, PETSC_DEFAULT);
+	petsc_err = KSPSetTolerances(ksp, rtol, atol, PETSC_DEFAULT, PETSC_DEFAULT);
 	petsc_err = KSPSetInitialGuessNonzero(ksp, PETSC_TRUE);
 	/* from options must be called before KSPSetUp() */
 	petsc_err = KSPSetFromOptions(ksp);
@@ -1210,8 +1210,9 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter)
 		}
 		else
 		{
-			log_printf(ACTIVE, " %d-th CMFD iteration k = %.10f, eps = %e", 
-					   iter, _keff, eps);
+			log_printf(ACTIVE, " %d-th CMFD iteration k = %.10f, eps = %e"
+					   " GMRES # = %d" , 
+					   iter, _keff, eps, (int)its);
 		}
 
 		/* divide new RHS by keff for the next iteration */
@@ -1228,7 +1229,7 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter)
 
 		/* check for convergence for the CMFD iterative solver using 
 		 * _l2_norm_conv_thresh as criteria */
-		if (iter > 0 && eps < _l2_norm_conv_thresh)
+		if (iter > 5 && eps < _l2_norm_conv_thresh)
 			break;
 	}
 	_num_iter_to_conv = iter + 1;
@@ -1258,6 +1259,7 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter)
 		for (int e = 0; e < ng; e++){
 			meshCell->setOldFlux(double(old_phi[i*ng + e]), e);
 			meshCell->setNewFlux(double(new_phi[i*ng + e]), e);
+			
 			log_printf(ACTIVE, " Relative to (m+1/2): %.10f",
 					   (double)(old_phi[i*ng + e]) 
 					   / (double)(new_phi[i*ng + e]));
@@ -1321,14 +1323,14 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 {
 	log_printf(INFO, "Running low order MOC solver...");
 
-	int iter, max_outer = 500; 
+	int iter, max_outer = 200; 
 
 	if (solveMethod == DIFFUSION)
 		max_outer = 1000;
 
 	if (moc_iter == 10000)
 	{
-		max_outer = 1;
+		max_outer = 5;
 		log_printf(NORMAL, "DEBUG mode on, max outer = %d", max_outer);
 	}
 
@@ -1425,17 +1427,31 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 
 	generateTrack(num_loop, num_track, i_array, t_array, t_arrayb);
 
-	/*
-	for (int iii = 0; iii < num_track * num_loop; iii++)
-		printf(" %d", i_array[iii]);
+/*
+	for (int iii = 0; iii < num_loop; iii++)
+	{
+		for (int jj = 0; jj < num_track; jj++)
+			printf(" %d", i_array[iii * num_track + jj]);
+		printf("\n");
+	}
 	printf("\n");
-	for (int iii = 0; iii < num_track * num_loop; iii++)
-		printf(" %d", t_array[iii]);
+	for (int iii = 0; iii < num_loop; iii++)
+	{
+		for (int jj = 0; jj < num_track; jj++)
+			printf(" %d", t_array[iii * num_track + jj]);
+		printf("\n");
+	}
 	printf("\n");
-	for (int iii = 0; iii < num_track * num_loop; iii++)
-		printf(" %d", t_arrayb[iii]);
+	for (int iii = 0; iii < num_loop; iii++)
+	{
+		for (int jj = 0; jj < num_track; jj++)
+			printf(" %d", t_arrayb[iii * num_track + jj]);
+		printf("\n");
+	}
 	printf("\n");
-	*/
+*/
+
+
 
 	/* Starts LOO acceleration iteration, we do not update src, quad_src, 
 	 * quad_flux, old_flux, as they are computed from the MOC step (i.e., 
@@ -1604,7 +1620,6 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 		/* Computs new cell-averaged scalar flux based on new_sum_quad_flux */
 		if (_run_loo_phi)
 		{
-			double leakage = 0;
 			for (int i = 0; i < cw * ch; i++)
 			{
 				meshCell = _mesh->getCells(i);
@@ -1612,30 +1627,28 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 				{
 					/* we multiple sin 45 degree to converge flux to current, 
 					 * divide by cell side length to get grad J */
-					leakage = net_current[i][e] * SIN_THETA_45
-						/ meshCell->getWidth();
+					net_current[i][e] *= SIN_THETA_45 / meshCell->getWidth();
 
-					log_printf(ACTIVE, "%.10f, %.10f, %.10f", leakage, 
-							   meshCell->getSigmaA()[e] 
+					log_printf(ACTIVE, "%.10f, %.10f, %.10f", 
+							   net_current[i][e], meshCell->getSigmaA()[e] 
 							   * meshCell->getOldFlux()[e], new_src[i][e]);
 
-					new_flux = (FOUR_PI * new_src[i][e] - leakage) 
+					new_flux = (FOUR_PI * new_src[i][e] - net_current[i][e]) 
 						/ meshCell->getSigmaT()[e];
 					meshCell->setNewFlux(new_flux, e);
 
-					// DEBUG: back out leakage: 
+					// DEBUG: back out leakage:
+					/*
 					log_printf(ACTIVE, "wc = %.10f",
 								(FOUR_PI * new_src[i][e] -
 								meshCell->getSigmaT()[e] * 
-								meshCell->getOldFlux()[e])
-							   / leakage
-							   );
+								meshCell->getOldFlux()[e])/ net_current[i][e]);
+					*/
 
 					log_printf(ACTIVE, "Cell %d energy %d scalar flux update"
 							   " by (before normalization) %.10f", i, e, 
 							   meshCell->getNewFlux()[e] 
-							   / meshCell->getOldFlux()[e]
-						);
+							   / meshCell->getOldFlux()[e]);
 				}
 			}
 		}
@@ -1655,8 +1668,7 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 					log_printf(ACTIVE, " %.10f", meshCell->getOldFlux()[e] /
 							   meshCell->getSumQuadFlux()[e]);
 
-					new_flux = meshCell->getOldFlux()[e] 
-						* (1.0 - _damp + _damp * phi_ratio);
+					new_flux = meshCell->getOldFlux()[e] * phi_ratio;
 #if phi_update /* for debugging new feature */
 					new_flux = sum_quad_flux[i][e];					
 #endif
@@ -1684,7 +1696,8 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 
 		/* Normalizes flux based on fission source */
 		double normalize_factor = 1.0 / fis_tot * vol_tot;
-		log_printf(ACTIVE, "normalize_factor = %.10f", normalize_factor);
+		if (iter == 0)
+			log_printf(ACTIVE, "normalize_factor = %.10f", normalize_factor);
 
 		for (int i = 0; i < cw * ch; i++)
 		{
@@ -1741,7 +1754,7 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 		/* In DEBUG mode (run CMFD or LOO after MOC converges), 
 		 * moc_iter = 10000 */
 		if (moc_iter == 10000)
-			log_printf(NORMAL, " %d-th LOO iteration k = %.10f, eps = %e", 
+			log_printf(ACTIVE, " %d-th LOO iteration k = %.10f, eps = %e", 
 					   iter, _keff, eps);
 		else
 			log_printf(ACTIVE, " %d-th LOO iteration k = %.10f, eps = %e", 
@@ -2205,13 +2218,16 @@ void Cmfd::updateMOCFlux(int iteration){
 
 	double under_relax = _damp;
 
+	int max_i = -10, max_e = -10; 
+	double max = -100.0, tmp_max = 0, tmp_cmco;
+	double max_range = 100, min_range = 0.01;
 	/* loop over mesh cells */
 #if USE_OPENMP
 #pragma omp parallel for private(meshCell, i, e, \
     new_flux, old_flux, flux, fsr, iter)
 #endif 
-	for (i = 0; i < cw * ch; i++){
-
+	for (i = 0; i < cw * ch; i++)
+	{
 		/* get pointer to current mesh cell */
 		meshCell = _mesh->getCells(i);
 
@@ -2219,6 +2235,14 @@ void Cmfd::updateMOCFlux(int iteration){
 		for (e = 0; e < ng; e++){
 			old_flux = meshCell->getOldFlux()[e];
 			new_flux = meshCell->getNewFlux()[e];
+
+			tmp_max = fabs(new_flux / old_flux - 1.0);
+			if (tmp_max > max)
+			{
+				max = tmp_max;
+				max_i = i;
+				max_e = e;
+			}
 
 			log_printf(ACTIVE, "Cell %d flux,"
 					   " old =  %f, new = %f, new/old = %f", 
@@ -2233,11 +2257,21 @@ void Cmfd::updateMOCFlux(int iteration){
 				flux = fsr->getFlux();
 
 				/* set new flux in FSR */
-				fsr->setFlux(e, under_relax * new_flux / old_flux * flux[e]
+				tmp_cmco = new_flux / old_flux;
+				if (tmp_cmco > max_range)
+					tmp_cmco = max_range;
+				else if (tmp_cmco < min_range)
+					tmp_cmco = min_range;
+				fsr->setFlux(e, under_relax * tmp_cmco * flux[e]
 							 + (1.0 - under_relax) * flux[e]);
+				
 			}
 		}
 	}
+
+	log_printf(NORMAL, " CMC0 = %.20e, cell # %d, energy %d", 
+			   max + 1.0, max_i, max_e);
+
 	return;
 }
 
