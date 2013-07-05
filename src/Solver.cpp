@@ -1101,22 +1101,23 @@ void Solver::MOCsweep(int max_iterations)
 			}
 		}
 		
+        normalizeFlux();
+
+
 		/* If more than one iteration is requested, we only computes source for
 		 * the last iteration, all previous iterations are considered to be 
 		 * converging boundary fluxes */
 		if (i == max_iterations - 1)
 		{
-			if (_run_loo)
-				_cmfd->storePreMOCMeshSource(_flat_source_regions);
+			//if (_run_loo)
+			//	_cmfd->storePreMOCMeshSource(_flat_source_regions);
 
       		/* computes new _k_eff; it is important that we compute new k 
 			 * before computing new source */
 		    _k_eff = computeKeff(i);
 
 		    /* Normalize scalar fluxes and computes Q for each FSR */
-		    normalizeFlux();
 			updateSource();
-		}
 
 			computeFsrPowers();
 
@@ -1131,6 +1132,7 @@ void Solver::MOCsweep(int max_iterations)
 				for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
 					old_source[e] = source[e];
 			}
+        }
 	} /* exit iteration loops */
 		
 	return;
@@ -1358,7 +1360,7 @@ double Solver::runLoo(int i)
 {
 	double loo_keff;
 
-	//_cmfd->storePreMOCMeshSource(_flat_source_regions);
+	_cmfd->storePreMOCMeshSource(_flat_source_regions);
 	MOCsweep(_boundary_iteration + 1);
 
 	_k_half = computeKeff(100);
