@@ -1451,7 +1451,10 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 	printf("\n");
 */
 
-
+	/* Prestore Boundary Condition to make our lives easier */
+	boundaryType bc[4];
+	for (int s = 0; s < 4; s++)
+		bc[s] = _mesh->getBoundary(s);
 
 	/* Starts LOO acceleration iteration, we do not update src, quad_src, 
 	 * quad_flux, old_flux, as they are computed from the MOC step (i.e., 
@@ -1533,6 +1536,7 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 		double wt = 1.0 / 8.0 * FOUR_PI;
 #endif
 
+		double leak_tot = 0.0;
 		for (int e = 0; e < ng; e++)
 		{
 			double flux, initial_flux, delta;
@@ -1541,14 +1545,34 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 			for (int j = 0; j < num_loop; j++)
 			{
 				/* Get the initial angular flux */
-				flux = _mesh->getCells(i_array[num_track * j])
-					->getMeshSurfaces(1)->getQuadFlux(e, 1);
+				if (bc[1] == REFLECTIVE)
+				{
+					flux = _mesh->getCells(i_array[num_track * j])
+						->getMeshSurfaces(1)->getQuadFlux(e, 1);
+				}
+				else if (bc[1] == VACUUM)
+					flux = 0;
+
+				/* Store initial flux for debugging */
 				initial_flux = flux;
 				for (int x = num_track * j; x < num_track * (j + 1); x++)
 				{
 					i = i_array[x];
 					t = t_array[x];
 					d = e * 8 + t;
+
+					/* Set flux to zero if incoming from a vacuum boundary */
+					if (((bc[0] == VACUUM) && (t == 6) && (i % cw ==0))
+						|| ((bc[1] == VACUUM) && (t == 0) 
+							&& (i >= cw * (ch - 1)))
+						|| ((bc[2] == VACUUM) && (t == 2)
+							&& ((i + 1) % cw == 0))
+						|| ((bc[3] == VACUUM) && (t == 4)
+							&& (i < cw)))
+					{
+						leak_tot += flux; 
+						flux = 0.0;
+					}	
 					/*
 					sum_quad_flux[i][e] += flux * ratio[i][e] + 
 						new_quad_src[i][d] * (1- ratio[i][e]) / quad_xs[i][e];
@@ -1570,18 +1594,32 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 
 					net_current[i][e] -= delta;
 				}
-				_mesh->getCells(i_array[num_track * j])->getMeshSurfaces(1)
-					->setQuadFlux(flux, e, 1);
+
+				if (bc[1] == REFLECTIVE)
+				{
+					_mesh->getCells(i_array[num_track * j])->getMeshSurfaces(1)
+						->setQuadFlux(flux, e, 1);
+				}
+				else if (bc[1] == VACUUM)
+					leak_tot += flux;
+
 				log_printf(ACTIVE, "  Energy %d, loop %d, fwd, %f -> %f, %e",
 						   e, j, initial_flux, flux, flux / initial_flux - 1.0);
 			}
 
+			if (bc[1] == VACUUM)
+				flux = 0.0;
 			/* Backward Directions */
 			for (int j = 0; j < num_loop; j++)
 			{
-				flux = _mesh->getCells(i_array[num_track * j])
-					->getMeshSurfaces(1)
-    				->getQuadFlux(e, 0);
+				if (bc[1] == REFLECTIVE)
+				{
+					flux = _mesh->getCells(i_array[num_track * j])
+						->getMeshSurfaces(1)->getQuadFlux(e, 0);
+				}
+				else if (bc[1] == VACUUM)
+					flux = 0.0;
+					
 				initial_flux = flux; 
 				for (int x = num_track * j + num_track - 1; 
 					 x > num_track * j - 1; x--)
@@ -1589,6 +1627,19 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 					i = i_array[x];
 					t = t_arrayb[x];
 					d = e * 8 + t;
+
+					if (((bc[0] == VACUUM) && (t == 5) && (i % cw ==0))
+						|| ((bc[1] == VACUUM) && (t == 3) 
+							&& (i >= cw * (ch - 1)))
+						|| ((bc[2] == VACUUM) && (t == 1)
+							&& ((i + 1) % cw == 0))
+						|| ((bc[3] == VACUUM) && (t == 7)
+							&& (i < cw)))
+					{							
+						leak_tot += flux;
+						flux = 0.0;
+					}
+
 					/* 
 					   sum_quad_flux[i][e] += flux * ratio[i][e] + 
 					   new_quad_src[i][d] * (1 - ratio[i][e]) / quad_xs[i][e];
@@ -1609,8 +1660,14 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 					flux -= delta;
 					net_current[i][e] -= delta;
 				}
-				_mesh->getCells(i_array[num_track * j])->getMeshSurfaces(1)
-					->setQuadFlux(flux, e, 0);
+				if (bc[1] == REFLECTIVE)
+				{
+					_mesh->getCells(i_array[num_track * j])->getMeshSurfaces(1)
+						->setQuadFlux(flux, e, 0);
+				}
+				else if (bc[1] == VACUUM)
+					leak_tot += flux;
+
 				log_printf(ACTIVE, "  Energy %d, loop %d, bwd, %f -> %f, %e",
 						   e, j, initial_flux, flux, flux / initial_flux - 1.0);
 			}
@@ -1692,7 +1749,7 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 				abs_tot += meshCell->getSigmaA()[e] * flux * vol;
 			}
 		}
-		_keff = fis_tot / abs_tot; 
+		_keff = fis_tot / (abs_tot + leak_tot); 
 
 		/* Normalizes flux based on fission source */
 		double normalize_factor = 1.0 / fis_tot * vol_tot;
