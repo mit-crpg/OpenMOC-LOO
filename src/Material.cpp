@@ -56,7 +56,8 @@ Material::Material(int id,
 		for (int i = 0; i < NUM_ENERGY_GROUPS; i++)
 			_chi[i] = chi[i] / chi_tot;
 	}
-	//memcpy(_chi, chi, NUM_ENERGY_GROUPS*sizeof(*_chi));
+	else
+		memcpy(_chi, chi, NUM_ENERGY_GROUPS*sizeof(*_chi));
 
 	if (sigma_s_cnt != NUM_ENERGY_GROUPS*NUM_ENERGY_GROUPS)
 		log_printf(ERROR, "Wrong number of sigma_s");
