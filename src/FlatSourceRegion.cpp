@@ -300,7 +300,6 @@ void FlatSourceRegion::computeRatios() {
  * this region
  */
 double FlatSourceRegion::computeFissionRate() {
-
 	double power = 0.0;
 	double* sigma_f = _material->getSigmaF();
 
