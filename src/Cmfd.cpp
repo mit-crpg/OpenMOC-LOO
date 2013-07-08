@@ -2414,7 +2414,8 @@ void Cmfd::updateMOCFlux(int iteration){
 
 	int max_i = -10, max_e = -10; 
 	double max = -100.0, tmp_max = 0, tmp_cmco;
-	double max_range = 100, min_range = 0.01;
+	//double max_range = 100, min_range = 0.01;
+
 	/* loop over mesh cells */
 #if USE_OPENMP
 #pragma omp parallel for private(meshCell, i, e, \
@@ -2426,7 +2427,8 @@ void Cmfd::updateMOCFlux(int iteration){
 		meshCell = _mesh->getCells(i);
 
 		/* loop over groups */
-		for (e = 0; e < ng; e++){
+		for (e = 0; e < ng; e++)
+		{
 			old_flux = meshCell->getOldFlux()[e];
 			new_flux = meshCell->getNewFlux()[e];
 
@@ -2444,7 +2446,8 @@ void Cmfd::updateMOCFlux(int iteration){
 
 			/* loop over FRSs in mesh cell */
 			for (iter = meshCell->getFSRs()->begin(); 
-				 iter != meshCell->getFSRs()->end(); ++iter) {
+				 iter != meshCell->getFSRs()->end(); ++iter) 
+			{
 				fsr = &_flat_source_regions[*iter];
 
 				/* get fsr flux */
@@ -2452,10 +2455,14 @@ void Cmfd::updateMOCFlux(int iteration){
 
 				/* set new flux in FSR */
 				tmp_cmco = new_flux / old_flux;
+
+				/*
 				if (tmp_cmco > max_range)
 					tmp_cmco = max_range;
 				else if (tmp_cmco < min_range)
 					tmp_cmco = min_range;
+				*/
+
 				fsr->setFlux(e, under_relax * tmp_cmco * flux[e]
 							 + (1.0 - under_relax) * flux[e]);
 				
@@ -2463,7 +2470,7 @@ void Cmfd::updateMOCFlux(int iteration){
 		}
 	}
 
-	log_printf(NORMAL, " CMC0 = %.20e, cell # %d, energy %d", 
+	log_printf(ACTIVE, " CMCO = %.20e, cell # %d, energy %d", 
 			   max + 1.0, max_i, max_e);
 
 	return;

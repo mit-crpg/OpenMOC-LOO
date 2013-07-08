@@ -74,9 +74,6 @@ Material::Material(int id,
 			_sigma_s[i][j] = sigma_s[j * NUM_ENERGY_GROUPS + i];
 	}
 
-
-
-
 	/* Uncompressed indices for the start and end of nonzero elements */
 	_sigma_t_start = 0;
 	_sigma_t_end = NUM_ENERGY_GROUPS;

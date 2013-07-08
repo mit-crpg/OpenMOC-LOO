@@ -1493,8 +1493,12 @@ double Solver::kernel(int max_iterations) {
 		old_fsr_powers[n] = _FSRs_to_powers[n];
 
 	if (_run_cmfd || _run_loo)
+	{
 		log_printf(NORMAL, "Acceleration is on with %d boundary iteration", 
 				   _boundary_iteration);
+		log_printf(NORMAL, "Acceleration is on with damping of %f",
+			_damp_factor);
+	}
 
 
 	/* Source iteration loop */
