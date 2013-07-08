@@ -34,8 +34,8 @@ Cmfd::Cmfd(Geometry* geom, Plotter* plotter, Mesh* mesh,
 	_ng = NUM_ENERGY_GROUPS;
 	if (_mesh->getMultigroup() == false)
 		_ng = 1;
-	_cw = mesh->getCellWidth();
-	_ch = mesh->getCellHeight();
+	_cw = _mesh->getCellWidth();
+	_ch = _mesh->getCellHeight();
 
 	_damp = damp;
 
@@ -1932,6 +1932,7 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 	/* Computes the L2 norm of point-wise-division of energy-integrated
 	 * fission source of mesh cells relative to (m+1/2) */
 	eps = 0;
+	int num_counted = 0;
 	for (int i = 0; i < cw * ch; i++)
 	{
 		meshCell = _mesh->getCells(i);
@@ -1944,9 +1945,15 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 			old_power[i] += xs * meshCell->getOldFlux()[e];
 			new_power[i] += xs * meshCell->getNewFlux()[e];
 		} 
-		eps += pow(new_power[i] / old_power[i] - 1.0, 2);
+		if (old_power[i] > 0.0)
+		{
+			eps += pow(new_power[i] / old_power[i] - 1.0, 2);
+			num_counted++;
+		}
 	}
+	eps /= (double) num_counted;
 	_l2_norm = pow(eps, 0.5);
+
 	log_printf(DEBUG, " iteration %d, L2 norm of cell power error = %e", 
 			   moc_iter, _l2_norm);
 	
@@ -2410,7 +2417,7 @@ void Cmfd::updateMOCFlux(int iteration){
 	int i, e;
 	std::vector<int>::iterator iter;
 
-	double under_relax = _damp;
+	double under_relax = 1.0; //_damp;
 
 	int max_i = -10, max_e = -10; 
 	double max = -100.0, tmp_max = 0, tmp_cmco;
