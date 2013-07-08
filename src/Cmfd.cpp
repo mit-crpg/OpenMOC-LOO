@@ -1154,9 +1154,12 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter)
 	petsc_err = MatMult(_A, _phi_new, sold);
 	petsc_err = VecSum(sold, &sumold);
 	_keff = sumnew / sumold;
-	log_printf(DEBUG, "Before CMFD, xs collapsed from the %i-MOC"
-			   " produce keff of %.10f = %.10f / %.10f", 
-			   moc_iter, _keff, (double) sumnew, (double) sumold);
+	if (moc_iter == 10000)
+	{
+		log_printf(NORMAL, "Before CMFD, xs collapsed from MOC"
+				   " produce keff of %.10f = %.10f / %.10f", 
+				   _keff, (double) sumnew, (double) sumold);
+	}
 	CHKERRQ(petsc_err);
 
 	/* recompute and normalize initial source */
@@ -1190,7 +1193,6 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter)
 		petsc_err = VecNorm(res, NORM_2, &eps);
 		CHKERRQ(petsc_err);
 
-
 		/* prints keff and error */
 		if (moc_iter == 10000)
 		{
@@ -1208,9 +1210,9 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter)
 				meshCell = _mesh->getCells(i);
 				for (int e = 0; e < ng; e++)
 				{
-					log_printf(NORMAL, " Relative to (m+1/2): %.10f",
+					log_printf(ACTIVE, " Update from (m+1/2) - 1.0: %e",
 							   (double)(old_phi[i*ng + e]) 
-							   / (double)(new_phi[i*ng + e]));
+							   / (double)(new_phi[i*ng + e]) - 1.0);
 				}
 			}			
 			petsc_err = VecRestoreArray(phi_old, &old_phi);

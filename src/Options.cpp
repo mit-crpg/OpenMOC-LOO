@@ -184,7 +184,10 @@ Options::Options(int argc, char **argv)
 					strcmp(argv[i], "--plotdiffusion") == 0)
 				_plot_diffusion = true;
 			else if (LAST("--fluxconv") || LAST("-fc"))
+			{
 				_moc_conv_thresh = atof(argv[i]);
+				_l2_norm_conv_thresh = _moc_conv_thresh * 1e-2;
+			}
 			else if (LAST("--l2normconv") || LAST("-lc"))
 				_l2_norm_conv_thresh = atof(argv[i]);
 			else if (strcmp(argv[i], "-mg") == 0 ||

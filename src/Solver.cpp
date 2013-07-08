@@ -1782,7 +1782,7 @@ void Solver::checkNeutronBalance()
 				/* compute total residual and average ratio */
 				/* residual = leakage + absorption - fission */
 				residual = leak + absorb - src;
-				log_printf(NORMAL, "CMFD cell %d energy %d, residual %.10f"
+				log_printf(ACTIVE, "CMFD cell %d energy %d, residual %.10f"
 						   " leak: %.10f"
 						   " absorb: %.10f, src: %.10f,"
 						   "  fis: %.10f, keff: %.10f", 
