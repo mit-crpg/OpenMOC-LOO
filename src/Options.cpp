@@ -72,7 +72,7 @@ Options::Options(int argc, char **argv)
 
 
 	_print_matrices = false;			/* Default will not print matrices */
-	_cmfd_level = 1;					/* Default cmfd level is 1 (hightest level) */
+	_cmfd_level = 0;					/* Default cmfd level is 0: pin-wise */
 	_plot_keff = false;					/* Default will not plot keff */
 	_diffusion = false;					/* Default will not solve diffusion problem */
 

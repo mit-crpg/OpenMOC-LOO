@@ -173,7 +173,7 @@ void Geometry::addMaterial(Material* material) {
 		try {
 			/* Check that the sum of the material's absorption and scattering
 			 * cross-sections equals its total cross-section */
-			//material->checkSigmaT();
+			material->checkSigmaT();
 			_materials.insert(std::pair<int, Material*>(material->getId(),
 					material));
 			log_printf(INFO, "Added material with id = %d to geometry",
@@ -2045,13 +2045,16 @@ bool Geometry::mapContainsKey(std::map<K, V> map, K key) {
  * This is a recursive function which makes a mesh for solving the
  * Course Mesh Finite Difference (CMFD) diffusion equations. The CMFD mesh must
  * be a structured mesh and defined as a certain lattice level (counting from
- * the top). This function takes in a pointer to a Mesh object and defines
+ * the bottom). For instance, -cl 0 means pin wise, -cl 1 means assembly etc.
+ * This function takes in a pointer to a Mesh object and defines
  * the cell dimensions (cellWidth and CellHeight) and geometric dimensions
  * (width and height) of the mesh. This function adds new MeshCell objects
  * to the Mesh and defines the values in each MeshCell.
  * @param mesh a pointer to the Mesh object
  */
-void Geometry::makeCMFDMesh(Mesh* mesh, int numAzim, bool multigroup, bool printMatrices, int cmfdLevel){
+void Geometry::makeCMFDMesh(Mesh* mesh, int numAzim, 
+							bool multigroup, bool printMatrices, int cmfdLevel)
+{
 	log_printf(NORMAL, "Making mesh at level %i...", cmfdLevel);
 
 	int max_cmfd_level = 0;
@@ -2059,14 +2062,20 @@ void Geometry::makeCMFDMesh(Mesh* mesh, int numAzim, bool multigroup, bool print
 
 	/* find the mesh depth of the geometry */
 	max_cmfd_level = findMeshDepth(univ, max_cmfd_level);
-	log_printf(INFO, "Maximum cmfd mesh depth is: %i level(s)", max_cmfd_level);
+	log_printf(INFO, "Maximum cmfd mesh depth is: %i level(s)", 
+			   max_cmfd_level);
 
 	/* if cmfd_level > CMFD_LEVEL throw errror message */
-	if (cmfdLevel > max_cmfd_level){
-		log_printf(ERROR, "Specified CMFD LEVEL (%i) is greater than the "
-				"maximum mesh depth (%i). Please reset CMFD_LEVEL to be <= %i.",
-				cmfdLevel, max_cmfd_level, max_cmfd_level);
+	if ((cmfdLevel < 0) || (cmfdLevel > max_cmfd_level - 1))
+	{
+		log_printf(ERROR, "Specified CMFD LEVEL is %i. "
+				   "Allowed range is: 0 (most fine) through %i (most coarse)",
+				   cmfdLevel, max_cmfd_level - 1);
 	}
+
+	/* converts bottom up index into top down index as the below functions 
+	 * actually uses the latter */
+	cmfdLevel = max_cmfd_level - cmfdLevel;
 
 	/* find cell width and height at CMFD_LEVEL lattice */
 	int width = 0;
