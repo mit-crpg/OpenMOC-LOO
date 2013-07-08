@@ -1418,9 +1418,12 @@ double Solver::computeFsrL2Norm(double *old_fsr_powers)
 	{
 		if (old_fsr_powers[i] > 0.0)
 		{
+			log_printf(INFO, "new power = %f, old power = %f", 
+					   _FSRs_to_powers[i], old_fsr_powers[i]);
+
 			l2_norm += pow(_FSRs_to_powers[i] 
 						   / old_fsr_powers[i] - 1.0, 2.0);
-			num_counted += 1;
+			num_counted++;
 		}
 	}
 	l2_norm /= (double) num_counted;
