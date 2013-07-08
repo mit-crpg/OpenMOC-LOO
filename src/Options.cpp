@@ -159,7 +159,7 @@ Options::Options(int argc, char **argv)
 				_loo = true;
 				_loo1 = true;
 				_loo2 = false;
-				_damp_factor = 0.50;
+				_damp_factor = 1.0;
 			}
 			else if (strcmp(argv[i], "-wl2") == 0 ||
 					strcmp(argv[i], "--withloo2") == 0)
