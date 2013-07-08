@@ -149,6 +149,7 @@ Options::Options(int argc, char **argv)
 			{
 				_cmfd = false;
 				_loo = true;
+				_loo1 = false;
 				_loo2 = true;
 				_damp_factor = 1.0;
 			}
