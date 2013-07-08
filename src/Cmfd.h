@@ -76,6 +76,12 @@ private:
 	bool _run_loo_phi;
 	bool _run_cmfd;
 	int _num_iter_to_conv;
+	int _num_loop;
+	int _num_track;
+	int _cw;
+	int _ch;
+	int _ng;
+
 public:
 	Cmfd(Geometry* geom, Plotter* plotter, Mesh* mesh, 
 		 bool runCmfd, bool runLoo, bool runLoo1, bool runLoo2,
@@ -113,8 +119,9 @@ public:
 	void computeQuadSrc();
 	void computeQuadFlux();
 	double computeLooFluxPower(solveType solveMethod, int moc_iter, double k);
-	void generateTrack(int num_loop, int num_track, int *i_array, 
-					   int *t_array, int *t_arrayb);
+	void generateTrack(int *i_array, int *t_array, int *t_arrayb);
+	double computeNormalization();
+	void normalizeFlux(double normalize_factor, int *i_array);
 };
 
 #endif /* CMFD_H_ */

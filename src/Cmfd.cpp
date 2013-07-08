@@ -31,23 +31,26 @@ Cmfd::Cmfd(Geometry* geom, Plotter* plotter, Mesh* mesh,
 	_l2_norm_conv_thresh = l2_norm_conv_thresh;
 	_use_diffusion_correction = useDiffusionCorrection;
 
+	_ng = NUM_ENERGY_GROUPS;
+	if (_mesh->getMultigroup() == false)
+		_ng = 1;
+	_cw = mesh->getCellWidth();
+	_ch = mesh->getCellHeight();
+
 	_damp = damp;
 
 	_run_cmfd = false;
-	if (runCmfd){
+	if (runCmfd)
+	{
 		_run_cmfd = true;
 		PetscInt size1, size2;
-		int ng = NUM_ENERGY_GROUPS;
-		if (_mesh->getMultigroup() == false){
-			ng = 1;
-		}
-
-		int cw = mesh->getCellWidth();
-		int ch = mesh->getCellHeight();
-		size1 = cw*ch*ng;
-		size2 = 4 + ng;
-		cw = createAMPhi(size1, size2, ch*cw*ng);
+		size1 = _cw * _ch * _ng;
+		size2 = 4 + _ng;
+		createAMPhi(size1, size2, _ch * _cw * _ng);
 	}
+
+	_num_loop = _cw;
+	_num_track = 4 * _cw; 
 
 	_run_loo = false;
 	_run_loo_psi = false;
@@ -818,11 +821,16 @@ void Cmfd::computeQuadFlux()
 				s[i] = meshCell->getMeshSurfaces(i);
 				for (int e = 0; e < ng; e++)
 				{
+					/* FIXME: DEBUG */
+					double tmp = 0.0;
 					for (int j = 0; j < 2; j++)
 					{
 						s[i]->setQuadFlux(s[i]->getQuadCurrent(e, j) / scale, 
 										  e, j);
-					}
+						tmp += s[i]->getQuadCurrent(e,j);
+						
+					}					
+					s[i]->setCurrent(tmp, e);
 
 					if (e == 0)
 					{
@@ -1360,6 +1368,10 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 	/* Allocate memories for terms internal to the LOO iterative solver */
 	double **sum_quad_flux, **quad_xs, **ratio, **expo, **tau, **new_src;
 	double **new_quad_src, **net_current;
+
+	/* FIXME: debug for comparing leakage between high order & low order */
+	double **ho_current;
+
 	try
 	{
 		sum_quad_flux = new double*[cw*ch];
@@ -1370,6 +1382,7 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 		new_src = new double*[cw*ch];
 		new_quad_src = new double*[cw*ch];
 		net_current = new double*[cw*ch];
+		ho_current = new double*[cw*ch];
 
 		for (int i = 0; i < cw * ch; i++)
 		{
@@ -1381,6 +1394,7 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 			ratio[i] = new double[ng];
 			net_current[i] = new double[ng];
 			new_quad_src[i] = new double[8 * ng];
+			ho_current[i] = new double[ng];
 		}
 	}
 	catch (std::exception &e)
@@ -1420,29 +1434,27 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 		} 
 	}
 
-	int num_loop = cw;
-	int num_track = 4 * cw; 
-	int i_array[num_track * num_loop], t_array[num_track * num_loop], 
-		t_arrayb[num_track * num_loop];
+	int i_array[_num_track * _num_loop], t_array[_num_track * _num_loop], 
+		t_arrayb[_num_track * _num_loop];
 
-	generateTrack(num_loop, num_track, i_array, t_array, t_arrayb);
+	generateTrack(i_array, t_array, t_arrayb);
 
 /*
-	for (int iii = 0; iii < num_loop; iii++)
+	for (int iii = 0; iii < _num_loop; iii++)
 	{
 		for (int jj = 0; jj < num_track; jj++)
 			printf(" %d", i_array[iii * num_track + jj]);
 		printf("\n");
 	}
 	printf("\n");
-	for (int iii = 0; iii < num_loop; iii++)
+	for (int iii = 0; iii < _num_loop; iii++)
 	{
 		for (int jj = 0; jj < num_track; jj++)
 			printf(" %d", t_array[iii * num_track + jj]);
 		printf("\n");
 	}
 	printf("\n");
-	for (int iii = 0; iii < num_loop; iii++)
+	for (int iii = 0; iii < _num_loop; iii++)
 	{
 		for (int jj = 0; jj < num_track; jj++)
 			printf(" %d", t_arrayb[iii * num_track + jj]);
@@ -1455,6 +1467,7 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 	boundaryType bc[4];
 	for (int s = 0; s < 4; s++)
 		bc[s] = _mesh->getBoundary(s);
+
 
 	/* Starts LOO acceleration iteration, we do not update src, quad_src, 
 	 * quad_flux, old_flux, as they are computed from the MOC step (i.e., 
@@ -1536,18 +1549,19 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 #endif
 		double leak_tot = 0.0;
 
+
 		/* Sweeps over geometry, solve LOO MOC */
 		for (int e = 0; e < ng; e++)
 		{
 			double flux, initial_flux, delta;
 			int i, t, d;
 			/* Forward Directions */
-			for (int j = 0; j < num_loop; j++)
+			for (int j = 0; j < _num_loop; j++)
 			{
 				/* Get the initial angular flux */
 				if (bc[1] == REFLECTIVE)
 				{
-					flux = _mesh->getCells(i_array[num_track * j])
+					flux = _mesh->getCells(i_array[_num_track * j])
 						->getMeshSurfaces(1)->getQuadFlux(e, 1);
 				}
 				else if (bc[1] == VACUUM)
@@ -1555,7 +1569,7 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 
 				/* Store initial flux for debugging */
 				initial_flux = flux;
-				for (int x = num_track * j; x < num_track * (j + 1); x++)
+				for (int x = _num_track * j; x < _num_track * (j + 1); x++)
 				{
 					i = i_array[x];
 					t = t_array[x];
@@ -1597,7 +1611,7 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 
 				if (bc[1] == REFLECTIVE)
 				{
-					_mesh->getCells(i_array[num_track * j])->getMeshSurfaces(1)
+					_mesh->getCells(i_array[_num_track * j])->getMeshSurfaces(1)
 						->setQuadFlux(flux, e, 1);
 				}
 				else if (bc[1] == VACUUM)
@@ -1610,19 +1624,19 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 			if (bc[1] == VACUUM)
 				flux = 0.0;
 			/* Backward Directions */
-			for (int j = 0; j < num_loop; j++)
+			for (int j = 0; j < _num_loop; j++)
 			{
 				if (bc[1] == REFLECTIVE)
 				{
-					flux = _mesh->getCells(i_array[num_track * j])
+					flux = _mesh->getCells(i_array[_num_track * j])
 						->getMeshSurfaces(1)->getQuadFlux(e, 0);
 				}
 				else if (bc[1] == VACUUM)
 					flux = 0.0;
 					
 				initial_flux = flux; 
-				for (int x = num_track * j + num_track - 1; 
-					 x > num_track * j - 1; x--)
+				for (int x = _num_track * j + _num_track - 1; 
+					 x > _num_track * j - 1; x--)
 				{
 					i = i_array[x];
 					t = t_arrayb[x];
@@ -1660,9 +1674,10 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 					flux -= delta;
 					net_current[i][e] -= delta;
 				}
+
 				if (bc[1] == REFLECTIVE)
 				{
-					_mesh->getCells(i_array[num_track * j])->getMeshSurfaces(1)
+					_mesh->getCells(i_array[_num_track * j])->getMeshSurfaces(1)
 						->setQuadFlux(flux, e, 0);
 				}
 				else if (bc[1] == VACUUM)
@@ -1674,6 +1689,8 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 		} /* finish looping over energy; exit to iter level */				
 
 		double new_flux = 0;
+		MeshCell *meshCellNext;
+
 		/* Computs new cell-averaged scalar flux based on new_sum_quad_flux */
 		if (_run_loo_phi)
 		{
@@ -1682,30 +1699,20 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 				meshCell = _mesh->getCells(i);
 				for (int e = 0; e < ng; e++)
 				{
-					/* we multiple sin 45 degree to converge flux to current, 
+					/* we multiple sin 45 to converge flux to current, 
 					 * divide by cell side length to get grad J */
-					net_current[i][e] *= SIN_THETA_45 / meshCell->getWidth();
+					net_current[i][e] *= SIN_THETA_45 
+						/ meshCell->getWidth();	
 
-					log_printf(ACTIVE, "%.10f, %.10f, %.10f", 
-							   net_current[i][e], meshCell->getSigmaA()[e] 
-							   * meshCell->getOldFlux()[e], new_src[i][e]);
-
-					new_flux = (FOUR_PI * new_src[i][e] - net_current[i][e]) 
+					new_flux = (FOUR_PI * new_src[i][e] - net_current[i][e])
 						/ meshCell->getSigmaT()[e];
 					meshCell->setNewFlux(new_flux, e);
-
-					// DEBUG: back out leakage:
-					/*
-					log_printf(ACTIVE, "wc = %.10f",
-								(FOUR_PI * new_src[i][e] -
-								meshCell->getSigmaT()[e] * 
-								meshCell->getOldFlux()[e])/ net_current[i][e]);
-					*/
-
-					log_printf(ACTIVE, "Cell %d energy %d scalar flux update"
-							   " by (before normalization) %.10f", i, e, 
+					
+					log_printf(ACTIVE, "Cell %d energy %d scalar flux"
+							   " update by (before normalization) -1 = %e", 
+							   i, e, 
 							   meshCell->getNewFlux()[e] 
-							   / meshCell->getOldFlux()[e]);
+							   / meshCell->getOldFlux()[e] - 1.0);
 				}
 			}
 		}
@@ -1720,9 +1727,11 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 					phi_ratio =  sum_quad_flux[i][e] 
 						/ meshCell->getSumQuadFlux()[e] ;/// 8;
 					log_printf(ACTIVE, "Cell %d energy %d scalar flux update "
-							   " diverge from 1 by %e", i, e, phi_ratio - 1.0);
+							   "by (before normalization) - 1 = %e", 
+							   i, e, phi_ratio - 1.0);
 
-					log_printf(ACTIVE, " %.10f", meshCell->getOldFlux()[e] /
+					log_printf(DEBUG, " phi / sum psi%.10f", 
+							   meshCell->getOldFlux()[e] /
 							   meshCell->getSumQuadFlux()[e]);
 
 					new_flux = meshCell->getOldFlux()[e] * phi_ratio;
@@ -1735,8 +1744,20 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 			}
 		}
 
-		/* Computes keff assuming zero leakage */
-		double fis_tot = 0, abs_tot = 0, vol_tot = 0;
+		/* Computes normalization factor based on fission source */
+		double normalize_factor = computeNormalization();
+		if (iter == 0)
+			log_printf(ACTIVE, "normalize_factor = %.10f", normalize_factor);
+
+		/* Normalizes leakage, scalar flux, angular flux */
+		leak_tot *= normalize_factor;
+		for (int i = 0; i < cw * ch; i++)
+			for (int e = 0; e < ng; e++)
+				net_current[i][e] *= normalize_factor;
+		normalizeFlux(normalize_factor, i_array);
+
+		/* Computes keff with leakage */
+		double vol_tot = 0, fis_tot = 0, abs_tot = 0;
 		for (int i = 0; i < cw * ch; i++)
 		{
 			meshCell = _mesh->getCells(i);
@@ -1752,39 +1773,99 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 		leak_tot *= SIN_THETA_45 * _mesh->getCells(0)->getWidth();
 		_keff = fis_tot / (abs_tot + leak_tot); 
 
-		/* Normalizes flux based on fission source */
-		double normalize_factor = 1.0 / fis_tot * vol_tot;
-		if (iter == 0)
-			log_printf(ACTIVE, "normalize_factor = %.10f", normalize_factor);
-
-		for (int i = 0; i < cw * ch; i++)
+		/* FIXME: DEBUG */
+		if (_run_loo_phi)
 		{
-			meshCell = _mesh->getCells(i);
-			for (int e = 0; e < ng; e++)
+			for (int y = 0; y < ch; y++)
 			{
-				meshCell->setNewFlux(meshCell->getNewFlux()[e] 
-									 * normalize_factor, e);
-				log_printf(ACTIVE, "Cell %d energy %d scalar flux update"
-						   " by %.10f", i, e, 
-						   meshCell->getNewFlux()[e] / meshCell->getOldFlux()[e]
-					);
-			}
-		}
-		
-		for (int e = 0; e < ng; e++)
-		{
-			for (int j = 0; j < num_loop; j++)
-			{
-				for (int jj = 0; jj < 2; jj++)
+				for (int x = 0; x < cw; x++)
 				{
-					double flux = _mesh->getCells(i_array[num_track * j])
-						->getMeshSurfaces(1)->getQuadFlux(e, jj);
-					_mesh->getCells(i_array[num_track * j])->getMeshSurfaces(1)
-						->setQuadFlux(flux * normalize_factor, e, jj);
+					int i = y * cw + x;
+					meshCell = _mesh->getCells(i);
+					for (int e = 0; e < ng; e++)
+					{
+						ho_current[i][e] = 0.0;
+					
+						for (int s = 0; s < 4; s++)
+						{
+							ho_current[i][e] += meshCell->getMeshSurfaces(s)
+								->getCurrent(e);
+						}
+						
+						if (x > 0)
+						{
+							meshCellNext = _mesh->getCells(y * cw + x - 1);
+							ho_current[i][e] -= meshCellNext->getMeshSurfaces(2)
+								->getCurrent(e);
+						}
+						else
+							ho_current[i][e] -= meshCell->getMeshSurfaces(0)
+								->getCurrent(e);
+				
+						if (x < cw - 1)
+						{
+							meshCellNext = _mesh->getCells(y * cw + x + 1);
+							ho_current[i][e] -= meshCellNext->getMeshSurfaces(0)
+								->getCurrent(e);
+						}
+						else
+							ho_current[i][e] -= meshCell->getMeshSurfaces(2)
+								->getCurrent(e);
+
+						if (y > 0)
+						{
+							meshCellNext = _mesh->getCells((y - 1) * cw + x);
+							ho_current[i][e] -= meshCellNext->getMeshSurfaces(1)
+								->getCurrent(e);
+						}
+						else
+							ho_current[i][e] -= meshCell->getMeshSurfaces(3)
+								->getCurrent(e);
+
+						if (y < ch - 1)
+						{
+							meshCellNext = _mesh->getCells((y + 1) * cw + x);
+							ho_current[i][e] -= meshCellNext->getMeshSurfaces(3)
+								->getCurrent(e);
+						}
+						else
+							ho_current[i][e] -= meshCell->getMeshSurfaces(1)
+								->getCurrent(e);
+
+						ho_current[i][e] /= meshCell->getVolume();		
+
+						log_printf(ACTIVE, "Cell %d energy %d"
+								   " lo: %.10f, ho: %.10f, ratio - 1 = %e", 
+								   i, e, 
+								   net_current[i][e], ho_current[i][e],
+								   net_current[i][e] / ho_current[i][e] - 1.0);
+
+
+						log_printf(ACTIVE, " Balance: %.10f + %.10f = %.10f", 
+								   net_current[i][e], meshCell->getSigmaA()[e] 
+								   * meshCell->getOldFlux()[e], 
+								   FOUR_PI * new_src[i][e]);
+
+						new_flux = (FOUR_PI * new_src[i][e] - net_current[i][e])
+							/ meshCell->getSigmaT()[e];
+						meshCell->setNewFlux(new_flux, e);
+
+						// DEBUG: back out leakage:
+						/*
+						  log_printf(ACTIVE, "wc = %.10f",
+						  (FOUR_PI * new_src[i][e] -
+						  meshCell->getSigmaT()[e] * 
+						  meshCell->getOldFlux()[e])/ net_current[i][e]);
+						*/
+
+						log_printf(ACTIVE, "Cell %d energy %d scalar flux"
+							   " update by (after normalization) %.10f", i, e, 
+								   meshCell->getNewFlux()[e] 
+								   / meshCell->getOldFlux()[e]);
+					}
 				}
 			}
 		}
-
 
 		/* Computes the L2 norm of point-wise-division of energy-integrated
 		 * fission source of mesh cells between LOO iterations */
@@ -1817,8 +1898,6 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 		else
 			log_printf(ACTIVE, " %d-th LOO iteration k = %.10f, eps = %e", 
 					   iter, _keff, eps);
-		log_printf(DEBUG, "  fission source = %f, abs source = %f", 
-				   fis_tot, abs_tot);
 
 		/* If LOO iterative solver converges */
 		if (eps < _l2_norm_conv_thresh)
@@ -1892,8 +1971,68 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 	return _keff;
 }
 
-void Cmfd::generateTrack(int num_loop, int num_track, int *i_array, 
-						 int *t_array, int *t_arrayb)
+double Cmfd::computeNormalization()
+{
+	double fis_tot = 0, vol_tot = 0, flux = 0, vol = 0;
+	int cw = _mesh->getCellWidth();
+	int ch = _mesh->getCellHeight();
+	int ng = NUM_ENERGY_GROUPS;
+	MeshCell *meshCell;
+
+	for (int i = 0; i < cw * ch; i++)
+	{
+		meshCell = _mesh->getCells(i);
+		vol_tot += meshCell->getVolume();
+		for (int e = 0; e < ng; e++)
+		{
+			flux = meshCell->getNewFlux()[e];
+			vol = meshCell->getVolume();
+			fis_tot += meshCell->getNuSigmaF()[e] * flux * vol;
+		}
+	}
+	
+	return vol_tot / fis_tot;
+}
+
+void Cmfd::normalizeFlux(double normalize_factor, int *i_array)
+{
+	int cw = _mesh->getCellWidth();
+	int ch = _mesh->getCellHeight();
+	int ng = NUM_ENERGY_GROUPS;
+	MeshCell *meshCell;
+	double flux; 
+
+	for (int i = 0; i < cw * ch; i++)
+	{
+		meshCell = _mesh->getCells(i);
+		for (int e = 0; e < ng; e++)
+		{
+			meshCell->setNewFlux(
+				meshCell->getNewFlux()[e] * normalize_factor, e);
+			log_printf(ACTIVE, "Cell %d energy %d scalar flux update by"
+					   " (after normalization) - 1 =  %e", i, e, 
+					   meshCell->getNewFlux()[e] 
+					   / meshCell->getOldFlux()[e] - 1.0);
+		}
+	}
+		
+	for (int e = 0; e < ng; e++)
+	{
+		for (int j = 0; j < _num_loop; j++)
+		{
+			for (int jj = 0; jj < 2; jj++)
+			{
+				flux = _mesh->getCells(i_array[_num_track * j])
+					->getMeshSurfaces(1)->getQuadFlux(e, jj);
+				_mesh->getCells(i_array[_num_track * j])->getMeshSurfaces(1)
+					->setQuadFlux(flux * normalize_factor, e, jj);
+			}
+		}
+	}
+	return;
+}
+
+void Cmfd::generateTrack(int *i_array, int *t_array, int *t_arrayb)
 {
 	int nl, nt, i;
 	int len1, len2; 
@@ -1907,15 +2046,15 @@ void Cmfd::generateTrack(int num_loop, int num_track, int *i_array,
 	*/
 	int i_start; 
 
-	len1 = num_track / 2 - 1;
+	len1 = _num_track / 2 - 1;
 	len2 = 1;
-	for (nl = 0; nl < num_loop; nl++)
+	for (nl = 0; nl < _num_loop; nl++)
 	{
 		i_start = (ch - 1) * cw + nl;
 
-		for (nt = 0; nt < num_track; nt++)
+		for (nt = 0; nt < _num_track; nt++)
 		{
-			i = nl * num_track + nt; 
+			i = nl * _num_track + nt; 
 			
 			/* First side: start with 0 index, goes like 0,5,0,5,... */
 			if (nt < len1)
@@ -2004,9 +2143,6 @@ void Cmfd::generateTrack(int num_loop, int num_track, int *i_array,
 		len1 -= 2;
 		len2 += 2;
 	}
-
-
-	
 
 	return;
 }
