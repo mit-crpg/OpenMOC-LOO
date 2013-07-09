@@ -1,34 +1,41 @@
 import matplotlib.pyplot as plt
 from matplotlib.font_manager import FontProperties
+from itertools import cycle
 import numpy as np
 import os
 
 # plot color 
-#plt.gca().set_color_cycle(['red', 'green', 'blue', 'yellow'])
+plt.gca().set_color_cycle(['red', 'green', 'blue', 'yellow'])
 #num_plots = 4
 #colormap = plt.cm.gist_ncar
 #plt.gca().set_color_cycle([colormap(i) for i in np.linspace(0, 0.9, num_plots)])
+#colors = ('b','r','g','c', 'm', 'y', 'k')
+#colors=('red', 'green', 'blue', 'yellow')
+#colorcycle = cycle(colors)
+
+# line style
+lines = ['-o']
+linecycle = cycle(lines)
+
+
 
 # font sizes 
 fontP = FontProperties()
 fontP.set_size('small')
 
-# run OpenMOC
 
+geometries = ['geometry_UO2.xml', 'geometry_c5g7.xml', 
+              'geometry_c5g7_wo_refl.xml', 'geometry_UO2_leakage.xml']
+# ['geometry_c5g7_refl.xml']
 
-geometries = ['geometry_c5g7.xml']
-materials = ['material_c5g7.xml']
-
-#geometries = ['geometry_LRA.xml', 'geometry_UO2.xml', 'geometry_c5g7_wo_refl.xml']
-#materials = ['material_LRA.xml', 'material_c5g7.xml','material_c5g7.xml' ]
-
-#geometries=['geometry_pin52.xml']#, 'geometry_pin51.xml', 'geometry_pin52.xml']
-#materials=['material_simple.xml','material_simple.xml','material_simple.xml']
+materials = ['material_c5g7.xml', 'material_c5g7.xml', 
+			 'material_c5g7.xml', 'material_c5g7.xml']
 
 ts = [0.1]
 na = [16]
-fc = [1e-4]
+fc = [1e-8]
 
+# run OpenMOC
 for i, geometry in enumerate(geometries):
     for spacing in ts:
         for angle in na:
@@ -68,10 +75,12 @@ for i, geometry in enumerate(geometries):
     #fig_l2_norm = plt.figure(1)
     #fig_keff = plt.figure(2)
 
-    # get all l2_norm files in directory
+    # get all l2_norm file names in directory
     for file in os.listdir("."):
-        if file.startswith("l2_norm") and file.endswith(".txt"):
+        if file.startswith("l2_norm", 0, 7) and file.endswith(".txt"):
             l2_norm_files.append(file)
+
+    #print '[%s]' % l2_norm_files
 
     # parse output files
     for file in l2_norm_files:
@@ -104,73 +113,54 @@ for i, geometry in enumerate(geometries):
                 iteration[i-1] = line.split()[0]
                 cell_l2[i-1]   = line.split()[1]
                 fsr_linf[i-1]  = line.split()[2]
-                fsr_l2[i-1]      = line.split()[3]
+                fsr_l2[i-1]    = line.split()[3]
                 num[i-1]       = line.split()[5]
 
 		# plot l2 norm
-        plt.figure(1)
-        fit_coeff = np.polyfit(iteration, np.log(cell_l2), 1)
-        fit_vals  = np.polyval(fit_coeff, iteration)
-        plt.semilogy(iteration, np.exp(fit_vals))
-        plt.semilogy(iteration, cell_l2, '+', label = ("%s damp %s" %
-		(method, damp)))
-        plt.xlim(0, iteration[num_lines-1] + 1)
-        plt.legend(loc='upper center', ncol=3, prop = fontP, shadow=True, 
-				   bbox_to_anchor=(0.5,-0.1), 				
-				   fancybox=True)
-		
-        plt.figure(2)
-        #fit_coeff = np.polyfit(iteration, np.log(fsr_linf), 1)
-        #fit_vals  = np.polyval(fit_coeff, iteration)
-        #plt.semilogy(iteration, np.exp(fit_vals))
-        plt.semilogy(iteration, fsr_linf, '+', label=("%s damp %s" %
-		(method, damp)))
-        plt.xlim(0, iteration[num_lines-1] + 1)
-        plt.legend(loc='upper center', ncol=3, prop = fontP, shadow=True, 
-				   bbox_to_anchor=(0.5,-0.1), 				
-				   fancybox=True)
-		
-        plt.figure(3)
-        fit_coeff = np.polyfit(iteration, np.log(fsr_l2), 1)
-        fit_vals  = np.polyval(fit_coeff, iteration)
-        plt.semilogy(iteration, np.exp(fit_vals))
-        plt.semilogy(iteration, fsr_l2, '+', label= ("%s damp %s" %
-		(method, damp)))
-        plt.xlim(0, iteration[num_lines-1] + 1)
-        plt.legend(loc='upper center', ncol=3, prop = fontP, shadow=True, 
-				   bbox_to_anchor=(0.5,-0.1), 				
-				   fancybox=True)		
-        plt.figure(4)
-        plt.plot(iteration, num, '+', label = ("%s damp %s" %
-		(method, damp)))
-        plt.xlim(0, iteration[num_lines-1] + 1)
-        plt.legend(loc='upper center', ncol=3, prop = fontP, shadow=True, 
-				   bbox_to_anchor=(0.5,-0.1), 				
-				   fancybox=True)	
-    plt.figure(1)
+        var = []
+        var.append(cell_l2);
+        var.append(fsr_linf);
+        var.append(fsr_l2);
+        var.append(num);
+
+        for i in range(4):  
+            plt.figure(i)
+            plt.semilogy(iteration, var[i], next(linecycle), 
+            label = ("%s damp %s" %(method, damp)), markersize=5)
+            plt.xlim(0, iteration[num_lines-1] + 1)
+            plt.legend(loc='upper center', ncol=3, prop = fontP, shadow=True, 
+				       bbox_to_anchor=(0.5,-0.1),fancybox=True)
+		# end of one file
+
+    # save figure including different configuration of the same geometries.
+    plt.figure(0)
     plt.xlabel('# MOC iteration')
     plt.ylabel('Mesh Cell L2 Norm on Fission Source')
     plt.title('Geometry: %s,'%(geometry[9:-4]) + ' spacing: %s,'%str(ts[0]) 
     		  + ' #angles: %s'%str(na[0]))
     plt.savefig(geometry[9:-4] + '_cell_l2.png', bbox_inches='tight')
+    plt.clf()
 
-    plt.figure(2)
+    plt.figure(1)
     plt.xlabel('# MOC iteration')
     plt.ylabel('FSR L-infinity Norm on Fission Source')
     plt.title('Geometry: %s,'%(geometry[9:-4]) + ' spacing: %s,'%str(ts[0]) 
 			  + ' #angles: %s'%str(na[0]))
     plt.savefig(geometry[9:-4] + '_fsr_linf.png', bbox_inches='tight')
+    plt.clf()
 
-    plt.figure(3)
+    plt.figure(2)
     plt.xlabel('# MOC iteration')
     plt.ylabel('FSR L2 Norm on Fission Source')
     plt.title('Geometry: %s,'%(geometry[9:-4]) + ' spacing: %s,'%str(ts[0]) 
 			  + ' #angles: %s'%str(na[0]))
     plt.savefig(geometry[9:-4] + '_fsr_l2.png', bbox_inches='tight')
+    plt.clf()
 
-    plt.figure(4)
+    plt.figure(3)
     plt.xlabel('# MOC iteration')
     plt.ylabel('# Acceleration Iterations Taken at Each MOC Iteration')
     plt.title('Geometry: %s,'%(geometry[9:-4]) + ' spacing: %s,'%str(ts[0]) 
 			  + ' #angles: %s'%str(na[0]))
     plt.savefig(geometry[9:-4] + '_num_acc.png', bbox_inches='tight')
+    plt.clf()
