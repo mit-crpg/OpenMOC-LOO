@@ -65,10 +65,12 @@ Cmfd::Cmfd(Geometry* geom, Plotter* plotter, Mesh* mesh,
 	if (runLoo1)
 	{
 		_run_loo = true;
-		_run_loo_phi = false;
+		/* this line has to be commented out, otherwise -wl1 does not work
+		 * for c5g7_refl */
+		//_run_loo_phi = false;
 		_run_loo_psi = true;
 	}
-	else
+	else if (runLoo2)
 	{
 		_run_loo = true;
 		_run_loo_phi = true;
