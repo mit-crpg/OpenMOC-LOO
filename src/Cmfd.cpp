@@ -1770,14 +1770,16 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 
 		/* Computes normalization factor based on fission source */
 		double normalize_factor = computeNormalization();
-		if (iter == 10000)
-			log_printf(ACTIVE, "normalize_factor = %.10f", normalize_factor);
+		if (moc_iter == 10000)
+			log_printf(NORMAL, "normalize_factor = %.10f", normalize_factor);
 
 		/* Normalizes leakage, scalar flux, angular flux */
-		leak_tot *= normalize_factor;
+		//leak_tot *= normalize_factor;
+		/*
 		for (int i = 0; i < cw * ch; i++)
 			for (int e = 0; e < ng; e++)
 				net_current[i][e] *= normalize_factor;
+		*/
 		normalizeFlux(normalize_factor, i_array);
 
 		/* Computes keff with leakage */
@@ -1862,7 +1864,7 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 
 						ho_current[i][e] /= meshCell->getVolume();		
 
-						log_printf(NORMAL, "Cell %d energy %d"
+						log_printf(ACTIVE, "Cell %d energy %d"
 								   " lo: %.10f, ho: %.10f, ratio - 1 = %e", 
 								   i, e, 
 								   net_current[i][e], ho_current[i][e],
