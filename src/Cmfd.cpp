@@ -515,9 +515,7 @@ void Cmfd::computeDs()
 	/* set cell width and height */
 	int cell_height = _mesh->getCellHeight();
 	int cell_width = _mesh->getCellWidth();
-	//double dt_weight = _damp_factor;
-	//FIXME: temperary set dt_weight = 1.0;
-	double dt_weight = 1.0;
+	double dt_weight = _damp_factor;
 
 	/* loop over all mesh cells */
 #if USE_OPENMP
@@ -1580,6 +1578,8 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 				}
 				else if (bc[1] == VACUUM)
 					flux = 0;
+				else
+					log_printf(ERROR, "Unknown BC at 1st surface");
 
 				/* Store initial flux for debugging */
 				initial_flux = flux;
@@ -1598,9 +1598,11 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 						|| ((bc[3] == VACUUM) && (t == 4)
 							&& (i < cw)))
 					{
+						log_printf(NORMAL, "spot a vacuum");
 						leak_tot += flux; 
 						flux = 0.0;
-					}	
+					}
+	
 					/*
 					sum_quad_flux[i][e] += flux * ratio[i][e] + 
 						new_quad_src[i][d] * (1- ratio[i][e]) / quad_xs[i][e];
@@ -1630,13 +1632,13 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 				}
 				else if (bc[1] == VACUUM)
 					leak_tot += flux;
+				else
+					log_printf(ERROR, "spot unknonwn BC at surface 1");
 
 				log_printf(ACTIVE, "  Energy %d, loop %d, fwd, %f -> %f, %e",
 						   e, j, initial_flux, flux, flux / initial_flux - 1.0);
 			}
 
-			if (bc[1] == VACUUM)
-				flux = 0.0;
 			/* Backward Directions */
 			for (int j = 0; j < _num_loop; j++)
 			{
@@ -1647,6 +1649,8 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 				}
 				else if (bc[1] == VACUUM)
 					flux = 0.0;
+				else
+					log_printf(ERROR, "spot unknown BC at surface 1");
 					
 				initial_flux = flux; 
 				for (int x = _num_track * j + _num_track - 1; 
@@ -1664,6 +1668,7 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 						|| ((bc[3] == VACUUM) && (t == 3)
 							&& (i < cw)))
 					{							
+						log_printf(NORMAL, "spot a vacuum");
 						leak_tot += flux;
 						flux = 0.0;
 					}
@@ -1703,8 +1708,6 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 		} /* finish looping over energy; exit to iter level */				
 
 		double new_flux = 0;
-		MeshCell *meshCellNext;
-
 		/* Computs new cell-averaged scalar flux based on new_sum_quad_flux */
 		if (_run_loo_phi)
 		{
@@ -1758,9 +1761,11 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 			}
 		}
 
+		log_printf(DEBUG, "raw leakage = %.10f", leak_tot);
+
 		/* Computes normalization factor based on fission source */
 		double normalize_factor = computeNormalization();
-		if (iter == 0)
+		if (iter == 10000)
 			log_printf(ACTIVE, "normalize_factor = %.10f", normalize_factor);
 
 		/* Normalizes leakage, scalar flux, angular flux */
@@ -1786,8 +1791,12 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 		}
 		leak_tot *= SIN_THETA_45 * _mesh->getCells(0)->getWidth();
 		_keff = fis_tot / (abs_tot + leak_tot); 
+		log_printf(ACTIVE, "%d: %.10f / (%.10f + %.10f)", 
+				   iter, fis_tot, abs_tot, leak_tot);
 
 		/* DEBUG */
+		/*
+		MeshCell *meshCellNext;
 		if (_run_loo_phi)
 		{
 			for (int y = 0; y < ch; y++)
@@ -1865,12 +1874,10 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 						meshCell->setNewFlux(new_flux, e);
 
 						// DEBUG: back out leakage:
-						/*
-						  log_printf(ACTIVE, "wc = %.10f",
-						  (FOUR_PI * new_src[i][e] -
-						  meshCell->getSigmaT()[e] * 
-						  meshCell->getOldFlux()[e])/ net_current[i][e]);
-						*/
+						//log_printf(ACTIVE, "wc = %.10f",
+						  //(FOUR_PI * new_src[i][e] -
+						  //meshCell->getSigmaT()[e] * 
+						  //meshCell->getOldFlux()[e])/ net_current[i][e]);
 
 						log_printf(ACTIVE, "Cell %d energy %d scalar flux"
 							   " update by (after normalization) %.10f", i, e, 
@@ -1880,6 +1887,7 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 				}
 			}
 		}
+        */
 
 		/* Computes the L2 norm of point-wise-division of energy-integrated
 		 * fission source of mesh cells between LOO iterations */
@@ -2431,7 +2439,12 @@ void Cmfd::updateMOCFlux(int iteration){
 	int i, e;
 	std::vector<int>::iterator iter;
 
-	double under_relax = 1.0; //_damp_factor;
+	double under_relax;
+	
+	if (_run_loo)
+		under_relax = _damp_factor;
+	else
+		under_relax = 1.0;
 
 	int max_i = -10, max_e = -10; 
 	double max = -100.0, tmp_max = 0, tmp_cmco;
