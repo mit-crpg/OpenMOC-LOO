@@ -822,7 +822,7 @@ void Cmfd::computeQuadFlux()
 				s[i] = meshCell->getMeshSurfaces(i);
 				for (int e = 0; e < ng; e++)
 				{
-					/* DEBUG */
+					/* FIXME: debug */
 					double tmp = 0.0;
 					for (int j = 0; j < 2; j++)
 					{
@@ -1799,8 +1799,7 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 		log_printf(ACTIVE, "%d: %.10f / (%.10f + %.10f)", 
 				   iter, fis_tot, abs_tot, leak_tot);
 
-		/* DEBUG */
-		/*
+		/* FIXME: DEBUG */
 		MeshCell *meshCellNext;
 		if (_run_loo_phi)
 		{
@@ -1826,9 +1825,10 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 							ho_current[i][e] -= meshCellNext->getMeshSurfaces(2)
 								->getCurrent(e);
 						}
-						else
+						else if (bc[0] == REFLECTIVE)
 							ho_current[i][e] -= meshCell->getMeshSurfaces(0)
 								->getCurrent(e);
+							
 				
 						if (x < cw - 1)
 						{
@@ -1836,7 +1836,7 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 							ho_current[i][e] -= meshCellNext->getMeshSurfaces(0)
 								->getCurrent(e);
 						}
-						else
+						else if (bc[2] == REFLECTIVE)
 							ho_current[i][e] -= meshCell->getMeshSurfaces(2)
 								->getCurrent(e);
 
@@ -1846,7 +1846,7 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 							ho_current[i][e] -= meshCellNext->getMeshSurfaces(1)
 								->getCurrent(e);
 						}
-						else
+						else if (bc[3] == REFLECTIVE)
 							ho_current[i][e] -= meshCell->getMeshSurfaces(3)
 								->getCurrent(e);
 
@@ -1856,43 +1856,46 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 							ho_current[i][e] -= meshCellNext->getMeshSurfaces(3)
 								->getCurrent(e);
 						}
-						else
+						else if (bc[1] == REFLECTIVE)
 							ho_current[i][e] -= meshCell->getMeshSurfaces(1)
 								->getCurrent(e);
 
 						ho_current[i][e] /= meshCell->getVolume();		
 
-						log_printf(ACTIVE, "Cell %d energy %d"
+						log_printf(NORMAL, "Cell %d energy %d"
 								   " lo: %.10f, ho: %.10f, ratio - 1 = %e", 
 								   i, e, 
 								   net_current[i][e], ho_current[i][e],
 								   net_current[i][e] / ho_current[i][e] - 1.0);
 
 
-						log_printf(ACTIVE, " Balance: %.10f + %.10f = %.10f", 
+						log_printf(DEBUG, " Balance (low order)"
+								   " : %.10f + %.10f - %.10f = %e", 
 								   net_current[i][e], meshCell->getSigmaA()[e] 
 								   * meshCell->getOldFlux()[e], 
+								   FOUR_PI * new_src[i][e],
+								   net_current[i][e] + meshCell->getSigmaA()[e] 
+								   * meshCell->getOldFlux()[e] - 
 								   FOUR_PI * new_src[i][e]);
 
-						new_flux = (FOUR_PI * new_src[i][e] - net_current[i][e])
-							/ meshCell->getSigmaT()[e];
-						meshCell->setNewFlux(new_flux, e);
 
+						log_printf(DEBUG, " Balance (high order)"
+								   " : %.10f + %.10f - %.10f = %e", 
+								   ho_current[i][e], meshCell->getSigmaA()[e] 
+								   * meshCell->getOldFlux()[e], 
+								   FOUR_PI * new_src[i][e],
+								   ho_current[i][e] + meshCell->getSigmaA()[e] 
+								   * meshCell->getOldFlux()[e] - 
+								   FOUR_PI * new_src[i][e]);
 						// DEBUG: back out leakage:
 						//log_printf(ACTIVE, "wc = %.10f",
 						  //(FOUR_PI * new_src[i][e] -
 						  //meshCell->getSigmaT()[e] * 
 						  //meshCell->getOldFlux()[e])/ net_current[i][e]);
-
-						log_printf(ACTIVE, "Cell %d energy %d scalar flux"
-							   " update by (after normalization) %.10f", i, e, 
-								   meshCell->getNewFlux()[e] 
-								   / meshCell->getOldFlux()[e]);
 					}
 				}
 			}
 		}
-        */
 
 		/* Computes the L2 norm of point-wise-division of energy-integrated
 		 * fission source of mesh cells between LOO iterations */
