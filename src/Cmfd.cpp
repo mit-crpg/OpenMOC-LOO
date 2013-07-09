@@ -56,7 +56,11 @@ Cmfd::Cmfd(Geometry* geom, Plotter* plotter, Mesh* mesh,
 	_run_loo_psi = false;
 	_run_loo_phi = false;
 	if (runLoo)
+	{
 		_run_loo = true;
+		/* this is important, otherwise -wl1 does not converge */
+		_run_loo_phi = true;
+	}
 	if (runLoo1)
 	{
 		_run_loo = true;
