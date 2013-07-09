@@ -37,7 +37,7 @@ Cmfd::Cmfd(Geometry* geom, Plotter* plotter, Mesh* mesh,
 	_cw = _mesh->getCellWidth();
 	_ch = _mesh->getCellHeight();
 
-	_damp = damp;
+	_damp_factor = damp;
 
 	_run_cmfd = false;
 	if (runCmfd)
@@ -339,7 +339,6 @@ void Cmfd::computeXS()
 					scat_tally_group[g] += scat[g * NUM_ENERGY_GROUPS + e] 
 						* flux * volume;
 				}
-				/* FIXME: unconditional jump or move based on unitialized val*/
 				if (chi >= meshCell->getChi()[e])
 					meshCell->setChi(chi,e);
 			}
@@ -512,7 +511,9 @@ void Cmfd::computeDs()
 	/* set cell width and height */
 	int cell_height = _mesh->getCellHeight();
 	int cell_width = _mesh->getCellWidth();
-	double dt_weight = _damp;
+	//double dt_weight = _damp_factor;
+	//FIXME: temperary set dt_weight = 1.0;
+	double dt_weight = 1.0;
 
 	/* loop over all mesh cells */
 #if USE_OPENMP
@@ -821,7 +822,7 @@ void Cmfd::computeQuadFlux()
 				s[i] = meshCell->getMeshSurfaces(i);
 				for (int e = 0; e < ng; e++)
 				{
-					/* FIXME: DEBUG */
+					/* DEBUG */
 					double tmp = 0.0;
 					for (int j = 0; j < 2; j++)
 					{
@@ -1137,15 +1138,16 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter)
 	/* initialize KSP solver */
 	KSP ksp;
 	petsc_err = KSPCreate(PETSC_COMM_WORLD, &ksp);
-	petsc_err = PetscObjectSetPrecision( (_p_PetscObject*) ksp, 
-										 PETSC_PRECISION_DOUBLE);
-	petsc_err = KSPSetOperators(ksp, _A, _A, SAME_NONZERO_PATTERN);
 	petsc_err = KSPSetTolerances(ksp, rtol, atol, PETSC_DEFAULT, PETSC_DEFAULT);
+	petsc_err = KSPSetType(ksp, KSPGMRES);
+	//petsc_err = PetscObjectSetPrecision( (_p_PetscObject*) ksp, 
+	//									 PETSC_PRECISION_DOUBLE);
 	petsc_err = KSPSetInitialGuessNonzero(ksp, PETSC_TRUE);
+	petsc_err = KSPSetOperators(ksp, _A, _A, SAME_NONZERO_PATTERN);
+
 	/* from options must be called before KSPSetUp() */
 	petsc_err = KSPSetFromOptions(ksp);
 	petsc_err = KSPSetUp(ksp);
-	petsc_err = KSPSetType(ksp, KSPGMRES);
 	CHKERRQ(petsc_err);
 
 	/* get initial source and find initial k_eff */
@@ -1153,7 +1155,7 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter)
 	petsc_err = VecSum(snew, &sumnew);
 	petsc_err = MatMult(_A, _phi_new, sold);
 	petsc_err = VecSum(sold, &sumold);
-	_keff = sumnew / sumold;
+	_keff = (double) sumnew / (double) sumold;
 	if (moc_iter == 10000)
 	{
 		log_printf(NORMAL, "Before CMFD, xs collapsed from MOC"
@@ -1162,22 +1164,28 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter)
 	}
 	CHKERRQ(petsc_err);
 
-	/* recompute and normalize initial source */
 	VecCopy(snew, sold);
 	VecScale(sold, 1/_keff);
 	sumold = sumnew / _keff;
 	//VecView(_phi_new, PETSC_VIEWER_STDOUT_SELF);
+
+	/*
+	MatMult(_M, _phi_new, sold);
+	VecSum(sold, &sumold);
+	VecScale(sold, cw * ch * ng / sumold);
+	sumold = cw * ch * ng;
+	*/
 
 	/* diffusion solver */
 	for (iter = 0; iter < max_outer; iter++)
 	{
 		/* Solve x = A_inverse * b problem and compute new source */
 		petsc_err = KSPSolve(ksp, sold, _phi_new);
-		KSPGetIterationNumber(ksp,&its);
+		petsc_err = KSPGetIterationNumber(ksp,&its);
+		CHKERRQ(petsc_err);
 
 		//VecView(sold, PETSC_VIEWER_STDOUT_SELF);
 		//VecView(_phi_new, PETSC_VIEWER_STDOUT_SELF);
-		CHKERRQ(petsc_err);
 		
 		/* compute and set keff */
 		petsc_err = MatMult(_M, _phi_new, snew);
@@ -1371,7 +1379,7 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 	double **sum_quad_flux, **quad_xs, **ratio, **expo, **tau, **new_src;
 	double **new_quad_src, **net_current;
 
-	/* FIXME: debug for comparing leakage between high order & low order */
+	/* DEBUG: for comparing leakage between high order & low order */
 	double **ho_current;
 
 	try
@@ -1775,7 +1783,7 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 		leak_tot *= SIN_THETA_45 * _mesh->getCells(0)->getWidth();
 		_keff = fis_tot / (abs_tot + leak_tot); 
 
-		/* FIXME: DEBUG */
+		/* DEBUG */
 		if (_run_loo_phi)
 		{
 			for (int y = 0; y < ch; y++)
@@ -2419,7 +2427,7 @@ void Cmfd::updateMOCFlux(int iteration){
 	int i, e;
 	std::vector<int>::iterator iter;
 
-	double under_relax = 1.0; //_damp;
+	double under_relax = 1.0; //_damp_factor;
 
 	int max_i = -10, max_e = -10; 
 	double max = -100.0, tmp_max = 0, tmp_cmco;

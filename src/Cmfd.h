@@ -64,7 +64,7 @@ private:
 	Mat _M;
 	Vec _phi_new;
 	Vec _source_old;
-	double _damp;
+	double _damp_factor;
 	double _keff;
 	double _l2_norm;
 	double _l2_norm_conv_thresh;
