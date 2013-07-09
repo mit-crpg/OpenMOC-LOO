@@ -56,18 +56,11 @@ Cmfd::Cmfd(Geometry* geom, Plotter* plotter, Mesh* mesh,
 	_run_loo_psi = false;
 	_run_loo_phi = false;
 	if (runLoo)
-	{
 		_run_loo = true;
-		/* this is important, otherwise -wl1 does not converge */
-		_run_loo_phi = true;
-		_run_loo_psi = false;
-	}
 	if (runLoo1)
 	{
 		_run_loo = true;
-		/* this line has to be commented out, otherwise -wl1 does not work
-		 * for c5g7_refl */
-		//_run_loo_phi = false;
+		_run_loo_phi = false;
 		_run_loo_psi = true;
 	}
 	else if (runLoo2)
@@ -1346,7 +1339,12 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter)
 double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter, 
 								 double k_MOC)
 {
-	log_printf(INFO, "Running low order MOC solver...");
+	if (_run_loo_phi)
+		log_printf(ACTIVE, "Running LOO (phi) ...");
+	else if (_run_loo_psi)
+		log_printf(ACTIVE, "Running LOO (psi) ...");
+	else
+		log_printf(ERROR, "Neither LOO psi nor phi is requested.");
 
 	int iter, max_outer = 200; 
 
@@ -1765,6 +1763,8 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 				}
 			}
 		}
+		else
+			log_printf(ERROR, "Neither LOO-psi nor LOO-phi was requested");
 
 		log_printf(DEBUG, "raw leakage = %.10f", leak_tot);
 
