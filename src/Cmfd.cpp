@@ -60,16 +60,19 @@ Cmfd::Cmfd(Geometry* geom, Plotter* plotter, Mesh* mesh,
 		_run_loo = true;
 		/* this is important, otherwise -wl1 does not converge */
 		_run_loo_phi = true;
+		_run_loo_psi = false;
 	}
 	if (runLoo1)
 	{
 		_run_loo = true;
+		_run_loo_phi = false;
 		_run_loo_psi = true;
 	}
 	else
 	{
 		_run_loo = true;
 		_run_loo_phi = true;
+		_run_loo_psi = false;
 	}
 
 	_num_iter_to_conv = 0;
@@ -1598,7 +1601,7 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 						|| ((bc[3] == VACUUM) && (t == 4)
 							&& (i < cw)))
 					{
-						log_printf(NORMAL, "spot a vacuum");
+						log_printf(DEBUG, "spot a vacuum");
 						leak_tot += flux; 
 						flux = 0.0;
 					}
@@ -1668,7 +1671,7 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 						|| ((bc[3] == VACUUM) && (t == 3)
 							&& (i < cw)))
 					{							
-						log_printf(NORMAL, "spot a vacuum");
+						log_printf(DEBUG, "spot a vacuum");
 						leak_tot += flux;
 						flux = 0.0;
 					}
