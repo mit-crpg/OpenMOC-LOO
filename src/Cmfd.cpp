@@ -395,6 +395,18 @@ void Cmfd::computeXS()
 			meshCell->setSrc(src_tally / vol_tally_group, 0);
 		}
 	}
+
+	/* FIXME: DEBUG */
+	/*
+	for (i = 0; i < _mesh->getCellWidth() * _mesh->getCellHeight(); i++)
+	{
+		double vol = _mesh->getCells(i)->getVolume();
+		_mesh->getCells(i)->setWidth(sqrt(vol));
+		_mesh->getCells(i)->setHeight(sqrt(vol));
+	}
+	*/
+
+	return;
 }
 
 void Cmfd::computeDsxDirection(double x, double y, int e, MeshCell *meshCell, 
@@ -807,7 +819,7 @@ void Cmfd::computeQuadFlux()
 
 	/* the factor that we devide everyone by is cos(45degree) * surface len */
 	/* May need to fixme */
-	double scale = _mesh->getCells(0)->getWidth() * SIN_THETA_45;
+	double scale;
 
 	/* loop over all mesh cells */
 	for (int y = 0; y < cell_height; y++)
@@ -815,6 +827,9 @@ void Cmfd::computeQuadFlux()
 		for (int x = 0; x < cell_width; x++)
 		{
 			meshCell = _mesh->getCells(y * cell_width + x);
+
+			/* FIXME: DEBUG */
+			scale = meshCell->getWidth() * SIN_THETA_45;
 
 			/* get four surfaces */
 			for (int i = 0; i < 4; i++) 
@@ -1025,7 +1040,7 @@ void Cmfd::computeQuadSrc()
 			}
 
 			/* Now that we have all the in's and out's, computes src */
-			double l = meshCell->getL();
+			double l = meshCell->getWidth() * SIN_THETA_45;
 			for (int e = 0; e < ng; e++)
 			{
 				double xs = meshCell->getSigmaT()[e];
@@ -1353,7 +1368,7 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 
 	if (moc_iter == 10000)
 	{
-		max_outer = 2;
+		max_outer = 5;
 		log_printf(NORMAL, "DEBUG mode on, max outer = %d", max_outer);
 	}
 
@@ -1420,6 +1435,7 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 
 	for (int i = 0; i < cw * ch; i++)
 	{
+		l = _mesh->getCells(i)->getWidth() * SIN_THETA_45;
 		for (int e = 0; e < ng; e++)
 		{
 			new_src[i][e] = 0.0;
@@ -1739,7 +1755,7 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 					/* we multiple sin 45 to converge flux to current, 
 					 * divide by cell side length to get grad J */
 					net_current[i][e] *= SIN_THETA_45 
-						/ meshCell->getWidth();	
+						/ sqrt(meshCell->getVolume());	
 
 					new_flux = (FOUR_PI * new_src[i][e] - net_current[i][e])
 						/ meshCell->getSigmaT()[e];
@@ -2548,7 +2564,7 @@ void Cmfd::updateMOCFlux(int iteration){
 
 	for (int i = 0; i < cw * ch; i ++)
 	{
-		log_printf(ACTIVE, " cell # %d, CMCO = %.10e",
+		log_printf(NORMAL, " cell # %d, CMCO = %.10e",
 				   i, CMCO[i] + 1  );
 	}
 
