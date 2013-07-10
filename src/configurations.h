@@ -24,7 +24,7 @@
 #define NUM_KEFFS_TRACKED 3
 
 /** Maximum number of fixed source iterations allowed */
-#define MAX_ITERATIONS 500
+#define MAX_ITERATIONS 1e3
 
 /* Precompute and store exponential pre-factors in transport equation */
 #define STORE_PREFACTORS true

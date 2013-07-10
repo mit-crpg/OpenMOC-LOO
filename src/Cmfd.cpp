@@ -251,8 +251,6 @@ void Cmfd::computeXS()
 		_mesh->splitCornerQuadCurrents();
 
 	/* initialize variables */
-	double volume, flux, abs, tot, nu_fis, chi;
-	double* scat;
 	double abs_tally_group, nu_fis_tally_group, dif_tally_group, 
 		rxn_tally_group, vol_tally_group, tot_tally_group;
 	double nu_fis_tally = 0, dif_tally = 0, rxn_tally = 0, abs_tally = 0, 
@@ -317,6 +315,8 @@ void Cmfd::computeXS()
 				fsr = &_flat_source_regions[*iter];
 
 				/* Gets FSR specific data. */
+				double volume, flux, chi, abs, tot, nu_fis;
+				double *scat;
 				volume = fsr->getVolume();
 				flux = fsr->getFlux()[e];
 				material = fsr->getMaterial();
@@ -1353,7 +1353,7 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 
 	if (moc_iter == 10000)
 	{
-		max_outer = 5;
+		max_outer = 2;
 		log_printf(NORMAL, "DEBUG mode on, max outer = %d", max_outer);
 	}
 
@@ -1913,8 +1913,9 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 				xs = meshCell->getNuSigmaF()[e];
 				new_power[i] += xs * meshCell->getNewFlux()[e];
 				num_counted++;
-			} 
-			eps += pow(new_power[i] / old_power[i] - 1.0, 2);
+			}
+			if (old_power[i] > 0.0)
+				eps += pow(new_power[i] / old_power[i] - 1.0, 2);
 		}
 		eps /= (double) num_counted;
 		eps = pow(eps, 0.5);
@@ -1977,7 +1978,7 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 			old_power[i] += xs * meshCell->getOldFlux()[e];
 			new_power[i] += xs * meshCell->getNewFlux()[e];
 		} 
-		if (old_power[i] > 0.0)
+		if (old_power[i] > 1e-20)
 		{
 			eps += pow(new_power[i] / old_power[i] - 1.0, 2);
 			num_counted++;
@@ -2443,6 +2444,8 @@ void Cmfd::updateMOCFlux(int iteration){
 	int ch = _mesh->getCellHeight();
 	int ng = NUM_ENERGY_GROUPS;
 
+	double CMCO[cw * ch];
+
 	if (_mesh->getMultigroup() == false)
 		ng = 1;
 
@@ -2470,6 +2473,7 @@ void Cmfd::updateMOCFlux(int iteration){
 		/* get pointer to current mesh cell */
 		meshCell = _mesh->getCells(i);
 
+		CMCO[i] = 0.0;
 		/* loop over groups */
 		for (e = 0; e < ng; e++)
 		{
@@ -2477,6 +2481,7 @@ void Cmfd::updateMOCFlux(int iteration){
 			new_flux = meshCell->getNewFlux()[e];
 
 			tmp_max = fabs(new_flux / old_flux - 1.0);
+			CMCO[i] += tmp_max;
 			if (tmp_max > max)
 			{
 				max = tmp_max;
@@ -2514,8 +2519,11 @@ void Cmfd::updateMOCFlux(int iteration){
 		}
 	}
 
-	log_printf(ACTIVE, " CMCO = %.20e, cell # %d, energy %d", 
-			   max + 1.0, max_i, max_e);
+	for (int i = 0; i < cw * ch; i ++)
+	{
+		log_printf(ACTIVE, " cell # %d, CMCO = %.10e",
+				   i, CMCO[i] + 1  );
+	}
 
 	return;
 }
