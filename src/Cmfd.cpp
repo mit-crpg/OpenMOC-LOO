@@ -2489,10 +2489,7 @@ void Cmfd::updateMOCFlux(int iteration){
 	//double max = -100.0;
 	//double max_range = 100, min_range = 0.01;
 
-	double tmp_max = 0, **tmp_cmco;
-	tmp_cmco = new double*[ng];
-	for (i = 0; i < ng; i++)
-		tmp_cmco[i] = new double[cw * ch];
+	double tmp_max = 0, tmp_cmco;
 
 	/* loop over mesh cells */
 #if USE_OPENMP
@@ -2511,11 +2508,11 @@ void Cmfd::updateMOCFlux(int iteration){
 			old_flux = meshCell->getOldFlux()[e];
 			new_flux = meshCell->getNewFlux()[e];
 
-			tmp_cmco[e][i] = new_flux / old_flux;
+			tmp_cmco = new_flux / old_flux;
 			
-			if (tmp_cmco[e][i] < 0.0)
+			if (tmp_cmco < 0.0)
 				log_printf(DEBUG, "cell %d energy %d prolongation = %f",
-						   i, e, tmp_cmco[e][i]);
+						   i, e, tmp_cmco);
 
 			tmp_max = fabs(new_flux / old_flux - 1.0);
 			CMCO[i] += tmp_max;
@@ -2548,7 +2545,7 @@ void Cmfd::updateMOCFlux(int iteration){
 					tmp_cmco = min_range;
 				*/
 
-				fsr->setFlux(e, under_relax * tmp_cmco[e][i] * flux[e]
+				fsr->setFlux(e, under_relax * tmp_cmco * flux[e]
 							 + (1.0 - under_relax) * flux[e]);
 				
 			}
