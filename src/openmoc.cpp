@@ -40,7 +40,7 @@ int main(int argc, char **argv) {
 	/* initialize Petsc */
 	int petsc_err = 0;
 	CHKERRQ(petsc_err);
-	PetscInitialize(&(opts.extra_argc), &(opts.extra_argv), 0, 0);
+	PetscInitialize(&(opts.extra_argc), &(opts.extra_argv), (char*)0, NULL);
 	CHKERRQ(petsc_err);
 
 	/* Set the verbosity */

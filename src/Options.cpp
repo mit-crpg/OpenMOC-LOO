@@ -80,10 +80,10 @@ Options::Options(int argc, char **argv)
 
 	/* All extra options get placed into this array, which can be used
 	 * to call sub-initializers (petsc, for instance) */
-	this->extra_argc = 0;
-	this->extra_argv = (char **)malloc(sizeof(*this->extra_argv) * argc);
+	extra_argc = 0;
+	extra_argv = (char **)malloc(sizeof(*this->extra_argv) * argc);
 	for (int i = 0 ; i < argc; i++)
-		this->extra_argv[i] = NULL;
+		extra_argv[i] = NULL;
 
 	for (int i = 0; i < argc; i++) {
 		if (i > 0) {

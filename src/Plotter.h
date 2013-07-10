@@ -77,6 +77,7 @@ public:
 	bool plotDiffusion();
 	void plotCMFDflux(Mesh* mesh, std::string string, int iter_num);
 	void plotCMFDKeff(Mesh* mesh, int num_iter);
+	void plotCmfdFluxUpdate(Mesh *mesh, int iter_num);
 };
 
 #endif /* PLOTTER_H_ */

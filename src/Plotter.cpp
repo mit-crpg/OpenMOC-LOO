@@ -1001,6 +1001,65 @@ void Plotter::plotXS(Mesh* mesh, int iter_num){
 	deleteBitMap(bitMap);
 }
 
+void Plotter::plotCmfdFluxUpdate(Mesh* mesh, int iter_num)
+{
+	log_printf(NORMAL, "plotting cmfd flux update ...");
+
+	/* set up bitMap */
+	BitMap<double>* bitMap = new BitMap<double>;
+	bitMap->pixel_x = _bit_length_x;
+	bitMap->pixel_y = _bit_length_y;
+	initialize(bitMap);
+	bitMap->geom_x = _width;
+	bitMap->geom_y = _height;
+	bitMap->color_type = SCALED;
+
+	double x_global;
+	double y_global;
+	std::stringstream string;
+	std::stringstream num;
+	std::string title_str;
+
+	int ng = 1;
+	if (mesh->getMultigroup() == true){
+		ng = NUM_ENERGY_GROUPS;
+	}
+
+	for (int e = 0; e < ng; e++){
+
+		/* find meshCell for each pixel */
+		for (int y=0;y < _bit_length_y; y++){
+			for (int x = 0; x < _bit_length_x; x++){
+				x_global = convertToGeometryX(x);
+				y_global = convertToGeometryY(y);
+				bitMap->pixels[y * _bit_length_x + x] = 
+					mesh->getCells(mesh->findMeshCell(x_global, y_global))
+					->getNewFlux()[e] 
+					/
+					mesh->getCells(mesh->findMeshCell(x_global, y_global))
+					->getOldFlux()[e];
+			}
+		}
+
+		num.str("");
+		num << std::setw(3) << std::setfill('0') << iter_num;
+		string.str("");
+		string << "update_i_" << num.str() << "_g_" << e+1;
+		title_str = string.str();
+
+
+		/* create filename with correct extension */
+		if (_extension == "tiff" || _extension == "jpg" || _extension == "png")
+			plot(bitMap, title_str, _extension);
+		else
+		{
+			log_printf(WARNING, "CMFD flux can only be plotted in tiff, jpg,"
+					   " and png. Plotting CMFD flux as png...");
+			plot(bitMap, title_str, "png");
+		}
+	}
+	deleteBitMap(bitMap);
+}
 
 void Plotter::plotCMFDflux(Mesh* mesh, std::string title1, int iter_num){
 	log_printf(NORMAL, "plotting flux...");

@@ -408,14 +408,10 @@ void Solver::zeroLeakage(){
  */
 double Solver::computeKeff(int iteration) 
 {
-	double tot_abs = 0.0;
-	double tot_fission = 0.0;
-	double leakage = 0.0;
-	double abs = 0;
-	double fission;
-	double* sigma_a;
-	double* nu_sigma_f;
-	double* flux;
+	double tot_abs = 0.0, tot_fission = 0.0, leakage = 0.0;
+	double abs = 0, fission = 0;
+	double k; 
+	double *sigma_a, *nu_sigma_f, *flux;
 	Material* material;
 	FlatSourceRegion* fsr;
 
@@ -432,11 +428,19 @@ double Solver::computeKeff(int iteration)
 		fsr = &_flat_source_regions[r];
 		material = fsr->getMaterial();
 		sigma_a = material->getSigmaA();
+
 		nu_sigma_f = material->getNuSigmaF();
 		flux = fsr->getFlux();
 
 		for (int e = 0; e < NUM_ENERGY_GROUPS; e++) 
 		{
+	/*
+	        if (sigma_a[e] * flux[e] * fsr->getVolume() < 0.0)
+			{
+				log_printf(WARNING, "# %d FSR energy %d has abs xs of %f", 
+						   r, e, sigma_a[e]);
+			}
+	*/
 	        abs += sigma_a[e] * flux[e] * fsr->getVolume();
 			fission += nu_sigma_f[e] * flux[e] * fsr->getVolume();
 		}
@@ -456,13 +460,21 @@ double Solver::computeKeff(int iteration)
 }
 #endif
 
-	for (int s = 1; s < 5; s++){
-		for (int e = 0; e < NUM_ENERGY_GROUPS; e++){
+	for (int s = 1; s < 5; s++)
+	{
+		for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
 			leakage += _geom->getSurface(s)->getLeakage()[e];
-		}
 	}
-    log_printf(INFO, " MOC leakage  = %f", leakage);
-	double k;
+
+	if (leakage < 0.0)
+		log_printf(WARNING, 
+				   "MOC leakage  = %f should be non-negative", leakage);
+	if (tot_fission < 0.0)
+		log_printf(ERROR, "MOC total fission = %f should be positive", 
+		tot_fission);
+	if (tot_abs < 0.0)
+		log_printf(WARNING, "MOC total abs = %f should be positive", tot_abs);
+
 	k = tot_fission / (tot_abs + leakage);
 	//_geom->getMesh()->setKeffMOC(_k_eff, iteration);
 	return k;
@@ -680,7 +692,6 @@ void Solver::computeFsrPowers() {
 
 	return;
 }
-
 
 /*
  * Plot the fluxes for each FSR

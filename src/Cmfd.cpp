@@ -2489,7 +2489,10 @@ void Cmfd::updateMOCFlux(int iteration){
 	//double max = -100.0;
 	//double max_range = 100, min_range = 0.01;
 
-	double tmp_max = 0, tmp_cmco;
+	double tmp_max = 0, **tmp_cmco;
+	tmp_cmco = new double*[ng];
+	for (i = 0; i < ng; i++)
+		tmp_cmco[i] = new double[cw * ch];
 
 	/* loop over mesh cells */
 #if USE_OPENMP
@@ -2507,6 +2510,12 @@ void Cmfd::updateMOCFlux(int iteration){
 		{
 			old_flux = meshCell->getOldFlux()[e];
 			new_flux = meshCell->getNewFlux()[e];
+
+			tmp_cmco[e][i] = new_flux / old_flux;
+			
+			if (tmp_cmco[e][i] < 0.0)
+				log_printf(DEBUG, "cell %d energy %d prolongation = %f",
+						   i, e, tmp_cmco[e][i]);
 
 			tmp_max = fabs(new_flux / old_flux - 1.0);
 			CMCO[i] += tmp_max;
@@ -2532,9 +2541,6 @@ void Cmfd::updateMOCFlux(int iteration){
 				/* get fsr flux */
 				flux = fsr->getFlux();
 
-				/* set new flux in FSR */
-				tmp_cmco = new_flux / old_flux;
-
 				/*
 				if (tmp_cmco > max_range)
 					tmp_cmco = max_range;
@@ -2542,12 +2548,14 @@ void Cmfd::updateMOCFlux(int iteration){
 					tmp_cmco = min_range;
 				*/
 
-				fsr->setFlux(e, under_relax * tmp_cmco * flux[e]
+				fsr->setFlux(e, under_relax * tmp_cmco[e][i] * flux[e]
 							 + (1.0 - under_relax) * flux[e]);
 				
 			}
 		}
 	}
+
+	//_plotter->plotCmfdFluxUpdate(_mesh, iteration);
 
 	for (int i = 0; i < cw * ch; i ++)
 	{
@@ -2557,8 +2565,6 @@ void Cmfd::updateMOCFlux(int iteration){
 
 	return;
 }
-
-
 
 double Cmfd::computeDiffCorrect(double d, double h){
 
@@ -2584,6 +2590,10 @@ double Cmfd::computeDiffCorrect(double d, double h){
 	}
 
 }
+
+
+
+
 
 /* compute the L2 norm of consecutive fission sources
  * @retun L2 norm
