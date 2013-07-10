@@ -1390,7 +1390,16 @@ double Solver::runLoo(int i)
 	log_printf(ACTIVE, "size = %d, front = %.10f, back = %.10f",
 				   (int) _old_k_effs.size(), 
 				   _old_k_effs.front(), _old_k_effs.back());
-	loo_keff = _cmfd->computeLooFluxPower(LOO, i, _k_eff);
+
+	if (i == 0)
+	{
+		_cmfd->computeDs();
+		loo_keff = _cmfd->computeCMFDFluxPower(DIFFUSION, i);
+	}
+	else
+	{
+		loo_keff = _cmfd->computeLooFluxPower(LOO, i, _k_eff);
+	}
 
 	return loo_keff;
 }
@@ -1480,7 +1489,8 @@ double Solver::kernel(int max_iterations) {
 
 	/* Set scalar flux to unity for each region */
 	oneFSRFluxes();
-	initializeTrackFluxes(1.0);
+	initializeTrackFluxes(2.0 * ONE_OVER_FOUR_PI);
+	//initializeTrackFluxes(0.0);
 
 	/* Set the old source to unity for each Region */
 #if USE_OPENMP
@@ -1624,7 +1634,7 @@ double Solver::kernel(int max_iterations) {
 
 
         /* Alternative: if (_cmfd->getL2Norm() < _moc_conv_thresh) */
-		if (eps_inf < _moc_conv_thresh) 
+		if (eps_2 < _moc_conv_thresh) 
 		{
 			/* Converge the flux further */
 			//MOCsweep(5);
