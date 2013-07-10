@@ -819,7 +819,7 @@ void Cmfd::computeQuadFlux()
 
 	/* the factor that we devide everyone by is cos(45degree) * surface len */
 	/* May need to fixme */
-	double scale;
+	double scale;//  = _mesh->getCells(0)->getWidth() * SIN_THETA_45;
 
 	/* loop over all mesh cells */
 	for (int y = 0; y < cell_height; y++)
@@ -1040,7 +1040,8 @@ void Cmfd::computeQuadSrc()
 			}
 
 			/* Now that we have all the in's and out's, computes src */
-			double l = meshCell->getWidth() * SIN_THETA_45;
+			/* has to use get l to get the polar angle right */
+			double l = meshCell->getL();
 			for (int e = 0; e < ng; e++)
 			{
 				double xs = meshCell->getSigmaT()[e];
@@ -1437,7 +1438,6 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 
 	for (int i = 0; i < cw * ch; i++)
 	{
-		l = _mesh->getCells(i)->getWidth() * SIN_THETA_45;
 		for (int e = 0; e < ng; e++)
 		{
 			new_src[i][e] = 0.0;
@@ -2551,7 +2551,7 @@ void Cmfd::updateMOCFlux(int iteration){
 
 	for (int i = 0; i < cw * ch; i ++)
 	{
-		log_printf(NORMAL, " cell # %d, CMCO = %.10e",
+		log_printf(ACTIVE, " cell # %d, CMCO = %.10e",
 				   i, CMCO[i] + 1  );
 	}
 
