@@ -51,7 +51,7 @@ Options::Options(int argc, char **argv)
 		_relative_path = "";
 
     /* Default geometry input file */
-	_geometry_file = _relative_path + "xml-sample/Cmfd/geometry_pin5.xml"; 	 
+	_geometry_file = _relative_path + "xml-sample/Cmfd/geometry_pin51.xml"; 	 
 	_material_file = _relative_path + "xml-sample/Cmfd/material_simple.xml";
 	
 	_track_spacing = 0.01;				/* Default track spacing: 0.05 */
