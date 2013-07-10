@@ -1551,26 +1551,34 @@ double Solver::kernel(int max_iterations) {
 		if (_run_cmfd)
 		{
 			string << "l2_norm_" << (_num_azim*2) << "_" 
-				   <<  _track_spacing
-				   << "_" << _damp_factor << "_cmfd.txt";
+				   << std::fixed 
+				   << std::setprecision(2) <<  _track_spacing
+				   << "_" 
+				   << std::setprecision(1) << _damp_factor << "_cmfd.txt";
 		}
 		else if (_run_loo1)
 		{
 			string << "l2_norm_" << (_num_azim*2) << "_" 
-				   <<  _track_spacing
-				   << "_" << _damp_factor << "_loo1.txt";
+				   << std::fixed
+				   << std::setprecision(2) <<  _track_spacing
+				   << "_" 
+				   << std::setprecision(1) << _damp_factor << "_loo1.txt";
 		}			
 		else if (_run_loo2)
 		{
 			string << "l2_norm_" << (_num_azim*2) << "_" 
-				   <<  _track_spacing
-				   << "_" << _damp_factor << "_loo2.txt";
+				   << std::fixed
+				   << std::setprecision(2) <<  _track_spacing
+				   << "_" 
+				   << std::setprecision(1) << _damp_factor << "_loo2.txt";
 		}
 		else
 		{
 			string << "l2_norm_" << (_num_azim*2) << "_" 
-				   <<  _track_spacing
-				   << "_" << _damp_factor << "_unac.txt";
+				   << std::fixed
+				   << std::setprecision(2) <<  _track_spacing
+				   << "_" 
+				   << std::setprecision(1) << _damp_factor << "_unac.txt";
 		}
 
 		std::string title_str = string.str();
