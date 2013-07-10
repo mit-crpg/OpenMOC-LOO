@@ -531,10 +531,12 @@ void Mesh::splitCornerCurrents()
 					   
 			for (int i = 0; i < 4; i++)
 			{
-				if (x > min_x[i] &&  x < max_x[i] && 
+				if (x > min_x[i] && x < max_x[i] && 
 					y > min_y[i] && y < max_y[i])
-					meshCellNext = &_cells[(y + next_y[i]) * cw 
-										   + x + next_x[i]];
+				{
+					meshCellNext = 
+						&_cells[(y + next_y[i]) * cw + x + next_x[i]];
+				}
 				else 
 					meshCellNext = meshCell;
 
@@ -576,10 +578,19 @@ void Mesh::splitCornerQuadCurrents()
 	int surf[]      = {0, 2, 2, 0};
 	int next_surf[] = {1, 1, 3, 3};
 	*/
+
+#if 1
+	int min_x[] = {0, -1, -1, 0};
+	int max_x[] = {cw, cw-1, cw-1, cw};
+	int min_y[] = {-1, -1, 0, 0};
+	int max_y[] = {ch-1, ch-1, ch, ch};
+#else
 	int min_x[] = {-1,   -1,   -1,   0};
 	int max_x[] = {cw,   cw,   cw-1, cw};
 	int min_y[] = {-1,   -1,   -1,    -1};
 	int max_y[] = {ch-1, ch-1, ch,   ch};
+#endif
+
 
 	int next_x[]    = {0, 0, 1, -1};
 	int next_y[]    = {1, 1, 0, 0};
