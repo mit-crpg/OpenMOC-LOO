@@ -70,7 +70,7 @@ private:
 	int _cw;
 	int _ch;
 	int _ng;
-	double _k_eff;
+	int *_i_array, *_t_array, *_t_arrayb;
 	double _damp_factor;
 	double _keff;
 	double _l2_norm;
@@ -121,7 +121,7 @@ public:
 	double computeLooFluxPower(solveType solveMethod, int moc_iter, double k);
 	void generateTrack(int *i_array, int *t_array, int *t_arrayb);
 	double computeNormalization();
-	void normalizeFlux(double normalize_factor, int *i_array);
+	void normalizeFlux(double normalize_factor);
 };
 
 #endif /* CMFD_H_ */
