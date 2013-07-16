@@ -10,13 +10,15 @@
     
     <!-- Definition of Cells -->
     <cell id="1" fill="6" surfaces="1 -2 3 -4" />
-    <cell id="2" universe="5" fill="4" surfaces="1 -2 3 -4" />
-    <cell id="101" universe="1" material="1" surfaces="-5" sectors="8"/>
-    <cell id="102" universe="1" material="2" surfaces="5" sectors="8"/>
-    <cell id="201" universe="2" material="1" surfaces="-6" rings="4" sectors="8"/>
-    <cell id="202" universe="2" material="2" surfaces="6" sectors="8"/>
-    <cell id="301" universe="3" material="1" surfaces="-7" rings="2" sectors="8"/>
-    <cell id="302" universe="3" material="2" surfaces="7" sectors="8"/>
+    <cell id="2" universe="5" fill="4" surfaces=""/>
+    <cell id="3" universe="7" fill="8" surfaces=""/>
+    <cell id="101" universe="1" material="1" surfaces="-5"/>
+    <cell id="102" universe="1" material="2" surfaces="5"/>
+    <cell id="201" universe="2" material="1" surfaces="-6"/>
+    <cell id="202" universe="2" material="2" surfaces="6"/>
+    <cell id="301" universe="3" material="1" surfaces="-7"/>
+    <cell id="302" universe="3" material="2" surfaces="7"/>
+    <cell id="401" universe="9" material="1" surfaces=""/>
     
     
     <!-- Definition of Lattices -->
@@ -31,14 +33,29 @@
         </universes>
     </lattice>
     
+    
+    
+    <!-- Definition of Lattices -->
+    <!-- 4 x 4 assembly -->
+    <lattice id="8">
+        <type>rectangular</type>
+        <dimension>4 2</dimension>
+        <width>0.5 1.0</width>
+        <universes>
+            9 9 9 9
+            9 9 9 9
+        </universes>
+    </lattice>
+    
+    
     <!-- 4 x 4 core -->
     <lattice id="6">
         <type>rectangular</type>
         <dimension>2 2</dimension>
         <width>2.0 2.0</width>
         <universes>
-            5 5
-            5 5
+            5 7
+            5 7
         </universes>
     </lattice>
     

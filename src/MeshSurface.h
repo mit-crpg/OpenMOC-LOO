@@ -19,33 +19,54 @@
 #include "log.h"
 #include <vector>
 #include "configurations.h"
+#include "Surface.h"
 
-enum meshSurfaceType{
-	SIDEX,
-	SIDEY,
-	CORNER
-};
+
 
 class MeshSurface {
 private:
-	meshSurfaceType _type;
-	double* _current;
-	double* _flux;
-	double _normal;
+	double *_current;
+	double **_quad_current;
+	double **_quad_flux;
+	double *_d_hat;
+	double *_d_tilde;
+	double *_d_dif;
+
+	/* Surface ID could be 0,1,2,3 and is later set in MeshCell.cpp */
+	int _id; 
+	int _cell_id;
+	boundaryType _boundary_type;
 
 public:
 	MeshSurface();
 	virtual ~MeshSurface();
-	meshSurfaceType getType();
-	void setType(meshSurfaceType type);
+
+	/* LOO Only */
+	void setQuadCurrent(double quad_current, int group, int index);
+	void incrementQuadCurrent(double quad_current, int group, int index);
+	double getQuadCurrent(int group, int index);
+	void setQuadFlux(double quad_current, int group, int index);
+	double getQuadFlux(int group, int index);
+
+	/* CMFD Only */
+	void makeCurrents();
 	void setCurrent(double current, int group);
 	double getCurrent(int group);
-	void incrementCurrent(double current, double phi, int group);
-	void setNormal(double normal);
-	double getNormal();
-	void setFlux(double flux, int group);
-	double getFlux(int group);
-	void incrementFlux(double flux, int group);
+	void incrementCurrent(double *current);
+	void setDHat(double dHat, int e);
+	double* getDHat();
+	void setDTilde(double dTilde, int e);
+	double* getDTilde();
+	void setDDif(double dTilde, int e);
+	double* getDDif();
+
+	/* General Purpose */
+	int getId();
+	void setId(int id);
+	int getCellId();
+	void setCellId(int id);
+	void setBoundary(boundaryType boundary);
+	boundaryType getBoundary();
 };
 
 

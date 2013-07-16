@@ -150,6 +150,8 @@ void TrackGenerator::generateTracks() {
 			/* num intersections with x,y-axes */
 			_num_x[i] = (int) (fabs(width / _spacing * sin(phi))) + 1;
 			_num_y[i] = (int) (fabs(height / _spacing * cos(phi))) + 1;
+			log_printf(DEBUG, "For azimuthal angle %d, num_x = %d, num_y = %d",
+					   i, _num_x[i], _num_y[i]);
 
 			/* total num of tracks */
 			_num_tracks[i] = _num_x[i] + _num_y[i];
@@ -184,7 +186,7 @@ void TrackGenerator::generateTracks() {
 			_azim_weights[i] = (x1 + x2) / (2 * M_PI) * d_eff[i] * 2;
 		}
 
-		log_printf(NORMAL, "Generating track start and end points...");
+		log_printf(INFO, "Generating track start and end points...");
 
 		/* Compute track starting and end points */
 		for (int i = 0; i < _num_azim; i++) {
@@ -218,15 +220,31 @@ void TrackGenerator::generateTracks() {
 				Point* end = _tracks[i][j].getEnd();
 				computeEndPoint(start, end, phi_eff[i], width, height);
 
-				/* Set the track's azimuthal weight */
+				/* Set the track's azimuthal weight and spacing*/
 				_tracks[i][j].setAzimuthalWeight(_azim_weights[i]);
 				_tracks[i][j].setPhi(phi_eff[i]);
+				_tracks[i][j].setSpacing(d_eff[i]);
+
 			}
 		}
 
 		/* Recalibrate track start and end points to geometry global origin */
-		//FIXME: This could be more efficiently done when start/end points are set
-		for (int i = 0; i < _num_azim; i++) {
+		//FIXME: This could be more efficient when start/end points are set
+#if 0
+		std::ofstream file;
+		std::stringstream string;
+		string << "characteristic_na_" << _num_azim << "_ts_" << _spacing 
+			   << ".txt";
+		std::string title_str = string.str();
+		file.open(title_str.c_str(), std::fstream::trunc);
+		file << "Note: reporting start point coordinate, end point coordinate,"
+			" and length for each characteristics" << std::endl;
+#endif
+		for (int i = 0; i < _num_azim; i++) 
+		{
+#if 0	
+			file << " azimuthal angle: " << _tracks[i][0].getPhi() << std::endl;
+#endif
 			for (int j = 0; j < _num_tracks[i]; j++) {
 				double x0 = _tracks[i][j].getStart()->getX();
 				double y0 = _tracks[i][j].getStart()->getY();
@@ -238,14 +256,21 @@ void TrackGenerator::generateTracks() {
 				double new_y1 = y1 - _geom->getHeight()/2.0;
 				double phi = _tracks[i][j].getPhi();
 				_tracks[i][j].setValues(new_x0, new_y0, new_x1, new_y1, phi);
-
+#if 0
+				file << "(" << new_x0 << ", " << new_y0 <<"), (" 
+					 << new_x1 << ", "<< new_y1 <<"), " << 
+					sqrt((new_x1 - new_x0)*(new_x1 - new_x0) 
+						 + (new_y1 - new_y0) * (new_y1 - new_y0)) << std::endl;
+#endif
 				/* Add line to segments bitmap */
 				if (_plotter->plotSpecs() == true){
 					drawLine(bitMap, new_x0, new_y0, new_x1, new_y1, 1);
 				}
 			}
 		}
-
+#if 0
+		file.close();
+#endif
 		if (_plotter->plotSpecs() == true){
 			plot(bitMap, "tracks", _plotter->getExtension());
 		}
@@ -349,39 +374,96 @@ void TrackGenerator::makeReflective() {
 				if (j < nxi) {
 					curr[j].setTrackIn(&refl[j]);
 					refl[j].setTrackIn(&curr[j]);
-					curr[j].setReflIn(false);
-					refl[j].setReflIn(false);
+					curr[j].setSurfBwd(3);
+					refl[j].setSurfBwd(3);
+
+					if (_geom->getSurface(3)->getBoundary() == REFLECTIVE){
+						curr[j].setReflIn(REFL_FALSE);
+						refl[j].setReflIn(REFL_FALSE);
+					}
+					else{
+						curr[j].setReflIn(VAC_FALSE);
+						refl[j].setReflIn(VAC_FALSE);
+					}
 
 					curr[j].setTrackOut(&refl[2 * nxi - 1 - j]);
 					refl[2 * nxi - 1 - j].setTrackIn(&curr[j]);
-					curr[j].setReflOut(false);
-					refl[2 * nxi - 1 - j].setReflIn(true);
+					curr[j].setSurfFwd(2);
+					refl[2 * nxi - 1 - j].setSurfBwd(2);
+
+					if (_geom->getSurface(2)->getBoundary() == REFLECTIVE){
+						curr[j].setReflOut(REFL_FALSE);
+						refl[2 * nxi - 1 - j].setReflIn(REFL_TRUE);
+					}
+					else{
+						curr[j].setReflOut(VAC_FALSE);
+						refl[2 * nxi - 1 - j].setReflIn(VAC_TRUE);
+					}
 				}
 
 				/* Left hand side to right hand side */
 				else if (j < nyi) {
+
 					curr[j].setTrackIn(&refl[j - nxi]);
 					refl[j - nxi].setTrackOut(&curr[j]);
-					curr[j].setReflIn(true);
-					refl[j - nxi].setReflOut(false);
+					curr[j].setSurfBwd(1);
+					refl[j - nxi].setSurfFwd(1);
+
+					if (_geom->getSurface(1)->getBoundary() == REFLECTIVE){
+						curr[j].setReflIn(REFL_TRUE);
+						refl[j - nxi].setReflOut(REFL_FALSE);
+					}
+					else{
+						curr[j].setReflIn(VAC_TRUE);
+						refl[j - nxi].setReflOut(VAC_FALSE);
+					}
 
 					curr[j].setTrackOut(&refl[j + nxi]);
 					refl[j + nxi].setTrackIn(&curr[j]);
-					curr[j].setReflOut(false);
-					refl[j + nxi].setReflIn(true);
+					curr[j].setSurfFwd(2);
+					refl[j + nxi].setSurfBwd(2);
+
+					if (_geom->getSurface(2)->getBoundary() == REFLECTIVE){
+						curr[j].setReflOut(REFL_FALSE);
+						refl[j + nxi].setReflIn(REFL_TRUE);
+					}
+					else{
+						curr[j].setReflOut(VAC_FALSE);
+						refl[j + nxi].setReflIn(VAC_TRUE);
+					}
 				}
 
 				/* Left hand side to top (j > ny) */
 				else {
+
 					curr[j].setTrackIn(&refl[j - nxi]);
 					refl[j - nxi].setTrackOut(&curr[j]);
-					curr[j].setReflIn(true);
-					refl[j - nxi].setReflOut(false);
+					curr[j].setSurfBwd(1);
+					refl[j - nxi].setSurfFwd(1);
+
+
+					if (_geom->getSurface(1)->getBoundary() == REFLECTIVE){
+						curr[j].setReflIn(REFL_TRUE);
+						refl[j - nxi].setReflOut(REFL_FALSE);
+					}
+					else{
+						curr[j].setReflIn(VAC_TRUE);
+						refl[j - nxi].setReflOut(VAC_FALSE);
+					}
 
 					curr[j].setTrackOut(&refl[2 * nti - nxi - j - 1]);
 					refl[2 * nti - nxi - j - 1].setTrackOut(&curr[j]);
-					curr[j].setReflOut(true);
-					refl[2 * nti - nxi - j - 1].setReflOut(true);
+					curr[j].setSurfFwd(4);
+					refl[2 * nti - nxi - j - 1].setSurfFwd(4);
+
+					if (_geom->getSurface(4)->getBoundary() == REFLECTIVE){
+						curr[j].setReflOut(REFL_TRUE);
+						refl[2 * nti - nxi - j - 1].setReflOut(REFL_TRUE);
+					}
+					else{
+						curr[j].setReflOut(VAC_TRUE);
+						refl[2 * nti - nxi - j - 1].setReflOut(VAC_TRUE);
+					}
 				}
 			}
 
@@ -391,39 +473,93 @@ void TrackGenerator::makeReflective() {
 				if (j < nxi - nyi) {
 					curr[j].setTrackIn(&refl[j]);
 					refl[j].setTrackIn(&curr[j]);
-					curr[j].setReflIn(false);
-					refl[j].setReflIn(false);
+					curr[j].setSurfBwd(3);
+					refl[j].setSurfBwd(3);
+
+					if (_geom->getSurface(3)->getBoundary() == REFLECTIVE){
+						curr[j].setReflIn(REFL_FALSE);
+						refl[j].setReflIn(REFL_FALSE);
+					}
+					else{
+						curr[j].setReflIn(VAC_FALSE);
+						refl[j].setReflIn(VAC_FALSE);
+					}
 
 					curr[j].setTrackOut(&refl[nti - (nxi - nyi) + j]);
 					refl[nti - (nxi - nyi) + j].setTrackOut(&curr[j]);
-					curr[j].setReflOut(true);
-					refl[nti - (nxi - nyi) + j].setReflOut(true);
+					curr[j].setSurfFwd(4);
+					refl[nti - (nxi - nyi) + j].setSurfFwd(4);
+
+					if (_geom->getSurface(4)->getBoundary() == REFLECTIVE){
+						curr[j].setReflOut(REFL_TRUE);
+						refl[nti - (nxi - nyi) + j].setReflOut(REFL_TRUE);
+					}
+					else{
+						curr[j].setReflOut(VAC_TRUE);
+						refl[nti - (nxi - nyi) + j].setReflOut(VAC_TRUE);
+					}
 				}
 
 				/* Bottom to right hand side */
 				else if (j < nxi) {
 					curr[j].setTrackIn(&refl[j]);
 					refl[j].setTrackIn(&curr[j]);
-					curr[j].setReflIn(false);
-					refl[j].setReflIn(false);
+					curr[j].setSurfBwd(3);
+					refl[j].setSurfBwd(3);
+
+					if (_geom->getSurface(3)->getBoundary() == REFLECTIVE){
+						curr[j].setReflIn(REFL_FALSE);
+						refl[j].setReflIn(REFL_FALSE);
+					}
+					else{
+						curr[j].setReflIn(VAC_FALSE);
+						refl[j].setReflIn(VAC_FALSE);
+					}
 
 					curr[j].setTrackOut(&refl[nxi + (nxi - j) - 1]);
 					refl[nxi + (nxi - j) - 1].setTrackIn(&curr[j]);
-					curr[j].setReflOut(false);
-					refl[nxi + (nxi - j) - 1].setReflIn(true);
+					curr[j].setSurfFwd(2);
+					refl[nxi + (nxi - j) - 1].setSurfBwd(2);
+
+					if (_geom->getSurface(2)->getBoundary() == REFLECTIVE){
+						curr[j].setReflOut(REFL_FALSE);
+						refl[nxi + (nxi - j) - 1].setReflIn(REFL_TRUE);
+					}
+					else{
+						curr[j].setReflOut(VAC_FALSE);
+						refl[nxi + (nxi - j) - 1].setReflIn(VAC_TRUE);
+					}
 				}
 
 				/* Left-hand side to top (j > nx) */
 				else {
 					curr[j].setTrackIn(&refl[j - nxi]);
 					refl[j - nxi].setTrackOut(&curr[j]);
-					curr[j].setReflIn(true);
-					refl[j - nxi].setReflOut(false);
+					curr[j].setSurfBwd(1);
+					refl[j - nxi].setSurfFwd(1);
+
+					if (_geom->getSurface(1)->getBoundary() == REFLECTIVE){
+						curr[j].setReflIn(REFL_TRUE);
+						refl[j - nxi].setReflOut(REFL_FALSE);
+					}
+					else{
+						curr[j].setReflIn(VAC_TRUE);
+						refl[j - nxi].setReflOut(VAC_FALSE);
+					}
 
 					curr[j].setTrackOut(&refl[nyi + (nti - j) - 1]);
 					refl[nyi + (nti - j) - 1].setTrackOut(&curr[j]);
-					curr[j].setReflOut(true);
-					refl[nyi + (nti - j) - 1].setReflOut(true);
+					curr[j].setSurfFwd(4);
+					refl[nyi + (nti - j) - 1].setSurfFwd(4);
+
+					if (_geom->getSurface(4)->getBoundary() == REFLECTIVE){
+						curr[j].setReflOut(REFL_TRUE);
+						refl[nyi + (nti - j) - 1].setReflOut(REFL_TRUE);
+					}
+					else{
+						curr[j].setReflOut(VAC_TRUE);
+						refl[nyi + (nti - j) - 1].setReflOut(VAC_TRUE);
+					}
 				}
 			}
 		}
@@ -461,7 +597,25 @@ void TrackGenerator::segmentize() {
 	bitMapFSR->color_type = RANDOM;
 	bitMap->color_type = RANDOM;
 
+	int total_num_segments = 0;
+
+#if USE_OPENMP
+#pragma omp parallel for private(i, j, k, phi,\
+								 sin_phi, cos_phi, track,	\
+								 x0, y0, x1, y1, num_segments)
+#endif
 	/* Loop over all tracks */
+
+#if 0	
+	std::ofstream file;
+	std::stringstream string;
+	string << "track_na_" << _num_azim << "_ts_" << _spacing 
+		   << ".txt";
+	std::string title_str = string.str();
+	file.open(title_str.c_str(), std::fstream::trunc);
+	file << "Note: reporting start point coordinate, end point coordinate, and length for each track" << std::endl;
+#endif
+
 	for (int i = 0; i < _num_azim; i++) {
 		phi = _tracks[i][0].getPhi();
 		sin_phi = sin(phi);
@@ -471,6 +625,7 @@ void TrackGenerator::segmentize() {
 
 			_geom->segmentize(track);
 			log_printf(DEBUG, "Segmented track phi: %f...", phi);
+			total_num_segments += track->getNumSegments();
 
 			/* plot segments */
 			if (_plotter->plotSpecs() == true){
@@ -478,23 +633,33 @@ void TrackGenerator::segmentize() {
 				y0 = track->getStart()->getY();
 				num_segments = track->getNumSegments();
 				for (int k=0; k < num_segments; k++){
-					log_printf(DEBUG, "Segmented segment: %f...", num_segments);
+					log_printf(DEBUG, "Segmented segment: %i...", k);
 					x1 = x0 + cos_phi * track->getSegment(k)->_length;
 					y1 = y0 + sin_phi * track->getSegment(k)->_length;
-					drawLine(bitMap, x0, y0, x1, y1, track->getSegment(k)->_region_id);
+					drawLine(bitMap, x0, y0, x1, y1, 
+							 track->getSegment(k)->_region_id);
+					#if 0
+					file << "(" << x0 << ", " << y0 << "), (" << x1 << ", "
+						 << y1 << "), " << track->getSegment(k)->_length 
+						 << std::endl;
+					#endif
 					x0 = x1;
 					y0 = y1;
 				}
 			}
 		}
 	}
+#if 0
+	file.close();
+#endif
 
-	log_printf(DEBUG, "Done segmenting...");
+	log_printf(NORMAL, "Generated %d number of segments...", 
+			   total_num_segments);
 
 	if (_plotter->plotSpecs() == true){
 		/* plot segments, FSRs, cells, and materials */
 		plot(bitMap, "segments", _plotter->getExtension());
-		_plotter->makeFSRMap(bitMapFSR->pixels);
+		_plotter->copyFSRMap(bitMapFSR->pixels);
 		plot(bitMapFSR, "FSRs", _plotter->getExtension());
 		_plotter->makeRegionMap(bitMapFSR->pixels, bitMap->pixels, _geom->getFSRtoCellMap());
 		plot(bitMap, "cells", _plotter->getExtension());

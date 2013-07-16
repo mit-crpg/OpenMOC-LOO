@@ -17,12 +17,16 @@ FlatSourceRegion::FlatSourceRegion() {
 	_material = NULL;
 	_volume = 0.0;
 
-	/* Zero the region's flux and source */
+	/* Initializes region's other attributes */
 	for (int e = 0; e < NUM_ENERGY_GROUPS; e++) {
 		_flux[e] = 0.0;
 		_old_flux[e] = 0.0;
 		_source[e] = 0.0;
 		_old_source[e] = 0.0;
+		_mat_mult_a[e] = 1.0;
+		for (int g=0; g < NUM_ENERGY_GROUPS; g++){
+			_mat_mult[e*NUM_ENERGY_GROUPS + g] = 1.0;
+		}
 	}
 
 #if USE_OPENMP
@@ -282,7 +286,7 @@ void FlatSourceRegion::computeRatios() {
 	double* sigma_t = _material->getSigmaT();
 
 	for (int e = 0; e < NUM_ENERGY_GROUPS; e++) {
-		_ratios[e] = _source[e]/sigma_t[e];
+			_ratios[e] = _source[e]/sigma_t[e];
 	}
 
 	return;
@@ -291,12 +295,11 @@ void FlatSourceRegion::computeRatios() {
 
 /**
  * Compute the volumetric fission rate in this flat source region by adding
- * up the fission rates in each energy group. This mehtod assumes that fixed
+ * up the fission rates in each energy group. This method assumes that fixed
  * source iteration has already been run since it uses the flux stored in
  * this region
  */
 double FlatSourceRegion::computeFissionRate() {
-
 	double power = 0.0;
 	double* sigma_f = _material->getSigmaF();
 
@@ -309,3 +312,23 @@ double FlatSourceRegion::computeFissionRate() {
 
 	return power;
 }
+
+
+void FlatSourceRegion::setMatMult(int group, double mult){
+	_mat_mult[group] = mult;
+}
+
+double* FlatSourceRegion::getMatMult(){
+	return _mat_mult;
+}
+
+void FlatSourceRegion::setMatMultA(int group, double mult){
+	_mat_mult_a[group] = mult;
+}
+
+double* FlatSourceRegion::getMatMultA(){
+	return _mat_mult_a;
+}
+
+
+

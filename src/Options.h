@@ -22,38 +22,79 @@ private:
 	std::string _relative_path;
 	std::string _geometry_file;
 	std::string _material_file;
-
 	std::string _track_input_file;
-
 	std::string _extension;
-	double _track_spacing;
+	std::string _verbosity;
 	int _num_azim;
 	int _bit_dimension;
-	std::string _verbosity;
+	int _cmfd_level;
+	int _boundary_iteration;
+	double _track_spacing;
+	double _l2_norm_conv_thresh;
+	double _moc_conv_thresh;
+	double _k_guess;
+	double _damp_factor;
 	bool _dump_geometry;
 	bool _plot_specs;
 	bool _plot_fluxes;
 	bool _compute_pin_powers;
 	bool _compress_cross_sections;
 	bool _cmfd;
+	bool _loo;
+	bool _loo1; //update by psi
+	bool _loo2; //update by phi
+	bool _acc_after_MOC_converge;
+	bool _plot_quad_flux;
 	bool _plot_current;
+	bool _plot_diffusion;
+	bool _plot_keff;
+	bool _plot_prolongation;
+	bool _update_keff;
+	bool _multigroup;
+	bool _print_matrices;
+	bool _diffusion;
+	bool _diffusion_correction;
+
 public:
-    Options(int argc, const char **argv);
+    Options(int argc, char **argv);
     ~Options(void);
+	int extra_argc;
+	char **extra_argv;
     const char *getGeometryFile() const;
     const char *getMaterialFile() const;
-    bool dumpGeometry() const;
-    double getNumAzim() const;
-    int getBitDimension() const;
-    double getTrackSpacing() const;
-    const char* getVerbosity() const;
-    std::string getExtension() const;
-    bool plotSpecs() const;
-    bool plotFluxes() const;
-    bool computePinPowers() const;
-    bool compressCrossSections() const;
-	bool cmfd() const;
-	bool plotCurrent() const;
+    bool dumpGeometry();
+    double getNumAzim();
+    int getBitDimension();
+    double getTrackSpacing();
+    char* getVerbosity();
+    std::string getExtension();
+    bool plotSpecs();
+    bool plotFluxes();
+    bool computePinPowers();
+    bool compressCrossSections();
+	bool cmfd();
+	bool plotQuadFlux();
+	bool plotCurrent();
+	bool plotDiffusion();
+	bool plotKeff();
+	bool plotProlongation();
+	bool updateKeff();
+	std::string getGeometryFile();
+	double getL2NormConvThresh();
+	double getMOCConvThresh();
+	double getKGuess();
+	bool getGroupStructure();
+	bool getPrintMatrices();
+	int getCmfdLevel();
+	bool getCmfd();
+	bool getLoo();
+	bool getLoo1();
+	bool getLoo2();
+	bool getDiffusion();
+	bool getDiffusionCorrection();
+	bool getAccAfterMOCConverge();
+	double getDampFactor();
+	int getBoundaryIteration();
 };
 
 #endif

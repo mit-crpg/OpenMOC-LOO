@@ -14,6 +14,7 @@
 #include <map>
 #include <utility>
 #include <sstream>
+#include <iomanip>
 #include "Point.h"
 #include "Track.h"
 #include "Geometry.h"
@@ -24,8 +25,6 @@
 #include "quickplot.h"
 #include "Mesh.h"
 #include "MeshCell.h"
-
-
 
 class Plotter{
 private:
@@ -40,11 +39,19 @@ private:
 	bool _specs;
 	bool _fluxes;
 	bool _net_current;
+	bool _plot_diffusion;
+	bool _plot_keff;
+	bool _plot_quad_flux_flag;
+	int *_FSR_map;
 public:
-	Plotter(Geometry* geom, const int bit_dim, std::string extension, bool specs, bool fluxes, bool netCurrent);
+	Plotter(Geometry* geom, const int bit_dim, std::string extension, 
+			bool specs, bool fluxes, bool netCurrent, 
+			bool plotDiffusion, bool plotKeff, bool plotQuadFluxFlag);
 	virtual ~Plotter();
 	void plotTracksReflective(Track* track, int numReflect);
-	void makeFSRMap(int* pixMap);
+	void makeFSRMap();
+	int *getFSRMap();
+	void copyFSRMap(int *pixels);
 	int getBitLengthX();
 	int getBitLengthY();
 	double getXPixel();
@@ -59,14 +66,18 @@ public:
 	void plotCMFDMesh(Mesh* mesh);
 	int convertToPixelX(double x);
 	int convertToPixelY(double y);
+	void plotGeometry(Mesh *mesh);
 	void plotNetCurrents(Mesh* mesh);
-	void plotSurfaceFlux(Mesh* mesh);
-	void plotXS(Mesh* mesh);
+	void plotQuadFlux(Mesh* mesh, int iter_num);
+	void plotDHats(Mesh* mesh, int iter_num);
+	void plotXS(Mesh* mesh, int iter_num);
 	bool plotCurrent();
+	bool plotQuadFluxFlag();
+	bool plotKeff();
+	bool plotDiffusion();
+	void plotCMFDflux(Mesh* mesh, std::string string, int iter_num);
+	void plotCMFDKeff(Mesh* mesh, int num_iter);
+	void plotCmfdFluxUpdate(Mesh *mesh, int iter_num);
 };
-
-
-
-
 
 #endif /* PLOTTER_H_ */

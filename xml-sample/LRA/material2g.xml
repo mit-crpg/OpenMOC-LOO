@@ -1,0 +1,62 @@
+<?xml version="1.0"?>
+<materials>
+
+<!-- Two group ficticious cross sections -->
+
+<!-- material 1: Fuel 1 blade in-->
+<material id="1" energy="2"
+		  sigma_a   ="0.008252 0.1003"
+		  sigma_t   ="0.2656 1.5798"
+		  sigma_f   ="0.002 0.05"
+		  nu_sigma_f="0.004602 0.1091"
+		  chi       ="1 0"
+		  sigma_s   ="0.232018 0.02533
+                      0.00 1.4795"
+		  />
+
+<!-- material 2: Fuel 1 blade out -->
+<material id="2" energy="2"
+    sigma_a   ="0.007181 0.07047"
+    sigma_t   ="0.2629 1.7525"
+    sigma_f   ="0.002 0.045"
+    nu_sigma_f="0.004609 0.08675"
+    chi       ="1 0"
+    sigma_s   ="0.228049 0.02767
+                0.00 1.68203"
+    />
+    
+<!-- material 3: Fuel 2 blade in -->
+<material id="3" energy="2"
+    sigma_a   ="0.008002 0.08344"
+    sigma_t   ="0.2648 1.5941"
+    sigma_f   ="0.002 0.045"
+    nu_sigma_f="0.004663 0.1021"
+    chi       ="1 0"
+    sigma_s   ="0.230628 0.02617
+                0.00 1.51066"
+    />
+    
+<!-- material 4: Fuel 2 blade out -->
+<material id="4" energy="2"
+    sigma_a   ="0.008002 0.073324"
+    sigma_t   ="0.2648 1.5941"
+    sigma_f   ="0.002 0.045"
+    nu_sigma_f="0.004663 0.1021"
+    chi       ="1 0"
+    sigma_s   ="0.230628 0.02617
+                0.00 1.520776"
+    />
+    
+    
+<!-- material 5: Reflector -->
+<material id="5" energy="2"
+    sigma_a   ="0.0006034 0.01911"
+    sigma_t   ="0.2652 2.0938"
+    sigma_f   ="0.0 0.0"
+    nu_sigma_f="0.0 0.0"
+    chi       ="1 0"
+    sigma_s   ="0.2170566 0.04754
+                0.00 2.07469"
+    />
+    
+</materials>

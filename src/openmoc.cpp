@@ -19,12 +19,16 @@
 #include "log.h"
 #include "configurations.h"
 #include "Plotter.h"
+#include "Cmfd.h"
+#include "petsc.h"
+#include "mpi.h"
+#include <petscmat.h>
 
 // FIXME: These should be removed when main() is properly implemented
 #pragma GCC diagnostic ignored "-Wunused"
 #pragma GCC diagnostic ignored "-Wunused-variable"
 
-int main(int argc, const char **argv) {
+int main(int argc, char **argv) {
 	log_printf(NORMAL, "Starting OpenMOC...");
 
 	double k_eff;
@@ -32,6 +36,12 @@ int main(int argc, const char **argv) {
 
 	/* Create an options class to parse command line options */
 	Options opts(argc, argv);
+
+	/* initialize Petsc */
+	int petsc_err = 0;
+	CHKERRQ(petsc_err);
+	PetscInitialize(&(opts.extra_argc), &(opts.extra_argv), (char*)0, NULL);
+	CHKERRQ(petsc_err);
 
 	/* Set the verbosity */
 	log_setlevel(opts.getVerbosity());
@@ -47,7 +57,7 @@ int main(int argc, const char **argv) {
 	timer.start();
 	Geometry geometry(&parser);
 	timer.stop();
-	timer.recordSplit("Geomery initialization");
+	timer.recordSplit("Geometry initialization");
 
 	/* Print out geometry to console if requested at runtime*/
 	if (opts.dumpGeometry())
@@ -57,20 +67,35 @@ int main(int argc, const char **argv) {
 	if (opts.compressCrossSections())
 		geometry.compressCrossSections();
 
+	/* Initialize plotter */
 	Plotter plotter(&geometry, opts.getBitDimension(), opts.getExtension(),
-			opts.plotSpecs(), opts.plotFluxes(), opts.plotCurrent());
+					opts.plotSpecs(), opts.plotFluxes(), opts.plotCurrent(), 
+					opts.plotDiffusion(), opts.plotKeff(), opts.plotQuadFlux());
 
-	/* Initialize the trackgenerator */
+	/* Initialize track generator */
 	TrackGenerator track_generator(&geometry, &plotter, opts.getNumAzim(),
 				       opts.getTrackSpacing());
 
-	/* create CMFD Mesh */
-#if CMFD_ACCEL
-		geometry.makeCMFDMesh();
-		if (opts.plotSpecs()){
-			plotter.plotCMFDMesh(geometry.getMesh());
-		}
-#endif
+	/* Tell geometry whether CMFD is on/off */
+	geometry.setCmfd(opts.getCmfd());
+	geometry.setLoo(opts.getLoo());
+
+	/* Make CMFD mesh */
+	if (opts.getCmfd() || opts.getLoo())
+		geometry.makeCMFDMesh(geometry.getMesh(), opts.getNumAzim(), 
+							  opts.getGroupStructure(), opts.getPrintMatrices(),
+							  opts.getCmfdLevel());
+
+	/* make FSR map for plotting */
+	if (opts.plotCurrent() || opts.plotDiffusion() || opts.plotFluxes() || 
+		opts.plotSpecs())
+		plotter.makeFSRMap();
+
+	/* plot CMFD mesh */
+	if (opts.plotSpecs() && opts.getCmfd())
+	{
+		plotter.plotCMFDMesh(geometry.getMesh());
+	}
 
 	/* Generate tracks */
 	timer.reset();
@@ -87,22 +112,29 @@ int main(int argc, const char **argv) {
 	timer.stop();
 	timer.recordSplit("Segmenting tracks");
 
-	/* Fixed source iteration to solve for k_eff */
-	Solver solver(&geometry, &track_generator, &plotter);
+	/* Create CMFD class */
+	Cmfd cmfd(&geometry, &plotter, geometry.getMesh(), 
+			  opts.getCmfd(), opts.getLoo(), opts.getLoo1(), opts.getLoo2(),
+			  opts.getDiffusionCorrection(), opts.plotProlongation(), 
+			  opts.getL2NormConvThresh(), opts.getDampFactor(),
+			  &track_generator);
+
+	/* Creat Solver class */
+	Solver solver(&geometry, &track_generator, &plotter, &cmfd, &opts);
+
+	cmfd.setFSRs(solver.getFSRs());
+
+	/* Solve steady state problem */
 	timer.reset();
 	timer.start();
-	k_eff = solver.computeKeff(MAX_ITERATIONS);
+	k_eff = solver.kernel(MAX_ITERATIONS);
 	timer.stop();
 	timer.recordSplit("Fixed source iteration");
+	log_printf(RESULT, "k_eff = %.10f", k_eff);
 
-	/* Compute pin powers if requested at run time */
-	if (opts.computePinPowers())
-		solver.computePinPowers();
-
-	if (opts.cmfd())
-		solver.cmfd();
-
-	log_printf(RESULT, "k_eff = %f", k_eff);
+	/* Finalize petsc */
+	PetscFinalize();
+	CHKERRQ(petsc_err);
 
 	/* Print timer splits to console */
 	log_printf(NORMAL, "Program complete");

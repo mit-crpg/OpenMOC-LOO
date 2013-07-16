@@ -6,7 +6,8 @@ obj
 Makefile
 *~
 Configfile.local
-Debug/
+Debug/*.txt
+Debug/*.png
 Release/
 *.d
 *.o
@@ -36,3 +37,6 @@ latex/
 /missing
 /depcomp
 /src/openmoc
+/check
+*.gold
+*.txt

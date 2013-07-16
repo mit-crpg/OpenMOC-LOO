@@ -29,10 +29,20 @@ private:
 	int _cell_height;
 	double _width;
 	double _height;
+	bool _multigroup;
+	bool _print_matrices;
+	boundaryType _boundary[4];
+	double _keff_cmfd[int(MAX_ITERATIONS)];
+	double _keff_moc[int(MAX_ITERATIONS)];
+	double _old_time;
+	int* _fsr_indices;
+	double* _cell_bounds;
+	MeshSurface **_surfaces;
 
 public:
 	Mesh();
 	virtual ~Mesh();
+	void makeMeshCells();
 	double getWidth();
 	double getHeight();
 	void setWidth(double width);
@@ -41,15 +51,33 @@ public:
 	int getCellHeight();
 	void setCellWidth(int cellWidth);
 	void setCellHeight(int cellHeight);
-	void makeMeshCells();
 	MeshCell* getCells(int cell);
 	void setCellBounds();
-	void setFSRBounds();
+	void setFSRBounds(boundaryType left, boundaryType right, boundaryType bottom, boundaryType top);
 	int findMeshCell(double x, double y);
-	MeshSurface* findMeshSurface(int fsr_id, LocalCoords* coord);
+	int findMeshSurface(int fsr_id, LocalCoords* coord);
 	void printBounds();
 	void printCurrents();
-	void splitCorners();
+	void computeTotCurrents();
+	void computeTotQuadCurrents();
+
+	void splitCornerCurrents();
+	void splitCornerCurrents_old();
+
+	void splitCornerQuadCurrents();
+	void setMultigroup(bool multigroup);
+	bool getMultigroup();
+	void setPrintMatrices(bool printMatrices);
+	bool getPrintMatrices();
+	void setBoundary(boundaryType boundary, int s);
+	boundaryType getBoundary(int s);
+	void setKeffCMFD(double keff, int iter);
+	double getKeffCMFD(int iter);
+	void setKeffMOC(double keff, int iter);
+	double getKeffMOC(int iter);
+	MeshSurface **getSurfaces();
+	double getOldTime();
+	void setOldTime(double time);
 
 };
 

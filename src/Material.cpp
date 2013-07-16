@@ -45,21 +45,33 @@ Material::Material(int id,
 
 	if (chi_cnt != NUM_ENERGY_GROUPS)
 		log_printf(ERROR, "Wrong number of chi");
-	memcpy(_chi, chi, NUM_ENERGY_GROUPS*sizeof(*_chi));
+
+	/* Normalize chi: each material, the sum of chi over all energy groups
+	 * should add up to 1 */
+	double chi_tot = 0;
+	for (int i = 0; i < NUM_ENERGY_GROUPS; i++)
+		chi_tot += chi[i];
+	if (chi_tot > 0.0)
+	{
+		for (int i = 0; i < NUM_ENERGY_GROUPS; i++)
+			_chi[i] = chi[i] / chi_tot;
+	}
+	else
+		memcpy(_chi, chi, NUM_ENERGY_GROUPS*sizeof(*_chi));
 
 	if (sigma_s_cnt != NUM_ENERGY_GROUPS*NUM_ENERGY_GROUPS)
 		log_printf(ERROR, "Wrong number of sigma_s");
 	
 	/* Set the material's scattering matrix. This assumes that the scattering
-	 * matrix passed in has the standard notation: the ij element is for scattering
+	 * matrix passed in has the notation: the ij element is for scattering
 	 * from group i to j. For efficient caching of the elements of this matrix
 	 * during fixed source iteration, the matrix transpose is what is actually
 	 * stored in the material
      */
-	for (int i=0; i<NUM_ENERGY_GROUPS; i++) {
-		for (int j=0; j<NUM_ENERGY_GROUPS; j++) {
-			_sigma_s[i][j] = sigma_s[j*NUM_ENERGY_GROUPS+i];
-		}
+	for (int i = 0; i < NUM_ENERGY_GROUPS; i++) 
+	{
+		for (int j = 0; j < NUM_ENERGY_GROUPS; j++) 
+			_sigma_s[i][j] = sigma_s[j * NUM_ENERGY_GROUPS + i];
 	}
 
 	/* Uncompressed indices for the start and end of nonzero elements */
@@ -74,11 +86,11 @@ Material::Material(int id,
 	_chi_start = 0;
 	_chi_end = NUM_ENERGY_GROUPS;
 
-	for (int e=0; e < NUM_ENERGY_GROUPS; e++) {
+	for (int e=0; e < NUM_ENERGY_GROUPS; e++) 
+	{
 		_sigma_s_start[e] = 0;
 		_sigma_s_end[e] = NUM_ENERGY_GROUPS;
 	}
-
 
 	//FIXME
 	compressCrossSections();
@@ -99,8 +111,6 @@ double* Material::getChi() {
     return _chi;
 }
 
-
-
 /**
  * Return the material's uid
  * @return the material's uid
@@ -117,8 +127,6 @@ int Material::getId() const {
     return _id;
 }
 
-
-
 /**
  * Return the material's fission cross-section array
  * @return the material's fission cross-section array
@@ -126,7 +134,6 @@ int Material::getId() const {
 double* Material::getSigmaF() {
     return _sigma_f;
 }
-
 
 /**
  * Return the material's nu*sigma_f array
@@ -391,13 +398,22 @@ void Material::checkSigmaT() {
 			calc_sigma_t += _sigma_s[j][i];
 
 		/* Check if the calculated and total match up to certain threshold */
+		/*
 		if (fabs(calc_sigma_t - _sigma_t[i]) > SIGMA_T_THRESH) {
-			log_printf(ERROR, "Material id = %d has a different total "
+			log_printf(WARNING, "Material id = %d has a different total "
 					"cross-section than the sum of its scattering and "
 					"absorption cross-sections for group %d: "
-					"sigma_t = %f, calc_sigma_t = %f", _id, i, _sigma_t[i],
+					"sigma_t = %.10f, calc_sigma_t = %.10f", 
+					   _id, i, _sigma_t[i],
 					   calc_sigma_t);
 		}
+		*/
+
+		log_printf(DEBUG, " material %d energy %d has"
+				   "  calculated sigma_t = %.10f, "
+				   "given sigma_t = %.10f", 
+				   _id, i, calc_sigma_t, _sigma_t[i]);
+		_sigma_t[i] = calc_sigma_t;
 	}
 
 	return;

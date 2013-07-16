@@ -24,11 +24,19 @@ typedef enum colortypes {
 	BLACKWHITE
 }colortype;
 
+//typedef enum scaling {
+//	LINEAR,
+//	LOG,
+//	SQRT
+//}scaling;
+
+
 /* define BitMap struct */
 template <typename U>
 struct BitMap {
 	U* pixels;
 	colortype color_type;
+//	scaling scaling_type;
 	int pixel_x;
 	int pixel_y;
 	double geom_x;
@@ -68,10 +76,13 @@ int convertToBitmapX(BitMap<U>* bitMap, V x);
 template <typename U>
 void deleteBitMap(BitMap<U>* bitMap);
 template <typename U>
-void drawText(BitMap<U>* bitMap, std::string text, int x, int y);
+void drawText(BitMap<U>* bitMap, std::string text, double x, double y);
 template <typename U>
 void addScalebar(BitMap<U>* bitMap, float* pixMap, std::list<Magick::Drawable>* drawList);
-
+template <typename U>
+void drawPoint(BitMap<U>* bitMap, std::string color, std::string color2, int stroke, double x, double y, double radius);
+template <typename U>
+void drawLine(BitMap<U>* bitMap, double x_start, double y_start, double x_end, double y_end);
 
 
 /*
@@ -164,7 +175,7 @@ void plotSilo(BitMap<U>* bitMap, float* pixMap, std::string name, std::string ex
  */
 template <typename U>
 void plotMagick(BitMap<U>* bitMap, float* pixMap, std::string name, std::string extension){
-	printf("Writing Magick bitmap...\n");
+	//printf("Writing Magick bitmap...\n");
 
 	/* declare variables */
 	float* color = new float[3];
@@ -250,14 +261,24 @@ void normalize(BitMap<U>* bitMap, float* pixMap){
 
 	float* bounds = new float[2];
 	getBounds(bitMap, pixMap, bounds);
-
+    
 	/* copy bitMap to bitMapRGB and normalize */
 	for (int y=0;y< bitMap->pixel_y; y++){
 		for (int x=0;x< bitMap->pixel_x; x++){
 			if (pixMap[y * bitMap->pixel_x + x] == -1){
 				pixMap[y * bitMap->pixel_x + x] = bounds[0];
 			}
+
+			/* scale pixmap values */
+//			if (bitMap->scaling_type == SQRT){
+//				pixMap[y * bitMap->pixel_x + x] = (std::sqrt(pixMap[y * bitMap->pixel_x + x]) - std::sqrt(bounds[0])) / (std::sqrt(bounds[1]) - std::sqrt(bounds[0]));
+//			}
+//			else if (bitMap->scaling_type == LOG){
+//				pixMap[y * bitMap->pixel_x + x] = std::log(pixMap[y * bitMap->pixel_x + x]/bounds[0]) / std::log(bounds[1]/bounds[0]);
+//			}
+//			else{
 			pixMap[y * bitMap->pixel_x + x] = (pixMap[y * bitMap->pixel_x + x] - bounds[0]) /  (bounds[1] - bounds[0]);
+//			}
 		}
 	}
 
@@ -434,7 +455,7 @@ int convertToBitmapX(BitMap<U>* bitMap, V x){
  */
 template <typename U, typename V>
 int convertToBitmapY(BitMap<U>* bitMap, V y){
-	return int(-(y - bitMap->center_y) * (bitMap->pixel_y - 1) / bitMap->geom_x + (bitMap->pixel_y - 1) / 2.0);
+	return int(-(y - bitMap->center_y) * (bitMap->pixel_y - 1) / bitMap->geom_y + (bitMap->pixel_y - 1) / 2.0);
 }
 
 /**
@@ -450,7 +471,7 @@ void deleteBitMap(BitMap<U>* bitMap){
  * Write text on BitMap
  */
 template <typename U>
-void drawText(BitMap<U>* bitMap, std::string text, int x, int y){
+void drawText(BitMap<U>* bitMap, std::string text, double x, double y){
 
 	/* add item to drawlist	 */
 	bitMap->drawList.push_back(Magick::DrawableText(x, y, text));
@@ -502,9 +523,30 @@ void addScalebar(BitMap<U>* bitMap, float* pixMap, std::list<Magick::Drawable>* 
 }
 
 
+/**
+ * Draw point on BitMap
+ */
+template <typename U>
+void drawPoint(BitMap<U>* bitMap, std::string color, std::string color2,  int stroke, double x, double y, double radius){
 
+	bitMap->drawList.push_back(Magick::DrawableStrokeColor(color));
+	bitMap->drawList.push_back(Magick::DrawableFillColor(color2));
 
+	bitMap->drawList.push_back(Magick::DrawableStrokeWidth(stroke));
 
+	/* add item to drawlist	 */
+	bitMap->drawList.push_back(Magick::DrawableCircle(x, y, x + radius, y));
+}
+
+/**
+ * Draw point on BitMap
+ */
+template <typename U>
+void drawLine(BitMap<U>* bitMap, double x_start, double y_start, double x_end, double y_end){
+
+	/* add item to drawlist	 */
+	bitMap->drawList.push_back(Magick::DrawableLine(x_start, y_start, x_end, y_end));
+}
 
 
 

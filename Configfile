@@ -1,13 +1,39 @@
 LANGUAGES   += c++
 COMPILEOPTS += -Wall
-COMPILEOPTS += -Werror
+COMPILEOPTS += -Werror=unused-variable
 COMPILEOPTS += -std=gnu++0x
 COMPILEOPTS += -fopenmp
 COMPILEOPTS += -O2
+COMPILEOPTS += -I/usr/include/petsc
+COMPILEOPTS += -I/usr/include/petsc/linux-gnu-cxx-debug/include
+COMPILEOPTS += -I/usr/include/petsc/linux-gnu-cxx-opt/include
+COMPILEOPTS += -g
+COMPILEOPTS += `pkg-config Magick++ --cflags`
+COMPILEOPTS += -DPETSC_HAVE_MPI_WIN_CREATE
+
+LANGUAGES 	+= bash
 
 BINARIES    += openmoc
+LINKOPTS	+= -lm
 LINKOPTS    += -lexpat
 LINKOPTS    += -lsilo
+LINKOPTS	+= -larmadillo
+LINKOPTS 	+= -lpetsc
+LINKOPTS 	+= -lmpi
 LINKOPTS    += `pkg-config Magick++ --libs`
-COMPILEOPTS += `pkg-config Magick++ --cflags`
 SOURCES     += openmoc.cpp
+
+TESTSRC		+= 1polar/unacc/pin5.bash
+TESTSRC		+= 1polar/cmfd/pin5.bash
+TESTSRC		+= 1polar/loo1/pin5.bash
+TESTSRC		+= 1polar/loo2/pin5.bash
+
+TESTSRC		+= 1polar/unacc/pin52.bash
+TESTSRC		+= 1polar/cmfd/pin52.bash
+TESTSRC		+= 1polar/loo1/pin52.bash
+TESTSRC		+= 1polar/loo2/pin52.bash
+
+# back to 3 polar angle cases
+#TESTSRC 	+= unacc/pin5.bash
+#TESTSRC 	+= cmfd/pin5.bash
+#TESTSRC 	+= loo/pin5.bash

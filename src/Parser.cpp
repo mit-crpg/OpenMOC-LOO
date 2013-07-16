@@ -256,7 +256,7 @@ Parser::Parser (const Options *opts) {
 	geofile = fopen(opts->getGeometryFile(), "r");
 	if (geofile == NULL) {
 		log_printf(ERROR, "Given geometry file %s does not exist",
-				   opts->getGeometryFile());
+				opts->getGeometryFile());
 	}
 
 	/* Passes single characters to the parser, which is quite slow but
@@ -376,6 +376,7 @@ void Parser::each_material(std::function<void(Material *)> callback) {
 void XMLCALL Parser_XMLCallback_Start(void *context,
 				      const XML_Char *name,
 				      const XML_Char **attrs) {
+	/* s is a stack, f is a frame */
 	struct stack *s;
 	struct frame *f;
 	enum frame_type type;
@@ -584,6 +585,8 @@ void XMLCALL Parser_XMLCallback_Start(void *context,
 
 				if (strcmp(value, "reflective") == 0)
 					f->surface.boundary = REFLECTIVE;
+				else if (strcmp(value, "vacuum") == 0)
+					f->surface.boundary = VACUUM;
 				else
 					log_printf(ERROR, "Only supports reflective boundary");
 			} else {

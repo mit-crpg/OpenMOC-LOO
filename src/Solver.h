@@ -28,6 +28,10 @@
 #include "Mesh.h"
 #include "MeshCell.h"
 #include "Material.h"
+#include "Cmfd.h"
+#include "Options.h"
+#include "petsc.h"
+#include <petscmat.h>
 
 #if USE_OPENMP == true
 	#include <omp.h>
@@ -50,36 +54,74 @@ private:
 	double *_FSRs_to_absorption[NUM_ENERGY_GROUPS + 1];
 	double *_FSRs_to_pin_absorption[NUM_ENERGY_GROUPS + 1];
 	double _k_eff;
+	double _cmfd_k;
+	double _loo_k;
+	double _k_half;
 	std::queue<double> _old_k_effs;
 	Plotter* _plotter;
 	float* _pix_map_total_flux;
+	Cmfd* _cmfd;
+	std::string _geometry_file;
+	double _damp_factor;
+	double _track_spacing;
+	int _boundary_iteration;
+
 #if !STORE_PREFACTORS
 	double* _pre_factor_array;
 	int _pre_factor_array_size;
 	int _pre_factor_max_index;
 	double _pre_factor_spacing;
 #endif
+	bool _update_keff;
+	double _l2_norm_conv_thresh;
+	double _moc_conv_thresh;
+	bool _compute_powers;
+	bool _run_cmfd;
+	bool _run_loo;
+	bool _run_loo1;
+	bool _run_loo2;
+	bool _diffusion;
+	bool _acc_after_MOC_converge;
 	void precomputeFactors();
-	double computePreFactor(segment* seg, int energy, int angle);
+	double computePreFactor(segment* seg, int energyg, int angle);
 	void initializeFSRs();
 public:
-	Solver(Geometry* geom, TrackGenerator* track_generator, Plotter* plotter);
+	Solver(Geometry* geom, TrackGenerator* track_generator, 
+		   Plotter* plotter, Cmfd* cmfd, Options* opts);
 	virtual ~Solver();
-	void zeroTrackFluxes();
+	void initializeTrackFluxes(double flux);
+	void initializeSource();
+	void normalizeFlux();
+ 	void updateSource();
 	void oneFSRFluxes();
 	void zeroFSRFluxes();
+	void zeroMeshCells();
+	void zeroLeakage();
 	void computeRatios();
-	void updateKeff();
+	void updateFlux(int iteration);
+	void printKeff(int iteration, double eps);
+	double computeKeff(int iteration);
 	double** getFSRtoFluxMap();
-	void fixedSourceIteration(int max_iterations, bool cmfd);
-	double computeKeff(int max_iterations);
-	void plotFluxes();
+	void MOCsweep(int max_iterations);
+	double kernel(int max_iterations);
+	void plotFluxes(int iter_num);
 	void checkTrackSpacing();
-	void computePinPowers();
-	void cmfd();
-	void computeNetCurrent();
-	void computeCoeffs();
-	void computeXS(Mesh* mesh);
+	void computeFsrPowers();
+	void plotPinPowers();
+ 	void checkNeutronBalance();
+ 	void checkNeutronBalanceWithDs();
+ 	void renormCurrents(Mesh* mesh, double keff);
+ 	double getEps(Mesh* mesh, double keff, double renorm_factor);
+ 	FlatSourceRegion* getFSRs();
+ 	void setOldFSRFlux();
+	void tallyLooCurrent(Track *track, segment *segment, 
+						 MeshSurface **meshSurfaces, int dir);
+	void tallyCmfdCurrent(Track *track, segment *segment, 
+						 MeshSurface **meshSurfaces, int dir);
+	double runLoo(int i);
+	double runCmfd(int i);
+	double computeFsrL2Norm(double *old_fsr_powers);
+	double computeFsrLinf(double *old_fsr_powers);
 };
 
 #endif /* SOLVER_H_ */

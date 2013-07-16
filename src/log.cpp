@@ -1,5 +1,4 @@
-/*
- * log.cpp
+/* log.cpp
  *
  *  Created on: Jan 22, 2012
  *      Author: William Boyd
@@ -13,7 +12,7 @@
 
 
 /* Default logging level is the lowest (most verbose) level */
-logLevel log_level = NORMAL;
+logLevel log_level = DEBUG;
 
 
 /**
@@ -30,6 +29,9 @@ void log_setlevel(logLevel newlevel) {
     	case INFO:
     		log_printf(INFO, "Logging level set to INFO");
     		break;
+	    case ACTIVE:
+			log_printf(INFO, "Logging level set to ACTIVE");
+			break;
     	case NORMAL:
     		log_printf(INFO, "Logging level set to NORMAL");
     		break;
@@ -64,6 +66,10 @@ void log_setlevel(const char* newlevel) {
 	else if (strcmp("INFO", newlevel) == 0) {
 		log_level = INFO;
 		log_printf(INFO, "Logging level set to INFO");
+	}
+	else if (strcmp("ACTIVE", newlevel) == 0) {
+		log_level = ACTIVE;
+		log_printf(INFO, "Logging level set to ACTIVE");
 	}
 	else if (strcmp("NORMAL", newlevel) == 0) {
 		log_level = NORMAL;
@@ -104,35 +110,43 @@ void log_printf(logLevel level, const char *format, ...) {
     	/* Append the log level to the message */
     	switch (level) {
 			case (DEBUG):
-				printf("[  DEBUG  ]  ");
+				fprintf(stderr, "[  DEBUG  ]  ");
 				break;
     		case (INFO):
-    			printf("[  INFO   ]  ");
+    			fprintf(stderr, "[  INFO   ]  ");
     			break;
+		    case (ACTIVE):
+				fprintf(stderr, "[  ACTIVE ]  ");
+				break;
     		case (NORMAL):
-    			printf("[  NORMAL ]  ");
+    			fprintf(stderr, "[  NORMAL ]  ");
     			break;
     		case (WARNING):
-    			printf("[ WARNING ]  ");
+    			fprintf(stderr, "[ WARNING ]  ");
     			break;
     		case (CRITICAL):
-    			printf("[ CRITICAL]  ");
+    			fprintf(stderr, "[ CRITICAL]  ");
     			break;
     		case (RESULT):
-    			printf("[  RESULT ]  ");
+    			fprintf(stderr, "[  RESULT ]  ");
     			break;
     		case (ERROR):
-    			printf("[  ERROR  ]  ");
+    			fprintf(stderr, "[  ERROR  ]  ");
     			break;
     	}
 
 		va_start(args, format);
-		vprintf(format, args);
+		vfprintf(stderr, format, args);
 		va_end(args);
-		printf("\n");
+		fprintf(stderr, "\n");
     }
     if (level == ERROR) {
-    	printf("[  EXIT   ]  Exiting program...\n");
+    	fprintf(stderr, "[  EXIT   ]  Exiting program...\n");
     	abort();
     }
 }
+
+void log_error(const char *format, ...) {
+	fprintf(stderr, "[  EXIT   ]  Exiting program...\n");
+	abort();
+}	

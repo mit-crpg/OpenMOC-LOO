@@ -106,9 +106,11 @@ quadratureType Quadrature::getType() const {
 double Quadrature::getSinTheta(const int n) const {
 	if (n > -1 && n < NUM_POLAR_ANGLES)
 		return _sinthetas[n];
-	else {
+	else 
+	{
 		log_printf(ERROR, "Attempted to retrieve sintheta for polar angle = %d"
-				" but only %d polar angles are defined", NUM_POLAR_ANGLES);
+				   " but only %d polar angles are defined", 
+				   n, NUM_POLAR_ANGLES);
 	}
 	exit(0);
 }
@@ -123,8 +125,12 @@ double Quadrature::getWeight(const int n) const {
 	if (n > -1 && n < NUM_POLAR_ANGLES)
 		return _weights[n];
 	else
-		log_printf(ERROR, "Attempted to retrieve the weight for polar angle = %d"
-				" but only %d polar angles are defined", NUM_POLAR_ANGLES);
+	{
+		log_printf(ERROR, 
+				   "Attempted to retrieve the weight for polar angle = %d"
+				   " but only %d polar angles are defined", 
+				   n, NUM_POLAR_ANGLES);
+	}
 	exit(0);
 }
 
@@ -138,8 +144,12 @@ double Quadrature::getMultiple(const int n) const {
 	if (n > -1 && n < NUM_POLAR_ANGLES)
 		return _multiples[n];
 	else
-		log_printf(ERROR, "Attempted to retrieve the multiple for polar angle = %d"
-				" but only %d polar angles are defined", NUM_POLAR_ANGLES);
+	{
+		log_printf(ERROR, 
+				   "Attempted to retrieve the multiple for polar angle = %d"
+				   " but only %d polar angles are defined", 
+				   n, NUM_POLAR_ANGLES);
+	}
 	exit(0);
 }
 
