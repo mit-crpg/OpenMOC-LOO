@@ -1398,7 +1398,7 @@ double Solver::runLoo(int i)
 	}
 	else
 	{
-		loo_keff = _cmfd->computeLooFluxPower(LOO, i, _k_eff);
+		loo_keff = _cmfd->computeLooFluxPower(i, _k_eff);
 	}
 
 	return loo_keff;

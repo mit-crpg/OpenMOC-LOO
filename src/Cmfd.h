@@ -115,11 +115,11 @@ public:
 	int fisSourceNorm(Vec snew, int iter, int num_cmfd_iteration);
 
 	/* LOO */
+	void generateTrack(int *i_array, int *t_array, int *t_arrayb);
 	void storePreMOCMeshSource(FlatSourceRegion* fsrs);
 	void computeQuadSrc();
 	void computeQuadFlux();
-	double computeLooFluxPower(solveType solveMethod, int moc_iter, double k);
-	void generateTrack(int *i_array, int *t_array, int *t_arrayb);
+	double computeLooFluxPower(int moc_iter, double k);
 	double computeNormalization();
 	void normalizeFlux(double normalize_factor);
 };

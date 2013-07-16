@@ -10,7 +10,7 @@
 #include "Cmfd.h"
 
 /**
- * Transient constructor
+ * Acceleration constructor
  * @param geom pointer to the geometry
  * @param track_generator pointer to the trackgenerator
  */
@@ -1361,8 +1361,7 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter)
 }
 
 /* Computes the flux in each mesh cell using LOO */
-double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter, 
-								 double k_MOC)
+double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
 {
 	if (_run_loo_phi)
 		log_printf(ACTIVE, "Running LOO (phi) ...");
@@ -1372,9 +1371,6 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 		log_printf(ERROR, "Neither LOO psi nor phi is requested.");
 
 	int iter, max_outer = 200; 
-
-	if (solveMethod == DIFFUSION)
-		max_outer = 1000;
 
 	if (moc_iter == 10000)
 	{
@@ -1960,15 +1956,6 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 		if (eps < _l2_norm_conv_thresh)
 		{
 			std::string string;
-			if (solveMethod == DIFFUSION)
-			{
-				if (_plotter->plotDiffusion() == true)
-				{
-					string = "diff";
-					_plotter->plotCMFDflux(_mesh, string, moc_iter);
-				}
-			}
-
 			if (_plotter->plotKeff())
 				_plotter->plotCMFDKeff(_mesh, moc_iter);
 
@@ -1977,9 +1964,6 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 				string = "loo";
 				_plotter->plotCMFDflux(_mesh, string, moc_iter);
 			}
-
-			if (solveMethod == CMFD)
-				_mesh->setKeffCMFD(_keff, moc_iter);
 
 			break;
 		}
