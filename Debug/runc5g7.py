@@ -4,6 +4,17 @@ from itertools import cycle
 import numpy as np
 import os
 
+geometries = ['geometry_c5g7.xml']
+#['geometry_UO2.xml', 'geometry_c5g7.xml', 
+#              'geometry_c5g7_wo_refl.xml', 'geometry_UO2_leakage.xml']
+
+materials = ['material_c5g7.xml', 'material_c5g7.xml', 
+			 'material_c5g7.xml', 'material_c5g7.xml']
+
+ts = [0.5]
+na = [64]
+fc = [1e-8]
+
 # plot color 
 plt.gca().set_color_cycle(['red', 'green', 'blue', 'yellow'])
 #num_plots = 4
@@ -17,23 +28,12 @@ plt.gca().set_color_cycle(['red', 'green', 'blue', 'yellow'])
 lines = ['-o']
 linecycle = cycle(lines)
 
-
-
 # font sizes 
 fontP = FontProperties()
 fontP.set_size('small')
 
 
-geometries = ['geometry_UO2.xml', 'geometry_c5g7.xml', 
-              'geometry_c5g7_wo_refl.xml', 'geometry_UO2_leakage.xml']
-# ['geometry_c5g7_refl.xml']
 
-materials = ['material_c5g7.xml', 'material_c5g7.xml', 
-			 'material_c5g7.xml', 'material_c5g7.xml']
-
-ts = [0.1]
-na = [16]
-fc = [1e-8]
 
 # run OpenMOC
 for i, geometry in enumerate(geometries):
