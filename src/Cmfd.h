@@ -101,8 +101,7 @@ public:
 	/* CMFD */
  	void computeDs();
 	void computeDsxDirection(double x, double y, int e, MeshCell *meshCell, 
-							 double d, double f, double flux, int cell_width, 
-							 double dt_weight);
+							 double d, double f, double flux, double dt_weight);
  	double computeDiffCorrect(double d, double h);
  	int constructAMPhi(Mat A, Mat B, Vec phi_old, solveType solveMethod);
  	double computeCMFDFluxPower(solveType solveMethod, int moc_iter);
