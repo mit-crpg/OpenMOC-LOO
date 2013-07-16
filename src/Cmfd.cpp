@@ -16,10 +16,10 @@
  */
 Cmfd::Cmfd(Geometry* geom, Plotter* plotter, Mesh* mesh, 
 		   bool runCmfd, bool runLoo, bool runLoo1, bool runLoo2,
-		   double damp, 
-		   bool useDiffusionCorrection, double l2_norm_conv_thresh,
-		   TrackGenerator *track_generator) {
-
+		   bool useDiffusionCorrection, bool plotProlongation,
+		   double l2_norm_conv_thresh, double damp,
+		   TrackGenerator *track_generator) 
+{
 	_geom = geom;
 	_plotter = plotter;
 	_mesh = mesh;
@@ -72,6 +72,7 @@ Cmfd::Cmfd(Geometry* geom, Plotter* plotter, Mesh* mesh,
 	}
 
 	_num_iter_to_conv = 0;
+	_plot_prolongation = plotProlongation;
 }
 
 /**
@@ -2452,8 +2453,8 @@ int Cmfd::constructAMPhi(Mat A, Mat M, Vec phi_old, solveType solveMethod)
 /* Update the MOC flux in each FSR
  * @param MOC iteration number
  */
-void Cmfd::updateMOCFlux(int iteration){
-
+void Cmfd::updateMOCFlux(int iteration)
+{
 	log_printf(INFO, "Updating MOC flux...");
 
 	/* initialize variables */
@@ -2475,6 +2476,7 @@ void Cmfd::updateMOCFlux(int iteration){
 
 	double under_relax;
 	
+	/* only apply damping here for LOO, because CMFD damps Dtilde */
 	if (_run_loo)
 		under_relax = _damp_factor;
 	else
@@ -2483,23 +2485,19 @@ void Cmfd::updateMOCFlux(int iteration){
 	//int max_i = -10, max_e = -10; 
 	//double max = -100.0;
 
-
 	//double max_range = 2.0, min_range = 0.5;
 
 	double tmp_max = 0, tmp_cmco;
 
-	/* loop over mesh cells */
 #if USE_OPENMP
 #pragma omp parallel for private(meshCell, i, e, \
     new_flux, old_flux, flux, fsr, iter)
 #endif 
 	for (i = 0; i < cw * ch; i++)
 	{
-		/* get pointer to current mesh cell */
 		meshCell = _mesh->getCells(i);
 
 		CMCO[i] = 0.0;
-		/* loop over groups */
 		for (e = 0; e < ng; e++)
 		{
 			old_flux = meshCell->getOldFlux()[e];
@@ -2531,8 +2529,6 @@ void Cmfd::updateMOCFlux(int iteration){
 				 iter != meshCell->getFSRs()->end(); ++iter) 
 			{
 				fsr = &_flat_source_regions[*iter];
-
-				/* get fsr flux */
 				flux = fsr->getFlux();
 
 				/*
@@ -2543,19 +2539,16 @@ void Cmfd::updateMOCFlux(int iteration){
 				*/
 				fsr->setFlux(e, under_relax * tmp_cmco * flux[e]
 							 + (1.0 - under_relax) * flux[e]);
-				
 			}
 		}
 	}
 
 	/* plots the scalar flux ratio */
-	//_plotter->plotCmfdFluxUpdate(_mesh, iteration);
+	if (_plot_prolongation)
+		_plotter->plotCmfdFluxUpdate(_mesh, iteration);
 
 	for (int i = 0; i < cw * ch; i ++)
-	{
-		log_printf(ACTIVE, " cell # %d, CMCO = %.10e",
-				   i, CMCO[i] + 1  );
-	}
+		log_printf(ACTIVE, " cell # %d, CMCO = %.10e", i, CMCO[i] + 1  );
 
 	return;
 }

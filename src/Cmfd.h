@@ -58,12 +58,19 @@ private:
 	Quadrature* _quad;
 	Mesh* _mesh;
 	FlatSourceRegion* _flat_source_regions;
-	double _k_eff;
 	Plotter* _plotter;
 	Mat _A;
 	Mat _M;
 	Vec _phi_new;
 	Vec _source_old;
+	int _num_azim;
+	int _num_iter_to_conv;
+	int _num_loop;
+	int _num_track;
+	int _cw;
+	int _ch;
+	int _ng;
+	double _k_eff;
 	double _damp_factor;
 	double _keff;
 	double _l2_norm;
@@ -74,19 +81,12 @@ private:
 	bool _run_loo_psi;
 	bool _run_loo_phi;
 	bool _run_cmfd;
-	int _num_azim;
-	int _num_iter_to_conv;
-	int _num_loop;
-	int _num_track;
-	int _cw;
-	int _ch;
-	int _ng;
-
+	bool _plot_prolongation;
 public:
 	Cmfd(Geometry* geom, Plotter* plotter, Mesh* mesh, 
 		 bool runCmfd, bool runLoo, bool runLoo1, bool runLoo2,
-		 double damp,
-		 bool useDiffusionCorrection, double l2_norm_conv_thresh,
+		 bool useDiffusionCorrection, bool plotProlongation, 
+		 double l2_norm_conv_thresh, double damp,
 		 TrackGenerator *track_generator);
 	virtual ~Cmfd();
 	int getNumIterToConv();

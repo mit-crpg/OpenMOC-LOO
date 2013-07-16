@@ -24,10 +24,16 @@ private:
 	std::string _material_file;
 	std::string _track_input_file;
 	std::string _extension;
-	double _track_spacing;
+	std::string _verbosity;
 	int _num_azim;
 	int _bit_dimension;
-	std::string _verbosity;
+	int _cmfd_level;
+	int _boundary_iteration;
+	double _track_spacing;
+	double _l2_norm_conv_thresh;
+	double _moc_conv_thresh;
+	double _k_guess;
+	double _damp_factor;
 	bool _dump_geometry;
 	bool _plot_specs;
 	bool _plot_fluxes;
@@ -42,17 +48,13 @@ private:
 	bool _plot_current;
 	bool _plot_diffusion;
 	bool _plot_keff;
+	bool _plot_prolongation;
 	bool _update_keff;
 	bool _multigroup;
 	bool _print_matrices;
 	bool _diffusion;
-	double _l2_norm_conv_thresh;
-	double _moc_conv_thresh;
-	int _cmfd_level;
-	double _k_guess;
 	bool _diffusion_correction;
-	double _damp_factor;
-	int _boundary_iteration;
+
 public:
     Options(int argc, char **argv);
     ~Options(void);
@@ -75,6 +77,7 @@ public:
 	bool plotCurrent();
 	bool plotDiffusion();
 	bool plotKeff();
+	bool plotProlongation();
 	bool updateKeff();
 	std::string getGeometryFile();
 	double getL2NormConvThresh();

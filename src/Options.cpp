@@ -51,11 +51,11 @@ Options::Options(int argc, char **argv)
 		_relative_path = "";
 
     /* Default geometry input file */
-	_geometry_file = _relative_path + "xml-sample/Cmfd/geometry_pin51.xml"; 	 
-	_material_file = _relative_path + "xml-sample/Cmfd/material_simple.xml";
+	_geometry_file = _relative_path + "xml-sample/Cmfd/geometry_c5g7_refl.xml"; 	 
+	_material_file = _relative_path + "xml-sample/Cmfd/material_c5g7.xml";
 	
-	_track_spacing = 0.01;				/* Default track spacing: 0.05 */
-	_num_azim = 128;					/* Default \# azimuthal angles: 32 */
+	_track_spacing = 0.5;				/* Default track spacing: 0.05 */
+	_num_azim = 64;					/* Default \# azimuthal angles: 32 */
 	
 	//_track_spacing = 0.8909545443;
 	//_num_azim = 4;
@@ -74,9 +74,9 @@ Options::Options(int argc, char **argv)
 	_print_matrices = false;			/* Default will not print matrices */
 	_cmfd_level = 0;					/* Default cmfd level is 0: pin-wise */
 	_plot_keff = false;					/* Default will not plot keff */
-	_diffusion = false;					/* Default will not solve diffusion problem */
-
+	_diffusion = false;					/* Default will not solve diffusion */
 	_diffusion_correction = false; 
+	_plot_prolongation = false;
 
 	/* All extra options get placed into this array, which can be used
 	 * to call sub-initializers (petsc, for instance) */
@@ -122,6 +122,9 @@ Options::Options(int argc, char **argv)
 			else if (strcmp(argv[i], "-pf") == 0 ||
 					strcmp(argv[i], "--plotfluxes") == 0)
 				_plot_fluxes = true;
+			else if (strcmp(argv[i], "-pp") == 0 ||
+					strcmp(argv[i], "--plotprolongation") == 0)
+				_plot_prolongation = true;
 			else if (strcmp(argv[i], "-cp") == 0 ||
 					strcmp(argv[i], "--computepowers") == 0)
 				_compute_pin_powers = true;
@@ -464,6 +467,10 @@ bool Options::getDiffusionCorrection(){
 
 bool Options::getAccAfterMOCConverge(){
 	return _acc_after_MOC_converge;
+}
+
+bool Options::plotProlongation(){
+	return _plot_prolongation;
 }
 
 double Options::getDampFactor()
