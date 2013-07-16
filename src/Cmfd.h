@@ -69,12 +69,12 @@ private:
 	double _l2_norm;
 	double _l2_norm_conv_thresh;
 	double _spacing;
-	int _num_azim;
 	bool _use_diffusion_correction;
 	bool _run_loo;
 	bool _run_loo_psi;
 	bool _run_loo_phi;
 	bool _run_cmfd;
+	int _num_azim;
 	int _num_iter_to_conv;
 	int _num_loop;
 	int _num_track;

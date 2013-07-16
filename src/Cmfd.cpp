@@ -41,13 +41,14 @@ Cmfd::Cmfd(Geometry* geom, Plotter* plotter, Mesh* mesh,
 
 	_run_cmfd = false;
 	if (runCmfd)
-	{
 		_run_cmfd = true;
-		PetscInt size1, size2;
-		size1 = _cw * _ch * _ng;
-		size2 = 4 + _ng;
-		createAMPhi(size1, size2, _ch * _cw * _ng);
-	}
+
+	/* since we need to run diffusion at 1st iteration, AMPhi needs to be 
+	 * created for every acceleration. */
+	PetscInt size1, size2;
+	size1 = _cw * _ch * _ng;
+	size2 = 4 + _ng;
+	createAMPhi(size1, size2, _ch * _cw * _ng);
 
 	_num_loop = _cw;
 	_num_track = 4 * _cw; 
@@ -1919,12 +1920,6 @@ double Cmfd::computeLooFluxPower(solveType solveMethod, int moc_iter,
 
 
 
-
-
-
-
-
-
 		/* Computes the L2 norm of point-wise-division of energy-integrated
 		 * fission source of mesh cells between LOO iterations */
 		eps = 0;
@@ -2487,7 +2482,9 @@ void Cmfd::updateMOCFlux(int iteration){
 
 	//int max_i = -10, max_e = -10; 
 	//double max = -100.0;
-	//double max_range = 100, min_range = 0.01;
+
+
+	//double max_range = 2.0, min_range = 0.5;
 
 	double tmp_max = 0, tmp_cmco;
 
@@ -2544,7 +2541,6 @@ void Cmfd::updateMOCFlux(int iteration){
 				else if (tmp_cmco < min_range)
 					tmp_cmco = min_range;
 				*/
-
 				fsr->setFlux(e, under_relax * tmp_cmco * flux[e]
 							 + (1.0 - under_relax) * flux[e]);
 				
@@ -2552,6 +2548,7 @@ void Cmfd::updateMOCFlux(int iteration){
 		}
 	}
 
+	/* plots the scalar flux ratio */
 	//_plotter->plotCmfdFluxUpdate(_mesh, iteration);
 
 	for (int i = 0; i < cw * ch; i ++)
