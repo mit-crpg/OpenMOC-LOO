@@ -51,11 +51,6 @@
 /******************************************************************************
  *************************** ERROR THRESHOLDS *********************************
  *****************************************************************************/
-
-/* Error threshold for determining how close the sum of sigma_a and sigma_s
- * must match that of sigma_t for each energy group */
-#define SIGMA_T_THRESH 1E-7
-
 /* Error threshold for determining how close a point needs to be to a surface
  * to be considered on it */
 #define ON_SURFACE_THRESH 1E-12

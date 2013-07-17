@@ -54,23 +54,21 @@ Options::Options(int argc, char **argv)
 	_geometry_file = _relative_path + "xml-sample/Cmfd/geometry_c5g7_refl.xml"; 	 
 	_material_file = _relative_path + "xml-sample/Cmfd/material_c5g7.xml";
 	
-	_track_spacing = 0.5;				/* Default track spacing: 0.05 */
-	_num_azim = 64;					/* Default \# azimuthal angles: 32 */
+	_track_spacing = 0.5;				/* Default track spacing in C4: 0.5cm */
+	_num_azim = 8;					    /* Default # azimuthal angle in C4: 64*/
 	
 	//_track_spacing = 0.8909545443;
 	//_num_azim = 4;
 
 	_k_guess = 1.0;
-	_bit_dimension = 1000;				/* y dimension of tracks and segments plots */
+	_bit_dimension = 1000;				/* y dimension of plots */
 	_verbosity = "NORMAL";				/* Default logging level */
-	_dump_geometry = false;				/* Default will not dump geometry */
-	_extension = "png";					/* Default will plot png */
-	_plot_specs = false;            	/* Default will not plot materials, cells, FSRs, tracks, or segments */
-	_compute_pin_powers = false;		/* Default will not compute pin powers */
-	_compress_cross_sections = false;	/* Default will not compress cross-sections */
-	_update_keff = false;  				/* Default will not use CMFD to update flux */
-
-
+	_dump_geometry = false;				/* Default: not dump geometry */
+	_extension = "png";					/* Default: plot in png */
+	_plot_specs = false;            	/* Default: not plot materials, cells, FSRs, tracks, or segments */
+	_compute_pin_powers = false;		/* Default: not compute pin powers */
+	_compress_cross_sections = false;	/* Default: not compress xs */
+	_update_keff = false;  				/* Default: not use CMFD's k */
 	_print_matrices = false;			/* Default will not print matrices */
 	_cmfd_level = 0;					/* Default cmfd level is 0: pin-wise */
 	_plot_keff = false;					/* Default will not plot keff */
@@ -222,9 +220,9 @@ Options::Options(int argc, char **argv)
 Options::~Options(void) { }
 
 /**
- * Returns a character array with the path to the geometry input file. By default this
- * will return the path to /xml-sample/1/geometry.xml if not set at runtime from the
- * console
+ * Returns a character array with the path to the geometry input file. By 
+ * default this will return the path to /xml-sample/1/geometry.xml if not set 
+ * at runtime from the console
  * @return path to the geometry input file
  */
 const char *Options::getGeometryFile() const {
@@ -232,15 +230,14 @@ const char *Options::getGeometryFile() const {
 }
 
 /**
- * Returns a character array with the path to the material input file. By default this
- * will return the path to /xml-sample/1/material.xml if not set at runtime from the
- * console
+ * Returns a character array with the path to the material input file. By 
+ * default this will return the path to /xml-sample/1/material.xml if not set 
+ * at runtime from the console
  * @return path to the geometry input file
  */
 const char *Options::getMaterialFile() const {
     return (const char*)_material_file.c_str();
 }
-
 
 /**
  * Returns a boolean representing whether or not to dump the geometry to the
@@ -252,8 +249,7 @@ bool Options::dumpGeometry(){
 }
 
 /**
- * Returns the number of azimuthal angles. By default this will return 128 angles if
- * not set at runtime from the console
+ * Returns the number of azimuthal angles. 
  * @return the number of azimuthal angles
  */
 double Options::getNumAzim(){
@@ -272,8 +268,8 @@ int Options::getBitDimension(){
 
 
 /**
- * Returns the track spacing. By default this will return 0.05 if not set at runtime
- * from the console
+ * Returns the track spacing. By default this will return 0.05 if not set 
+ * at runtime from the console
  * @return the track spacing
  */
 double Options::getTrackSpacing(){
@@ -285,8 +281,8 @@ double Options::getKGuess(){
 }
 
 /**
- * Returns the verbosity logging level. By default this will return NORMAL if not set
- * at runtime from the console
+ * Returns the verbosity logging level. By default this will return NORMAL if 
+ * not set at runtime from the console
  * @return the verbosity
  */
 char* Options::getVerbosity(){
@@ -294,8 +290,8 @@ char* Options::getVerbosity(){
 }
 
 /**
- * Returns the image files extension. By default this will return .png if not set
- * at runtime from the console
+ * Returns the image files extension. By default this will return .png if not 
+ * set at runtime from the console
  * @return the image files extension
  */
 std::string Options::getExtension(){
