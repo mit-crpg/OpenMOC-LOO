@@ -28,6 +28,7 @@ private:
 	double *_current;
 	double **_quad_current;
 	double **_quad_flux;
+	double **_old_quad_flux;
 	double *_d_hat;
 	double *_d_tilde;
 	double *_d_dif;
@@ -47,6 +48,8 @@ public:
 	double getQuadCurrent(int group, int index);
 	void setQuadFlux(double quad_current, int group, int index);
 	double getQuadFlux(int group, int index);
+	void setOldQuadFlux(double quad_current, int group, int index);
+	double getOldQuadFlux(int group, int index);
 
 	/* CMFD Only */
 	void makeCurrents();

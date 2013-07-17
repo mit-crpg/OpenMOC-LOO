@@ -487,9 +487,69 @@ double Solver::computeKeff(int iteration)
 void Solver::updateFlux(int iteration) 
 {
 	_cmfd->updateMOCFlux(iteration);
+	if (_run_loo)
+		updateBoundaryFlux();
 	normalizeFlux();
 	return;
 }
+
+void Solver::updateBoundaryFlux()
+{
+	Track *track;
+	segment *seg;
+	FlatSourceRegion *fsr;
+	double phi, factor;
+	double *polar_fluxes;
+	int ind, num_segments, pe;
+
+	for (int i = 0; i < _num_azim; i++) 
+	{
+		for (int j = 0; j < _num_tracks[i]; j++)
+		{
+			track = &_tracks[i][j];
+			num_segments = track->getNumSegments();
+			phi = track->getPhi();
+			if (phi < PI / 2.0)
+				ind = 0;
+			else
+				ind = 1;
+			
+			/* Forward direction */
+			seg = track->getSegment(0); /* get the boundary segment */
+			fsr =&_flat_source_regions[seg->_region_id]; /* get boundary FSR */
+			polar_fluxes = track->getPolarFluxes();
+			pe = 0;
+			for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
+			{
+				factor = fsr->getBoundaryUpdate(e, ind);
+				for (int p = 0; p < NUM_POLAR_ANGLES; p++)
+				{
+					polar_fluxes[pe] *= factor;
+					track->setBoundaryPolarFluxes(pe, polar_fluxes[pe]);
+					pe++;
+				}				
+			}
+
+			/* Backward direction*/
+			seg = track->getSegment(num_segments - 1); 
+			fsr =&_flat_source_regions[seg->_region_id]; /* get boundary FSR */
+			pe = GRP_TIMES_ANG;
+			for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
+			{
+				factor = fsr->getBoundaryUpdate(e, ind);
+				for (int p = 0; p < NUM_POLAR_ANGLES; p++)
+				{
+					polar_fluxes[pe] *= factor;
+					track->setBoundaryPolarFluxes(pe, polar_fluxes[pe]);
+					pe++;
+				}				
+			}
+		}
+	}
+
+	return;
+}
+
 
 void Solver::printKeff(int iteration, double eps)
 {

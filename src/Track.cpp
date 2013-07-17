@@ -67,6 +67,11 @@ void Track::setPolarWeight(const int angle, double polar_weight) {
 	_polar_weights[angle] = polar_weight;
 }
 
+void Track::setBoundaryPolarFluxes(int pe, double flux)
+{
+	_polar_fluxes[pe] = flux;
+	return;
+}
 
 /**
  * Set this track's polar fluxes for a particular direction (0 or 1)

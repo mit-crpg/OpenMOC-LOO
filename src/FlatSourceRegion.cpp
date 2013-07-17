@@ -12,20 +12,26 @@
 /**
  * FlatSourceRegion constructor
  */
-FlatSourceRegion::FlatSourceRegion() {
-
+FlatSourceRegion::FlatSourceRegion() 
+{
 	_material = NULL;
 	_volume = 0.0;
 
 	/* Initializes region's other attributes */
-	for (int e = 0; e < NUM_ENERGY_GROUPS; e++) {
+	for (int e = 0; e < NUM_ENERGY_GROUPS; e++) 
+	{
 		_flux[e] = 0.0;
 		_old_flux[e] = 0.0;
 		_source[e] = 0.0;
 		_old_source[e] = 0.0;
 		_mat_mult_a[e] = 1.0;
-		for (int g=0; g < NUM_ENERGY_GROUPS; g++){
+		for (int g = 0; g < NUM_ENERGY_GROUPS; g++)
+		{
 			_mat_mult[e*NUM_ENERGY_GROUPS + g] = 1.0;
+		}
+		for (int i = 0; i < 2; i++)
+		{
+			_boundary_update[e * 2 + i] = 1.0;
 		}
 	}
 
@@ -330,5 +336,13 @@ double* FlatSourceRegion::getMatMultA(){
 	return _mat_mult_a;
 }
 
+void FlatSourceRegion::setBoundaryUpdate(int group, int ind, double bu)
+{
+	_boundary_update[group * 2 + ind] = bu;
+}
 
+double FlatSourceRegion::getBoundaryUpdate(int group, int ind)
+{
+	return _boundary_update[group * 2 + ind];
+}
 

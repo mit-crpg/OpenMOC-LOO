@@ -80,6 +80,21 @@ Cmfd::Cmfd(Geometry* geom, Plotter* plotter, Mesh* mesh,
 
 	_num_iter_to_conv = 0;
 	_plot_prolongation = plotProlongation;
+
+	if ((_mesh->getBoundary(0) == REFLECTIVE) || 
+		(_mesh->getBoundary(1) == REFLECTIVE) || 
+		(_mesh->getBoundary(2) == REFLECTIVE) || 
+		(_mesh->getBoundary(3) == REFLECTIVE) )
+		_reflective = true;
+	else
+		_reflective = false;
+
+	_boundary_update = new double[2 * NUM_ENERGY_GROUPS];
+	for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
+	{
+		for (int ind = 0; ind < 2; ind++)
+			_boundary_update[e * 2 + ind] = 1.0;
+	}
 }
 
 /**
@@ -816,6 +831,7 @@ void Cmfd::computeQuadFlux()
 	/* the factor that we devide everyone by is cos(45degree) * surface len */
 	/* May need to fixme */
 	double scale = _mesh->getCells(0)->getWidth() * SIN_THETA_45;
+	double flux;
 
 	/* loop over all mesh cells */
 	for (int y = 0; y < _ch; y++)
@@ -836,8 +852,9 @@ void Cmfd::computeQuadFlux()
 					double tmp = 0.0;
 					for (int j = 0; j < 2; j++)
 					{
-						s[i]->setQuadFlux(s[i]->getQuadCurrent(e, j) / scale, 
-										  e, j);
+						flux = s[i]->getQuadCurrent(e, j) / scale;
+						s[i]->setQuadFlux(flux, e, j);
+						s[i]->setOldQuadFlux(flux, e, j);
 						tmp += s[i]->getQuadCurrent(e,j);
 						
 					}					
@@ -1673,7 +1690,6 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
 #endif
 		double leak_tot = 0.0;
 
-
 		/* Sweeps over geometry, solve LOO MOC */
 		for (int e = 0; e < _ng; e++)
 		{
@@ -1964,6 +1980,26 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
 		}
 	}
 	_num_iter_to_conv = iter + 1;
+
+	/* Store flux update */
+	double update;
+	for (int e = 0; e < _ng; e++)
+	{
+		for (int j = 0; j < _num_loop; j++)
+		{
+			if (bc[1] == REFLECTIVE)
+			{
+				meshCell = _mesh->getCells(_i_array[_num_track * j]);
+				for (int ind = 0; ind < 2; ind++)
+				{
+					update = meshCell->getMeshSurfaces(1)->getQuadFlux(e, ind)
+						/ meshCell->getMeshSurfaces(1)->getOldQuadFlux(e, ind);
+					log_printf(NORMAL, "update is %f", update);
+					meshCell->setBoundaryUpdate(update, e, ind);
+				}
+			}
+		}
+	}
 
 	/* Computes the L2 norm of point-wise-division of energy-integrated
 	 * fission source of mesh cells relative to (m+1/2) */
@@ -2496,8 +2532,21 @@ void Cmfd::updateMOCFlux(int iteration)
 				fsr->setFlux(e, under_relax * tmp_cmco * flux[e]
 							 + (1.0 - under_relax) * flux[e]);
 			}
-		}
+		} /* exit looping over energy */
+	} /* exit mesh cells */
+
+	if (_reflective)
+	{
+		if (_mesh->getBoundary(0) == REFLECTIVE)
+			setFsrBoundaryUpdate(0, 1, 0, _ch);
+		if (_mesh->getBoundary(1) == REFLECTIVE)
+			setFsrBoundaryUpdate(0, _cw, _ch - 1, _ch);
+		if (_mesh->getBoundary(2) == REFLECTIVE)
+			setFsrBoundaryUpdate(_cw - 1, _cw, 0, _ch);
+		if (_mesh->getBoundary(3) == REFLECTIVE)
+			setFsrBoundaryUpdate(0, _cw, 0, 1);
 	}
+
 
 	/* plots the scalar flux ratio */
 	if (_plot_prolongation)
@@ -2505,6 +2554,39 @@ void Cmfd::updateMOCFlux(int iteration)
 
 	for (int i = 0; i < _cw * _ch; i ++)
 		log_printf(DEBUG, " cell # %d, CMCO = %.10e", i, CMCO[i] + 1  );
+
+	return;
+}
+
+void Cmfd::setFsrBoundaryUpdate(int x_min, int x_max, int y_min, int y_max)
+{
+	int x, y, e, ind;
+	MeshCell* meshCell;
+	FlatSourceRegion* fsr;
+	std::vector<int>::iterator iter;
+
+	for (y = y_min; y < y_max; y++)
+	{
+		for (x = x_min; x < x_max; x++)
+		{
+			meshCell = _mesh->getCells(y * _cw + x);
+				
+			for (iter = meshCell->getFSRs()->begin(); 
+				 iter != meshCell->getFSRs()->end(); ++iter) 
+			{
+				fsr = &_flat_source_regions[*iter];
+				for (e = 0; e < _ng; e++)
+				{
+					for (ind = 0; ind < 2; ind++)
+					{
+						fsr->setBoundaryUpdate(e, ind, 
+											   meshCell->getBoundaryUpdate
+											   (e, ind));
+					}
+				}
+			}
+		}
+	}
 
 	return;
 }
@@ -2691,4 +2773,14 @@ void Cmfd::setFSRs(FlatSourceRegion* fsrs)
 int Cmfd::getNumIterToConv()
 {
 	return _num_iter_to_conv;
+}
+
+void Cmfd::setBoundaryUpdate(double bu, int e, int ind)
+{
+	_boundary_update[e * 2 + ind] = bu;
+} 
+
+double Cmfd::getBoundaryUpdate(int e, int ind)
+{
+	return _boundary_update[e * 2 + ind];
 }

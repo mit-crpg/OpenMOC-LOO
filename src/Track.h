@@ -71,6 +71,7 @@ public:
     void setAzimuthalWeight(const double azim_weight);
     void setPolarWeight(const int angle, double polar_weight);
     void setPolarFluxes(reflectType direction, int start_index, double* polar_fluxes);
+	void setBoundaryPolarFluxes(int pe, double flux);
     void setPhi(const double phi);
     void setReflIn(reflectType refl_in);
     void setReflOut(reflectType refl_out);

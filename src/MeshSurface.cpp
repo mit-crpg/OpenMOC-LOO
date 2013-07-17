@@ -17,11 +17,13 @@ MeshSurface::MeshSurface(){
 		
 		_quad_current = new double*[NUM_ENERGY_GROUPS];
 		_quad_flux = new double*[NUM_ENERGY_GROUPS];
+		_old_quad_flux = new double*[NUM_ENERGY_GROUPS];
 		
 		for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
 		{
 			_quad_current[e] = new double[2];
 			_quad_flux[e] = new double[2];
+			_old_quad_flux[e] = new double[2];
 		}
 	}
 	catch (std::exception &e)
@@ -91,6 +93,14 @@ void MeshSurface::setQuadFlux(double quad_flux, int group, int index){
 
 double MeshSurface::getQuadFlux(int group, int index){
 	return _quad_flux[group][index];
+}
+
+void MeshSurface::setOldQuadFlux(double quad_flux, int group, int index){
+	_old_quad_flux[group][index] = quad_flux;
+}
+
+double MeshSurface::getOldQuadFlux(int group, int index){
+	return _old_quad_flux[group][index];
 }
 
 void MeshSurface::incrementQuadCurrent(double quad_current, int group, 

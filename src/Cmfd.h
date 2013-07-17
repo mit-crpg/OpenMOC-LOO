@@ -76,12 +76,14 @@ private:
 	double _l2_norm;
 	double _l2_norm_conv_thresh;
 	double _spacing;
+	double *_boundary_update;
 	bool _use_diffusion_correction;
 	bool _run_loo;
 	bool _run_loo_psi;
 	bool _run_loo_phi;
 	bool _run_cmfd;
 	bool _plot_prolongation;
+	bool _reflective;
 public:
 	Cmfd(Geometry* geom, Plotter* plotter, Mesh* mesh, 
 		 bool runCmfd, bool runLoo, bool runLoo1, bool runLoo2,
@@ -121,6 +123,9 @@ public:
 	double computeLooFluxPower(int moc_iter, double k);
 	double computeNormalization();
 	void normalizeFlux(double normalize_factor);
+	void setFsrBoundaryUpdate(int x_min, int x_max, int y_min, int y_max);
+	void setBoundaryUpdate(double bu, int e, int ind);
+	double getBoundaryUpdate(int e, int ind);
 };
 
 #endif /* CMFD_H_ */
