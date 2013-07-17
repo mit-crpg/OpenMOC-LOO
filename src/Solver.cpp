@@ -510,9 +510,9 @@ void Solver::updateBoundaryFlux()
 			num_segments = track->getNumSegments();
 			phi = track->getPhi();
 			if (phi < PI / 2.0)
-				ind = 0;
-			else
 				ind = 1;
+			else
+				ind = 0;
 			
 			/* Forward direction */
 			seg = track->getSegment(0); /* get the boundary segment */
@@ -1322,7 +1322,6 @@ void Solver::normalizeFlux()
 	}
 
 	/* Renormalize tallied current on each surface */
-	/*
 	if ((_run_cmfd) && !(_acc_after_MOC_converge))
 	{
 		int cw = _geom->getMesh()->getCellWidth();
@@ -1368,7 +1367,7 @@ void Solver::normalizeFlux()
 			}
 		}		
 	}
-	*/
+
 	return;
 }
 

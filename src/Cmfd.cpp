@@ -1695,6 +1695,7 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
 		{
 			double flux, initial_flux, delta;
 			int i, t, d;
+
 			/* Forward Directions */
 			for (int j = 0; j < _num_loop; j++)
 			{
@@ -1731,14 +1732,29 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
 						flux = 0.0;
 					}
 	
-					/*
-					sum_quad_flux[i][e] += flux * ratio[i][e] + 
-						new_quad_src[i][d] * (1- ratio[i][e]) / quad_xs[i][e];
-					flux -= (flux * tau[i][e] - new_quad_src[i][d] * l) 
-					* ratio[i][e];
-					*/
-					//delta = (flux * tau[i][e] - new_quad_src[i][d] * l) 
-					//	* ratio[i][e];
+					if ((bc[0] == REFLECTIVE) && (t == 6) && (i % _cw == 0))
+					{
+						_mesh->getCells(i)->getMeshSurfaces(0)
+							->setQuadFlux(flux, e, 0);
+					}
+					else if ((bc[1] == REFLECTIVE) && (t == 0) 
+						&& (i >= _cw * (_ch - 1)))
+					{
+						_mesh->getCells(i)->getMeshSurfaces(1)
+							->setQuadFlux(flux, e, 1);
+					}
+					else if ((bc[2] == REFLECTIVE) && (t == 2) 
+						&& ((i + 1) % _cw == 0))
+					{
+						_mesh->getCells(i)->getMeshSurfaces(2)
+							->setQuadFlux(flux, e, 0);
+					}
+					else if ((bc[3] == VACUUM) && (t == 4) && (i < _cw))
+					{
+						_mesh->getCells(i)->getMeshSurfaces(3)
+							->setQuadFlux(flux, e, 1);
+					}
+
 					delta = (flux - new_quad_src[i][d] / (double)quad_xs[i][e])
 						* (1 - expo[i][e]);
 #if phi_update
@@ -1801,14 +1817,30 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
 						flux = 0.0;
 					}
 
-					/* 
-					   sum_quad_flux[i][e] += flux * ratio[i][e] + 
-					   new_quad_src[i][d] * (1 - ratio[i][e]) / quad_xs[i][e];
-					   flux -= (flux * tau[i][e] - new_quad_src[i][d] * l) 
-					   * ratio[i][e];
-					*/
-					//delta = (flux * tau[i][e] - new_quad_src[i][d] * l) 
-					//	* ratio[i][e];
+					if ((bc[0] == REFLECTIVE) && (t == 5) && (i % _cw == 0))
+					{
+						_mesh->getCells(i)->getMeshSurfaces(0)
+							->setQuadFlux(flux, e, 1);	
+					}
+					else if ((bc[1] == REFLECTIVE) && (t == 7) 
+						&& (i >= _cw * (_ch - 1)))
+					{
+						_mesh->getCells(i)->getMeshSurfaces(1)
+							->setQuadFlux(flux, e, 0);
+					}
+					else if ((bc[2] == REFLECTIVE) && (t == 1) 
+						&& ((i + 1) % _cw == 0))
+					{
+						_mesh->getCells(i)->getMeshSurfaces(2)
+							->setQuadFlux(flux, e, 1);
+					}
+					else if ((bc[3] == REFLECTIVE) && (t == 3)
+						&& (i < _cw))
+					{
+						_mesh->getCells(i)->getMeshSurfaces(3)
+							->setQuadFlux(flux, e, 0);
+					}
+
 					delta = (flux - new_quad_src[i][d] / quad_xs[i][e])
 						* (1.0 - expo[i][e]);
 #if phi_update
@@ -1900,7 +1932,7 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
 		/* Computes normalization factor based on fission source */
 		double normalize_factor = computeNormalization();
 		if (moc_iter == 10000)
-			log_printf(NORMAL, "normalize_factor = %.10f", normalize_factor);
+			log_printf(ACTIVE, "normalize_factor = %.10f", normalize_factor);
 
 		/* Normalizes leakage, scalar flux, angular flux */
 		//leak_tot *= normalize_factor;
@@ -1982,23 +2014,16 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
 	_num_iter_to_conv = iter + 1;
 
 	/* Store flux update */
-	double update;
-	for (int e = 0; e < _ng; e++)
+	if (_reflective)
 	{
-		for (int j = 0; j < _num_loop; j++)
-		{
-			if (bc[1] == REFLECTIVE)
-			{
-				meshCell = _mesh->getCells(_i_array[_num_track * j]);
-				for (int ind = 0; ind < 2; ind++)
-				{
-					update = meshCell->getMeshSurfaces(1)->getQuadFlux(e, ind)
-						/ meshCell->getMeshSurfaces(1)->getOldQuadFlux(e, ind);
-					log_printf(NORMAL, "update is %f", update);
-					meshCell->setBoundaryUpdate(update, e, ind);
-				}
-			}
-		}
+		if (bc[0] == REFLECTIVE)
+			setCmfdBoundaryUpdate(0, 1, 0, _ch, 0);
+		if (bc[1] == REFLECTIVE)
+			setCmfdBoundaryUpdate(0, _cw, _ch - 1, _ch, 1);
+		if (bc[2] == REFLECTIVE)
+			setCmfdBoundaryUpdate(_cw - 1, _cw, 0, _ch, 2);
+		if (bc[3] == REFLECTIVE)
+			setCmfdBoundaryUpdate(0, _cw, 0, 1, 3);
 	}
 
 	/* Computes the L2 norm of point-wise-division of energy-integrated
@@ -2554,6 +2579,36 @@ void Cmfd::updateMOCFlux(int iteration)
 
 	for (int i = 0; i < _cw * _ch; i ++)
 		log_printf(DEBUG, " cell # %d, CMCO = %.10e", i, CMCO[i] + 1  );
+
+	return;
+}
+
+void Cmfd::setCmfdBoundaryUpdate(int x_min, int x_max, int y_min, int y_max, 
+								 int surf)
+{
+	MeshCell* meshCell;
+	std::vector<int>::iterator iter;
+	int x, y, e, j;
+	double update;
+
+	for (y = y_min; y < y_max; y++)
+	{
+		for (x = x_min; x < x_max; x++)
+		{
+			meshCell = _mesh->getCells(y * _cw + x);
+				
+			for (e = 0; e < _ng; e++)
+			{
+				for (j = 0; j < 2; j++)
+				{
+					update = meshCell->getMeshSurfaces(surf)->getQuadFlux(e, j)
+						/ meshCell->getMeshSurfaces(surf)->getOldQuadFlux(e, j);
+
+					meshCell->setBoundaryUpdate(update, e, j);
+				}
+			}
+		}
+	}
 
 	return;
 }
