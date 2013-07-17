@@ -13,7 +13,6 @@
 /******************************************************************************
  ****************************** USER DEFINED **********************************
  *****************************************************************************/
-
 #define NUM_POLAR_ANGLES 1
 #define NUM_ENERGY_GROUPS 7
 #define GRP_TIMES_ANG NUM_POLAR_ANGLES*NUM_ENERGY_GROUPS
@@ -35,13 +34,9 @@
 /* If this machine has OpenMP installed, define as true for parallel speedup */
 #define USE_OPENMP false
 
-/* Axial buckling term used for diffusion problems */
-#define AXIAL_BUCKLING 1e-4
-
 /******************************************************************************
  *********************** PHYSICAL CONSTANTS ***********************************
  *****************************************************************************/
-
 #define FOUR_PI 12.566370614359172
 #define TWO_PI 6.283185307179586
 #define ONE_OVER_FOUR_PI 0.07957747154594767

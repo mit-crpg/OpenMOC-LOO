@@ -266,8 +266,8 @@ bool Lattice::withinBounds(Point* point) {
  * @return a pointer to the cell this localcoord is in or NULL
  */
 Cell* Lattice::findCell(LocalCoords* coords,
-						std::map<int, Universe*> universes) {
-
+						std::map<int, Universe*> universes) 
+{
 	/* Set the localcoord to be a LAT type at this level */
 	coords->setType(LAT);
 
@@ -277,16 +277,17 @@ Cell* Lattice::findCell(LocalCoords* coords,
 
 	/* Check if the localcoord is on the lattice boundaries and if so adjust
 	 * x or y lattice cell indices i */
-	if (fabs(fabs(coords->getX()) - _num_x*_width_x*0.5) <
-													ON_LATTICE_CELL_THRESH) {
-
+	if (fabs(fabs(coords->getX()) - _num_x*_width_x*0.5) < 
+		ON_LATTICE_CELL_THRESH) 
+	{
 		if (coords->getX() > 0)
 			lat_x = _num_x - 1;
 		else
 			lat_x = 0;
 	}
 	if (fabs(fabs(coords->getY()) - _num_y*_width_y*0.5) <
-													ON_LATTICE_CELL_THRESH) {
+		ON_LATTICE_CELL_THRESH) 
+	{
 		if (coords->getY() > 0)
 			lat_y = _num_y - 1;
 		else
@@ -294,10 +295,8 @@ Cell* Lattice::findCell(LocalCoords* coords,
 	}
 
 	/* If the indices are outside the bound of the lattice */
-	if (lat_x < 0 || lat_x >= _num_x ||
-			lat_y < 0 || lat_y >= _num_y) {
+	if (lat_x < 0 || lat_x >= _num_x || lat_y < 0 || lat_y >= _num_y) 
 		return NULL;
-	}
 
 	/* Compute local position of particle in the next level universe */
 	double nextX = coords->getX() - (_origin.getX()
@@ -373,17 +372,20 @@ Cell* Lattice::findNextLatticeCell(LocalCoords* coords, double angle,
 	Point test;						/* Test point for computing distance */
 
 	/* Check lower lattice cell Lower lattice cell */
-	if (lattice_y >= 0 && angle >= M_PI) {
+	if (lattice_y >= 0 && angle >= M_PI) 
+	{
 		y_curr = (lattice_y - _num_y/2.0) * _width_y;
 		x_curr = x0 + (y_curr - y0) / m;
 		test.setCoords(x_curr, y_curr);
 
 		/* Check if the test point is within the bounds of the lattice */
-		if (withinBounds(&test)) {
+		if (withinBounds(&test)) 
+		{
 			d = test.distance(coords->getPoint());
 
 			/* Check if distance to test point is current minimum */
-			if (d < distance) {
+			if (d < distance) 
+			{
 				distance = d;
 				x_new = x_curr;
 				y_new = y_curr;
