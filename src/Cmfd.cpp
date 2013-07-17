@@ -933,8 +933,10 @@ void Cmfd::computeQuadSrc()
 				meshCellNext = _mesh->getCells(y * _cw + x - 1);
 				for (int e = 0; e < _ng; e++)
 				{
-					in[e][5] = meshCellNext->getMeshSurfaces(2)->getQuadFlux(e,0);
-					in[e][6] = meshCellNext->getMeshSurfaces(2)->getQuadFlux(e,1);
+					in[e][5] = meshCellNext->getMeshSurfaces(2)
+						->getQuadFlux(e,0);
+					in[e][6] = meshCellNext->getMeshSurfaces(2)
+						->getQuadFlux(e,1);
 				}			
 			}
 
@@ -963,8 +965,10 @@ void Cmfd::computeQuadSrc()
 				meshCellNext = _mesh->getCells(y * _cw + x + 1);
 				for (int e = 0; e < _ng; e++)
 				{
-					in[e][1] = meshCellNext->getMeshSurfaces(0)->getQuadFlux(e,0);
-					in[e][2] = meshCellNext->getMeshSurfaces(0)->getQuadFlux(e,1);
+					in[e][1] = meshCellNext->getMeshSurfaces(0)
+						->getQuadFlux(e,0);
+					in[e][2] = meshCellNext->getMeshSurfaces(0)
+						->getQuadFlux(e,1);
 				}			
 			}			
 			
@@ -992,8 +996,10 @@ void Cmfd::computeQuadSrc()
 				meshCellNext = _mesh->getCells((y - 1) * _cw + x);
 				for (int e = 0; e < _ng; e++)
 				{
-					in[e][3] = meshCellNext->getMeshSurfaces(1)->getQuadFlux(e,1);
-					in[e][4] = meshCellNext->getMeshSurfaces(1)->getQuadFlux(e,0);
+					in[e][3] = meshCellNext->getMeshSurfaces(1)
+						->getQuadFlux(e,1);
+					in[e][4] = meshCellNext->getMeshSurfaces(1)
+						->getQuadFlux(e,0);
 				}			
 			}
 
@@ -1021,8 +1027,10 @@ void Cmfd::computeQuadSrc()
 				meshCellNext = _mesh->getCells( (y + 1) * _cw + x);
 				for (int e = 0; e < _ng; e++)
 				{
-					in[e][7] = meshCellNext->getMeshSurfaces(3)->getQuadFlux(e,1);
-					in[e][0] = meshCellNext->getMeshSurfaces(3)->getQuadFlux(e,0);
+					in[e][7] = meshCellNext->getMeshSurfaces(3)
+						->getQuadFlux(e,1);
+					in[e][0] = meshCellNext->getMeshSurfaces(3)
+						->getQuadFlux(e,0);
 				}			
 			}
 
@@ -1038,6 +1046,22 @@ void Cmfd::computeQuadSrc()
 				for (int t = 0; t < 8; t++)
 				{
 					double src = xs * (out[e][t] - ex * in[e][t]) / (1.0 - ex);
+
+					/* FIXME: debug */
+					//double clip = -0.01;
+					//if (src < clip)
+					//	src = clip;
+
+					if (src < 0)
+					{
+						//src = 0;
+						log_printf(ACTIVE, "(%d %d) %d %d %f - %f * %f = %f",
+								   x, y, e, t,
+								   out[e][t], ex, in[e][t], 
+								   out[e][t] - ex * in[e][t]);
+					}
+
+
 					meshCell->setQuadSrc(src, e, t);
 					tmp_src += src;
 					sum_quad_flux += src/xs + (in[e][t] - out[e][t])/(xs * l);
@@ -1266,14 +1290,15 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter)
 	petsc_err = VecGetArray(_phi_new, &new_phi);
 	CHKERRQ(petsc_err);
 
-	log_printf(ACTIVE, "CMFD Converged to updating scalar flux:");
+	log_printf(DEBUG, "CMFD converged flux update (relative to m+1/2):");
 	for (int i = 0; i < _cw*_ch; i++){
 		meshCell = _mesh->getCells(i);
 		for (int e = 0; e < _ng; e++){
 			meshCell->setOldFlux(double(old_phi[i*_ng + e]), e);
 			meshCell->setNewFlux(double(new_phi[i*_ng + e]), e);
 			
-			log_printf(ACTIVE, " Relative to (m+1/2): %.10f",
+			log_printf(DEBUG, " cell %d, energy %d, new/old = %.10f",
+					   i, e, 
 					   (double)(old_phi[i*_ng + e]) 
 					   / (double)(new_phi[i*_ng + e]));
 		}
@@ -1618,10 +1643,21 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
 			{
 				/* getOldSrc()[e] returns the $\bar{Q}_g^{(m)}$ */
 				src_ratio = new_src[i][e] / meshCell->getOldSrc()[e];
+
+				/* FIXME: debug */
+				if (new_src[i][e] < 0)
+					log_printf(ACTIVE, "new_src = %f", new_src[i][e]);
+
 				for (int t = 0; t < 8; t++)
 				{
 					int d = e * 8 + t;
 					new_quad_src[i][d] = meshCell->getQuadSrc()[d] * src_ratio;
+					if (meshCell->getQuadSrc()[d] < 0)
+					{
+						log_printf(ACTIVE, "cell %d energy %d track %d"
+								   " quad src = %f", 
+								   i, e, t, meshCell->getQuadSrc()[d]);
+					}
 				}
 				log_printf(ACTIVE, "Average source ratio for cell %d" 
 						   " energy %d, by %e", i, e, src_ratio - 1.0);		
@@ -2406,7 +2442,7 @@ void Cmfd::updateMOCFlux(int iteration)
 	//int max_i = -10, max_e = -10; 
 	//double max = -100.0;
 
-	//double max_range = 2.0, min_range = 0.5;
+	double max_range = 100.0, min_range = 1.0 / max_range;
 
 	double tmp_max = 0, tmp_cmco;
 
@@ -2441,7 +2477,7 @@ void Cmfd::updateMOCFlux(int iteration)
 			}
 			*/
 
-			log_printf(ACTIVE, "Cell %d flux,"
+			log_printf(DEBUG, "Flux prolongation for cell %d"
 					   " old =  %f, new = %f, new/old = %f", 
 					   i, old_flux, new_flux, new_flux / old_flux);
 
@@ -2452,12 +2488,11 @@ void Cmfd::updateMOCFlux(int iteration)
 				fsr = &_flat_source_regions[*iter];
 				flux = fsr->getFlux();
 
-				/*
 				if (tmp_cmco > max_range)
 					tmp_cmco = max_range;
 				else if (tmp_cmco < min_range)
 					tmp_cmco = min_range;
-				*/
+
 				fsr->setFlux(e, under_relax * tmp_cmco * flux[e]
 							 + (1.0 - under_relax) * flux[e]);
 			}
@@ -2469,7 +2504,7 @@ void Cmfd::updateMOCFlux(int iteration)
 		_plotter->plotCmfdFluxUpdate(_mesh, iteration);
 
 	for (int i = 0; i < _cw * _ch; i ++)
-		log_printf(ACTIVE, " cell # %d, CMCO = %.10e", i, CMCO[i] + 1  );
+		log_printf(DEBUG, " cell # %d, CMCO = %.10e", i, CMCO[i] + 1  );
 
 	return;
 }

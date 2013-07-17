@@ -1147,7 +1147,7 @@ void Solver::MOCsweep(int max_iterations)
 	} /* exit iteration loops */
 		
 	return;
-}
+	} /* end of MOCsweep */
 
 /* initialize the source and renormalize the fsr and track fluxes */
 void Solver::initializeSource(){
@@ -1213,8 +1213,8 @@ void Solver::initializeSource(){
 
 /* Normalizes the scalar flux in each FSR and angular flux track to that total 
  * volume-integrated fission source add up to the total volume. */
-void Solver::normalizeFlux(){
-			
+void Solver::normalizeFlux()
+{			
 	double fission_source = 0, total_vol = 0;
 	double renorm_factor, volume;
 	double* nu_sigma_f;
@@ -1224,8 +1224,8 @@ void Solver::normalizeFlux(){
 	int start_index, end_index;
 
 	/* Compute total fission source for this region */
-	for (int r = 0; r < _num_FSRs; r++) {
-
+	for (int r = 0; r < _num_FSRs; r++) 
+	{
 		/* Get pointers to important data structures */
 		fsr = &_flat_source_regions[r];
 		material = fsr->getMaterial();
@@ -1255,12 +1255,14 @@ void Solver::normalizeFlux(){
 	#if USE_OPENMP
 	#pragma omp parallel for
 	#endif
-	for (int i = 0; i < _num_azim; i++) {
+	for (int i = 0; i < _num_azim; i++) 
+	{
 		for (int j = 0; j < _num_tracks[i]; j++)
 			_tracks[i][j].normalizeFluxes(renorm_factor);
 	}
 
 	/* Renormalize tallied current on each surface */
+	/*
 	if ((_run_cmfd) && !(_acc_after_MOC_converge))
 	{
 		int cw = _geom->getMesh()->getCellWidth();
@@ -1306,7 +1308,7 @@ void Solver::normalizeFlux(){
 			}
 		}		
 	}
-
+	*/
 	return;
 }
 
