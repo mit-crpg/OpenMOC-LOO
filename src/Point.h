@@ -23,19 +23,19 @@
  */
 class Point {
 private:
-	double _x, _y;
+    double _x, _y;
 public:
-	Point();
-	Point(const Point& point);
-	virtual ~Point();
-	void setCoords(const double x, const double y);
-	double getX() const;
-	double getY() const;
-	void setX(const double x);
-	void setY(const double y);
-	double distance(const double x, const double y) const;
-	double distance(const Point* point);
-	std::string toString();
+    Point();
+    Point(const Point& point);
+    virtual ~Point();
+    void setCoords(const double x, const double y);
+    double getX() const;
+    double getY() const;
+    void setX(const double x);
+    void setY(const double y);
+    double distance(const double x, const double y) const;
+    double distance(const Point* point);
+    std::string toString();
 };
 
 #endif /* POINT_H_ */

@@ -16,10 +16,10 @@ int Universe::_n = 0;
  * @param id the universe id
  */
 Universe::Universe(const int id) {
-	_uid = _n;
-	_id = id;
-	_n++;
-	_type = SIMPLE;
+    _uid = _n;
+    _id = id;
+    _n++;
+    _type = SIMPLE;
 }
 
 
@@ -27,7 +27,7 @@ Universe::Universe(const int id) {
  * Destructor
  */
 Universe::~Universe() {
-	_cells.clear();
+    _cells.clear();
 }
 
 
@@ -36,7 +36,7 @@ Universe::~Universe() {
  * @return the universe's uid
  */
 int Universe::getUid() const {
-	return _uid;
+    return _uid;
 }
 
 
@@ -45,15 +45,15 @@ int Universe::getUid() const {
  * @param cell the cell id
  */
 void Universe::addCell(Cell* cell) {
-	try {
-		_cells.insert(std::pair<int, Cell*>(cell->getId(), cell));
-		log_printf(INFO, "Added cell with id = %d to universe with id = %d",
-				   cell->getId(), _id);
-	}
-	catch (std::exception &e) {
-		log_printf(ERROR, "Unable to add cell with id = %d to universe with"
-				   " id = %d. Backtrace:\n%s", cell->getId(), _id, e.what());
-	}
+    try {
+        _cells.insert(std::pair<int, Cell*>(cell->getId(), cell));
+        log_printf(INFO, "Added cell with id = %d to universe with id = %d",
+                   cell->getId(), _id);
+    }
+    catch (std::exception &e) {
+        log_printf(ERROR, "Unable to add cell with id = %d to universe with"
+                   " id = %d. Backtrace:\n%s", cell->getId(), _id, e.what());
+    }
 }
 
 
@@ -80,7 +80,7 @@ int Universe::getId() const {
  * @return the universe type
  */
 universeType Universe::getType() {
-	return _type;
+    return _type;
 }
 
 /**
@@ -103,11 +103,11 @@ Point* Universe::getOrigin() {
 
 int Universe::getFSR(int cell_id) {
 
-	if (_cells.find(cell_id) == _cells.end())
-		log_printf(ERROR, "Tried to find FSR id for cell with id = %d"
-				" in universe with id = %d but no cell exists", cell_id, _id);
+    if (_cells.find(cell_id) == _cells.end())
+        log_printf(ERROR, "Tried to find FSR id for cell with id = %d"
+                   " in universe with id = %d but no cell exists", cell_id, _id);
 
-	return _region_map.at(cell_id);
+    return _region_map.at(cell_id);
 }
 
 
@@ -117,7 +117,7 @@ int Universe::getFSR(int cell_id) {
  * @param type the universe type
  */
 void Universe::setType(universeType type) {
-	_type = type;
+    _type = type;
 }
 
 /**
@@ -139,56 +139,56 @@ void Universe::setOrigin(Point* origin) {
  * @return a pointer the cell where the localcoords is located
  */
 Cell* Universe::findCell(LocalCoords* coords,
-						std::map<int, Universe*> universes) {
+                         std::map<int, Universe*> universes) {
 
-	Cell* return_cell = NULL;
-	std::map<int, Cell*>::iterator iter;
+    Cell* return_cell = NULL;
+    std::map<int, Cell*>::iterator iter;
 
-	/* Sets the localcoord type to UNIV at this level */
-	coords->setType(UNIV);
+    /* Sets the localcoord type to UNIV at this level */
+    coords->setType(UNIV);
 
-	/* Loop over all cells in this universe */
-	for (iter = _cells.begin(); iter != _cells.end(); ++iter) {
-		Cell* cell = iter->second;
+    /* Loop over all cells in this universe */
+    for (iter = _cells.begin(); iter != _cells.end(); ++iter) {
+        Cell* cell = iter->second;
 
-		if (cell->cellContains(coords)) {
+        if (cell->cellContains(coords)) {
 
-			/* Set the cell on this level */
-			coords->setCell(cell->getId());
+            /* Set the cell on this level */
+            coords->setCell(cell->getId());
 
-			/* MATERIAL type cell - lowest level, terminate search for cell */
-			if (cell->getType() == MATERIAL) {
-				coords->setCell(cell->getId());
-				return_cell = cell;
-				return return_cell;
-			}
+            /* MATERIAL type cell - lowest level, terminate search for cell */
+            if (cell->getType() == MATERIAL) {
+                coords->setCell(cell->getId());
+                return_cell = cell;
+                return return_cell;
+            }
 
-			/* FILL type cell - cell contains a universe at a lower level
-			 * Update coords to next level and continue search */
-			else if (cell->getType() == FILL) {
+            /* FILL type cell - cell contains a universe at a lower level
+             * Update coords to next level and continue search */
+            else if (cell->getType() == FILL) {
 
-				LocalCoords* next_coords;
+                LocalCoords* next_coords;
 
-				if (coords->getNext() == NULL)
-					next_coords = new LocalCoords(coords->getX(),
-													coords->getY());
-				else
-					next_coords = coords->getNext();
+                if (coords->getNext() == NULL)
+                    next_coords = new LocalCoords(coords->getX(),
+                                                  coords->getY());
+                else
+                    next_coords = coords->getNext();
 
-				CellFill* cell_fill = static_cast<CellFill*>(cell);
-				int universe_id = cell_fill->getUniverseFillId();
-				next_coords->setUniverse(universe_id);
-				Universe* univ = universes.at(universe_id);
-				coords->setCell(cell->getId());
+                CellFill* cell_fill = static_cast<CellFill*>(cell);
+                int universe_id = cell_fill->getUniverseFillId();
+                next_coords->setUniverse(universe_id);
+                Universe* univ = universes.at(universe_id);
+                coords->setCell(cell->getId());
 
-				coords->setNext(next_coords);
-				next_coords->setPrev(coords);
-				return univ->findCell(next_coords, universes);
+                coords->setNext(next_coords);
+                next_coords->setPrev(coords);
+                return univ->findCell(next_coords, universes);
 
-			}
-		}
-	}
-	return return_cell;
+            }
+        }
+    }
+    return return_cell;
 }
 
 
@@ -197,21 +197,21 @@ Cell* Universe::findCell(LocalCoords* coords,
  * @param a character array reprsenting the universe
  */
 std::string Universe::toString() {
-	std::stringstream string;
-	std::map<int, Cell*>::iterator iter;
+    std::stringstream string;
+    std::map<int, Cell*>::iterator iter;
 
-	string << "Universe id = " << _id << ", type = ";
-	if (_type == SIMPLE)
-		string << "SIMPLE";
-	else
-		string << "LATTICE";
+    string << "Universe id = " << _id << ", type = ";
+    if (_type == SIMPLE)
+        string << "SIMPLE";
+    else
+        string << "LATTICE";
 
-	string << ", num cells = " << _cells.size() << ", cell ids = ";
+    string << ", num cells = " << _cells.size() << ", cell ids = ";
 
-	for (iter = _cells.begin(); iter != _cells.end(); ++iter)
-		string << iter->first << ", ";
+    for (iter = _cells.begin(); iter != _cells.end(); ++iter)
+        string << iter->first << ", ";
 
-	return string.str();
+    return string.str();
 }
 
 
@@ -219,39 +219,39 @@ std::string Universe::toString() {
  * Compute the FSR Maps for this universe
  */
 int Universe::computeFSRMaps() {
-	/* initialize a counter count */
-	std::map<int, Cell*>::iterator iter;
-	int count = 0;
+    /* initialize a counter count */
+    std::map<int, Cell*>::iterator iter;
+    int count = 0;
     
-	/* loop over cells in the universe to set the map and update count */
-	for (iter = _cells.begin(); iter != _cells.end(); ++iter) {
-		_region_map.insert(std::pair<int, int>(iter->first, count));
-		count += iter->second->getNumFSRs();
-	}
+    /* loop over cells in the universe to set the map and update count */
+    for (iter = _cells.begin(); iter != _cells.end(); ++iter) {
+        _region_map.insert(std::pair<int, int>(iter->first, count));
+        count += iter->second->getNumFSRs();
+    }
 
-	return count;
+    return count;
 }
 
 
 void Universe::generateCSGLists(std::vector<int>* surf_flags, std::vector<double>* surf_coeffs,
-		std::vector<int>* oper_flags, std::vector<int>* left_ids, std::vector<int>* right_ids,
-		std::vector<int>* zones, Point* current_origin){
+                                std::vector<int>* oper_flags, std::vector<int>* left_ids, std::vector<int>* right_ids,
+                                std::vector<int>* zones, Point* current_origin){
 
-	Cell* cell = _cells.begin()->second;
+    Cell* cell = _cells.begin()->second;
 
-		/* If the Universe contains a FILL type Cell, try to generate tracks for
-		 * daughter universes. Else, throw error.
-		 */
-	if (cell->getType() == FILL) {
-		log_printf(DEBUG, "Universe: Cell is fill type...");
+    /* If the Universe contains a FILL type Cell, try to generate tracks for
+     * daughter universes. Else, throw error.
+     */
+    if (cell->getType() == FILL) {
+        log_printf(DEBUG, "Universe: Cell is fill type...");
 
-		Universe* univ = static_cast<CellFill*>(cell)->getUniverseFill();
-		univ->generateCSGLists(surf_flags, surf_coeffs, oper_flags,
-				left_ids, right_ids, zones, current_origin);
-	}
-	else {
-		log_printf(ERROR, "Parent Universe must be FILL type");
-	}
+        Universe* univ = static_cast<CellFill*>(cell)->getUniverseFill();
+        univ->generateCSGLists(surf_flags, surf_coeffs, oper_flags,
+                               left_ids, right_ids, zones, current_origin);
+    }
+    else {
+        log_printf(ERROR, "Parent Universe must be FILL type");
+    }
 }
 
 

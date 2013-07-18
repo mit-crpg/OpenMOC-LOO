@@ -27,8 +27,8 @@ class LocalCoords;
 
 /* Represents cell type */
 enum cellType {
-	MATERIAL,
-	FILL
+    MATERIAL,
+    FILL
 };
 
 /**
@@ -42,32 +42,32 @@ enum cellType {
  */
 class Cell {
 protected:
-	static int _n;
-	int _uid;
-	int _id;
-	cellType _type;
-	int _universe;
-	std::map<int, Surface*> _surfaces;  /* +/- depending on side of surface */
+    static int _n;
+    int _uid;
+    int _id;
+    cellType _type;
+    int _universe;
+    std::map<int, Surface*> _surfaces;  /* +/- depending on side of surface */
 public:
-	Cell();
-	Cell(int id, cellType type, int universe, int num_surfaces, 
-	     int *surfaces);
-	virtual ~Cell();
-	void addSurface(int surface_id, Surface* surface);
-	void setSurfacePointer(Surface* surface);
-	int getUid() const;
-	int getId() const;
-	cellType getType() const;
-	int getUniverse() const;
-	int getNumSurfaces() const;
-	std::map<int, Surface*> getSurfaces() const;
-	void setUniverse(int universe);
-	bool cellContains(Point* point);
-	bool cellContains(LocalCoords* coords);
-	double minSurfaceDist(Point* point, double angle, 
-			      Point* min_intersection);
-	virtual std::string toString() =0;
-	virtual int getNumFSRs() =0;
+    Cell();
+    Cell(int id, cellType type, int universe, int num_surfaces, 
+         int *surfaces);
+    virtual ~Cell();
+    void addSurface(int surface_id, Surface* surface);
+    void setSurfacePointer(Surface* surface);
+    int getUid() const;
+    int getId() const;
+    cellType getType() const;
+    int getUniverse() const;
+    int getNumSurfaces() const;
+    std::map<int, Surface*> getSurfaces() const;
+    void setUniverse(int universe);
+    bool cellContains(Point* point);
+    bool cellContains(LocalCoords* coords);
+    double minSurfaceDist(Point* point, double angle, 
+                          Point* min_intersection);
+    virtual std::string toString() =0;
+    virtual int getNumFSRs() =0;
 };
 
 
@@ -77,24 +77,24 @@ public:
  */
 class CellBasic: public Cell {
 private: 
-	int _material;
-	int _num_rings;
-	int _num_sectors;
+    int _material;
+    int _num_rings;
+    int _num_sectors;
 public:
-	CellBasic(int id, int universe, int num_surfaces, int *surfaces, 
-			  int material, int num_rings, int num_sectors);
-	CellBasic(int id, int universe, int material, 
-			  int num_rings, int num_sectors);
-	CellBasic(int id, int universe, int material);
-	int getMaterial() const;
-	void addSurface(int surface_id, Surface* surface);
-	void adjustKeys(int universe, int material);
-	std::string toString();
-	int getNumFSRs();
-	CellBasic* clone(int new_id, int num_rings, int num_sectors);
-	int getNumRings();
-	int getNumSectors();
-	void setNumSectors(int num);
+    CellBasic(int id, int universe, int num_surfaces, int *surfaces, 
+              int material, int num_rings, int num_sectors);
+    CellBasic(int id, int universe, int material, 
+              int num_rings, int num_sectors);
+    CellBasic(int id, int universe, int material);
+    int getMaterial() const;
+    void addSurface(int surface_id, Surface* surface);
+    void adjustKeys(int universe, int material);
+    std::string toString();
+    int getNumFSRs();
+    CellBasic* clone(int new_id, int num_rings, int num_sectors);
+    int getNumRings();
+    int getNumSectors();
+    void setNumSectors(int num);
 };
 
 
@@ -104,17 +104,17 @@ public:
  */
 class CellFill: public Cell {
 private:
-	std::pair<int, Universe*> _universe_fill;
+    std::pair<int, Universe*> _universe_fill;
 public:
-	CellFill(int id, int universe, int num_surfaces,
-		 int *surfaces, int universe_fill);
-	int getUniverseFillId() const;
-	Universe* getUniverseFill() const;
-	void setUniverseFill(int universe_Fill);
-	void setUniverseFillPointer(Universe* universe_fill);
-	void adjustKeys(int universe, int universe_fill);
-	std::string toString();
-	int getNumFSRs();
+    CellFill(int id, int universe, int num_surfaces,
+             int *surfaces, int universe_fill);
+    int getUniverseFillId() const;
+    Universe* getUniverseFill() const;
+    void setUniverseFill(int universe_Fill);
+    void setUniverseFillPointer(Universe* universe_fill);
+    void adjustKeys(int universe, int universe_fill);
+    std::string toString();
+    int getNumFSRs();
 };
 
 #endif /* CELL_H_ */

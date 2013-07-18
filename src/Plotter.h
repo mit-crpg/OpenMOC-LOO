@@ -28,56 +28,56 @@
 
 class Plotter{
 private:
-	double _width;
-	double _height;
-	std::string _extension;
-	Geometry* _geom;
-	int _bit_length_x;
-	int _bit_length_y;
-	double _x_pixel;
-	double _y_pixel;
-	bool _specs;
-	bool _fluxes;
-	bool _net_current;
-	bool _plot_diffusion;
-	bool _plot_keff;
-	bool _plot_quad_flux_flag;
-	int *_FSR_map;
+    double _width;
+    double _height;
+    std::string _extension;
+    Geometry* _geom;
+    int _bit_length_x;
+    int _bit_length_y;
+    double _x_pixel;
+    double _y_pixel;
+    bool _specs;
+    bool _fluxes;
+    bool _net_current;
+    bool _plot_diffusion;
+    bool _plot_keff;
+    bool _plot_quad_flux_flag;
+    int *_FSR_map;
 public:
-	Plotter(Geometry* geom, const int bit_dim, std::string extension, 
-			bool specs, bool fluxes, bool netCurrent, 
-			bool plotDiffusion, bool plotKeff, bool plotQuadFluxFlag);
-	virtual ~Plotter();
-	void plotTracksReflective(Track* track, int numReflect);
-	void makeFSRMap();
-	int *getFSRMap();
-	void copyFSRMap(int *pixels);
-	int getBitLengthX();
-	int getBitLengthY();
-	double getXPixel();
-	double getYPixel();
-	bool plotSpecs();
-	bool plotFlux();
-	std::string getExtension();
-	void makeRegionMap(int* pixMapFSR, int* pixMap, int* regionMap);
-	void makeRegionMap(int* pixMapFSR, float* pixMap, double* regionMap);
-	double convertToGeometryX(int x);
-	double convertToGeometryY(int y);
-	void plotCMFDMesh(Mesh* mesh);
-	int convertToPixelX(double x);
-	int convertToPixelY(double y);
-	void plotGeometry(Mesh *mesh);
-	void plotNetCurrents(Mesh* mesh);
-	void plotQuadFlux(Mesh* mesh, int iter_num);
-	void plotDHats(Mesh* mesh, int iter_num);
-	void plotXS(Mesh* mesh, int iter_num);
-	bool plotCurrent();
-	bool plotQuadFluxFlag();
-	bool plotKeff();
-	bool plotDiffusion();
-	void plotCMFDflux(Mesh* mesh, std::string string, int iter_num);
-	void plotCMFDKeff(Mesh* mesh, int num_iter);
-	void plotCmfdFluxUpdate(Mesh *mesh, int iter_num);
+    Plotter(Geometry* geom, const int bit_dim, std::string extension, 
+            bool specs, bool fluxes, bool netCurrent, 
+            bool plotDiffusion, bool plotKeff, bool plotQuadFluxFlag);
+    virtual ~Plotter();
+    void plotTracksReflective(Track* track, int numReflect);
+    void makeFSRMap();
+    int *getFSRMap();
+    void copyFSRMap(int *pixels);
+    int getBitLengthX();
+    int getBitLengthY();
+    double getXPixel();
+    double getYPixel();
+    bool plotSpecs();
+    bool plotFlux();
+    std::string getExtension();
+    void makeRegionMap(int* pixMapFSR, int* pixMap, int* regionMap);
+    void makeRegionMap(int* pixMapFSR, float* pixMap, double* regionMap);
+    double convertToGeometryX(int x);
+    double convertToGeometryY(int y);
+    void plotCMFDMesh(Mesh* mesh);
+    int convertToPixelX(double x);
+    int convertToPixelY(double y);
+    void plotGeometry(Mesh *mesh);
+    void plotNetCurrents(Mesh* mesh);
+    void plotQuadFlux(Mesh* mesh, int iter_num);
+    void plotDHats(Mesh* mesh, int iter_num);
+    void plotXS(Mesh* mesh, int iter_num);
+    bool plotCurrent();
+    bool plotQuadFluxFlag();
+    bool plotKeff();
+    bool plotDiffusion();
+    void plotCMFDflux(Mesh* mesh, std::string string, int iter_num);
+    void plotCMFDKeff(Mesh* mesh, int num_iter);
+    void plotCmfdFluxUpdate(Mesh *mesh, int iter_num);
 };
 
 #endif /* PLOTTER_H_ */

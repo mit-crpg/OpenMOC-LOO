@@ -26,21 +26,21 @@
 
 class Timer {
 protected:
-	timespec start_time, end_time;
-	double elapsed_time;
-	bool running;
-	std::vector< std::pair<double, const char*> > _timer_splits;
+    timespec start_time, end_time;
+    double elapsed_time;
+    bool running;
+    std::vector< std::pair<double, const char*> > _timer_splits;
 public:
-	Timer();
-	virtual ~Timer();
-	void start();
-	void stop();
-	void restart();
-	void reset();
-	void recordSplit(const char* msg);
-	double getTime();
-	double diff(timespec start, timespec end);
-	void printSplits();
+    Timer();
+    virtual ~Timer();
+    void start();
+    void stop();
+    void restart();
+    void reset();
+    void recordSplit(const char* msg);
+    double getTime();
+    double diff(timespec start, timespec end);
+    void printSplits();
 };
 
 #endif /* TIMER_H_ */

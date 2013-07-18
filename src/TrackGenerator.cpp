@@ -18,24 +18,24 @@
  * @param spacing track spacing
  */
 TrackGenerator::TrackGenerator(Geometry* geom, Plotter* plotter,
-		const int num_azim, const double spacing) {
+                               const int num_azim, const double spacing) {
 
-	_plotter = plotter;
-	_geom = geom;
-	_num_azim = num_azim/2.0;
-	_spacing = spacing;
+    _plotter = plotter;
+    _geom = geom;
+    _num_azim = num_azim/2.0;
+    _spacing = spacing;
 
-	try {
-		_num_tracks = new int[_num_azim];
-		_num_x = new int[_num_azim];
-		_num_y = new int[_num_azim];
-		_azim_weights = new double[_num_azim];
-		_tracks = new Track*[_num_azim];
-	}
-	catch (std::exception &e) {
-		log_printf(ERROR, "Unable to allocate memory for TrackGenerator. "
-				"Backtrace:\n%s", e.what());
-	}
+    try {
+        _num_tracks = new int[_num_azim];
+        _num_x = new int[_num_azim];
+        _num_y = new int[_num_azim];
+        _azim_weights = new double[_num_azim];
+        _tracks = new Track*[_num_azim];
+    }
+    catch (std::exception &e) {
+        log_printf(ERROR, "Unable to allocate memory for TrackGenerator. "
+                   "Backtrace:\n%s", e.what());
+    }
 }
 
 
@@ -43,15 +43,15 @@ TrackGenerator::TrackGenerator(Geometry* geom, Plotter* plotter,
  * TrackGenerator destructor frees memory for all tracks
  */
 TrackGenerator::~TrackGenerator() {
-	delete [] _num_tracks;
-	delete [] _num_x;
-	delete [] _num_y;
-	delete [] _azim_weights;
+    delete [] _num_tracks;
+    delete [] _num_x;
+    delete [] _num_y;
+    delete [] _azim_weights;
 
-	for (int i = 0; i < _num_azim; i++)
-		delete [] _tracks[i];
+    for (int i = 0; i < _num_azim; i++)
+        delete [] _tracks[i];
 
-	delete [] _tracks;
+    delete [] _tracks;
 }
 
 
@@ -108,186 +108,186 @@ Track **TrackGenerator::getTracks() const {
  */
 void TrackGenerator::generateTracks() {
 
-	/* Check to make sure that height, width of the geometry are nonzero */
-	if (_geom->getHeight() <= 0 || _geom->getHeight() <= 0)
-		log_printf(ERROR, "The total height and width of the geometry must be"
-				"nonzero for track generation. Please specify the height and "
-				"width in the geometry input file.");
+    /* Check to make sure that height, width of the geometry are nonzero */
+    if (_geom->getHeight() <= 0 || _geom->getHeight() <= 0)
+        log_printf(ERROR, "The total height and width of the geometry must be"
+                   "nonzero for track generation. Please specify the height and "
+                   "width in the geometry input file.");
 
 
-	try {
-		log_printf(NORMAL, "Computing azimuthal angles and track spacings...");
+    try {
+        log_printf(NORMAL, "Computing azimuthal angles and track spacings...");
 
-		/* Each element in arrays corresponds to a track angle in phi_eff */
-		/* Track spacing along x,y-axes, and perpendicular to each track */
-		double* dx_eff = new double[_num_azim];
-		double* dy_eff = new double[_num_azim];
-		double* d_eff = new double[_num_azim];
+        /* Each element in arrays corresponds to a track angle in phi_eff */
+        /* Track spacing along x,y-axes, and perpendicular to each track */
+        double* dx_eff = new double[_num_azim];
+        double* dy_eff = new double[_num_azim];
+        double* d_eff = new double[_num_azim];
 
-		/* Effective azimuthal angles with respect to positive x-axis */
-		double* phi_eff = new double[_num_azim];
+        /* Effective azimuthal angles with respect to positive x-axis */
+        double* phi_eff = new double[_num_azim];
 
-		double x1, x2;
-		double iazim = _num_azim*2.0;
-		double width = _geom->getWidth();
-		double height = _geom->getHeight();
+        double x1, x2;
+        double iazim = _num_azim*2.0;
+        double width = _geom->getWidth();
+        double height = _geom->getHeight();
 
-		/* create BitMap for plotting */
-		BitMap<int>* bitMap = new BitMap<int>;
-		bitMap->pixel_x = _plotter->getBitLengthX();
-		bitMap->pixel_y = _plotter->getBitLengthY();
-		initialize(bitMap);
-		bitMap->geom_x = width;
-		bitMap->geom_y = height;
-		bitMap->color_type = BLACKWHITE;
+        /* create BitMap for plotting */
+        BitMap<int>* bitMap = new BitMap<int>;
+        bitMap->pixel_x = _plotter->getBitLengthX();
+        bitMap->pixel_y = _plotter->getBitLengthY();
+        initialize(bitMap);
+        bitMap->geom_x = width;
+        bitMap->geom_y = height;
+        bitMap->color_type = BLACKWHITE;
 
-		/* Determine azimuthal angles and track spacing */
-		for (int i = 0; i < _num_azim; i++) {
+        /* Determine azimuthal angles and track spacing */
+        for (int i = 0; i < _num_azim; i++) {
 
-			/* desired angle */
-			double phi = 2.0 * M_PI / iazim * (0.5 + i);
+            /* desired angle */
+            double phi = 2.0 * M_PI / iazim * (0.5 + i);
 
-			/* num intersections with x,y-axes */
-			_num_x[i] = (int) (fabs(width / _spacing * sin(phi))) + 1;
-			_num_y[i] = (int) (fabs(height / _spacing * cos(phi))) + 1;
-			log_printf(DEBUG, "For azimuthal angle %d, num_x = %d, num_y = %d",
-					   i, _num_x[i], _num_y[i]);
+            /* num intersections with x,y-axes */
+            _num_x[i] = (int) (fabs(width / _spacing * sin(phi))) + 1;
+            _num_y[i] = (int) (fabs(height / _spacing * cos(phi))) + 1;
+            log_printf(DEBUG, "For azimuthal angle %d, num_x = %d, num_y = %d",
+                       i, _num_x[i], _num_y[i]);
 
-			/* total num of tracks */
-			_num_tracks[i] = _num_x[i] + _num_y[i];
+            /* total num of tracks */
+            _num_tracks[i] = _num_x[i] + _num_y[i];
 
-			/* effective/actual angle (not the angle we desire, but close */
-			phi_eff[i] = atan((height * _num_x[i]) / (width * _num_y[i]));
+            /* effective/actual angle (not the angle we desire, but close */
+            phi_eff[i] = atan((height * _num_x[i]) / (width * _num_y[i]));
 
-			/* fix angles in range(pi/2, pi) */
-			if (phi > M_PI / 2)
-				phi_eff[i] = M_PI - phi_eff[i];
+            /* fix angles in range(pi/2, pi) */
+            if (phi > M_PI / 2)
+                phi_eff[i] = M_PI - phi_eff[i];
 
-			/* Effective track spacing (not spacing we desire, but close */
-			dx_eff[i] = (width / _num_x[i]);
-			dy_eff[i] = (height / _num_y[i]);
-			d_eff[i] = (dx_eff[i] * sin(phi_eff[i]));
-		}
+            /* Effective track spacing (not spacing we desire, but close */
+            dx_eff[i] = (width / _num_x[i]);
+            dy_eff[i] = (height / _num_y[i]);
+            d_eff[i] = (dx_eff[i] * sin(phi_eff[i]));
+        }
 
-		/* Compute azimuthal weights */
-		for (int i = 0; i < _num_azim; i++) {
+        /* Compute azimuthal weights */
+        for (int i = 0; i < _num_azim; i++) {
 
-			if (i < _num_azim - 1)
-				x1 = 0.5 * (phi_eff[i+1] - phi_eff[i]);
-			else
-				x1 = 2 * M_PI / 2.0 - phi_eff[i];
+            if (i < _num_azim - 1)
+                x1 = 0.5 * (phi_eff[i+1] - phi_eff[i]);
+            else
+                x1 = 2 * M_PI / 2.0 - phi_eff[i];
 
-			if (i >= 1)
-				x2 = 0.5 * (phi_eff[i] - phi_eff[i-1]);
-			else
-				x2 = phi_eff[i];
+            if (i >= 1)
+                x2 = 0.5 * (phi_eff[i] - phi_eff[i-1]);
+            else
+                x2 = phi_eff[i];
 
-			/* Multiply weight by 2 because angles are in [0, Pi] */
-			_azim_weights[i] = (x1 + x2) / (2 * M_PI) * d_eff[i] * 2;
-		}
+            /* Multiply weight by 2 because angles are in [0, Pi] */
+            _azim_weights[i] = (x1 + x2) / (2 * M_PI) * d_eff[i] * 2;
+        }
 
-		log_printf(INFO, "Generating track start and end points...");
+        log_printf(INFO, "Generating track start and end points...");
 
-		/* Compute track starting and end points */
-		for (int i = 0; i < _num_azim; i++) {
+        /* Compute track starting and end points */
+        for (int i = 0; i < _num_azim; i++) {
 
-			/* Tracks for azimuthal angle i */
-			_tracks[i] = new Track[_num_tracks[i]];
+            /* Tracks for azimuthal angle i */
+            _tracks[i] = new Track[_num_tracks[i]];
 
-			/* Compute start points for tracks starting on x-axis */
-			for (int j = 0; j < _num_x[i]; j++)
-				_tracks[i][j].getStart()->setCoords(dx_eff[i] * (0.5 + j), 0);
+            /* Compute start points for tracks starting on x-axis */
+            for (int j = 0; j < _num_x[i]; j++)
+                _tracks[i][j].getStart()->setCoords(dx_eff[i] * (0.5 + j), 0);
 
-			/* Compute start points for tracks starting on y-axis */
-			for (int j = 0; j < _num_y[i]; j++) {
+            /* Compute start points for tracks starting on y-axis */
+            for (int j = 0; j < _num_y[i]; j++) {
 
-				/* If track points to the upper right */
-				if (sin(phi_eff[i]) > 0 && cos(phi_eff[i]) > 0)
-					_tracks[i][_num_x[i]+j].getStart()->setCoords(0,
-													dy_eff[i] * (0.5 + j));
+                /* If track points to the upper right */
+                if (sin(phi_eff[i]) > 0 && cos(phi_eff[i]) > 0)
+                    _tracks[i][_num_x[i]+j].getStart()->setCoords(0,
+                                                                  dy_eff[i] * (0.5 + j));
 
-				/* If track points to the upper left */
-				else if (sin(phi_eff[i]) > 0 && cos(phi_eff[i]) < 0)
-					_tracks[i][_num_x[i]+j].getStart()->setCoords(width,
-														dy_eff[i] * (0.5 + j));
-			}
+                /* If track points to the upper left */
+                else if (sin(phi_eff[i]) > 0 && cos(phi_eff[i]) < 0)
+                    _tracks[i][_num_x[i]+j].getStart()->setCoords(width,
+                                                                  dy_eff[i] * (0.5 + j));
+            }
 
-			/* Compute the exit points for each track */
-			for (int j = 0; j < _num_tracks[i]; j++) {
+            /* Compute the exit points for each track */
+            for (int j = 0; j < _num_tracks[i]; j++) {
 
-				/* Set the track's end point */
-				Point* start = _tracks[i][j].getStart();
-				Point* end = _tracks[i][j].getEnd();
-				computeEndPoint(start, end, phi_eff[i], width, height);
+                /* Set the track's end point */
+                Point* start = _tracks[i][j].getStart();
+                Point* end = _tracks[i][j].getEnd();
+                computeEndPoint(start, end, phi_eff[i], width, height);
 
-				/* Set the track's azimuthal weight and spacing*/
-				_tracks[i][j].setAzimuthalWeight(_azim_weights[i]);
-				_tracks[i][j].setPhi(phi_eff[i]);
-				_tracks[i][j].setSpacing(d_eff[i]);
+                /* Set the track's azimuthal weight and spacing*/
+                _tracks[i][j].setAzimuthalWeight(_azim_weights[i]);
+                _tracks[i][j].setPhi(phi_eff[i]);
+                _tracks[i][j].setSpacing(d_eff[i]);
 
-			}
-		}
+            }
+        }
 
-		/* Recalibrate track start and end points to geometry global origin */
-		//FIXME: This could be more efficient when start/end points are set
+        /* Recalibrate track start and end points to geometry global origin */
+        //FIXME: This could be more efficient when start/end points are set
 #if 0
-		std::ofstream file;
-		std::stringstream string;
-		string << "characteristic_na_" << _num_azim << "_ts_" << _spacing 
-			   << ".txt";
-		std::string title_str = string.str();
-		file.open(title_str.c_str(), std::fstream::trunc);
-		file << "Note: reporting start point coordinate, end point coordinate,"
-			" and length for each characteristics" << std::endl;
+        std::ofstream file;
+        std::stringstream string;
+        string << "characteristic_na_" << _num_azim << "_ts_" << _spacing 
+               << ".txt";
+        std::string title_str = string.str();
+        file.open(title_str.c_str(), std::fstream::trunc);
+        file << "Note: reporting start point coordinate, end point coordinate,"
+            " and length for each characteristics" << std::endl;
 #endif
-		for (int i = 0; i < _num_azim; i++) 
-		{
+        for (int i = 0; i < _num_azim; i++) 
+        {
 #if 0	
-			file << " azimuthal angle: " << _tracks[i][0].getPhi() << std::endl;
+            file << " azimuthal angle: " << _tracks[i][0].getPhi() << std::endl;
 #endif
-			for (int j = 0; j < _num_tracks[i]; j++) {
-				double x0 = _tracks[i][j].getStart()->getX();
-				double y0 = _tracks[i][j].getStart()->getY();
-				double x1 = _tracks[i][j].getEnd()->getX();
-				double y1 = _tracks[i][j].getEnd()->getY();
-				double new_x0 = x0 - _geom->getWidth()/2.0;
-				double new_y0 = y0 - _geom->getHeight()/2.0;
-				double new_x1 = x1 - _geom->getWidth()/2.0;
-				double new_y1 = y1 - _geom->getHeight()/2.0;
-				double phi = _tracks[i][j].getPhi();
-				_tracks[i][j].setValues(new_x0, new_y0, new_x1, new_y1, phi);
+            for (int j = 0; j < _num_tracks[i]; j++) {
+                double x0 = _tracks[i][j].getStart()->getX();
+                double y0 = _tracks[i][j].getStart()->getY();
+                double x1 = _tracks[i][j].getEnd()->getX();
+                double y1 = _tracks[i][j].getEnd()->getY();
+                double new_x0 = x0 - _geom->getWidth()/2.0;
+                double new_y0 = y0 - _geom->getHeight()/2.0;
+                double new_x1 = x1 - _geom->getWidth()/2.0;
+                double new_y1 = y1 - _geom->getHeight()/2.0;
+                double phi = _tracks[i][j].getPhi();
+                _tracks[i][j].setValues(new_x0, new_y0, new_x1, new_y1, phi);
 #if 0
-				file << "(" << new_x0 << ", " << new_y0 <<"), (" 
-					 << new_x1 << ", "<< new_y1 <<"), " << 
-					sqrt((new_x1 - new_x0)*(new_x1 - new_x0) 
-						 + (new_y1 - new_y0) * (new_y1 - new_y0)) << std::endl;
+                file << "(" << new_x0 << ", " << new_y0 <<"), (" 
+                     << new_x1 << ", "<< new_y1 <<"), " << 
+                    sqrt((new_x1 - new_x0)*(new_x1 - new_x0) 
+                         + (new_y1 - new_y0) * (new_y1 - new_y0)) << std::endl;
 #endif
-				/* Add line to segments bitmap */
-				if (_plotter->plotSpecs() == true){
-					drawLine(bitMap, new_x0, new_y0, new_x1, new_y1, 1);
-				}
-			}
-		}
+                /* Add line to segments bitmap */
+                if (_plotter->plotSpecs() == true){
+                    drawLine(bitMap, new_x0, new_y0, new_x1, new_y1, 1);
+                }
+            }
+        }
 #if 0
-		file.close();
+        file.close();
 #endif
-		if (_plotter->plotSpecs() == true){
-			plot(bitMap, "tracks", _plotter->getExtension());
-		}
+        if (_plotter->plotSpecs() == true){
+            plot(bitMap, "tracks", _plotter->getExtension());
+        }
 
-		deleteBitMap(bitMap);
-		delete [] dx_eff;
-		delete [] dy_eff;
-		delete [] d_eff;
-		delete [] phi_eff;
+        deleteBitMap(bitMap);
+        delete [] dx_eff;
+        delete [] dy_eff;
+        delete [] d_eff;
+        delete [] phi_eff;
 
-		return;
-	}
+        return;
+    }
 
-	catch (std::exception &e) {
-		log_printf(ERROR, "Unable to allocate memory needed to generate tracks"
-				".Backtrace:\n%s", e.what());
-	}
+    catch (std::exception &e) {
+        log_printf(ERROR, "Unable to allocate memory needed to generate tracks"
+                   ".Backtrace:\n%s", e.what());
+    }
 
 }
 
@@ -304,42 +304,42 @@ void TrackGenerator::generateTracks() {
  * @param height the height of the geometry
  */
 void TrackGenerator::computeEndPoint(Point* start, Point* end,
-		const double phi, const double width, const double height) {
+                                     const double phi, const double width, const double height) {
 
-	double m = sin(phi) / cos(phi); 		/* slope */
-	double yin = start->getY(); 			/* y-coord */
-	double xin = start->getX(); 			/* x-coord */
+    double m = sin(phi) / cos(phi); 		/* slope */
+    double yin = start->getY(); 			/* y-coord */
+    double xin = start->getX(); 			/* x-coord */
 
-	try {
-		Point *points = new Point[4];
+    try {
+        Point *points = new Point[4];
 
-		/* Determine all possible points */
-		points[0].setCoords(0, yin - m * xin);
-		points[1].setCoords(width, yin + m * (width - xin));
-		points[2].setCoords(xin - yin / m, 0);
-		points[3].setCoords(xin - (yin - height) / m, height);
+        /* Determine all possible points */
+        points[0].setCoords(0, yin - m * xin);
+        points[1].setCoords(width, yin + m * (width - xin));
+        points[2].setCoords(xin - yin / m, 0);
+        points[3].setCoords(xin - (yin - height) / m, height);
 
-		/* For each of the possible intersection points */
-		for (int i = 0; i < 4; i++) {
-			/* neglect the trivial point (xin, yin) */
-			if (points[i].getX() == xin && points[i].getY() == yin) { }
+        /* For each of the possible intersection points */
+        for (int i = 0; i < 4; i++) {
+            /* neglect the trivial point (xin, yin) */
+            if (points[i].getX() == xin && points[i].getY() == yin) { }
 
-			/* The point to return will be within the bounds of the cell */
-			else if (points[i].getX() >= 0 && points[i].getX() <= width
-					&& points[i].getY() >= 0 && points[i].getY() <= height) {
-				end->setCoords(points[i].getX(), points[i].getY());
-			}
-		}
+            /* The point to return will be within the bounds of the cell */
+            else if (points[i].getX() >= 0 && points[i].getX() <= width
+                     && points[i].getY() >= 0 && points[i].getY() <= height) {
+                end->setCoords(points[i].getX(), points[i].getY());
+            }
+        }
 
-		delete[] points;
-		return;
-	}
+        delete[] points;
+        return;
+    }
 
-	catch (std::exception &e) {
-		log_printf(ERROR, "Unable to allocate memory for intersection points "
-				"in computeEndPoint method of TrackGenerator. Backtrace:\n%s",
-				e.what());
-	}
+    catch (std::exception &e) {
+        log_printf(ERROR, "Unable to allocate memory for intersection points "
+                   "in computeEndPoint method of TrackGenerator. Backtrace:\n%s",
+                   e.what());
+    }
 
 }
 
@@ -350,222 +350,222 @@ void TrackGenerator::computeEndPoint(Point* start, Point* end,
  *  into the trackgenerator's 2d jagged array of tracks
  */
 void TrackGenerator::makeReflective() {
-	log_printf(NORMAL, "Creating reflective boundary conditions...");
+    log_printf(NORMAL, "Creating reflective boundary conditions...");
 
-	int nxi, nyi, nti; /* nx, ny, nt for a particular angle */
-	Track *curr;
-	Track *refl;
+    int nxi, nyi, nti; /* nx, ny, nt for a particular angle */
+    Track *curr;
+    Track *refl;
 
-	/* Loop over only half the angles since we will set the pointers for
-	 * connecting tracks at the same time
-	 */
-	for (int i = 0; i < floor(_num_azim / 2); i++) {
-		nxi = _num_x[i];
-		nyi = _num_y[i];
-		nti = _num_tracks[i];
-		curr = _tracks[i];
-		refl = _tracks[_num_azim - i - 1];
+    /* Loop over only half the angles since we will set the pointers for
+     * connecting tracks at the same time
+     */
+    for (int i = 0; i < floor(_num_azim / 2); i++) {
+        nxi = _num_x[i];
+        nyi = _num_y[i];
+        nti = _num_tracks[i];
+        curr = _tracks[i];
+        refl = _tracks[_num_azim - i - 1];
 
-		/* Loop over all of the tracks for this angle */
-		for (int j = 0; j < nti; j++) {
-			/* More tracks starting along x-axis than y-axis */
-			if (nxi <= nyi) {
-				/* Bottom to right hand side */
-				if (j < nxi) {
-					curr[j].setTrackIn(&refl[j]);
-					refl[j].setTrackIn(&curr[j]);
-					curr[j].setSurfBwd(3);
-					refl[j].setSurfBwd(3);
+        /* Loop over all of the tracks for this angle */
+        for (int j = 0; j < nti; j++) {
+            /* More tracks starting along x-axis than y-axis */
+            if (nxi <= nyi) {
+                /* Bottom to right hand side */
+                if (j < nxi) {
+                    curr[j].setTrackIn(&refl[j]);
+                    refl[j].setTrackIn(&curr[j]);
+                    curr[j].setSurfBwd(3);
+                    refl[j].setSurfBwd(3);
 
-					if (_geom->getSurface(3)->getBoundary() == REFLECTIVE){
-						curr[j].setReflIn(REFL_FALSE);
-						refl[j].setReflIn(REFL_FALSE);
-					}
-					else{
-						curr[j].setReflIn(VAC_FALSE);
-						refl[j].setReflIn(VAC_FALSE);
-					}
+                    if (_geom->getSurface(3)->getBoundary() == REFLECTIVE){
+                        curr[j].setReflIn(REFL_FALSE);
+                        refl[j].setReflIn(REFL_FALSE);
+                    }
+                    else{
+                        curr[j].setReflIn(VAC_FALSE);
+                        refl[j].setReflIn(VAC_FALSE);
+                    }
 
-					curr[j].setTrackOut(&refl[2 * nxi - 1 - j]);
-					refl[2 * nxi - 1 - j].setTrackIn(&curr[j]);
-					curr[j].setSurfFwd(2);
-					refl[2 * nxi - 1 - j].setSurfBwd(2);
+                    curr[j].setTrackOut(&refl[2 * nxi - 1 - j]);
+                    refl[2 * nxi - 1 - j].setTrackIn(&curr[j]);
+                    curr[j].setSurfFwd(2);
+                    refl[2 * nxi - 1 - j].setSurfBwd(2);
 
-					if (_geom->getSurface(2)->getBoundary() == REFLECTIVE){
-						curr[j].setReflOut(REFL_FALSE);
-						refl[2 * nxi - 1 - j].setReflIn(REFL_TRUE);
-					}
-					else{
-						curr[j].setReflOut(VAC_FALSE);
-						refl[2 * nxi - 1 - j].setReflIn(VAC_TRUE);
-					}
-				}
+                    if (_geom->getSurface(2)->getBoundary() == REFLECTIVE){
+                        curr[j].setReflOut(REFL_FALSE);
+                        refl[2 * nxi - 1 - j].setReflIn(REFL_TRUE);
+                    }
+                    else{
+                        curr[j].setReflOut(VAC_FALSE);
+                        refl[2 * nxi - 1 - j].setReflIn(VAC_TRUE);
+                    }
+                }
 
-				/* Left hand side to right hand side */
-				else if (j < nyi) {
+                /* Left hand side to right hand side */
+                else if (j < nyi) {
 
-					curr[j].setTrackIn(&refl[j - nxi]);
-					refl[j - nxi].setTrackOut(&curr[j]);
-					curr[j].setSurfBwd(1);
-					refl[j - nxi].setSurfFwd(1);
+                    curr[j].setTrackIn(&refl[j - nxi]);
+                    refl[j - nxi].setTrackOut(&curr[j]);
+                    curr[j].setSurfBwd(1);
+                    refl[j - nxi].setSurfFwd(1);
 
-					if (_geom->getSurface(1)->getBoundary() == REFLECTIVE){
-						curr[j].setReflIn(REFL_TRUE);
-						refl[j - nxi].setReflOut(REFL_FALSE);
-					}
-					else{
-						curr[j].setReflIn(VAC_TRUE);
-						refl[j - nxi].setReflOut(VAC_FALSE);
-					}
+                    if (_geom->getSurface(1)->getBoundary() == REFLECTIVE){
+                        curr[j].setReflIn(REFL_TRUE);
+                        refl[j - nxi].setReflOut(REFL_FALSE);
+                    }
+                    else{
+                        curr[j].setReflIn(VAC_TRUE);
+                        refl[j - nxi].setReflOut(VAC_FALSE);
+                    }
 
-					curr[j].setTrackOut(&refl[j + nxi]);
-					refl[j + nxi].setTrackIn(&curr[j]);
-					curr[j].setSurfFwd(2);
-					refl[j + nxi].setSurfBwd(2);
+                    curr[j].setTrackOut(&refl[j + nxi]);
+                    refl[j + nxi].setTrackIn(&curr[j]);
+                    curr[j].setSurfFwd(2);
+                    refl[j + nxi].setSurfBwd(2);
 
-					if (_geom->getSurface(2)->getBoundary() == REFLECTIVE){
-						curr[j].setReflOut(REFL_FALSE);
-						refl[j + nxi].setReflIn(REFL_TRUE);
-					}
-					else{
-						curr[j].setReflOut(VAC_FALSE);
-						refl[j + nxi].setReflIn(VAC_TRUE);
-					}
-				}
+                    if (_geom->getSurface(2)->getBoundary() == REFLECTIVE){
+                        curr[j].setReflOut(REFL_FALSE);
+                        refl[j + nxi].setReflIn(REFL_TRUE);
+                    }
+                    else{
+                        curr[j].setReflOut(VAC_FALSE);
+                        refl[j + nxi].setReflIn(VAC_TRUE);
+                    }
+                }
 
-				/* Left hand side to top (j > ny) */
-				else {
+                /* Left hand side to top (j > ny) */
+                else {
 
-					curr[j].setTrackIn(&refl[j - nxi]);
-					refl[j - nxi].setTrackOut(&curr[j]);
-					curr[j].setSurfBwd(1);
-					refl[j - nxi].setSurfFwd(1);
+                    curr[j].setTrackIn(&refl[j - nxi]);
+                    refl[j - nxi].setTrackOut(&curr[j]);
+                    curr[j].setSurfBwd(1);
+                    refl[j - nxi].setSurfFwd(1);
 
 
-					if (_geom->getSurface(1)->getBoundary() == REFLECTIVE){
-						curr[j].setReflIn(REFL_TRUE);
-						refl[j - nxi].setReflOut(REFL_FALSE);
-					}
-					else{
-						curr[j].setReflIn(VAC_TRUE);
-						refl[j - nxi].setReflOut(VAC_FALSE);
-					}
+                    if (_geom->getSurface(1)->getBoundary() == REFLECTIVE){
+                        curr[j].setReflIn(REFL_TRUE);
+                        refl[j - nxi].setReflOut(REFL_FALSE);
+                    }
+                    else{
+                        curr[j].setReflIn(VAC_TRUE);
+                        refl[j - nxi].setReflOut(VAC_FALSE);
+                    }
 
-					curr[j].setTrackOut(&refl[2 * nti - nxi - j - 1]);
-					refl[2 * nti - nxi - j - 1].setTrackOut(&curr[j]);
-					curr[j].setSurfFwd(4);
-					refl[2 * nti - nxi - j - 1].setSurfFwd(4);
+                    curr[j].setTrackOut(&refl[2 * nti - nxi - j - 1]);
+                    refl[2 * nti - nxi - j - 1].setTrackOut(&curr[j]);
+                    curr[j].setSurfFwd(4);
+                    refl[2 * nti - nxi - j - 1].setSurfFwd(4);
 
-					if (_geom->getSurface(4)->getBoundary() == REFLECTIVE){
-						curr[j].setReflOut(REFL_TRUE);
-						refl[2 * nti - nxi - j - 1].setReflOut(REFL_TRUE);
-					}
-					else{
-						curr[j].setReflOut(VAC_TRUE);
-						refl[2 * nti - nxi - j - 1].setReflOut(VAC_TRUE);
-					}
-				}
-			}
+                    if (_geom->getSurface(4)->getBoundary() == REFLECTIVE){
+                        curr[j].setReflOut(REFL_TRUE);
+                        refl[2 * nti - nxi - j - 1].setReflOut(REFL_TRUE);
+                    }
+                    else{
+                        curr[j].setReflOut(VAC_TRUE);
+                        refl[2 * nti - nxi - j - 1].setReflOut(VAC_TRUE);
+                    }
+                }
+            }
 
-			/* More tracks starting on y-axis than on x-axis */
-			else {
-				/* Bottom to top */
-				if (j < nxi - nyi) {
-					curr[j].setTrackIn(&refl[j]);
-					refl[j].setTrackIn(&curr[j]);
-					curr[j].setSurfBwd(3);
-					refl[j].setSurfBwd(3);
+            /* More tracks starting on y-axis than on x-axis */
+            else {
+                /* Bottom to top */
+                if (j < nxi - nyi) {
+                    curr[j].setTrackIn(&refl[j]);
+                    refl[j].setTrackIn(&curr[j]);
+                    curr[j].setSurfBwd(3);
+                    refl[j].setSurfBwd(3);
 
-					if (_geom->getSurface(3)->getBoundary() == REFLECTIVE){
-						curr[j].setReflIn(REFL_FALSE);
-						refl[j].setReflIn(REFL_FALSE);
-					}
-					else{
-						curr[j].setReflIn(VAC_FALSE);
-						refl[j].setReflIn(VAC_FALSE);
-					}
+                    if (_geom->getSurface(3)->getBoundary() == REFLECTIVE){
+                        curr[j].setReflIn(REFL_FALSE);
+                        refl[j].setReflIn(REFL_FALSE);
+                    }
+                    else{
+                        curr[j].setReflIn(VAC_FALSE);
+                        refl[j].setReflIn(VAC_FALSE);
+                    }
 
-					curr[j].setTrackOut(&refl[nti - (nxi - nyi) + j]);
-					refl[nti - (nxi - nyi) + j].setTrackOut(&curr[j]);
-					curr[j].setSurfFwd(4);
-					refl[nti - (nxi - nyi) + j].setSurfFwd(4);
+                    curr[j].setTrackOut(&refl[nti - (nxi - nyi) + j]);
+                    refl[nti - (nxi - nyi) + j].setTrackOut(&curr[j]);
+                    curr[j].setSurfFwd(4);
+                    refl[nti - (nxi - nyi) + j].setSurfFwd(4);
 
-					if (_geom->getSurface(4)->getBoundary() == REFLECTIVE){
-						curr[j].setReflOut(REFL_TRUE);
-						refl[nti - (nxi - nyi) + j].setReflOut(REFL_TRUE);
-					}
-					else{
-						curr[j].setReflOut(VAC_TRUE);
-						refl[nti - (nxi - nyi) + j].setReflOut(VAC_TRUE);
-					}
-				}
+                    if (_geom->getSurface(4)->getBoundary() == REFLECTIVE){
+                        curr[j].setReflOut(REFL_TRUE);
+                        refl[nti - (nxi - nyi) + j].setReflOut(REFL_TRUE);
+                    }
+                    else{
+                        curr[j].setReflOut(VAC_TRUE);
+                        refl[nti - (nxi - nyi) + j].setReflOut(VAC_TRUE);
+                    }
+                }
 
-				/* Bottom to right hand side */
-				else if (j < nxi) {
-					curr[j].setTrackIn(&refl[j]);
-					refl[j].setTrackIn(&curr[j]);
-					curr[j].setSurfBwd(3);
-					refl[j].setSurfBwd(3);
+                /* Bottom to right hand side */
+                else if (j < nxi) {
+                    curr[j].setTrackIn(&refl[j]);
+                    refl[j].setTrackIn(&curr[j]);
+                    curr[j].setSurfBwd(3);
+                    refl[j].setSurfBwd(3);
 
-					if (_geom->getSurface(3)->getBoundary() == REFLECTIVE){
-						curr[j].setReflIn(REFL_FALSE);
-						refl[j].setReflIn(REFL_FALSE);
-					}
-					else{
-						curr[j].setReflIn(VAC_FALSE);
-						refl[j].setReflIn(VAC_FALSE);
-					}
+                    if (_geom->getSurface(3)->getBoundary() == REFLECTIVE){
+                        curr[j].setReflIn(REFL_FALSE);
+                        refl[j].setReflIn(REFL_FALSE);
+                    }
+                    else{
+                        curr[j].setReflIn(VAC_FALSE);
+                        refl[j].setReflIn(VAC_FALSE);
+                    }
 
-					curr[j].setTrackOut(&refl[nxi + (nxi - j) - 1]);
-					refl[nxi + (nxi - j) - 1].setTrackIn(&curr[j]);
-					curr[j].setSurfFwd(2);
-					refl[nxi + (nxi - j) - 1].setSurfBwd(2);
+                    curr[j].setTrackOut(&refl[nxi + (nxi - j) - 1]);
+                    refl[nxi + (nxi - j) - 1].setTrackIn(&curr[j]);
+                    curr[j].setSurfFwd(2);
+                    refl[nxi + (nxi - j) - 1].setSurfBwd(2);
 
-					if (_geom->getSurface(2)->getBoundary() == REFLECTIVE){
-						curr[j].setReflOut(REFL_FALSE);
-						refl[nxi + (nxi - j) - 1].setReflIn(REFL_TRUE);
-					}
-					else{
-						curr[j].setReflOut(VAC_FALSE);
-						refl[nxi + (nxi - j) - 1].setReflIn(VAC_TRUE);
-					}
-				}
+                    if (_geom->getSurface(2)->getBoundary() == REFLECTIVE){
+                        curr[j].setReflOut(REFL_FALSE);
+                        refl[nxi + (nxi - j) - 1].setReflIn(REFL_TRUE);
+                    }
+                    else{
+                        curr[j].setReflOut(VAC_FALSE);
+                        refl[nxi + (nxi - j) - 1].setReflIn(VAC_TRUE);
+                    }
+                }
 
-				/* Left-hand side to top (j > nx) */
-				else {
-					curr[j].setTrackIn(&refl[j - nxi]);
-					refl[j - nxi].setTrackOut(&curr[j]);
-					curr[j].setSurfBwd(1);
-					refl[j - nxi].setSurfFwd(1);
+                /* Left-hand side to top (j > nx) */
+                else {
+                    curr[j].setTrackIn(&refl[j - nxi]);
+                    refl[j - nxi].setTrackOut(&curr[j]);
+                    curr[j].setSurfBwd(1);
+                    refl[j - nxi].setSurfFwd(1);
 
-					if (_geom->getSurface(1)->getBoundary() == REFLECTIVE){
-						curr[j].setReflIn(REFL_TRUE);
-						refl[j - nxi].setReflOut(REFL_FALSE);
-					}
-					else{
-						curr[j].setReflIn(VAC_TRUE);
-						refl[j - nxi].setReflOut(VAC_FALSE);
-					}
+                    if (_geom->getSurface(1)->getBoundary() == REFLECTIVE){
+                        curr[j].setReflIn(REFL_TRUE);
+                        refl[j - nxi].setReflOut(REFL_FALSE);
+                    }
+                    else{
+                        curr[j].setReflIn(VAC_TRUE);
+                        refl[j - nxi].setReflOut(VAC_FALSE);
+                    }
 
-					curr[j].setTrackOut(&refl[nyi + (nti - j) - 1]);
-					refl[nyi + (nti - j) - 1].setTrackOut(&curr[j]);
-					curr[j].setSurfFwd(4);
-					refl[nyi + (nti - j) - 1].setSurfFwd(4);
+                    curr[j].setTrackOut(&refl[nyi + (nti - j) - 1]);
+                    refl[nyi + (nti - j) - 1].setTrackOut(&curr[j]);
+                    curr[j].setSurfFwd(4);
+                    refl[nyi + (nti - j) - 1].setSurfFwd(4);
 
-					if (_geom->getSurface(4)->getBoundary() == REFLECTIVE){
-						curr[j].setReflOut(REFL_TRUE);
-						refl[nyi + (nti - j) - 1].setReflOut(REFL_TRUE);
-					}
-					else{
-						curr[j].setReflOut(VAC_TRUE);
-						refl[nyi + (nti - j) - 1].setReflOut(VAC_TRUE);
-					}
-				}
-			}
-		}
-	}
+                    if (_geom->getSurface(4)->getBoundary() == REFLECTIVE){
+                        curr[j].setReflOut(REFL_TRUE);
+                        refl[nyi + (nti - j) - 1].setReflOut(REFL_TRUE);
+                    }
+                    else{
+                        curr[j].setReflOut(VAC_TRUE);
+                        refl[nyi + (nti - j) - 1].setReflOut(VAC_TRUE);
+                    }
+                }
+            }
+        }
+    }
 
-	return;
+    return;
 }
 
 
@@ -575,101 +575,101 @@ void TrackGenerator::makeReflective() {
  */
 void TrackGenerator::segmentize() {
 
-	log_printf(NORMAL, "Segmenting tracks...");
-	double phi, sin_phi, cos_phi;
-	double x0, y0, x1, y1;
-	int num_segments;
-	Track* track;
+    log_printf(NORMAL, "Segmenting tracks...");
+    double phi, sin_phi, cos_phi;
+    double x0, y0, x1, y1;
+    int num_segments;
+    Track* track;
 
-	/* create BitMaps for plotting */
-	BitMap<int>* bitMapFSR = new BitMap<int>;
-	BitMap<int>* bitMap = new BitMap<int>;
-	bitMapFSR->pixel_x = _plotter->getBitLengthX();
-	bitMapFSR->pixel_y = _plotter->getBitLengthY();
-	bitMap->pixel_x = _plotter->getBitLengthX();
-	bitMap->pixel_y = _plotter->getBitLengthY();
-	initialize(bitMap);
-	initialize(bitMapFSR);
-	bitMapFSR->geom_x = _geom->getWidth();
-	bitMapFSR->geom_y = _geom->getHeight();
-	bitMap->geom_x = _geom->getWidth();
-	bitMap->geom_y = _geom->getHeight();
-	bitMapFSR->color_type = RANDOM;
-	bitMap->color_type = RANDOM;
+    /* create BitMaps for plotting */
+    BitMap<int>* bitMapFSR = new BitMap<int>;
+    BitMap<int>* bitMap = new BitMap<int>;
+    bitMapFSR->pixel_x = _plotter->getBitLengthX();
+    bitMapFSR->pixel_y = _plotter->getBitLengthY();
+    bitMap->pixel_x = _plotter->getBitLengthX();
+    bitMap->pixel_y = _plotter->getBitLengthY();
+    initialize(bitMap);
+    initialize(bitMapFSR);
+    bitMapFSR->geom_x = _geom->getWidth();
+    bitMapFSR->geom_y = _geom->getHeight();
+    bitMap->geom_x = _geom->getWidth();
+    bitMap->geom_y = _geom->getHeight();
+    bitMapFSR->color_type = RANDOM;
+    bitMap->color_type = RANDOM;
 
-	int total_num_segments = 0;
+    int total_num_segments = 0;
 
 #if USE_OPENMP
-#pragma omp parallel for private(i, j, k, phi,\
-								 sin_phi, cos_phi, track,	\
-								 x0, y0, x1, y1, num_segments)
+#pragma omp parallel for private(i, j, k, phi,                  \
+                                 sin_phi, cos_phi, track,	\
+                                 x0, y0, x1, y1, num_segments)
 #endif
-	/* Loop over all tracks */
+    /* Loop over all tracks */
 
 #if 0	
-	std::ofstream file;
-	std::stringstream string;
-	string << "track_na_" << _num_azim << "_ts_" << _spacing 
-		   << ".txt";
-	std::string title_str = string.str();
-	file.open(title_str.c_str(), std::fstream::trunc);
-	file << "Note: reporting start point coordinate, end point coordinate, and length for each track" << std::endl;
+    std::ofstream file;
+    std::stringstream string;
+    string << "track_na_" << _num_azim << "_ts_" << _spacing 
+           << ".txt";
+    std::string title_str = string.str();
+    file.open(title_str.c_str(), std::fstream::trunc);
+    file << "Note: reporting start point coordinate, end point coordinate, and length for each track" << std::endl;
 #endif
 
-	for (int i = 0; i < _num_azim; i++) {
-		phi = _tracks[i][0].getPhi();
-		sin_phi = sin(phi);
-		cos_phi = cos(phi);
-		for (int j = 0; j < _num_tracks[i]; j++){
-			track = &_tracks[i][j];
+    for (int i = 0; i < _num_azim; i++) {
+        phi = _tracks[i][0].getPhi();
+        sin_phi = sin(phi);
+        cos_phi = cos(phi);
+        for (int j = 0; j < _num_tracks[i]; j++){
+            track = &_tracks[i][j];
 
-			_geom->segmentize(track);
-			log_printf(DEBUG, "Segmented track phi: %f...", phi);
-			total_num_segments += track->getNumSegments();
+            _geom->segmentize(track);
+            log_printf(DEBUG, "Segmented track phi: %f...", phi);
+            total_num_segments += track->getNumSegments();
 
-			/* plot segments */
-			if (_plotter->plotSpecs() == true){
-				x0 = track->getStart()->getX();
-				y0 = track->getStart()->getY();
-				num_segments = track->getNumSegments();
-				for (int k=0; k < num_segments; k++){
-					log_printf(DEBUG, "Segmented segment: %i...", k);
-					x1 = x0 + cos_phi * track->getSegment(k)->_length;
-					y1 = y0 + sin_phi * track->getSegment(k)->_length;
-					drawLine(bitMap, x0, y0, x1, y1, 
-							 track->getSegment(k)->_region_id);
-					#if 0
-					file << "(" << x0 << ", " << y0 << "), (" << x1 << ", "
-						 << y1 << "), " << track->getSegment(k)->_length 
-						 << std::endl;
-					#endif
-					x0 = x1;
-					y0 = y1;
-				}
-			}
-		}
-	}
+            /* plot segments */
+            if (_plotter->plotSpecs() == true){
+                x0 = track->getStart()->getX();
+                y0 = track->getStart()->getY();
+                num_segments = track->getNumSegments();
+                for (int k=0; k < num_segments; k++){
+                    log_printf(DEBUG, "Segmented segment: %i...", k);
+                    x1 = x0 + cos_phi * track->getSegment(k)->_length;
+                    y1 = y0 + sin_phi * track->getSegment(k)->_length;
+                    drawLine(bitMap, x0, y0, x1, y1, 
+                             track->getSegment(k)->_region_id);
 #if 0
-	file.close();
+                    file << "(" << x0 << ", " << y0 << "), (" << x1 << ", "
+                         << y1 << "), " << track->getSegment(k)->_length 
+                         << std::endl;
+#endif
+                    x0 = x1;
+                    y0 = y1;
+                }
+            }
+        }
+    }
+#if 0
+    file.close();
 #endif
 
-	log_printf(NORMAL, "Generated %d number of segments...", 
-			   total_num_segments);
+    log_printf(NORMAL, "Generated %d number of segments...", 
+               total_num_segments);
 
-	if (_plotter->plotSpecs() == true){
-		/* plot segments, FSRs, cells, and materials */
-		plot(bitMap, "segments", _plotter->getExtension());
-		_plotter->copyFSRMap(bitMapFSR->pixels);
-		plot(bitMapFSR, "FSRs", _plotter->getExtension());
-		_plotter->makeRegionMap(bitMapFSR->pixels, bitMap->pixels, _geom->getFSRtoCellMap());
-		plot(bitMap, "cells", _plotter->getExtension());
-		_plotter->makeRegionMap(bitMapFSR->pixels, bitMap->pixels, _geom->getFSRtoMaterialMap());
-		plot(bitMap, "materials", _plotter->getExtension());
+    if (_plotter->plotSpecs() == true){
+        /* plot segments, FSRs, cells, and materials */
+        plot(bitMap, "segments", _plotter->getExtension());
+        _plotter->copyFSRMap(bitMapFSR->pixels);
+        plot(bitMapFSR, "FSRs", _plotter->getExtension());
+        _plotter->makeRegionMap(bitMapFSR->pixels, bitMap->pixels, _geom->getFSRtoCellMap());
+        plot(bitMap, "cells", _plotter->getExtension());
+        _plotter->makeRegionMap(bitMapFSR->pixels, bitMap->pixels, _geom->getFSRtoMaterialMap());
+        plot(bitMap, "materials", _plotter->getExtension());
 
-	}
-		/* delete bitMaps */
-		deleteBitMap(bitMapFSR);
-		deleteBitMap(bitMap);
+    }
+    /* delete bitMaps */
+    deleteBitMap(bitMapFSR);
+    deleteBitMap(bitMap);
 }
 
 

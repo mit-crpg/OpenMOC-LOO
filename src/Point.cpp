@@ -28,8 +28,8 @@ Point::~Point() { }
  * @param y y-coordinate
  */
 void Point::setCoords(const double x, const double y) {
-	_x = x;
-	_y = y;
+    _x = x;
+    _y = y;
 }
 
 
@@ -38,7 +38,7 @@ void Point::setCoords(const double x, const double y) {
  * @return the x-coordinate
  */
 double Point::getX() const {
-	return _x;
+    return _x;
 }
 
 
@@ -47,7 +47,7 @@ double Point::getX() const {
  * @return the y-coordinate
  */
 double Point::getY() const {
-	return _y;
+    return _y;
 }
 
 
@@ -56,7 +56,7 @@ double Point::getY() const {
  * @param x the new x-coordinate
  */
 void Point::setX(const double x) {
-	_x = x;
+    _x = x;
 }
 
 
@@ -65,7 +65,7 @@ void Point::setX(const double x) {
  * @param y the new y-coordinate
  */
 void Point::setY(const double y) {
-	_y = y;
+    _y = y;
 }
 
 
@@ -76,9 +76,9 @@ void Point::setY(const double y) {
  * @return distance to the point of interest
  */
 double Point::distance(const double x, const double y) const {
-	double deltax = _x - x;
-	double deltay = _y - y;
-	return sqrt(deltax*deltax + deltay*deltay);
+    double deltax = _x - x;
+    double deltay = _y - y;
+    return sqrt(deltax*deltax + deltay*deltay);
 }
 
 
@@ -89,9 +89,9 @@ double Point::distance(const double x, const double y) const {
  * @return distance to the point of interest
  */
 double Point::distance(const Point* point) {
-	double deltax = _x - point->_x;
-	double deltay = _y - point->_y;
-	return sqrt(deltax*deltax + deltay*deltay);
+    double deltax = _x - point->_x;
+    double deltay = _y - point->_y;
+    return sqrt(deltax*deltax + deltay*deltay);
 }
 
 
@@ -100,9 +100,9 @@ double Point::distance(const Point* point) {
  * @param a character array of this point's attributes
  */
 std::string Point::toString() {
-	std::stringstream string;
+    std::stringstream string;
 
-	string << "Point: x = " << _x << ", y = " << _y;
+    string << "Point: x = " << _x << ", y = " << _y;
 
-	return string.str();
+    return string.str();
 }

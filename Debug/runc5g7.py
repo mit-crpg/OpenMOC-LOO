@@ -32,9 +32,6 @@ linecycle = cycle(lines)
 fontP = FontProperties()
 fontP.set_size('small')
 
-
-
-
 # run OpenMOC
 for i, geometry in enumerate(geometries):
     for spacing in ts:
@@ -45,42 +42,36 @@ for i, geometry in enumerate(geometries):
                       + ' -na ' + str(angle) 
                       + ' -ts ' + str(spacing) 
                       + ' -fc ' + str(fc[0]) 
-					  + ' -wl1 -df 1.0 -nub')
+                      + ' -wc -df 1.0')
             os.system('../bin/openmoc'
                       + ' -m ../xml-sample/Cmfd/' + materials[i]
                       + ' -g ../xml-sample/Cmfd/' + geometry 
                       + ' -na ' + str(angle) 
                       + ' -ts ' + str(spacing) 
                       + ' -fc ' + str(fc[0])
-					  + ' -wl1 -df 1.0 -ub')
+                      + ' -wc -df 0.7')
             os.system('../bin/openmoc'
                       + ' -m ../xml-sample/Cmfd/' + materials[i]
                       + ' -g ../xml-sample/Cmfd/' + geometry 
                       + ' -na ' + str(angle) 
                       + ' -ts ' + str(spacing) 
                       + ' -fc ' + str(fc[0])
-					  + ' -wl -df 1.0 -nub')
+                      + ' -wl1 -df 1.0 -nub')
             os.system('../bin/openmoc'
                       + ' -m ../xml-sample/Cmfd/' + materials[i]
                       + ' -g ../xml-sample/Cmfd/' + geometry 
                       + ' -na ' + str(angle) 
                       + ' -ts ' + str(spacing) 
                       + ' -fc ' + str(fc[0])
-					  + ' -wl -df 1.0 -ub')
+                      + ' -wl2 -df 1.0 -ub')
 
     # list of l2_norm files
     l2_norm_files = []
-
-    # make figure objects
-    #fig_l2_norm = plt.figure(1)
-    #fig_keff = plt.figure(2)
 
     # get all l2_norm file names in directory
     for file in os.listdir("."):
         if file.startswith("l2_norm", 0, 7) and file.endswith(".txt"):
             l2_norm_files.append(file)
-
-    #print '[%s]' % l2_norm_files
 
     # parse output files
     for file in l2_norm_files:
@@ -106,13 +97,14 @@ for i, geometry in enumerate(geometries):
         for num_lines, l in enumerate(logfile):
             pass
 
-        # create numpy arras
+        # create numpy arrays
         iteration = np.zeros(num_lines)
         cell_l2   = np.zeros(num_lines)
         fsr_linf  = np.zeros(num_lines)
         fsr_l2    = np.zeros(num_lines)
         num       = np.zeros(num_lines)
 
+        # collect data together
         for i, line in enumerate(logfile):
             if i is not 0:
                 iteration[i-1] = line.split()[0]
@@ -121,13 +113,13 @@ for i, geometry in enumerate(geometries):
                 fsr_l2[i-1]    = line.split()[3]
                 num[i-1]       = line.split()[5]
 
-		# plot l2 norm
         var = []
         var.append(cell_l2);
         var.append(fsr_linf);
         var.append(fsr_l2);
         var.append(num);
 
+        # plotting :)
         for i in range(4):  
             plt.figure(i)
             plt.semilogy(iteration, var[i], next(linecycle), 

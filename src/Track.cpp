@@ -21,9 +21,9 @@ Track::Track() { }
  * Track destructor
  */
 Track::~Track() {
-	clearSegments();
+    clearSegments();
 #if USE_OPENMP
-	omp_destroy_lock(&_flux_lock);
+    omp_destroy_lock(&_flux_lock);
 #endif
 }
 
@@ -37,14 +37,14 @@ Track::~Track() {
  * @param phi the track's azimuthal angle
  */
 void Track::setValues(const double start_x, const double start_y,
-		const double end_x, const double end_y, const double phi) {
+                      const double end_x, const double end_y, const double phi) {
 
-	_start.setCoords(start_x, start_y);
-	_end.setCoords(end_x, end_y);
-	_phi = phi;
+    _start.setCoords(start_x, start_y);
+    _end.setCoords(end_x, end_y);
+    _phi = phi;
 
 #if USE_OPENMP
-	omp_init_lock(&_flux_lock);
+    omp_init_lock(&_flux_lock);
 #endif
 }
 
@@ -64,13 +64,13 @@ void Track::setAzimuthalWeight(const double azim_weight) {
  * @param polar_weight the weight of that angle
  */
 void Track::setPolarWeight(const int angle, double polar_weight) {
-	_polar_weights[angle] = polar_weight;
+    _polar_weights[angle] = polar_weight;
 }
 
 void Track::setBoundaryPolarFluxes(int pe, double flux)
 {
-	_polar_fluxes[pe] = flux;
-	return;
+    _polar_fluxes[pe] = flux;
+    return;
 }
 
 /**
@@ -79,34 +79,34 @@ void Track::setBoundaryPolarFluxes(int pe, double flux)
  * @param polar_fluxes pointer to an array of fluxes
  */
 void Track::setPolarFluxes(reflectType direction, int start_index,
-							double* polar_fluxes) {
+                           double* polar_fluxes) {
 #if USE_OPENMP
-	omp_set_lock(&_flux_lock);
+    omp_set_lock(&_flux_lock);
 #endif
 
-	if (direction != REFL_TRUE && direction != REFL_FALSE && direction != VAC_TRUE && direction != VAC_FALSE)
-		log_printf(ERROR, "Tried to set this track's polar flux in a direction"
-				   "which does not exist;"
-				   " supported ones are: reflective, vacuume");
+    if (direction != REFL_TRUE && direction != REFL_FALSE && direction != VAC_TRUE && direction != VAC_FALSE)
+        log_printf(ERROR, "Tried to set this track's polar flux in a direction"
+                   "which does not exist;"
+                   " supported ones are: reflective, vacuume");
 
-	if (direction == REFL_TRUE || direction == REFL_FALSE){
-		int start = direction * GRP_TIMES_ANG;
-		for (int i = 0; i < GRP_TIMES_ANG; i++){
-			_polar_fluxes[start + i] = polar_fluxes[i+start_index];
-		}
-	}
-	else{
-		int start = (direction - 2) * GRP_TIMES_ANG;
-		for (int i = 0; i < GRP_TIMES_ANG; i++){
-				_polar_fluxes[start + i] = 0.0;
-		}
-	}
+    if (direction == REFL_TRUE || direction == REFL_FALSE){
+        int start = direction * GRP_TIMES_ANG;
+        for (int i = 0; i < GRP_TIMES_ANG; i++){
+            _polar_fluxes[start + i] = polar_fluxes[i+start_index];
+        }
+    }
+    else{
+        int start = (direction - 2) * GRP_TIMES_ANG;
+        for (int i = 0; i < GRP_TIMES_ANG; i++){
+            _polar_fluxes[start + i] = 0.0;
+        }
+    }
 
 #if USE_OPENMP
-	omp_unset_lock(&_flux_lock);
+    omp_unset_lock(&_flux_lock);
 #endif
 
-	return;
+    return;
 }
 
 
@@ -115,7 +115,7 @@ void Track::setPolarFluxes(reflectType direction, int start_index,
  * @param phi the azimuthal angle
  */
 void Track::setPhi(const double phi) {
-	_phi = phi;
+    _phi = phi;
 }
 
 
@@ -126,13 +126,13 @@ void Track::setPhi(const double phi) {
  * @param segment a pointer to the segment
  */
 void Track::addSegment(segment* segment) {
-	try {
-		_segments.push_back(segment);
-	}
-	catch (std::exception &e) {
-		log_printf(ERROR, "Unable to add a segment to track. Backtrace:"
-				"\n%s", e.what());
-	}
+    try {
+        _segments.push_back(segment);
+    }
+    catch (std::exception &e) {
+        log_printf(ERROR, "Unable to add a segment to track. Backtrace:"
+                   "\n%s", e.what());
+    }
 }
 
 
@@ -233,7 +233,7 @@ double Track::getAzimuthalWeight() const {
  * @return pointer to the tracks' polar weights
  */
 double* Track::getPolarWeights() {
-	return _polar_weights;
+    return _polar_weights;
 }
 
 
@@ -242,7 +242,7 @@ double* Track::getPolarWeights() {
  * @return a pointer to the polar flux array
  */
 double* Track::getPolarFluxes() {
-	return _polar_fluxes;
+    return _polar_fluxes;
 }
 
 
@@ -285,9 +285,9 @@ reflectType Track::isReflOut() {
 
 
 /**
- * Returns a pointer to a segment with a given index or ends program if
- * track does not have the segment
- * @param segment index into the track's segments container
+* Returns a pointer to a segment with a given index or ends program if
+* track does not have the segment
+* @param segment index into the track's segments container
  * @return a pointer to the requested segment
  */
 segment* Track::getSegment(int segment) {
@@ -298,8 +298,8 @@ segment* Track::getSegment(int segment) {
 
 	/* If track doesn't contain this segment, exits program */
 	else
-		log_printf(ERROR, "Attempted to retrieve segment s = %d but track only"
-				   "has %d segments", segment, (int)_segments.size());
+            log_printf(ERROR, "Attempted to retrieve segment s = %d but track only"
+                       "has %d segments", segment, (int)_segments.size());
 	exit(1);
 }
 
@@ -310,7 +310,7 @@ segment* Track::getSegment(int segment) {
  * @return vector of segment pointer
  */
 std::vector<segment*> Track::getSegments() {
-	return _segments;
+    return _segments;
 }
 
 
@@ -319,7 +319,7 @@ std::vector<segment*> Track::getSegments() {
  * @return the number of segments
  */
 int Track::getNumSegments() {
-	return _segments.size();
+    return _segments.size();
 }
 
 
@@ -330,18 +330,18 @@ int Track::getNumSegments() {
 void Track::normalizeFluxes(double factor)  {
 
 #if USE_OPENMP
-	omp_set_lock(&_flux_lock);
+    omp_set_lock(&_flux_lock);
 #endif
 
-	/* Loop over all polar fluxes */
-	for (int i = 0; i < 2*GRP_TIMES_ANG; i++)
-		_polar_fluxes[i] *= factor;
+    /* Loop over all polar fluxes */
+    for (int i = 0; i < 2*GRP_TIMES_ANG; i++)
+        _polar_fluxes[i] *= factor;
 
 #if USE_OPENMP
-	omp_unset_lock(&_flux_lock);
+    omp_unset_lock(&_flux_lock);
 #endif
 
-	return;
+    return;
 }
 
 
@@ -352,44 +352,44 @@ void Track::normalizeFluxes(double factor)  {
  */
 bool Track::contains(Point* point) {
 
-	double m; 		// the slope of the track
+    double m; 		// the slope of the track
 
-	/* If the point is outside of the bounds of the start and end points of the
-	 * track it does not lie on the track */
-	if (!(((point->getX() <= _start.getX()+1.0E-2 &&
-			point->getX() >= _end.getX()-1.0E-2)
-		|| (point->getX() >= _start.getX()-1.0E-2 &&
-				point->getX() <= _end.getX()+1.0E-2))
-		&&
-		((point->getY() <= _start.getY()+1.0E-2 &&
-				point->getY() >= _end.getY()-1.0E-2)
-		|| (point->getY() >= _start.getY()-1.0E-2 &&
-				point->getY() <= _end.getY()+1.0E-2)))) {
+    /* If the point is outside of the bounds of the start and end points of the
+     * track it does not lie on the track */
+    if (!(((point->getX() <= _start.getX()+1.0E-2 &&
+            point->getX() >= _end.getX()-1.0E-2)
+           || (point->getX() >= _start.getX()-1.0E-2 &&
+               point->getX() <= _end.getX()+1.0E-2))
+          &&
+          ((point->getY() <= _start.getY()+1.0E-2 &&
+            point->getY() >= _end.getY()-1.0E-2)
+           || (point->getY() >= _start.getY()-1.0E-2 &&
+               point->getY() <= _end.getY()+1.0E-2)))) {
 
-		return false;
-	}
+        return false;
+    }
 
 
-	/* If the track is vertical */
-	if (fabs(_phi - M_PI / 2) < 1E-10) {
-		if (fabs(point->getX() - _start.getX()) < 1E-10)
-			return true;
-		else
-			return false;
-	}
-	/* If the track is not vertical */
-	else {
-		m = sin(_phi) / cos(_phi);
+    /* If the track is vertical */
+    if (fabs(_phi - M_PI / 2) < 1E-10) {
+        if (fabs(point->getX() - _start.getX()) < 1E-10)
+            return true;
+        else
+            return false;
+    }
+    /* If the track is not vertical */
+    else {
+        m = sin(_phi) / cos(_phi);
 
-		/* Use point-slope formula */
-		if (fabs(point->getY() - (_start.getY() +
-				m * (point->getX() - _start.getX()))) < 1e-10) {
+        /* Use point-slope formula */
+        if (fabs(point->getY() - (_start.getY() +
+                                  m * (point->getX() - _start.getX()))) < 1e-10) {
 
-			return true;
-		}
-		else
-			return false;
-	}
+            return true;
+        }
+        else
+            return false;
+    }
 }
 
 
@@ -397,10 +397,10 @@ bool Track::contains(Point* point) {
  * Deletes each of this track's segments
  */
 void Track::clearSegments() {
-	for (int i=0; i < (int)_segments.size(); i++)
-		delete _segments.at(i);
+    for (int i=0; i < (int)_segments.size(); i++)
+        delete _segments.at(i);
 
-	_segments.clear();
+    _segments.clear();
 }
 
 
@@ -409,33 +409,33 @@ void Track::clearSegments() {
  * @return a character array of this track's attributes
  */
 std::string Track::toString() {
-	std::stringstream string;
-	string << "Track: start, x = " << _start.getX() << ", y = " <<
-			_start.getY() << " end, x = " << _end.getX() << ", y = "
-			<< _end.getY() << ", phi = " << _phi << " azim_weight = " <<
-			_azim_weight;
+    std::stringstream string;
+    string << "Track: start, x = " << _start.getX() << ", y = " <<
+        _start.getY() << " end, x = " << _end.getX() << ", y = "
+           << _end.getY() << ", phi = " << _phi << " azim_weight = " <<
+        _azim_weight;
 
-	return string.str();
+    return string.str();
 }
 
 
 void Track::setSurfFwd(int surfFwd){
-	_surf_fwd = surfFwd;
+    _surf_fwd = surfFwd;
 }
 
 
 int Track::getSurfFwd(){
-	return _surf_fwd;
+    return _surf_fwd;
 }
 
 
 void Track::setSurfBwd(int surfBwd){
-	_surf_bwd = surfBwd;
+    _surf_bwd = surfBwd;
 }
 
 
 int Track::getSurfBwd(){
-	return _surf_bwd;
+    return _surf_bwd;
 }
 
 

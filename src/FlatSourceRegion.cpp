@@ -14,29 +14,29 @@
  */
 FlatSourceRegion::FlatSourceRegion() 
 {
-	_material = NULL;
-	_volume = 0.0;
+    _material = NULL;
+    _volume = 0.0;
 
-	/* Initializes region's other attributes */
-	for (int e = 0; e < NUM_ENERGY_GROUPS; e++) 
-	{
-		_flux[e] = 0.0;
-		_old_flux[e] = 0.0;
-		_source[e] = 0.0;
-		_old_source[e] = 0.0;
-		_mat_mult_a[e] = 1.0;
-		for (int g = 0; g < NUM_ENERGY_GROUPS; g++)
-		{
-			_mat_mult[e*NUM_ENERGY_GROUPS + g] = 1.0;
-		}
-		for (int i = 0; i < 2; i++)
-		{
-			_boundary_update[e * 2 + i] = 1.0;
-		}
-	}
+    /* Initializes region's other attributes */
+    for (int e = 0; e < NUM_ENERGY_GROUPS; e++) 
+    {
+        _flux[e] = 0.0;
+        _old_flux[e] = 0.0;
+        _source[e] = 0.0;
+        _old_source[e] = 0.0;
+        _mat_mult_a[e] = 1.0;
+        for (int g = 0; g < NUM_ENERGY_GROUPS; g++)
+        {
+            _mat_mult[e*NUM_ENERGY_GROUPS + g] = 1.0;
+        }
+        for (int i = 0; i < 2; i++)
+        {
+            _boundary_update[e * 2 + i] = 1.0;
+        }
+    }
 
 #if USE_OPENMP
-	omp_init_lock(&_flux_lock);
+    omp_init_lock(&_flux_lock);
 #endif
 }
 
@@ -46,7 +46,7 @@ FlatSourceRegion::FlatSourceRegion()
  */
 FlatSourceRegion::~FlatSourceRegion() {
 #if USE_OPENMP
-	omp_destroy_lock(&_flux_lock);
+    omp_destroy_lock(&_flux_lock);
 #endif
 }
 
@@ -65,7 +65,7 @@ int FlatSourceRegion::getId() const {
  * @return a pointer to a material
  */
 Material* FlatSourceRegion::getMaterial() {
-	return _material;
+    return _material;
 }
 
 
@@ -124,7 +124,7 @@ double* FlatSourceRegion::getOldSource() {
  * @return array of source / sigma_t ratio
  */
 double* FlatSourceRegion::getRatios() {
-	return _ratios;
+    return _ratios;
 }
 
 
@@ -142,7 +142,7 @@ void FlatSourceRegion::setId(int id){
  * @param material pointer to a material
  */
 void FlatSourceRegion::setMaterial(Material* material) {
-	_material = material;
+    _material = material;
 }
 
 
@@ -160,7 +160,7 @@ void FlatSourceRegion::setVolume(double volume) {
  * @param volume the amount to increment by
  */
 void FlatSourceRegion::incrementVolume(double volume) {
-	_volume += volume;
+    _volume += volume;
 }
 
 
@@ -170,12 +170,12 @@ void FlatSourceRegion::incrementVolume(double volume) {
  * @param flux the scalar flux
  */
 void FlatSourceRegion::setFlux(int energy, double flux) {
-	if (energy < -1 || energy >= NUM_ENERGY_GROUPS)
-		log_printf(ERROR, "Attempted to set the scalar flux for FSR id = %d "
-				"in an energy group which does not exist: %d", _id, energy);
+    if (energy < -1 || energy >= NUM_ENERGY_GROUPS)
+        log_printf(ERROR, "Attempted to set the scalar flux for FSR id = %d "
+                   "in an energy group which does not exist: %d", _id, energy);
 
-	_flux[energy] = flux;
-	return;
+    _flux[energy] = flux;
+    return;
 }
 
 
@@ -186,20 +186,20 @@ void FlatSourceRegion::setFlux(int energy, double flux) {
  */
 void FlatSourceRegion::incrementFlux(int energy, double flux) {
 #if USE_OPENMP
-	omp_set_lock(&_flux_lock);
+    omp_set_lock(&_flux_lock);
 #endif
 
-	if (energy < -1 || energy >= NUM_ENERGY_GROUPS)
-		log_printf(ERROR, "Attempted to increment the scalar flux for FSR id = "
-				"%d in an energy group which does not exist: %d", _id, energy);
+    if (energy < -1 || energy >= NUM_ENERGY_GROUPS)
+        log_printf(ERROR, "Attempted to increment the scalar flux for FSR id = "
+                   "%d in an energy group which does not exist: %d", _id, energy);
 
-	_flux[energy] += flux;
+    _flux[energy] += flux;
 
 #if USE_OPENMP
-	omp_unset_lock(&_flux_lock);
+    omp_unset_lock(&_flux_lock);
 #endif
 
-	return;
+    return;
 }
 
 
@@ -209,17 +209,17 @@ void FlatSourceRegion::incrementFlux(int energy, double flux) {
  */
 void FlatSourceRegion::incrementFlux(double* flux) {
 #if USE_OPENMP
-	omp_set_lock(&_flux_lock);
+    omp_set_lock(&_flux_lock);
 #endif
 
-	for (int e=0; e < NUM_ENERGY_GROUPS; e++)
-		_flux[e] += flux[e];
+    for (int e=0; e < NUM_ENERGY_GROUPS; e++)
+        _flux[e] += flux[e];
 
 #if USE_OPENMP
-	omp_unset_lock(&_flux_lock);
+    omp_unset_lock(&_flux_lock);
 #endif
 
-	return;
+    return;
 }
 
 
@@ -230,12 +230,12 @@ void FlatSourceRegion::incrementFlux(double* flux) {
  * @param old_flux the old scalar flux
  */
 void FlatSourceRegion::setOldFlux(int energy, double old_flux) {
-	if (energy < -1 || energy >= NUM_ENERGY_GROUPS)
-		log_printf(ERROR, "Attempted to set the old scalar flux for FSR id = %d "
-				"in an energy group which does not exist: %d", _id, energy);
+    if (energy < -1 || energy >= NUM_ENERGY_GROUPS)
+        log_printf(ERROR, "Attempted to set the old scalar flux for FSR id = %d "
+                   "in an energy group which does not exist: %d", _id, energy);
 
-	_old_flux[energy] = old_flux;
-	return;
+    _old_flux[energy] = old_flux;
+    return;
 }
 
 
@@ -245,12 +245,12 @@ void FlatSourceRegion::setOldFlux(int energy, double old_flux) {
  * @param source the source
  */
 void FlatSourceRegion::setSource(int energy, double source) {
-	if (energy < -1 || energy >= NUM_ENERGY_GROUPS)
-		log_printf(ERROR, "Attempted to set the source for FSR id = %d "
-				"in an energy group which does not exist: %d", _id, energy);
+    if (energy < -1 || energy >= NUM_ENERGY_GROUPS)
+        log_printf(ERROR, "Attempted to set the source for FSR id = %d "
+                   "in an energy group which does not exist: %d", _id, energy);
 
-	_old_source[energy] = source;
-	return;
+    _old_source[energy] = source;
+    return;
 }
 
 
@@ -261,12 +261,12 @@ void FlatSourceRegion::setSource(int energy, double source) {
  * @param old_source the old source
  */
 void FlatSourceRegion::setOldSource(int energy, double old_source) {
-	if (energy < -1 || energy >= NUM_ENERGY_GROUPS)
-		log_printf(ERROR, "Attempted to set the old source for FSR id = %d "
-				"in an energy group which does not exist: %d", _id, energy);
+    if (energy < -1 || energy >= NUM_ENERGY_GROUPS)
+        log_printf(ERROR, "Attempted to set the old source for FSR id = %d "
+                   "in an energy group which does not exist: %d", _id, energy);
 
-	_old_source[energy] = old_source;
-	return;
+    _old_source[energy] = old_source;
+    return;
 }
 
 
@@ -276,11 +276,11 @@ void FlatSourceRegion::setOldSource(int energy, double old_source) {
  */
 void FlatSourceRegion::normalizeFluxes(double factor) {
 
-	/* Loop over all energy groups */
-	for (int e=0; e < NUM_ENERGY_GROUPS; e++)
-		_flux[e] *= factor;
+    /* Loop over all energy groups */
+    for (int e=0; e < NUM_ENERGY_GROUPS; e++)
+        _flux[e] *= factor;
 
-	return;
+    return;
 }
 
 
@@ -289,13 +289,13 @@ void FlatSourceRegion::normalizeFluxes(double factor) {
  */
 void FlatSourceRegion::computeRatios() {
 
-	double* sigma_t = _material->getSigmaT();
+    double* sigma_t = _material->getSigmaT();
 
-	for (int e = 0; e < NUM_ENERGY_GROUPS; e++) {
-			_ratios[e] = _source[e]/sigma_t[e];
-	}
+    for (int e = 0; e < NUM_ENERGY_GROUPS; e++) {
+        _ratios[e] = _source[e]/sigma_t[e];
+    }
 
-	return;
+    return;
 }
 
 
@@ -306,43 +306,43 @@ void FlatSourceRegion::computeRatios() {
  * this region
  */
 double FlatSourceRegion::computeFissionRate() {
-	double power = 0.0;
-	double* sigma_f = _material->getSigmaF();
+    double power = 0.0;
+    double* sigma_f = _material->getSigmaF();
 
-	/* Add the fission rates from each energy group */
-	for (int e=0; e < NUM_ENERGY_GROUPS; e++)
-		power += sigma_f[e] * _flux[e];
+    /* Add the fission rates from each energy group */
+    for (int e=0; e < NUM_ENERGY_GROUPS; e++)
+        power += sigma_f[e] * _flux[e];
 
-	/* Multiply by volume of FSR */
-	power *= _volume;
+    /* Multiply by volume of FSR */
+    power *= _volume;
 
-	return power;
+    return power;
 }
 
 
 void FlatSourceRegion::setMatMult(int group, double mult){
-	_mat_mult[group] = mult;
+    _mat_mult[group] = mult;
 }
 
 double* FlatSourceRegion::getMatMult(){
-	return _mat_mult;
+    return _mat_mult;
 }
 
 void FlatSourceRegion::setMatMultA(int group, double mult){
-	_mat_mult_a[group] = mult;
+    _mat_mult_a[group] = mult;
 }
 
 double* FlatSourceRegion::getMatMultA(){
-	return _mat_mult_a;
+    return _mat_mult_a;
 }
 
 void FlatSourceRegion::setBoundaryUpdate(int group, int ind, double bu)
 {
-	_boundary_update[group * 2 + ind] = bu;
+    _boundary_update[group * 2 + ind] = bu;
 }
 
 double FlatSourceRegion::getBoundaryUpdate(int group, int ind)
 {
-	return _boundary_update[group * 2 + ind];
+    return _boundary_update[group * 2 + ind];
 }
 

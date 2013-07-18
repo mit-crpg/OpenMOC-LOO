@@ -19,59 +19,59 @@
 #include "configurations.h"
 
 #if USE_OPENMP
-	#include <omp.h>
+#include <omp.h>
 #endif
 
 /**
  * Surface boundary types
  */
 enum reflectType {
-	REFL_FALSE,
-	REFL_TRUE,
-	VAC_FALSE,
-	VAC_TRUE
+    REFL_FALSE,
+    REFL_TRUE,
+    VAC_FALSE,
+    VAC_TRUE
 };
 
 
 
 /* Represent a segment along a given track */
 struct segment {
-	double _length;
-	Material* _material;
-	int _region_id;
+    double _length;
+    Material* _material;
+    int _region_id;
 #if STORE_PREFACTORS
-	double _prefactors[NUM_ENERGY_GROUPS][NUM_POLAR_ANGLES];
+    double _prefactors[NUM_ENERGY_GROUPS][NUM_POLAR_ANGLES];
 #endif
-	int _mesh_surface_fwd;
-	int _mesh_surface_bwd;
+    int _mesh_surface_fwd;
+    int _mesh_surface_bwd;
 };
 
 class Track {
 private:
-	Point _start;
-	Point _end;
-	double _phi;
-	double _spacing;
-	double _azim_weight;
-	double _polar_weights[NUM_POLAR_ANGLES];
-	double _polar_fluxes[2 * GRP_TIMES_ANG];
-	std::vector<segment*> _segments;
-	Track *_track_in, *_track_out;
-	reflectType _refl_in, _refl_out;
-	int _surf_fwd;
-	int _surf_bwd;
+    Point _start;
+    Point _end;
+    double _phi;
+    double _spacing;
+    double _azim_weight;
+    double _polar_weights[NUM_POLAR_ANGLES];
+    double _polar_fluxes[2 * GRP_TIMES_ANG];
+    std::vector<segment*> _segments;
+    Track *_track_in, *_track_out;
+    reflectType _refl_in, _refl_out;
+    int _surf_fwd;
+    int _surf_bwd;
 #if USE_OPENMP
-	omp_lock_t _flux_lock;
+    omp_lock_t _flux_lock;
 #endif
 public:
-	Track();
-	virtual ~Track();
-	void setValues(const double start_x, const double start_y,
-			const double end_x, const double end_y, const double phi);
+    Track();
+    virtual ~Track();
+    void setValues(const double start_x, const double start_y,
+                   const double end_x, const double end_y, const double phi);
     void setAzimuthalWeight(const double azim_weight);
     void setPolarWeight(const int angle, double polar_weight);
     void setPolarFluxes(reflectType direction, int start_index, double* polar_fluxes);
-	void setBoundaryPolarFluxes(int pe, double flux);
+    void setBoundaryPolarFluxes(int pe, double flux);
     void setPhi(const double phi);
     void setReflIn(reflectType refl_in);
     void setReflOut(reflectType refl_out);
@@ -87,9 +87,9 @@ public:
     double* getPolarWeights();
     double* getPolarFluxes();
     double* getNewPolarFluxes();
-	segment* getSegment(int s);
-	std::vector<segment*> getSegments();
-	int getNumSegments();
+    segment* getSegment(int s);
+    std::vector<segment*> getSegments();
+    int getNumSegments();
     Track *getTrackIn() const;
     Track *getTrackOut() const;
     reflectType isReflIn();
@@ -101,9 +101,9 @@ public:
 
     void normalizeFluxes(double factor);
     bool contains(Point* point);
-	void addSegment(segment* segment);
-	void clearSegments();
-	std::string toString();
+    void addSegment(segment* segment);
+    void clearSegments();
+    std::string toString();
 };
 
 #endif /* TRACK_H_ */

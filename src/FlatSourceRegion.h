@@ -15,29 +15,29 @@
 #include "log.h"
 
 #if USE_OPENMP
-	#include <omp.h>
+#include <omp.h>
 #endif
 
 class FlatSourceRegion {
 private:
-	int _id;
-	Material* _material;
-	double _volume;
-	double _mat_mult[NUM_ENERGY_GROUPS*NUM_ENERGY_GROUPS];
-	double _mat_mult_a[NUM_ENERGY_GROUPS];
-	double _flux[NUM_ENERGY_GROUPS];
-	double _old_flux[NUM_ENERGY_GROUPS];
-	double _source[NUM_ENERGY_GROUPS];
-	double _old_source[NUM_ENERGY_GROUPS];
-	/* Pre-computed Ratio of source / sigma_t */
-	double _ratios[NUM_ENERGY_GROUPS];
-	double _boundary_update[NUM_ENERGY_GROUPS * 2];
+    int _id;
+    Material* _material;
+    double _volume;
+    double _mat_mult[NUM_ENERGY_GROUPS*NUM_ENERGY_GROUPS];
+    double _mat_mult_a[NUM_ENERGY_GROUPS];
+    double _flux[NUM_ENERGY_GROUPS];
+    double _old_flux[NUM_ENERGY_GROUPS];
+    double _source[NUM_ENERGY_GROUPS];
+    double _old_source[NUM_ENERGY_GROUPS];
+    /* Pre-computed Ratio of source / sigma_t */
+    double _ratios[NUM_ENERGY_GROUPS];
+    double _boundary_update[NUM_ENERGY_GROUPS * 2];
 #if USE_OPENMP
-	omp_lock_t _flux_lock;
+    omp_lock_t _flux_lock;
 #endif
 public:
-	FlatSourceRegion();
-	virtual ~FlatSourceRegion();
+    FlatSourceRegion();
+    virtual ~FlatSourceRegion();
     int getId() const;
     Material* getMaterial();
     double getVolume() const;
@@ -63,8 +63,8 @@ public:
     double* getMatMult();
     void setMatMultA(int group, double mult);
     double* getMatMultA();
-	void setBoundaryUpdate(int group, int ind, double boundary_update);
-	double getBoundaryUpdate(int group, int ind);
+    void setBoundaryUpdate(int group, int ind, double boundary_update);
+    double getBoundaryUpdate(int group, int ind);
 };
 
 

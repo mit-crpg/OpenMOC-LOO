@@ -16,8 +16,8 @@
  * Timer class constructor
  */
 Timer::Timer() {
-	this->running = false;
-	this->elapsed_time = 0;
+    this->running = false;
+    this->elapsed_time = 0;
 }
 
 
@@ -32,15 +32,15 @@ Timer::~Timer() { }
  */
 void Timer::start() {
 
-	if (!this->running) {
-		#ifdef __MACH__ 	/* For OSX */
-			gettimeofday(&this->start_time, NULL);
-		#else				/* For linux */
-			clock_gettime(CLOCK_MONOTONIC, &this->start_time);
-		#endif
-		this->running = true;
-	}
-	return;
+    if (!this->running) {
+#ifdef __MACH__ 	/* For OSX */
+        gettimeofday(&this->start_time, NULL);
+#else				/* For linux */
+        clock_gettime(CLOCK_MONOTONIC, &this->start_time);
+#endif
+        this->running = true;
+    }
+    return;
 }
 
 
@@ -48,16 +48,16 @@ void Timer::start() {
  * Stops the timer - similar to stopping a stopwatch
  */
 void Timer::stop() {
-	if (this->running) {
-		#ifdef __MACH__ /* For OSX */
-			gettimeofday(&this->end_time, NULL);
-		#else			/* For linux */
-		  clock_gettime(CLOCK_MONOTONIC, &this->end_time);
-		#endif
-		this->running = false;
-		this->elapsed_time += this->diff(this->start_time, this->end_time);
-	}
-	return;
+    if (this->running) {
+#ifdef __MACH__ /* For OSX */
+        gettimeofday(&this->end_time, NULL);
+#else			/* For linux */
+        clock_gettime(CLOCK_MONOTONIC, &this->end_time);
+#endif
+        this->running = false;
+        this->elapsed_time += this->diff(this->start_time, this->end_time);
+    }
+    return;
 }
 
 
@@ -65,8 +65,8 @@ void Timer::stop() {
  * Resets the timer - similar to resetting a stopwatch.
  */
 void Timer::reset() {
-	this->elapsed_time = 0;
-	this->running = false;
+    this->elapsed_time = 0;
+    this->running = false;
 }
 
 
@@ -76,10 +76,10 @@ void Timer::reset() {
  * this function does nothing
  */
 void Timer::restart() {
-	if (!this->running) {
-		this->elapsed_time += this->diff(this->start_time, this->end_time);
-		this->start();
-	}
+    if (!this->running) {
+        this->elapsed_time += this->diff(this->start_time, this->end_time);
+        this->start();
+    }
 }
 
 
@@ -90,7 +90,7 @@ void Timer::restart() {
  * @param msg a msg corresponding to this time split
  */
 void Timer::recordSplit(const char* msg) {
-	_timer_splits.push_back(std::pair<double, const char*>(getTime(), msg));
+    _timer_splits.push_back(std::pair<double, const char*>(getTime(), msg));
 }
 
 
@@ -102,32 +102,32 @@ void Timer::recordSplit(const char* msg) {
  * @return the elapsed time
  */
 double Timer::getTime() {
-	/* If the timer is not running */
-	if (!this->running) {
-		#ifdef __MACH__		/* For OSX */
-			return this->elapsed_time * 1.0E-6;
-		#else				/* For Linux */
-			return this->elapsed_time * 1.0E-9;
-		#endif
-	}
+    /* If the timer is not running */
+    if (!this->running) {
+#ifdef __MACH__		/* For OSX */
+        return this->elapsed_time * 1.0E-6;
+#else				/* For Linux */
+        return this->elapsed_time * 1.0E-9;
+#endif
+    }
 
-	/* If the timer is currently running */
-	else {
-		timespec temp;
-		#ifdef __MACH__ 	/* For OSX */
-			gettimeofday(&temp, NULL);
-		#else				/* For Linux */
-		  clock_gettime(CLOCK_MONOTONIC, &temp);
-		#endif
+    /* If the timer is currently running */
+    else {
+        timespec temp;
+#ifdef __MACH__ 	/* For OSX */
+        gettimeofday(&temp, NULL);
+#else				/* For Linux */
+        clock_gettime(CLOCK_MONOTONIC, &temp);
+#endif
 
-		this->elapsed_time += this->diff(this->start_time, temp);
+        this->elapsed_time += this->diff(this->start_time, temp);
 
-		#ifdef __MACH__		/* For OSX */
-			return this->elapsed_time * 1.0E-6;
-		#else				/* For Linux */
-			return this->elapsed_time * 1.0E-9;
-		#endif
-	}
+#ifdef __MACH__		/* For OSX */
+        return this->elapsed_time * 1.0E-6;
+#else				/* For Linux */
+        return this->elapsed_time * 1.0E-9;
+#endif
+    }
 }
 
 
@@ -138,37 +138,37 @@ double Timer::getTime() {
  * @param end timespec representing the end time
  */
 double Timer::diff(timespec start, timespec end) {
-	double sec, delta;
-	#ifdef __MACH__
-		double usec;
-		delta = end.tv_usec - start.tv_usec;
-	#else
-		double nsec;
-		delta = end.tv_nsec - start.tv_nsec;
-	#endif
+    double sec, delta;
+#ifdef __MACH__
+    double usec;
+    delta = end.tv_usec - start.tv_usec;
+#else
+    double nsec;
+    delta = end.tv_nsec - start.tv_nsec;
+#endif
 
-	if (delta < 0) {
-		sec = end.tv_sec - start.tv_sec;
-		#ifdef __MACH__
-			usec = 1.0E6 + delta;
-		#else
-			nsec = 1.0E9 + delta;
-		#endif
+    if (delta < 0) {
+        sec = end.tv_sec - start.tv_sec;
+#ifdef __MACH__
+        usec = 1.0E6 + delta;
+#else
+        nsec = 1.0E9 + delta;
+#endif
 
-	} else {
-		sec = end.tv_sec - start.tv_sec;
-		#ifdef __MACH__
-			usec = delta;
-		#else
-			nsec = delta;
-		#endif
-	}
+    } else {
+        sec = end.tv_sec - start.tv_sec;
+#ifdef __MACH__
+        usec = delta;
+#else
+        nsec = delta;
+#endif
+    }
 
-	#ifdef __MACH__
-		return (sec * 1.0E6 + usec);
-	#else
-		return(sec*1.0E9 + nsec);
-	#endif
+#ifdef __MACH__
+    return (sec * 1.0E6 + usec);
+#else
+    return(sec*1.0E9 + nsec);
+#endif
 }
 
 
@@ -179,27 +179,27 @@ double Timer::diff(timespec start, timespec end) {
  */
 void Timer::printSplits() {
 
-	const char* curr_msg;
-	double curr_split;
-	int msg_length, num_whitespaces;
+    const char* curr_msg;
+    double curr_split;
+    int msg_length, num_whitespaces;
 
-	for (int i=0; i < (int)_timer_splits.size(); i++) {
-		std::stringstream formatted_msg;
+    for (int i=0; i < (int)_timer_splits.size(); i++) {
+        std::stringstream formatted_msg;
 
-		curr_split = _timer_splits.at(i).first;
-		curr_msg = _timer_splits.at(i).second;
-		msg_length = strlen(curr_msg);
+        curr_split = _timer_splits.at(i).first;
+        curr_msg = _timer_splits.at(i).second;
+        msg_length = strlen(curr_msg);
 
-		/* Num whitespaces for formatting is:
-		 * 80 max char - 13 char for logger - 13 for time - msg length */
-		num_whitespaces = 80 - 13 - 11 - msg_length -3;
+        /* Num whitespaces for formatting is:
+         * 80 max char - 13 char for logger - 13 for time - msg length */
+        num_whitespaces = 80 - 13 - 11 - msg_length -3;
 
-		formatted_msg << curr_msg;
+        formatted_msg << curr_msg;
 
-		/* Add periods to format message to 80 characters length */
-		for (int i=0; i < num_whitespaces; i++)
-			formatted_msg << ".";
+        /* Add periods to format message to 80 characters length */
+        for (int i=0; i < num_whitespaces; i++)
+            formatted_msg << ".";
 
-		log_printf(RESULT, "%s%.7f sec", formatted_msg.str().c_str(), curr_split);
-	}
+        log_printf(RESULT, "%s%.7f sec", formatted_msg.str().c_str(), curr_split);
+    }
 }

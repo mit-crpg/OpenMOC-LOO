@@ -23,30 +23,30 @@ void log_setlevel(logLevel newlevel) {
     log_level = newlevel;
 
     switch (newlevel) {
-		case DEBUG:
-			log_printf(INFO, "Logging level set to DEBUG");
-			break;
-    	case INFO:
-    		log_printf(INFO, "Logging level set to INFO");
-    		break;
-	    case ACTIVE:
-			log_printf(INFO, "Logging level set to ACTIVE");
-			break;
-    	case NORMAL:
-    		log_printf(INFO, "Logging level set to NORMAL");
-    		break;
-    	case WARNING:
-    		log_printf(INFO, "Logging level set to WARNING");
-    		break;
-    	case CRITICAL:
-    		log_printf(INFO, "Logging level set to CRITICAL");
-    		break;
-    	case RESULT:
-    		log_printf(INFO, "Logging level set to RESULT");
-    		break;
-    	case ERROR:
-    		log_printf(INFO, "Logging level set to ERROR");
-    		break;
+    case DEBUG:
+        log_printf(INFO, "Logging level set to DEBUG");
+        break;
+    case INFO:
+        log_printf(INFO, "Logging level set to INFO");
+        break;
+    case ACTIVE:
+        log_printf(INFO, "Logging level set to ACTIVE");
+        break;
+    case NORMAL:
+        log_printf(INFO, "Logging level set to NORMAL");
+        break;
+    case WARNING:
+        log_printf(INFO, "Logging level set to WARNING");
+        break;
+    case CRITICAL:
+        log_printf(INFO, "Logging level set to CRITICAL");
+        break;
+    case RESULT:
+        log_printf(INFO, "Logging level set to RESULT");
+        break;
+    case ERROR:
+        log_printf(INFO, "Logging level set to ERROR");
+        break;
     }
 }
 
@@ -59,40 +59,40 @@ void log_setlevel(logLevel newlevel) {
  */
 void log_setlevel(const char* newlevel) {
 
-	if (strcmp("DEBUG", newlevel) == 0) {
-		log_level = DEBUG;
-		log_printf(INFO, "Logging level set to DEBUG");
-	}
-	else if (strcmp("INFO", newlevel) == 0) {
-		log_level = INFO;
-		log_printf(INFO, "Logging level set to INFO");
-	}
-	else if (strcmp("ACTIVE", newlevel) == 0) {
-		log_level = ACTIVE;
-		log_printf(INFO, "Logging level set to ACTIVE");
-	}
-	else if (strcmp("NORMAL", newlevel) == 0) {
-		log_level = NORMAL;
-		log_printf(INFO, "Logging level set to NORMAL");
-	}
-	else if (strcmp("WARNING", newlevel) == 0) {
-		log_level = WARNING;
-		log_printf(INFO, "Logging level set to WARNING");
-	}
-	else if (strcmp("CRITICAL", newlevel) == 0) {
-		log_level = CRITICAL;
-		log_printf(INFO, "Logging level set to CRITICAL");
-	}
-	else if (strcmp("RESULT", newlevel) == 0) {
-		log_level = RESULT;
-		log_printf(INFO, "Logging level set to RESULT");
-	}
-	else if (strcmp("ERROR", newlevel) == 0) {
-		log_level = ERROR;
-		log_printf(INFO, "Logging level set to ERROR");
-	}
+    if (strcmp("DEBUG", newlevel) == 0) {
+        log_level = DEBUG;
+        log_printf(INFO, "Logging level set to DEBUG");
+    }
+    else if (strcmp("INFO", newlevel) == 0) {
+        log_level = INFO;
+        log_printf(INFO, "Logging level set to INFO");
+    }
+    else if (strcmp("ACTIVE", newlevel) == 0) {
+        log_level = ACTIVE;
+        log_printf(INFO, "Logging level set to ACTIVE");
+    }
+    else if (strcmp("NORMAL", newlevel) == 0) {
+        log_level = NORMAL;
+        log_printf(INFO, "Logging level set to NORMAL");
+    }
+    else if (strcmp("WARNING", newlevel) == 0) {
+        log_level = WARNING;
+        log_printf(INFO, "Logging level set to WARNING");
+    }
+    else if (strcmp("CRITICAL", newlevel) == 0) {
+        log_level = CRITICAL;
+        log_printf(INFO, "Logging level set to CRITICAL");
+    }
+    else if (strcmp("RESULT", newlevel) == 0) {
+        log_level = RESULT;
+        log_printf(INFO, "Logging level set to RESULT");
+    }
+    else if (strcmp("ERROR", newlevel) == 0) {
+        log_level = ERROR;
+        log_printf(INFO, "Logging level set to ERROR");
+    }
 
-	return;
+    return;
 }
 
 
@@ -109,36 +109,36 @@ void log_printf(logLevel level, const char *format, ...) {
 
     	/* Append the log level to the message */
     	switch (level) {
-			case (DEBUG):
-				fprintf(stderr, "[  DEBUG  ]  ");
-				break;
-    		case (INFO):
-    			fprintf(stderr, "[  INFO   ]  ");
-    			break;
-		    case (ACTIVE):
-				fprintf(stderr, "[  ACTIVE ]  ");
-				break;
-    		case (NORMAL):
-    			fprintf(stderr, "[  NORMAL ]  ");
-    			break;
-    		case (WARNING):
-    			fprintf(stderr, "[ WARNING ]  ");
-    			break;
-    		case (CRITICAL):
-    			fprintf(stderr, "[ CRITICAL]  ");
-    			break;
-    		case (RESULT):
-    			fprintf(stderr, "[  RESULT ]  ");
-    			break;
-    		case (ERROR):
-    			fprintf(stderr, "[  ERROR  ]  ");
-    			break;
+        case (DEBUG):
+            fprintf(stderr, "[  DEBUG  ]  ");
+            break;
+        case (INFO):
+            fprintf(stderr, "[  INFO   ]  ");
+            break;
+        case (ACTIVE):
+            fprintf(stderr, "[  ACTIVE ]  ");
+            break;
+        case (NORMAL):
+            fprintf(stderr, "[  NORMAL ]  ");
+            break;
+        case (WARNING):
+            fprintf(stderr, "[ WARNING ]  ");
+            break;
+        case (CRITICAL):
+            fprintf(stderr, "[ CRITICAL]  ");
+            break;
+        case (RESULT):
+            fprintf(stderr, "[  RESULT ]  ");
+            break;
+        case (ERROR):
+            fprintf(stderr, "[  ERROR  ]  ");
+            break;
     	}
 
-		va_start(args, format);
-		vfprintf(stderr, format, args);
-		va_end(args);
-		fprintf(stderr, "\n");
+        va_start(args, format);
+        vfprintf(stderr, format, args);
+        va_end(args);
+        fprintf(stderr, "\n");
     }
     if (level == ERROR) {
     	fprintf(stderr, "[  EXIT   ]  Exiting program...\n");
@@ -147,6 +147,6 @@ void log_printf(logLevel level, const char *format, ...) {
 }
 
 void log_error(const char *format, ...) {
-	fprintf(stderr, "[  EXIT   ]  Exiting program...\n");
-	abort();
+    fprintf(stderr, "[  EXIT   ]  Exiting program...\n");
+    abort();
 }	

@@ -18,15 +18,15 @@ int Surface::_n = 0;
  * @param boundary this surface's boundary type
  */
 Surface::Surface(const int id, const surfaceType type,
-					const boundaryType boundary){
-	_uid = _n;
-	_id = id;
-	_type = type;
-	_n++;
-	_boundary = boundary;
-	for (int e = 0; e < NUM_ENERGY_GROUPS; e++){
-		_leakage[e] = 0.0;
-	}
+                 const boundaryType boundary){
+    _uid = _n;
+    _id = id;
+    _type = type;
+    _n++;
+    _boundary = boundary;
+    for (int e = 0; e < NUM_ENERGY_GROUPS; e++){
+        _leakage[e] = 0.0;
+    }
 }
 
 
@@ -41,7 +41,7 @@ Surface::~Surface() { }
  * @return the surface's uid
  */
 int Surface::getUid() const {
-	return _uid;
+    return _uid;
 }
 
 /**
@@ -67,7 +67,7 @@ surfaceType Surface::getType() const {
  * @return vector of surface ids
  */
 std::vector<Cell*> Surface::getNeighborPos() {
-	return _neighbor_pos;
+    return _neighbor_pos;
 }
 
 
@@ -76,7 +76,7 @@ std::vector<Cell*> Surface::getNeighborPos() {
  * @return vector of surface id
  */
 std::vector<Cell*> Surface::getNeighborNeg() {
-	return _neighbor_neg;
+    return _neighbor_neg;
 }
 
 
@@ -86,14 +86,14 @@ std::vector<Cell*> Surface::getNeighborNeg() {
  * @param size the number of cells
  */
 void Surface::setNeighborPosSize(int size) {
-	try {
-		_neighbor_pos.resize(size);
-	}
-	catch (std::exception &e) {
-		log_printf(ERROR, "Could not resize a vector for the positive"
-				" neighbor cells for surface id = %d. Backtrace:\n%s",
-				_id, e.what());
-	}
+    try {
+        _neighbor_pos.resize(size);
+    }
+    catch (std::exception &e) {
+        log_printf(ERROR, "Could not resize a vector for the positive"
+                   " neighbor cells for surface id = %d. Backtrace:\n%s",
+                   _id, e.what());
+    }
 }
 
 
@@ -103,14 +103,14 @@ void Surface::setNeighborPosSize(int size) {
  * @param size the number of cells
  */
 void Surface::setNeighborNegSize(int size) {
-	try {
-		_neighbor_neg.resize(size);
-	}
-	catch (std::exception &e) {
-		log_printf(ERROR, "Could not resize a vector for the positive"
-				" neighbor cells for surface id = %d. Backtrace:\n%s",
-				_id, e.what());
-	}
+    try {
+        _neighbor_neg.resize(size);
+    }
+    catch (std::exception &e) {
+        log_printf(ERROR, "Could not resize a vector for the positive"
+                   " neighbor cells for surface id = %d. Backtrace:\n%s",
+                   _id, e.what());
+    }
 }
 
 
@@ -121,7 +121,7 @@ void Surface::setNeighborNegSize(int size) {
  * @param cell the cell id
  */
 void Surface::setNeighborPos(int index, Cell* cell) {
-	_neighbor_pos[index] = cell;
+    _neighbor_pos[index] = cell;
 }
 
 
@@ -132,7 +132,7 @@ void Surface::setNeighborPos(int index, Cell* cell) {
  * @param cell the cell id
  */
 void Surface::setNeighborNeg(int index, Cell* cell) {
-	_neighbor_neg[index] = cell;
+    _neighbor_neg[index] = cell;
 }
 
 
@@ -141,7 +141,7 @@ void Surface::setNeighborNeg(int index, Cell* cell) {
  * @return the boundary type (REFLECTIVE, VACUUM, or BOUNDARY_NONE)
  */
 boundaryType Surface::getBoundary(){
-       return _boundary;
+    return _boundary;
 }
 
 
@@ -152,11 +152,11 @@ boundaryType Surface::getBoundary(){
  */
 bool Surface::onSurface(Point* point) {
 
-	/* Uses a threshold to determine whether the point is on the surface */
-	if (abs(evaluate(point)) < ON_SURFACE_THRESH)
-		return true;
-	else
-		return false;
+    /* Uses a threshold to determine whether the point is on the surface */
+    if (abs(evaluate(point)) < ON_SURFACE_THRESH)
+        return true;
+    else
+        return false;
 }
 
 
@@ -166,7 +166,7 @@ bool Surface::onSurface(Point* point) {
  * @return true (on) or false (off)
  */
 bool Surface::onSurface(LocalCoords* coord) {
-	return onSurface(coord->getPoint());
+    return onSurface(coord->getPoint());
 }
 
 
@@ -180,61 +180,61 @@ bool Surface::onSurface(LocalCoords* coord) {
  * @return the minimum distance
  */
 double Surface::getMinDistance(Point* point, double angle,
-									Point* intersection) {
+                               Point* intersection) {
 
-	/* Point array for intersections with this surface */
-	Point intersections[2];
+    /* Point array for intersections with this surface */
+    Point intersections[2];
 
-	/* Find the intersection point(s) */
-	int num_inters = this->intersection(point, angle, intersections);
-	double distance = INFINITY;
+    /* Find the intersection point(s) */
+    int num_inters = this->intersection(point, angle, intersections);
+    double distance = INFINITY;
 
-	/* If there is one intersection point */
-	if (num_inters == 1) {
-		distance = intersections[0].distance(point);
-		intersection->setX(intersections[0].getX());
-		intersection->setY(intersections[0].getY());
-	}
+    /* If there is one intersection point */
+    if (num_inters == 1) {
+        distance = intersections[0].distance(point);
+        intersection->setX(intersections[0].getX());
+        intersection->setY(intersections[0].getY());
+    }
 
-	/* If there are two intersection points */
-	else if (num_inters == 2) {
-		double dist1 = intersections[0].distance(point);
-		double dist2 = intersections[1].distance(point);
+    /* If there are two intersection points */
+    else if (num_inters == 2) {
+        double dist1 = intersections[0].distance(point);
+        double dist2 = intersections[1].distance(point);
 
-		/* Determine which intersection point is nearest */
-		if (dist1 < dist2) {
-			distance = dist1;	double getRadius();
+        /* Determine which intersection point is nearest */
+        if (dist1 < dist2) {
+            distance = dist1;	double getRadius();
 
-			intersection->setX(intersections[0].getX());
-			intersection->setY(intersections[0].getY());
-		}
-		else {
-			distance = dist2;
-			intersection->setX(intersections[1].getX());
-			intersection->setY(intersections[1].getY());
-		}
-	}
+            intersection->setX(intersections[0].getX());
+            intersection->setY(intersections[0].getY());
+        }
+        else {
+            distance = dist2;
+            intersection->setX(intersections[1].getX());
+            intersection->setY(intersections[1].getY());
+        }
+    }
 
-	return distance;
+    return distance;
 }
 
 
 void Surface::setLeakage(double leakage, int e){
 
-	_leakage[e] = leakage;
+    _leakage[e] = leakage;
 }
 
 
 double* Surface::getLeakage(){
-	return _leakage;
+    return _leakage;
 }
 
 
 void Surface::incrementLeakage(reflectType direction, double leakage, int e){
 
-	if (direction == VAC_TRUE || direction == VAC_FALSE){
-		_leakage[e] += leakage;
-	}
+    if (direction == VAC_TRUE || direction == VAC_FALSE){
+        _leakage[e] += leakage;
+    }
 }
 
 
@@ -252,9 +252,9 @@ void Surface::incrementLeakage(reflectType direction, double leakage, int e){
 Plane::Plane(const int id, const boundaryType boundary,
 	     const double A, const double B,
 	     const double C): Surface(id, PLANE, boundary) {
-	_A = B;
-	_B = A;
-	_C = C;
+    _A = B;
+    _B = A;
+    _C = C;
 }
 
 
@@ -264,9 +264,9 @@ Plane::Plane(const int id, const boundaryType boundary,
  * @return the value of point in the equation
  */
 double Plane::evaluate(const Point* point) const {
-	double x = point->getX();
-	double y = point->getY();
-	return (_A * x + _B * y + _C);
+    double x = point->getX();
+    double y = point->getY();
+    return (_A * x + _B * y + _C);
 }
 
 
@@ -275,12 +275,12 @@ double Plane::evaluate(const Point* point) const {
  * @param a character array of this plane's attributes
  */
 std::string Plane::toString() {
-	std::stringstream string;
+    std::stringstream string;
 
-	string << "Surface id = " << _id << ", type = PLANE " << ", A = "
-			<< _A << ", B = " << _B << ", C = " << _C;
+    string << "Surface id = " << _id << ", type = PLANE " << ", A = "
+           << _A << ", B = " << _B << ", C = " << _C;
 
-	return string.str();
+    return string.str();
 }
 
 
@@ -295,54 +295,54 @@ std::string Plane::toString() {
  */
 int Plane::intersection(Point* point, double angle, Point* points) {
 
-	double x0 = point->getX();
-	double y0 = point->getY();
+    double x0 = point->getX();
+    double y0 = point->getY();
 
-	int num = 0; 			/* number of intersections */
-	double xcurr, ycurr;	/* coordinates of current intersection point */
+    int num = 0; 			/* number of intersections */
+    double xcurr, ycurr;	/* coordinates of current intersection point */
 
-	/* The track is vertical */
-	if ((fabs(angle - (M_PI / 2))) < 1.0e-10) {
+    /* The track is vertical */
+    if ((fabs(angle - (M_PI / 2))) < 1.0e-10) {
 
-		/* The plane is also vertical => no intersections */
-		if (_B == 0)
-			return 0;
+        /* The plane is also vertical => no intersections */
+        if (_B == 0)
+            return 0;
 
-		/* The plane is not vertical */
-		else {
-			xcurr = x0;
-			ycurr = (-_A * x0 - _C) / _B;
-			points->setCoords(xcurr, ycurr);
-			/* Check that point is in same direction as angle */
-			if (angle < M_PI && ycurr > y0)
-				num++;
-			else if (angle > M_PI && ycurr < y0)
-				num++;
-			return num;
-		}
-	}
+        /* The plane is not vertical */
+        else {
+            xcurr = x0;
+            ycurr = (-_A * x0 - _C) / _B;
+            points->setCoords(xcurr, ycurr);
+            /* Check that point is in same direction as angle */
+            if (angle < M_PI && ycurr > y0)
+                num++;
+            else if (angle > M_PI && ycurr < y0)
+                num++;
+            return num;
+        }
+    }
 
-	/* If the track isn't vertical */
-	else {
-		double m = sin(angle) / cos(angle);
+    /* If the track isn't vertical */
+    else {
+        double m = sin(angle) / cos(angle);
 
-		/* The plane and track are parallel, no intersections */
-		if (fabs(-_A/_B - m) < 1e-11 && _B != 0)
-			return 0;
+        /* The plane and track are parallel, no intersections */
+        if (fabs(-_A/_B - m) < 1e-11 && _B != 0)
+            return 0;
 
-		else {
-			xcurr = -(_B * (y0 - m * x0) + _C)
-					/ (_A + _B * m);
-			ycurr = y0 + m * (xcurr - x0);
-			points->setCoords(xcurr, ycurr);
-			if (angle < M_PI && ycurr > y0)
-				num++;
-			else if (angle > M_PI && ycurr < y0)
-				num++;
+        else {
+            xcurr = -(_B * (y0 - m * x0) + _C)
+                / (_A + _B * m);
+            ycurr = y0 + m * (xcurr - x0);
+            points->setCoords(xcurr, ycurr);
+            if (angle < M_PI && ycurr > y0)
+                num++;
+            else if (angle > M_PI && ycurr < y0)
+                num++;
 
-			return num;
-		}
-	}
+            return num;
+        }
+    }
 }
 
 
@@ -351,8 +351,8 @@ int Plane::intersection(Point* point, double angle, Point* points) {
  * @return the minimum x value
  */
 double Plane::getXMin(){
-	log_printf(ERROR, "Plane::getXMin not implemented");
-	return -1.0/0.0;
+    log_printf(ERROR, "Plane::getXMin not implemented");
+    return -1.0/0.0;
 }
 
 
@@ -361,8 +361,8 @@ double Plane::getXMin(){
  * @return the maximum x value
  */
 double Plane::getXMax(){
-	log_printf(ERROR, "Plane::getXMax not implemented");
-	return 1.0/0.0;
+    log_printf(ERROR, "Plane::getXMax not implemented");
+    return 1.0/0.0;
 }
 
 
@@ -371,8 +371,8 @@ double Plane::getXMax(){
  * @return the minimum y value
  */
 double Plane::getYMin(){
-	log_printf(ERROR, "Plane::getYMin not implemented");
-	return -1.0/0.0;
+    log_printf(ERROR, "Plane::getYMin not implemented");
+    return -1.0/0.0;
 }
 
 
@@ -381,8 +381,8 @@ double Plane::getYMin(){
  * @return the maximum y value
  */
 double Plane::getYMax(){
-	log_printf(ERROR, "Plane::getYMax not implemented");
-	return 1.0/0.0;
+    log_printf(ERROR, "Plane::getYMax not implemented");
+    return 1.0/0.0;
 }
 
 /**
@@ -392,8 +392,8 @@ double Plane::getYMax(){
  * @param C the location of the plane along the y-axis
  */
 XPlane::XPlane(const int id, const boundaryType boundary,
-		const double C): Plane(id, boundary, 0, 1, -C) {
-	_type = XPLANE;
+               const double C): Plane(id, boundary, 0, 1, -C) {
+    _type = XPLANE;
 }
 
 
@@ -402,12 +402,12 @@ XPlane::XPlane(const int id, const boundaryType boundary,
  * @param a character array of this plane's attributes
  */
 std::string XPlane::toString() {
-	std::stringstream string;
+    std::stringstream string;
 
-	string << "Surface id = " << _id << ", type = XPLANE " << ", A = "
-			<< _A << ", B = " << _B << ", C = " << _C;
+    string << "Surface id = " << _id << ", type = XPLANE " << ", A = "
+           << _A << ", B = " << _B << ", C = " << _C;
 
-	return string.str();
+    return string.str();
 }
 
 
@@ -416,7 +416,7 @@ std::string XPlane::toString() {
  * @return the minimum x value
  */
 double XPlane::getXMin(){
-	return -_C;
+    return -_C;
 }
 
 
@@ -425,7 +425,7 @@ double XPlane::getXMin(){
  * @return the maximum x value
  */
 double XPlane::getXMax(){
-	return -_C;
+    return -_C;
 }
 
 
@@ -434,7 +434,7 @@ double XPlane::getXMax(){
  * @return the minimum y value
  */
 double XPlane::getYMin(){
-	return 1.0/0.0;
+    return 1.0/0.0;
 }
 
 
@@ -443,7 +443,7 @@ double XPlane::getYMin(){
  * @return the maximum y value
  */
 double XPlane::getYMax(){
-	return -1.0/0.0;
+    return -1.0/0.0;
 }
 
 
@@ -454,8 +454,8 @@ double XPlane::getYMax(){
  * @param C the location of the plane along the x-axis
  */
 YPlane::YPlane(const int id, const boundaryType boundary,
-		const double C): Plane(id, boundary, 1, 0, -C) {
-	_type = YPLANE;
+               const double C): Plane(id, boundary, 1, 0, -C) {
+    _type = YPLANE;
 }
 
 
@@ -465,12 +465,12 @@ YPlane::YPlane(const int id, const boundaryType boundary,
  * @param a character array of this plane's attributes
  */
 std::string YPlane::toString() {
-	std::stringstream string;
+    std::stringstream string;
 
-	string << "Surface id = " << _id << ", type = YPLANE " << ", A = "
-			<< _A << ", B = " << _B << ", C = " << _C;
+    string << "Surface id = " << _id << ", type = YPLANE " << ", A = "
+           << _A << ", B = " << _B << ", C = " << _C;
 
-	return string.str();
+    return string.str();
 }
 
 
@@ -479,7 +479,7 @@ std::string YPlane::toString() {
  * @return the minimum x value
  */
 double YPlane::getXMin(){
-	return 1.0/0.0;
+    return 1.0/0.0;
 }
 
 
@@ -488,7 +488,7 @@ double YPlane::getXMin(){
  * @return the maximum x value
  */
 double YPlane::getXMax(){
-	return -1.0/0.0;
+    return -1.0/0.0;
 }
 
 
@@ -497,7 +497,7 @@ double YPlane::getXMax(){
  * @return the minimum y value
  */
 double YPlane::getYMin(){
-	return -_C;
+    return -_C;
 }
 
 /**
@@ -505,7 +505,7 @@ double YPlane::getYMin(){
  * @return the maximum y value
  */
 double YPlane::getYMax(){
-	return -_C;
+    return -_C;
 }
 
 
@@ -518,15 +518,15 @@ double YPlane::getYMax(){
  * @param radius the radius of the circle
  */
 Circle::Circle(const int id, const boundaryType boundary, const double x,
-		const double y, const double radius): Surface(id, CIRCLE, boundary) {
-	_A = 1;
-	_B = 1;
-	_C = -2*x;
-	_D = -2*y;
-	_E = x*x + y*y - radius*radius;
-	_radius = radius;
-	center.setX(x);
-	center.setY(y);
+               const double y, const double radius): Surface(id, CIRCLE, boundary) {
+    _A = 1;
+    _B = 1;
+    _C = -2*x;
+    _D = -2*y;
+    _E = x*x + y*y - radius*radius;
+    _radius = radius;
+    center.setX(x);
+    center.setY(y);
 }
 
 /**
@@ -534,7 +534,7 @@ Circle::Circle(const int id, const boundaryType boundary, const double x,
  * @return the radius of the circle
  */
 double Circle::getRadius() {
-	return this->_radius;
+    return this->_radius;
 }
 
 
@@ -545,9 +545,9 @@ double Circle::getRadius() {
  * @return the value of point in the equation
  */
 double Circle::evaluate(const Point* point) const {
-	double x = point->getX();
-	double y = point->getY();
-	return (_A * x * x + _B * y * y + _C * x + _D * y + _E);
+    double x = point->getX();
+    double y = point->getY();
+    return (_A * x * x + _B * y * y + _C * x + _D * y + _E);
 }
 
 
@@ -562,119 +562,119 @@ double Circle::evaluate(const Point* point) const {
  */
 int Circle::intersection(Point* point, double angle, Point* points) {
 
-	double x0 = point->getX();
-	double y0 = point->getY();
-	double xcurr, ycurr;
-	int num = 0;			/* Number of intersection points */
-	double a, b, c, q, discr;
+    double x0 = point->getX();
+    double y0 = point->getY();
+    double xcurr, ycurr;
+    int num = 0;			/* Number of intersection points */
+    double a, b, c, q, discr;
 
-	/* If the track is vertical */
-	if ((fabs(angle - (M_PI / 2))) < 1.0e-10) {
-		/* Solve for where the line x = x0 and the surface F(x,y) intersect
-		 * Find the y where F(x0, y) = 0
-		 * Substitute x0 into F(x,y) and rearrange to put in
-		 * the form of the quadratic formula: ay^2 + by + c = 0
-		 */
-		a = _B * _B;
-		b = _D;
-		c = _A * x0 * x0 + _C * x0 + _E;
+    /* If the track is vertical */
+    if ((fabs(angle - (M_PI / 2))) < 1.0e-10) {
+        /* Solve for where the line x = x0 and the surface F(x,y) intersect
+         * Find the y where F(x0, y) = 0
+         * Substitute x0 into F(x,y) and rearrange to put in
+         * the form of the quadratic formula: ay^2 + by + c = 0
+         */
+        a = _B * _B;
+        b = _D;
+        c = _A * x0 * x0 + _C * x0 + _E;
 
-		discr = b*b - 4*a*c;
+        discr = b*b - 4*a*c;
 
-		/* There are no intersections */
-		if (discr < 0)
-			return 0;
+        /* There are no intersections */
+        if (discr < 0)
+            return 0;
 
-		/* There is one intersection (ie on the surface) */
-		else if (discr == 0) {
-			xcurr = x0;
-			ycurr = -b / (2*a);
-			points[num].setCoords(xcurr, ycurr);
-			if (angle < M_PI && ycurr > y0)
-				num++;
-			else if (angle > M_PI && ycurr < y0)
-				num++;
-			return num;
-		}
+        /* There is one intersection (ie on the surface) */
+        else if (discr == 0) {
+            xcurr = x0;
+            ycurr = -b / (2*a);
+            points[num].setCoords(xcurr, ycurr);
+            if (angle < M_PI && ycurr > y0)
+                num++;
+            else if (angle > M_PI && ycurr < y0)
+                num++;
+            return num;
+        }
 
-		/* There are two intersections */
-		else {
-			xcurr = x0;
-			ycurr = (-b + sqrt(discr)) / (2 * a);
-			points[num].setCoords(xcurr, ycurr);
-			if (angle < M_PI && ycurr > y0)
-				num++;
-			else if (angle > M_PI && ycurr < y0)
-				num++;
+        /* There are two intersections */
+        else {
+            xcurr = x0;
+            ycurr = (-b + sqrt(discr)) / (2 * a);
+            points[num].setCoords(xcurr, ycurr);
+            if (angle < M_PI && ycurr > y0)
+                num++;
+            else if (angle > M_PI && ycurr < y0)
+                num++;
 
-			xcurr = x0;
-			ycurr = (-b - sqrt(discr)) / (2 * a);
-			points[num].setCoords(xcurr, ycurr);
-			if (angle < M_PI && ycurr > y0)
-				num++;
-			else if (angle > M_PI && ycurr < y0)
-				num++;
-			return num;
-		}
-	}
+            xcurr = x0;
+            ycurr = (-b - sqrt(discr)) / (2 * a);
+            points[num].setCoords(xcurr, ycurr);
+            if (angle < M_PI && ycurr > y0)
+                num++;
+            else if (angle > M_PI && ycurr < y0)
+                num++;
+            return num;
+        }
+    }
 
-	/* If the track isn't vertical */
-	else {
-		/*Solve for where the line y-y0 = m*(x-x0) and the surface F(x,y) intersect
-		 * Find the (x,y) where F(x, y0 + m*(x-x0)) = 0
-		 * Substitute the point-slope formula for y into F(x,y) and rearrange to put in
-		 * the form of the quadratic formula: ax^2 + bx + c = 0
-		 * double m = sin(track->getPhi()) / cos(track->getPhi());
-		 */
-		double m = sin(angle) / cos(angle);
-		q = y0 - m * x0;
-		a = _A + _B * _B * m * m;
-		b = 2 * _B * m * q + _C + _D * m;
-		c = _B * q * q + _D * q + _E;
+    /* If the track isn't vertical */
+    else {
+        /*Solve for where the line y-y0 = m*(x-x0) and the surface F(x,y) intersect
+         * Find the (x,y) where F(x, y0 + m*(x-x0)) = 0
+         * Substitute the point-slope formula for y into F(x,y) and rearrange to put in
+         * the form of the quadratic formula: ax^2 + bx + c = 0
+         * double m = sin(track->getPhi()) / cos(track->getPhi());
+         */
+        double m = sin(angle) / cos(angle);
+        q = y0 - m * x0;
+        a = _A + _B * _B * m * m;
+        b = 2 * _B * m * q + _C + _D * m;
+        c = _B * q * q + _D * q + _E;
 
-		discr = b*b - 4*a*c;
+        discr = b*b - 4*a*c;
 
-		/* There are no intersections */
-		if (discr < 0)
-			return 0;
+        /* There are no intersections */
+        if (discr < 0)
+            return 0;
 
-		/* There is one intersection (ie on the surface) */
-		else if (discr == 0) {
-			xcurr = -b / (2*a);
-			ycurr = y0 + m * (points[0].getX() - x0);
-			points[num].setCoords(xcurr, ycurr);
-			if (angle < M_PI && ycurr > y0)
-				num++;
-			else if (angle > M_PI && ycurr < y0)
-				num++;
-			return num;
-		}
+        /* There is one intersection (ie on the surface) */
+        else if (discr == 0) {
+            xcurr = -b / (2*a);
+            ycurr = y0 + m * (points[0].getX() - x0);
+            points[num].setCoords(xcurr, ycurr);
+            if (angle < M_PI && ycurr > y0)
+                num++;
+            else if (angle > M_PI && ycurr < y0)
+                num++;
+            return num;
+        }
 
-		/* There are two intersections */
-		else {
-			xcurr = (-b + sqrt(discr)) / (2*a);
-			ycurr = y0 + m * (xcurr - x0);
-			points[num].setCoords(xcurr, ycurr);
-			if (angle < M_PI && ycurr > y0) {
-				num++;
-			}
-			else if (angle > M_PI && ycurr < y0) {
-				num++;
-			}
+        /* There are two intersections */
+        else {
+            xcurr = (-b + sqrt(discr)) / (2*a);
+            ycurr = y0 + m * (xcurr - x0);
+            points[num].setCoords(xcurr, ycurr);
+            if (angle < M_PI && ycurr > y0) {
+                num++;
+            }
+            else if (angle > M_PI && ycurr < y0) {
+                num++;
+            }
 
-			xcurr = (-b - sqrt(discr)) / (2*a);
-			ycurr = y0 + m * (xcurr - x0);
-			points[num].setCoords(xcurr, ycurr);
-			if (angle < M_PI && ycurr > y0) {
-				num++;
-			}
-			else if (angle > M_PI && ycurr < y0) {
-				num++;
-			}
+            xcurr = (-b - sqrt(discr)) / (2*a);
+            ycurr = y0 + m * (xcurr - x0);
+            points[num].setCoords(xcurr, ycurr);
+            if (angle < M_PI && ycurr > y0) {
+                num++;
+            }
+            else if (angle > M_PI && ycurr < y0) {
+                num++;
+            }
 
-			return num;
-		}
-	}
+            return num;
+        }
+    }
 }
 
 
@@ -683,33 +683,33 @@ int Circle::intersection(Point* point, double angle, Point* points) {
  * @param a character array of this plane's attributes
  */
 std::string Circle::toString() {
-	std::stringstream string;
+    std::stringstream string;
 
-	string << "Surface id = " << _id << ", type = CIRCLE " << ", A = "
-			<< _A << ", B = " << _B << ", C = " << _C << ", D = " << _D
-			<< ", E = " << _E;
+    string << "Surface id = " << _id << ", type = CIRCLE " << ", A = "
+           << _A << ", B = " << _B << ", C = " << _C << ", D = " << _D
+           << ", E = " << _E;
 
-	return string.str();
+    return string.str();
 }
 
 double Circle::getXMin(){
-	log_printf(ERROR, "Circle::getXMin not implemented");
-	return -1.0/0.0;
+    log_printf(ERROR, "Circle::getXMin not implemented");
+    return -1.0/0.0;
 }
 
 double Circle::getXMax(){
-	log_printf(ERROR, "Circle::getXMax not implemented");
-	return 1.0/0.0;
+    log_printf(ERROR, "Circle::getXMax not implemented");
+    return 1.0/0.0;
 }
 
 double Circle::getYMin(){
-	log_printf(ERROR, "Circle::getYMin not implemented");
-	return -1.0/0.0;
+    log_printf(ERROR, "Circle::getYMin not implemented");
+    return -1.0/0.0;
 }
 
 double Circle::getYMax(){
-	log_printf(ERROR, "Circle::getYMax not implemented");
-	return 1.0/0.0;
+    log_printf(ERROR, "Circle::getYMax not implemented");
+    return 1.0/0.0;
 }
 
 

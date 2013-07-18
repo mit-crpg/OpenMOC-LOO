@@ -15,9 +15,9 @@
  * @param y the y-coordinate
  */
 LocalCoords::LocalCoords(double x, double y) {
-	_coords.setCoords(x, y);
-	_next = NULL;
-	_prev = NULL;
+    _coords.setCoords(x, y);
+    _next = NULL;
+    _prev = NULL;
 }
 
 
@@ -33,7 +33,7 @@ LocalCoords::~LocalCoords() { }
  * @return the level (UNIV or LAT)
  */
 coordType LocalCoords::getType() {
-	return _type;
+    return _type;
 }
 
 
@@ -51,7 +51,7 @@ int LocalCoords::getUniverse() const {
  * @return the cell id
  */
 int LocalCoords::getCell() const {
-	return _cell;
+    return _cell;
 }
 
 
@@ -104,7 +104,7 @@ double LocalCoords::getY() const {
  * @return pointer the coordinates
  */
 Point* LocalCoords::getPoint() {
-	return &_coords;
+    return &_coords;
 }
 
 
@@ -118,7 +118,7 @@ LocalCoords* LocalCoords::getNext() const {
 
 
 LocalCoords* LocalCoords::getPrev() const {
-	return _prev;
+    return _prev;
 }
 
 /**
@@ -126,7 +126,7 @@ LocalCoords* LocalCoords::getPrev() const {
  * @param level the level for this localcoords (UNIV or LAT)
  */
 void LocalCoords::setType(coordType type) {
-	_type = type;
+    _type = type;
 }
 
 
@@ -145,7 +145,7 @@ void LocalCoords::setUniverse(int universe) {
  * @param cell the cell id
  */
 void LocalCoords::setCell(int cell) {
-	_cell = cell;
+    _cell = cell;
 }
 
 
@@ -180,7 +180,7 @@ void LocalCoords::setLatticeY(int lattice_y) {
  * @param x the x-coordinate
  */
 void LocalCoords::setX(double x) {
-	_coords.setX(x);
+    _coords.setX(x);
 }
 
 
@@ -189,7 +189,7 @@ void LocalCoords::setX(double x) {
  * @param y the y-coordinate
  */
 void LocalCoords::setY(double y) {
-	_coords.setY(y);
+    _coords.setY(y);
 }
 
 
@@ -207,7 +207,7 @@ void LocalCoords::setNext(LocalCoords* next) {
  * @param prev pointer to the previous localcoord
  */
 void LocalCoords::setPrev(LocalCoords* prev) {
-	_prev = prev;
+    _prev = prev;
 }
 
 
@@ -217,15 +217,15 @@ void LocalCoords::setPrev(LocalCoords* prev) {
  * @return a pointer to the last localcoord object in the list
  */
 LocalCoords* LocalCoords::getLowestLevel() {
-	LocalCoords* curr = this;
+    LocalCoords* curr = this;
 
-	if (curr )
+    if (curr )
 
 	/* Traverse linked list */
 	while (curr->getNext() != NULL)
-		curr = curr->getNext();
+            curr = curr->getNext();
 
-	return curr;
+    return curr;
 }
 
 
@@ -238,22 +238,22 @@ LocalCoords* LocalCoords::getLowestLevel() {
  */
 void LocalCoords::adjustCoords(double delta_x, double delta_y) {
 
-	/* Forward direction along linked list */
-	LocalCoords* curr = this;
-	while (curr != NULL) {
-		curr->setX(curr->getX() + delta_x);
-		curr->setY(curr->getY() + delta_y);
-		curr = curr->getNext();
-	}
+    /* Forward direction along linked list */
+    LocalCoords* curr = this;
+    while (curr != NULL) {
+        curr->setX(curr->getX() + delta_x);
+        curr->setY(curr->getY() + delta_y);
+        curr = curr->getNext();
+    }
 
-	/* Reverse direction along linked list */
-	curr = _prev;
-	while (curr != NULL) {
-		curr->setX(curr->getX() + delta_x);
-		curr->setY(curr->getY() + delta_y);
-		curr = curr->getPrev();
-	}
-	return;
+    /* Reverse direction along linked list */
+    curr = _prev;
+    while (curr != NULL) {
+        curr->setX(curr->getX() + delta_x);
+        curr->setY(curr->getY() + delta_y);
+        curr = curr->getPrev();
+    }
+    return;
 }
 
 
@@ -264,70 +264,70 @@ void LocalCoords::adjustCoords(double delta_x, double delta_y) {
  */
 void LocalCoords::updateMostLocal(Point* point) {
 
-	/* Get the lowest level coordinate */
-	LocalCoords* curr = getLowestLevel();
+    /* Get the lowest level coordinate */
+    LocalCoords* curr = getLowestLevel();
 
-	/* Translate coordinates by appropriate amount */
-	double delta_x = point->getX() - curr->getX();
-	double delta_y = point->getY() - curr->getY();
-	adjustCoords(delta_x, delta_y);
+    /* Translate coordinates by appropriate amount */
+    double delta_x = point->getX() - curr->getX();
+    double delta_y = point->getY() - curr->getY();
+    adjustCoords(delta_x, delta_y);
 
-	return;
+    return;
 }
 
 
 void LocalCoords::prune() {
 
-	LocalCoords* curr = getLowestLevel();
-	LocalCoords* next = curr->getPrev();
+    LocalCoords* curr = getLowestLevel();
+    LocalCoords* next = curr->getPrev();
 
-	while (curr != this) {
-		next = curr->getPrev();
-		delete curr;
-		curr = next;
-	}
+    while (curr != this) {
+        next = curr->getPrev();
+        delete curr;
+        curr = next;
+    }
 
-	setNext(NULL);
+    setNext(NULL);
 }
 
 
 void LocalCoords::copyCoords(LocalCoords* coords) {
 
-	LocalCoords* curr1 = this;
-	LocalCoords* curr2 = coords;
-	curr2->prune();
+    LocalCoords* curr1 = this;
+    LocalCoords* curr2 = coords;
+    curr2->prune();
 
-	while (curr1 != NULL) {
-		curr2->setX(curr1->getX());
-		curr2->setY(curr1->getY());
-		curr2->setUniverse(curr1->getUniverse());
+    while (curr1 != NULL) {
+        curr2->setX(curr1->getX());
+        curr2->setY(curr1->getY());
+        curr2->setUniverse(curr1->getUniverse());
 
-		if (curr1->getType() == UNIV) {
-			curr2->setType(UNIV);
-			curr2->setCell(curr1->getCell());
-		}
-		else {
-			curr2->setLattice(curr1->getLattice());
-			curr2->setLatticeX(curr1->getLatticeX());
-			curr2->setLatticeY(curr1->getLatticeY());
-			curr2->setType(LAT);
-		}
+        if (curr1->getType() == UNIV) {
+            curr2->setType(UNIV);
+            curr2->setCell(curr1->getCell());
+        }
+        else {
+            curr2->setLattice(curr1->getLattice());
+            curr2->setLatticeX(curr1->getLatticeX());
+            curr2->setLatticeY(curr1->getLatticeY());
+            curr2->setType(LAT);
+        }
 
-		curr1 = curr1->getNext();
+        curr1 = curr1->getNext();
 
-		if (curr1 != NULL && curr2->getNext() == NULL) {
-			LocalCoords* new_coords = new LocalCoords(0.0, 0.0);
-			curr2->setNext(new_coords);
-			new_coords->setPrev(curr2);
-			curr2 = new_coords;
-		}
-		else if (curr1 != NULL)
-			curr2 = curr2->getNext();
-	}
+        if (curr1 != NULL && curr2->getNext() == NULL) {
+            LocalCoords* new_coords = new LocalCoords(0.0, 0.0);
+            curr2->setNext(new_coords);
+            new_coords->setPrev(curr2);
+            curr2 = new_coords;
+        }
+        else if (curr1 != NULL)
+            curr2 = curr2->getNext();
+    }
 
-	/* Prune any remainder from the old coords linked list */
-	if (curr2 != NULL)
-		curr2->prune();
+    /* Prune any remainder from the old coords linked list */
+    if (curr2 != NULL)
+        curr2->prune();
 }
 
 /**
@@ -336,35 +336,35 @@ void LocalCoords::copyCoords(LocalCoords* coords) {
  */
 std::string LocalCoords::toString() {
 
-	std::stringstream string;
-	LocalCoords* curr = this;
+    std::stringstream string;
+    LocalCoords* curr = this;
 
-	/* Loops over all localcoords lower than this one in the list */
-	while (curr != NULL) {
-		string << "LocalCoords: level = ";
+    /* Loops over all localcoords lower than this one in the list */
+    while (curr != NULL) {
+        string << "LocalCoords: level = ";
 
-		if (curr->getType() == UNIV) {
-			string << " UNIVERSE, x = " << curr->getX() << ", y = " << curr->getY()
-					<< ", universe = " << curr->getUniverse() << ", cell = " <<
-					curr->getCell();
-		}
-		else if (curr->getType() == LAT){
-			string << " LATTICE, x = " << curr->getX() << ", y = " << curr->getY()
-					<< ", universe = " << curr->getUniverse() << ", lattice = " <<
-					curr->getLattice() << ", lattice_x = " << curr->getLatticeX()
-					<< ", lattice_y = " << curr->getLatticeY();
-		}
-		else {
-			string << " NONE, x = " << curr->getX() << ", y = " << curr->getY()
-					<< ", universe = " << curr->getUniverse() << ", lattice = " <<
-					curr->getLattice() << ", lattice_x = " << curr->getLatticeX()
-					<< ", lattice_y = " << curr->getLatticeY()
-					<< ", cell = " << curr->getCell();
-		}
+        if (curr->getType() == UNIV) {
+            string << " UNIVERSE, x = " << curr->getX() << ", y = " << curr->getY()
+                   << ", universe = " << curr->getUniverse() << ", cell = " <<
+                curr->getCell();
+        }
+        else if (curr->getType() == LAT){
+            string << " LATTICE, x = " << curr->getX() << ", y = " << curr->getY()
+                   << ", universe = " << curr->getUniverse() << ", lattice = " <<
+                curr->getLattice() << ", lattice_x = " << curr->getLatticeX()
+                   << ", lattice_y = " << curr->getLatticeY();
+        }
+        else {
+            string << " NONE, x = " << curr->getX() << ", y = " << curr->getY()
+                   << ", universe = " << curr->getUniverse() << ", lattice = " <<
+                curr->getLattice() << ", lattice_x = " << curr->getLatticeX()
+                   << ", lattice_y = " << curr->getLatticeY()
+                   << ", cell = " << curr->getCell();
+        }
 
-		string << ", next:\n";
-		curr = curr->getNext();
-	}
+        string << ", next:\n";
+        curr = curr->getNext();
+    }
 
-	return string.str();
+    return string.str();
 }

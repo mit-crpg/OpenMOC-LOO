@@ -22,30 +22,30 @@
 
 class TrackGenerator {
 private:
-	int _num_azim;			/* number of azimuthal angles */
-	double _spacing;		/* track spacing */
-	int* _num_tracks;		/* number of tracks at each angle */
-	int* _num_x;			/* number of tracks starting on x-axis */
-	int* _num_y;			/* number of tracks starting on y-axis */
-	double* _azim_weights;	/* azimuthal weights */
-	Track** _tracks;
-	Geometry* _geom;
-	Plotter* _plotter;
+    int _num_azim;			/* number of azimuthal angles */
+    double _spacing;		/* track spacing */
+    int* _num_tracks;		/* number of tracks at each angle */
+    int* _num_x;			/* number of tracks starting on x-axis */
+    int* _num_y;			/* number of tracks starting on y-axis */
+    double* _azim_weights;	/* azimuthal weights */
+    Track** _tracks;
+    Geometry* _geom;
+    Plotter* _plotter;
 public:
-	TrackGenerator(Geometry* geom, Plotter* plotter,
-			const int num_azim,const double spacing);
-	virtual ~TrackGenerator();
+    TrackGenerator(Geometry* geom, Plotter* plotter,
+                   const int num_azim,const double spacing);
+    virtual ~TrackGenerator();
     double *getAzimWeights() const;
     int getNumAzim() const;
     int *getNumTracks() const;
     double getSpacing() const;
     Track **getTracks() const;
     void generateTracks();
-	void computeEndPoint(Point* start, Point* end,  const double phi,
-			const double width, const double height);
-	void makeReflective();
-	void segmentize();
-	void printTrackingTimers();
+    void computeEndPoint(Point* start, Point* end,  const double phi,
+                         const double width, const double height);
+    void makeReflective();
+    void segmentize();
+    void printTrackingTimers();
 };
 
 #endif /* TRACKGENERATOR_H_ */

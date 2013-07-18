@@ -39,87 +39,87 @@
 
 class Geometry {
 private:
-	double _x_min, _y_min, _x_max, _y_max; 		/* the corners */
-	int _base_universe;
-	int _num_FSRs;
-	int* _FSRs_to_cells;
-	int* _FSRs_to_materials;
-	double _max_seg_length;
-	double _min_seg_length;
-	bool _run_cmfd;
-	bool _run_loo;
-	std::map<int, Material*> _materials;
-	std::map<int, Surface*> _surfaces;
-	std::map<int, Cell*> _cells;
-	std::map<int, Universe*> _universes;
-	std::map<int, Lattice*> _lattices;
-	Mesh* _mesh;
+    double _x_min, _y_min, _x_max, _y_max; 		/* the corners */
+    int _base_universe;
+    int _num_FSRs;
+    int* _FSRs_to_cells;
+    int* _FSRs_to_materials;
+    double _max_seg_length;
+    double _min_seg_length;
+    bool _run_cmfd;
+    bool _run_loo;
+    std::map<int, Material*> _materials;
+    std::map<int, Surface*> _surfaces;
+    std::map<int, Cell*> _cells;
+    std::map<int, Universe*> _universes;
+    std::map<int, Lattice*> _lattices;
+    Mesh* _mesh;
 
 
 public:
-	Geometry(Parser* parser);
-	virtual ~Geometry();
-	double getWidth() const;
-	double getHeight() const;
-	int getNumRings() const;
-	int getNumSectors() const;
-	double getSectorOffset() const;
-	int getNumFSRs() const;
-	double getMaxSegmentLength() const;
-	double getMinSegmentLength() const;
-	int* getFSRtoCellMap() const;
-	int* getFSRtoMaterialMap() const;
+    Geometry(Parser* parser);
+    virtual ~Geometry();
+    double getWidth() const;
+    double getHeight() const;
+    int getNumRings() const;
+    int getNumSectors() const;
+    double getSectorOffset() const;
+    int getNumFSRs() const;
+    double getMaxSegmentLength() const;
+    double getMinSegmentLength() const;
+    int* getFSRtoCellMap() const;
+    int* getFSRtoMaterialMap() const;
 
-	void addMaterial(Material* material);
-	Material* getMaterial(int id);
-	void addSurface(Surface* surface);
-	Surface* getSurface(int id);
-	void addCell(Cell *cell);
-	Cell* getCell(int id);
-	void addUniverse(Universe* universe);
-	Universe* getUniverse(int id);
-	void addLattice(Lattice* lattice);
-	Lattice* getLattice(int id);
-	std::string toString();
-	void printString();
+    void addMaterial(Material* material);
+    Material* getMaterial(int id);
+    void addSurface(Surface* surface);
+    Surface* getSurface(int id);
+    void addCell(Cell *cell);
+    Cell* getCell(int id);
+    void addUniverse(Universe* universe);
+    Universe* getUniverse(int id);
+    void addLattice(Lattice* lattice);
+    Lattice* getLattice(int id);
+    std::string toString();
+    void printString();
 
-	void adjustKeys();
-	void buildNeighborsLists();
-	Cell* findCell(LocalCoords* coords);
-	Cell* findFirstCell(LocalCoords* coords, double angle);
-	Cell* findCell(int fsr_id);
-	Cell* findCell(Universe* univ, int fsr_id);
-	Cell* findNextCell(LocalCoords* coords, double angle);
-	int findFSRId(LocalCoords* coords);
-	void segmentize(Track* track);
+    void adjustKeys();
+    void buildNeighborsLists();
+    Cell* findCell(LocalCoords* coords);
+    Cell* findFirstCell(LocalCoords* coords, double angle);
+    Cell* findCell(int fsr_id);
+    Cell* findCell(Universe* univ, int fsr_id);
+    Cell* findNextCell(LocalCoords* coords, double angle);
+    int findFSRId(LocalCoords* coords);
+    void segmentize(Track* track);
 
-	void compressCrossSections();
-	void computePinPowers(double* FSRs_to_powers, double* FSRs_to_pin_powers);
-	double computePinPowers(Universe* univ, char* output_file_prefix,
-			int FSR_id, double* FSRs_to_powers, double* FSRs_to_pin_powers);
-	void computePinAbsorption
-		(double* FSRs_to_absorption[NUM_ENERGY_GROUPS + 1],
-		 double* FSRs_to_pin_absorption[NUM_ENERGY_GROUPS + 1]);
-	double computePinAbsorption
-		(Universe* univ, char* output_file_prefix, int FSR_id, 
-		 double* FSRs_to_absorption[NUM_ENERGY_GROUPS + 1], 
-		 double* FSRs_to_pin_absorption[NUM_ENERGY_GROUPS + 1]);
+    void compressCrossSections();
+    void computePinPowers(double* FSRs_to_powers, double* FSRs_to_pin_powers);
+    double computePinPowers(Universe* univ, char* output_file_prefix,
+                            int FSR_id, double* FSRs_to_powers, double* FSRs_to_pin_powers);
+    void computePinAbsorption
+        (double* FSRs_to_absorption[NUM_ENERGY_GROUPS + 1],
+         double* FSRs_to_pin_absorption[NUM_ENERGY_GROUPS + 1]);
+    double computePinAbsorption
+        (Universe* univ, char* output_file_prefix, int FSR_id, 
+         double* FSRs_to_absorption[NUM_ENERGY_GROUPS + 1], 
+         double* FSRs_to_pin_absorption[NUM_ENERGY_GROUPS + 1]);
 
-	template <class K, class V>
+    template <class K, class V>
 	bool mapContainsKey(std::map<K, V> map, K key);
 
-	void makeCMFDMesh(Mesh* mesh, int numAzim, bool multigroup, 
-					  bool printMatrices, int cmfdLevel);
-	void findMeshWidth(Universe* univ, int* width, int depth);
-	void findMeshHeight(Universe* univ, int* height, int depth);
-	void defineMesh(Mesh* mesh, Universe* univ, int depth, int* meshCellNum, 
-					int row, bool base, int fsr_id);
-	void findFSRs(Universe* univ, MeshCell* meshCell, int* fsr_id);
-	int nextLatticeHeight(Universe* curr);
-	Mesh* getMesh();
-	int findMeshDepth(Universe* univ, int cmfd_level);
-	void setCmfd(bool runCmfd);
-	void setLoo(bool runLoo);
+    void makeCMFDMesh(Mesh* mesh, int numAzim, bool multigroup, 
+                      bool printMatrices, int cmfdLevel);
+    void findMeshWidth(Universe* univ, int* width, int depth);
+    void findMeshHeight(Universe* univ, int* height, int depth);
+    void defineMesh(Mesh* mesh, Universe* univ, int depth, int* meshCellNum, 
+                    int row, bool base, int fsr_id);
+    void findFSRs(Universe* univ, MeshCell* meshCell, int* fsr_id);
+    int nextLatticeHeight(Universe* curr);
+    Mesh* getMesh();
+    int findMeshDepth(Universe* univ, int cmfd_level);
+    void setCmfd(bool runCmfd);
+    void setLoo(bool runLoo);
 };
 
 #endif /* GEOMETRY_H_ */

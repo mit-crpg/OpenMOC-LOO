@@ -18,24 +18,24 @@
 #include "log.h"
 
 enum quadratureType {
-	LEONARD,
-	TABUCHI
+    LEONARD,
+    TABUCHI
 };
 
 class Quadrature {
 private:
-	quadratureType _type;
-	double _sinthetas[NUM_POLAR_ANGLES];
-	double _weights[NUM_POLAR_ANGLES];
-	double _multiples[NUM_POLAR_ANGLES];
+    quadratureType _type;
+    double _sinthetas[NUM_POLAR_ANGLES];
+    double _weights[NUM_POLAR_ANGLES];
+    double _multiples[NUM_POLAR_ANGLES];
 public:
-	Quadrature(quadratureType type);
-	virtual ~Quadrature();
-	quadratureType getType() const;
-	double getSinTheta(const int n) const;
-	double getWeight(const int n) const;
-	double getMultiple(const int n) const;
-	double* getSinThetas();
+    Quadrature(quadratureType type);
+    virtual ~Quadrature();
+    quadratureType getType() const;
+    double getSinTheta(const int n) const;
+    double getWeight(const int n) const;
+    double getMultiple(const int n) const;
+    double* getSinThetas();
     double* getWeights();
     double* getMultiples();
     std::string toString();

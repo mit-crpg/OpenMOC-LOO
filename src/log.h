@@ -18,26 +18,26 @@
 #include <string.h>
 
 typedef enum logLevels {
-	DEBUG,
-	INFO,
-	ACTIVE,
-	NORMAL,
-	WARNING,
-	CRITICAL,
-	RESULT,
-	ERROR
+    DEBUG,
+    INFO,
+    ACTIVE,
+    NORMAL,
+    WARNING,
+    CRITICAL,
+    RESULT,
+    ERROR
 } logLevel;
 
 void log_setlevel(logLevel newlevel);
 void log_setlevel(const char* newlevel);
 void log_printf(logLevel level, const char *format, ...)
-	__attribute__((__format__ (__printf__, 2, 3) ));
+    __attribute__((__format__ (__printf__, 2, 3) ));
 void log_error(const char *format, ...)
-	__attribute__((__noreturn__))
-	__attribute__((__format__ (__printf__, 1, 2) ));
+    __attribute__((__noreturn__))
+    __attribute__((__format__ (__printf__, 1, 2) ));
 
 #ifndef LOG_C
-	extern logLevel log_level;
+extern logLevel log_level;
 #endif
 
 

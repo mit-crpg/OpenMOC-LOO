@@ -19,26 +19,26 @@
 /* Type represents whether a localcoords is in a simple
  * universe or lattice */
 enum coordType {
-	UNIV,
-	LAT
+    UNIV,
+    LAT
 };
 
 
 class LocalCoords {
 private:
-	coordType _type;
-	int _universe;
-	int _cell;
-	int _lattice;
-	int _lattice_x;
-	int _lattice_y;
-	Point _coords;
-	LocalCoords* _next;
-	LocalCoords* _prev;
+    coordType _type;
+    int _universe;
+    int _cell;
+    int _lattice;
+    int _lattice_x;
+    int _lattice_y;
+    Point _coords;
+    LocalCoords* _next;
+    LocalCoords* _prev;
 public:
-	LocalCoords(double x, double y);
-	virtual ~LocalCoords();
-	coordType getType();
+    LocalCoords(double x, double y);
+    virtual ~LocalCoords();
+    coordType getType();
     int getUniverse() const;
     int getCell() const;
     int getLattice() const;

@@ -16,69 +16,69 @@
  */
 Quadrature::Quadrature(quadratureType type) {
 
-	/* If TabuchiYamomoto */
-	if (type == TABUCHI) {
-		_type = TABUCHI;
-		if (NUM_POLAR_ANGLES == 1) {
-			_sinthetas[0] = 0.798184;
-			_weights[0] = 1.0;
-			_multiples[0] = _sinthetas[0] * _weights[0];
-		}
-		else if (NUM_POLAR_ANGLES == 2) {
-			_sinthetas[0] = 0.363900;
-			_sinthetas[1] = 0.899900;
-			_weights[0] = 0.212854;
-			_weights[1] = 0.787146;
-			_multiples[0] = _sinthetas[0] * _weights[0];
-			_multiples[1] = _sinthetas[1] * _weights[1];
-		}
-		else if (NUM_POLAR_ANGLES == 3) {
-			_sinthetas[0] = 0.166648;
-			_sinthetas[1] = 0.537707;
-			_sinthetas[2] = 0.932954;
-			_weights[0] = 0.046233;
-			_weights[1] = 0.283619;
-			_weights[2] = 0.670148;
-			_multiples[0] = _sinthetas[0] * _weights[0];
-			_multiples[1] = _sinthetas[1] * _weights[1];
-			_multiples[2] = _sinthetas[2] * _weights[2];
-		}
-		else
-			log_printf(ERROR, "Tabuchi type quadrature supports 1, 2, or 3 polar"
-					" angles but %d are defined", NUM_POLAR_ANGLES);
-	}
+    /* If TabuchiYamomoto */
+    if (type == TABUCHI) {
+        _type = TABUCHI;
+        if (NUM_POLAR_ANGLES == 1) {
+            _sinthetas[0] = 0.798184;
+            _weights[0] = 1.0;
+            _multiples[0] = _sinthetas[0] * _weights[0];
+        }
+        else if (NUM_POLAR_ANGLES == 2) {
+            _sinthetas[0] = 0.363900;
+            _sinthetas[1] = 0.899900;
+            _weights[0] = 0.212854;
+            _weights[1] = 0.787146;
+            _multiples[0] = _sinthetas[0] * _weights[0];
+            _multiples[1] = _sinthetas[1] * _weights[1];
+        }
+        else if (NUM_POLAR_ANGLES == 3) {
+            _sinthetas[0] = 0.166648;
+            _sinthetas[1] = 0.537707;
+            _sinthetas[2] = 0.932954;
+            _weights[0] = 0.046233;
+            _weights[1] = 0.283619;
+            _weights[2] = 0.670148;
+            _multiples[0] = _sinthetas[0] * _weights[0];
+            _multiples[1] = _sinthetas[1] * _weights[1];
+            _multiples[2] = _sinthetas[2] * _weights[2];
+        }
+        else
+            log_printf(ERROR, "Tabuchi type quadrature supports 1, 2, or 3 polar"
+                       " angles but %d are defined", NUM_POLAR_ANGLES);
+    }
 
-	/* If Leonard */
-	else if (type == LEONARD) {
-		_type = LEONARD;
-		if (NUM_POLAR_ANGLES == 2) {
-			_sinthetas[0] = 0.273658;
-			_sinthetas[1] = 0.865714;
-			_weights[0] = 0.139473;
-			_weights[1] = 0.860527;
-			_multiples[0] = _sinthetas[0] * _weights[0];
-			_multiples[1] = _sinthetas[1] * _weights[1];
-		}
-		else if (NUM_POLAR_ANGLES == 3) {
-			_sinthetas[0] = 0.099812;
-			_sinthetas[1] = 0.395534;
-			_sinthetas[2] = 0.891439;
-			_weights[0] = 0.017620;
-			_weights[1] = 0.188561;
-			_weights[2] = 0.793819;
-			_multiples[0] = _sinthetas[0] * _weights[0];
-			_multiples[1] = _sinthetas[1] * _weights[1];
-			_multiples[2] = _sinthetas[2] * _weights[2];
-		}
-		else {
-			log_printf(ERROR, "Leonard type quadrature supports 2, or 3 polar"
-					" angles but %d are defined", NUM_POLAR_ANGLES);
-		}
+    /* If Leonard */
+    else if (type == LEONARD) {
+        _type = LEONARD;
+        if (NUM_POLAR_ANGLES == 2) {
+            _sinthetas[0] = 0.273658;
+            _sinthetas[1] = 0.865714;
+            _weights[0] = 0.139473;
+            _weights[1] = 0.860527;
+            _multiples[0] = _sinthetas[0] * _weights[0];
+            _multiples[1] = _sinthetas[1] * _weights[1];
+        }
+        else if (NUM_POLAR_ANGLES == 3) {
+            _sinthetas[0] = 0.099812;
+            _sinthetas[1] = 0.395534;
+            _sinthetas[2] = 0.891439;
+            _weights[0] = 0.017620;
+            _weights[1] = 0.188561;
+            _weights[2] = 0.793819;
+            _multiples[0] = _sinthetas[0] * _weights[0];
+            _multiples[1] = _sinthetas[1] * _weights[1];
+            _multiples[2] = _sinthetas[2] * _weights[2];
+        }
+        else {
+            log_printf(ERROR, "Leonard type quadrature supports 2, or 3 polar"
+                       " angles but %d are defined", NUM_POLAR_ANGLES);
+        }
 
-	}
-	else
-		log_printf(ERROR, "Leonard and Tabuchi quadrature types supported, but unknown"
-				" type given");
+    }
+    else
+        log_printf(ERROR, "Leonard and Tabuchi quadrature types supported, but unknown"
+                   " type given");
 }
 
 
@@ -94,7 +94,7 @@ Quadrature::~Quadrature() { }
  * @return the quadrature type
  */
 quadratureType Quadrature::getType() const {
-	return _type;
+    return _type;
 }
 
 
@@ -104,15 +104,15 @@ quadratureType Quadrature::getType() const {
  * @return the sintheta value
  */
 double Quadrature::getSinTheta(const int n) const {
-	if (n > -1 && n < NUM_POLAR_ANGLES)
-		return _sinthetas[n];
-	else 
-	{
-		log_printf(ERROR, "Attempted to retrieve sintheta for polar angle = %d"
-				   " but only %d polar angles are defined", 
-				   n, NUM_POLAR_ANGLES);
-	}
-	exit(0);
+    if (n > -1 && n < NUM_POLAR_ANGLES)
+        return _sinthetas[n];
+    else 
+    {
+        log_printf(ERROR, "Attempted to retrieve sintheta for polar angle = %d"
+                   " but only %d polar angles are defined", 
+                   n, NUM_POLAR_ANGLES);
+    }
+    exit(0);
 }
 
 
@@ -122,16 +122,16 @@ double Quadrature::getSinTheta(const int n) const {
  * @return the polar weight value
  */
 double Quadrature::getWeight(const int n) const {
-	if (n > -1 && n < NUM_POLAR_ANGLES)
-		return _weights[n];
-	else
-	{
-		log_printf(ERROR, 
-				   "Attempted to retrieve the weight for polar angle = %d"
-				   " but only %d polar angles are defined", 
-				   n, NUM_POLAR_ANGLES);
-	}
-	exit(0);
+    if (n > -1 && n < NUM_POLAR_ANGLES)
+        return _weights[n];
+    else
+    {
+        log_printf(ERROR, 
+                   "Attempted to retrieve the weight for polar angle = %d"
+                   " but only %d polar angles are defined", 
+                   n, NUM_POLAR_ANGLES);
+    }
+    exit(0);
 }
 
 
@@ -141,16 +141,16 @@ double Quadrature::getWeight(const int n) const {
  * @return the multiple value
  */
 double Quadrature::getMultiple(const int n) const {
-	if (n > -1 && n < NUM_POLAR_ANGLES)
-		return _multiples[n];
-	else
-	{
-		log_printf(ERROR, 
-				   "Attempted to retrieve the multiple for polar angle = %d"
-				   " but only %d polar angles are defined", 
-				   n, NUM_POLAR_ANGLES);
-	}
-	exit(0);
+    if (n > -1 && n < NUM_POLAR_ANGLES)
+        return _multiples[n];
+    else
+    {
+        log_printf(ERROR, 
+                   "Attempted to retrieve the multiple for polar angle = %d"
+                   " but only %d polar angles are defined", 
+                   n, NUM_POLAR_ANGLES);
+    }
+    exit(0);
 }
 
 
@@ -159,7 +159,7 @@ double Quadrature::getMultiple(const int n) const {
  * @return a pointer to the sintheta array
  */
 double* Quadrature::getSinThetas() {
-	return _sinthetas;
+    return _sinthetas;
 }
 
 
@@ -168,7 +168,7 @@ double* Quadrature::getSinThetas() {
  * @return a pointer to the polar weights array
  */
 double* Quadrature::getWeights() {
-	return _weights;
+    return _weights;
 }
 
 
@@ -178,7 +178,7 @@ double* Quadrature::getWeights() {
  * @return a pointer to the multiples array
  */
 double* Quadrature::getMultiples() {
-	return _multiples;
+    return _multiples;
 }
 
 
@@ -187,26 +187,26 @@ double* Quadrature::getMultiples() {
  * @param a character array of this quadrature's attributes
  */
 std::string Quadrature::toString() {
-	std::stringstream string;
+    std::stringstream string;
 
-	string << "Quadrature type = ";
+    string << "Quadrature type = ";
 
-	if (_type == LEONARD)
-		string << "LEONARD";
-	else if (_type == TABUCHI)
-		string << "TABUCHI";
+    if (_type == LEONARD)
+        string << "LEONARD";
+    else if (_type == TABUCHI)
+        string << "TABUCHI";
 
-	string << "\nsinthetas = ";
-	for (int p = 0; p < NUM_POLAR_ANGLES; p++)
-		string << _sinthetas[p] << ", ";
+    string << "\nsinthetas = ";
+    for (int p = 0; p < NUM_POLAR_ANGLES; p++)
+        string << _sinthetas[p] << ", ";
 
-	string << "\nweights = ";
-	for (int p = 0; p < NUM_POLAR_ANGLES; p++)
-		string << _weights[p] << ", ";
+    string << "\nweights = ";
+    for (int p = 0; p < NUM_POLAR_ANGLES; p++)
+        string << _weights[p] << ", ";
 
-	string << "\nmultiples= ";
-	for (int p = 0; p < NUM_POLAR_ANGLES; p++)
-		string << _multiples[p] << ", ";
+    string << "\nmultiples= ";
+    for (int p = 0; p < NUM_POLAR_ANGLES; p++)
+        string << _multiples[p] << ", ";
 
-	return string.str();
+    return string.str();
 }
