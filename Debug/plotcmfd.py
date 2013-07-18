@@ -40,7 +40,7 @@ l2_norm_files = []
 
 # get all l2_norm file names in directory
 for file in os.listdir("."):
-    if file.startswith("geometry_c5g7_l2_norm",) and file.endswith("cmfd.txt"):
+    if file.startswith(geometry[9:-4] + "_l2_norm_64_0.50_1.0",) and file.endswith(".txt"):
         l2_norm_files.append(file)
 		
 # parse output files
@@ -54,7 +54,12 @@ for file in l2_norm_files:
 
     for c_num, c in enumerate(file):
         if c == '_':
-            damp = file[-12:-9]
+            update = file[-15:-9]
+            break
+
+    for c_num, c in enumerate(file):
+        if c == '_':
+            damp = file[-19:-16]
             break
 
     # find number of lines in file
@@ -86,16 +91,17 @@ for file in l2_norm_files:
     for i in range(4):  
         plt.figure(i)
         plt.semilogy(iteration, var[i], next(linecycle), 
-        label = ("%s damp %s" %(method, damp)), markersize=5)
+        label = ("%s boundary %s damp %s" %(method, update, damp)), 
+                     markersize=5)
         plt.xlim(0, iteration[num_lines-1] + 1)
         plt.legend(loc='upper center', ncol=3, prop = fontP, shadow=True, 
-		     bbox_to_anchor=(0.5,-0.1),fancybox=True)
-		# end of one file
+                   bbox_to_anchor=(0.5,-0.1),fancybox=True)
+    # end of one file
 
 # save figure including different configuration of the same geometries.
 plt.figure(0)
 plt.xlabel('# MOC iteration')
-plt.ylabel('Mesh Cell L2 Norm on Fission Source')
+plt.ylabel('Mesh Cell L2 Norm on Fission Source Relative Change')
 plt.title('Geometry: %s,'%(geometry[9:-4]) + ' spacing: %s,'%str(ts[0]) 
 		  + ' #angles: %s'%str(na[0]))
 plt.savefig(geometry[9:-4] + '_cell_l2.png', bbox_inches='tight')
@@ -103,7 +109,7 @@ plt.clf()
 
 plt.figure(1)
 plt.xlabel('# MOC iteration')
-plt.ylabel('FSR L-infinity Norm on Fission Source')
+plt.ylabel('FSR L-infinity Norm on Fission Source Relative Change')
 plt.title('Geometry: %s,'%(geometry[9:-4]) + ' spacing: %s,'%str(ts[0]) 
 	  + ' #angles: %s'%str(na[0]))
 plt.savefig(geometry[9:-4] + '_fsr_linf.png', bbox_inches='tight')
@@ -111,10 +117,10 @@ plt.clf()
 
 plt.figure(2)
 plt.xlabel('# MOC iteration')
-plt.ylabel('FSR L2 Norm on Fission Source')
+plt.ylabel('FSR L2 Norm on Fission Source Relative Change')
 plt.title('Geometry: %s,'%(geometry[9:-4]) + ' spacing: %s,'%str(ts[0]) 
 			  + ' #angles: %s'%str(na[0]))
-plt.savefig(geometry[9:-4] + '_damp.png', bbox_inches='tight')
+plt.savefig(geometry[9:-4] + '_fsr_l2.png', bbox_inches='tight')
 plt.clf()
 
 plt.figure(3)

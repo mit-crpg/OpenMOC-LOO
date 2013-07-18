@@ -9,7 +9,7 @@ geometries = ['geometry_c5g7.xml']
 #              'geometry_c5g7_wo_refl.xml', 'geometry_UO2_leakage.xml']
 
 materials = ['material_c5g7.xml', 'material_c5g7.xml', 
-			 'material_c5g7.xml', 'material_c5g7.xml']
+             'material_c5g7.xml', 'material_c5g7.xml']
 
 ts = [0.5]
 na = [64]
@@ -45,28 +45,28 @@ for i, geometry in enumerate(geometries):
                       + ' -na ' + str(angle) 
                       + ' -ts ' + str(spacing) 
                       + ' -fc ' + str(fc[0]) 
-					  + ' -wc -df 1.0')
+					  + ' -wl1 -df 1.0 -nub')
             os.system('../bin/openmoc'
                       + ' -m ../xml-sample/Cmfd/' + materials[i]
                       + ' -g ../xml-sample/Cmfd/' + geometry 
                       + ' -na ' + str(angle) 
                       + ' -ts ' + str(spacing) 
                       + ' -fc ' + str(fc[0])
-					  + ' -wc -df 0.7')
+					  + ' -wl1 -df 1.0 -ub')
             os.system('../bin/openmoc'
                       + ' -m ../xml-sample/Cmfd/' + materials[i]
                       + ' -g ../xml-sample/Cmfd/' + geometry 
                       + ' -na ' + str(angle) 
                       + ' -ts ' + str(spacing) 
                       + ' -fc ' + str(fc[0])
-					  + ' -wl1 -df 1.0')
+					  + ' -wl -df 1.0 -nub')
             os.system('../bin/openmoc'
                       + ' -m ../xml-sample/Cmfd/' + materials[i]
                       + ' -g ../xml-sample/Cmfd/' + geometry 
                       + ' -na ' + str(angle) 
                       + ' -ts ' + str(spacing) 
                       + ' -fc ' + str(fc[0])
-					  + ' -wl -df 1.0')
+					  + ' -wl -df 1.0 -ub')
 
     # list of l2_norm files
     l2_norm_files = []
@@ -94,7 +94,12 @@ for i, geometry in enumerate(geometries):
 
         for c_num, c in enumerate(file):
             if c == '_':
-                damp = file[-12:-9]
+                update = file[-15:-9]
+                break
+
+        for c_num, c in enumerate(file):
+            if c == '_':
+                damp = file[-19:-16]
                 break
 
         # find number of lines in file
@@ -126,16 +131,17 @@ for i, geometry in enumerate(geometries):
         for i in range(4):  
             plt.figure(i)
             plt.semilogy(iteration, var[i], next(linecycle), 
-            label = ("%s damp %s" %(method, damp)), markersize=5)
+            label = ("%s boundary %s damp %s" %(method, update, damp)), 
+                         markersize=5)
             plt.xlim(0, iteration[num_lines-1] + 1)
             plt.legend(loc='upper center', ncol=3, prop = fontP, shadow=True, 
-				       bbox_to_anchor=(0.5,-0.1),fancybox=True)
-		# end of one file
+                       bbox_to_anchor=(0.5,-0.1),fancybox=True)
+        # end of one file
 
     # save figure including different configuration of the same geometries.
     plt.figure(0)
     plt.xlabel('# MOC iteration')
-    plt.ylabel('Mesh Cell L2 Norm on Fission Source')
+    plt.ylabel('Mesh Cell L2 Norm on Fission Source Relative Change')
     plt.title('Geometry: %s,'%(geometry[9:-4]) + ' spacing: %s,'%str(ts[0]) 
     		  + ' #angles: %s'%str(na[0]))
     plt.savefig(geometry[9:-4] + '_cell_l2.png', bbox_inches='tight')
@@ -143,7 +149,7 @@ for i, geometry in enumerate(geometries):
 
     plt.figure(1)
     plt.xlabel('# MOC iteration')
-    plt.ylabel('FSR L-infinity Norm on Fission Source')
+    plt.ylabel('FSR L-infinity Norm on Fission Source Relative Change')
     plt.title('Geometry: %s,'%(geometry[9:-4]) + ' spacing: %s,'%str(ts[0]) 
 			  + ' #angles: %s'%str(na[0]))
     plt.savefig(geometry[9:-4] + '_fsr_linf.png', bbox_inches='tight')
@@ -151,7 +157,7 @@ for i, geometry in enumerate(geometries):
 
     plt.figure(2)
     plt.xlabel('# MOC iteration')
-    plt.ylabel('FSR L2 Norm on Fission Source')
+    plt.ylabel('FSR L2 Norm on Fission Source Relative Change')
     plt.title('Geometry: %s,'%(geometry[9:-4]) + ' spacing: %s,'%str(ts[0]) 
 			  + ' #angles: %s'%str(na[0]))
     plt.savefig(geometry[9:-4] + '_fsr_l2.png', bbox_inches='tight')
