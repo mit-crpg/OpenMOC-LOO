@@ -16,7 +16,7 @@
  * @param track_generator pointer to the trackgenerator
  */
 Solver::Solver(Geometry* geom, TrackGenerator* track_generator, 
-			   Plotter* plotter, Cmfd* cmfd, Options* opts)
+               Plotter* plotter, Cmfd* cmfd, Options* opts)
 {
     _geom = geom;
     _quad = new Quadrature(TABUCHI);
@@ -247,6 +247,7 @@ void Solver::initializeFSRs()
     Track* track;
     segment* seg;
     FlatSourceRegion* fsr;
+
 
     /* Set each FSR's volume by accumulating the total length of all
        tracks inside the FSR. Loop over azimuthal angle, track and segment */
@@ -488,20 +489,25 @@ return k;
 void Solver::updateFlux(int iteration) 
 {
     _cmfd->updateMOCFlux(iteration);
-    if (_run_loo && _update_boundary && (iteration > 0))
-        updateBoundaryFlux();
+    if (_update_boundary)
+    {
+        if (_run_loo && (iteration > 0))
+            updateBoundaryFluxByQuadrature();
+        else
+            _cmfd->updateBoundaryFluxByHalfSpace();
+    }
     normalizeFlux();
     return;
 }
 
-void Solver::updateBoundaryFlux()
+void Solver::updateBoundaryFluxByQuadrature()
 {
     Track *track;
     segment *seg;
     MeshSurface *meshSurface, **meshSurfaces;
     double phi, factor;
     double *polar_fluxes;
-    int ind, num_segments, pe, surfID;
+    int ind, num_segments, pe, surfID, num_updated = 0;
 
     meshSurfaces = _geom->getMesh()->getSurfaces();
 
@@ -538,8 +544,21 @@ void Solver::updateBoundaryFlux()
                                                       polar_fluxes[pe] 
                                                       * factor);
                         pe++;
+                        num_updated++;
                     }	
-                }			
+                }	
+                else
+                {
+                    if (e == 0)
+                    {
+                        log_printf(ACTIVE, 
+                                   "e %d i %d j %d (total %d) %f -> %f"
+                                   " forward phi %f",
+                                   e, i, j, _num_tracks[i],
+                                   meshSurface->getOldQuadFlux(e, ind),
+                                   meshSurface->getQuadFlux(e, ind), phi);
+                    }		
+                }
             }
 
             /* Backward direction*/
@@ -561,15 +580,28 @@ void Solver::updateBoundaryFlux()
                                                       polar_fluxes[pe] 
                                                       * factor);
                         pe++;
+                        num_updated++;
                     }	
-                }			
+                }	
+                else
+                {
+                    if (e == 0)
+                    {
+                        log_printf(ACTIVE, 
+                                   "e %d i %d j %d (total %d) %f -> %f"
+                                   " backwar phi %f",
+                                   e, i, j, _num_tracks[i],
+                                   meshSurface->getOldQuadFlux(e, ind),
+                                   meshSurface->getQuadFlux(e, ind), phi);
+                    }		
+                }
             }
         }
     }
 
+    log_printf(ACTIVE, "total updated boundary flux: %d", num_updated);
     return;
 }
-
 
 void Solver::printKeff(int iteration, double eps)
 {
@@ -1559,7 +1591,10 @@ double Solver::kernel(int max_iterations) {
 
     /* Gives cmfd a pointer to the FSRs */
     if ((_run_cmfd) || (_run_loo)) 
+    {
         _cmfd->setFSRs(_flat_source_regions);
+        _cmfd->setTracks(_tracks);
+    }
 
     /* Check that each FSR has at least one segment crossing it */
     checkTrackSpacing();

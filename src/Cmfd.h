@@ -21,6 +21,7 @@
 #include <queue>
 #include <iostream>
 #include <fstream>
+#include "Track.h"
 #include "TrackGenerator.h"
 #include "Geometry.h"
 #include "Quadrature.h"
@@ -57,8 +58,11 @@ private:
     Geometry* _geom;
     Quadrature* _quad;
     Mesh* _mesh;
-    FlatSourceRegion* _flat_source_regions;
     Plotter* _plotter;
+
+    FlatSourceRegion* _flat_source_regions;
+    Track **_tracks;
+
     Mat _A;
     Mat _M;
     Vec _phi_new;
@@ -67,6 +71,7 @@ private:
     int _num_iter_to_conv;
     int _num_loop;
     int _num_track;
+    int *_num_tracks; 
     int _cw;
     int _ch;
     int _ng;
@@ -115,7 +120,9 @@ public:
     int createAMPhi(PetscInt size1, PetscInt size2, int cells);
     void setOldFSRFlux();
     void setFSRs(FlatSourceRegion *fsrs);
+    void setTracks(Track **tracks);
     int fisSourceNorm(Vec snew, int iter, int num_cmfd_iteration);
+    void updateBoundaryFluxByHalfSpace();
 
     /* LOO */
     void generateTrack(int *i_array, int *t_array, int *t_arrayb);

@@ -290,6 +290,7 @@ void MeshCell::setSumQuadFlux(double flux, int e){
     _sum_quad_flux[e] = flux;
 }
 
+/*
 void MeshCell::setBoundaryUpdate(double boundaryUpdate, int group, int ind)
 {
     _boundary_update[group * 2 + ind] = boundaryUpdate;
@@ -299,3 +300,4 @@ double MeshCell::getBoundaryUpdate(int group, int ind)
 {
     return _boundary_update[group * 2 + ind];
 }
+*/

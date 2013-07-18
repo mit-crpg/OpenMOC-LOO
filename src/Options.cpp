@@ -54,7 +54,7 @@ Options::Options(int argc, char **argv)
     _material_file = _relative_path + "xml-sample/Cmfd/material_c5g7.xml";
 	
     _track_spacing = 0.5;				/* Default track spacing in C4: 0.5cm */
-    _num_azim = 8;					    /* Default # azimuthal angle in C4: 64*/
+    _num_azim = 64;					    /* Default # azimuthal angle in C4: 64*/
 	
     //_track_spacing = 0.8909545443;
     //_num_azim = 4;

@@ -21,14 +21,14 @@
 class FlatSourceRegion {
 private:
     int _id;
+    int _mesh_cell_id;
     Material* _material;
     double _volume;
     double _flux[NUM_ENERGY_GROUPS];
     double _old_flux[NUM_ENERGY_GROUPS];
     double _source[NUM_ENERGY_GROUPS];
     double _old_source[NUM_ENERGY_GROUPS];
-    /* Pre-computed Ratio of source / sigma_t */
-    double _ratios[NUM_ENERGY_GROUPS];
+    double _ratios[NUM_ENERGY_GROUPS];     /* Pre-computed source / sigma_t */
     //double _boundary_update[NUM_ENERGY_GROUPS * 2];
 #if USE_OPENMP
     omp_lock_t _flux_lock;
@@ -37,6 +37,7 @@ public:
     FlatSourceRegion();
     virtual ~FlatSourceRegion();
     int getId() const;
+    int getMeshCellId() const;
     Material* getMaterial();
     double getVolume() const;
     double* getFlux();
@@ -45,6 +46,7 @@ public:
     double* getSource();
     double* getRatios();
     void setId(int id);
+    void setMeshCellId(int id);
     void setMaterial(Material* material);
     void setVolume(double volume);
     void incrementVolume(double volume);

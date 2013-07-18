@@ -100,7 +100,7 @@ public:
     void zeroLeakage();
     void computeRatios();
     void updateFlux(int iteration);
-    void updateBoundaryFlux();
+    void updateBoundaryFluxByQuadrature();
     void printKeff(int iteration, double eps);
     double computeKeff(int iteration);
     double** getFSRtoFluxMap();

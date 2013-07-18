@@ -49,7 +49,7 @@ private:
     double _sum_quad_flux[NUM_ENERGY_GROUPS];
     double _quad_flux[8*NUM_ENERGY_GROUPS];
     double _quad_src[8*NUM_ENERGY_GROUPS];
-    double _boundary_update[2*NUM_ENERGY_GROUPS];
+    //double _boundary_update[2*NUM_ENERGY_GROUPS];
 public:
     MeshCell();
     virtual ~MeshCell();
@@ -102,8 +102,10 @@ public:
     double* getQuadSrc();
     void setSumQuadFlux(double sumQuadFlux, int e);
     double* getSumQuadFlux();
+    /*
     void setBoundaryUpdate(double boundaryUpdate, int e, int ind);
     double getBoundaryUpdate(int e, int ind);
+    */
 };
 
 

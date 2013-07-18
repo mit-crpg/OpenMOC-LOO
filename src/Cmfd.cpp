@@ -28,6 +28,8 @@ Cmfd::Cmfd(Geometry* geom, Plotter* plotter, Mesh* mesh,
 
     _num_azim = track_generator->getNumAzim();
     _spacing = track_generator->getSpacing();
+    _num_tracks = track_generator->getNumTracks();
+
     _l2_norm = 1.0;
     _l2_norm_conv_thresh = l2_norm_conv_thresh;
     _use_diffusion_correction = useDiffusionCorrection;
@@ -1698,6 +1700,7 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
             for (int j = 0; j < _num_loop; j++)
             {
                 /* Get the initial angular flux */
+                /* FIXME: should be able to get rid of the condition here */
                 if (bc[1] == REFLECTIVE)
                 {
                     flux = _mesh->getCells(_i_array[_num_track * j])
@@ -1725,13 +1728,13 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
                         || ((bc[3] == VACUUM) && (t == 4)
                             && (i < _cw)))
                     {
-                        log_printf(DEBUG, "spot a vacuum");
                         leak_tot += flux; 
                         flux = 0.0;
                     }
 	
                     if (_update_boundary)
                     {
+                        /* FIXME: could cheat by not checking bc[1] case*/
                         if ((bc[0] == REFLECTIVE) && (t == 6) && (i % _cw == 0))
                         {
                             _mesh->getCells(i)->getMeshSurfaces(0)
@@ -1782,7 +1785,7 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
 
                 log_printf(ACTIVE, "  Energy %d, loop %d, fwd, %f -> %f, %e",
                            e, j, initial_flux, flux, flux / initial_flux - 1.0);
-            }
+            } /* exit this loop j */
 
             /* Backward Directions */
             for (int j = 0; j < _num_loop; j++)
@@ -1813,7 +1816,6 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
                         || ((bc[3] == VACUUM) && (t == 3)
                             && (i < _cw)))
                     {							
-                        log_printf(DEBUG, "spot a vacuum");
                         leak_tot += flux;
                         flux = 0.0;
                     }
@@ -2589,6 +2591,78 @@ void Cmfd::updateMOCFlux(int iteration)
     return;
 }
 
+void Cmfd::updateBoundaryFluxByHalfSpace()
+{
+    Track *track;
+    segment *seg;
+    FlatSourceRegion *fsr;
+    MeshCell *meshCell;
+    double factor;
+    double *polar_fluxes;
+    int num_segments, pe, num_updated = 0, meshCell_id;
+
+    for (int i = 0; i < _num_azim; i++) 
+    {
+        for (int j = 0; j < _num_tracks[i]; j++)
+        {
+            track = &_tracks[i][j];
+            num_segments = track->getNumSegments();
+
+            /* Forward direction */
+            seg = track->getSegment(0); /* get the boundary segment */
+            fsr =&_flat_source_regions[seg->_region_id];
+            meshCell_id = fsr->getMeshCellId();
+            meshCell = _mesh->getCells(meshCell_id);
+            polar_fluxes = track->getPolarFluxes();
+            pe = 0;
+            for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
+            {
+                if (meshCell->getOldFlux()[e] > 0)
+                {
+                    factor = meshCell->getNewFlux()[e]
+                        / meshCell->getOldFlux()[e];
+                    log_printf(DEBUG, "forward factor = %.10f", factor);
+                    for (int p = 0; p < NUM_POLAR_ANGLES; p++)
+                    {
+                        track->setBoundaryPolarFluxes(pe, 
+                                                      polar_fluxes[pe] 
+                                                      * factor);
+                        pe++;
+                        num_updated++;
+                    }	
+                }	
+            }
+
+            /* Backward direction*/
+            seg = track->getSegment(num_segments - 1); 
+            fsr =&_flat_source_regions[seg->_region_id];
+            meshCell_id = fsr->getMeshCellId();
+            meshCell = _mesh->getCells(meshCell_id);
+            pe = GRP_TIMES_ANG;
+            for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
+            {
+                if (meshCell->getOldFlux()[e] > 0)
+                {
+                    factor = meshCell->getNewFlux()[e]
+                        / meshCell->getOldFlux()[e];
+                    log_printf(DEBUG, "forward factor = %.10f", factor);
+                    for (int p = 0; p < NUM_POLAR_ANGLES; p++)
+                    {
+                        track->setBoundaryPolarFluxes(pe, 
+                                                      polar_fluxes[pe] 
+                                                      * factor);
+                        pe++;
+                        num_updated++;
+                    }	
+                }	
+            }
+        }
+    }
+
+    log_printf(ACTIVE, "total updated boundary flux: %d", num_updated);
+    return;
+}
+
 /*
 void Cmfd::setCmfdBoundaryUpdate(int x_min, int x_max, int y_min, int y_max, 
                                  int surf)
@@ -2840,8 +2914,31 @@ void Cmfd::setOldFSRFlux()
 void Cmfd::setFSRs(FlatSourceRegion* fsrs)
 {
     _flat_source_regions = fsrs;
+
+    MeshCell *meshCell;
+    std::vector<int>::iterator iter;
+    FlatSourceRegion *fsr;
+
+    for (int i = 0; i < _cw * _ch; i++)
+    {
+        meshCell = _mesh->getCells(i);
+        for (iter = meshCell->getFSRs()->begin(); 
+             iter != meshCell->getFSRs()->end(); iter++)
+        {
+            fsr = &_flat_source_regions[*iter];
+            fsr->setMeshCellId(i);
+        }
+    }
+    return;
 } 
 
+/* set pointer to tracks
+ * @param pointer to tracks
+ */
+void Cmfd::setTracks(Track **tracks)
+{
+    _tracks = tracks;
+} 
 
 int Cmfd::getNumIterToConv()
 {

@@ -56,6 +56,13 @@ int FlatSourceRegion::getId() const {
     return _id;
 }
 
+/**
+ * Returns this mesh cell's id that this FSR belongs to. 
+ * @return the mesh cell's id
+ */
+int FlatSourceRegion::getMeshCellId() const {
+    return _mesh_cell_id;
+}
 
 /**
  * Returns a pointer to this region's material
@@ -133,6 +140,13 @@ void FlatSourceRegion::setId(int id){
     _id = id;
 }
 
+/**
+ * Sets the id for the mesh cell that this FSR belongs to 
+ * @param id the mesh cell id
+ */
+void FlatSourceRegion::setMeshCellId(int id){
+    _mesh_cell_id = id;
+}
 
 /**
  * Set this region's material
