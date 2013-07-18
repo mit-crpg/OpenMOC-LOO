@@ -1,5 +1,3 @@
-((nil . ((indent-tabs-mode . t)
-         (tab-width . 4)
-         (c-basic-offset . 4)
-	)
-))
+(setq-default c-basic-offset 4)
+(setq tab-width 4)
+(setq-default indent-tabs-mode nil)
