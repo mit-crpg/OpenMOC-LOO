@@ -488,7 +488,7 @@ return k;
 void Solver::updateFlux(int iteration) 
 {
     _cmfd->updateMOCFlux(iteration);
-    if (_run_loo && _update_boundary)
+    if (_run_loo && _update_boundary && (iteration > 0))
         updateBoundaryFlux();
     normalizeFlux();
     return;
@@ -498,10 +498,13 @@ void Solver::updateBoundaryFlux()
 {
     Track *track;
     segment *seg;
-    FlatSourceRegion *fsr;
+    //FlatSourceRegion *fsr;
+    MeshSurface *meshSurface, **meshSurfaces;
     double phi, factor;
     double *polar_fluxes;
-    int ind, num_segments, pe;
+    int ind, num_segments, pe, surfID;
+
+    meshSurfaces = _geom->getMesh()->getSurfaces();
 
     for (int i = 0; i < _num_azim; i++) 
     {
@@ -517,33 +520,50 @@ void Solver::updateBoundaryFlux()
 			
             /* Forward direction */
             seg = track->getSegment(0); /* get the boundary segment */
-            fsr =&_flat_source_regions[seg->_region_id]; /* get boundary FSR */
+            surfID = seg->_mesh_surface_bwd; /* the surface it starts from */
+            meshSurface = meshSurfaces[surfID];
+            //fsr =&_flat_source_regions[seg->_region_id]; 
             polar_fluxes = track->getPolarFluxes();
             pe = 0;
             for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
             {
-                factor = fsr->getBoundaryUpdate(e, ind);
-                for (int p = 0; p < NUM_POLAR_ANGLES; p++)
+                //factor = fsr->getBoundaryUpdate(e, ind);
+                if (meshSurface->getOldQuadFlux(e, ind) > 0)
                 {
-                    polar_fluxes[pe] *= factor;
-                    track->setBoundaryPolarFluxes(pe, polar_fluxes[pe]);
-                    pe++;
-                }				
+                    factor = meshSurface->getQuadFlux(e, ind) 
+                        / meshSurface->getOldQuadFlux(e, ind);
+                    log_printf(DEBUG, "factor = %.10f", factor);
+                    for (int p = 0; p < NUM_POLAR_ANGLES; p++)
+                    {
+                        polar_fluxes[pe] *= factor;
+                        track->setBoundaryPolarFluxes(pe, polar_fluxes[pe]);
+                        pe++;
+                    }	
+                }			
             }
 
             /* Backward direction*/
             seg = track->getSegment(num_segments - 1); 
-            fsr =&_flat_source_regions[seg->_region_id]; /* get boundary FSR */
+            surfID = seg->_mesh_surface_fwd; 
+            meshSurface = meshSurfaces[surfID];
+            //fsr =&_flat_source_regions[seg->_region_id]; 
             pe = GRP_TIMES_ANG;
             for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
             {
-                factor = fsr->getBoundaryUpdate(e, ind);
-                for (int p = 0; p < NUM_POLAR_ANGLES; p++)
+                //factor = fsr->getBoundaryUpdate(e, ind);
+                if (meshSurface->getOldQuadFlux(e, ind) > 0)
                 {
-                    polar_fluxes[pe] *= factor;
-                    track->setBoundaryPolarFluxes(pe, polar_fluxes[pe]);
-                    pe++;
-                }				
+                    factor = meshSurface->getQuadFlux(e, ind) 
+                        / meshSurface->getOldQuadFlux(e, ind);
+                    log_printf(DEBUG, "factor = %.10f", factor);
+
+                    for (int p = 0; p < NUM_POLAR_ANGLES; p++)
+                    {
+                        polar_fluxes[pe] *= factor;
+                        track->setBoundaryPolarFluxes(pe, polar_fluxes[pe]);
+                        pe++;
+                    }	
+                }			
             }
         }
     }

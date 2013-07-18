@@ -2021,7 +2021,7 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
     }
     _num_iter_to_conv = iter + 1;
 
-    /* Store flux update */
+    /*
     if (_reflective && _update_boundary)
     {
         if (bc[0] == REFLECTIVE)
@@ -2033,6 +2033,7 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
         if (bc[3] == REFLECTIVE)
             setCmfdBoundaryUpdate(0, _cw, 0, 1, 3);
     }
+    */
 
     /* Computes the L2 norm of point-wise-division of energy-integrated
      * fission source of mesh cells relative to (m+1/2) */
@@ -2568,7 +2569,8 @@ void Cmfd::updateMOCFlux(int iteration)
         } /* exit looping over energy */
     } /* exit mesh cells */
 
-    if ((_reflective) && (_update_boundary))
+    /*
+    if (_reflective && _update_boundary)
     {
         if (_mesh->getBoundary(0) == REFLECTIVE)
             setFsrBoundaryUpdate(0, 1, 0, _ch);
@@ -2579,7 +2581,7 @@ void Cmfd::updateMOCFlux(int iteration)
         if (_mesh->getBoundary(3) == REFLECTIVE)
             setFsrBoundaryUpdate(0, _cw, 0, 1);
     }
-
+    */
 
     /* plots the scalar flux ratio */
     if (_plot_prolongation)
@@ -2591,6 +2593,7 @@ void Cmfd::updateMOCFlux(int iteration)
     return;
 }
 
+/*
 void Cmfd::setCmfdBoundaryUpdate(int x_min, int x_max, int y_min, int y_max, 
                                  int surf)
 {
@@ -2607,6 +2610,7 @@ void Cmfd::setCmfdBoundaryUpdate(int x_min, int x_max, int y_min, int y_max,
 				
             for (e = 0; e < _ng; e++)
             {
+#if 1                
                 for (j = 0; j < 2; j++)
                 {
                     update = meshCell->getMeshSurfaces(surf)->getQuadFlux(e, j)
@@ -2614,13 +2618,23 @@ void Cmfd::setCmfdBoundaryUpdate(int x_min, int x_max, int y_min, int y_max,
 
                     meshCell->setBoundaryUpdate(update, e, j);
                 }
+#else
+                update = (meshCell->getMeshSurfaces(surf)->getQuadFlux(e, 0)
+                          + meshCell->getMeshSurfaces(surf)->getQuadFlux(e, 1))
+                    / (meshCell->getMeshSurfaces(surf)->getOldQuadFlux(e, 0)
+                       + meshCell->getMeshSurfaces(surf)->getOldQuadFlux(e, 1));
+
+                for (j = 0; j < 2; j++)
+                    meshCell->setBoundaryUpdate(update, e, j);
+#endif
             }
         }
     }
 
     return;
 }
-
+*/
+/*
 void Cmfd::setFsrBoundaryUpdate(int x_min, int x_max, int y_min, int y_max)
 {
     int x, y, e, ind;
@@ -2643,7 +2657,7 @@ void Cmfd::setFsrBoundaryUpdate(int x_min, int x_max, int y_min, int y_max)
                     for (ind = 0; ind < 2; ind++)
                     {
                         fsr->setBoundaryUpdate(e, ind, 
-                                               meshCell->getBoundaryUpdate
+                                               meshCell->getBoundaryUpdate 
                                                (e, ind));
                     }
                 }
@@ -2653,7 +2667,7 @@ void Cmfd::setFsrBoundaryUpdate(int x_min, int x_max, int y_min, int y_max)
 
     return;
 }
-
+*/
 double Cmfd::computeDiffCorrect(double d, double h){
 
     if (_use_diffusion_correction == false)
@@ -2838,6 +2852,7 @@ int Cmfd::getNumIterToConv()
     return _num_iter_to_conv;
 }
 
+/*
 void Cmfd::setBoundaryUpdate(double bu, int e, int ind)
 {
     _boundary_update[e * 2 + ind] = bu;
@@ -2847,3 +2862,4 @@ double Cmfd::getBoundaryUpdate(int e, int ind)
 {
     return _boundary_update[e * 2 + ind];
 }
+*/
