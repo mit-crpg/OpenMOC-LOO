@@ -1,4 +1,4 @@
-CLOPTS="-g xml-sample/Cmfd/geometry_pin5.xml -m xml-sample/Cmfd/material_simple.xml -fc 1e-12 -ts 0.05 -na 128 -wl1"
+CLOPTS="-g xml-sample/Cmfd/geometry_pin5.xml -m xml-sample/Cmfd/material_simple.xml -fc 1e-12 -ts 0.05 -na 128 -wl1 -ub"
 #include "harness.bash"
 H4sIADjM5VEAA+2aT48cNRDF95xPMRIXEEnj+uNy1SEnJCQkUA7ckZAScUhQULL7/Sl3u6dttz0g
 hgiQ0ntY5e1u9092vVfVnnx8fP3+6XH59f271w+f6gp+CXP+DilC/d0vDIn4ARASEEtAfAiA/hsP
