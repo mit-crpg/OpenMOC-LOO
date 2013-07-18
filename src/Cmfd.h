@@ -84,10 +84,12 @@ private:
     bool _run_cmfd;
     bool _plot_prolongation;
     bool _reflective;
+    bool _update_boundary;
 public:
     Cmfd(Geometry* geom, Plotter* plotter, Mesh* mesh, 
          bool runCmfd, bool runLoo, bool runLoo1, bool runLoo2,
          bool useDiffusionCorrection, bool plotProlongation, 
+         bool updateBoundary,
          double l2_norm_conv_thresh, double damp,
          TrackGenerator *track_generator);
     virtual ~Cmfd();

@@ -1637,7 +1637,8 @@ double Solver::kernel(int max_iterations) {
                    << std::fixed 
                    << std::setprecision(2) <<  _track_spacing
                    << "_" 
-                   << std::setprecision(1) << _damp_factor << "_cmfd.txt";
+                   << std::setprecision(1) << _damp_factor 
+                   << "_noupda_cmfd.txt";
         }
         else if (_run_loo1)
         {
@@ -1688,7 +1689,7 @@ double Solver::kernel(int max_iterations) {
                    << std::setprecision(2) <<  _track_spacing
                    << "_" 
                    << std::setprecision(1) << _damp_factor 
-                   << "_unac.txt";
+                   << "_noupda_unac.txt";
         }
 
         std::string title_str = string.str();

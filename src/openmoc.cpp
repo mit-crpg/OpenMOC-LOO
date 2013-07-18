@@ -116,6 +116,7 @@ int main(int argc, char **argv) {
     Cmfd cmfd(&geometry, &plotter, geometry.getMesh(), 
               opts.getCmfd(), opts.getLoo(), opts.getLoo1(), opts.getLoo2(),
               opts.getDiffusionCorrection(), opts.plotProlongation(), 
+              opts.getUpdateBoundary(),
               opts.getL2NormConvThresh(), opts.getDampFactor(),
               &track_generator);
 

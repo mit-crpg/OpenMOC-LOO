@@ -74,7 +74,7 @@ Options::Options(int argc, char **argv)
     _diffusion = false;					/* Default will not solve diffusion */
     _diffusion_correction = false; 
     _plot_prolongation = false;
-    _update_boundary = true;
+    _update_boundary = false;
 
     /* All extra options get placed into this array, which can be used
      * to call sub-initializers (petsc, for instance) */
