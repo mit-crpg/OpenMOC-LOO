@@ -4,6 +4,9 @@ from itertools import cycle
 import numpy as np
 import os
 
+geometries = ['geometry_c5g7_refl.xml']
+geometry = geometries[0]
+
 # plot color 
 plt.gca().set_color_cycle(['red', 'green', 'blue', 'yellow'])
 #num_plots = 4
@@ -17,30 +20,18 @@ plt.gca().set_color_cycle(['red', 'green', 'blue', 'yellow'])
 lines = ['-o']
 linecycle = cycle(lines)
 
-
-
 # font sizes 
 fontP = FontProperties()
 fontP.set_size('small')
 
-
-geometries = ['geometry_c5g7.xml']
-geometry = geometries[0]
-# ['geometry_c5g7_refl.xml']
-
-materials = ['material_c5g7.xml', 'material_c5g7.xml', 
-			 'material_c5g7.xml', 'material_c5g7.xml']
-
-ts = [0.01]
-na = [4]
-fc = [1e-5]
+max_num_lines = 0
 
 # list of l2_norm files
 l2_norm_files = []
 
 # get all l2_norm file names in directory
 for file in os.listdir("."):
-    if file.startswith(geometry[9:-4] + "_l2_norm_64_0.50_1.0",) and file.endswith(".txt"):
+    if file.startswith(geometry[0:-4] + "_l2_norm_64_0.50",) and file.endswith(".txt"):
         l2_norm_files.append(file)
 		
 # parse output files
@@ -62,9 +53,21 @@ for file in l2_norm_files:
             damp = file[-19:-16]
             break
 
+    for c_num, c in enumerate(file):
+        if c == '_':
+            ts = file[-24:-20]
+            break
+
+    for c_num, c in enumerate(file):
+        if c == '_':
+            na = file[-27:-25]
+            break
+
     # find number of lines in file
     for num_lines, l in enumerate(logfile):
         pass
+
+    max_num_lines = max(num_lines, max_num_lines)
 
     # create numpy arras
     iteration = np.zeros(num_lines)
@@ -93,7 +96,7 @@ for file in l2_norm_files:
         plt.semilogy(iteration, var[i], next(linecycle), 
         label = ("%s boundary %s damp %s" %(method, update, damp)), 
                      markersize=5)
-        plt.xlim(0, iteration[num_lines-1] + 1)
+        plt.xlim(0, max_num_lines + 1)
         plt.legend(loc='upper center', ncol=3, prop = fontP, shadow=True, 
                    bbox_to_anchor=(0.5,-0.1),fancybox=True)
     # end of one file

@@ -4,15 +4,16 @@ from itertools import cycle
 import numpy as np
 import os
 
-geometries = ['geometry_c5g7.xml']
+geometries = ['geometry_pin5.xml']
 #['geometry_UO2.xml', 'geometry_c5g7.xml', 
-#              'geometry_c5g7_wo_refl.xml', 'geometry_UO2_leakage.xml']
+# 'geometry_c5g7_wo_refl.xml', 'geometry_UO2_leakage.xml']
 
-materials = ['material_c5g7.xml', 'material_c5g7.xml', 
+materials = ['material_simple.xml', 'material_c5g7.xml', 
              'material_c5g7.xml', 'material_c5g7.xml']
 
-ts = [0.5]
-na = [64]
+# C4 default is: 0.5cm, 64 azimuthal angle
+ts = [0.05]
+na = [128]
 fc = [1e-8]
 
 # plot color 
@@ -31,6 +32,8 @@ linecycle = cycle(lines)
 # font sizes 
 fontP = FontProperties()
 fontP.set_size('small')
+
+max_num_lines = 0
 
 # run OpenMOC
 for i, geometry in enumerate(geometries):
@@ -63,7 +66,7 @@ for i, geometry in enumerate(geometries):
                       + ' -na ' + str(angle) 
                       + ' -ts ' + str(spacing) 
                       + ' -fc ' + str(fc[0])
-                      + ' -wl2 -df 1.0 -ub')
+                      + ' -wl2 -df 1.0 -nub')
 
     # list of l2_norm files
     l2_norm_files = []
@@ -97,6 +100,8 @@ for i, geometry in enumerate(geometries):
         for num_lines, l in enumerate(logfile):
             pass
 
+        max_num_lines = max(num_lines, max_num_lines)
+
         # create numpy arrays
         iteration = np.zeros(num_lines)
         cell_l2   = np.zeros(num_lines)
@@ -125,7 +130,7 @@ for i, geometry in enumerate(geometries):
             plt.semilogy(iteration, var[i], next(linecycle), 
             label = ("%s boundary %s damp %s" %(method, update, damp)), 
                          markersize=5)
-            plt.xlim(0, iteration[num_lines-1] + 1)
+            plt.xlim(0, max_num_lines + 1)
             plt.legend(loc='upper center', ncol=3, prop = fontP, shadow=True, 
                        bbox_to_anchor=(0.5,-0.1),fancybox=True)
         # end of one file
