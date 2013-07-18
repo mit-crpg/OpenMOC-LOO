@@ -43,6 +43,7 @@ Solver::Solver(Geometry* geom, TrackGenerator* track_generator,
 	_damp_factor = opts->getDampFactor();
 	_track_spacing = opts->getTrackSpacing();
 	_boundary_iteration = opts->getBoundaryIteration();
+	_update_boundary = opts->getUpdateBoundary();
 
 	_cmfd_k = _k_eff;
 	_loo_k = _k_eff;
@@ -487,7 +488,7 @@ double Solver::computeKeff(int iteration)
 void Solver::updateFlux(int iteration) 
 {
 	_cmfd->updateMOCFlux(iteration);
-	if (_run_loo)
+	if (_run_loo && _update_boundary)
 		updateBoundaryFlux();
 	normalizeFlux();
 	return;
@@ -1640,19 +1641,45 @@ double Solver::kernel(int max_iterations) {
 		}
 		else if (_run_loo1)
 		{
-			string << "l2_norm_" << (_num_azim*2) << "_" 
-				   << std::fixed
-				   << std::setprecision(2) <<  _track_spacing
-				   << "_" 
-				   << std::setprecision(1) << _damp_factor << "_loo1.txt";
+			if (_update_boundary)
+			{
+				string << "l2_norm_" << (_num_azim*2) << "_" 
+					   << std::fixed
+					   << std::setprecision(2) <<  _track_spacing
+					   << "_" 
+					   << std::setprecision(1) << _damp_factor 
+					   << "_update_loo1.txt";
+			}
+			else
+			{
+				string << "l2_norm_" << (_num_azim*2) << "_" 
+					   << std::fixed
+					   << std::setprecision(2) <<  _track_spacing
+					   << "_" 
+					   << std::setprecision(1) << _damp_factor 
+					   << "_noupda_loo1.txt";
+			}
 		}			
 		else if (_run_loo2)
 		{
-			string << "l2_norm_" << (_num_azim*2) << "_" 
-				   << std::fixed
-				   << std::setprecision(2) <<  _track_spacing
-				   << "_" 
-				   << std::setprecision(1) << _damp_factor << "_loo2.txt";
+			if (_update_boundary)
+			{
+				string << "l2_norm_" << (_num_azim*2) << "_" 
+					   << std::fixed
+					   << std::setprecision(2) <<  _track_spacing
+					   << "_" 
+					   << std::setprecision(1) << _damp_factor 
+					   << "_update_loo2.txt";
+			}
+			else
+			{
+				string << "l2_norm_" << (_num_azim*2) << "_" 
+					   << std::fixed
+					   << std::setprecision(2) <<  _track_spacing
+					   << "_" 
+					   << std::setprecision(1) << _damp_factor 
+					   << "_noupda_loo2.txt";
+			}				
 		}
 		else
 		{
@@ -1660,7 +1687,8 @@ double Solver::kernel(int max_iterations) {
 				   << std::fixed
 				   << std::setprecision(2) <<  _track_spacing
 				   << "_" 
-				   << std::setprecision(1) << _damp_factor << "_unac.txt";
+				   << std::setprecision(1) << _damp_factor 
+				   << "_unac.txt";
 		}
 
 		std::string title_str = string.str();

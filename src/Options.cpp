@@ -31,8 +31,7 @@ Options::Options(int argc, char **argv)
 	_loo1 = false;
 	_loo2 = false;
 	_damp_factor = 1.0;
-	_boundary_iteration = 2;
-
+	_boundary_iteration = 1;
 
 	/* plotting options */
 	_plot_quad_flux = false;             /* Plots quad flux, net current, xs */
@@ -75,6 +74,7 @@ Options::Options(int argc, char **argv)
 	_diffusion = false;					/* Default will not solve diffusion */
 	_diffusion_correction = false; 
 	_plot_prolongation = false;
+	_update_boundary = true;
 
 	/* All extra options get placed into this array, which can be used
 	 * to call sub-initializers (petsc, for instance) */
@@ -130,8 +130,14 @@ Options::Options(int argc, char **argv)
 					strcmp(argv[i], "--compressxs") == 0)
 				_compress_cross_sections = true;
 			else if (strcmp(argv[i], "-uk") == 0 ||
-					strcmp(argv[i], "--updatekeff") == 0)
+					 strcmp(argv[i], "--updatekeff") == 0)
 				_update_keff = true;
+			else if (strcmp(argv[i], "-ub") == 0 ||
+					 strcmp(argv[i], "--updateboundary") == 0)
+				_update_boundary = true;
+			else if (strcmp(argv[i], "-nub") == 0 ||
+					 strcmp(argv[i], "--noupdateboundary") == 0)
+				_update_boundary = false;
 			else if (strcmp(argv[i], "-nc") == 0 ||
 					strcmp(argv[i], "--nocmfd") == 0)
 				_cmfd = false;
@@ -477,4 +483,9 @@ double Options::getDampFactor()
 int Options::getBoundaryIteration()
 {
 	return _boundary_iteration;
+}
+
+bool Options::getUpdateBoundary()
+{
+	return _update_boundary;
 }

@@ -54,20 +54,28 @@ private:
 	bool _print_matrices;
 	bool _diffusion;
 	bool _diffusion_correction;
-
+	bool _update_boundary;
 public:
     Options(int argc, char **argv);
     ~Options(void);
-	int extra_argc;
+	std::string getGeometryFile();
+    std::string getExtension();
 	char **extra_argv;
+    char* getVerbosity();
     const char *getGeometryFile() const;
     const char *getMaterialFile() const;
-    bool dumpGeometry();
-    double getNumAzim();
+
+	int extra_argc;
     int getBitDimension();
+	int getCmfdLevel();
+	int getBoundaryIteration();
     double getTrackSpacing();
-    char* getVerbosity();
-    std::string getExtension();
+    double getNumAzim();
+	double getL2NormConvThresh();
+	double getMOCConvThresh();
+	double getKGuess();
+	double getDampFactor();
+    bool dumpGeometry();
     bool plotSpecs();
     bool plotFluxes();
     bool computePinPowers();
@@ -79,13 +87,8 @@ public:
 	bool plotKeff();
 	bool plotProlongation();
 	bool updateKeff();
-	std::string getGeometryFile();
-	double getL2NormConvThresh();
-	double getMOCConvThresh();
-	double getKGuess();
 	bool getGroupStructure();
 	bool getPrintMatrices();
-	int getCmfdLevel();
 	bool getCmfd();
 	bool getLoo();
 	bool getLoo1();
@@ -93,8 +96,7 @@ public:
 	bool getDiffusion();
 	bool getDiffusionCorrection();
 	bool getAccAfterMOCConverge();
-	double getDampFactor();
-	int getBoundaryIteration();
+	bool getUpdateBoundary();
 };
 
 #endif

@@ -72,9 +72,9 @@ private:
 	int _pre_factor_max_index;
 	double _pre_factor_spacing;
 #endif
-	bool _update_keff;
 	double _l2_norm_conv_thresh;
 	double _moc_conv_thresh;
+	double computePreFactor(segment* seg, int energyg, int angle);
 	bool _compute_powers;
 	bool _run_cmfd;
 	bool _run_loo;
@@ -82,8 +82,9 @@ private:
 	bool _run_loo2;
 	bool _diffusion;
 	bool _acc_after_MOC_converge;
+	bool _update_keff;
+	bool _update_boundary;
 	void precomputeFactors();
-	double computePreFactor(segment* seg, int energyg, int angle);
 	void initializeFSRs();
 public:
 	Solver(Geometry* geom, TrackGenerator* track_generator, 
