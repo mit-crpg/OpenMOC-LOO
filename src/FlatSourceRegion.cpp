@@ -24,11 +24,6 @@ FlatSourceRegion::FlatSourceRegion()
         _old_flux[e] = 0.0;
         _source[e] = 0.0;
         _old_source[e] = 0.0;
-        _mat_mult_a[e] = 1.0;
-        for (int g = 0; g < NUM_ENERGY_GROUPS; g++)
-        {
-            _mat_mult[e*NUM_ENERGY_GROUPS + g] = 1.0;
-        }
         /*
         for (int i = 0; i < 2; i++)
         {
@@ -319,23 +314,6 @@ double FlatSourceRegion::computeFissionRate() {
     power *= _volume;
 
     return power;
-}
-
-
-void FlatSourceRegion::setMatMult(int group, double mult){
-    _mat_mult[group] = mult;
-}
-
-double* FlatSourceRegion::getMatMult(){
-    return _mat_mult;
-}
-
-void FlatSourceRegion::setMatMultA(int group, double mult){
-    _mat_mult_a[group] = mult;
-}
-
-double* FlatSourceRegion::getMatMultA(){
-    return _mat_mult_a;
 }
 
 /*

@@ -147,8 +147,6 @@ void Cmfd::computeXS_old()
     /* initialize variables */
     double volume, flux, abs, tot, nu_fis, chi;
     double* scat;
-    double* mat_mult;
-    double* mat_mult_a;
     double abs_tally_group, nu_fis_tally_group, dif_tally_group, rxn_tally_group, vol_tally_group, tot_tally_group;
     double nu_fis_tally = 0, dif_tally = 0, rxn_tally = 0, abs_tally = 0, tot_tally = 0;
     double scat_tally_group[NUM_ENERGY_GROUPS];
@@ -162,7 +160,7 @@ void Cmfd::computeXS_old()
 
 #if USE_OPENMP
 #pragma omp parallel for private(i, e, g, volume, flux, abs, tot, nu_fis, \
-                                 chi, scat, mat_mult, mat_mult_a, abs_tally_group, nu_fis_tally_group, \
+                                 chi, scat, abs_tally_group, nu_fis_tally_group, \
                                  dif_tally_group, rxn_tally_group, vol_tally_group, tot_tally_group, \
                                  nu_fis_tally, dif_tally, rxn_tally, abs_tally, tot_tally, \
                                  scat_tally_group, iter, meshCell, fsr, material)
@@ -209,11 +207,9 @@ void Cmfd::computeXS_old()
                 tot = material->getSigmaT()[e];
                 nu_fis = material->getNuSigmaF()[e];
                 scat = material->getSigmaS();
-                mat_mult = fsr->getMatMult();
-                mat_mult_a = fsr->getMatMultA();
 
                 /* increment tallies for this group */
-                abs_tally_group += abs * flux * volume * mat_mult_a[e];
+                abs_tally_group += abs * flux * volume;
                 tot_tally_group += tot * flux * volume;
                 nu_fis_tally_group += nu_fis * flux * volume;
                 rxn_tally_group += flux * volume;
@@ -222,7 +218,7 @@ void Cmfd::computeXS_old()
 
                 /* increment group to group scattering tallies */
                 for (g = 0; g < NUM_ENERGY_GROUPS; g++){
-                    scat_tally_group[g] += scat[g*NUM_ENERGY_GROUPS + e] * flux * volume * mat_mult[g*NUM_ENERGY_GROUPS + e];
+                    scat_tally_group[g] += scat[g*NUM_ENERGY_GROUPS + e] * flux * volume;
                     log_printf(DEBUG, "scattering from group %i to %i: %f", e, g, scat[g*NUM_ENERGY_GROUPS + e]);
                 }
 
