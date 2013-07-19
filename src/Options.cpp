@@ -22,9 +22,11 @@
  */
 Options::Options(int argc, char **argv) 
 {
+    /* convergence options */
     _l2_norm_conv_thresh = 1e-10; /* convergence on acceleration iteration */
-    _moc_conv_thresh = 1e-8;     /* convergence on MOC sweeps */
+    _moc_conv_thresh = 1e-8;      /* convergence on MOC sweeps */
 
+    /* most important acceleration options */
     _acc_after_MOC_converge = false;
     _cmfd = false; 					
     _loo = false;
@@ -32,49 +34,47 @@ Options::Options(int argc, char **argv)
     _loo2 = false;
     _damp_factor = 1.0;
     _boundary_iteration = 1;
+    _diffusion = true;			/* run diffusion for 1st iter */
+    _update_boundary = true;            /* update boundary angular flux */
 
-    /* plotting options */
-    _plot_quad_flux = false;             /* Plots quad flux, net current, xs */
-    _plot_fluxes = false;				/* plot colors, not values*/
-    _plot_current = false;				/* plot cmfd currents */
-    _plot_diffusion = false;			/* FIXME: does nothing now */
-
-    _multigroup = true;				/* sets CMFD to one group structure */
-
-    /* Checks the working directory to set the relative path for input files
-     * This is important so that default input files work when program is run
-     * from both eclipse and the console */
     if (std::string(getenv("PWD")).find("Release") != std::string::npos)
         _relative_path = "../";
     else
         _relative_path = "";
 
     /* Default geometry input file */
-    _geometry_file = _relative_path + "xml-sample/Cmfd/geometry_c5g7_refl.xml"; 	 
+    _geometry_file = _relative_path + "xml-sample/Cmfd/geometry_c5g7.xml"; 
     _material_file = _relative_path + "xml-sample/Cmfd/material_c5g7.xml";
 	
-    _track_spacing = 0.5;				/* Default track spacing in C4: 0.5cm */
-    _num_azim = 64;					    /* Default # azimuthal angle in C4: 64*/
-	
+    _track_spacing = 0.5;		/* Default track spacing in C4: 0.5cm */
+    _num_azim = 64;			/* Default # azimuthal angle in C4: 64*/
     //_track_spacing = 0.8909545443;
     //_num_azim = 4;
 
-    _k_guess = 1.0;
-    _bit_dimension = 1000;				/* y dimension of plots */
-    _verbosity = "NORMAL";				/* Default logging level */
-    _dump_geometry = false;				/* Default: not dump geometry */
-    _extension = "png";					/* Default: plot in png */
-    _plot_specs = false;            	/* Default: not plot materials, cells, FSRs, tracks, or segments */
-    _compute_pin_powers = false;		/* Default: not compute pin powers */
+    /* MOC options */
+    _verbosity = "NORMAL";		/* Default logging level */
+    _dump_geometry = false;		/* Default: not dump geometry */
+    _extension = "png";			/* Default: plot in png */
+    _compute_pin_powers = false;	/* Default: not compute pin powers */
     _compress_cross_sections = false;	/* Default: not compress xs */
-    _update_keff = false;  				/* Default: not use CMFD's k */
-    _print_matrices = false;			/* Default will not print matrices */
-    _cmfd_level = 0;					/* Default cmfd level is 0: pin-wise */
-    _plot_keff = false;					/* Default will not plot keff */
-    _diffusion = false;					/* Default will not solve diffusion */
+
+    /* other acceleration options */
+    _cmfd_level = 0;			/* Default cmfd level is 0: pin-wise */
+    _multigroup = true;			/* sets CMFD to one group structure */
+    _k_guess = 1.0;
+    _update_keff = false;  		/* Default: not use CMFD's k */
+    _print_matrices = false;		/* Default will not print matrices */
     _diffusion_correction = false; 
+
+    /* plotting options */
+    _bit_dimension = 1000;		/* y dimension of plots */
+    _plot_specs = false;            	/* plot mat, cell, FSR, track, seg */
+    _plot_quad_flux = false;            /* plot quad flux, net current, xs */
+    _plot_fluxes = false;		/* plot colors, not values*/
+    _plot_current = false;		/* plot cmfd currents */
+    _plot_diffusion = false;		/* FIXME: does nothing now */
+    _plot_keff = false;			/* Default will not plot keff */
     _plot_prolongation = false;
-    _update_boundary = false;
 
     /* All extra options get placed into this array, which can be used
      * to call sub-initializers (petsc, for instance) */
