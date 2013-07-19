@@ -1912,7 +1912,8 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
                 for (int e = 0; e < _ng; e++) 
                 {
                     phi_ratio =  sum_quad_flux[i][e] 
-                        / meshCell->getSumQuadFlux()[e] ;/// 8;
+                        / meshCell->getSumQuadFlux()[e];/// 8;
+
                     log_printf(ACTIVE, "Cell %d energy %d scalar flux update "
                                "by (before normalization) - 1 = %e", 
                                i, e, phi_ratio - 1.0);
@@ -1923,7 +1924,7 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
 
                     new_flux = meshCell->getOldFlux()[e] * phi_ratio;
 #if phi_update /* for debugging new feature */
-                    new_flux = sum_quad_flux[i][e];					
+                    new_flux = sum_quad_flux[i][e];
 #endif
 
                     meshCell->setNewFlux(new_flux, e);

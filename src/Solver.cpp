@@ -1701,7 +1701,8 @@ double Solver::kernel(int max_iterations) {
                 string << "l2_norm_" << (_num_azim*2) << "_" 
                        << std::fixed 
                        << std::setprecision(2) <<  _track_spacing
-                       << "_" 
+                       << "_bi_" << _boundary_iteration
+                       << "_"
                        << std::setprecision(1) << _damp_factor 
                        << "_update_cmfd.txt";
             }
@@ -1710,6 +1711,7 @@ double Solver::kernel(int max_iterations) {
                 string << "l2_norm_" << (_num_azim*2) << "_" 
                        << std::fixed 
                        << std::setprecision(2) <<  _track_spacing
+                       << "_bi_" << _boundary_iteration
                        << "_" 
                        << std::setprecision(1) << _damp_factor 
                        << "_noupda_cmfd.txt";
@@ -1722,6 +1724,7 @@ double Solver::kernel(int max_iterations) {
                 string << "l2_norm_" << (_num_azim*2) << "_" 
                        << std::fixed
                        << std::setprecision(2) <<  _track_spacing
+                       << "_bi_" << _boundary_iteration
                        << "_" 
                        << std::setprecision(1) << _damp_factor 
                        << "_update_loo1.txt";
@@ -1731,6 +1734,7 @@ double Solver::kernel(int max_iterations) {
                 string << "l2_norm_" << (_num_azim*2) << "_" 
                        << std::fixed
                        << std::setprecision(2) <<  _track_spacing
+                       << "_bi_" << _boundary_iteration
                        << "_" 
                        << std::setprecision(1) << _damp_factor 
                        << "_noupda_loo1.txt";
@@ -1743,6 +1747,7 @@ double Solver::kernel(int max_iterations) {
                 string << "l2_norm_" << (_num_azim*2) << "_" 
                        << std::fixed
                        << std::setprecision(2) <<  _track_spacing
+                       << "_bi_" << _boundary_iteration
                        << "_" 
                        << std::setprecision(1) << _damp_factor 
                        << "_update_loo2.txt";
@@ -1752,6 +1757,7 @@ double Solver::kernel(int max_iterations) {
                 string << "l2_norm_" << (_num_azim*2) << "_" 
                        << std::fixed
                        << std::setprecision(2) <<  _track_spacing
+                       << "_bi_" << _boundary_iteration
                        << "_" 
                        << std::setprecision(1) << _damp_factor 
                        << "_noupda_loo2.txt";
