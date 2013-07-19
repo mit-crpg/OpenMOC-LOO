@@ -491,7 +491,7 @@ void Solver::updateFlux(int iteration)
     _cmfd->updateMOCFlux(iteration);
     if (_update_boundary)
     {
-        if (_run_loo && (iteration > 0))
+        if (_run_loo && (!(_diffusion) && (iteration == 0)))
             updateBoundaryFluxByQuadrature();
         else
             _cmfd->updateBoundaryFluxByHalfSpace();
@@ -1504,15 +1504,13 @@ double Solver::runLoo(int i)
                (int) _old_k_effs.size(), 
                _old_k_effs.front(), _old_k_effs.back());
 
-    if (i == 0)
+    if (i == 0 && _diffusion == true)
     {
         _cmfd->computeDs();
         loo_keff = _cmfd->computeCMFDFluxPower(DIFFUSION, i);
     }
     else
-    {
         loo_keff = _cmfd->computeLooFluxPower(i, _k_eff);
-    }
 
     return loo_keff;
 }
@@ -1533,12 +1531,10 @@ double Solver::runCmfd(int i)
         checkNeutronBalance();
 
     /* Run diffusion problem on initial geometry */
-    if (i == 0 && _diffusion == true){
+    if (i == 0 && _diffusion == true)
         cmfd_keff = _cmfd->computeCMFDFluxPower(DIFFUSION, i);
-    }
-
-    /* Run CMFD diffusion problem */
-    cmfd_keff = _cmfd->computeCMFDFluxPower(CMFD, i);
+    else
+        cmfd_keff = _cmfd->computeCMFDFluxPower(CMFD, i);
 
     return cmfd_keff;
 }
@@ -1687,12 +1683,24 @@ double Solver::kernel(int max_iterations) {
         std::stringstream string;
         if (_run_cmfd)
         {
-            string << "l2_norm_" << (_num_azim*2) << "_" 
-                   << std::fixed 
-                   << std::setprecision(2) <<  _track_spacing
-                   << "_" 
-                   << std::setprecision(1) << _damp_factor 
-                   << "_noupda_cmfd.txt";
+            if (_update_boundary)
+            {
+                string << "l2_norm_" << (_num_azim*2) << "_" 
+                       << std::fixed 
+                       << std::setprecision(2) <<  _track_spacing
+                       << "_" 
+                       << std::setprecision(1) << _damp_factor 
+                       << "_update_cmfd.txt";
+            }
+            else
+            {
+                string << "l2_norm_" << (_num_azim*2) << "_" 
+                       << std::fixed 
+                       << std::setprecision(2) <<  _track_spacing
+                       << "_" 
+                       << std::setprecision(1) << _damp_factor 
+                       << "_noupda_cmfd.txt";
+            }               
         }
         else if (_run_loo1)
         {
