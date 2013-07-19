@@ -491,7 +491,7 @@ void Solver::updateFlux(int iteration)
     _cmfd->updateMOCFlux(iteration);
     if (_update_boundary)
     {
-        if (_run_loo && (!(_diffusion) && (iteration == 0)))
+        if (_run_loo && (!(_diffusion && (iteration == 0))))
             updateBoundaryFluxByQuadrature();
         else
             _cmfd->updateBoundaryFluxByHalfSpace();
@@ -1081,9 +1081,10 @@ void Solver::MOCsweep(int max_iterations)
 
                         /* if segment crosses a surface in fwd direction, 
                            tally current/weight */
-                        if (_run_loo)
+                        if ((_run_loo) && (!(_diffusion && (i == 0))))
                             tallyLooCurrent(track, segment, meshSurfaces, 1);
-                        else if (_run_cmfd)
+                        else if ((_run_cmfd) || 
+                                 (_run_loo & _diffusion && (i == 0)))
                             tallyCmfdCurrent(track, segment, meshSurfaces, 1);
 
                         /* Increments the scalar flux for this FSR */
@@ -1163,9 +1164,10 @@ void Solver::MOCsweep(int max_iterations)
 
                         /* if segment crosses a surface in bwd direction, 
                            tally quadrature flux for LOO acceleration */
-                        if (_run_loo)
+                        if ((_run_loo) && (!(_diffusion && (i == 0))))
                             tallyLooCurrent(track, segment, meshSurfaces, -1);
-                        else if (_run_cmfd)
+                        else if ((_run_cmfd) || 
+                                 (_run_loo && _diffusion && (i == 0)))
                             tallyCmfdCurrent(track, segment, meshSurfaces, -1);
 						
                         /* Increments the scalar flux for this FSR */
@@ -1492,25 +1494,18 @@ double Solver::runLoo(int i)
     /* LOO Method 1: assume constant Sigma in each mesh. 
      * Computes cross sections */
     _cmfd->computeXS();
-
-    /* Computes _quad_flux based on _quad_current */
-    _cmfd->computeQuadFlux();
-
-    /* Computes _quad_src based on (m+1/2) results  */
-    _cmfd->computeQuadSrc();
 			 
-    /* Performs low order MOC */
-    log_printf(ACTIVE, "size = %d, front = %.10f, back = %.10f",
-               (int) _old_k_effs.size(), 
-               _old_k_effs.front(), _old_k_effs.back());
-
     if (i == 0 && _diffusion == true)
     {
         _cmfd->computeDs();
         loo_keff = _cmfd->computeCMFDFluxPower(DIFFUSION, i);
     }
     else
+    {
+        _cmfd->computeQuadFlux();
+        _cmfd->computeQuadSrc();
         loo_keff = _cmfd->computeLooFluxPower(i, _k_eff);
+    }
 
     return loo_keff;
 }
