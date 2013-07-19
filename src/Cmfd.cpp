@@ -78,7 +78,7 @@ Cmfd::Cmfd(Geometry* geom, Plotter* plotter, Mesh* mesh,
     _t_array = new int[_num_loop * _num_track];
     _t_arrayb = new int[_num_loop * _num_track];
 
-    if (_run_loo || _run_loo_phi || _run_loo_psi) 
+    if (_run_loo)
         generateTrack(_i_array, _t_array, _t_arrayb);
 
     _num_iter_to_conv = 0;
@@ -2528,7 +2528,10 @@ void Cmfd::updateMOCFlux(int iteration)
             old_flux = meshCell->getOldFlux()[e];
             new_flux = meshCell->getNewFlux()[e];
 
-            tmp_cmco = new_flux / old_flux;
+            if (old_flux > 0.0)
+                tmp_cmco = new_flux / old_flux;
+            else
+                tmp_cmco = 1.0;
 			
             if (tmp_cmco < 0.0)
                 log_printf(DEBUG, "cell %d energy %d prolongation = %f",
@@ -2584,9 +2587,6 @@ void Cmfd::updateMOCFlux(int iteration)
     /* plots the scalar flux ratio */
     if (_plot_prolongation)
         _plotter->plotCmfdFluxUpdate(_mesh, iteration);
-
-    for (int i = 0; i < _cw * _ch; i ++)
-        log_printf(DEBUG, " cell # %d, CMCO = %.10e", i, CMCO[i] + 1  );
 
     return;
 }

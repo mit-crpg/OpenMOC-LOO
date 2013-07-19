@@ -492,9 +492,15 @@ void Solver::updateFlux(int iteration)
     if (_update_boundary)
     {
         if (_run_loo && (!(_diffusion && (iteration == 0))))
+        {
+            log_printf(DEBUG, "update by quadrature");
             updateBoundaryFluxByQuadrature();
+        }
         else
+        {
+            log_printf(DEBUG, "update by partial");
             _cmfd->updateBoundaryFluxByHalfSpace();
+        }
     }
     normalizeFlux();
     return;
@@ -949,7 +955,7 @@ void Solver::tallyCmfdCurrent(Track *track, segment *segment,
 }
 
 /* Performs MOC sweep(s), could be just one sweep or till convergance */
-void Solver::MOCsweep(int max_iterations) 
+void Solver::MOCsweep(int max_iterations, int moc_iter) 
 {
     Track* track;
     int num_segments;
@@ -976,9 +982,23 @@ void Solver::MOCsweep(int max_iterations)
     log_printf(INFO, "Fixed source iteration with max_iterations = %d and "
                "# threads = %d", max_iterations, num_threads);
 
+    int tally; 
+
     /* Loop for until converged or max_iterations is reached */
     for (int i = 0; i < max_iterations; i++)
     {
+        if ((_run_loo) && (!(_diffusion && (moc_iter == 0))))
+        {
+            tally = 2;
+            log_printf(DEBUG, "tally quardrature current");
+        }
+        else if ((_run_cmfd) || (_run_loo & _diffusion && (moc_iter == 0)))
+        {
+            tally = 1;
+            log_printf(DEBUG, "tally partial current");
+        }
+        else
+            tally = 0;
 
         /* Initialize flux in each region to zero */
         zeroFSRFluxes();
@@ -1081,10 +1101,9 @@ void Solver::MOCsweep(int max_iterations)
 
                         /* if segment crosses a surface in fwd direction, 
                            tally current/weight */
-                        if ((_run_loo) && (!(_diffusion && (i == 0))))
+                        if (tally == 2)
                             tallyLooCurrent(track, segment, meshSurfaces, 1);
-                        else if ((_run_cmfd) || 
-                                 (_run_loo & _diffusion && (i == 0)))
+                        else if (tally == 1)
                             tallyCmfdCurrent(track, segment, meshSurfaces, 1);
 
                         /* Increments the scalar flux for this FSR */
@@ -1164,10 +1183,9 @@ void Solver::MOCsweep(int max_iterations)
 
                         /* if segment crosses a surface in bwd direction, 
                            tally quadrature flux for LOO acceleration */
-                        if ((_run_loo) && (!(_diffusion && (i == 0))))
+                        if (tally == 2)
                             tallyLooCurrent(track, segment, meshSurfaces, -1);
-                        else if ((_run_cmfd) || 
-                                 (_run_loo && _diffusion && (i == 0)))
+                        else if (tally == 1)
                             tallyCmfdCurrent(track, segment, meshSurfaces, -1);
 						
                         /* Increments the scalar flux for this FSR */
@@ -1487,7 +1505,7 @@ double Solver::runLoo(int i)
     double loo_keff;
 
     _cmfd->storePreMOCMeshSource(_flat_source_regions);
-    MOCsweep(_boundary_iteration + 1);
+    MOCsweep(_boundary_iteration + 1, i);
 
     _k_half = computeKeff(100);
 
@@ -1514,7 +1532,7 @@ double Solver::runCmfd(int i)
 {
     double cmfd_keff;
 
-    MOCsweep(_boundary_iteration + 1);
+    MOCsweep(_boundary_iteration + 1, i);
     _k_half = computeKeff(100);
 
     /* compute cross sections and diffusion coefficients */
@@ -1644,7 +1662,7 @@ double Solver::kernel(int max_iterations) {
         else if ((_run_loo) && !(_acc_after_MOC_converge))
             _loo_k = runLoo(i);
         else 
-            MOCsweep(1);
+            MOCsweep(1, i);
 
         /* Update FSR's flux based on cell-averaged flux coming from the
          * acceleration steps */
