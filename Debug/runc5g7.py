@@ -4,16 +4,16 @@ from itertools import cycle
 import numpy as np
 import os
 
-geometries = ['geometry_pin5.xml']
+geometries = ['geometry_c5g7.xml']
 #['geometry_UO2.xml', 'geometry_c5g7.xml', 
 # 'geometry_c5g7_wo_refl.xml', 'geometry_UO2_leakage.xml']
 
-materials = ['material_simple.xml', 'material_c5g7.xml', 
+materials = ['material_c5g7.xml', 'material_c5g7.xml', 
              'material_c5g7.xml', 'material_c5g7.xml']
 
 # C4 default is: 0.5cm, 64 azimuthal angle
-ts = [0.05]
-na = [128]
+ts = [0.5]
+na = [64]
 fc = [1e-8]
 
 # plot color 
@@ -45,28 +45,28 @@ for i, geometry in enumerate(geometries):
                       + ' -na ' + str(angle) 
                       + ' -ts ' + str(spacing) 
                       + ' -fc ' + str(fc[0]) 
-                      + ' -wc -df 1.0')
+                      + ' -wl1 -bi 0')
             os.system('../bin/openmoc'
                       + ' -m ../xml-sample/Cmfd/' + materials[i]
                       + ' -g ../xml-sample/Cmfd/' + geometry 
                       + ' -na ' + str(angle) 
                       + ' -ts ' + str(spacing) 
                       + ' -fc ' + str(fc[0])
-                      + ' -wc -df 0.7')
+                      + ' -wl1')
             os.system('../bin/openmoc'
                       + ' -m ../xml-sample/Cmfd/' + materials[i]
                       + ' -g ../xml-sample/Cmfd/' + geometry 
                       + ' -na ' + str(angle) 
                       + ' -ts ' + str(spacing) 
                       + ' -fc ' + str(fc[0])
-                      + ' -wl1 -df 1.0 -nub')
+                      + ' -wl2 -bi 0')
             os.system('../bin/openmoc'
                       + ' -m ../xml-sample/Cmfd/' + materials[i]
                       + ' -g ../xml-sample/Cmfd/' + geometry 
                       + ' -na ' + str(angle) 
                       + ' -ts ' + str(spacing) 
                       + ' -fc ' + str(fc[0])
-                      + ' -wl2 -df 1.0 -nub')
+                      + ' -wl2')
 
     # list of l2_norm files
     l2_norm_files = []
@@ -94,6 +94,11 @@ for i, geometry in enumerate(geometries):
         for c_num, c in enumerate(file):
             if c == '_':
                 damp = file[-19:-16]
+                break
+
+        for c_num, c in enumerate(file):
+            if c == '_':
+                bi = file[-21:-20]
                 break
 
         # find number of lines in file
@@ -128,7 +133,7 @@ for i, geometry in enumerate(geometries):
         for i in range(4):  
             plt.figure(i)
             plt.semilogy(iteration, var[i], next(linecycle), 
-            label = ("%s boundary %s damp %s" %(method, update, damp)), 
+                         label = ("%s bu %s bi %s" %(method, update, bi)), 
                          markersize=5)
             plt.xlim(0, max_num_lines + 1)
             plt.legend(loc='upper center', ncol=3, prop = fontP, shadow=True, 

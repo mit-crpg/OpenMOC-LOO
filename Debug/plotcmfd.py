@@ -4,7 +4,7 @@ from itertools import cycle
 import numpy as np
 import os
 
-geometries = ['geometry_c5g7_refl.xml']
+geometries = ['geometry_c5g7.xml']
 geometry = geometries[0]
 
 # plot color 
@@ -53,14 +53,20 @@ for file in l2_norm_files:
             damp = file[-19:-16]
             break
 
+    # 21 is "1",  23-24 is "bi", 
     for c_num, c in enumerate(file):
         if c == '_':
-            ts = file[-24:-20]
+            bi = file[-21:-20]
             break
 
     for c_num, c in enumerate(file):
         if c == '_':
-            na = file[-27:-25]
+            ts = file[-29:-25]
+            break
+
+    for c_num, c in enumerate(file):
+        if c == '_':
+            na = file[-31:-29]
             break
 
     # find number of lines in file
@@ -94,7 +100,7 @@ for file in l2_norm_files:
     for i in range(4):  
         plt.figure(i)
         plt.semilogy(iteration, var[i], next(linecycle), 
-        label = ("%s boundary %s damp %s" %(method, update, damp)), 
+                     label = ("%s bu %s bi %s" %(method, update, bi)), 
                      markersize=5)
         plt.xlim(0, max_num_lines + 1)
         plt.legend(loc='upper center', ncol=3, prop = fontP, shadow=True, 
