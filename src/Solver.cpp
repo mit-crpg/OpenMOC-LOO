@@ -513,7 +513,7 @@ void Solver::updateBoundaryFluxByQuadrature()
     MeshSurface *meshSurface, **meshSurfaces;
     double phi, factor;
     double *polar_fluxes;
-    int ind, num_segments, pe, surfID, num_updated = 0;
+    int ind, num_segments, pe, surf_id, num_updated = 0;
 
     meshSurfaces = _geom->getMesh()->getSurfaces();
 
@@ -523,83 +523,53 @@ void Solver::updateBoundaryFluxByQuadrature()
         {
             track = &_tracks[i][j];
             num_segments = track->getNumSegments();
+            polar_fluxes = track->getPolarFluxes();
             phi = track->getPhi();
             if (phi < PI / 2.0)
                 ind = 1;
             else
                 ind = 0;
-			
-            /* Forward direction */
-            seg = track->getSegment(0); /* get the boundary segment */
-            surfID = seg->_mesh_surface_bwd; /* the surface it starts from */
-            if (surfID == -1)
-                log_printf(WARNING, "surfID = -1");
-            meshSurface = meshSurfaces[surfID];
-            polar_fluxes = track->getPolarFluxes();
-            pe = 0;
-            for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
-            {
-                if (meshSurface->getOldQuadFlux(e, ind) > 0)
-                {
-                    factor = meshSurface->getQuadFlux(e, ind) 
-                        / meshSurface->getOldQuadFlux(e, ind);
-                    log_printf(DEBUG, "forward factor = %.10f", factor);
-                    for (int p = 0; p < NUM_POLAR_ANGLES; p++)
-                    {
-                        track->setBoundaryPolarFluxes(pe, 
-                                                      polar_fluxes[pe] 
-                                                      * factor);
-                        pe++;
-                        num_updated++;
-                    }	
-                }	
-                else
-                {
-                    if (e == 0)
-                    {
-                        log_printf(ACTIVE, 
-                                   "e %d i %d j %d (total %d) %f -> %f"
-                                   " forward phi %f",
-                                   e, i, j, _num_tracks[i],
-                                   meshSurface->getOldQuadFlux(e, ind),
-                                   meshSurface->getQuadFlux(e, ind), phi);
-                    }		
-                }
-            }
 
-            /* Backward direction*/
-            seg = track->getSegment(num_segments - 1); 
-            surfID = seg->_mesh_surface_fwd; 
-            meshSurface = meshSurfaces[surfID];
-            pe = GRP_TIMES_ANG;
-            for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
+            /* Forward direction is 0, backward is 1 */
+            for (int dir = 0; dir < 2; dir++)
             {
-                if (meshSurface->getOldQuadFlux(e, ind) > 0)
-                {
-                    factor = meshSurface->getQuadFlux(e, ind) 
-                        / meshSurface->getOldQuadFlux(e, ind);
-                    log_printf(DEBUG, "backward factor = %.10f", factor);
-
-                    for (int p = 0; p < NUM_POLAR_ANGLES; p++)
-                    {
-                        track->setBoundaryPolarFluxes(pe, 
-                                                      polar_fluxes[pe] 
-                                                      * factor);
-                        pe++;
-                        num_updated++;
-                    }	
-                }	
+                seg = track->getSegment(dir * (num_segments - 1));
+                if (dir == 0)
+                    surf_id = seg->_mesh_surface_bwd; 
                 else
+                    surf_id = seg->_mesh_surface_fwd;
+                if (surf_id == -1)
+                    log_printf(WARNING, "wrong surface! surf_id = -1");
+                meshSurface = meshSurfaces[surf_id];
+                pe = dir * GRP_TIMES_ANG;
+                for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
                 {
-                    if (e == 0)
+                    if (meshSurface->getOldQuadFlux(e, ind) > 0)
                     {
-                        log_printf(ACTIVE, 
-                                   "e %d i %d j %d (total %d) %f -> %f"
-                                   " backwar phi %f",
-                                   e, i, j, _num_tracks[i],
-                                   meshSurface->getOldQuadFlux(e, ind),
-                                   meshSurface->getQuadFlux(e, ind), phi);
-                    }		
+                        factor = meshSurface->getQuadFlux(e, ind) 
+                            / meshSurface->getOldQuadFlux(e, ind);
+                        log_printf(DEBUG, "factor = %.10f", factor);
+                        for (int p = 0; p < NUM_POLAR_ANGLES; p++)
+                        {
+                            track->setBoundaryPolarFluxes(pe, 
+                                                          polar_fluxes[pe] 
+                                                          * factor);
+                            pe++;
+                            num_updated++;
+                        }	
+                    }	
+                    else
+                    {
+                        if (e == 0)
+                        {
+                            log_printf(ACTIVE, 
+                                       "e %d i %d j %d (total %d) %f -> %f"
+                                       " forward phi %f",
+                                       e, i, j, _num_tracks[i],
+                                       meshSurface->getOldQuadFlux(e, ind),
+                                       meshSurface->getQuadFlux(e, ind), phi);
+                        }		
+                    }
                 }
             }
         }
@@ -1779,9 +1749,9 @@ double Solver::kernel(int max_iterations) {
         if (i == 0)
         {
             logfile.open(title_str.c_str(), std::fstream::trunc);
-            logfile << "# iteration, mesh cell l2 norm (m+1, m+1/2),"
-                    << " fsr l-inf norm (m+1, m+1/2),"
-                    << " fsr l-2 norm (m+1, m+1/2)," 
+            logfile << "# iteration, mesh cell l2 norm (m+1/2, m+1),"
+                    << " fsr l-inf norm (m, m+1),"
+                    << " fsr l-2 norm (m, m+1)," 
                     << " keff relative change"
                     << ", # loo iterations "
                     << ", keff"

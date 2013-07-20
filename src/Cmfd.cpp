@@ -1104,7 +1104,6 @@ void Cmfd::computeQuadSrc()
  */
 double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter)
 {
-
     log_printf(INFO, "Running diffusion solver...");
 
     /* initialize variables */
@@ -2608,54 +2607,34 @@ void Cmfd::updateBoundaryFluxByHalfSpace()
         {
             track = &_tracks[i][j];
             num_segments = track->getNumSegments();
-
-            /* Forward direction */
-            seg = track->getSegment(0); /* get the boundary segment */
-            fsr =&_flat_source_regions[seg->_region_id];
-            meshCell_id = fsr->getMeshCellId();
-            meshCell = _mesh->getCells(meshCell_id);
             polar_fluxes = track->getPolarFluxes();
-            pe = 0;
-            for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
-            {
-                if (meshCell->getOldFlux()[e] > 0)
-                {
-                    factor = meshCell->getNewFlux()[e]
-                        / meshCell->getOldFlux()[e];
-                    log_printf(DEBUG, "forward factor = %.10f", factor);
-                    for (int p = 0; p < NUM_POLAR_ANGLES; p++)
-                    {
-                        track->setBoundaryPolarFluxes(pe, 
-                                                      polar_fluxes[pe] 
-                                                      * factor);
-                        pe++;
-                        num_updated++;
-                    }	
-                }	
-            }
 
-            /* Backward direction*/
-            seg = track->getSegment(num_segments - 1); 
-            fsr =&_flat_source_regions[seg->_region_id];
-            meshCell_id = fsr->getMeshCellId();
-            meshCell = _mesh->getCells(meshCell_id);
-            pe = GRP_TIMES_ANG;
-            for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
+            /* Forward direction is 0, backward is 1 */
+            for (int dir = 0; dir < 2; dir++)
             {
-                if (meshCell->getOldFlux()[e] > 0)
+                /* forward gets 0, backwards get num_segments - 1 */
+                seg = track->getSegment(dir * (num_segments - 1)); 
+                fsr =&_flat_source_regions[seg->_region_id];
+                meshCell_id = fsr->getMeshCellId();
+                meshCell = _mesh->getCells(meshCell_id);
+                pe = dir * GRP_TIMES_ANG;
+                for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
                 {
-                    factor = meshCell->getNewFlux()[e]
-                        / meshCell->getOldFlux()[e];
-                    log_printf(DEBUG, "forward factor = %.10f", factor);
-                    for (int p = 0; p < NUM_POLAR_ANGLES; p++)
+                    if (meshCell->getOldFlux()[e] > 0)
                     {
-                        track->setBoundaryPolarFluxes(pe, 
-                                                      polar_fluxes[pe] 
-                                                      * factor);
-                        pe++;
-                        num_updated++;
+                        factor = meshCell->getNewFlux()[e]
+                            / meshCell->getOldFlux()[e];
+                        log_printf(DEBUG, "factor = %.10f", factor);
+                        for (int p = 0; p < NUM_POLAR_ANGLES; p++)
+                        {
+                            track->setBoundaryPolarFluxes(pe, 
+                                                          polar_fluxes[pe] 
+                                                          * factor);
+                            pe++;
+                            num_updated++;
+                        }	
                     }	
-                }	
+                }
             }
         }
     }
