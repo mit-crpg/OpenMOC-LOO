@@ -2639,7 +2639,8 @@ void Cmfd::updateBoundaryFluxByHalfSpace()
         }
     }
 
-    log_printf(ACTIVE, "total updated boundary flux: %d", num_updated);
+    log_printf(ACTIVE, "total updated boundary flux by mesh cell: %d", 
+               num_updated);
     return;
 }
 

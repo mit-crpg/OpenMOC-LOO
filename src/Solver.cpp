@@ -524,6 +524,7 @@ void Solver::updateBoundaryFluxByQuadrature()
             track = &_tracks[i][j];
             num_segments = track->getNumSegments();
             polar_fluxes = track->getPolarFluxes();
+
             phi = track->getPhi();
             if (phi < PI / 2.0)
                 ind = 1;
@@ -534,12 +535,19 @@ void Solver::updateBoundaryFluxByQuadrature()
             for (int dir = 0; dir < 2; dir++)
             {
                 seg = track->getSegment(dir * (num_segments - 1));
+
                 if (dir == 0)
                     surf_id = seg->_mesh_surface_bwd; 
                 else
                     surf_id = seg->_mesh_surface_fwd;
-                if (surf_id == -1)
-                    log_printf(WARNING, "wrong surface! surf_id = -1");
+
+                if ((surf_id % 8 == 4) || (surf_id % 8 == 5))
+                    surf_id = (surf_id / 8) * 8 + 1;
+                else if (surf_id % 8 == 6)
+                    surf_id = (surf_id / 8) * 8 + 2;
+                else if (surf_id % 8 == 7)
+                    surf_id = (surf_id / 8) * 8;
+
                 meshSurface = meshSurfaces[surf_id];
                 pe = dir * GRP_TIMES_ANG;
                 for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
@@ -575,7 +583,8 @@ void Solver::updateBoundaryFluxByQuadrature()
         }
     }
 
-    log_printf(ACTIVE, "total updated boundary flux: %d", num_updated);
+    log_printf(ACTIVE, "total updated boundary flux by quadrature: %d", 
+               num_updated);
     return;
 }
 
