@@ -219,8 +219,8 @@ void Mesh::setFSRBounds(boundaryType left, boundaryType right, boundaryType bott
 
 
 /* Using an fsr_id and coordinate, find which surface a coordinate is on */
-int Mesh::findMeshSurface(int fsr_id, LocalCoords* coord){
-
+int Mesh::findMeshSurface(int fsr_id, LocalCoords* coord)
+{
     int surface = -1;
     double x = coord->getX();
     double y = coord->getY();
@@ -228,44 +228,39 @@ int Mesh::findMeshSurface(int fsr_id, LocalCoords* coord){
     double limit = 1e-10;
 
     /* find which MeshCell fsr_id is in -> get meshSuface that coord is on*/
-    for (int i = 0; i < _cell_width * _cell_height; i++){
-        if (fsr_id >= _fsr_indices[2*i] && fsr_id <= _fsr_indices[2*i+1]){
-
+    for (int i = 0; i < _cell_width * _cell_height; i++)
+    {
+        if (fsr_id >= _fsr_indices[2*i] && fsr_id <= _fsr_indices[2*i+1])
+        {
             /* find which surface coord is on */
             /* left */
-            if (fabs(x - _cell_bounds[i*4+0]) < limit){
+            if (fabs(x - _cell_bounds[i*4+0]) < limit)
+            {
                 if (fabs(y - _cell_bounds[i*4+1]) > limit && 
-                    fabs(y - _cell_bounds[i*4+3]) > limit){
+                    fabs(y - _cell_bounds[i*4+3]) > limit)
                     surface = i*8+0;
-                }
-                else if (fabs(y - _cell_bounds[i*4+3]) < limit){
+                else if (fabs(y - _cell_bounds[i*4+3]) < limit)
                     surface = i*8+7;
-                }
-                else{
+                else
                     surface = i*8+4;
-                }
             }
             /* right */
-            else if (fabs(x - _cell_bounds[i*4+2]) < limit){
+            else if (fabs(x - _cell_bounds[i*4+2]) < limit)
+            {
                 if (fabs(y - _cell_bounds[i*4+1]) > limit && 
-                    fabs(y - _cell_bounds[i*4+3]) > limit){
+                    fabs(y - _cell_bounds[i*4+3]) > limit)
                     surface = i*8+2;
-                }
-                else if (fabs(y - _cell_bounds[i*4+3]) < limit){
+                else if (fabs(y - _cell_bounds[i*4+3]) < limit)
                     surface = i*8+6;
-                }
-                else{
+                else
                     surface = i*8+5;
-                }
             }
             /* top */
-            else if (fabs(y - _cell_bounds[i*4+3]) < limit){
+            else if (fabs(y - _cell_bounds[i*4+3]) < limit)
                 surface = i*8+3;
-            }
             /* bottom */
-            else if (fabs(y - _cell_bounds[i*4+1]) < limit){
+            else if (fabs(y - _cell_bounds[i*4+1]) < limit)
                 surface = i*8+1;
-            }
 
             break;
         }
@@ -274,27 +269,35 @@ int Mesh::findMeshSurface(int fsr_id, LocalCoords* coord){
     return surface;
 }
 
-void Mesh::printBounds(){
-
+void Mesh::printBounds()
+{
     double* bounds;
 
-    for (int i = 0; i < _cell_width * _cell_height; i++){
+    for (int i = 0; i < _cell_width * _cell_height; i++)
+    {
         bounds = _cells[i].getBounds();
-        log_printf(NORMAL, "cell: %i bounds [%f, %f, %f, %f]", i, bounds[0], bounds[1], bounds[2], bounds[3]);
+        log_printf(NORMAL, "cell: %i bounds [%f, %f, %f, %f]", 
+                   i, bounds[0], bounds[1], bounds[2], bounds[3]);
     }
-
+    
+    return;
 }
 
 
-void Mesh::printCurrents(){
-
+void Mesh::printCurrents()
+{
     double current;
 
-    for (int i = 0; i < _cell_width * _cell_height; i++){
-        for (int surface = 0; surface < 8; surface++){
-            for (int group = 0; group < NUM_ENERGY_GROUPS; group++){
+    for (int i = 0; i < _cell_width * _cell_height; i++)
+    {
+        for (int surface = 0; surface < 8; surface++)
+        {
+            for (int group = 0; group < NUM_ENERGY_GROUPS; group++)
+            {
                 current = _cells[i].getMeshSurfaces(surface)->getCurrent(group);
-                log_printf(NORMAL, "cell: %i, surface: %i, group: %i, current: %f", i, surface, group, current);
+                log_printf(NORMAL, 
+                           "cell: %i, surface: %i, group: %i, current: %f", 
+                           i, surface, group, current);
             }
         }
     }
@@ -309,8 +312,6 @@ void Mesh::setBoundary(boundaryType boundary, int s){
 boundaryType Mesh::getBoundary(int s){
     return _boundary[s];
 }
-
-
 
 void Mesh::splitCornerCurrents_old(){
 
