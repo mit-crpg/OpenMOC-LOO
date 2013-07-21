@@ -254,23 +254,23 @@ void Geometry::addSurface(Surface* surface) {
     /* Use new surface to update the boundaries of the geometry */
     switch (surface->getBoundary()) {
     case REFLECTIVE:
-        if (surface->getXMin() <= _x_min)
+        if (surface->getXMin() <_x_min)
             _x_min = surface->getXMin();
-        if (surface->getXMax() >= _x_max)
+        if (surface->getXMax() > _x_max)
             _x_max = surface->getXMax();
-        if (surface->getYMin() <= _y_min)
+        if (surface->getYMin() < _y_min)
             _y_min = surface->getYMin();
-        if (surface->getYMax() >= _y_max)
+        if (surface->getYMax() > _y_max)
             _y_max = surface->getYMax();
         break;
     case VACUUM:
-        if (surface->getXMin() <= _x_min)
+        if (surface->getXMin() < _x_min)
             _x_min = surface->getXMin();
-        if (surface->getXMax() >= _x_max)
+        if (surface->getXMax() > _x_max)
             _x_max = surface->getXMax();
-        if (surface->getYMin() <= _y_min)
+        if (surface->getYMin() < _y_min)
             _y_min = surface->getYMin();
-        if (surface->getYMax() >= _y_max)
+        if (surface->getYMax() > _y_max)
             _y_max = surface->getYMax();
         break;
     case BOUNDARY_NONE:

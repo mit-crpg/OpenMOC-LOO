@@ -1025,19 +1025,23 @@ void Plotter::plotCmfdFluxUpdate(Mesh* mesh, int iter_num)
         ng = NUM_ENERGY_GROUPS;
     }
 
-    for (int e = 0; e < ng; e++){
+    MeshCell *meshCell;
+    int id;
+    double ratio;
 
+    for (int e = 0; e < ng; e++)
+    {
         /* find meshCell for each pixel */
-        for (int y=0;y < _bit_length_y; y++){
-            for (int x = 0; x < _bit_length_x; x++){
+        for (int y= 0;y < _bit_length_y; y++)
+        {
+            for (int x = 0; x < _bit_length_x; x++)
+            {
                 x_global = convertToGeometryX(x);
                 y_global = convertToGeometryY(y);
-                bitMap->pixels[y * _bit_length_x + x] = 
-                    mesh->getCells(mesh->findMeshCell(x_global, y_global))
-                    ->getNewFlux()[e] 
-                    /
-                    mesh->getCells(mesh->findMeshCell(x_global, y_global))
-                    ->getOldFlux()[e];
+                id = mesh->findMeshCell(x_global, y_global);
+                meshCell = mesh->getCells(id);
+                ratio = meshCell->getNewFlux()[e] / meshCell->getOldFlux()[e];
+                bitMap->pixels[y * _bit_length_x + x] = ratio;
             }
         }
 

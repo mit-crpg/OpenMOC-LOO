@@ -109,13 +109,16 @@ Track **TrackGenerator::getTracks() const {
 void TrackGenerator::generateTracks() {
 
     /* Check to make sure that height, width of the geometry are nonzero */
-    if (_geom->getHeight() <= 0 || _geom->getHeight() <= 0)
+    if ((_geom->getHeight() <= 0 - ON_SURFACE_THRESH) || 
+        (_geom->getWidth() <= 0 - ON_SURFACE_THRESH))
+    {
         log_printf(ERROR, "The total height and width of the geometry must be"
-                   "nonzero for track generation. Please specify the height and "
-                   "width in the geometry input file.");
+                   "nonzero for track generation. Please specify the height"
+                   " and width in the geometry input file.");
+    }
 
-
-    try {
+    try 
+    {
         log_printf(NORMAL, "Computing azimuthal angles and track spacings...");
 
         /* Each element in arrays corresponds to a track angle in phi_eff */
@@ -142,8 +145,8 @@ void TrackGenerator::generateTracks() {
         bitMap->color_type = BLACKWHITE;
 
         /* Determine azimuthal angles and track spacing */
-        for (int i = 0; i < _num_azim; i++) {
-
+        for (int i = 0; i < _num_azim; i++) 
+        {
             /* desired angle */
             double phi = 2.0 * M_PI / iazim * (0.5 + i);
 
@@ -170,8 +173,8 @@ void TrackGenerator::generateTracks() {
         }
 
         /* Compute azimuthal weights */
-        for (int i = 0; i < _num_azim; i++) {
-
+        for (int i = 0; i < _num_azim; i++) 
+        {
             if (i < _num_azim - 1)
                 x1 = 0.5 * (phi_eff[i+1] - phi_eff[i]);
             else
@@ -189,8 +192,8 @@ void TrackGenerator::generateTracks() {
         log_printf(INFO, "Generating track start and end points...");
 
         /* Compute track starting and end points */
-        for (int i = 0; i < _num_azim; i++) {
-
+        for (int i = 0; i < _num_azim; i++) 
+        {
             /* Tracks for azimuthal angle i */
             _tracks[i] = new Track[_num_tracks[i]];
 
@@ -204,22 +207,20 @@ void TrackGenerator::generateTracks() {
                 /* If track points to the upper right */
                 if (sin(phi_eff[i]) > 0 && cos(phi_eff[i]) > 0)
                 {
-                    _tracks[i][_num_x[i]+j].getStart()->setCoords(0,
-                                                                  dy_eff[i] 
-                                                                  * (0.5 + j));
+                    _tracks[i][_num_x[i]+j].getStart()
+                        ->setCoords(0, dy_eff[i] * (0.5 + j));
                 }
                 /* If track points to the upper left */
                 else if (sin(phi_eff[i]) > 0 && cos(phi_eff[i]) < 0)
                 {
-                    _tracks[i][_num_x[i]+j].getStart()->setCoords(width,
-                                                                  dy_eff[i] 
-                                                                  * (0.5 + j));
+                    _tracks[i][_num_x[i]+j].getStart()
+                        ->setCoords(width, dy_eff[i] * (0.5 + j));
                 }
             }
 
             /* Compute the exit points for each track */
-            for (int j = 0; j < _num_tracks[i]; j++) {
-
+            for (int j = 0; j < _num_tracks[i]; j++) 
+            {
                 /* Set the track's end point */
                 Point* start = _tracks[i][j].getStart();
                 Point* end = _tracks[i][j].getEnd();
@@ -269,17 +270,15 @@ void TrackGenerator::generateTracks() {
                          + (new_y1 - new_y0) * (new_y1 - new_y0)) << std::endl;
 #endif
                 /* Add line to segments bitmap */
-                if (_plotter->plotSpecs() == true){
+                if (_plotter->plotSpecs() == true)
                     drawLine(bitMap, new_x0, new_y0, new_x1, new_y1, 1);
-                }
             }
         }
 #if 0
         file.close();
 #endif
-        if (_plotter->plotSpecs() == true){
+        if (_plotter->plotSpecs() == true)
             plot(bitMap, "tracks", _plotter->getExtension());
-        }
 
         deleteBitMap(bitMap);
         delete [] dx_eff;
@@ -289,12 +288,13 @@ void TrackGenerator::generateTracks() {
 
         return;
     }
-
-    catch (std::exception &e) {
-        log_printf(ERROR, "Unable to allocate memory needed to generate tracks"
-                   ".Backtrace:\n%s", e.what());
+    catch (std::exception &e) 
+    {
+        log_printf(ERROR, "Unable to allocate memory needed to generate "
+                   "tracks. Backtrace:\n%s", e.what());
     }
 
+    return;    
 }
 
 

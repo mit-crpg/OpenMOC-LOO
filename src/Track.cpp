@@ -356,37 +356,37 @@ bool Track::contains(Point* point) {
 
     /* If the point is outside of the bounds of the start and end points of the
      * track it does not lie on the track */
-    if (!(((point->getX() <= _start.getX()+1.0E-2 &&
-            point->getX() >= _end.getX()-1.0E-2)
-           || (point->getX() >= _start.getX()-1.0E-2 &&
-               point->getX() <= _end.getX()+1.0E-2))
+    if (!(((point->getX() <= _start.getX()+1.0E-5 &&
+            point->getX() >= _end.getX()-1.0E-5)
+           || (point->getX() >= _start.getX()-1.0E-5 &&
+               point->getX() <= _end.getX()+1.0E-5))
           &&
-          ((point->getY() <= _start.getY()+1.0E-2 &&
-            point->getY() >= _end.getY()-1.0E-2)
-           || (point->getY() >= _start.getY()-1.0E-2 &&
-               point->getY() <= _end.getY()+1.0E-2)))) {
+          ((point->getY() <= _start.getY()+1.0E-5 &&
+            point->getY() >= _end.getY()-1.0E-5)
+           || (point->getY() >= _start.getY()-1.0E-5 &&
+               point->getY() <= _end.getY()+1.0E-5)))) {
 
         return false;
     }
 
 
     /* If the track is vertical */
-    if (fabs(_phi - M_PI / 2) < 1E-10) {
+    if (fabs(_phi - M_PI / 2) < 1E-10) 
+    {
         if (fabs(point->getX() - _start.getX()) < 1E-10)
             return true;
         else
             return false;
     }
     /* If the track is not vertical */
-    else {
+    else 
+    {
         m = sin(_phi) / cos(_phi);
 
         /* Use point-slope formula */
-        if (fabs(point->getY() - (_start.getY() +
-                                  m * (point->getX() - _start.getX()))) < 1e-10) {
-
+        if (fabs(point->getY() - 
+                 (_start.getY() + m * (point->getX() - _start.getX()))) < 1e-10)
             return true;
-        }
         else
             return false;
     }
@@ -396,7 +396,8 @@ bool Track::contains(Point* point) {
 /**
  * Deletes each of this track's segments
  */
-void Track::clearSegments() {
+void Track::clearSegments() 
+{
     for (int i=0; i < (int)_segments.size(); i++)
         delete _segments.at(i);
 

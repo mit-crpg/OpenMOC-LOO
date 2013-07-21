@@ -225,9 +225,8 @@ void Cmfd::computeXS_old()
                 }
 
                 /* choose a chi for this group */
-                if (chi >= meshCell->getChi()[e]){
+                if (chi > meshCell->getChi()[e])
                     meshCell->setChi(chi,e);
-                }
             }
 
             /* if multigroup, set the multigroup parameters */
@@ -365,7 +364,7 @@ void Cmfd::computeXS()
                     scat_tally_group[g] += scat[g * NUM_ENERGY_GROUPS + e] 
                         * flux * volume;
                 }
-                if (chi >= meshCell->getChi()[e])
+                if (chi > meshCell->getChi()[e])
                     meshCell->setChi(chi,e);
             }
 
@@ -2539,18 +2538,20 @@ void Cmfd::updateMOCFlux(int iteration)
 
             tmp_max = fabs(new_flux / old_flux - 1.0);
             CMCO[i] += tmp_max;
+
+
             /*
-              if (tmp_max > max)
-              {
-              max = tmp_max;
-              max_i = i;
-              max_e = e;
-              }
+            if (tmp_max > max)
+            {
+                max = tmp_max;
+                max_i = i;
+                max_e = e;
+            }
             */
 
             log_printf(DEBUG, "Flux prolongation for cell %d"
                        " old =  %f, new = %f, new/old = %f", 
-                       i, old_flux, new_flux, new_flux / old_flux);
+                       i, old_flux, new_flux, tmp_cmco);
 
             /* loop over FRSs in mesh cell */
             for (iter = meshCell->getFSRs()->begin(); 

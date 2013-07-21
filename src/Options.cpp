@@ -33,7 +33,7 @@ Options::Options(int argc, char **argv)
     _loo1 = false;
     _loo2 = false;
     _damp_factor = 1.0;
-    _boundary_iteration = 1;
+    _boundary_iteration = 0;
     _diffusion = true;			/* run diffusion for 1st iter */
     _update_boundary = true;            /* update boundary angular flux */
 

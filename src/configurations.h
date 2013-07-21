@@ -58,5 +58,6 @@
  * track segmentation */
 #define TINY_MOVE 1E-10
 
+#define TINY_ANGLE 1E-10
 
 #endif /* CONFIGURATIONS_H_ */

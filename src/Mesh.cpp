@@ -68,8 +68,8 @@ bool Mesh::getPrintMatrices(){
 /* given an x,y coordinate, find what mesh cell the point is in */
 
 
-int Mesh::findMeshCell(double pointX, double pointY){
-
+int Mesh::findMeshCell(double pointX, double pointY)
+{
     double left = - _width / 2.0;
     double bottom = - _height / 2.0;
     double height, width;
@@ -77,12 +77,15 @@ int Mesh::findMeshCell(double pointX, double pointY){
     for (int y = 0; y < _cell_height; y++){
         height = getCells(y * _cell_width)->getHeight();
 
-        if (pointY >= bottom && pointY <= bottom + height)
+        if ((pointY > bottom - ON_LATTICE_CELL_THRESH) && 
+            (pointY < bottom + height + ON_LATTICE_CELL_THRESH))
         {
             for (int x = 0; x < _cell_width; x++)
             {
                 width = getCells(y * _cell_width + x)->getWidth();
-                if (pointX >= left && pointX <= left + width)
+
+                if ((pointX > left - ON_LATTICE_CELL_THRESH)
+                    && (pointX < left + width + ON_LATTICE_CELL_THRESH))
                     return y * _cell_width + x;
                 left += width;
             }

@@ -862,7 +862,7 @@ void Solver::tallyLooCurrent(Track *track, segment *segment,
         polar_fluxes = track->getPolarFluxes();
 
         /* Defines index */
-        if (track->getPhi() >= PI/2.0)
+        if (track->getPhi() > PI/2.0)
             index = 1;
 
         /* Obtains the surface that the segment crosses */
@@ -1045,7 +1045,7 @@ void Solver::MOCsweep(int max_iterations, int moc_iter)
 
                             fsr_flux[e] = 0;
                             sigma_t_l = sigma_t[e] * segment->_length;
-                            //sigma_t_l = std::min(sigma_t_l,10.0);
+                            sigma_t_l = std::min(sigma_t_l,10.0);
                             index = sigma_t_l / _pre_factor_spacing;
                             index = std::min(index * 2 * NUM_POLAR_ANGLES,
                                              _pre_factor_max_index);
@@ -1129,7 +1129,7 @@ void Solver::MOCsweep(int max_iterations, int moc_iter)
                         {
                             fsr_flux[e] = 0;
                             sigma_t_l = sigma_t[e] * segment->_length;
-                            //sigma_t_l = std::min(sigma_t_l,10.0);
+                            sigma_t_l = std::min(sigma_t_l,10.0);
                             index = sigma_t_l / _pre_factor_spacing;
                             index = std::min(index * 2 * NUM_POLAR_ANGLES,
                                              _pre_factor_max_index);
@@ -1202,35 +1202,34 @@ void Solver::MOCsweep(int max_iterations, int moc_iter)
             }
         }
 		
-        /* Add in source term and normalize flux to volume for each region */
-        /* Loop over flat source regions, energy groups */
-#if USE_OPENMP
-#pragma omp parallel for private(fsr, scalar_flux, ratios,      \
-                                 sigma_t, volume)
-#endif
-        for (int r = 0; r < _num_FSRs; r++) 
-        {
-            fsr = &_flat_source_regions[r];
-            scalar_flux = fsr->getFlux();
-            ratios = fsr->getRatios();
-            sigma_t = fsr->getMaterial()->getSigmaT();
-            volume = fsr->getVolume();
-
-            for (int e = 0; e < NUM_ENERGY_GROUPS; e++) 
-            {
-                fsr->setFlux(e, FOUR_PI * ratios[e] 
-                             + (scalar_flux[e] / (2.0 * sigma_t[e] * volume)));
-            }
-        }
-		
-        normalizeFlux();
-
-
         /* If more than one iteration is requested, we only computes source for
          * the last iteration, all previous iterations are considered to be 
          * converging boundary fluxes */
         if (i == max_iterations - 1)
         {
+#if USE_OPENMP
+#pragma omp parallel for private(fsr, scalar_flux, ratios,  sigma_t, volume)
+#endif
+            /* Add in source term and normalize flux to volume for each FSR */
+            for (int r = 0; r < _num_FSRs; r++) 
+            {
+                fsr = &_flat_source_regions[r];
+                scalar_flux = fsr->getFlux();
+                ratios = fsr->getRatios();
+                sigma_t = fsr->getMaterial()->getSigmaT();
+                volume = fsr->getVolume();
+
+                for (int e = 0; e < NUM_ENERGY_GROUPS; e++) 
+                {
+                    fsr->setFlux(e, FOUR_PI * ratios[e] 
+                                 + (scalar_flux[e] / 
+                                    (2.0 * sigma_t[e] * volume)));
+                }
+            }
+		
+            normalizeFlux();
+
+
             //if (_run_loo)
             //	_cmfd->storePreMOCMeshSource(_flat_source_regions);
 
@@ -1484,6 +1483,7 @@ double Solver::runLoo(int i)
     double loo_keff;
 
     _cmfd->storePreMOCMeshSource(_flat_source_regions);
+
     MOCsweep(_boundary_iteration + 1, i);
 
     _k_half = computeKeff(100);

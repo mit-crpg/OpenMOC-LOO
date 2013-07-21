@@ -354,25 +354,25 @@ Cell* Lattice::findNextLatticeCell(LocalCoords* coords, double angle,
      * the current location of the localcoord */
 
     double distance = INFINITY;		/* Initial distance is infinity */
-    double d;						/* Current minimum distance */
+    double d;				/* Current minimum distance */
 
     /* Properties of the current localcoords */
     double x0 = coords->getX();
     double y0 = coords->getY();
     int lattice_x = coords->getLatticeX();
     int lattice_y = coords->getLatticeY();
-    double m = sin(angle) / cos(angle);		/* Slope of trajectory */
+    double m = sin(angle) / cos(angle);	/* Slope of trajectory */
 
     /* Properties of the new location for localcoords */
-    double x_curr, y_curr;			/* Current point of minimum distance */
-    double x_new = x0;				/* x-coordinate on new lattice cell */
-    double y_new = x0; 				/* y-coordinate on new lattice cell */
-    int new_lattice_x;	/* New x lattice cell index */
-    int new_lattice_y;	/* New y lattice cell index */
-    Point test;						/* Test point for computing distance */
+    double x_curr, y_curr;		/* Current point of minimum distance */
+    double x_new = x0;			/* x-coordinate on new lattice cell */
+    double y_new = x0; 			/* y-coordinate on new lattice cell */
+    int new_lattice_x;	                /* New x lattice cell index */
+    int new_lattice_y;	                /* New y lattice cell index */
+    Point test;				/* Test point for computing distance */
 
     /* Check lower lattice cell Lower lattice cell */
-    if (lattice_y >= 0 && angle >= M_PI) 
+    if (lattice_y >= 0 && angle >= M_PI - TINY_ANGLE) 
     {
         y_curr = (lattice_y - _num_y/2.0) * _width_y;
         x_curr = x0 + (y_curr - y0) / m;
@@ -394,7 +394,7 @@ Cell* Lattice::findNextLatticeCell(LocalCoords* coords, double angle,
     }
 
     /* Upper lattice cell */
-    if (lattice_y <= _num_y-1 && angle <= M_PI) {
+    if (lattice_y <= _num_y-1 && angle <= M_PI + TINY_ANGLE) {
         y_curr = (lattice_y - _num_y/2.0 + 1) * _width_y;
         x_curr = x0 + (y_curr - y0) / m;
         test.setCoords(x_curr, y_curr);
@@ -413,8 +413,10 @@ Cell* Lattice::findNextLatticeCell(LocalCoords* coords, double angle,
     }
 
     /* Left lattice cell */
-    if (lattice_x >= 0 && (angle >= M_PI/2 && angle <= 3*M_PI/2)) {
-        x_curr = (lattice_x - _num_x/2.0) * _width_x;
+    if (lattice_x >= 0 && (angle >= M_PI / 2.0 - TINY_ANGLE) && 
+        (angle <= 3.0 * M_PI / 2.0 + TINY_ANGLE))
+    {
+        x_curr = (lattice_x - _num_x / 2.0) * _width_x;
         y_curr = y0 + m * (x_curr - x0);
         test.setCoords(x_curr, y_curr);
 
@@ -432,7 +434,10 @@ Cell* Lattice::findNextLatticeCell(LocalCoords* coords, double angle,
     }
 
     /* Right lattice cell */
-    if (lattice_x <= _num_x-1 && (angle <= M_PI/2 || angle >= 3*M_PI/2)) {
+    if ((lattice_x <= _num_x - 1) && 
+        ((angle <= M_PI / 2.0 + TINY_ANGLE) || 
+         (angle >= 3.0 * M_PI / 2.0 - TINY_ANGLE)))
+    {
         x_curr = (lattice_x - _num_x/2.0 + 1) * _width_x;
         y_curr = y0 + m * (x_curr - x0);
         test.setCoords(x_curr, y_curr);
