@@ -695,6 +695,24 @@ void Solver::checkTrackSpacing() {
     delete [] FSR_segment_tallies;
 }
 
+/* Print out the four boundary conditions around the whole geometry in the 
+ * order of left, bottom, right, top. 
+ */
+void Solver::checkBoundary()
+{
+    std::string bc[4];
+    for (int s = 0; s < 4; s++)
+    {
+        if (_geom->getMesh()->getBoundary(s) == REFLECTIVE)
+            bc[s] = "reflective";
+        else
+            bc[s] = "vacuum";
+    }
+    log_printf(NORMAL, "Boundary conditions: %s %s %s %s", 
+               bc[0].c_str(), bc[1].c_str(), bc[2].c_str(), bc[3].c_str()); 
+
+    return;
+}
 
 /**
  * Plot the fission rates in each FSR and save them in a map of
@@ -1577,24 +1595,38 @@ double Solver::kernel(int max_iterations) {
 
     log_printf(NORMAL, "Starting kernel ...");
 
+    /* Initial guess */
+    _old_k_effs.push(_k_eff);
+    log_printf(NORMAL, "Starting guess of k_eff = %f", _k_eff);
+
     /* Gives cmfd a pointer to the FSRs */
     if ((_run_cmfd) || (_run_loo)) 
     {
         _cmfd->setFSRs(_flat_source_regions);
         _cmfd->setTracks(_tracks);
+        if (_update_boundary)
+        {
+            log_printf(NORMAL, "Acceleration is on with %d boundary iteration,"
+                       " %f damping, and update boundary flux" , 
+                       _boundary_iteration, _damp_factor);
+        }
+        else
+        {
+            log_printf(NORMAL, "Acceleration is on with %d boundary iteration,"
+                       " %f damping, and no update boundary flux" , 
+                       _boundary_iteration, _damp_factor);
+        }  
     }
 
     /* Check that each FSR has at least one segment crossing it */
     checkTrackSpacing();
 
-    /* Initial guess */
-    _old_k_effs.push(_k_eff);
-    log_printf(NORMAL, "Starting guess of k_eff = %f", _k_eff);
+    /* Check boundary conditions */
+    checkBoundary();
 
     /* Set scalar flux to unity for each region */
     oneFSRFluxes();
     initializeTrackFluxes(2.0 * ONE_OVER_FOUR_PI);
-    //initializeTrackFluxes(0.0);
 
     /* Set the old source to unity for each Region */
 #if USE_OPENMP
@@ -1619,15 +1651,6 @@ double Solver::kernel(int max_iterations) {
     /* Stores the initial FSR powers into old_fsr_powers */
     for (int n = 0; n < _num_FSRs; n++)
         old_fsr_powers[n] = _FSRs_to_powers[n];
-
-    if (_run_cmfd || _run_loo)
-    {
-        log_printf(NORMAL, "Acceleration is on with %d boundary iteration", 
-                   _boundary_iteration);
-        log_printf(NORMAL, "Acceleration is on with damping of %f",
-                   _damp_factor);
-    }
-
 
     /* Source iteration loop */
     for (i = 0; i < max_iterations; i++) 

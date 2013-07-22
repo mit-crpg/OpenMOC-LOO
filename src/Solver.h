@@ -108,6 +108,7 @@ public:
     double kernel(int max_iterations);
     void plotFluxes(int iter_num);
     void checkTrackSpacing();
+    void checkBoundary();
     void computeFsrPowers();
     void plotPinPowers();
     void checkNeutronBalance();
