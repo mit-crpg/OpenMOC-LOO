@@ -187,6 +187,9 @@ Options::Options(int argc, char **argv)
             else if (strcmp(argv[i], "-diff") == 0 ||
                      strcmp(argv[i], "--diffusion") == 0)
                 _diffusion = true;
+            else if (strcmp(argv[i], "-ndiff") == 0 ||
+                     strcmp(argv[i], "--nodiffusion") == 0)
+                _diffusion = false;
             else if (strcmp(argv[i], "-pd") == 0 ||
                      strcmp(argv[i], "--plotdiffusion") == 0)
                 _plot_diffusion = true;

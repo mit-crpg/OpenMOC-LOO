@@ -1103,7 +1103,10 @@ void Cmfd::computeQuadSrc()
  */
 double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter)
 {
-    log_printf(INFO, "Running diffusion solver...");
+    if (solveMethod == DIFFUSION)
+        log_printf(NORMAL, "Running coarse-mesh diffusion solver...");
+    else
+        log_printf(ACTIVE, "Running CMFD Acceleration");
 
     /* initialize variables */
     MeshCell* meshCell;

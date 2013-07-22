@@ -544,9 +544,9 @@ void Solver::updateBoundaryFluxByQuadrature()
                 if ((surf_id % 8 == 4) || (surf_id % 8 == 5))
                     surf_id = (surf_id / 8) * 8 + 1;
                 else if (surf_id % 8 == 6)
-                    surf_id = (surf_id / 8) * 8 + 2;
+                    surf_id -= 4;
                 else if (surf_id % 8 == 7)
-                    surf_id = (surf_id / 8) * 8;
+                    surf_id -= 7;
 
                 meshSurface = meshSurfaces[surf_id];
                 pe = dir * GRP_TIMES_ANG;
@@ -583,8 +583,8 @@ void Solver::updateBoundaryFluxByQuadrature()
         }
     }
 
-    log_printf(ACTIVE, "total updated boundary flux by quadrature: %d", 
-               num_updated);
+    log_printf(DEBUG, "updated boundary flux by quadrature per energy: %f", 
+               num_updated / (double) NUM_ENERGY_GROUPS);
     return;
 }
 
