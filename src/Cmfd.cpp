@@ -1635,7 +1635,6 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
         } /* finishing looping over i; exit to iter level */
 
         /* weighting on net current */
-        //double wp = 0.798184;
 #if phi_update	
         double wq = 1.0 * FOUR_PI;
         double wt = 1.0 / 8.0 * FOUR_PI;
@@ -1665,6 +1664,7 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
 
                 /* Store initial flux for debugging */
                 initial_flux = flux;
+                log_printf(ACTIVE, "Sweeping loop %d forward", j);
                 for (int x = _num_track * j; x < _num_track * (j + 1); x++)
                 {
                     i = _i_array[x];
@@ -1691,6 +1691,8 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
                         {
                             _mesh->getCells(i)->getMeshSurfaces(0)
                                 ->setQuadFlux(flux, e, 0);
+                            log_printf(ACTIVE, "update boundary for cell %d"
+                                       " energy %d surface 0 forward", i, e);
                         }
                         else if ((bc[1] == REFLECTIVE) && (t == 0) 
                                  && (i >= _cw * (_ch - 1)))
@@ -1703,11 +1705,15 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
                         {
                             _mesh->getCells(i)->getMeshSurfaces(2)
                                 ->setQuadFlux(flux, e, 0);
+                            log_printf(ACTIVE, "update boundary for cell %d"
+                                       " energy %d surface 2 forward", i, e);
                         }
-                        else if ((bc[3] == VACUUM) && (t == 4) && (i < _cw))
+                        else if ((bc[3] == REFLECTIVE) && (t == 4) && (i < _cw))
                         {
                             _mesh->getCells(i)->getMeshSurfaces(3)
                                 ->setQuadFlux(flux, e, 1);
+                            log_printf(ACTIVE, "update boundary for cell %d"
+                                       " energy %d surface 3 forward", i, e);
                         }
                     }
 
@@ -1729,6 +1735,9 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
                 {
                     _mesh->getCells(_i_array[_num_track * j])
                         ->getMeshSurfaces(1)->setQuadFlux(flux, e, 1);
+                    log_printf(ACTIVE, "update boundary for cell %d"
+                               " energy %d surface 1 forward", 
+                               _num_track * j, e);
                 }
                 else if (bc[1] == VACUUM)
                     leak_tot += flux;
@@ -1753,6 +1762,7 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
                     log_printf(ERROR, "spot unknown BC at surface 1");
 					
                 initial_flux = flux; 
+                log_printf(ACTIVE, "Sweeping loop %d backward", j);
                 for (int x = _num_track * j + _num_track - 1; 
                      x > _num_track * j - 1; x--)
                 {
@@ -1777,7 +1787,9 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
                         if ((bc[0] == REFLECTIVE) && (t == 5) && (i % _cw == 0))
                         {
                             _mesh->getCells(i)->getMeshSurfaces(0)
-                                ->setQuadFlux(flux, e, 1);	
+                                ->setQuadFlux(flux, e, 1);
+                            log_printf(ACTIVE, "update boundary for cell %d"
+                                       " energy %d surface 0 backward", i, e);	
                         }
                         else if ((bc[1] == REFLECTIVE) && (t == 7) 
                                  && (i >= _cw * (_ch - 1)))
@@ -1790,12 +1802,16 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
                         {
                             _mesh->getCells(i)->getMeshSurfaces(2)
                                 ->setQuadFlux(flux, e, 1);
+                            log_printf(ACTIVE, "update boundary for cell %d"
+                                       " energy %d surface 2 backward", i, e);
                         }
                         else if ((bc[3] == REFLECTIVE) && (t == 3)
                                  && (i < _cw))
                         {
                             _mesh->getCells(i)->getMeshSurfaces(3)
                                 ->setQuadFlux(flux, e, 0);
+                            log_printf(ACTIVE, "update boundary for cell %d"
+                                       " energy %d surface 3 backward", i, e);
                         }
                     }
 
@@ -1816,6 +1832,9 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
                 {
                     _mesh->getCells(_i_array[_num_track * j])
                         ->getMeshSurfaces(1)->setQuadFlux(flux, e, 0);
+                    log_printf(ACTIVE, "update boundary for cell %d"
+                               " energy %d surface 1 backward", 
+                               _num_track * j, e);
                 }
                 else if (bc[1] == VACUUM)
                     leak_tot += flux;
@@ -2076,6 +2095,7 @@ void Cmfd::normalizeFlux(double normalize)
 		
     for (int e = 0; e < _ng; e++)
     {
+        /* FIXME: should update every boundary flux */
         for (int j = 0; j < _num_loop; j++)
         {
             for (int jj = 0; jj < 2; jj++)
