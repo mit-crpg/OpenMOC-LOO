@@ -1400,7 +1400,7 @@ void Solver::normalizeFlux()
         for (int i = 0; i < cw * ch; i++)
         {
             meshCell = _geom->getMesh()->getCells(i);
-            for (int s = 0; s < 4; s++)
+            for (int s = 0; s < 8; s++)
             {
                 for (int e = 0; e < ng; e++)
                 {
@@ -1421,7 +1421,7 @@ void Solver::normalizeFlux()
         for (int i = 0; i < cw * ch; i++)
         {
             meshCell = _geom->getMesh()->getCells(i);
-            for (int s = 0; s < 4; s++)
+            for (int s = 0; s < 8; s++)
             {
                 for (int e = 0; e < ng; e++)
                 {

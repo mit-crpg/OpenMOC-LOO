@@ -1746,8 +1746,8 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
                     _mesh->getCells(_i_array[_num_track * j])
                         ->getMeshSurfaces(1)->setQuadFlux(flux, e, 1);
                     log_printf(ACTIVE, "update boundary for cell %d"
-                               " energy %d surface 1 forward", 
-                               _i_array[_num_track * j], e);
+                               " energy %d surface 1 forward %f", 
+                               _i_array[_num_track * j], e, flux);
                 }
                 else if (bc[1] == VACUUM)
                     leak_tot += flux;
@@ -1876,7 +1876,7 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
 
                     meshCell->setNewFlux(new_flux, e);
 					
-                    log_printf(ACTIVE, "Cell %d energy %d scalar flux"
+                    log_printf(DEBUG, "Cell %d energy %d scalar flux"
                                " update by (before normalization) -1 = %e", 
                                i, e, 
                                meshCell->getNewFlux()[e] 
@@ -1895,7 +1895,7 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
                     phi_ratio =  sum_quad_flux[i][e] 
                         / meshCell->getSumQuadFlux()[e];/// 8;
 
-                    log_printf(ACTIVE, "Cell %d energy %d scalar flux update "
+                    log_printf(DEBUG, "Cell %d energy %d scalar flux update "
                                "by (before normalization) - 1 = %e", 
                                i, e, phi_ratio - 1.0);
 
@@ -1948,8 +1948,6 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
         _keff = fis_tot / (abs_tot + leak_tot); 
         log_printf(ACTIVE, "%d: %.10f / (%.10f + %.10f)", 
                    iter, fis_tot, abs_tot, leak_tot);
-
-
 
         /* Computes the L2 norm of point-wise-division of energy-integrated
          * fission source of mesh cells between LOO iterations */
@@ -2093,29 +2091,32 @@ void Cmfd::normalizeFlux(double normalize)
         for (int e = 0; e < _ng; e++)
         {
             meshCell->setNewFlux(meshCell->getNewFlux()[e] * normalize, e);
-            log_printf(ACTIVE, "Cell %d energy %d scalar flux update by"
+            log_printf(DEBUG, "Cell %d energy %d scalar flux update by"
                        " (after normalization) - 1 =  %e", i, e, 
                        meshCell->getNewFlux()[e] 
                        / meshCell->getOldFlux()[e] - 1.0);
         }
     }
 
-///*
     if (_update_boundary)
     {
         double flux;
-#if 1
+#if 0
         for (int j = 0; j < _num_loop; j++)
         {
             log_printf(ACTIVE, "update cell %d, surface 1", 
                        _i_array[_num_track * j]);
+
             for (int jj = 0; jj < 2; jj++)
             {
-                for (int e = 0; e <_ng; e++)
+                for (int e = 0; e < _ng; e++)
                 {
                     flux = _mesh->getCells(_i_array[_num_track * j])
                         ->getMeshSurfaces(1)->getQuadFlux(e, jj);
-                    
+
+                    log_printf(ACTIVE, " e %d jj %d: %f -> %f", 
+                               e, jj, flux, flux * normalize);
+
                     _mesh->getCells(_i_array[_num_track * j])
                         ->getMeshSurfaces(1)
                         ->setQuadFlux(flux * normalize, e, jj);
@@ -2123,7 +2124,31 @@ void Cmfd::normalizeFlux(double normalize)
             }
         }
 #else
-        int x, y, i;
+        int x, i;
+
+        for (x = 0; x < _cw; x++)
+        {
+            i = (_ch - 1) * _cw + x;
+            
+            log_printf(ACTIVE, "update cell %d, surface 1", i);
+            for (int jj = 0; jj < 2; jj++)
+            {
+                for (int e = 0; e < _ng; e++)
+                {
+                    flux = _mesh->getCells(i)->getMeshSurfaces(1)
+                        ->getQuadFlux(e, jj);
+
+                    log_printf(ACTIVE, " e %d jj %d: %f -> %f", 
+                               e, jj, flux, flux * normalize);
+
+                    _mesh->getCells(i)->getMeshSurfaces(1)
+                        ->setQuadFlux(flux * normalize, e, jj);
+                }        
+            }
+        }
+
+///*
+        int y;
         for (y = 0; y < _ch; y++)
         {
             i = y * _cw;
@@ -2132,30 +2157,15 @@ void Cmfd::normalizeFlux(double normalize)
             {
                 for (int jj = 0; jj < 2; jj++)
                 {
-                    flux = _mesh->getCells(_i_array[i])->getMeshSurfaces(0)
+                    flux = _mesh->getCells(i)->getMeshSurfaces(0)
                         ->getQuadFlux(e, jj);
-                    _mesh->getCells(_i_array[i])->getMeshSurfaces(0)
+                    _mesh->getCells(i)->getMeshSurfaces(0)
                         ->setQuadFlux(flux * normalize, e, jj);
                 }        
             }
         }
 
-        for (x = 0; x < _cw; x++)
-        {
-            i = (_ch - 1) * _cw + x;
-            
-            log_printf(ACTIVE, "update cell %d, surface 1", i);
-            for (int e = 0; e < _ng; e++)
-            {
-                for (int jj = 0; jj < 2; jj++)
-                {
-                    flux = _mesh->getCells(_i_array[i])->getMeshSurfaces(1)
-                        ->getQuadFlux(e, jj);
-                    _mesh->getCells(_i_array[i])->getMeshSurfaces(1)
-                        ->setQuadFlux(flux * normalize, e, jj);
-                }        
-            }
-        }
+
 
         for (y = 0; y < _ch; y++)
         {
@@ -2166,9 +2176,9 @@ void Cmfd::normalizeFlux(double normalize)
             {
                 for (int jj = 0; jj < 2; jj++)
                 {
-                    flux = _mesh->getCells(_i_array[i])->getMeshSurfaces(2)
+                    flux = _mesh->getCells(i)->getMeshSurfaces(2)
                         ->getQuadFlux(e, jj);
-                    _mesh->getCells(_i_array[i])->getMeshSurfaces(2)
+                    _mesh->getCells(i)->getMeshSurfaces(2)
                         ->setQuadFlux(flux * normalize, e, jj);
                 }        
             }
@@ -2182,16 +2192,16 @@ void Cmfd::normalizeFlux(double normalize)
             {
                 for (int jj = 0; jj < 2; jj++)
                 {
-                    flux = _mesh->getCells(_i_array[i])->getMeshSurfaces(3)
+                    flux = _mesh->getCells(i)->getMeshSurfaces(3)
                         ->getQuadFlux(e, jj);
-                    _mesh->getCells(_i_array[i])->getMeshSurfaces(3)
+                    _mesh->getCells(i)->getMeshSurfaces(3)
                         ->setQuadFlux(flux * normalize, e, jj);
                 }        
             }
         }
+//*/
 #endif
     }
-//*/
 
     return;
 }
