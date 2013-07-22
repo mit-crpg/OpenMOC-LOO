@@ -1489,6 +1489,13 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
     for (int s = 0; s < 4; s++)
         bc[s] = _mesh->getBoundary(s);
 
+    for (int i = 0; i < _cw * _ch; i++)
+    {
+        meshCell = _mesh->getCells(i);
+        for (int e = 0; e < _ng; e++)
+            meshCell->setNewFlux(meshCell->getOldFlux()[e], e);
+    }
+
     /* Initializes source */
     /*
     for (int i = 0; i < _cw * _ch; i++)
