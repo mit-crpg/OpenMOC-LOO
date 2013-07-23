@@ -23,10 +23,10 @@ Geometry::Geometry(Parser* parser) {
     _min_seg_length = INFINITY;
 
     /* Initializing the corners to be infinite  */
-    _x_min = 1.0/0.0;
-    _y_min = 1.0/0.0;
-    _x_max = -1.0/0.0;
-    _y_max = -1.0/0.0;
+    _x_min = INFINITY;
+    _y_min = INFINITY;
+    _x_max = -INFINITY;
+    _y_max = -INFINITY;
 
     /* Add each material from parser */
     parser->each_material([this](Material *m) -> void

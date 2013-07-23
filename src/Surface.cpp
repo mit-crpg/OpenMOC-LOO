@@ -293,7 +293,8 @@ std::string Plane::toString() {
  * @param points pointer to a point to store the intersection point
  * @return the number of intersection points (0 or 1)
  */
-int Plane::intersection(Point* point, double angle, Point* points) {
+int Plane::intersection(Point* point, double angle, Point* points) 
+{
 
     double x0 = point->getX();
     double y0 = point->getY();
@@ -302,14 +303,14 @@ int Plane::intersection(Point* point, double angle, Point* points) {
     double xcurr, ycurr;	/* coordinates of current intersection point */
 
     /* The track is vertical */
-    if ((fabs(angle - (M_PI / 2))) < 1.0e-10) {
-
+    if ((fabs(angle - (M_PI / 2))) < 1.0e-10) 
+    {
         /* The plane is also vertical => no intersections */
         if (_B == 0)
             return 0;
-
         /* The plane is not vertical */
-        else {
+        else 
+        {
             xcurr = x0;
             ycurr = (-_A * x0 - _C) / _B;
             points->setCoords(xcurr, ycurr);
@@ -321,16 +322,16 @@ int Plane::intersection(Point* point, double angle, Point* points) {
             return num;
         }
     }
-
     /* If the track isn't vertical */
-    else {
+    else 
+    {
         double m = sin(angle) / cos(angle);
 
         /* The plane and track are parallel, no intersections */
-        if (fabs(-_A/_B - m) < 1e-11 && _B != 0)
+        if ((_B != 0) && (fabs(-_A/_B - m) < 1e-11))
             return 0;
-
-        else {
+        else 
+        {
             xcurr = -(_B * (y0 - m * x0) + _C)
                 / (_A + _B * m);
             ycurr = y0 + m * (xcurr - x0);
@@ -343,6 +344,7 @@ int Plane::intersection(Point* point, double angle, Point* points) {
             return num;
         }
     }
+    return 0;
 }
 
 
@@ -352,7 +354,7 @@ int Plane::intersection(Point* point, double angle, Point* points) {
  */
 double Plane::getXMin(){
     log_printf(ERROR, "Plane::getXMin not implemented");
-    return -1.0/0.0;
+    return -INFINITY;
 }
 
 
@@ -362,7 +364,7 @@ double Plane::getXMin(){
  */
 double Plane::getXMax(){
     log_printf(ERROR, "Plane::getXMax not implemented");
-    return 1.0/0.0;
+    return INFINITY;
 }
 
 
@@ -372,7 +374,7 @@ double Plane::getXMax(){
  */
 double Plane::getYMin(){
     log_printf(ERROR, "Plane::getYMin not implemented");
-    return -1.0/0.0;
+    return -INFINITY;
 }
 
 
@@ -382,7 +384,7 @@ double Plane::getYMin(){
  */
 double Plane::getYMax(){
     log_printf(ERROR, "Plane::getYMax not implemented");
-    return 1.0/0.0;
+    return INFINITY;
 }
 
 /**
@@ -434,7 +436,7 @@ double XPlane::getXMax(){
  * @return the minimum y value
  */
 double XPlane::getYMin(){
-    return 1.0/0.0;
+    return INFINITY;
 }
 
 
@@ -443,7 +445,7 @@ double XPlane::getYMin(){
  * @return the maximum y value
  */
 double XPlane::getYMax(){
-    return -1.0/0.0;
+    return -INFINITY;
 }
 
 
@@ -479,7 +481,7 @@ std::string YPlane::toString() {
  * @return the minimum x value
  */
 double YPlane::getXMin(){
-    return 1.0/0.0;
+    return INFINITY;
 }
 
 
@@ -488,7 +490,7 @@ double YPlane::getXMin(){
  * @return the maximum x value
  */
 double YPlane::getXMax(){
-    return -1.0/0.0;
+    return -INFINITY;
 }
 
 
@@ -694,22 +696,22 @@ std::string Circle::toString() {
 
 double Circle::getXMin(){
     log_printf(ERROR, "Circle::getXMin not implemented");
-    return -1.0/0.0;
+    return -INFINITY;
 }
 
 double Circle::getXMax(){
     log_printf(ERROR, "Circle::getXMax not implemented");
-    return 1.0/0.0;
+    return INFINITY;
 }
 
 double Circle::getYMin(){
     log_printf(ERROR, "Circle::getYMin not implemented");
-    return -1.0/0.0;
+    return -INFINITY;
 }
 
 double Circle::getYMax(){
     log_printf(ERROR, "Circle::getYMax not implemented");
-    return 1.0/0.0;
+    return INFINITY;
 }
 
 

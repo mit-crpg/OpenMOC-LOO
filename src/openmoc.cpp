@@ -23,14 +23,18 @@
 #include "petsc.h"
 #include "mpi.h"
 #include <petscmat.h>
+#include <fenv.h>
 
 // FIXME: These should be removed when main() is properly implemented
 #pragma GCC diagnostic ignored "-Wunused"
 #pragma GCC diagnostic ignored "-Wunused-variable"
 
 int main(int argc, char **argv) {
-    log_printf(NORMAL, "Starting OpenMOC...");
+    feenableexcept(FE_DIVBYZERO);
+    feenableexcept(FE_UNDERFLOW);
+    feenableexcept(FE_OVERFLOW);
 
+    log_printf(NORMAL, "Starting OpenMOC...");
     double k_eff;
     Timer timer;
 

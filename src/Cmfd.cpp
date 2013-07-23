@@ -1755,7 +1755,8 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
                     log_printf(ERROR, "spot unknonwn BC at surface 1");
 
                 log_printf(ACTIVE, "  Energy %d, loop %d, fwd, %f -> %f, %e",
-                           e, j, initial_flux, flux, flux / initial_flux - 1.0);
+                           e, j, initial_flux, flux, 
+                           flux / (initial_flux + 1e-10) - 1.0);
             } /* exit this loop j */
 
             /* Backward Directions */
@@ -1850,9 +1851,10 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
                     leak_tot += flux;
 
                 log_printf(ACTIVE, "  Energy %d, loop %d, bwd, %f -> %f, %e",
-                           e, j, initial_flux, flux, flux / initial_flux - 1.0);
+                           e, j, initial_flux, flux, 
+                           flux / (initial_flux + 1e-10) - 1.0);
             }
-        } /* finish looping over energy; exit to iter level */				
+        } /* finish looping over energy; exit to iter level */
 
         double new_flux = 0;
         /* Computs new cell-averaged scalar flux based on new_sum_quad_flux */
