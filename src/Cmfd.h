@@ -132,13 +132,6 @@ public:
     double computeLooFluxPower(int moc_iter, double k);
     double computeNormalization();
     void normalizeFlux(double normalize_factor);
-    /*
-    void setFsrBoundaryUpdate(int x_min, int x_max, int y_min, int y_max);
-    void setCmfdBoundaryUpdate(int x_min, int x_max, int y_min, int y_max, 
-                               int surface_id);
-    void setBoundaryUpdate(double bu, int e, int ind);
-    double getBoundaryUpdate(int e, int ind);
-    */
 };
 
 #endif /* CMFD_H_ */
