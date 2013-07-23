@@ -43,8 +43,9 @@ Options::Options(int argc, char **argv)
         _relative_path = "";
 
     /* Default geometry input file */
-    _geometry_file = _relative_path + "xml-sample/Cmfd/geometry_c5g7.xml"; 
-    _material_file = _relative_path + "xml-sample/Cmfd/material_c5g7.xml";
+    _geometry_file = _relative_path + 
+        "xml-sample/Cmfd/geometry_pin52_leakage.xml"; 
+    _material_file = _relative_path + "xml-sample/Cmfd/material_simple.xml";
 	
     _track_spacing = 0.5;		/* Default track spacing in C4: 0.5cm */
     _num_azim = 64;			/* Default # azimuthal angle in C4: 64*/

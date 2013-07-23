@@ -411,7 +411,7 @@ void Solver::zeroLeakage(){
 double Solver::computeKeff(int iteration) 
 {
     double tot_abs = 0.0, tot_fission = 0.0, leakage = 0.0;
-    double abs = 0, fission = 0;
+    double abs = 0, fission = 0, vol = 0;
     double k; 
     double *sigma_a, *nu_sigma_f, *flux;
     Material* material;
@@ -433,18 +433,18 @@ double Solver::computeKeff(int iteration)
 
             nu_sigma_f = material->getNuSigmaF();
             flux = fsr->getFlux();
+            vol = fsr->getVolume();
 
             for (int e = 0; e < NUM_ENERGY_GROUPS; e++) 
             {
-                /*
-                  if (sigma_a[e] * flux[e] * fsr->getVolume() < 0.0)
+                  if (sigma_a[e] * flux[e] * vol < 0.0)
                   {
-                  log_printf(WARNING, "# %d FSR energy %d has abs xs of %f", 
-                  r, e, sigma_a[e]);
+                      log_printf(DEBUG, "  FSR %d energy %d has abs xs %f, "
+                                 " flux %f, vol %f", 
+                                 r, e, sigma_a[e], flux[e], vol);
                   }
-                */
-	        abs += sigma_a[e] * flux[e] * fsr->getVolume();
-                fission += nu_sigma_f[e] * flux[e] * fsr->getVolume();
+	        abs += sigma_a[e] * flux[e] * vol;
+                fission += nu_sigma_f[e] * flux[e] * vol;
             }
 
 #if USE_OPENMP
@@ -472,7 +472,7 @@ if (leakage < 0.0)
     log_printf(WARNING, 
                "MOC leakage  = %f should be non-negative", leakage);
 if (tot_fission < 0.0)
-    log_printf(ERROR, "MOC total fission = %f should be positive", 
+    log_printf(WARNING, "MOC total fission = %f should be positive", 
                tot_fission);
 if (tot_abs < 0.0)
     log_printf(WARNING, "MOC total abs = %f should be positive", tot_abs);
@@ -552,7 +552,7 @@ void Solver::updateBoundaryFluxByQuadrature()
                 pe = dir * GRP_TIMES_ANG;
                 for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
                 {
-                    if (meshSurface->getOldQuadFlux(e, ind) > 0)
+                    if (meshSurface->getOldQuadFlux(e, ind) > -100)
                     {
                         factor = meshSurface->getQuadFlux(e, ind) 
                             / meshSurface->getOldQuadFlux(e, ind);
@@ -570,7 +570,7 @@ void Solver::updateBoundaryFluxByQuadrature()
                     {
                         if (e == 0)
                         {
-                            log_printf(ACTIVE, 
+                            log_printf(WARNING, 
                                        "e %d i %d j %d (total %d) %f -> %f"
                                        " forward phi %f",
                                        e, i, j, _num_tracks[i],

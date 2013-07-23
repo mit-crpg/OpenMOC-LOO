@@ -2570,18 +2570,17 @@ void Cmfd::updateMOCFlux(int iteration)
     double CMCO[_cw * _ch];
     int i, e;
     std::vector<int>::iterator iter;
-    double under_relax;
+    double under_relax = 1.0;
 	
     /* only apply damping here for LOO, because CMFD damps Dtilde */
     if (_run_loo)
         under_relax = _damp_factor;
-    else
-        under_relax = 1.0;
 
     //int max_i = -10, max_e = -10; 
     //double max = -100.0;
 
-    double max_range = 100.0, min_range = 1.0 / max_range;
+    //double max_range = 100.0, min_range = 1.0 / max_range;
+    double max_range = INFINITY, min_range = -INFINITY;
 
     double tmp_max = 0, tmp_cmco;
 
@@ -2599,10 +2598,10 @@ void Cmfd::updateMOCFlux(int iteration)
             old_flux = meshCell->getOldFlux()[e];
             new_flux = meshCell->getNewFlux()[e];
 
-            if (old_flux > 0.0)
-                tmp_cmco = new_flux / old_flux;
-            else
-                tmp_cmco = 1.0;
+            tmp_cmco = new_flux / old_flux;
+            if (tmp_cmco < 0.0)
+                log_printf(WARNING, "update cell %d energy %ds with %f",
+                           i, e, tmp_cmco);
 			
             if (tmp_cmco < 0.0)
                 log_printf(DEBUG, "cell %d energy %d prolongation = %f",
