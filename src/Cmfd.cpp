@@ -2700,13 +2700,10 @@ int Cmfd::computeCmfdL2Norm(Vec snew, int moc_iter)
     {
         for (int e = 0; e < _ng; e++)
         {
-            if (new_source[i * _ng + e] != 0.0)
-            {
-                _l2_norm += pow(new_source[i * _ng + e] 
-                                / old_source[i * _ng + e]
-                                - 1.0, 2);
-                num_counted ++;
-            }
+            _l2_norm += pow(new_source[i * _ng + e] 
+                            / old_source[i * _ng + e]
+                            - 1.0, 2);
+            num_counted ++;
         }
     }
     _l2_norm /= (double) num_counted; 
