@@ -43,18 +43,21 @@ public:
     virtual ~MeshSurface();
 
     /* LOO Only */
+    double getQuadCurrent(int group, int index);
     void setQuadCurrent(double quad_current, int group, int index);
     void incrementQuadCurrent(double quad_current, int group, int index);
-    double getQuadCurrent(int group, int index);
-    void setQuadFlux(double quad_current, int group, int index);
+    void updateQuadCurrent(double factor, int group, int index);
     double getQuadFlux(int group, int index);
-    void setOldQuadFlux(double quad_current, int group, int index);
+    void setQuadFlux(double quad_current, int group, int index);
+    void updateQuadFlux(double ratio, int group, int index);
     double getOldQuadFlux(int group, int index);
+    void setOldQuadFlux(double quad_current, int group, int index);
 
     /* CMFD Only */
     void makeCurrents();
     void setCurrent(double current, int group);
     double getCurrent(int group);
+    void updateCurrent(double factor, int group);
     void incrementCurrent(double *current);
     void setDHat(double dHat, int e);
     double* getDHat();

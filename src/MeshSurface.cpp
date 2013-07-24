@@ -64,12 +64,13 @@ MeshSurface::~MeshSurface()
     delete []_quad_flux;
 }
 
-void MeshSurface::setCurrent(double current, int group){
-    _current[group] = current;
-}
-
+/* Current */
 double MeshSurface::getCurrent(int group){
     return _current[group];
+}
+
+void MeshSurface::setCurrent(double current, int group){
+    _current[group] = current;
 }
 
 void MeshSurface::incrementCurrent(double* current){
@@ -79,22 +80,44 @@ void MeshSurface::incrementCurrent(double* current){
     }
 }
 
+void MeshSurface::updateCurrent(double factor, int group){
+    _current[group] *= factor;
+}
+
+/* QuadCurrent */
+double MeshSurface::getQuadCurrent(int group, int index){
+    return _quad_current[group][index];
+}
+
 void MeshSurface::setQuadCurrent(double quad_current, int group, int index){
     _quad_current[group][index] = quad_current;
 }
 
-double MeshSurface::getQuadCurrent(int group, int index){
-    return _quad_current[group][index];
+void MeshSurface::incrementQuadCurrent(double quad_current, int group, 
+                                       int index)
+{	
+    _quad_current[group][index] += quad_current;
+}
+
+void MeshSurface::updateQuadCurrent(double factor, int group, int index)
+{	
+    _quad_current[group][index] *= factor;
+}
+
+/* QuadFlux */
+double MeshSurface::getQuadFlux(int group, int index){
+    return _quad_flux[group][index];
 }
 
 void MeshSurface::setQuadFlux(double quad_flux, int group, int index){
     _quad_flux[group][index] = quad_flux;
 }
 
-double MeshSurface::getQuadFlux(int group, int index){
-    return _quad_flux[group][index];
+void MeshSurface::updateQuadFlux(double ratio, int group, int index){
+    _quad_flux[group][index] *= ratio;
 }
 
+/* OldQuadFlux */
 void MeshSurface::setOldQuadFlux(double quad_flux, int group, int index){
     _old_quad_flux[group][index] = quad_flux;
 }
@@ -103,11 +126,7 @@ double MeshSurface::getOldQuadFlux(int group, int index){
     return _old_quad_flux[group][index];
 }
 
-void MeshSurface::incrementQuadCurrent(double quad_current, int group, 
-                                       int index)
-{	
-    _quad_current[group][index] += quad_current;
-}
+
 
 void MeshSurface::setDHat(double dHat, int e){
     _d_hat[e] = dHat;
