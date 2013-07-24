@@ -99,14 +99,14 @@ public:
     void zeroMeshCells();
     void zeroLeakage();
     void computeRatios();
-    void updateFlux(int iteration);
+    void updateFlux(int moc_iter);
     void updateBoundaryFluxByQuadrature();
-    void printKeff(int iteration, double eps);
-    double computeKeff(int iteration);
+    void printKeff(int moc_iter, double eps);
+    double computeKeff(int moc_iter);
     double** getFSRtoFluxMap();
     void MOCsweep(int max_iterations, int moc_iter);
     double kernel(int max_iterations);
-    void plotFluxes(int iter_num);
+    void plotFluxes(int moc_iter);
     void checkTrackSpacing();
     void checkBoundary();
     void computeFsrPowers();
@@ -121,8 +121,8 @@ public:
                          MeshSurface **meshSurfaces, int dir);
     void tallyCmfdCurrent(Track *track, segment *segment, 
                           MeshSurface **meshSurfaces, int dir);
-    double runLoo(int i);
-    double runCmfd(int i);
+    double runLoo(int moc_iter);
+    double runCmfd(int moc_iter);
     double computeFsrL2Norm(double *old_fsr_powers);
     double computeFsrLinf(double *old_fsr_powers);
 };

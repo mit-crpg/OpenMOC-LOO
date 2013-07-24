@@ -121,8 +121,8 @@ void Solver::precomputeFactors() {
 
             for (int p = 0; p < NUM_POLAR_ANGLES; p++)
             {
-                curr_track->setPolarWeight(p, 
-                                           azim_weight * _quad->getMultiple(p) * FOUR_PI);
+                curr_track->setPolarWeight
+                    (p, azim_weight * _quad->getMultiple(p) * FOUR_PI);
             }
         }
     }
@@ -151,7 +151,8 @@ void Solver::precomputeFactors() {
 
                 for (int e = 0; e < NUM_ENERGY_GROUPS; e++) {
                     for (int p = 0; p < NUM_POLAR_ANGLES; p++) {
-                        curr_seg->_prefactors[e][p] = computePreFactor(curr_seg, e, p);
+                        curr_seg->_prefactors[e][p] = 
+                            computePreFactor(curr_seg, e, p);
                     }
                 }
             }
@@ -486,15 +487,17 @@ return k;
 /**
  * Update FSR's scalar fluxes, normalize them and update the source
  */
-void Solver::updateFlux(int iteration) 
+void Solver::updateFlux(int moc_iter) 
 {
-    _cmfd->updateMOCFlux(iteration);
+    _cmfd->updateMOCFlux(moc_iter);
+
     if (_update_boundary)
     {
-        if (_run_loo && (!(_diffusion && (iteration == 0))))
+        if (_run_loo && (!(_diffusion && (moc_iter == 0))))
         {
             log_printf(DEBUG, "update by quadrature");
             updateBoundaryFluxByQuadrature();
+            //_cmfd->updateBoundaryFluxByHalfSpace();
         }
         else
         {
@@ -512,7 +515,6 @@ void Solver::updateBoundaryFluxByQuadrature()
     segment *seg;
     MeshSurface *meshSurface, **meshSurfaces;
     double phi, factor;
-    double *polar_fluxes;
     int ind, num_segments, pe, surf_id, num_updated = 0;
 
     meshSurfaces = _geom->getMesh()->getSurfaces();
@@ -523,8 +525,6 @@ void Solver::updateBoundaryFluxByQuadrature()
         {
             track = &_tracks[i][j];
             num_segments = track->getNumSegments();
-            polar_fluxes = track->getPolarFluxes();
-
             phi = track->getPhi();
             if (phi < PI / 2.0)
                 ind = 1;
@@ -541,11 +541,12 @@ void Solver::updateBoundaryFluxByQuadrature()
                 else
                     surf_id = seg->_mesh_surface_fwd;
 
-                if ((surf_id % 8 == 4) || (surf_id % 8 == 5))
+                if ((surf_id % 8) < 4){}
+                else if ((surf_id % 8) < 6)
                     surf_id = (surf_id / 8) * 8 + 1;
-                else if (surf_id % 8 == 6)
+                else if ((surf_id % 8) < 7)
                     surf_id -= 4;
-                else if (surf_id % 8 == 7)
+                else
                     surf_id -= 7;
 
                 meshSurface = meshSurfaces[surf_id];
@@ -555,13 +556,12 @@ void Solver::updateBoundaryFluxByQuadrature()
                     if (meshSurface->getOldQuadFlux(e, ind) > -100)
                     {
                         factor = meshSurface->getQuadFlux(e, ind) 
+                            // / meshSurface->getCurrent(e);
                             / meshSurface->getOldQuadFlux(e, ind);
                         log_printf(DEBUG, "factor = %.10f", factor);
                         for (int p = 0; p < NUM_POLAR_ANGLES; p++)
                         {
-                            track->setBoundaryPolarFluxes(pe, 
-                                                          polar_fluxes[pe] 
-                                                          * factor);
+                            track->updatePolarFluxes(pe, factor);
                             pe++;
                             num_updated++;
                         }	
@@ -588,7 +588,7 @@ void Solver::updateBoundaryFluxByQuadrature()
     return;
 }
 
-void Solver::printKeff(int iteration, double eps)
+void Solver::printKeff(int moc_iter, double eps)
 {
     /* Prints & Update keff for MOC sweep */
     if ((_run_cmfd) && !(_acc_after_MOC_converge))
@@ -596,7 +596,7 @@ void Solver::printKeff(int iteration, double eps)
         printf("Iteration %d, MOC k^(m+1) = %.10f, CMFD k = %.10f,"
                " MOC k^(m+1/2) = %.10f" 
                " FS eps = %.4e,  k eps = %.4e, #CMFD = %d\n", 
-               iteration, _k_eff, _cmfd_k, _k_half,
+               moc_iter, _k_eff, _cmfd_k, _k_half,
                eps, 
                (_old_k_effs.back() - _old_k_effs.front()) / _old_k_effs.back(),
                _cmfd->getNumIterToConv());
@@ -606,21 +606,30 @@ void Solver::printKeff(int iteration, double eps)
     }
     else if ((_run_loo) && !(_acc_after_MOC_converge))
     {
+#if 0
         printf("Iter %d, MOC k^(m+1) = %.10f, LOO k = %.10f,"
                " MOC k^(m+1/2) = %.10f"
                " FS eps = %.4e, k eps = %.4e, #LOO = %d\n", 
-               iteration, _k_eff, _loo_k, _k_half,
+               moc_iter, _k_eff, _loo_k, _k_half,
                eps, 
                (_old_k_effs.back() - _old_k_effs.front()) / _old_k_effs.back(),
                _cmfd->getNumIterToConv());
-
+#else
+        log_printf(NORMAL, "Iter %d, MOC k^(m+1) = %.10f, LOO k = %.10f,"
+                   " MOC k^(m+1/2) = %.10f"
+                   " FS eps = %.4e, k eps = %.4e, #LOO = %d", 
+                   moc_iter, _k_eff, _loo_k, _k_half,
+                   eps, (_old_k_effs.back() - _old_k_effs.front()) / 
+                   _old_k_effs.back(),
+                   _cmfd->getNumIterToConv());
+#endif
         if (_update_keff)
             _k_eff = _loo_k;
     }
     else
     {
         printf("Iter %d, MOC k = %.10f, FS eps = %.4e, k eps = %.4e\n", 
-               iteration, _k_eff, eps, 
+               moc_iter, _k_eff, eps, 
                (_old_k_effs.back() - _old_k_effs.front()) 
                / _old_k_effs.back());
     }
@@ -811,8 +820,8 @@ void Solver::computeFsrPowers() {
 /*
  * Plot the fluxes for each FSR
  */
-void Solver::plotFluxes(int iter_num){
-
+void Solver::plotFluxes(int moc_iter)
+{
     /* create BitMaps for plotting */
     BitMap<int>* bitMapFSR = new BitMap<int>;
     BitMap<float>* bitMap = new BitMap<float>;
@@ -844,7 +853,7 @@ void Solver::plotFluxes(int iter_num){
 
 
     std::stringstream string;
-    string << "flux_tot_i_" << iter_num;
+    string << "flux_tot_i_" << moc_iter;
     std::string title_str = string.str();
 
     log_printf(DEBUG, "Plotting total flux...");
@@ -858,7 +867,8 @@ void Solver::plotFluxes(int iter_num){
 }
 
 void Solver::tallyLooCurrent(Track *track, segment *segment, 
-                             MeshSurface **meshSurfaces, int direction){
+                             MeshSurface **meshSurfaces, int direction)
+{
     int index = 0, pe = 0, pe_initial = 0, p, e, surfID;
     MeshSurface *meshSurface;
     double *weights, *polar_fluxes;
@@ -880,7 +890,7 @@ void Solver::tallyLooCurrent(Track *track, segment *segment,
         polar_fluxes = track->getPolarFluxes();
 
         /* Defines index */
-        if (track->getPhi() > PI/2.0)
+        if (track->getPhi() > PI / 2.0)
             index = 1;
 
         /* Obtains the surface that the segment crosses */
@@ -1022,18 +1032,16 @@ void Solver::MOCsweep(int max_iterations, int moc_iter)
             sigma_t_l, index, currents)
 #endif
         /* Loop over each thread */
-        for (t=0; t < num_threads; t++) 
+        for (t = 0; t < num_threads; t++) 
         {
 
             /* Loop over the pair of azimuthal angles for this thread */
             j = t;
             while (j < _num_azim) 
             {
-
                 /* Loop over all tracks for this azimuthal angles */
                 for (k = 0; k < _num_tracks[j]; k++) 
                 {
-
                     /* Initialize local pointers to important data structures */
                     track = &_tracks[j][k];
                     segments = track->getSegments();
@@ -1118,9 +1126,9 @@ void Solver::MOCsweep(int max_iterations, int moc_iter)
                         for (p = 0; p < NUM_POLAR_ANGLES; p++)
                         {
                             _geom->getSurface(track->getSurfFwd())
-                                ->incrementLeakage(track->isReflOut(), 
-                                                   polar_fluxes[pe]*weights[p]/2.0,
-                                                   e);
+                                ->incrementLeakage
+                                (track->isReflOut(), 
+                                 polar_fluxes[pe]*weights[p] / 2.0, e);
                             pe++;
                         }
                     }
@@ -1344,7 +1352,7 @@ void Solver::initializeSource(){
 void Solver::normalizeFlux()
 {			
     double fission_source = 0, total_vol = 0;
-    double renorm_factor, volume;
+    double factor, volume;
     double* nu_sigma_f;
     double* scalar_flux;
     FlatSourceRegion* fsr;
@@ -1371,13 +1379,13 @@ void Solver::normalizeFlux()
     }
 
     /* Renormalize scalar fluxes in each region */
-    renorm_factor = total_vol / fission_source;
+    factor = total_vol / fission_source;
 
 #if USE_OPENMP
 #pragma omp parallel for
 #endif
     for (int r = 0; r < _num_FSRs; r++)
-        _flat_source_regions[r].normalizeFluxes(renorm_factor);
+        _flat_source_regions[r].normalizeFluxes(factor);
 
     /* Renormalize angular boundary fluxes for each track */
 #if USE_OPENMP
@@ -1386,10 +1394,11 @@ void Solver::normalizeFlux()
     for (int i = 0; i < _num_azim; i++) 
     {
         for (int j = 0; j < _num_tracks[i]; j++)
-            _tracks[i][j].normalizeFluxes(renorm_factor);
+            _tracks[i][j].normalizeFluxes(factor);
     }
 
     /* Renormalize tallied current on each surface */
+    ///*
     if ((_run_cmfd) && !(_acc_after_MOC_converge))
     {
         int cw = _geom->getMesh()->getCellWidth();
@@ -1404,9 +1413,7 @@ void Solver::normalizeFlux()
             {
                 for (int e = 0; e < ng; e++)
                 {
-                    meshCell->getMeshSurfaces(s)->setCurrent(
-                        meshCell->getMeshSurfaces(s)->getCurrent(e) 
-                        * renorm_factor, e);
+                    meshCell->getMeshSurfaces(s)->updateCurrent(factor, e);
                 }
             }
         }
@@ -1496,40 +1503,36 @@ void Solver::updateSource()
 }
 
 
-double Solver::runLoo(int i)
+double Solver::runLoo(int moc_iter)
 {
     double loo_keff;
 
     _cmfd->storePreMOCMeshSource(_flat_source_regions);
-
-    MOCsweep(_boundary_iteration + 1, i);
-
+    MOCsweep(_boundary_iteration + 1, moc_iter);
     _k_half = computeKeff(100);
 
-    /* LOO Method 1: assume constant Sigma in each mesh. 
-     * Computes cross sections */
     _cmfd->computeXS();
 			 
-    if (i == 0 && _diffusion == true)
+    if (moc_iter == 0 && _diffusion == true)
     {
         _cmfd->computeDs();
-        loo_keff = _cmfd->computeCMFDFluxPower(DIFFUSION, i);
+        loo_keff = _cmfd->computeCMFDFluxPower(DIFFUSION, moc_iter);
     }
     else
     {
         _cmfd->computeQuadFlux();
         _cmfd->computeQuadSrc();
-        loo_keff = _cmfd->computeLooFluxPower(i, _k_eff);
+        loo_keff = _cmfd->computeLooFluxPower(moc_iter, _k_eff);
     }
 
     return loo_keff;
 }
 
-double Solver::runCmfd(int i)
+double Solver::runCmfd(int moc_iter)
 {
     double cmfd_keff;
 
-    MOCsweep(_boundary_iteration + 1, i);
+    MOCsweep(_boundary_iteration + 1, moc_iter);
     _k_half = computeKeff(100);
 
     /* compute cross sections and diffusion coefficients */
@@ -1537,14 +1540,14 @@ double Solver::runCmfd(int i)
     _cmfd->computeDs();
 
     /* Check for neutron balance */
-    if (i == 10000)
+    if (moc_iter == 10000)
         checkNeutronBalance();
 
     /* Run diffusion problem on initial geometry */
-    if (i == 0 && _diffusion == true)
-        cmfd_keff = _cmfd->computeCMFDFluxPower(DIFFUSION, i);
+    if (moc_iter == 0 && _diffusion == true)
+        cmfd_keff = _cmfd->computeCMFDFluxPower(DIFFUSION, moc_iter);
     else
-        cmfd_keff = _cmfd->computeCMFDFluxPower(CMFD, i);
+        cmfd_keff = _cmfd->computeCMFDFluxPower(CMFD, moc_iter);
 
     return cmfd_keff;
 }
@@ -1591,7 +1594,7 @@ double Solver::computeFsrLinf(double *old_fsr_powers)
 
 double Solver::kernel(int max_iterations) {
     FlatSourceRegion* fsr;
-    int i;
+    int moc_iter;
 
     log_printf(NORMAL, "Starting kernel ...");
 
@@ -1653,26 +1656,26 @@ double Solver::kernel(int max_iterations) {
         old_fsr_powers[n] = _FSRs_to_powers[n];
 
     /* Source iteration loop */
-    for (i = 0; i < max_iterations; i++) 
+    for (moc_iter = 0; moc_iter < max_iterations; moc_iter++) 
     {
-        log_printf(INFO, "Iteration %d: k_eff = %f", i, _k_eff);
+        log_printf(INFO, "Iteration %d: k_eff = %f", moc_iter, _k_eff);
 
         /* Perform one sweep for no acceleration, or call one of the 
          * acceleration function which performs two sweeps plus acceleration */
         if ((_run_cmfd) && !(_acc_after_MOC_converge))
-            _cmfd_k = runCmfd(i);
+            _cmfd_k = runCmfd(moc_iter);
         else if ((_run_loo) && !(_acc_after_MOC_converge))
-            _loo_k = runLoo(i);
+            _loo_k = runLoo(moc_iter);
         else 
-            MOCsweep(1, i);
+            MOCsweep(1, moc_iter);
 
         /* Update FSR's flux based on cell-averaged flux coming from the
          * acceleration steps */
         if ((_run_cmfd || _run_loo) && !(_acc_after_MOC_converge))
-            updateFlux(i);
+            updateFlux(moc_iter);
 
         /* Computes the new keff */
-        _k_eff = computeKeff(i);
+        _k_eff = computeKeff(moc_iter);
 
         /* Computes new FSR source now we have new flux and new k */
         updateSource();
@@ -1692,7 +1695,7 @@ double Solver::kernel(int max_iterations) {
             old_fsr_powers[n] = _FSRs_to_powers[n];
 
         /* Prints out keff & eps, may update keff too based on _update_keff */
-        printKeff(i, eps_inf);
+        printKeff(moc_iter, eps_inf);
 
         std::ofstream logfile;
         std::stringstream string;
@@ -1778,7 +1781,7 @@ double Solver::kernel(int max_iterations) {
         std::string title_str = string.str();
 
         /* Write the message to the output file */
-        if (i == 0)
+        if (moc_iter == 0)
         {
             logfile.open(title_str.c_str(), std::fstream::trunc);
             logfile << "# iteration, mesh cell l2 norm (m+1/2, m+1),"
@@ -1792,7 +1795,7 @@ double Solver::kernel(int max_iterations) {
         else
         {
             logfile.open(title_str.c_str(), std::ios::app);
-            logfile << i 
+            logfile << moc_iter 
                     << " " << _cmfd->getL2Norm() 
                     << " " << eps_inf
                     << " " << eps_2
@@ -1809,9 +1812,6 @@ double Solver::kernel(int max_iterations) {
         /* Alternative: if (_cmfd->getL2Norm() < _moc_conv_thresh) */
         if (eps_2 < _moc_conv_thresh) 
         {
-            /* Converge the flux further */
-            //MOCsweep(5);
-
             /* plot pin powers */
             if (_compute_powers)
                 plotPinPowers();
@@ -1830,17 +1830,17 @@ double Solver::kernel(int max_iterations) {
             {
                 _cmfd->computeXS();
                 _cmfd->computeDs();
-                _plotter->plotDHats(_geom->getMesh(), i);
+                _plotter->plotDHats(_geom->getMesh(), moc_iter);
                 _plotter->plotNetCurrents(_geom->getMesh());
-                _plotter->plotXS(_geom->getMesh(), i);
+                _plotter->plotXS(_geom->getMesh(), moc_iter);
             }
 
             /* plot LOO flux and xs */
             if (_run_loo && _plotter->plotQuadFluxFlag())
             {
-                _plotter->plotQuadFlux(_geom->getMesh(), i);
+                _plotter->plotQuadFlux(_geom->getMesh(), moc_iter);
                 _plotter->plotNetCurrents(_geom->getMesh());
-                _plotter->plotXS(_geom->getMesh(), i);
+                _plotter->plotXS(_geom->getMesh(), moc_iter);
             }
 
             /* plot MOC flux */
@@ -1856,7 +1856,7 @@ double Solver::kernel(int max_iterations) {
                     }
                 }
 
-                plotFluxes(i+1);
+                plotFluxes(moc_iter + 1);
             }
 
             std::ofstream logfile;
@@ -1866,7 +1866,7 @@ double Solver::kernel(int max_iterations) {
             logfile.open(title_str.c_str(), std::fstream::app);
             logfile << _geometry_file << " " 
                     <<  std::setprecision(11) <<  _k_eff;
-            logfile << " " << i+1 << std::endl;
+            logfile << " " << moc_iter << std::endl;
             logfile.close();
 
             return _k_eff;
