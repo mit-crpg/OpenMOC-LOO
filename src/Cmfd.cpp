@@ -92,13 +92,6 @@ Cmfd::Cmfd(Geometry* geom, Plotter* plotter, Mesh* mesh,
         _reflective = true;
     else
         _reflective = false;
-
-    _boundary_update = new double[2 * NUM_ENERGY_GROUPS];
-    for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
-    {
-        for (int ind = 0; ind < 2; ind++)
-            _boundary_update[e * 2 + ind] = 1.0;
-    }
 }
 
 /**
@@ -1383,7 +1376,7 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
     else
         log_printf(ERROR, "Neither LOO psi nor phi is requested.");
 
-    int iter, max_outer = 200; 
+    int loo_iter, max_outer = 200; 
 
     if (moc_iter == 10000)
     {
@@ -1602,7 +1595,7 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
     /* Starts LOO acceleration iteration, we do not update src, quad_src, 
      * quad_flux, old_flux, as they are computed from the MOC step (i.e., 
      * order m+1/2) and should not be updated during acceleration step. */
-    for (iter = 0; iter < max_outer; iter++)
+    for (loo_iter = 1; loo_iter < max_outer; loo_iter++)
     {
         log_printf(ACTIVE, "k passed into LOO = %.10f", _keff);
 		
@@ -1895,15 +1888,11 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
                 for (int e = 0; e < _ng; e++) 
                 {
                     phi_ratio =  sum_quad_flux[i][e] 
-                        / meshCell->getSumQuadFlux()[e];/// 8;
+                        / meshCell->getSumQuadFlux()[e];
 
                     log_printf(DEBUG, "Cell %d energy %d scalar flux update "
                                "by (before normalization) - 1 = %e", 
                                i, e, phi_ratio - 1.0);
-
-                    log_printf(DEBUG, " phi / sum psi%.10f", 
-                               meshCell->getOldFlux()[e] /
-                               meshCell->getSumQuadFlux()[e]);
 
                     new_flux = meshCell->getOldFlux()[e] * phi_ratio;
 #if phi_update /* for debugging new feature */
@@ -1924,32 +1913,31 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
         log_printf(ACTIVE, "normalize_factor = %.10f", normalize_factor);
 
         /* Normalizes leakage, scalar flux, angular flux */
-        /*
-        leak_tot *= normalize_factor;
+        //leak_tot *= normalize_factor;
         for (int i = 0; i < _cw * _ch; i++)
             for (int e = 0; e < _ng; e++)
                 net_current[i][e] *= normalize_factor;
-        */
+
         normalizeFlux(normalize_factor);
 
         /* Computes keff with leakage */
-        double vol_tot = 0, fis_tot = 0, abs_tot = 0;
+        double vol_tot = 0, fis_tot = 0, abs_tot = 0, vol = 0;
         for (int i = 0; i < _cw * _ch; i++)
         {
             meshCell = _mesh->getCells(i);
-            vol_tot += meshCell->getVolume();
+            vol = meshCell->getVolume();
+            vol_tot += vol;
             for (int e = 0; e < _ng; e++)
             {
                 double flux = meshCell->getNewFlux()[e];
-                double vol = meshCell->getVolume();
-                fis_tot += meshCell->getNuSigmaF()[e] * flux * vol;
                 abs_tot += meshCell->getSigmaA()[e] * flux * vol;
+                fis_tot += meshCell->getNuSigmaF()[e] * flux * vol;
             }
         }
         leak_tot *= SIN_THETA_45 * _mesh->getCells(0)->getWidth();
         _keff = fis_tot / (abs_tot + leak_tot); 
         log_printf(ACTIVE, "%d: %.10f / (%.10f + %.10f)", 
-                   iter, fis_tot, abs_tot, leak_tot);
+                   loo_iter, fis_tot, abs_tot, leak_tot);
 
         /* Computes the L2 norm of point-wise-division of energy-integrated
          * fission source of mesh cells between LOO iterations */
@@ -1979,10 +1967,10 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
          * moc_iter = 10000 */
         if (moc_iter == 10000)
             log_printf(NORMAL, " %d-th LOO iteration k = %.10f, eps = %e", 
-                       iter, _keff, eps);
+                       loo_iter, _keff, eps);
         else
             log_printf(ACTIVE, " %d-th LOO iteration k = %.10f, eps = %e", 
-                       iter, _keff, eps);
+                       loo_iter, _keff, eps);
 
         /* If LOO iterative solver converges */
         if (eps < _l2_norm_conv_thresh)
@@ -2000,7 +1988,7 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
             break;
         }
     } /* exit iteration level */
-    _num_iter_to_conv = iter + 1;
+    _num_iter_to_conv = loo_iter + 1;
 
     /* Computes the L2 norm of point-wise-division of energy-integrated
      * fission source of mesh cells relative to (m+1/2) */
@@ -2078,7 +2066,7 @@ void Cmfd::normalizeFlux(double normalize)
         meshCell = _mesh->getCells(i);
         for (int e = 0; e < _ng; e++)
         {
-            meshCell->setNewFlux(meshCell->getNewFlux()[e] * normalize, e);
+            meshCell->updateNewFlux(normalize, e);
             log_printf(DEBUG, "Cell %d energy %d scalar flux update by"
                        " (after normalization) - 1 =  %e", i, e, 
                        meshCell->getNewFlux()[e] 
@@ -2088,8 +2076,8 @@ void Cmfd::normalizeFlux(double normalize)
 
     if (_update_boundary)
     {
-        double flux;
 #if 0
+        double flux;
         for (int j = 0; j < _num_loop; j++)
         {
             log_printf(ACTIVE, "update cell %d, surface 1", 
@@ -2113,7 +2101,6 @@ void Cmfd::normalizeFlux(double normalize)
         }
 #else
         int x, i;
-
         for (x = 0; x < _cw; x++)
         {
             i = (_ch - 1) * _cw + x;
@@ -2123,19 +2110,17 @@ void Cmfd::normalizeFlux(double normalize)
             {
                 for (int e = 0; e < _ng; e++)
                 {
-                    flux = _mesh->getCells(i)->getMeshSurfaces(1)
-                        ->getQuadFlux(e, jj);
-
-                    log_printf(ACTIVE, " e %d jj %d: %f -> %f", 
-                               e, jj, flux, flux * normalize);
+                    log_printf(ACTIVE, " e %d jj %d: %f * %f", 
+                               e, jj,  _mesh->getCells(i)->getMeshSurfaces(1)
+                               ->getQuadFlux(e, jj), normalize);
 
                     _mesh->getCells(i)->getMeshSurfaces(1)
-                        ->setQuadFlux(flux * normalize, e, jj);
+                        ->updateQuadFlux(normalize, e, jj);
                 }        
             }
         }
 
-///*
+// /*
         int y;
         for (y = 0; y < _ch; y++)
         {
@@ -2145,15 +2130,11 @@ void Cmfd::normalizeFlux(double normalize)
             {
                 for (int jj = 0; jj < 2; jj++)
                 {
-                    flux = _mesh->getCells(i)->getMeshSurfaces(0)
-                        ->getQuadFlux(e, jj);
                     _mesh->getCells(i)->getMeshSurfaces(0)
-                        ->setQuadFlux(flux * normalize, e, jj);
+                        ->updateQuadFlux(normalize, e, jj);
                 }        
             }
         }
-
-
 
         for (y = 0; y < _ch; y++)
         {
@@ -2164,10 +2145,8 @@ void Cmfd::normalizeFlux(double normalize)
             {
                 for (int jj = 0; jj < 2; jj++)
                 {
-                    flux = _mesh->getCells(i)->getMeshSurfaces(2)
-                        ->getQuadFlux(e, jj);
                     _mesh->getCells(i)->getMeshSurfaces(2)
-                        ->setQuadFlux(flux * normalize, e, jj);
+                        ->updateQuadFlux(normalize, e, jj);
                 }        
             }
         }
@@ -2180,14 +2159,12 @@ void Cmfd::normalizeFlux(double normalize)
             {
                 for (int jj = 0; jj < 2; jj++)
                 {
-                    flux = _mesh->getCells(i)->getMeshSurfaces(3)
-                        ->getQuadFlux(e, jj);
                     _mesh->getCells(i)->getMeshSurfaces(3)
-                        ->setQuadFlux(flux * normalize, e, jj);
+                        ->updateQuadFlux(normalize, e, jj);
                 }        
             }
         }
-//*/
+        //   */
 #endif
     }
 
@@ -2638,7 +2615,6 @@ void Cmfd::updateBoundaryFluxByHalfSpace()
     FlatSourceRegion *fsr;
     MeshCell *meshCell;
     double factor;
-    double *polar_fluxes;
     int num_segments, pe, num_updated = 0, meshCell_id;
 
     for (int i = 0; i < _num_azim; i++) 
@@ -2647,7 +2623,6 @@ void Cmfd::updateBoundaryFluxByHalfSpace()
         {
             track = &_tracks[i][j];
             num_segments = track->getNumSegments();
-            polar_fluxes = track->getPolarFluxes();
 
             /* Forward direction is 0, backward is 1 */
             for (int dir = 0; dir < 2; dir++)
@@ -2667,9 +2642,7 @@ void Cmfd::updateBoundaryFluxByHalfSpace()
                         log_printf(DEBUG, "factor = %.10f", factor);
                         for (int p = 0; p < NUM_POLAR_ANGLES; p++)
                         {
-                            track->setBoundaryPolarFluxes(pe, 
-                                                          polar_fluxes[pe] 
-                                                          * factor);
+                            track->updatePolarFluxes(pe, factor);
                             pe++;
                             num_updated++;
                         }	
@@ -2708,10 +2681,6 @@ double Cmfd::computeDiffCorrect(double d, double h){
     }
 
 }
-
-
-
-
 
 /* compute the L2 norm of consecutive fission sources
  * @retun L2 norm
@@ -2770,7 +2739,6 @@ Vec Cmfd::getPhiNew(){
 double Cmfd::getKeff(){
     return _keff;
 }
-
 
 /* Store the mesh cell averaged source before a MOC sweep */
 void Cmfd::storePreMOCMeshSource(FlatSourceRegion* fsrs)

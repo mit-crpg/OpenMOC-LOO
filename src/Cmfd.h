@@ -81,7 +81,6 @@ private:
     double _l2_norm;
     double _l2_norm_conv_thresh;
     double _spacing;
-    double *_boundary_update;
     bool _use_diffusion_correction;
     bool _run_loo;
     bool _run_loo_psi;
