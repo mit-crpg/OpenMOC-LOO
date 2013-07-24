@@ -67,9 +67,9 @@ void Track::setPolarWeight(const int angle, double polar_weight) {
     _polar_weights[angle] = polar_weight;
 }
 
-void Track::setBoundaryPolarFluxes(int pe, double flux)
+void Track::updatePolarFluxes(int pe, double update)
 {
-    _polar_fluxes[pe] = flux;
+    _polar_fluxes[pe] *= update;
     return;
 }
 
@@ -79,27 +79,28 @@ void Track::setBoundaryPolarFluxes(int pe, double flux)
  * @param polar_fluxes pointer to an array of fluxes
  */
 void Track::setPolarFluxes(reflectType direction, int start_index,
-                           double* polar_fluxes) {
+                           double* polar_fluxes) 
+{
 #if USE_OPENMP
     omp_set_lock(&_flux_lock);
 #endif
 
-    if (direction != REFL_TRUE && direction != REFL_FALSE && direction != VAC_TRUE && direction != VAC_FALSE)
-        log_printf(ERROR, "Tried to set this track's polar flux in a direction"
-                   "which does not exist;"
-                   " supported ones are: reflective, vacuume");
-
-    if (direction == REFL_TRUE || direction == REFL_FALSE){
+    if (direction == REFL_TRUE || direction == REFL_FALSE)
+    {
         int start = direction * GRP_TIMES_ANG;
-        for (int i = 0; i < GRP_TIMES_ANG; i++){
+        for (int i = 0; i < GRP_TIMES_ANG; i++)
             _polar_fluxes[start + i] = polar_fluxes[i+start_index];
-        }
     }
-    else{
+    else if (direction == VAC_TRUE || direction == VAC_FALSE)
+    {
         int start = (direction - 2) * GRP_TIMES_ANG;
-        for (int i = 0; i < GRP_TIMES_ANG; i++){
+        for (int i = 0; i < GRP_TIMES_ANG; i++)
             _polar_fluxes[start + i] = 0.0;
-        }
+    }
+    else
+    {
+        log_printf(ERROR, "Tried to set this track's polar flux in a direction"
+                   " which does not exist; try using: reflective, vacuume");
     }
 
 #if USE_OPENMP
