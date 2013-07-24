@@ -1434,14 +1434,14 @@ void Solver::normalizeFlux()
                 {
                     for (int ind = 0; ind < 2; ind++)
                     {
-                        meshCell->getMeshSurfaces(s)->setQuadFlux(
-                            meshCell->getMeshSurfaces(s)->getQuadFlux(e, ind)
-                            * renorm_factor, e, ind);
+                        meshCell->getMeshSurfaces(s)->updateQuadCurrent(
+                            factor, e, ind);
                     }
                 }
             }
         }		
     }
+    //*/
 
     return;
 }
