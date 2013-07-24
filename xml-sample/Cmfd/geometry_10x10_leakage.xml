@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 
-<!-- 2x2 lattice simple pin cell -->
+<!-- 10x10 lattice simple pin cell -->
 
 <geometry>
 
@@ -10,8 +10,8 @@
   <cell id="102" universe="1" material="2" surfaces="5"  sectors="8"/>
   <cell id="103" universe="2" material="1" surfaces="-6" sectors="4"/>
   <cell id="104" universe="2" material="2" surfaces="6"  sectors="8"/>
-  <cell id="105" universe="3" material="4" surfaces="-6"/>
-  <cell id="106" universe="3" material="2" surfaces="6"/>
+  <cell id="105" universe="3" material="4" surfaces="-6" sectors="4"/>
+  <cell id="106" universe="3" material="2" surfaces="6" sectors="8"/>
 <!-- Definition of Lattices -->
   <lattice id="5">
     <type>rectangular</type>
