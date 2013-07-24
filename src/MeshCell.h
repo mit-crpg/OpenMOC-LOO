@@ -82,6 +82,7 @@ public:
     void setFSREnd(int fsr);
     MeshSurface* getMeshSurfaces(int surface);
     void setNewFlux(double flux, int e);
+    void updateNewFlux(double ratio, int e);
     double* getNewFlux();
     void setOldFlux(double flux, int e);
     double* getOldFlux();

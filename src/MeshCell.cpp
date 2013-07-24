@@ -227,6 +227,10 @@ void MeshCell::setNewFlux(double flux, int e){
     _new_flux[e] = flux;
 }
 
+void MeshCell::updateNewFlux(double ratio, int e){
+    _new_flux[e] *= ratio;
+}
+
 double* MeshCell::getOldSrc(){
     return _old_src;
 }
