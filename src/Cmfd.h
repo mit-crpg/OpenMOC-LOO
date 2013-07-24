@@ -104,7 +104,7 @@ public:
     /* Shared by two methods */
     void computeXS();
     void computeXS_old();	
-    void updateMOCFlux(int iteration);
+    void updateMOCFlux(int moc_iter);
 
     /* CMFD */
     void computeDs();
@@ -120,7 +120,7 @@ public:
     void setOldFSRFlux();
     void setFSRs(FlatSourceRegion *fsrs);
     void setTracks(Track **tracks);
-    int fisSourceNorm(Vec snew, int iter, int num_cmfd_iteration);
+    int computeCmfdL2Norm(Vec snew, int moc_iter);
     void updateBoundaryFluxByHalfSpace();
 
     /* LOO */

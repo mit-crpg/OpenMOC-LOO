@@ -1323,7 +1323,7 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter)
      * step and the one coming out of converged CMFD step to decided whether 
      * the outter MOC iteration / source iteration should quit */
     if (moc_iter > 0)
-        petsc_err = fisSourceNorm(snew, moc_iter, _num_iter_to_conv);
+        petsc_err = computeCmfdL2Norm(snew, moc_iter);
 
     /* Copies source new to source old */
     petsc_err = VecCopy(snew, _source_old);
@@ -2521,7 +2521,7 @@ int Cmfd::constructAMPhi(Mat A, Mat M, Vec phi_old, solveType solveMethod)
 /* Update the MOC flux in each FSR
  * @param MOC iteration number
  */
-void Cmfd::updateMOCFlux(int iteration)
+void Cmfd::updateMOCFlux(int moc_iter)
 {
     log_printf(INFO, "Updating MOC flux...");
 
@@ -2564,7 +2564,7 @@ void Cmfd::updateMOCFlux(int iteration)
             tmp_cmco = new_flux / old_flux;
             if (tmp_cmco < 0.0)
                 log_printf(WARNING, "iter %d update cell %d energy %d with %f",
-                           iteration, i, e, tmp_cmco);
+                           moc_iter, i, e, tmp_cmco);
 
             tmp_max = fabs(new_flux / old_flux - 1.0);
             CMCO[i] += tmp_max;
@@ -2603,7 +2603,7 @@ void Cmfd::updateMOCFlux(int iteration)
 
     /* plots the scalar flux ratio */
     if (_plot_prolongation)
-        _plotter->plotCmfdFluxUpdate(_mesh, iteration);
+        _plotter->plotCmfdFluxUpdate(_mesh, moc_iter);
 
     return;
 }
@@ -2685,7 +2685,7 @@ double Cmfd::computeDiffCorrect(double d, double h){
 /* compute the L2 norm of consecutive fission sources
  * @retun L2 norm
  */
-int Cmfd::fisSourceNorm(Vec snew, int moc_iter, int num_cmfd_iteration)
+int Cmfd::computeCmfdL2Norm(Vec snew, int moc_iter)
 {
     int petsc_err = 0;
     PetscScalar *old_source;
@@ -2822,7 +2822,7 @@ void Cmfd::setOldFSRFlux()
 }
 
 
-/* set pointer to array of fsrs
+/* set pointer to array of fsrs, give each fsr the ID of the mesh cell it is in
  * @param pointer to arrary of fsrs
  */
 void Cmfd::setFSRs(FlatSourceRegion* fsrs)
