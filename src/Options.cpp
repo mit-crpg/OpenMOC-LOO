@@ -44,7 +44,7 @@ Options::Options(int argc, char **argv)
 
     /* Default geometry input file */
     _geometry_file = _relative_path + 
-        "xml-sample/Cmfd/geometry_pin52_leakage.xml"; 
+        "xml-sample/Cmfd/geometry_8x8_leakage3_2.xml"; 
     _material_file = _relative_path + "xml-sample/Cmfd/material_simple.xml";
 	
     _track_spacing = 0.5;		/* Default track spacing in C4: 0.5cm */

@@ -45,6 +45,8 @@ MeshCell::MeshCell(){
         _src[e] = 0.0; /* FIXME: no need to keep this around */
         _old_src[e] = 0.0;
         _sum_quad_flux[e] = 0.0;
+        _net_current[e] = 0.0;
+        _old_net_current[e] = 0.0;
         for (int k = 0; k < 8; k++) 
         {
             _quad_flux[e * 8 + k] = 0.0;
@@ -294,14 +296,18 @@ void MeshCell::setSumQuadFlux(double flux, int e){
     _sum_quad_flux[e] = flux;
 }
 
-/*
-void MeshCell::setBoundaryUpdate(double boundaryUpdate, int group, int ind)
-{
-    _boundary_update[group * 2 + ind] = boundaryUpdate;
+double* MeshCell::getNetCurrent(){
+    return _net_current;
 }
 
-double MeshCell::getBoundaryUpdate(int group, int ind)
-{
-    return _boundary_update[group * 2 + ind];
+void MeshCell::setNetCurrent(double current, int e){
+    _net_current[e] = current;
 }
-*/
+
+double* MeshCell::getOldNetCurrent(){
+    return _old_net_current;
+}
+
+void MeshCell::setOldNetCurrent(double current, int e){
+    _old_net_current[e] = current;
+}

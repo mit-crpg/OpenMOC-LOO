@@ -49,7 +49,8 @@ private:
     double _sum_quad_flux[NUM_ENERGY_GROUPS];
     double _quad_flux[8*NUM_ENERGY_GROUPS];
     double _quad_src[8*NUM_ENERGY_GROUPS];
-    //double _boundary_update[2*NUM_ENERGY_GROUPS];
+    double _net_current[NUM_ENERGY_GROUPS];
+    double _old_net_current[NUM_ENERGY_GROUPS];    
 public:
     MeshCell();
     virtual ~MeshCell();
@@ -93,20 +94,20 @@ public:
     Material* getMaterial();
     void setMaterial(Material* material);
     /* LOO */
-    void setSrc(double src, int e);
     double* getSrc();
-    void setOldSrc(double src, int e);
+    void setSrc(double src, int e);
     double* getOldSrc();
-    void setQuadFlux(double quadFlux, int e, int index);
+    void setOldSrc(double src, int e);
     double* getQuadFlux();
-    void setQuadSrc(double quadSrc, int e, int index);
+    void setQuadFlux(double quadFlux, int e, int index);
     double* getQuadSrc();
-    void setSumQuadFlux(double sumQuadFlux, int e);
+    void setQuadSrc(double quadSrc, int e, int index);
     double* getSumQuadFlux();
-    /*
-    void setBoundaryUpdate(double boundaryUpdate, int e, int ind);
-    double getBoundaryUpdate(int e, int ind);
-    */
+    void setSumQuadFlux(double sumQuadFlux, int e);
+    double* getNetCurrent();
+    void setNetCurrent(double current, int e);
+    double* getOldNetCurrent();
+    void setOldNetCurrent(double current, int e);
 };
 
 

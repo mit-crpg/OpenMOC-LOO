@@ -121,16 +121,20 @@ public:
     void setFSRs(FlatSourceRegion *fsrs);
     void setTracks(Track **tracks);
     int computeCmfdL2Norm(Vec snew, int moc_iter);
-    void updateBoundaryFluxByHalfSpace();
+    void updateBoundaryFluxByHalfSpace(int moc_iter);
 
     /* LOO */
     void generateTrack(int *i_array, int *t_array, int *t_arrayb);
+    void checkTrack();
     void storePreMOCMeshSource(FlatSourceRegion* fsrs);
     void computeQuadSrc();
     void computeQuadFlux();
     double computeLooFluxPower(int moc_iter, double k);
     double computeNormalization();
     void normalizeFlux(double normalize_factor);
+    void updateBoundaryFluxByNetCurrent(int moc_iter);
+    void updateBoundaryFluxBySrc(int moc_iter);
+    void updateOldQuadFlux();
 };
 
 #endif /* CMFD_H_ */

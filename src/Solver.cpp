@@ -495,14 +495,23 @@ void Solver::updateFlux(int moc_iter)
     {
         if (_run_loo && (!(_diffusion && (moc_iter == 0))))
         {
-            log_printf(DEBUG, "update by quadrature");
-            updateBoundaryFluxByQuadrature();
-            //_cmfd->updateBoundaryFluxByHalfSpace();
+            log_printf(DEBUG, " iter %d prolongation: update by quadrature",
+                       moc_iter);
+            if (_run_loo1)
+                updateBoundaryFluxByQuadrature();
+            else
+            {
+                updateBoundaryFluxByQuadrature();
+                //_cmfd->updateBoundaryFluxBySrc(moc_iter);
+                //_cmfd->updateBoundaryFluxByNetCurrent(moc_iter);
+                //_cmfd->updateBoundaryFluxByHalfSpace(moc_iter);
+            }
         }
         else
         {
-            log_printf(DEBUG, "update by partial");
-            _cmfd->updateBoundaryFluxByHalfSpace();
+            log_printf(DEBUG, " iter %d prolongation: update by partial",
+                       moc_iter);
+            _cmfd->updateBoundaryFluxByHalfSpace(moc_iter);
         }
     }
     normalizeFlux();
@@ -1441,7 +1450,7 @@ void Solver::normalizeFlux()
             }
         }		
     }
-    //*/
+    */
 
     return;
 }
