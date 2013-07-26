@@ -43,9 +43,17 @@ private:
     Quadrature* _quad;
     FlatSourceRegion* _flat_source_regions;
     Track** _tracks;
-    int* _num_tracks;
+    int _boundary_iteration;
     int _num_azim;
     int _num_FSRs;
+    int* _num_tracks;
+    double _total_vol;
+    double _damp_factor;
+    double _track_spacing;
+    double _k_eff;
+    double _cmfd_k;
+    double _loo_k;
+    double _k_half;
     double *_FSRs_to_fluxes[NUM_ENERGY_GROUPS + 1];
     double *_FSRs_to_powers;
     double *_FSRs_to_pin_powers;
@@ -53,19 +61,13 @@ private:
     double *_FSRs_to_scatter_source;
     double *_FSRs_to_absorption[NUM_ENERGY_GROUPS + 1];
     double *_FSRs_to_pin_absorption[NUM_ENERGY_GROUPS + 1];
-    double _k_eff;
-    double _cmfd_k;
-    double _loo_k;
-    double _k_half;
+
     std::queue<double> _old_k_effs;
     std::queue<double> _delta_phi;
     Plotter* _plotter;
     float* _pix_map_total_flux;
     Cmfd* _cmfd;
     std::string _geometry_file;
-    double _damp_factor;
-    double _track_spacing;
-    int _boundary_iteration;
 
 #if !STORE_PREFACTORS
     double* _pre_factor_array;
@@ -93,7 +95,6 @@ public:
     virtual ~Solver();
     /* initialization */
     void initializeTrackFluxes(double flux);
-    void initializeSource();
     void oneFSRFluxes();
     void zeroFSRFluxes();
     void zeroMeshCells();

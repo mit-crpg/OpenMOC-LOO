@@ -71,6 +71,29 @@ Solver::Solver(Geometry* geom, TrackGenerator* track_generator,
     /* Initializes FSRs */
     initializeFSRs();
     oneFSRFluxes();
+
+    _total_vol = 0;
+    for (int r = 0; r < _num_FSRs; r++) 
+        _total_vol = _flat_source_regions[r].getVolume();
+
+    /* Gives cmfd a pointer to the FSRs */
+    if ((_run_cmfd) || (_run_loo)) 
+    {
+        _cmfd->setFSRs(_flat_source_regions);
+        _cmfd->setTracks(_tracks);
+        if (_update_boundary)
+        {
+            log_printf(NORMAL, "Acceleration is on with %d boundary iteration,"
+                       " %f damping, and update boundary flux" , 
+                       _boundary_iteration, _damp_factor);
+        }
+        else
+        {
+            log_printf(NORMAL, "Acceleration is on with %d boundary iteration,"
+                       " %f damping, and no update boundary flux" , 
+                       _boundary_iteration, _damp_factor);
+        }  
+    }
 }
 
 
@@ -1292,73 +1315,11 @@ void Solver::MOCsweep(int max_iterations, int moc_iter)
     return;
 } /* end of MOCsweep */
 
-/* initialize the source and renormalize the fsr and track fluxes */
-void Solver::initializeSource(){
-
-    double fission_source;
-    double renorm_factor, volume, tot_vol;
-    double* nu_sigma_f;
-    double* scalar_flux;
-    FlatSourceRegion* fsr;
-    Material* material;
-    int start_index, end_index;
-
-
-    /*********************************************************************
-     * Renormalize scalar and boundary fluxes
-     *********************************************************************/
-
-    /* Initialize fission source to zero */
-    fission_source = 0;
-    tot_vol = 0;
-
-    /* Compute total fission source for this region */
-    for (int r = 0; r < _num_FSRs; r++) {
-
-        /* Get pointers to important data structures */
-        fsr = &_flat_source_regions[r];
-        material = fsr->getMaterial();
-        nu_sigma_f = material->getNuSigmaF();
-        scalar_flux = fsr->getFlux();
-        volume = fsr->getVolume();
-
-        start_index = fsr->getMaterial()->getNuSigmaFStart();
-        end_index = fsr->getMaterial()->getNuSigmaFEnd();
-
-        for (int e = start_index; e < end_index; e++)
-        {
-            fission_source += nu_sigma_f[e] * scalar_flux[e] * volume;
-            tot_vol += volume;
-        }
-    }
-
-    /* Renormalize scalar fluxes in each region */
-    renorm_factor = tot_vol / fission_source;
-
-#if USE_OPENMP
-#pragma omp parallel for
-#endif
-    for (int r = 0; r < _num_FSRs; r++)
-        _flat_source_regions[r].normalizeFluxes(renorm_factor);
-
-    /* Renormalize angular boundary fluxes for each track */
-#if USE_OPENMP
-#pragma omp parallel for
-#endif
-    for (int i = 0; i < _num_azim; i++) {
-        for (int j = 0; j < _num_tracks[i]; j++)
-            _tracks[i][j].normalizeFluxes(renorm_factor);
-    }
-
-    updateSource();
-}
-
-
 /* Normalizes the scalar flux in each FSR and angular flux track to that total 
  * volume-integrated fission source add up to the total volume. */
 void Solver::normalizeFlux()
 {			
-    double fission_source = 0, total_vol = 0;
+    double fission_source = 0;
     double factor, volume;
     double* nu_sigma_f;
     double* scalar_flux;
@@ -1381,12 +1342,10 @@ void Solver::normalizeFlux()
 
         for (int e = start_index; e < end_index; e++)
             fission_source += nu_sigma_f[e] * scalar_flux[e] * volume;
-
-        total_vol += volume;
     }
 
     /* Renormalize scalar fluxes in each region */
-    factor = total_vol / fission_source;
+    factor = _total_vol / fission_source;
 
 #if USE_OPENMP
 #pragma omp parallel for
@@ -1632,25 +1591,6 @@ double Solver::kernel(int max_iterations) {
     _old_k_effs.push(_k_eff);
     _delta_phi.push(1.0);
     log_printf(NORMAL, "Starting guess of k_eff = %f", _k_eff);
-
-    /* Gives cmfd a pointer to the FSRs */
-    if ((_run_cmfd) || (_run_loo)) 
-    {
-        _cmfd->setFSRs(_flat_source_regions);
-        _cmfd->setTracks(_tracks);
-        if (_update_boundary)
-        {
-            log_printf(NORMAL, "Acceleration is on with %d boundary iteration,"
-                       " %f damping, and update boundary flux" , 
-                       _boundary_iteration, _damp_factor);
-        }
-        else
-        {
-            log_printf(NORMAL, "Acceleration is on with %d boundary iteration,"
-                       " %f damping, and no update boundary flux" , 
-                       _boundary_iteration, _damp_factor);
-        }  
-    }
 
     /* Check that each FSR has at least one segment crossing it */
     checkTrackSpacing();
