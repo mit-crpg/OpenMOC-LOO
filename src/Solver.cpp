@@ -820,17 +820,20 @@ void Solver::plotPinPowers() {
     return;
 }
 
-void Solver::computeFsrPowers() {
+void Solver::storeFsrFluxPower() {
 
     log_printf(INFO, "Computing pin powers...");
-
     FlatSourceRegion* fsr;
+    double *fluxes;
 
     /* Loop over all FSRs and compute the fission rate*/
-    for (int i=0; i < _num_FSRs; i++) 
+    for (int i = 0; i < _num_FSRs; i++) 
     {
         fsr = &_flat_source_regions[i];
         _FSRs_to_powers[i] = fsr->computeFissionRate();
+        fluxes = _flat_source_regions[i].getFlux();
+        for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
+            _FSRs_to_fluxes[e][i] = fluxes[e];
     }
 
     return;
@@ -1281,7 +1284,7 @@ void Solver::MOCsweep(int max_iterations, int moc_iter)
             /* Normalize scalar fluxes and computes Q for each FSR */
             updateSource();
 
-            computeFsrPowers();
+            storeFsrFluxPower();
 
             /* Book-keeping: update old source in each FSR */
             double *source, *old_source;
@@ -1692,16 +1695,8 @@ double Solver::kernel(int max_iterations) {
     for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
         old_fsr_fluxes[e] = new double[_num_FSRs];
 
-    /* Computes initial FSR powers / fission rates */
-    computeFsrPowers();
-    /* Store fluxes */
-    for (int r=0; r < _num_FSRs; r++) 
-    {
-        double* fluxes = _flat_source_regions[r].getFlux();
-        for (int e=0; e < NUM_ENERGY_GROUPS; e++)
-            _FSRs_to_fluxes[e][r] = fluxes[e];
-    }
-
+    /* Computes and store initial FSR powers, store initial fluxes */
+    storeFsrFluxPower();
 
     /* Stores the initial FSR powers into old_fsr_powers */
     for (int n = 0; n < _num_FSRs; n++)
@@ -1740,28 +1735,20 @@ double Solver::kernel(int max_iterations) {
         if (_old_k_effs.size() == NUM_KEFFS_TRACKED)
             _old_k_effs.pop();
 
-        /* Store fluxes */
-        for (int r=0; r < _num_FSRs; r++) 
-        {
-            double* fluxes = _flat_source_regions[r].getFlux();
-            for (int e=0; e < NUM_ENERGY_GROUPS; e++)
-                _FSRs_to_fluxes[e][r] = fluxes[e];
-        }
+        storeFsrFluxPower();
 
         spectral_radius = computeSpectralRadius(old_fsr_fluxes);
-
-        /* Checks energy-integrated L2 norm of FSR powers / fission rates */
-        computeFsrPowers();
         eps_inf = computeFsrLinf(old_fsr_powers);
         eps_2 = computeFsrL2Norm(old_fsr_powers);
 
-        /* Stores current FSR powers into old fsr powers for next iter */
+        /* book-keeping: save fsr fluxes and powers into old */
         for (int n = 0; n < _num_FSRs; n++)
         {
             old_fsr_powers[n] = _FSRs_to_powers[n];
             for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
                 old_fsr_fluxes[e][n] = _FSRs_to_fluxes[e][n];
         }
+
         /* Prints out keff & eps, may update keff too based on _update_keff */
         printToScreen(moc_iter, eps_inf);
         printToLog(moc_iter, eps_inf, eps_2, spectral_radius);

@@ -112,7 +112,7 @@ public:
     void plotFluxes(int moc_iter);
     void checkTrackSpacing();
     void checkBoundary();
-    void computeFsrPowers();
+    void storeFsrFluxPower();
     void plotPinPowers();
     void checkNeutronBalance();
     void checkNeutronBalanceWithDs();
