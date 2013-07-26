@@ -1274,10 +1274,6 @@ void Solver::MOCsweep(int max_iterations, int moc_iter)
 		
             normalizeFlux();
 
-
-            //if (_run_loo)
-            //	_cmfd->storePreMOCMeshSource(_flat_source_regions);
-
             /* computes new _k_eff; it is important that we compute new k 
              * before computing new source */
             _k_eff = computeKeff(i);
@@ -1811,24 +1807,13 @@ double Solver::kernel(int max_iterations) {
                 for (int r=0; r < _num_FSRs; r++) {
                     double* fluxes = _flat_source_regions[r].getFlux();
                     for (int e=0; e < NUM_ENERGY_GROUPS; e++)
-                    {
-                        _FSRs_to_fluxes[e][r] = fluxes[e];
                         _FSRs_to_fluxes[NUM_ENERGY_GROUPS][r] += fluxes[e];
-                    }
                 }
 
-                plotFluxes(moc_iter + 1);
+                plotFluxes(moc_iter);
             }
 
-            std::ofstream logfile;
-            std::stringstream string;
-            string << "benchmark.txt";
-            std::string title_str = string.str();
-            logfile.open(title_str.c_str(), std::fstream::app);
-            logfile << _geometry_file << " " 
-                    <<  std::setprecision(11) <<  _k_eff;
-            logfile << " " << moc_iter << std::endl;
-            logfile.close();
+            printToMinimumLog(moc_iter);
 
             return _k_eff;
         }
@@ -1839,6 +1824,22 @@ double Solver::kernel(int max_iterations) {
 
     return _k_eff;
 }
+
+void Solver::printToMinimumLog(int moc_iter)
+{
+    std::ofstream logfile;
+    std::stringstream string;
+    string << "benchmark.txt";
+    std::string title_str = string.str();
+    logfile.open(title_str.c_str(), std::fstream::app);
+    logfile << _geometry_file << " " 
+            <<  std::setprecision(11) <<  _k_eff;
+    logfile << " " << moc_iter << std::endl;
+    logfile.close();
+
+    return;
+}
+
 
 void Solver::printToLog(int moc_iter, double eps_inf, double eps_2, double rho)
 {

@@ -104,6 +104,7 @@ public:
     void updateBoundaryFluxByQuadrature();
     void printToScreen(int moc_iter, double eps);
     void printToLog(int moc_iter, double eps_inf, double eps_2, double rho);
+    void printToMinimumLog(int moc_iter);
     double computeKeff(int moc_iter);
     double** getFSRtoFluxMap();
     void MOCsweep(int max_iterations, int moc_iter);
