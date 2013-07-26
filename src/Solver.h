@@ -58,6 +58,7 @@ private:
     double _loo_k;
     double _k_half;
     std::queue<double> _old_k_effs;
+    std::queue<double> _delta_phi;
     Plotter* _plotter;
     float* _pix_map_total_flux;
     Cmfd* _cmfd;
@@ -125,6 +126,7 @@ public:
     double runCmfd(int moc_iter);
     double computeFsrL2Norm(double *old_fsr_powers);
     double computeFsrLinf(double *old_fsr_powers);
+    double computeSpectralRadius(double **old_fsr_powers);        
 };
 
 #endif /* SOLVER_H_ */

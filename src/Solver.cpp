@@ -1450,7 +1450,7 @@ void Solver::normalizeFlux()
             }
         }		
     }
-    */
+    //*/
 
     return;
 }
@@ -1600,6 +1600,29 @@ double Solver::computeFsrLinf(double *old_fsr_powers)
     return l2_norm;
 }
 
+double Solver::computeSpectralRadius(double **old_fsr_fluxes)
+{
+    double l2_norm = 0.0, rho = 0;
+    int num_counted = 0;
+    for (int i = 0; i < _num_FSRs; i++)
+    {
+        for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
+        {
+            l2_norm += pow(_FSRs_to_fluxes[e][i] - old_fsr_fluxes[e][i], 2.0);
+            num_counted++;
+        }
+    }
+    l2_norm /= (double) num_counted;
+    l2_norm = pow(l2_norm, 0.5);
+
+    _delta_phi.push(l2_norm);
+    if (_delta_phi.size() == 3)
+        _delta_phi.pop();
+
+    rho = _delta_phi.back() / _delta_phi.front();
+    
+    return rho;
+}
 
 double Solver::kernel(int max_iterations) {
     FlatSourceRegion* fsr;
@@ -1609,6 +1632,7 @@ double Solver::kernel(int max_iterations) {
 
     /* Initial guess */
     _old_k_effs.push(_k_eff);
+    _delta_phi.push(1.0);
     log_printf(NORMAL, "Starting guess of k_eff = %f", _k_eff);
 
     /* Gives cmfd a pointer to the FSRs */
@@ -1655,15 +1679,31 @@ double Solver::kernel(int max_iterations) {
     normalizeFlux();
     updateSource();
 
+    double spectral_radius; 
     double old_fsr_powers[_num_FSRs];
+    double **old_fsr_fluxes;
+    old_fsr_fluxes = new double*[NUM_ENERGY_GROUPS];
+    for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
+        old_fsr_fluxes[e] = new double[_num_FSRs];
 
     /* Computes initial FSR powers / fission rates */
     computeFsrPowers();
+    /* Store fluxes */
+    for (int r=0; r < _num_FSRs; r++) 
+    {
+        double* fluxes = _flat_source_regions[r].getFlux();
+        for (int e=0; e < NUM_ENERGY_GROUPS; e++)
+            _FSRs_to_fluxes[e][r] = fluxes[e];
+    }
+
 
     /* Stores the initial FSR powers into old_fsr_powers */
     for (int n = 0; n < _num_FSRs; n++)
+    {
         old_fsr_powers[n] = _FSRs_to_powers[n];
-
+        for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
+            old_fsr_fluxes[e][n] = _FSRs_to_fluxes[e][n];
+    }
     /* Source iteration loop */
     for (moc_iter = 0; moc_iter < max_iterations; moc_iter++) 
     {
@@ -1694,6 +1734,16 @@ double Solver::kernel(int max_iterations) {
         if (_old_k_effs.size() == NUM_KEFFS_TRACKED)
             _old_k_effs.pop();
 
+        /* Store fluxes */
+        for (int r=0; r < _num_FSRs; r++) 
+        {
+            double* fluxes = _flat_source_regions[r].getFlux();
+            for (int e=0; e < NUM_ENERGY_GROUPS; e++)
+                _FSRs_to_fluxes[e][r] = fluxes[e];
+        }
+
+        spectral_radius = computeSpectralRadius(old_fsr_fluxes);
+
         /* Checks energy-integrated L2 norm of FSR powers / fission rates */
         computeFsrPowers();
         double eps_inf = computeFsrLinf(old_fsr_powers);
@@ -1701,8 +1751,11 @@ double Solver::kernel(int max_iterations) {
 
         /* Stores current FSR powers into old fsr powers for next iter */
         for (int n = 0; n < _num_FSRs; n++)
+        {
             old_fsr_powers[n] = _FSRs_to_powers[n];
-
+            for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
+                old_fsr_fluxes[e][n] = _FSRs_to_fluxes[e][n];
+        }
         /* Prints out keff & eps, may update keff too based on _update_keff */
         printKeff(moc_iter, eps_inf);
 
@@ -1799,6 +1852,7 @@ double Solver::kernel(int max_iterations) {
                     << " keff relative change"
                     << ", # loo iterations "
                     << ", keff"
+                    << ", spectral radius"
                     << std::endl;
         }
         else
@@ -1812,6 +1866,7 @@ double Solver::kernel(int max_iterations) {
                 / _old_k_effs.back()
                     << " " << _cmfd->getNumIterToConv() 
                     << " " << std::setprecision(11) << _old_k_effs.back()
+                    << " " << spectral_radius
                     << std::endl;
         }
 
