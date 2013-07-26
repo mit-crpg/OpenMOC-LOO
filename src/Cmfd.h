@@ -135,6 +135,9 @@ public:
     void updateBoundaryFluxBySrc(int moc_iter);
     void updateOldQuadFlux();
     void computeLooL2Norm(int moc_iter);
+    bool onBoundary(int track_id, int cell_id, int surf, int dir);
+    bool onVacuumBoundary(int track_id, int cell_id, int dir);
+    bool onReflectiveBoundary(int track_id, int cell_id, int surf, int dir);
 };
 
 #endif /* CMFD_H_ */
