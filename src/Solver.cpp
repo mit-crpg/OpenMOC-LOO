@@ -861,27 +861,16 @@ void Solver::plotFluxes(int moc_iter)
     /* make FSR BitMap */
     _plotter->copyFSRMap(bitMapFSR->pixels);
 
-    for (int i = 0; i < NUM_ENERGY_GROUPS; i++){
-
-        std::stringstream string;
+    std::stringstream string;
+    std::string title_str;
+    for (int i = 0; i < NUM_ENERGY_GROUPS; i++)
+    {
         string << "flux" << i + 1 << "group";
-        std::string title_str = string.str();
-
-        log_printf(DEBUG, "Plotting group %d flux...", (i+1));
+        title_str = string.str();
         _plotter->makeRegionMap(bitMapFSR->pixels, bitMap->pixels, 
                                 _FSRs_to_fluxes[i]);
         plot(bitMap, title_str, _plotter->getExtension());
     }
-
-
-    std::stringstream string;
-    string << "flux_tot_i_" << moc_iter;
-    std::string title_str = string.str();
-
-    log_printf(DEBUG, "Plotting total flux...");
-    _plotter->makeRegionMap(bitMapFSR->pixels, bitMap->pixels, 
-                            _FSRs_to_fluxes[NUM_ENERGY_GROUPS]);
-    plot(bitMap, title_str, _plotter->getExtension());
 
     /* delete bitMaps */
     deleteBitMap(bitMapFSR);
@@ -1756,10 +1745,6 @@ double Solver::kernel(int max_iterations) {
         /* Alternative: if (_cmfd->getL2Norm() < _moc_conv_thresh) */
         if (eps_2 < _moc_conv_thresh) 
         {
-            /* plot pin powers */
-            if (_compute_powers)
-                plotPinPowers();
-
             /* Run one steps of acceleration if it is requested to do so */
             if (_acc_after_MOC_converge)
             {
@@ -1769,38 +1754,8 @@ double Solver::kernel(int max_iterations) {
                     _cmfd_k = runCmfd(10000);
             }
 
-            /* plot CMFD flux and xs */
-            if (_run_cmfd && _plotter->plotCurrent() )
-            {
-                _cmfd->computeXS();
-                _cmfd->computeDs();
-                _plotter->plotDHats(_geom->getMesh(), moc_iter);
-                _plotter->plotNetCurrents(_geom->getMesh());
-                _plotter->plotXS(_geom->getMesh(), moc_iter);
-            }
-
-            /* plot LOO flux and xs */
-            if (_run_loo && _plotter->plotQuadFluxFlag())
-            {
-                _plotter->plotQuadFlux(_geom->getMesh(), moc_iter);
-                _plotter->plotNetCurrents(_geom->getMesh());
-                _plotter->plotXS(_geom->getMesh(), moc_iter);
-            }
-
-            /* plot MOC flux */
-            if (_plotter->plotFlux())
-            {
-                /* Load fluxes into FSR to flux map */
-                for (int r=0; r < _num_FSRs; r++) {
-                    double* fluxes = _flat_source_regions[r].getFlux();
-                    for (int e=0; e < NUM_ENERGY_GROUPS; e++)
-                        _FSRs_to_fluxes[NUM_ENERGY_GROUPS][r] += fluxes[e];
-                }
-
-                plotFluxes(moc_iter);
-            }
-
             printToMinimumLog(moc_iter);
+            plotEverything(moc_iter);
 
             return _k_eff;
         }
@@ -1810,6 +1765,37 @@ double Solver::kernel(int max_iterations) {
                max_iterations);
 
     return _k_eff;
+}
+
+void Solver::plotEverything(int moc_iter)
+{
+    /* plot pin powers */
+    if (_compute_powers)
+        plotPinPowers();
+
+    /* plot CMFD flux and xs */
+    if (_run_cmfd && _plotter->plotCurrent() )
+    {
+        _cmfd->computeXS();
+        _cmfd->computeDs();
+        _plotter->plotDHats(_geom->getMesh(), moc_iter);
+        _plotter->plotNetCurrents(_geom->getMesh());
+        _plotter->plotXS(_geom->getMesh(), moc_iter);
+    }
+
+    /* plot LOO flux and xs */
+    if (_run_loo && _plotter->plotQuadFluxFlag())
+    {
+        _plotter->plotQuadFlux(_geom->getMesh(), moc_iter);
+        _plotter->plotNetCurrents(_geom->getMesh());
+        _plotter->plotXS(_geom->getMesh(), moc_iter);
+    }
+
+    /* plot FSR scalar flux */
+    if (_plotter->plotFlux())
+        plotFluxes(moc_iter);
+
+    return;
 }
 
 void Solver::printToMinimumLog(int moc_iter)

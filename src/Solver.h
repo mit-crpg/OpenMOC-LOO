@@ -91,44 +91,54 @@ public:
     Solver(Geometry* geom, TrackGenerator* track_generator, 
            Plotter* plotter, Cmfd* cmfd, Options* opts);
     virtual ~Solver();
+    /* initialization */
     void initializeTrackFluxes(double flux);
     void initializeSource();
-    void normalizeFlux();
-    void updateSource();
     void oneFSRFluxes();
     void zeroFSRFluxes();
     void zeroMeshCells();
     void zeroLeakage();
-    void computeRatios();
-    void updateFlux(int moc_iter);
-    void updateBoundaryFluxByQuadrature();
-    void printToScreen(int moc_iter, double eps);
-    void printToLog(int moc_iter, double eps_inf, double eps_2, double rho);
-    void printToMinimumLog(int moc_iter);
-    double computeKeff(int moc_iter);
-    double** getFSRtoFluxMap();
-    void MOCsweep(int max_iterations, int moc_iter);
-    double kernel(int max_iterations);
-    void plotFluxes(int moc_iter);
+
+    /* checking and debugging */
     void checkTrackSpacing();
     void checkBoundary();
-    void storeFsrFluxPower();
-    void plotPinPowers();
     void checkNeutronBalance();
     void checkNeutronBalanceWithDs();
+
+    /* main routines */
+    double kernel(int max_iterations);
+    void MOCsweep(int max_iterations, int moc_iter);
+    double runLoo(int moc_iter);
+    double runCmfd(int moc_iter);
+    void tallyLooCurrent(Track *t, segment *seg, MeshSurface **surf, int dir);
+    void tallyCmfdCurrent(Track *t, segment *seg, MeshSurface **surf, int dir);
+
+    /* updates after transport sweep */
+    void computeRatios();
+    double computeKeff(int moc_iter);
+    void normalizeFlux();
     void renormCurrents(Mesh* mesh, double keff);
+    void updateSource();
+    void updateFlux(int moc_iter);
+    void updateBoundaryFluxByQuadrature();
+    void storeFsrFluxPower();
+    double computeFsrL2Norm(double *old_fsr_powers);
+    double computeFsrLinf(double *old_fsr_powers);
+    double computeSpectralRadius(double **old_fsr_powers); 
+
+    /* getters and setters */
+    double** getFSRtoFluxMap();
     double getEps(Mesh* mesh, double keff, double renorm_factor);
     FlatSourceRegion* getFSRs();
     void setOldFSRFlux();
-    void tallyLooCurrent(Track *track, segment *segment, 
-                         MeshSurface **meshSurfaces, int dir);
-    void tallyCmfdCurrent(Track *track, segment *segment, 
-                          MeshSurface **meshSurfaces, int dir);
-    double runLoo(int moc_iter);
-    double runCmfd(int moc_iter);
-    double computeFsrL2Norm(double *old_fsr_powers);
-    double computeFsrLinf(double *old_fsr_powers);
-    double computeSpectralRadius(double **old_fsr_powers);        
+
+    /* printing and plotting */
+    void printToScreen(int moc_iter, double eps);
+    void printToLog(int moc_iter, double eps_inf, double eps_2, double rho);
+    void printToMinimumLog(int moc_iter);
+    void plotFluxes(int moc_iter);
+    void plotPinPowers();
+    void plotEverything(int moc_iter);
 };
 
 #endif /* SOLVER_H_ */
