@@ -1846,13 +1846,14 @@ void Solver::printToLog(int moc_iter, double eps_inf, double eps_2, double rho)
     if (moc_iter == 0)
     {
         logfile.open(title_str.c_str(), std::fstream::trunc);
-        logfile << "# iteration, mesh cell l2 norm (m+1/2, m+1),"
+        logfile << "# iteration,"
+                << " cell l2 norm (m+1/2, m+1),"
                 << " fsr l-inf norm (m, m+1),"
-                << " fsr l-2 norm (m, m+1)," 
-                << " keff relative change"
-                << ", # loo iterations "
-                << ", keff"
-                << ", spectral radius"
+                << " fsr l2 norm (m, m+1)," 
+                << " keff relative change,"
+                << " #lo iterations, "
+                << " keff,"
+                << " spectral radius"
                 << std::endl;
     }
     else

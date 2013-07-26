@@ -1132,10 +1132,8 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter)
     else
         log_printf(ACTIVE, "Running CMFD Acceleration");
 
-    /* initialize variables */
     MeshCell* meshCell;
-    int max_outer, iter = 0;
-    int petsc_err;
+    int max_outer, iter = 0, petsc_err;
     Vec phi_old, sold, snew, res;
     PetscInt size, its;
     PetscScalar sumold, sumnew, scale_val, eps;
@@ -1154,12 +1152,10 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter)
     petsc_err = constructAMPhi(_A, _M, phi_old, solveMethod);
     CHKERRQ(petsc_err);
 
-    /* if solve method is DIFFUSION, set max_outer to large number
-     * to allow solver to fully converge */
+    /* if solve method is DIFFUSION, set max_outer to large number to allow 
+     * the solver to fully converge; for CMFD, 50 is probably sufficient */
     if (solveMethod == DIFFUSION)
         max_outer = 1000;
-    /* if solve method is CMFD, set max_outer such that flux
-     * partially converges */
     else
         max_outer = 200;
 
@@ -1207,8 +1203,8 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter)
     petsc_err = KSPCreate(PETSC_COMM_WORLD, &ksp);
     petsc_err = KSPSetTolerances(ksp, rtol, atol, PETSC_DEFAULT, PETSC_DEFAULT);
     petsc_err = KSPSetType(ksp, KSPGMRES);
-    //petsc_err = PetscObjectSetPrecision( (_p_PetscObject*) ksp, 
-    //									 PETSC_PRECISION_DOUBLE);
+    //petsc_err = PetscObjectSetPrecision((_p_PetscObject*) ksp, 
+    //					  PETSC_PRECISION_DOUBLE);
     petsc_err = KSPSetInitialGuessNonzero(ksp, PETSC_TRUE);
     petsc_err = KSPSetOperators(ksp, _A, _A, SAME_NONZERO_PATTERN);
 
@@ -1229,6 +1225,7 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter)
                    " produce keff of %.10f = %.10f / %.10f", 
                    _keff, (double) sumnew, (double) sumold);
     }
+    petsc_err = VecCopy(snew, _source_old);
     CHKERRQ(petsc_err);
 
     VecCopy(snew, sold);
@@ -1339,16 +1336,13 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter)
     CHKERRQ(petsc_err);
 
     log_printf(DEBUG, "CMFD converged flux update (relative to m+1/2):");
-    for (int i = 0; i < _cw*_ch; i++){
+    for (int i = 0; i < _cw*_ch; i++)
+    {
         meshCell = _mesh->getCells(i);
-        for (int e = 0; e < _ng; e++){
+        for (int e = 0; e < _ng; e++)
+        {
             meshCell->setOldFlux(double(old_phi[i*_ng + e]), e);
             meshCell->setNewFlux(double(new_phi[i*_ng + e]), e);
-			
-            log_printf(DEBUG, " cell %d, energy %d, new/old = %.10f",
-                       i, e, 
-                       (double)(old_phi[i*_ng + e]) 
-                       / (double)(new_phi[i*_ng + e]));
         }
     }
 
@@ -2917,9 +2911,12 @@ int Cmfd::computeCmfdL2Norm(Vec snew, int moc_iter)
     {
         for (int e = 0; e < _ng; e++)
         {
-            _l2_norm += pow(new_source[i * _ng + e] 
-                            / old_source[i * _ng + e]
-                            - 1.0, 2);
+            if (old_source[i * _ng + e] > 0)
+            {
+                _l2_norm += pow(new_source[i * _ng + e] 
+                                / old_source[i * _ng + e]
+                                - 1.0, 2);
+            }
             num_counted ++;
         }
     }
