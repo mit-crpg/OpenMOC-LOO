@@ -1689,7 +1689,7 @@ double Solver::kernel(int max_iterations) {
     normalizeFlux();
     updateSource();
 
-    double spectral_radius; 
+    double spectral_radius, eps_inf, eps_2;
     double old_fsr_powers[_num_FSRs];
     double **old_fsr_fluxes;
     old_fsr_fluxes = new double*[NUM_ENERGY_GROUPS];
@@ -1756,8 +1756,8 @@ double Solver::kernel(int max_iterations) {
 
         /* Checks energy-integrated L2 norm of FSR powers / fission rates */
         computeFsrPowers();
-        double eps_inf = computeFsrLinf(old_fsr_powers);
-        double eps_2 = computeFsrL2Norm(old_fsr_powers);
+        eps_inf = computeFsrLinf(old_fsr_powers);
+        eps_2 = computeFsrL2Norm(old_fsr_powers);
 
         /* Stores current FSR powers into old fsr powers for next iter */
         for (int n = 0; n < _num_FSRs; n++)
@@ -1768,120 +1768,7 @@ double Solver::kernel(int max_iterations) {
         }
         /* Prints out keff & eps, may update keff too based on _update_keff */
         printToScreen(moc_iter, eps_inf);
-
-        std::ofstream logfile;
-        std::stringstream string;
-        if (_run_cmfd)
-        {
-            if (_update_boundary)
-            {
-                string << "l2_norm_" << (_num_azim*2) << "_" 
-                       << std::fixed 
-                       << std::setprecision(2) <<  _track_spacing
-                       << "_bi_" << _boundary_iteration
-                       << "_"
-                       << std::setprecision(1) << _damp_factor 
-                       << "_update_cmfd.txt";
-            }
-            else
-            {
-                string << "l2_norm_" << (_num_azim*2) << "_" 
-                       << std::fixed 
-                       << std::setprecision(2) <<  _track_spacing
-                       << "_bi_" << _boundary_iteration
-                       << "_" 
-                       << std::setprecision(1) << _damp_factor 
-                       << "_noupda_cmfd.txt";
-            }               
-        }
-        else if (_run_loo1)
-        {
-            if (_update_boundary)
-            {
-                string << "l2_norm_" << (_num_azim*2) << "_" 
-                       << std::fixed
-                       << std::setprecision(2) <<  _track_spacing
-                       << "_bi_" << _boundary_iteration
-                       << "_" 
-                       << std::setprecision(1) << _damp_factor 
-                       << "_update_loo1.txt";
-            }
-            else
-            {
-                string << "l2_norm_" << (_num_azim*2) << "_" 
-                       << std::fixed
-                       << std::setprecision(2) <<  _track_spacing
-                       << "_bi_" << _boundary_iteration
-                       << "_" 
-                       << std::setprecision(1) << _damp_factor 
-                       << "_noupda_loo1.txt";
-            }
-        }			
-        else if (_run_loo2)
-        {
-            if (_update_boundary)
-            {
-                string << "l2_norm_" << (_num_azim*2) << "_" 
-                       << std::fixed
-                       << std::setprecision(2) <<  _track_spacing
-                       << "_bi_" << _boundary_iteration
-                       << "_" 
-                       << std::setprecision(1) << _damp_factor 
-                       << "_update_loo2.txt";
-            }
-            else
-            {
-                string << "l2_norm_" << (_num_azim*2) << "_" 
-                       << std::fixed
-                       << std::setprecision(2) <<  _track_spacing
-                       << "_bi_" << _boundary_iteration
-                       << "_" 
-                       << std::setprecision(1) << _damp_factor 
-                       << "_noupda_loo2.txt";
-            }				
-        }
-        else
-        {
-            string << "l2_norm_" << (_num_azim*2) << "_" 
-                   << std::fixed
-                   << std::setprecision(2) <<  _track_spacing
-                   << "_" 
-                   << std::setprecision(1) << _damp_factor 
-                   << "_noupda_unac.txt";
-        }
-
-        std::string title_str = string.str();
-
-        /* Write the message to the output file */
-        if (moc_iter == 0)
-        {
-            logfile.open(title_str.c_str(), std::fstream::trunc);
-            logfile << "# iteration, mesh cell l2 norm (m+1/2, m+1),"
-                    << " fsr l-inf norm (m, m+1),"
-                    << " fsr l-2 norm (m, m+1)," 
-                    << " keff relative change"
-                    << ", # loo iterations "
-                    << ", keff"
-                    << ", spectral radius"
-                    << std::endl;
-        }
-        else
-        {
-            logfile.open(title_str.c_str(), std::ios::app);
-            logfile << moc_iter 
-                    << " " << _cmfd->getL2Norm() 
-                    << " " << eps_inf
-                    << " " << eps_2
-                    << " " << (_old_k_effs.back() - _old_k_effs.front()) 
-                / _old_k_effs.back()
-                    << " " << _cmfd->getNumIterToConv() 
-                    << " " << std::setprecision(11) << _old_k_effs.back()
-                    << " " << spectral_radius
-                    << std::endl;
-        }
-
-        logfile.close();
-
+        printToLog(moc_iter, eps_inf, eps_2, spectral_radius);
 
         /* Alternative: if (_cmfd->getL2Norm() < _moc_conv_thresh) */
         if (eps_2 < _moc_conv_thresh) 
@@ -1952,6 +1839,66 @@ double Solver::kernel(int max_iterations) {
 
     return _k_eff;
 }
+
+void Solver::printToLog(int moc_iter, double eps_inf, double eps_2, double rho)
+{
+    std::ofstream logfile;
+    std::stringstream string;
+
+    string << "l2_norm_" << (_num_azim*2) 
+           << "_" << std::fixed 
+           << std::setprecision(2) <<  _track_spacing
+           << "_bi_" << _boundary_iteration
+           << "_"
+           << std::setprecision(1) << _damp_factor;
+
+    if (_update_boundary)
+        string << "_update";
+    else
+        string << "_noupda";
+
+    if (_run_cmfd)
+        string << "_cmfd.txt";
+    else if (_run_loo1)
+        string << "_loo1.txt";
+    else if (_run_loo2)
+        string << "_loo2.txt";
+    else
+        string << "_unac.txt";
+
+
+    std::string title_str = string.str();
+
+    if (moc_iter == 0)
+    {
+        logfile.open(title_str.c_str(), std::fstream::trunc);
+        logfile << "# iteration, mesh cell l2 norm (m+1/2, m+1),"
+                << " fsr l-inf norm (m, m+1),"
+                << " fsr l-2 norm (m, m+1)," 
+                << " keff relative change"
+                << ", # loo iterations "
+                << ", keff"
+                << ", spectral radius"
+                << std::endl;
+    }
+    else
+    {
+        logfile.open(title_str.c_str(), std::ios::app);
+        logfile << moc_iter 
+                << " " << _cmfd->getL2Norm() 
+                << " " << eps_inf
+                << " " << eps_2
+                << " " << 1.0 -  _old_k_effs.front() / _old_k_effs.back()
+                << " " << _cmfd->getNumIterToConv() 
+                << " " << std::setprecision(11) << _old_k_effs.back()
+                << " " << rho
+                << std::endl;
+    }
+
+    logfile.close();
+        
+}
+
 
 
 /*
