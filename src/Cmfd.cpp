@@ -1973,7 +1973,7 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
         log_printf(ACTIVE, "normalize_factor = %.10f", normalize_factor);
 
         /* Normalizes leakage, scalar flux, angular flux */
-        //leak_tot *= normalize_factor;
+        leak_tot *= normalize_factor;
         for (int i = 0; i < _cw * _ch; i++)
         {
             for (int e = 0; e < _ng; e++)
@@ -1997,9 +1997,6 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
             }
         }
         */
-
-
-
 
         /* Computes keff with leakage */
         double vol_tot = 0, fis_tot = 0, abs_tot = 0, vol = 0;
@@ -2056,62 +2053,21 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
         /* If LOO iterative solver converges */
         if (eps < _l2_norm_conv_thresh)
         {
-            std::string string;
             if (_plotter->plotKeff())
                 _plotter->plotCMFDKeff(_mesh, moc_iter);
 
             if (_plotter->plotCurrent())
-            {
-                string = "loo";
-                _plotter->plotCMFDflux(_mesh, string, moc_iter);
-            }
+                _plotter->plotCMFDflux(_mesh, "loo", moc_iter);
 
             break;
         }
     } /* exit iteration level */
+
     _num_iter_to_conv = loo_iter + 1;
-
-
-
-    /* FIXME: DEBUG */
-    ///*
-    for (int i = 0; i < _cw * _ch; i++)
-    {
-        for (int e = 0; e < _ng; e++)
-            _mesh->getCells(i)->setSrc(new_src[i][e], e);
-    }
-    //*/
-
-
 
     /* Computes the L2 norm of point-wise-division of energy-integrated
      * fission source of mesh cells relative to (m+1/2) */
-    eps = 0;
-    int num_counted = 0;
-    double xs;
-    for (int i = 0; i < _cw * _ch; i++)
-    {
-        meshCell = _mesh->getCells(i);
-        old_power[i] = 0;
-        new_power[i] = 0;
-        /* integrates over energy */
-        for (int e = 0; e < _ng; e++)
-        {
-            xs = meshCell->getNuSigmaF()[e];
-            old_power[i] += xs * meshCell->getOldFlux()[e];
-            new_power[i] += xs * meshCell->getNewFlux()[e];
-        } 
-        if (old_power[i] > 1e-20)
-        {
-            eps += pow(new_power[i] / old_power[i] - 1.0, 2);
-            num_counted++;
-        }
-    }
-    eps /= (double) num_counted;
-    _l2_norm = pow(eps, 0.5);
-
-    log_printf(DEBUG, " iteration %d, L2 norm of cell power error = %e", 
-               moc_iter, _l2_norm);
+    computeLooL2Norm(moc_iter);
 	
     /* Cleaning up; FIXME: more cleaning */
     for (int i = 0; i < _cw * _ch; i++)
@@ -2892,6 +2848,40 @@ double Cmfd::computeDiffCorrect(double d, double h){
     }
 
 }
+
+void Cmfd::computeLooL2Norm(int moc_iter)
+{
+    MeshCell *meshCell;
+    double eps = 0;
+    int num_counted = 0;
+    double xs, old_power[_cw * _ch], new_power[_cw * _ch];
+
+    for (int i = 0; i < _cw * _ch; i++)
+    {
+        meshCell = _mesh->getCells(i);
+        old_power[i] = 0;
+        new_power[i] = 0;
+        /* integrates over energy */
+        for (int e = 0; e < _ng; e++)
+        {
+            xs = meshCell->getNuSigmaF()[e];
+            old_power[i] += xs * meshCell->getOldFlux()[e];
+            new_power[i] += xs * meshCell->getNewFlux()[e];
+        } 
+        if (old_power[i] > 0)
+        {
+            eps += pow(new_power[i] / old_power[i] - 1.0, 2);
+            num_counted++;
+        }
+    }
+    eps /= (double) num_counted;
+    _l2_norm = pow(eps, 0.5);
+
+    log_printf(DEBUG, " iteration %d, L2 norm of cell power error = %e", 
+               moc_iter, _l2_norm);
+}
+
+
 
 /* compute the L2 norm of consecutive fission sources
  * @retun L2 norm

@@ -135,6 +135,7 @@ public:
     void updateBoundaryFluxByNetCurrent(int moc_iter);
     void updateBoundaryFluxBySrc(int moc_iter);
     void updateOldQuadFlux();
+    void computeLooL2Norm(int moc_iter);
 };
 
 #endif /* CMFD_H_ */

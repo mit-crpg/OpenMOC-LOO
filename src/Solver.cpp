@@ -68,7 +68,7 @@ Solver::Solver(Geometry* geom, TrackGenerator* track_generator,
     /* Pre-compute exponential pre-factors */
     precomputeFactors();
 
-    /* Initializes FSRs */
+    /* Initializes FSRs: store id, cell id, material, volume */
     initializeFSRs();
     oneFSRFluxes();
 
