@@ -102,7 +102,7 @@ public:
     void computeRatios();
     void updateFlux(int moc_iter);
     void updateBoundaryFluxByQuadrature();
-    void printKeff(int moc_iter, double eps);
+    void printToScreen(int moc_iter, double eps);
     double computeKeff(int moc_iter);
     double** getFSRtoFluxMap();
     void MOCsweep(int max_iterations, int moc_iter);

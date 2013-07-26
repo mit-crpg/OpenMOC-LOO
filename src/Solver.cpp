@@ -597,16 +597,27 @@ void Solver::updateBoundaryFluxByQuadrature()
     return;
 }
 
-void Solver::printKeff(int moc_iter, double eps)
+void Solver::printToScreen(int moc_iter, double eps)
 {
     /* Prints & Update keff for MOC sweep */
-    if ((_run_cmfd) && !(_acc_after_MOC_converge))
+    if ((moc_iter == 0) && _diffusion)
     {
-        printf("Iteration %d, MOC k^(m+1) = %.10f, CMFD k = %.10f,"
+        printf("Iter %d, MOC k^(m+1) = %.10f, Diffusion k = %.10f,"
+               " MOC k^(m+1/2) = %.10f" 
+               " FS eps = %.4e,  k eps = %.4e, #Diffusion = %d\n", 
+               moc_iter, _k_eff, _cmfd_k, _k_half, eps,
+               (_old_k_effs.back() - _old_k_effs.front()) / _old_k_effs.back(),
+               _cmfd->getNumIterToConv());
+
+        if (_update_keff)
+            _k_eff = _cmfd_k;
+    }
+    else if ((_run_cmfd) && !(_acc_after_MOC_converge))
+    {
+        printf("Iter %d, MOC k^(m+1) = %.10f, CMFD k = %.10f,"
                " MOC k^(m+1/2) = %.10f" 
                " FS eps = %.4e,  k eps = %.4e, #CMFD = %d\n", 
-               moc_iter, _k_eff, _cmfd_k, _k_half,
-               eps, 
+               moc_iter, _k_eff, _cmfd_k, _k_half, eps,
                (_old_k_effs.back() - _old_k_effs.front()) / _old_k_effs.back(),
                _cmfd->getNumIterToConv());
 
@@ -619,8 +630,7 @@ void Solver::printKeff(int moc_iter, double eps)
         printf("Iter %d, MOC k^(m+1) = %.10f, LOO k = %.10f,"
                " MOC k^(m+1/2) = %.10f"
                " FS eps = %.4e, k eps = %.4e, #LOO = %d\n", 
-               moc_iter, _k_eff, _loo_k, _k_half,
-               eps, 
+               moc_iter, _k_eff, _loo_k, _k_half, eps,
                (_old_k_effs.back() - _old_k_effs.front()) / _old_k_effs.back(),
                _cmfd->getNumIterToConv());
 #else
@@ -1757,7 +1767,7 @@ double Solver::kernel(int max_iterations) {
                 old_fsr_fluxes[e][n] = _FSRs_to_fluxes[e][n];
         }
         /* Prints out keff & eps, may update keff too based on _update_keff */
-        printKeff(moc_iter, eps_inf);
+        printToScreen(moc_iter, eps_inf);
 
         std::ofstream logfile;
         std::stringstream string;
