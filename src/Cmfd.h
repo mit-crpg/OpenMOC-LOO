@@ -59,10 +59,9 @@ private:
     Quadrature* _quad;
     Mesh* _mesh;
     Plotter* _plotter;
-
     FlatSourceRegion* _flat_source_regions;
     Track **_tracks;
-
+    boundaryType _bc[4];
     Mat _A;
     Mat _M;
     Vec _phi_new;
