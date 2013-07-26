@@ -1188,9 +1188,15 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter)
     petsc_err = MatAssemblyEnd(_M, MAT_FINAL_ASSEMBLY);
     CHKERRQ(petsc_err);
 
-    PetscViewerSetFormat(PETSC_VIEWER_STDOUT_SELF, PETSC_VIEWER_ASCII_MATLAB);
-    //MatView(_A, PETSC_VIEWER_STDOUT_SELF);
-    //MatView(_M, PETSC_VIEWER_STDOUT_SELF);
+    /*
+    if ((solveMethod == CMFD) && (moc_iter == 4))
+    {
+        PetscViewerSetFormat(PETSC_VIEWER_STDOUT_SELF, 
+                             PETSC_VIEWER_ASCII_MATLAB);
+        MatView(_A, PETSC_VIEWER_STDOUT_SELF);
+        MatView(_M, PETSC_VIEWER_STDOUT_SELF);
+    }
+    */
 
     /* set _phi_new to phi_old */
     petsc_err = VecCopy(phi_old, _phi_new);
