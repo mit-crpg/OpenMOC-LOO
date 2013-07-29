@@ -95,7 +95,7 @@ public:
     virtual ~Solver();
     /* initialization */
     void initializeTrackFluxes(double flux);
-    void oneFSRFluxes();
+    void oneFSRFluxOldSource();
     void zeroFSRFluxes();
     void zeroMeshCells();
     void zeroLeakage();

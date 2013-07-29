@@ -343,8 +343,8 @@ void Solver::initializeTrackFluxes(double flux) {
  * Set the scalar flux for each energy group inside each FSR
  * to unity
  */
-void Solver::oneFSRFluxes() {
-
+void Solver::oneFSRFluxOldSource() 
+{
     log_printf(INFO, "Setting all FSR scalar fluxes to unity...");
     FlatSourceRegion* fsr;
 
@@ -352,10 +352,14 @@ void Solver::oneFSRFluxes() {
 #if USE_OPENMP
 #pragma omp parallel for private(fsr)
 #endif
-    for (int r = 0; r < _num_FSRs; r++) {
+    for (int r = 0; r < _num_FSRs; r++) 
+    {
         fsr = &_flat_source_regions[r];
         for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
+        {
             fsr->setFlux(e, 1.0);
+            fsr->setOldSource(e, 1.0);
+        }
     }
 
     return;
@@ -1580,7 +1584,6 @@ double Solver::computeSpectralRadius(double **old_fsr_fluxes)
 }
 
 double Solver::kernel(int max_iterations) {
-    FlatSourceRegion* fsr;
     int moc_iter;
 
     log_printf(NORMAL, "Starting kernel ...");
@@ -1597,20 +1600,8 @@ double Solver::kernel(int max_iterations) {
     checkBoundary();
 
     /* Set scalar flux to unity for each region */
-    oneFSRFluxes();
+    oneFSRFluxOldSource();
     initializeTrackFluxes(ONE_OVER_FOUR_PI);
-
-    /* Set the old source to unity for each Region */
-#if USE_OPENMP
-#pragma omp parallel for private(fsr)
-#endif
-    for (int r = 0; r < _num_FSRs; r++) 
-    {
-        fsr = &_flat_source_regions[r];
-
-        for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
-            fsr->setOldSource(e, 1.0);
-    }
 
     normalizeFlux();
     updateSource();
