@@ -1610,7 +1610,7 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
 
         /* Computes new cell averaged source, looping over energy groups */
         double src_ratio;
-        for (int i = 1; i < _cw * _ch; i++)
+        for (int i = 0; i < _cw * _ch; i++)
         {
             meshCell = _mesh->getCells(i);
 
