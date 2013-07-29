@@ -1096,7 +1096,8 @@ void Cmfd::computeQuadSrc()
                     if (src < 0)
                     {
                         //src = 0;
-                        log_printf(ACTIVE, "(%d %d) %d %d %f - %f * %f = %f",
+                        log_printf(ACTIVE, "(%d %d) e %d t %d"
+                                   " quad src = %f - %f * %f = %f",
                                    x, y, e, t,
                                    out[e][t], ex, in[e][t], 
                                    out[e][t] - ex * in[e][t]);
@@ -1627,8 +1628,8 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
                 /* getOldSrc()[e] returns the $\bar{Q}_g^{(m)}$ */
                 src_ratio = new_src[i][e] / meshCell->getOldSrc()[e];
 
-                log_printf(ACTIVE, " cell %d e %d, src_ratio = %f",
-                           i, e, src_ratio);
+                log_printf(ACTIVE, " cell %d e %d, src_ratio -1 = %e",
+                           i, e, src_ratio - 1.0);
 
                 for (int t = 0; t < 8; t++)
                 {
@@ -1847,7 +1848,7 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
                             log_printf(ACTIVE, "update boundary for cell %d"
                                        " energy %d surface 3 backward", i, e);
                         }
-                    }
+                    } /* end of update boundary */
 
                     delta = (flux - new_quad_src[i][d] / quad_xs[i][e])
                         * (1.0 - expo[i][e]);
