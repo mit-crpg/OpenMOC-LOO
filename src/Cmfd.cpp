@@ -1590,7 +1590,7 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
     /* Starts LOO acceleration iteration, we do not update src, quad_src, 
      * quad_flux, old_flux, as they are computed from the MOC step (i.e., 
      * order m+1/2) and should not be updated during acceleration step. */
-    for (loo_iter = 1; loo_iter < max_outer; loo_iter++)
+    for (loo_iter = 0; loo_iter < max_outer; loo_iter++)
     {
         log_printf(ACTIVE, "k passed into LOO = %.10f", _keff);
 		
@@ -1690,11 +1690,6 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
                         {
                             _mesh->getCells(i)->getMeshSurfaces(0)
                                 ->setQuadFlux(flux, e, 0);
-                            if (loo_iter == 0)
-                            {
-                                _mesh->getCells(i)->getMeshSurfaces(0)
-                                    ->setOldQuadFlux(flux, e, 0);
-                            }
                             log_printf(ACTIVE, "update boundary for cell %d"
                                        " energy %d surface 0 forward", i, e);
                         }
@@ -1702,21 +1697,11 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
                         {
                             _mesh->getCells(i)->getMeshSurfaces(1)
                                 ->setQuadFlux(flux, e, 1);
-                            if (loo_iter == 0)
-                            {
-                                _mesh->getCells(i)->getMeshSurfaces(1)
-                                    ->setOldQuadFlux(flux, e, 1);
-                            }
                         }
                         else if (onReflectiveBoundary(t, i, 2, 0))
                         {
                             _mesh->getCells(i)->getMeshSurfaces(2)
                                 ->setQuadFlux(flux, e, 0);
-                            if (loo_iter == 0)
-                            {
-                                _mesh->getCells(i)->getMeshSurfaces(2)
-                                    ->setOldQuadFlux(flux, e, 0);
-                            }
                             log_printf(ACTIVE, "update boundary for cell %d"
                                        " energy %d surface 2 forward", i, e);
                         }
@@ -1724,11 +1709,6 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
                         {
                             _mesh->getCells(i)->getMeshSurfaces(3)
                                 ->setQuadFlux(flux, e, 1);
-                            if (loo_iter == 0)
-                            {
-                                _mesh->getCells(i)->getMeshSurfaces(3)
-                                    ->setOldQuadFlux(flux, e, 1);
-                            }
                             log_printf(ACTIVE, "update boundary for cell %d"
                                        " energy %d surface 3 forward", i, e);
                         }
@@ -1752,12 +1732,6 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
                 {
                     _mesh->getCells(_i_array[_num_track * j])
                         ->getMeshSurfaces(1)->setQuadFlux(flux, e, 1);
-                    if (loo_iter == 0)
-                    {
-                        _mesh->getCells(_i_array[_num_track * j])
-                            ->getMeshSurfaces(1)
-                            ->setOldQuadFlux(flux, e, 1);
-                    }
                     log_printf(ACTIVE, "update boundary for cell %d"
                                " energy %d surface 1 forward", 
                                _i_array[_num_track * j], e);
@@ -1806,11 +1780,6 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
                         {
                             _mesh->getCells(i)->getMeshSurfaces(0)
                                 ->setQuadFlux(flux, e, 1);
-                            if (loo_iter == 0)
-                            {
-                                _mesh->getCells(i)->getMeshSurfaces(0)
-                                    ->setOldQuadFlux(flux, e, 1);
-                            }
                             log_printf(ACTIVE, "update boundary for cell %d"
                                        " energy %d surface 0 backward", i, e);	
                         }
@@ -1818,21 +1787,11 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
                         {
                             _mesh->getCells(i)->getMeshSurfaces(1)
                                 ->setQuadFlux(flux, e, 0);
-                            if (loo_iter == 0)
-                            {
-                                _mesh->getCells(i)->getMeshSurfaces(1)
-                                    ->setOldQuadFlux(flux, e, 0);
-                            }
                         }
                         else if (onReflectiveBoundary(t, i, 2, 1))
                         {
                             _mesh->getCells(i)->getMeshSurfaces(2)
                                 ->setQuadFlux(flux, e, 1);
-                            if (loo_iter == 0)
-                            {
-                                _mesh->getCells(i)->getMeshSurfaces(2)
-                                    ->setOldQuadFlux(flux, e, 1);
-                            }
                             log_printf(ACTIVE, "update boundary for cell %d"
                                        " energy %d surface 2 backward", i, e);
                         }
@@ -1840,11 +1799,6 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
                         {
                             _mesh->getCells(i)->getMeshSurfaces(3)
                                 ->setQuadFlux(flux, e, 0);
-                            if (loo_iter == 0)
-                            {
-                                _mesh->getCells(i)->getMeshSurfaces(3)
-                                    ->setOldQuadFlux(flux, e, 0);
-                            }
                             log_printf(ACTIVE, "update boundary for cell %d"
                                        " energy %d surface 3 backward", i, e);
                         }
@@ -1867,12 +1821,6 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
                 {
                     _mesh->getCells(_i_array[_num_track * j])
                         ->getMeshSurfaces(1)->setQuadFlux(flux, e, 0);
-                    if (loo_iter == 0)
-                    {
-                        _mesh->getCells(_i_array[_num_track * j])
-                            ->getMeshSurfaces(1)
-                            ->setOldQuadFlux(flux, e, 0);
-                    }
                     log_printf(ACTIVE, "update boundary for cell %d"
                                " energy %d surface 1 backward", 
                                _i_array[_num_track * j], e);
@@ -2624,7 +2572,7 @@ void Cmfd::updateMOCFlux(int moc_iter)
     //int max_i = -10, max_e = -10; 
     //double max = -100.0;
 
-    //double max_range = 100.0, min_range = 1.0 / max_range;
+    //double max_range = 2.0, min_range = 1.0 / max_range;
     double max_range = INFINITY, min_range = -INFINITY;
 
     double tmp_max = 0, tmp_cmco;

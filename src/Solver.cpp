@@ -652,7 +652,7 @@ void Solver::printToScreen(int moc_iter, double eps)
     }
     else if ((_run_loo) && !(_acc_after_MOC_converge))
     {
-#if 0
+#if 1
         printf("Iter %d, MOC k^(m+1) = %.10f, LOO k = %.10f,"
                " MOC k^(m+1/2) = %.10f"
                " FS eps = %.4e, k eps = %.4e, #LOO = %d\n", 
@@ -1030,12 +1030,12 @@ void Solver::MOCsweep(int max_iterations, int moc_iter)
     if ((_run_loo) && (!(_diffusion && (moc_iter == 0))))
     {
         tally = 2;
-        log_printf(NORMAL, "tally quardrature current");
+        log_printf(ACTIVE, "tally quadrature current");
     }
     else if ((_run_cmfd) || (_run_loo & _diffusion && (moc_iter == 0)))
     {
         tally = 1;
-        log_printf(NORMAL, "tally partial current");
+        log_printf(ACTIVE, "tally partial current");
     }
     else
         tally = 0;
@@ -1366,7 +1366,7 @@ void Solver::normalizeFlux()
     }
 
     /* Renormalize tallied current on each surface */
-    /*
+    ///*
     if ((_run_cmfd) && !(_acc_after_MOC_converge))
     {
         int cw = _geom->getMesh()->getCellWidth();
@@ -1409,7 +1409,7 @@ void Solver::normalizeFlux()
             }
         }		
     }
-    */
+    //*/
 
     return;
 }
