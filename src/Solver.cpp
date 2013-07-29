@@ -70,11 +70,10 @@ Solver::Solver(Geometry* geom, TrackGenerator* track_generator,
 
     /* Initializes FSRs: store id, cell id, material, volume */
     initializeFSRs();
-    oneFSRFluxes();
 
     _total_vol = 0;
     for (int r = 0; r < _num_FSRs; r++) 
-        _total_vol = _flat_source_regions[r].getVolume();
+        _total_vol += _flat_source_regions[r].getVolume();
 
     /* Gives cmfd a pointer to the FSRs */
     if ((_run_cmfd) || (_run_loo)) 
@@ -1024,23 +1023,22 @@ void Solver::MOCsweep(int max_iterations, int moc_iter)
                "# threads = %d", max_iterations, num_threads);
 
     int tally; 
+    if ((_run_loo) && (!(_diffusion && (moc_iter == 0))))
+    {
+        tally = 2;
+        log_printf(NORMAL, "tally quardrature current");
+    }
+    else if ((_run_cmfd) || (_run_loo & _diffusion && (moc_iter == 0)))
+    {
+        tally = 1;
+        log_printf(NORMAL, "tally partial current");
+    }
+    else
+        tally = 0;
 
     /* Loop for until converged or max_iterations is reached */
     for (int i = 0; i < max_iterations; i++)
     {
-        if ((_run_loo) && (!(_diffusion && (moc_iter == 0))))
-        {
-            tally = 2;
-            log_printf(DEBUG, "tally quardrature current");
-        }
-        else if ((_run_cmfd) || (_run_loo & _diffusion && (moc_iter == 0)))
-        {
-            tally = 1;
-            log_printf(DEBUG, "tally partial current");
-        }
-        else
-            tally = 0;
-
         /* Initialize flux in each region to zero */
         zeroFSRFluxes();
         zeroLeakage();
@@ -1364,7 +1362,7 @@ void Solver::normalizeFlux()
     }
 
     /* Renormalize tallied current on each surface */
-    ///*
+    /*
     if ((_run_cmfd) && !(_acc_after_MOC_converge))
     {
         int cw = _geom->getMesh()->getCellWidth();
@@ -1407,7 +1405,7 @@ void Solver::normalizeFlux()
             }
         }		
     }
-    //*/
+    */
 
     return;
 }
@@ -1600,7 +1598,7 @@ double Solver::kernel(int max_iterations) {
 
     /* Set scalar flux to unity for each region */
     oneFSRFluxes();
-    initializeTrackFluxes(2.0 * ONE_OVER_FOUR_PI);
+    initializeTrackFluxes(ONE_OVER_FOUR_PI);
 
     /* Set the old source to unity for each Region */
 #if USE_OPENMP

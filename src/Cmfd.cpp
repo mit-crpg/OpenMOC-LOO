@@ -3,7 +3,7 @@
  *
  *  Created on: September 13, 2012
  *      Author: Sam Shaner
- *				MIT, Course 22
+ *		MIT, Course 22
  *              shaner@mit.edu
  */
 
@@ -1627,6 +1627,9 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
                 /* getOldSrc()[e] returns the $\bar{Q}_g^{(m)}$ */
                 src_ratio = new_src[i][e] / meshCell->getOldSrc()[e];
 
+                log_printf(ACTIVE, " cell %d e %d, src_ratio = %f",
+                           i, e, src_ratio);
+
                 for (int t = 0; t < 8; t++)
                 {
                     int d = e * 8 + t;
@@ -1755,8 +1758,8 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
                             ->setOldQuadFlux(flux, e, 1);
                     }
                     log_printf(ACTIVE, "update boundary for cell %d"
-                               " energy %d surface 1 forward %f", 
-                               _i_array[_num_track * j], e, flux);
+                               " energy %d surface 1 forward", 
+                               _i_array[_num_track * j], e);
                 }
                 else if (_bc[1] == VACUUM)
                     leak_tot += flux;
