@@ -45,7 +45,7 @@ for i, geometry in enumerate(geometries):
                       + ' -na ' + str(angle) 
                       + ' -ts ' + str(spacing) 
                       + ' -fc ' + str(fc[0]) 
-                      + ' -wl1 -bi 0')
+                      + ' -wc')
             os.system('../bin/openmoc'
                       + ' -m ../xml-sample/Cmfd/' + materials[i]
                       + ' -g ../xml-sample/Cmfd/' + geometry 
@@ -59,14 +59,14 @@ for i, geometry in enumerate(geometries):
                       + ' -na ' + str(angle) 
                       + ' -ts ' + str(spacing) 
                       + ' -fc ' + str(fc[0])
-                      + ' -wl2 -bi 0')
+                      + ' -wl2')
             os.system('../bin/openmoc'
                       + ' -m ../xml-sample/Cmfd/' + materials[i]
                       + ' -g ../xml-sample/Cmfd/' + geometry 
                       + ' -na ' + str(angle) 
                       + ' -ts ' + str(spacing) 
                       + ' -fc ' + str(fc[0])
-                      + ' -wl2')
+                      + ' -wl2 -df 0.9')
 
     # list of l2_norm files
     l2_norm_files = []
@@ -113,6 +113,7 @@ for i, geometry in enumerate(geometries):
         fsr_linf  = np.zeros(num_lines)
         fsr_l2    = np.zeros(num_lines)
         num       = np.zeros(num_lines)
+        rho       = np.zeros(num_lines)
 
         # collect data together
         for i, line in enumerate(logfile):
@@ -122,12 +123,14 @@ for i, geometry in enumerate(geometries):
                 fsr_linf[i-1]  = line.split()[2]
                 fsr_l2[i-1]    = line.split()[3]
                 num[i-1]       = line.split()[5]
+                rho[i-1]       = line.split()[7]
 
         var = []
         var.append(cell_l2);
         var.append(fsr_linf);
         var.append(fsr_l2);
         var.append(num);
+        var.append(rho);
 
         # plotting :)
         for i in range(4):  
@@ -171,4 +174,12 @@ for i, geometry in enumerate(geometries):
     plt.title('Geometry: %s,'%(geometry[9:-4]) + ' spacing: %s,'%str(ts[0]) 
 			  + ' #angles: %s'%str(na[0]))
     plt.savefig(geometry[9:-4] + '_num_acc.png', bbox_inches='tight')
+    plt.clf()
+
+    plt.figure(4)
+    plt.xlabel('# MOC iteration')
+    plt.ylabel('Spectral Radius (numerical approximation)')
+    plt.title('Geometry: %s,'%(geometry[9:-4]) + ' spacing: %s,'%str(ts[0]) 
+              + ' #angles: %s'%str(na[0]))
+    plt.savefig(geometry[9:-4] + '_rho.png', bbox_inches='tight')
     plt.clf()
