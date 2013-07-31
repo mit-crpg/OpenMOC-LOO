@@ -41,7 +41,7 @@ private:
     double _new_flux[NUM_ENERGY_GROUPS];
     double _volume;
     int _cell_id;
-    double _temp;
+
     /* for LOO */
     double _l;
     double _old_src[NUM_ENERGY_GROUPS]; /* $\bar{Q}^{(m)}$ */

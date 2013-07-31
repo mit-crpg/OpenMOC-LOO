@@ -256,14 +256,6 @@ void MeshCell::setVolume(double volume){
     _volume = volume;
 }
 
-void MeshCell::setTemp(double temp){
-    _temp = temp;
-}
-
-double MeshCell::getTemp(){
-    return _temp;
-}
-
 Material* MeshCell::getMaterial(){
     return _material;
 }

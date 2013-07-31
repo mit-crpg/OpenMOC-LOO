@@ -1605,8 +1605,8 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
         }
 
         /* FIXME: DEBUG */
-        //if (_run_loo_phi)
-        //    updateOldQuadFlux();
+        if ((_run_loo_phi) && (loo_iter == -1))
+            updateOldQuadFlux();
 
         /* Computes new cell averaged source, looping over energy groups */
         double src_ratio;
