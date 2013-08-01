@@ -125,7 +125,7 @@ public:
     void storeFsrFluxPower();
     double computeFsrL2Norm(double *old_fsr_powers);
     double computeFsrLinf(double *old_fsr_powers);
-    double computeSpectralRadius(double **old_fsr_powers); 
+    double computeSpectralRadius(double *old_fsr_powers); 
 
     /* getters and setters */
     double** getFSRtoFluxMap();

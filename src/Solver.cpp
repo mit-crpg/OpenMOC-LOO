@@ -1561,18 +1561,33 @@ double Solver::computeFsrLinf(double *old_fsr_powers)
     return l2_norm;
 }
 
-double Solver::computeSpectralRadius(double **old_fsr_fluxes)
+double Solver::computeSpectralRadius(double *old_fsr_powers)
 {
     double l2_norm = 0.0, rho = 0;
-    int num_counted = 0;
+    int num_counted = 0; 
+    //double tmp = 0, tmp_old = 0;
     for (int i = 0; i < _num_FSRs; i++)
     {
-        for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
+        if (old_fsr_powers[i] > 0.0)
         {
-            l2_norm += pow(_FSRs_to_fluxes[e][i] - old_fsr_fluxes[e][i], 2.0);
+            log_printf(INFO, "new power = %f, old power = %f", 
+                       _FSRs_to_powers[i], old_fsr_powers[i]);
+
+            l2_norm += pow(_FSRs_to_powers[i] - old_fsr_powers[i], 2.0);
             num_counted++;
         }
     }
+        /*
+        tmp = 0;
+        tmp_old = 0;
+        for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
+        {
+            tmp += _FSRs_to_fluxes[e][i];
+            tmp_old += old_fsr_fluxes[e][i];
+        }
+        l2_norm += pow(tmp - tmp_old, 2.0);
+        */
+
     l2_norm /= (double) num_counted;
     l2_norm = pow(l2_norm, 0.5);
 
@@ -1657,7 +1672,7 @@ double Solver::kernel(int max_iterations) {
 
         storeFsrFluxPower();
 
-        spectral_radius = computeSpectralRadius(old_fsr_fluxes);
+        spectral_radius = computeSpectralRadius(old_fsr_powers);
         eps_inf = computeFsrLinf(old_fsr_powers);
         eps_2 = computeFsrL2Norm(old_fsr_powers);
 
