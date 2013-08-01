@@ -352,7 +352,8 @@ void Plotter::plotCMFDMesh(Mesh* mesh){
     deleteBitMap(bitMap);
 }
 
-void Plotter::plotNetCurrents(Mesh* mesh){
+void Plotter::plotNetCurrents(Mesh* mesh, int moc_iter)
+{
     log_printf(NORMAL, "plotting net currents...");
 
     /* set up bitMap */
@@ -517,16 +518,22 @@ void Plotter::plotNetCurrents(Mesh* mesh){
 
         }
     }
+    std::stringstream string, string2;
+    string << "surface_current_i_" << iter_num;
+    string2 << "surface_current_1G_i_" << iter_num;
+    std::string title_str = string.str();
+    std::string title_str2 = string2.str();
+
 
     /* create filename with correct extension */
     if (_extension == "tiff" || _extension == "jpg" || _extension == "png"){
-        plot(bitMap, "current", _extension);
-        plot(bitMap2, "current_1G", _extension);
+        plot(bitMap, title_str, _extension);
+        plot(bitMap2, title_str2, _extension);
     }
     else{
         log_printf(WARNING, "Currents can only be plotted in tiff, jpg, and png. Plotting CMFD currents as png...");
-        plot(bitMap, "current", "png");
-        plot(bitMap2, "current_1G", "png");
+        plot(bitMap, title_str, "png");
+        plot(bitMap2, title_str2, "png");
     }
 
     deleteBitMap(bitMap);

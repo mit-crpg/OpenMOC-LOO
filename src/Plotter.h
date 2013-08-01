@@ -67,7 +67,7 @@ public:
     int convertToPixelX(double x);
     int convertToPixelY(double y);
     void plotGeometry(Mesh *mesh);
-    void plotNetCurrents(Mesh* mesh);
+    void plotNetCurrents(Mesh* mesh, int moc_iter);
     void plotQuadFlux(Mesh* mesh, int iter_num);
     void plotDHats(Mesh* mesh, int iter_num);
     void plotXS(Mesh* mesh, int iter_num);

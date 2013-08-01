@@ -1979,7 +1979,7 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
                 _plotter->plotCMFDKeff(_mesh, moc_iter);
 
             if (_plotter->plotCurrent())
-                _plotter->plotCMFDflux(_mesh, "loo", moc_iter);
+                _plotter->plotNetCurrents(_mesh, moc_iter);
 
             break;
         }
