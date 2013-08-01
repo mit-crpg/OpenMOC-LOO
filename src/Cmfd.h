@@ -121,6 +121,7 @@ public:
     void setTracks(Track **tracks);
     int computeCmfdL2Norm(Vec snew, int moc_iter);
     void updateBoundaryFluxByHalfSpace(int moc_iter);
+    void updateBoundaryFlux(int moc_iter);
 
     /* LOO */
     void generateTrack(int *i_array, int *t_array, int *t_arrayb);

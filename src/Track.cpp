@@ -72,7 +72,11 @@ void Track::updatePolarFluxes(int pe, double update)
     _polar_fluxes[pe] *= update;
     return;
 }
-
+void Track::setPolarFluxesByIndex(int pe, double update)
+{
+    _polar_fluxes[pe] = update;
+    return;
+}
 /**
  * Set this track's polar fluxes for a particular direction (0 or 1)
  * @param direction incoming/outgoing (0/1) flux for forward/reverse directions

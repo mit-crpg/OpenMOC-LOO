@@ -533,6 +533,10 @@ void Solver::updateFlux(int moc_iter)
                 //_cmfd->updateBoundaryFluxByHalfSpace(moc_iter);
             }
         }
+        else if ((_diffusion) && (moc_iter == 0))
+        {
+            _cmfd->updateBoundaryFlux(moc_iter);
+        }
         else
         {
             log_printf(DEBUG, " iter %d prolongation: update by partial",
@@ -1366,7 +1370,6 @@ void Solver::normalizeFlux()
     }
 
     /* Renormalize tallied current on each surface */
-    ///*
     if ((_run_cmfd) && !(_acc_after_MOC_converge))
     {
         int cw = _geom->getMesh()->getCellWidth();
@@ -1409,7 +1412,6 @@ void Solver::normalizeFlux()
             }
         }		
     }
-    //*/
 
     return;
 }

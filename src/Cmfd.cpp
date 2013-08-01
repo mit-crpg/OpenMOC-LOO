@@ -2620,13 +2620,19 @@ void Cmfd::updateMOCFlux(int moc_iter)
                 fsr = &_flat_source_regions[*iter];
                 flux = fsr->getFlux();
 
-                if (tmp_cmco > max_range)
-                    tmp_cmco = max_range;
-                else if (tmp_cmco < min_range)
-                    tmp_cmco = min_range;
+                if (moc_iter == 0)
+                    fsr->setFlux(e, new_flux);
+                else
+                {
+                    if (tmp_cmco > max_range)
+                        tmp_cmco = max_range;
+                    else if (tmp_cmco < min_range)
+                        tmp_cmco = min_range;
+                    
+                    fsr->setFlux(e, under_relax * tmp_cmco * flux[e]
+                                 + (1.0 - under_relax) * flux[e]);
+                }
 
-                fsr->setFlux(e, under_relax * tmp_cmco * flux[e]
-                             + (1.0 - under_relax) * flux[e]);
             }
         } /* exit looping over energy */
     } /* exit mesh cells */
@@ -2635,6 +2641,54 @@ void Cmfd::updateMOCFlux(int moc_iter)
     if (_plot_prolongation)
         _plotter->plotCmfdFluxUpdate(_mesh, moc_iter);
 
+    return;
+}
+
+void Cmfd::updateBoundaryFlux(int moc_iter)
+{
+    Track *track;
+    segment *seg;
+    FlatSourceRegion *fsr;
+    MeshCell *meshCell;
+    double factor;
+    int num_segments, pe, num_updated = 0, meshCell_id;
+
+    for (int i = 0; i < _num_azim; i++) 
+    {
+        for (int j = 0; j < _num_tracks[i]; j++)
+        {
+            track = &_tracks[i][j];
+            num_segments = track->getNumSegments();
+
+            /* Forward direction is 0, backward is 1 */
+            for (int dir = 0; dir < 2; dir++)
+            {
+                /* forward gets 0, backwards get num_segments - 1 */
+                seg = track->getSegment(dir * (num_segments - 1)); 
+                fsr =&_flat_source_regions[seg->_region_id];
+                meshCell_id = fsr->getMeshCellId();
+                meshCell = _mesh->getCells(meshCell_id);
+                pe = dir * GRP_TIMES_ANG;
+                for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
+                {
+                    if (meshCell->getOldFlux()[e] > 0)
+                    {
+                        /* Need to be 1/4pi tested in homogeneous gemetry */
+                        factor = meshCell->getNewFlux()[e] / FOUR_PI; 
+                        for (int p = 0; p < NUM_POLAR_ANGLES; p++)
+                        {
+                            track->setPolarFluxesByIndex(pe, factor);
+                            pe++;
+                            num_updated++;
+                        }	
+                    }	
+                }
+            }
+        }
+    }
+
+    log_printf(ACTIVE, "updated boundary flux by mesh cell per energy: %f", 
+               num_updated / (double) NUM_ENERGY_GROUPS);
     return;
 }
 
