@@ -519,8 +519,8 @@ void Plotter::plotNetCurrents(Mesh* mesh, int moc_iter)
         }
     }
     std::stringstream string, string2;
-    string << "surface_current_i_" << iter_num;
-    string2 << "surface_current_1G_i_" << iter_num;
+    string << "surface_current_i_" << moc_iter;
+    string2 << "surface_current_1G_i_" << moc_iter;
     std::string title_str = string.str();
     std::string title_str2 = string2.str();
 
