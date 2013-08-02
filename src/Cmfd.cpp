@@ -138,7 +138,7 @@ void Cmfd::computeXS_old()
 {
     /* split corner currents to side surfaces */
     if (_run_cmfd)
-        _mesh->splitCornerCurrents();
+        _mesh->splitCornerCurrents_old();
     if (_run_loo)
         _mesh->splitCornerQuadCurrents();
 
@@ -266,9 +266,10 @@ void Cmfd::computeXS()
     /* split corner currents to side surfaces */
     if (_run_cmfd)
         _mesh->splitCornerCurrents();
+// /*
     if (_run_loo)
-        _mesh->splitCornerQuadCurrents();
-
+         _mesh->splitCornerQuadCurrents();
+// */
     /* initialize variables */
     double abs_tally_group, nu_fis_tally_group, dif_tally_group, 
         rxn_tally_group, vol_tally_group, tot_tally_group;
@@ -1096,16 +1097,11 @@ void Cmfd::computeQuadSrc()
                     //if (src < clip)
                     //	src = clip;
 
-                    if (src < 0)
-                    {
-                        //src = 0;
-                        log_printf(ACTIVE, "(%d %d) e %d t %d"
-                                   " quad src = %f - %f * %f = %f",
-                                   x, y, e, t,
-                                   out[e][t], ex, in[e][t], 
-                                   out[e][t] - ex * in[e][t]);
-                    }
-
+                    log_printf(ACTIVE, "(%d %d) e %d t %d"
+                               " quad src = %f - %f * %f = %f",
+                               x, y, e, t,
+                               out[e][t], ex, in[e][t], 
+                               out[e][t] - ex * in[e][t]);
 
                     meshCell->setQuadSrc(src, e, t);
                     tmp_src += src;

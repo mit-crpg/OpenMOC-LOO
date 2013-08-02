@@ -65,6 +65,7 @@ public:
     void splitCornerCurrents_old();
 
     void splitCornerQuadCurrents();
+    void splitCornerQuadCurrents_old();
     void setMultigroup(bool multigroup);
     bool getMultigroup();
     void setPrintMatrices(bool printMatrices);
