@@ -769,7 +769,7 @@ void Plotter::plotQuadFlux(Mesh* mesh, int iter_num){
     std::string text;
     int p = 6; // for precision
 
-    text_stream.precision(10);
+    text_stream.precision(p);
 	
     double scale = 1;
     /* y_max correponds to (0, max_y)'s bottom surface (surface 3) */
@@ -784,30 +784,30 @@ void Plotter::plotQuadFlux(Mesh* mesh, int iter_num){
                x_max, y_max);
 
     /* plot mesh currents next to surface */
-    for (int cellY = 0; cellY < mesh->getCellHeight(); cellY++){
-        for (int cellX = 0; cellX < mesh->getCellWidth(); cellX++){
+    for (int cellY = 0; cellY < mesh->getCellHeight(); cellY++)
+    {
+        for (int cellX = 0; cellX < mesh->getCellWidth(); cellX++)
+        {
             meshCell = mesh->getCells(cellY * mesh->getCellWidth() + cellX);
 
             /* SIDE 0 */
             /* get midpoint of mesh surface */
-            x_mid = convertToPixelX(meshCell->getBounds()[0]) + 20.0; // was -170
+            x_mid = convertToPixelX(meshCell->getBounds()[0]) + 20.0; //-170
             y_mid = convertToPixelY((meshCell->getBounds()[1] + 
-                                     meshCell->getBounds()[3]) / 2.0);
-
-			
+                                     meshCell->getBounds()[3]) / 2.0);		
             if (x_mid < x_min)
                 x_mid = convertToPixelX(meshCell->getBounds()[0]) + 20.0;
 
             /* create string and draw on bitMap */
             text_stream << "1: " << std::setprecision(p) <<
-                scale * meshCell->getMeshSurfaces(0)->getQuadCurrent(0,1);
+                scale * meshCell->getMeshSurfaces(0)->getQuadFlux(0,1);
             text = text_stream.str();
             text_stream.str("");
             drawText(bitMap, text, x_mid, y_mid - 20.0);
             text.clear();
 
             text_stream << "0: " << std::setprecision(p) <<
-                scale *meshCell->getMeshSurfaces(0)->getQuadCurrent(0,0);
+                scale *meshCell->getMeshSurfaces(0)->getQuadFlux(0,0);
             text = text_stream.str();
             text_stream.str("");
             drawText(bitMap, text, x_mid, y_mid + 20.0);
@@ -824,14 +824,14 @@ void Plotter::plotQuadFlux(Mesh* mesh, int iter_num){
 
             /* create string and draw on bitMap */
             text_stream << "0: " << std::setprecision(p) <<
-                scale *meshCell->getMeshSurfaces(2)->getQuadCurrent(0,0);
+                scale *meshCell->getMeshSurfaces(2)->getQuadFlux(0,0);
             text = text_stream.str();
             text_stream.str("");
             drawText(bitMap, text, x_mid, y_mid - 20);
             text.clear();
 
             text_stream << "1: " << std::setprecision(p) <<
-                scale *meshCell->getMeshSurfaces(2)->getQuadCurrent(0,1);
+                scale *meshCell->getMeshSurfaces(2)->getQuadFlux(0,1);
             text = text_stream.str();
             text_stream.str("");
             drawText(bitMap, text, x_mid, y_mid + 20);
@@ -849,14 +849,14 @@ void Plotter::plotQuadFlux(Mesh* mesh, int iter_num){
 
             /* create string and draw on bitMap */
             text_stream << "0: " << std::setprecision(p) <<
-                scale *meshCell->getMeshSurfaces(1)->getQuadCurrent(0,0);
+                scale *meshCell->getMeshSurfaces(1)->getQuadFlux(0,0);
             text = text_stream.str();
             text_stream.str("");
-            drawText(bitMap, text, x_mid - 200, y_mid);
+            drawText(bitMap, text, x_mid - 300, y_mid);
             text.clear();
 
             text_stream << "1: " << std::setprecision(p)  <<
-                scale *meshCell->getMeshSurfaces(1)->getQuadCurrent(0,1);
+                scale *meshCell->getMeshSurfaces(1)->getQuadFlux(0,1);
             text = text_stream.str();
             text_stream.str("");
             drawText(bitMap, text, x_mid + 20, y_mid);
@@ -873,14 +873,14 @@ void Plotter::plotQuadFlux(Mesh* mesh, int iter_num){
 
             /* create string and draw on bitMap */
             text_stream << "1: " << std::setprecision(p) <<
-                scale *meshCell->getMeshSurfaces(3)->getQuadCurrent(0,1);
+                scale *meshCell->getMeshSurfaces(3)->getQuadFlux(0,1);
             text = text_stream.str();
             text_stream.str("");
-            drawText(bitMap, text, x_mid - 200, y_mid);
+            drawText(bitMap, text, x_mid - 300, y_mid);
             text.clear();
 
             text_stream << "0: " << std::setprecision(p) <<
-                scale *meshCell->getMeshSurfaces(3)->getQuadCurrent(0,0);
+                scale *meshCell->getMeshSurfaces(3)->getQuadFlux(0,0);
             text = text_stream.str();
             text_stream.str("");
             drawText(bitMap, text, x_mid + 20, y_mid);
