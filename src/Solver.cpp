@@ -895,6 +895,7 @@ void Solver::plotFluxes(int moc_iter)
     std::string title_str;
     for (int i = 0; i < NUM_ENERGY_GROUPS; i++)
     {
+        string.str("");
         string << "flux" << i + 1 << "group";
         title_str = string.str();
         _plotter->makeRegionMap(bitMapFSR->pixels, bitMap->pixels, 
