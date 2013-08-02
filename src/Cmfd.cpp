@@ -1846,7 +1846,7 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
                 {
                     /* we multiple sin 45 to converge flux to current, 
                      * divide by cell side length to get grad J */
-                    net_current[i][e] *= SIN_THETA_45 / d;
+                    net_current[i][e] *= SIN_THETA_45 / d / 2.0;
 
                     new_flux = (FOUR_PI * new_src[i][e] - net_current[i][e])
                         / meshCell->getSigmaT()[e];
