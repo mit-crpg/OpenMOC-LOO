@@ -10,6 +10,7 @@
 MeshSurface::MeshSurface(){
 	
     try{
+        _total_wt = new double[2];
         _d_tilde = new double[NUM_ENERGY_GROUPS];
         _d_hat = new double[NUM_ENERGY_GROUPS];
         _current = new double[NUM_ENERGY_GROUPS];
@@ -98,10 +99,23 @@ void MeshSurface::incrementQuadCurrent(double quad_current, int group,
 {	
     _quad_current[group][index] += quad_current;
 }
+void MeshSurface::incrementTotalWt(double quad_current, int index)
+{	
+    _total_wt[index] += quad_current;
+}
+
+void MeshSurface::setTotalWt(double wt, int index)
+{
+    _total_wt[index] = wt;
+}
 
 void MeshSurface::updateQuadCurrent(double factor, int group, int index)
 {	
     _quad_current[group][index] *= factor;
+}
+
+double MeshSurface::getTotalWt(int index){
+    return _total_wt[index];
 }
 
 /* QuadFlux */

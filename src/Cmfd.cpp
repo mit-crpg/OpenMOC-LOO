@@ -840,20 +840,23 @@ void Cmfd::computeQuadFlux()
             /* get four surfaces */
             for (int i = 0; i < 4; i++) 
             {
-                s[i] = meshCell->getMeshSurfaces(i);
+                s[i] = meshCell->getMeshSurfaces(i);    
                 for (int e = 0; e < _ng; e++)
                 {
                     /* FIXME: debug */
                     double tmp = 0.0;
+                    double tmp_wt = 0.0;
                     for (int j = 0; j < 2; j++)
                     {
-                        flux = s[i]->getQuadCurrent(e, j) / scale;
+                        double wt = s[i]->getTotalWt(j) / (double) NUM_ENERGY_GROUPS;
+                        flux = s[i]->getQuadCurrent(e, j) / scale / wt;
                         s[i]->setQuadFlux(flux, e, j);
                         s[i]->setOldQuadFlux(flux, e, j);
-                        tmp += s[i]->getQuadCurrent(e,j);
+                        tmp += s[i]->getQuadCurrent(e,j);// / wt;
+                        tmp_wt += wt;
 						
                     }					
-                    s[i]->setCurrent(tmp, e);
+                    s[i]->setCurrent(tmp / tmp_wt, e);
 
                     if (e == 0)
                     {

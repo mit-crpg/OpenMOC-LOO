@@ -25,6 +25,7 @@
 
 class MeshSurface {
 private:
+    double *_total_wt; 
     double *_current;
     double **_quad_current;
     double **_quad_flux;
@@ -46,6 +47,9 @@ public:
     double getQuadCurrent(int group, int index);
     void setQuadCurrent(double quad_current, int group, int index);
     void incrementQuadCurrent(double quad_current, int group, int index);
+    void incrementTotalWt(double quad_current, int index);
+    void setTotalWt(double wt, int index);
+    double getTotalWt(int index);
     void updateQuadCurrent(double factor, int group, int index);
     double getQuadFlux(int group, int index);
     void setQuadFlux(double quad_current, int group, int index);
