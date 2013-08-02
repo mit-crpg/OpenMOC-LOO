@@ -45,29 +45,28 @@ for i, geometry in enumerate(geometries):
                       + ' -na ' + str(angle) 
                       + ' -ts ' + str(spacing) 
                       + ' -fc ' + str(fc[0]) 
-                      + ' -wc')
+                      + ' -wl2 -nub')
+            os.system('../bin/openmoc'
+                      + ' -m ../xml-sample/Cmfd/' + materials[i]
+                      + ' -g ../xml-sample/Cmfd/' + geometry 
+                      + ' -na ' + str(angle) 
+                      + ' -ts ' + str(spacing) 
+                      + ' -fc ' + str(fc[0]) 
+                      + ' -wl2 -bi 1 -nub')
             os.system('../bin/openmoc'
                       + ' -m ../xml-sample/Cmfd/' + materials[i]
                       + ' -g ../xml-sample/Cmfd/' + geometry 
                       + ' -na ' + str(angle) 
                       + ' -ts ' + str(spacing) 
                       + ' -fc ' + str(fc[0])
-                      + ' -wl1')
+                      + ' -wl2 -bi 0 -ub')
             os.system('../bin/openmoc'
                       + ' -m ../xml-sample/Cmfd/' + materials[i]
                       + ' -g ../xml-sample/Cmfd/' + geometry 
                       + ' -na ' + str(angle) 
                       + ' -ts ' + str(spacing) 
                       + ' -fc ' + str(fc[0])
-                      + ' -wl2')
-            os.system('../bin/openmoc'
-                      + ' -m ../xml-sample/Cmfd/' + materials[i]
-                      + ' -g ../xml-sample/Cmfd/' + geometry 
-                      + ' -na ' + str(angle) 
-                      + ' -ts ' + str(spacing) 
-                      + ' -fc ' + str(fc[0])
-                      + ' -wl2 -df 0.9')
-
+                      + ' -wl2 -bi 1 -ub')
     # list of l2_norm files
     l2_norm_files = []
 
@@ -133,10 +132,11 @@ for i, geometry in enumerate(geometries):
         var.append(rho);
 
         # plotting :)
-        for i in range(4):  
+        for i in range(5):  
             plt.figure(i)
             plt.semilogy(iteration, var[i], next(linecycle), 
-                         label = ("%s bu %s bi %s" %(method, update, bi)), 
+                         label = ("%s bi %s %s damp %s" 
+                                  %(method, bi, update, damp)), 
                          markersize=5)
             plt.xlim(0, max_num_lines + 1)
             plt.legend(loc='upper center', ncol=3, prop = fontP, shadow=True, 
