@@ -43,6 +43,7 @@ private:
     Quadrature* _quad;
     FlatSourceRegion* _flat_source_regions;
     Track** _tracks;
+    int _num_crn;
     int _boundary_iteration;
     int _num_azim;
     int _num_FSRs;

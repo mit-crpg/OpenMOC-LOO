@@ -26,6 +26,7 @@ Solver::Solver(Geometry* geom, TrackGenerator* track_generator,
     _num_azim = track_generator->getNumAzim();
     _plotter = plotter;
     _cmfd = cmfd;
+    _num_crn = 0;
 
     /* Options */
     _update_keff = opts->updateKeff();
@@ -925,6 +926,9 @@ void Solver::tallyLooCurrent(Track *track, segment *segment,
         pe_initial = GRP_TIMES_ANG;
     }
 
+    if ((surfID % 8) > 3) 
+        _num_crn += 1;
+
     if (surfID != -1)
     {
         /* notice this is polar flux weights, more than just polar weights */
@@ -1031,6 +1035,8 @@ void Solver::MOCsweep(int max_iterations, int moc_iter)
     log_printf(INFO, "Fixed source iteration with max_iterations = %d and "
                "# threads = %d", max_iterations, num_threads);
 
+    _num_crn = 0;
+
     int tally; 
     if ((_run_loo) && (!(_diffusion && (moc_iter == 0))))
     {
@@ -1048,6 +1054,8 @@ void Solver::MOCsweep(int max_iterations, int moc_iter)
     /* Loop for until converged or max_iterations is reached */
     for (int i = 0; i < max_iterations; i++)
     {
+        _num_crn = 0; 
+
         /* Initialize flux in each region to zero */
         zeroFSRFluxes();
         zeroLeakage();
@@ -1269,6 +1277,9 @@ void Solver::MOCsweep(int max_iterations, int moc_iter)
             }
         }
 		
+
+        log_printf(NORMAL, " Number of corners tallied %d", _num_crn);
+
         /* If more than one iteration is requested, we only computes source for
          * the last iteration, all previous iterations are considered to be 
          * converging boundary fluxes */
