@@ -415,7 +415,11 @@ void Solver::zeroMeshCells() {
 
                 /* set quad currents to zero */
                 for (int j = 0; j < 2; j++)
+                {
                     meshCell->getMeshSurfaces(surface)->setQuadCurrent(0, e, j);
+                    meshCell->getMeshSurfaces(surface)->setTotalWt(0,j);
+                }
+                
             }
         }
     }
@@ -946,12 +950,14 @@ void Solver::tallyLooCurrent(Track *track, segment *segment,
                    meshSurface->getId());
 
         pe = pe_initial;
+        
         for (e = 0; e < NUM_ENERGY_GROUPS; e++) 
         {
             for (p = 0; p < NUM_POLAR_ANGLES; p++)
             {
                 meshSurface->incrementQuadCurrent(polar_fluxes[pe] * weights[p] 
                                                   / 2.0, e, index);
+                meshSurface->incrementTotalWt(weights[p] / 2.0, index);
                 pe++;
             }
         }
@@ -1737,15 +1743,15 @@ void Solver::plotEverything(int moc_iter)
         _cmfd->computeXS();
         _cmfd->computeDs();
         _plotter->plotDHats(_geom->getMesh(), moc_iter);
-        _plotter->plotNetCurrents(_geom->getMesh());
+        //_plotter->plotNetCurrents(_geom->getMesh(), moc_iter);
         _plotter->plotXS(_geom->getMesh(), moc_iter);
     }
 
     /* plot LOO flux and xs */
-    if (_run_loo && _plotter->plotQuadFluxFlag())
+    if (_run_loo)
     {
         _plotter->plotQuadFlux(_geom->getMesh(), moc_iter);
-        _plotter->plotNetCurrents(_geom->getMesh());
+        _plotter->plotNetCurrents(_geom->getMesh(), moc_iter);
         _plotter->plotXS(_geom->getMesh(), moc_iter);
     }
 
