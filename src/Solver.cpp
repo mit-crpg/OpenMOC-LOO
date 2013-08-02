@@ -930,9 +930,6 @@ void Solver::tallyLooCurrent(Track *track, segment *segment,
         pe_initial = GRP_TIMES_ANG;
     }
 
-    if ((surfID % 8) > 3) 
-        _num_crn += 1;
-
     if (surfID != -1)
     {
         /* notice this is polar flux weights, more than just polar weights */
@@ -966,7 +963,8 @@ void Solver::tallyLooCurrent(Track *track, segment *segment,
 }
 
 void Solver::tallyCmfdCurrent(Track *track, segment *segment, 
-                              MeshSurface **meshSurfaces, int direction){
+                              MeshSurface **meshSurfaces, int direction)
+{
     MeshSurface *meshSurface;
     int pe = 0, pe_initial = 0, p, e, surfID;
     /* polar weights should be azi weight x sin(theta) x polar weight x 4 pi, 
@@ -981,6 +979,9 @@ void Solver::tallyCmfdCurrent(Track *track, segment *segment,
         surfID = segment->_mesh_surface_bwd;
         pe_initial = GRP_TIMES_ANG;
     }
+
+    if ((surfID % 8) > 3) 
+        _num_crn += 1;
 
     if (surfID != -1)
     {
@@ -1060,11 +1061,10 @@ void Solver::MOCsweep(int max_iterations, int moc_iter)
     /* Loop for until converged or max_iterations is reached */
     for (int i = 0; i < max_iterations; i++)
     {
-        _num_crn = 0; 
-
         /* Initialize flux in each region to zero */
         zeroFSRFluxes();
         zeroLeakage();
+        _num_crn = 0;
 
         /* Initializes mesh cells if ANY acceleration is on */
         if (_run_cmfd || _run_loo)
@@ -1283,8 +1283,8 @@ void Solver::MOCsweep(int max_iterations, int moc_iter)
             }
         }
 		
-
-        log_printf(NORMAL, " Number of corners tallied %d", _num_crn);
+        if (moc_iter == 0)
+            log_printf(NORMAL, "Number of corners tallied %d", _num_crn);
 
         /* If more than one iteration is requested, we only computes source for
          * the last iteration, all previous iterations are considered to be 
