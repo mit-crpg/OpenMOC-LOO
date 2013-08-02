@@ -634,6 +634,8 @@ void Mesh::splitCornerQuadCurrents()
                          }
                      }
                 }
+                /* do nothing for REFLECTIVE */
+                /*
                 else if (_boundary[surf[i]] == REFLECTIVE)
                 {
                     for (int j = 0; j < 2; j++)
@@ -647,10 +649,7 @@ void Mesh::splitCornerQuadCurrents()
                         }
                     }
                 }
-                else /* vacuum: do nothing */
-                {
-                }
-
+                */
 
                 if (y > min_y[i] && y < max_y[i])
                 {
@@ -671,6 +670,8 @@ void Mesh::splitCornerQuadCurrents()
                          }
                      }
                 } 
+                /* do nothing for REFLECTIVE */
+                /*
                 else if (_boundary[surf2[i]] == REFLECTIVE)
                 {
                     for (int j = 0; j < 2; j++)
@@ -684,10 +685,7 @@ void Mesh::splitCornerQuadCurrents()
                         }
                     }
                 }
-                else
-                {
-
-                }
+                */
 
             }
         }
