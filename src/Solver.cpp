@@ -1006,6 +1006,7 @@ void Solver::tallyCmfdCurrent(Track *track, segment *segment,
                  * track spacing now on the surface. The 1/2.0 takes into 
                  * account half space. */
                 currents[e] += polar_fluxes[pe] * weights[p]/2.0;
+                meshSurface->incrementTotalWt(weights[p] / 2.0, 0);
                 pe++;
             }
         }
@@ -1524,6 +1525,7 @@ double Solver::runCmfd(int moc_iter)
     _k_half = computeKeff(100);
 
     /* compute cross sections and diffusion coefficients */
+    //_cmfd->computeCurrent();
     _cmfd->computeXS();
     _cmfd->computeDs();
 

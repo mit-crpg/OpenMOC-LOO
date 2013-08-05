@@ -106,6 +106,7 @@ public:
     void updateMOCFlux(int moc_iter);
 
     /* CMFD */
+    void computeCurrent();
     void computeDs();
     void computeDsxDirection(double x, double y, int e, MeshCell *meshCell, 
                              double d, double f, double flux, double dt_weight);

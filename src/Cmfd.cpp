@@ -849,7 +849,8 @@ void Cmfd::computeQuadFlux()
                     double tmp_wt = 0.0;
                     for (int j = 0; j < 2; j++)
                     {
-                        double wt = s[i]->getTotalWt(j) / (double) NUM_ENERGY_GROUPS;
+                        double wt = s[i]->getTotalWt(j) / 
+                            (double) NUM_ENERGY_GROUPS;
                         flux = s[i]->getQuadCurrent(e, j) / scale / wt;
                         s[i]->setQuadFlux(flux, e, j);
                         s[i]->setOldQuadFlux(flux, e, j);
@@ -876,6 +877,36 @@ void Cmfd::computeQuadFlux()
     /* Debugging */
     log_printf(DEBUG, "set cell 2 side 1 track 0: %f", 
                _mesh->getCells(2)->getMeshSurfaces(1)->getQuadFlux(0, 0));
+
+    return;
+}
+void Cmfd::computeCurrent()
+{
+    /* Initializations */
+    MeshSurface *s[4];
+    MeshCell* meshCell;
+    //double l = _mesh->getCells(0)->getWidth();
+
+    /* loop over all mesh cells */
+    for (int y = 0; y < _ch; y++)
+    {
+        for (int x = 0; x < _cw; x++)
+        {
+            meshCell = _mesh->getCells(y * _cw + x);
+
+            for (int i = 0; i < 4; i++) 
+            {
+                s[i] = meshCell->getMeshSurfaces(i);    
+                for (int e = 0; e < _ng; e++)
+                {
+                    double wt = s[i]->getTotalWt(0) / 
+                        (double) NUM_ENERGY_GROUPS;
+                    
+                    s[i]->setCurrent(s[i]->getCurrent(e) / wt, e);
+                }
+            }
+        }
+    }
 
     return;
 }
