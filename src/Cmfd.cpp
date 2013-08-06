@@ -826,7 +826,7 @@ void Cmfd::computeQuadFlux()
 
     /* the factor that we devide everyone by is cos(45degree) * surface len */
     /* May need to fixme */
-    double scale = _mesh->getCells(0)->getWidth() * SIN_THETA_45;
+    double scale = SIN_THETA_45; // * _mesh->getCells(0)->getWidth();
     double flux;
 
     /* loop over all mesh cells */
@@ -1871,24 +1871,33 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
             for (int i = 0; i < _cw * _ch; i++)
             {
                 meshCell = _mesh->getCells(i);
-                double d = meshCell->getVolume() / meshCell->getWidth();
+                //double d = meshCell->getVolume() / meshCell->getWidth();
+                double d = meshCell->getWidth();
 
                 for (int e = 0; e < _ng; e++)
                 {
                     /* we multiple sin 45 to converge flux to current, 
                      * divide by cell side length to get grad J */
+
+#if 0
                     net_current[i][e] *= SIN_THETA_45 / d / 2.0;
+#else
+                    net_current[i][e] *= SIN_THETA_45 / d / 0.798184;
+#endif
+
 
                     new_flux = (FOUR_PI * new_src[i][e] - net_current[i][e])
                         / meshCell->getSigmaT()[e];
 
                     meshCell->setNewFlux(new_flux, e);
 					
-                    log_printf(DEBUG, "Cell %d energy %d scalar flux"
-                               " update by (before normalization) -1 = %e", 
+                    log_printf(NORMAL, "Cell %d energy %d net current now/true"
+                               " = %f", 
                                i, e, 
-                               meshCell->getNewFlux()[e] 
-                               / meshCell->getOldFlux()[e] - 1.0);
+                               net_current[i][e] / 
+                               (FOUR_PI * new_src[i][e] - 
+                                meshCell->getOldFlux()[e] 
+                                * meshCell->getSigmaT()[e]));
                 }
             }
         }

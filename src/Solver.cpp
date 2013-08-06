@@ -918,7 +918,8 @@ void Solver::tallyLooCurrent(Track *track, segment *segment,
 {
     int index = 0, pe = 0, pe_initial = 0, p, e, surfID;
     MeshSurface *meshSurface;
-    double *weights, *polar_fluxes;
+    double *weights, *polar_fluxes, *sinThetaP;
+    double cosTheta;
 
     /* Get the ID of the surface that the segment ends on (forward), starts
      * on (backwards)*/
@@ -934,11 +935,14 @@ void Solver::tallyLooCurrent(Track *track, segment *segment,
     {
         /* notice this is polar flux weights, more than just polar weights */
         weights = track->getPolarWeights();
+        sinThetaP = _quad->getSinThetas();
         polar_fluxes = track->getPolarFluxes();
 
         /* Defines index */
         if (track->getPhi() > PI / 2.0)
             index = 1;
+        
+        cosTheta = fabs(cos(track->getPhi()));
 
         /* Obtains the surface that the segment crosses */
         meshSurface = meshSurfaces[surfID];
@@ -954,7 +958,8 @@ void Solver::tallyLooCurrent(Track *track, segment *segment,
             {
                 meshSurface->incrementQuadCurrent(polar_fluxes[pe] * weights[p] 
                                                   / 2.0, e, index);
-                meshSurface->incrementTotalWt(weights[p] / 2.0, index);
+                meshSurface->incrementTotalWt(weights[p] / 2.0,// / sinThetaP[p],
+                                              index);
                 pe++;
             }
         }
