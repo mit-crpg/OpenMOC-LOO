@@ -77,10 +77,12 @@ Solver::Solver(Geometry* geom, TrackGenerator* track_generator,
         _total_vol += _flat_source_regions[r].getVolume();
 
     /* Gives cmfd a pointer to the FSRs */
-    if ((_run_cmfd) || (_run_loo)) 
+    if (_run_cmfd || _run_loo || _acc_after_MOC_converge) 
     {
         _cmfd->setFSRs(_flat_source_regions);
         _cmfd->setTracks(_tracks);
+        initializeWeights();
+
         if (_update_boundary)
         {
             log_printf(NORMAL, "Acceleration is on with %d boundary iteration,"
@@ -417,7 +419,7 @@ void Solver::zeroMeshCells() {
                 for (int j = 0; j < 2; j++)
                 {
                     meshCell->getMeshSurfaces(surface)->setQuadCurrent(0, e, j);
-                    meshCell->getMeshSurfaces(surface)->setTotalWt(0,j);
+                    //meshCell->getMeshSurfaces(surface)->setTotalWt(0,j);
                 }
                 
             }
@@ -958,8 +960,7 @@ void Solver::tallyLooCurrent(Track *track, segment *segment,
             {
                 meshSurface->incrementQuadCurrent(polar_fluxes[pe] * weights[p] 
                                                   / 2.0, e, index);
-                meshSurface->incrementTotalWt(weights[p] / 2.0,// / sinThetaP[p],
-                                              index);
+                //meshSurface->incrementTotalWt(weights[p] / 2.0, index);
                 pe++;
             }
         }
@@ -985,9 +986,6 @@ void Solver::tallyCmfdCurrent(Track *track, segment *segment,
         pe_initial = GRP_TIMES_ANG;
     }
 
-    if ((surfID % 8) > 3) 
-        _num_crn += 1;
-
     if (surfID != -1)
     {
 
@@ -1011,7 +1009,7 @@ void Solver::tallyCmfdCurrent(Track *track, segment *segment,
                  * track spacing now on the surface. The 1/2.0 takes into 
                  * account half space. */
                 currents[e] += polar_fluxes[pe] * weights[p]/2.0;
-                meshSurface->incrementTotalWt(weights[p] / 2.0, 0);
+                //meshSurface->incrementTotalWt(weights[p] / 2.0, 0);
                 pe++;
             }
         }
@@ -1019,6 +1017,181 @@ void Solver::tallyCmfdCurrent(Track *track, segment *segment,
     }
     return;
 }
+
+void Solver::tallyLooWeight(Track *track, segment *segment, 
+                             MeshSurface **meshSurfaces, int direction)
+{
+    int index = 0, p, surfID;
+    int cw = _geom->getMesh()->getCellWidth();
+    int ch = _geom->getMesh()->getCellHeight();
+    MeshSurface *meshSurface;
+    double cosTheta, omega_a, sinTheta, wt;
+
+    /* Get the ID of the surface that the segment ends on (forward), starts
+     * on (backwards)*/
+    if (direction == 1)
+        surfID = segment->_mesh_surface_fwd;
+    else 
+        surfID = segment->_mesh_surface_bwd;
+
+    if (surfID != -1)
+    {
+        /* notice this is polar flux weights, more than just polar weights */
+        //double *weights = track->getPolarWeights();
+        //double *sinThetaP = _quad->getSinThetas();
+        omega_a = track->getAzimuthalWeight();
+        wt = 0.5 * omega_a;
+
+        /* Obtains the surface that the segment crosses */
+        meshSurface = meshSurfaces[surfID];
+
+        /* Defines index */
+        if (track->getPhi() > PI / 2.0)
+            index = 1;
+
+        /* Cell ID */
+        int i = surfID / 8;
+        int y = i / cw;
+        int x = i % cw;
+        int s = surfID % 8;
+
+        if ((s  == 0) || (s == 2))
+        {
+            cosTheta = fabs(cos(track->getPhi()));
+            for (p = 0; p < NUM_POLAR_ANGLES; p++)
+                meshSurface->incrementTotalWt(wt / cosTheta, index);
+        }
+        else if (s < 4)
+        {
+            sinTheta = fabs(sin(track->getPhi()));
+            for (p = 0; p < NUM_POLAR_ANGLES; p++)
+                meshSurface->incrementTotalWt(wt / sinTheta, index);
+        }
+        else
+        {
+            _num_crn += 1;
+            cosTheta = fabs(cos(track->getPhi()));
+            sinTheta = fabs(sin(track->getPhi()));
+
+            if (s < 5)
+            {
+                meshSurfaces[surfID - 4]->incrementTotalWt(wt / cosTheta, index);
+                meshSurfaces[surfID - 3]->incrementTotalWt(wt / sinTheta, index);
+                if (x > 0)
+                    meshSurfaces[(i - 1) * 8 + 1]
+                        ->incrementTotalWt(wt / sinTheta, index);
+                if (y < ch -1)
+                    meshSurfaces[(i + cw) * 8 + 0]
+                        ->incrementTotalWt(wt / cosTheta, index);
+            }
+            else if (s < 6)
+            {
+                meshSurfaces[surfID - 4]->incrementTotalWt(wt / sinTheta, index);
+                meshSurfaces[surfID - 3]->incrementTotalWt(wt / cosTheta, index);
+                if (x < cw - 1)
+                    meshSurfaces[(i + 1) * 8 + 1]
+                        ->incrementTotalWt(wt / sinTheta, index);
+                if (y < ch -1)
+                    meshSurfaces[(i + cw) * 8 + 2]
+                        ->incrementTotalWt(wt / cosTheta, index);
+            }
+            else if (s < 7)
+            {
+                meshSurfaces[surfID - 4]->incrementTotalWt(wt / cosTheta, index);
+                meshSurfaces[surfID - 3]->incrementTotalWt(wt / sinTheta, index);
+                if (x < cw - 1)
+                    meshSurfaces[(i + 1) * 8 + 3]
+                        ->incrementTotalWt(wt / sinTheta, index);
+                if (y > 0)
+                    meshSurfaces[(i - cw) * 8 + 2]
+                        ->incrementTotalWt(wt / cosTheta, index);
+            }
+            else
+            {
+                meshSurfaces[surfID - 4]->incrementTotalWt(wt / sinTheta, index);
+                meshSurfaces[surfID - 7]->incrementTotalWt(wt / cosTheta, index);
+                if (x > 0)
+                    meshSurfaces[(i - 1) * 8 + 3]
+                        ->incrementTotalWt(wt / sinTheta, index);
+                if (y > 0)
+                    meshSurfaces[(i - cw) * 8 + 0]
+                        ->incrementTotalWt(wt / cosTheta, index);
+            }
+        }
+    }
+
+    return;
+}
+
+void Solver::initializeWeights() 
+{
+    Track* track;
+    int num_segments;
+    std::vector<segment*> segments;
+    segment* segment;
+    int t, j, k, s;
+    int num_threads = _num_azim / 2;
+    MeshSurface **meshSurfaces = _geom->getMesh()->getSurfaces();
+    int cw = _geom->getMesh()->getCellWidth();
+    int ch = _geom->getMesh()->getCellHeight();
+
+    /* Loop over each thread */
+    for (t = 0; t < num_threads; t++) 
+    {
+
+        /* Loop over the pair of azimuthal angles for this thread */
+        j = t;
+        while (j < _num_azim) 
+        {
+            /* Loop over all tracks for this azimuthal angles */
+            for (k = 0; k < _num_tracks[j]; k++) 
+            {
+                /* Initialize local pointers to important data structures */
+                track = &_tracks[j][k];
+                segments = track->getSegments();
+                num_segments = track->getNumSegments();
+
+                /* Loop over each segment in forward direction */
+                for (s = 0; s < num_segments; s++) 
+                {
+                    segment = segments.at(s);
+                    tallyLooWeight(track, segment, meshSurfaces, 1);
+                }
+
+                /* Loops over each segment in the reverse direction */
+                for (s = num_segments-1; s > -1; s--) 
+                {
+                    segment = segments.at(s);
+                    tallyLooWeight(track, segment, meshSurfaces, -1);
+                }
+            }
+
+            /* Update the azimuthal angle index for this thread
+             * such that the next azimuthal angle is the one that reflects
+             * out of the current one. If instead this is the 2nd (final)
+             * angle to be used by this thread, break loop */
+            if (j < num_threads)
+                j = _num_azim - j - 1;
+            else
+                break;
+        }
+    }
+
+    log_printf(NORMAL, "Number of corners tallied %d", _num_crn);
+	
+
+    for (int s = 0; s < cw * ch * 8; s++)
+    { 
+       meshSurfaces[s]->setTotalWt(meshSurfaces[s]->getTotalWt(0) + 
+                                    meshSurfaces[s]->getTotalWt(1), 2);
+       log_printf(NORMAL, "surface %d has weight %.10f", s, 
+                  meshSurfaces[s]->getTotalWt(2));
+    }
+
+
+	
+    return;
+} 
 
 /* Performs MOC sweep(s), could be just one sweep or till convergance */
 void Solver::MOCsweep(int max_iterations, int moc_iter) 
@@ -1070,7 +1243,6 @@ void Solver::MOCsweep(int max_iterations, int moc_iter)
         /* Initialize flux in each region to zero */
         zeroFSRFluxes();
         zeroLeakage();
-        _num_crn = 0;
 
         /* Initializes mesh cells if ANY acceleration is on */
         if (_run_cmfd || _run_loo)
@@ -1288,9 +1460,6 @@ void Solver::MOCsweep(int max_iterations, int moc_iter)
                     break;
             }
         }
-		
-        if (moc_iter == 0)
-            log_printf(NORMAL, "Number of corners tallied %d", _num_crn);
 
         /* If more than one iteration is requested, we only computes source for
          * the last iteration, all previous iterations are considered to be 

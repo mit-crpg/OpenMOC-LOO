@@ -155,20 +155,11 @@ void Mesh::setFSRBounds(boundaryType left, boundaryType right, boundaryType bott
         _fsr_indices[2*i] = min;
         _fsr_indices[2*i+1] = max;
 
-        _cell_bounds[i*4  ] = _cells[i].getBounds()[0];
-        _cell_bounds[i*4+1] = _cells[i].getBounds()[1];
-        _cell_bounds[i*4+2] = _cells[i].getBounds()[2];
-        _cell_bounds[i*4+3] = _cells[i].getBounds()[3];
+        for (int iii = 0; iii < 4; iii++)
+            _cell_bounds[i * 4 + iii] = _cells[i].getBounds()[iii];
 
-        _surfaces[i*8  ] = _cells[i].getMeshSurfaces(0);
-        _surfaces[i*8+1] = _cells[i].getMeshSurfaces(1);
-        _surfaces[i*8+2] = _cells[i].getMeshSurfaces(2);
-        _surfaces[i*8+3] = _cells[i].getMeshSurfaces(3);
-        _surfaces[i*8+4] = _cells[i].getMeshSurfaces(4);
-        _surfaces[i*8+5] = _cells[i].getMeshSurfaces(5);
-        _surfaces[i*8+6] = _cells[i].getMeshSurfaces(6);
-        _surfaces[i*8+7] = _cells[i].getMeshSurfaces(7);
-
+        for (int iii = 0; iii < 8; iii++)
+            _surfaces[i * 8 + iii] = _cells[i].getMeshSurfaces(iii);
     }
 
     for (int x = 0; x < _cell_width; x++){
@@ -566,7 +557,7 @@ void Mesh::splitCornerQuadCurrents()
     int cw = getCellWidth();
     int ch = getCellHeight();
     MeshCell *meshCell, *meshCellNext, *meshCellNext2; 
-    double current, wt;
+    double current;
     double f = 0.50; 
 
     /* associated with this current cell */
@@ -604,9 +595,9 @@ void Mesh::splitCornerQuadCurrents()
 
                 for (int j = 0; j < 2; j++)
                 {
-                    wt = f * surfaceCorner->getTotalWt(j);
-                    surface1->incrementTotalWt(wt, j);
-                    surface2->incrementTotalWt(wt, j);
+                    //wt = f * surfaceCorner->getTotalWt(j);
+                    //surface1->incrementTotalWt(wt, j);
+                    //surface2->incrementTotalWt(wt, j);
                     for (int g = 0; g < NUM_ENERGY_GROUPS; g++)
                     {
                         current = f * surfaceCorner->getQuadCurrent(g, j);
@@ -624,8 +615,8 @@ void Mesh::splitCornerQuadCurrents()
                    
                      for (int j = 0; j < 2; j++)
                      {
-                         wt = f * surfaceCorner->getTotalWt(j);
-                         surface_next1->incrementTotalWt(wt, j);
+                         //wt = f * surfaceCorner->getTotalWt(j);
+                         //surface_next1->incrementTotalWt(wt, j);
 
                          for (int g = 0; g < NUM_ENERGY_GROUPS; g++)
                          {
@@ -634,22 +625,6 @@ void Mesh::splitCornerQuadCurrents()
                          }
                      }
                 }
-                /* do nothing for REFLECTIVE */
-                /*
-                else if (_boundary[surf[i]] == REFLECTIVE)
-                {
-                    for (int j = 0; j < 2; j++)
-                    {
-                        wt = f * surfaceCorner->getTotalWt(j);
-                        surface1->incrementTotalWt(wt, j);
-                        for (int g = 0; g < NUM_ENERGY_GROUPS; g++)
-                        {
-                            current = - f * surfaceCorner->getQuadCurrent(g, j);
-                            surface1->incrementQuadCurrent(current, g, j);
-                        }
-                    }
-                }
-                */
 
                 if (y > min_y[i] && y < max_y[i])
                 {
@@ -660,8 +635,8 @@ void Mesh::splitCornerQuadCurrents()
 
                      for (int j = 0; j < 2; j++)
                      {
-                         wt = f * surfaceCorner->getTotalWt(j);
-                         surface_next2->incrementTotalWt(wt, j);
+                         //wt = f * surfaceCorner->getTotalWt(j);
+                         //surface_next2->incrementTotalWt(wt, j);
 
                          for (int g = 0; g < NUM_ENERGY_GROUPS; g++)
                          {
@@ -670,23 +645,6 @@ void Mesh::splitCornerQuadCurrents()
                          }
                      }
                 } 
-                /* do nothing for REFLECTIVE */
-                /*
-                else if (_boundary[surf2[i]] == REFLECTIVE)
-                {
-                    for (int j = 0; j < 2; j++)
-                    {
-                        wt = f * surfaceCorner->getTotalWt(j);
-                        surface2->incrementTotalWt(wt, j);
-                        for (int g = 0; g < NUM_ENERGY_GROUPS; g++)
-                        {
-                            current = - f * surfaceCorner->getQuadCurrent(g, j);
-                            surface2->incrementQuadCurrent(current, g, j);
-                        }
-                    }
-                }
-                */
-
             }
         }
     }

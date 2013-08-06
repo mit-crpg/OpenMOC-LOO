@@ -100,6 +100,7 @@ public:
     void zeroFSRFluxes();
     void zeroMeshCells();
     void zeroLeakage();
+    void initializeWeights();
 
     /* checking and debugging */
     void checkTrackSpacing();
@@ -112,6 +113,7 @@ public:
     void MOCsweep(int max_iterations, int moc_iter);
     double runLoo(int moc_iter);
     double runCmfd(int moc_iter);
+    void tallyLooWeight(Track *t, segment *seg, MeshSurface **surf, int dir);
     void tallyLooCurrent(Track *t, segment *seg, MeshSurface **surf, int dir);
     void tallyCmfdCurrent(Track *t, segment *seg, MeshSurface **surf, int dir);
 

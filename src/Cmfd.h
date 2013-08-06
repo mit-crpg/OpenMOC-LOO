@@ -130,6 +130,7 @@ public:
     void storePreMOCMeshSource(FlatSourceRegion* fsrs);
     void computeQuadSrc();
     void computeQuadFlux();
+    double getSurf(int t, int i, int ind);
     double computeLooFluxPower(int moc_iter, double k);
     double computeNormalization();
     void normalizeFlux(double normalize_factor);
@@ -137,6 +138,7 @@ public:
     void updateBoundaryFluxBySrc(int moc_iter);
     void updateOldQuadFlux();
     void computeLooL2Norm(int moc_iter);
+    bool onAnyBoundary(int i, int surf_id);
     bool onBoundary(int track_id, int cell_id, int surf, int dir);
     bool onVacuumBoundary(int track_id, int cell_id, int dir);
     bool onReflectiveBoundary(int track_id, int cell_id, int surf, int dir);

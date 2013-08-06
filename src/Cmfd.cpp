@@ -826,7 +826,6 @@ void Cmfd::computeQuadFlux()
 
     /* the factor that we devide everyone by is cos(45degree) * surface len */
     /* May need to fixme */
-    double scale = SIN_THETA_45; // * _mesh->getCells(0)->getWidth();
     double flux;
 
     /* loop over all mesh cells */
@@ -836,8 +835,6 @@ void Cmfd::computeQuadFlux()
         {
             meshCell = _mesh->getCells(y * _cw + x);
 
-            //scale = meshCell->getWidth() * SIN_THETA_45;
-
             /* get four surfaces */
             for (int i = 0; i < 4; i++) 
             {
@@ -846,22 +843,22 @@ void Cmfd::computeQuadFlux()
                 {
                     /* FIXME: debug */
                     double tmp = 0.0;
-                    double tmp_wt = 0.0;
                     for (int j = 0; j < 2; j++)
                     {
-                        double wt = s[i]->getTotalWt(j) / 
-                            (double) NUM_ENERGY_GROUPS;
-                        flux = s[i]->getQuadCurrent(e, j) / scale / wt;
+                        /* may need to check for wt > 0 before proceeding */
+                        double wt = s[i]->getTotalWt(j);
+                        flux = s[i]->getQuadCurrent(e, j) / SIN_THETA_45 / wt;
                         s[i]->setQuadFlux(flux, e, j);
-                        s[i]->setOldQuadFlux(flux, e, j);
-                        tmp += s[i]->getQuadCurrent(e,j);// / wt;
-                        tmp_wt += wt;
-						
-                    }					
-                    s[i]->setCurrent(tmp / tmp_wt, e);
+                        s[i]->setOldQuadFlux(flux, e, j);                  
+                        tmp += s[i]->getQuadCurrent(e,j);			
+                    }		
+                    s[i]->setCurrent(tmp / s[i]->getTotalWt(2), e);
 
                     if (e == 0)
                     {
+                        log_printf(NORMAL, " cell %d surf %d wt = %f", 
+                                   y * _cw + x, i, s[i]->getTotalWt(2));
+
                         /* Prints to screen quad current and quad flux */
                         log_printf(DEBUG, "cell %d surface %d energy %d's "
                                    " quad fluxes: %.10f %.10f", 
@@ -899,8 +896,8 @@ void Cmfd::computeCurrent()
                 s[i] = meshCell->getMeshSurfaces(i);    
                 for (int e = 0; e < _ng; e++)
                 {
-                    double wt = s[i]->getTotalWt(0) / 
-                        (double) NUM_ENERGY_GROUPS;
+                    /* FIXME: need to figure out what to do here */
+                    double wt = s[i]->getTotalWt(0); 
                     
                     s[i]->setCurrent(s[i]->getCurrent(e) / wt, e);
                 }
@@ -1443,7 +1440,7 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
 
     if (moc_iter == 10000)
     {
-        max_outer = 5;
+        max_outer = 1;
         log_printf(NORMAL, "DEBUG mode on, max outer = %d", max_outer);
     }
 
@@ -1753,9 +1750,13 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
                     sum_quad_flux[i][e] += delta / tau[i][e] + 
                         new_quad_src[i][d] / quad_xs[i][e];
 #endif
+                    net_current[i][e] -= flux * 
+                        getSurf(i, t, 0); 
                     flux -= delta;
+                    net_current[i][e] += flux * 
+                        getSurf(i, t, 1);
 
-                    net_current[i][e] -= delta;
+                    //net_current[i][e] -= delta;
                 }
 
                 if (_bc[1] == REFLECTIVE)
@@ -1843,8 +1844,12 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
                     sum_quad_flux[i][e] += delta / tau[i][e] + 
                         new_quad_src[i][d] / quad_xs[i][e];
 #endif
+
+                    net_current[i][e] -= flux * getSurf(i, t, 0); 
                     flux -= delta;
-                    net_current[i][e] -= delta;
+                    net_current[i][e] += flux * getSurf(i, t, 1);
+
+                    //net_current[i][e] -= delta;
                 }
 
                 if (_bc[1] == REFLECTIVE)
@@ -1866,38 +1871,41 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
 
         double new_flux = 0;
         /* Computs new cell-averaged scalar flux based on new_sum_quad_flux */
+        log_printf(ACTIVE, "true vol = %.10f, true vol / real width = %.10f", 
+                   _mesh->getCells(0)->getVolume(), 
+                   _mesh->getCells(0)->getVolume() 
+                   / _mesh->getCells(0)->getWidth());
+
         if (_run_loo_phi)
         {
             for (int i = 0; i < _cw * _ch; i++)
             {
                 meshCell = _mesh->getCells(i);
-                //double d = meshCell->getVolume() / meshCell->getWidth();
-                double d = meshCell->getWidth();
-
+                double vol = meshCell->getVolume();
                 for (int e = 0; e < _ng; e++)
                 {
-                    /* we multiple sin 45 to converge flux to current, 
-                     * divide by cell side length to get grad J */
-
-#if 0
-                    net_current[i][e] *= SIN_THETA_45 / d / 2.0;
+#if 1
+                    net_current[i][e] *= SIN_THETA_45 / vol / 2.0;
 #else
-                    net_current[i][e] *= SIN_THETA_45 / d / 0.798184;
+                    net_current[i][e] *= SIN_THETA_45 / d;
 #endif
-
 
                     new_flux = (FOUR_PI * new_src[i][e] - net_current[i][e])
                         / meshCell->getSigmaT()[e];
 
                     meshCell->setNewFlux(new_flux, e);
 					
-                    log_printf(NORMAL, "Cell %d energy %d net current now/true"
-                               " = %f", 
-                               i, e, 
-                               net_current[i][e] / 
+                    log_printf(NORMAL, "Cell %d energy %d net current true/now"
+                               " %f / %f = %f", 
+                               i, e,  
+                               FOUR_PI * new_src[i][e] - 
+                               meshCell->getOldFlux()[e] 
+                                * meshCell->getSigmaT()[e], 
+                               net_current[i][e], 
                                (FOUR_PI * new_src[i][e] - 
                                 meshCell->getOldFlux()[e] 
-                                * meshCell->getSigmaT()[e]));
+                                * meshCell->getSigmaT()[e])
+                               / net_current[i][e]);
                 }
             }
         }
@@ -2047,6 +2055,56 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
     delete[] new_quad_src;
 
     return _keff;
+}
+
+double Cmfd::getSurf(int i, int t, int d)
+{
+    int id = -1;
+    MeshCell *meshCell = _mesh->getCells(i);
+
+    if (d == 0)
+    {
+        if ((t == 5) || (t == 6))
+            id = 0;
+        else if ((t == 0) || (t == 7))
+            id = 1;
+        else if ((t == 1) || (t == 2))
+            id = 2;
+        else
+            id = 3;
+    }
+    else
+    {
+        if ((t == 4) || (t == 7))
+            id = 0;
+        else if ((t == 1) || (t == 6))
+            id = 1;
+        else if ((t == 0) || (t == 3))
+            id = 2;
+        else
+            id = 3;
+    }  
+
+    MeshSurface *surface = meshCell->getMeshSurfaces(id); 
+    double length = surface->getTotalWt(2);
+
+    log_printf(DEBUG, " find surf %d for i %d t %d, len = %f", 
+               id, i, t, length);
+
+    return length;
+}
+
+bool Cmfd::onAnyBoundary(int i, int surf_id)
+{
+    if ((surf_id == 0) && (i % _cw == 0))
+        return true;
+    if ((surf_id == 1) && (i >= _cw * (_ch - 1)))
+        return true;
+    if ((surf_id == 2) && ((i + 1) % _cw == 0))
+        return true;
+    if ((surf_id == 3) && (i < _cw))
+        return true;
+    return false;
 }
 
 bool Cmfd::onBoundary(int t, int i, int surf, int dir)
@@ -3044,7 +3102,7 @@ void Cmfd::storePreMOCMeshSource(FlatSourceRegion* fsrs)
         if (_mesh->getMultigroup() == false)
             meshCell->setOldSrc(source_tally / vol_tally_cell, 0);
 
-        log_printf(DEBUG, "As tracked volume of this mesh is %.10f", 
+        log_printf(ACTIVE, "As tracked volume of this mesh is %.10f", 
                    vol_tally_cell);
     }
     return;
