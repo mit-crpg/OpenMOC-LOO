@@ -12,9 +12,9 @@ materials = ['material_c5g7.xml', 'material_c5g7.xml',
              'material_c5g7.xml', 'material_c5g7.xml']
 
 # C4 default is: 0.5cm, 64 azimuthal angle
-ts = [0.5]
+ts = [0.05]
 na = [64]
-fc = [1e-8]
+fc = [1e-6]
 
 # plot color 
 plt.gca().set_color_cycle(['red', 'green', 'blue', 'yellow'])
@@ -45,29 +45,15 @@ for i, geometry in enumerate(geometries):
                       + ' -na ' + str(angle) 
                       + ' -ts ' + str(spacing) 
                       + ' -fc ' + str(fc[0]) 
-                      + ' -wl2 -nub')
+                      + ' -wc -df 1.0')
             os.system('../bin/openmoc'
                       + ' -m ../xml-sample/Cmfd/' + materials[i]
                       + ' -g ../xml-sample/Cmfd/' + geometry 
                       + ' -na ' + str(angle) 
                       + ' -ts ' + str(spacing) 
                       + ' -fc ' + str(fc[0]) 
-                      + ' -wl2 -bi 1 -nub')
-            os.system('../bin/openmoc'
-                      + ' -m ../xml-sample/Cmfd/' + materials[i]
-                      + ' -g ../xml-sample/Cmfd/' + geometry 
-                      + ' -na ' + str(angle) 
-                      + ' -ts ' + str(spacing) 
-                      + ' -fc ' + str(fc[0])
-                      + ' -wl2 -bi 0 -ub')
-            os.system('../bin/openmoc'
-                      + ' -m ../xml-sample/Cmfd/' + materials[i]
-                      + ' -g ../xml-sample/Cmfd/' + geometry 
-                      + ' -na ' + str(angle) 
-                      + ' -ts ' + str(spacing) 
-                      + ' -fc ' + str(fc[0])
-                      + ' -wl2 -bi 1 -ub')
-    # list of l2_norm files
+                      + ' -wc -df 0.7')
+
     l2_norm_files = []
 
     # get all l2_norm file names in directory

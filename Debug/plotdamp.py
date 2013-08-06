@@ -44,7 +44,7 @@ for file in l2_norm_files:
     update = file[-15:-9]
     bi = file[-21:-20]
     ts = file[-29:-25]
-    na = file[-31:-29]
+    na = file[-32:-30]
 
     # find number of lines in file
     for num_lines, l in enumerate(logfile):
@@ -79,7 +79,7 @@ for file in l2_norm_files:
 
     for i in range(5):  
         plt.figure(i)
-        plt.plot(iteration, var[i], next(linecycle), 
+        plt.semilogy(iteration, var[i], next(linecycle), 
                      label = ("%s damp %s" %(method, damp)), 
                      markersize=5)
         plt.xlim(0, max_num_lines + 1)
@@ -91,39 +91,39 @@ for file in l2_norm_files:
 plt.figure(0)
 plt.xlabel('# MOC iteration')
 plt.ylabel('Mesh Cell L2 Norm on Fission Source Relative Change')
-plt.title('Geometry: %s,'%(geometry[9:-4]) + ' spacing: %s,'%str(ts[0]) 
-		  + ' #angles: %s'%str(na[0]))
+plt.title('Geometry: %s,'%(geometry[9:-4]) + ' spacing: %s,'%str(ts) 
+		  + ' #angles: %s'%str(na))
 plt.savefig(geometry[9:-4] + '_cell_l2.png', bbox_inches='tight')
 plt.clf()
 
 plt.figure(1)
 plt.xlabel('# MOC iteration')
 plt.ylabel('FSR L-infinity Norm on Fission Source Relative Change')
-plt.title('Geometry: %s,'%(geometry[9:-4]) + ' spacing: %s,'%str(ts[0]) 
-	  + ' #angles: %s'%str(na[0]))
+plt.title('Geometry: %s,'%(geometry[9:-4]) + ' spacing: %s,'%str(ts) 
+	  + ' #angles: %s'%str(na))
 plt.savefig(geometry[9:-4] + '_fsr_linf.png', bbox_inches='tight')
 plt.clf()
 
 plt.figure(2)
 plt.xlabel('# MOC iteration')
 plt.ylabel('FSR L2 Norm on Fission Source Relative Change')
-plt.title('Geometry: %s,'%(geometry[9:-4]) + ' spacing: %s,'%str(ts[0]) 
-			  + ' #angles: %s'%str(na[0]))
+plt.title('Geometry: %s,'%(geometry[9:-4]) + ' spacing: %s,'%str(ts) 
+			  + ' #angles: %s'%str(na))
 plt.savefig(geometry[9:-4] + '_fsr_l2.png', bbox_inches='tight')
 plt.clf()
 
 plt.figure(3)
 plt.xlabel('# MOC iteration')
 plt.ylabel('# Acceleration Iterations Taken at Each MOC Iteration')
-plt.title('Geometry: %s,'%(geometry[9:-4]) + ' spacing: %s,'%str(ts[0]) 
-  + ' #angles: %s'%str(na[0]))
+plt.title('Geometry: %s,'%(geometry[9:-4]) + ' spacing: %s,'%str(ts) 
+  + ' #angles: %s'%str(na))
 plt.savefig(geometry[9:-4] + '_num_acc.png', bbox_inches='tight')
 plt.clf()
 
 plt.figure(4)
 plt.xlabel('# MOC iteration')
 plt.ylabel('Spectral Radius (numerical approximation)')
-plt.title('Geometry: %s,'%(geometry[9:-4]) + ' spacing: %s,'%str(ts[0]) 
-  + ' #angles: %s'%str(na[0]))
+plt.title('Geometry: %s,'%(geometry[9:-4]) + ' spacing: %s,'%str(ts) 
+  + ' #angles: %s'%str(na))
 plt.savefig(geometry[9:-4] + '_rho.png', bbox_inches='tight')
 plt.clf()
