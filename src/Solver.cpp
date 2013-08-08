@@ -79,6 +79,8 @@ Solver::Solver(Geometry* geom, TrackGenerator* track_generator,
     /* Gives cmfd a pointer to the FSRs */
     if (_run_cmfd || _run_loo || _acc_after_MOC_converge) 
     {
+        _cw = _geom->getMesh()->getCellWidth();
+        _ch = _geom->getMesh()->getCellHeight();
         _cmfd->setFSRs(_flat_source_regions);
         _cmfd->setTracks(_tracks);
         initializeWeights();
@@ -1022,8 +1024,6 @@ void Solver::tallyLooWeight(Track *track, segment *segment,
                              MeshSurface **meshSurfaces, int direction)
 {
     int index = 0, p, surfID;
-    int cw = _geom->getMesh()->getCellWidth();
-    int ch = _geom->getMesh()->getCellHeight();
     MeshSurface *meshSurface;
     double cosTheta, omega_a, sinTheta, wt;
 
@@ -1051,71 +1051,93 @@ void Solver::tallyLooWeight(Track *track, segment *segment,
 
         /* Cell ID */
         int i = surfID / 8;
-        int y = i / cw;
-        int x = i % cw;
+        int y = i / _cw;
+        int x = i % _cw;
         int s = surfID % 8;
 
-        if ((s  == 0) || (s == 2))
-        {
-            cosTheta = fabs(cos(track->getPhi()));
-            for (p = 0; p < NUM_POLAR_ANGLES; p++)
-                meshSurface->incrementTotalWt(wt / cosTheta, index);
-        }
-        else if (s < 4)
-        {
-            sinTheta = fabs(sin(track->getPhi()));
-            for (p = 0; p < NUM_POLAR_ANGLES; p++)
-                meshSurface->incrementTotalWt(wt / sinTheta, index);
-        }
-        else
-        {
-            _num_crn += 1;
-            cosTheta = fabs(cos(track->getPhi()));
-            sinTheta = fabs(sin(track->getPhi()));
+        //cosTheta = fabs(cos(track->getPhi()));
+        //sinTheta = fabs(sin(track->getPhi()));
 
-            if (s < 5)
-            {
-                meshSurfaces[surfID - 4]->incrementTotalWt(wt / cosTheta, index);
-                meshSurfaces[surfID - 3]->incrementTotalWt(wt / sinTheta, index);
-                if (x > 0)
-                    meshSurfaces[(i - 1) * 8 + 1]
-                        ->incrementTotalWt(wt / sinTheta, index);
-                if (y < ch -1)
-                    meshSurfaces[(i + cw) * 8 + 0]
-                        ->incrementTotalWt(wt / cosTheta, index);
-            }
-            else if (s < 6)
-            {
-                meshSurfaces[surfID - 4]->incrementTotalWt(wt / sinTheta, index);
-                meshSurfaces[surfID - 3]->incrementTotalWt(wt / cosTheta, index);
-                if (x < cw - 1)
-                    meshSurfaces[(i + 1) * 8 + 1]
-                        ->incrementTotalWt(wt / sinTheta, index);
-                if (y < ch -1)
-                    meshSurfaces[(i + cw) * 8 + 2]
-                        ->incrementTotalWt(wt / cosTheta, index);
-            }
-            else if (s < 7)
-            {
-                meshSurfaces[surfID - 4]->incrementTotalWt(wt / cosTheta, index);
-                meshSurfaces[surfID - 3]->incrementTotalWt(wt / sinTheta, index);
-                if (x < cw - 1)
-                    meshSurfaces[(i + 1) * 8 + 3]
-                        ->incrementTotalWt(wt / sinTheta, index);
-                if (y > 0)
-                    meshSurfaces[(i - cw) * 8 + 2]
-                        ->incrementTotalWt(wt / cosTheta, index);
-            }
+        cosTheta = 1.0;
+        sinTheta = 1.0;
+
+        for (p = 0; p < NUM_POLAR_ANGLES; p++)
+        {
+            omega_a = track->getAzimuthalWeight() / sinThetaP[p];
+            wt = 0.5 * weights[p];
+
+            if ((s  == 0) || (s == 2))
+                meshSurface->incrementTotalWt(wt / cosTheta, index);
+            else if (s < 4)
+                meshSurface->incrementTotalWt(wt / sinTheta, index);
             else
             {
-                meshSurfaces[surfID - 4]->incrementTotalWt(wt / sinTheta, index);
-                meshSurfaces[surfID - 7]->incrementTotalWt(wt / cosTheta, index);
-                if (x > 0)
-                    meshSurfaces[(i - 1) * 8 + 3]
-                        ->incrementTotalWt(wt / sinTheta, index);
-                if (y > 0)
-                    meshSurfaces[(i - cw) * 8 + 0]
+                _num_crn += 1;
+
+                if (s < 5)
+                {
+                    meshSurfaces[surfID - 4]
                         ->incrementTotalWt(wt / cosTheta, index);
+                    meshSurfaces[surfID - 3]
+                        ->incrementTotalWt(wt / sinTheta, index);
+
+                    if (x > 0)
+                    {
+                        meshSurfaces[(i - 1) * 8 + 1]
+                            ->incrementTotalWt(wt / sinTheta, index);
+                    }
+
+                    if (y < _ch -1)
+                    {
+                        meshSurfaces[(i + _cw) * 8 + 0]
+                            ->incrementTotalWt(wt / cosTheta, index);
+                    }
+                }
+                else if (s < 6)
+                {
+                    meshSurfaces[surfID - 4]
+                        ->incrementTotalWt(wt / sinTheta, index);
+                    meshSurfaces[surfID - 3]
+                        ->incrementTotalWt(wt / cosTheta, index);
+
+                    if (x < _cw - 1)
+                    {
+                        meshSurfaces[(i + 1) * 8 + 1]
+                            ->incrementTotalWt(wt / sinTheta, index);
+                    }
+
+                    if (y < _ch -1)
+                    {
+                        meshSurfaces[(i + _cw) * 8 + 2]
+                            ->incrementTotalWt(wt / cosTheta, index);
+                    }
+                }
+                else if (s < 7)
+                {
+                    meshSurfaces[surfID - 4]
+                        ->incrementTotalWt(wt / cosTheta, index);
+                    meshSurfaces[surfID - 3]
+                        ->incrementTotalWt(wt / sinTheta, index);
+                    if (x < _cw - 1)
+                        meshSurfaces[(i + 1) * 8 + 3]
+                            ->incrementTotalWt(wt / sinTheta, index);
+                    if (y > 0)
+                        meshSurfaces[(i - _cw) * 8 + 2]
+                            ->incrementTotalWt(wt / cosTheta, index);
+                }
+                else
+                {
+                    meshSurfaces[surfID - 4]
+                        ->incrementTotalWt(wt / sinTheta, index);
+                    meshSurfaces[surfID - 7]
+                        ->incrementTotalWt(wt / cosTheta, index);
+                    if (x > 0)
+                        meshSurfaces[(i - 1) * 8 + 3]
+                            ->incrementTotalWt(wt / sinTheta, index);
+                    if (y > 0)
+                        meshSurfaces[(i - _cw) * 8 + 0]
+                            ->incrementTotalWt(wt / cosTheta, index);
+                }
             }
         }
     }
@@ -1132,8 +1154,6 @@ void Solver::initializeWeights()
     int t, j, k, s;
     int num_threads = _num_azim / 2;
     MeshSurface **meshSurfaces = _geom->getMesh()->getSurfaces();
-    int cw = _geom->getMesh()->getCellWidth();
-    int ch = _geom->getMesh()->getCellHeight();
 
     /* Loop over each thread */
     for (t = 0; t < num_threads; t++) 
@@ -1180,11 +1200,11 @@ void Solver::initializeWeights()
     log_printf(NORMAL, "Number of corners tallied %d", _num_crn);
 	
 
-    for (int s = 0; s < cw * ch * 8; s++)
+    for (int s = 0; s < _cw * _ch * 8; s++)
     { 
-       meshSurfaces[s]->setTotalWt(meshSurfaces[s]->getTotalWt(0) + 
-                                    meshSurfaces[s]->getTotalWt(1), 2);
-       log_printf(NORMAL, "surface %d has weight %.10f", s, 
+        meshSurfaces[s]->setTotalWt((meshSurfaces[s]->getTotalWt(0) + 
+                                     meshSurfaces[s]->getTotalWt(1)) / 2.0, 2);
+       log_printf(ACTIVE, "surface %d has weight %.10f", s, 
                   meshSurfaces[s]->getTotalWt(2));
     }
 
@@ -1565,12 +1585,10 @@ void Solver::normalizeFlux()
     /* Renormalize tallied current on each surface */
     if ((_run_cmfd) && !(_acc_after_MOC_converge))
     {
-        int cw = _geom->getMesh()->getCellWidth();
-        int ch = _geom->getMesh()->getCellHeight();
         int ng = NUM_ENERGY_GROUPS;
         MeshCell *meshCell;
 
-        for (int i = 0; i < cw * ch; i++)
+        for (int i = 0; i < _cw * _ch; i++)
         {
             meshCell = _geom->getMesh()->getCells(i);
             for (int s = 0; s < 8; s++)
@@ -1584,12 +1602,10 @@ void Solver::normalizeFlux()
     }
     else if ((_run_loo) && !(_acc_after_MOC_converge))
     {
-        int cw = _geom->getMesh()->getCellWidth();
-        int ch = _geom->getMesh()->getCellHeight();
         int ng = NUM_ENERGY_GROUPS;
         MeshCell *meshCell;
 
-        for (int i = 0; i < cw * ch; i++)
+        for (int i = 0; i < _cw * _ch; i++)
         {
             meshCell = _geom->getMesh()->getCells(i);
             for (int s = 0; s < 8; s++)
