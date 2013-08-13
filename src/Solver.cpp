@@ -922,8 +922,7 @@ void Solver::tallyLooCurrent(Track *track, segment *segment,
 {
     int index = 0, pe = 0, pe_initial = 0, p, e, surfID;
     MeshSurface *meshSurface;
-    double *weights, *polar_fluxes, *sinThetaP;
-    double cosTheta;
+    double *weights, *polar_fluxes;
 
     /* Get the ID of the surface that the segment ends on (forward), starts
      * on (backwards)*/
@@ -939,15 +938,12 @@ void Solver::tallyLooCurrent(Track *track, segment *segment,
     {
         /* notice this is polar flux weights, more than just polar weights */
         weights = track->getPolarWeights();
-        sinThetaP = _quad->getSinThetas();
         polar_fluxes = track->getPolarFluxes();
 
         /* Defines index */
         if (track->getPhi() > PI / 2.0)
             index = 1;
         
-        cosTheta = fabs(cos(track->getPhi()));
-
         /* Obtains the surface that the segment crosses */
         meshSurface = meshSurfaces[surfID];
         log_printf(DEBUG, " phi = %f, index = %d, surface ID = %d",
@@ -962,7 +958,6 @@ void Solver::tallyLooCurrent(Track *track, segment *segment,
             {
                 meshSurface->incrementQuadCurrent(polar_fluxes[pe] * weights[p] 
                                                   / 2.0, e, index);
-                //meshSurface->incrementTotalWt(weights[p] / 2.0, index);
                 pe++;
             }
         }
@@ -1025,7 +1020,7 @@ void Solver::tallyLooWeight(Track *track, segment *segment,
 {
     int index = 0, p, surfID;
     MeshSurface *meshSurface;
-    double cosTheta, omega_a, sinTheta, wt;
+    double cosTheta, sinTheta, wt;
 
     /* Get the ID of the surface that the segment ends on (forward), starts
      * on (backwards)*/
@@ -1037,10 +1032,8 @@ void Solver::tallyLooWeight(Track *track, segment *segment,
     if (surfID != -1)
     {
         /* notice this is polar flux weights, more than just polar weights */
-        //double *weights = track->getPolarWeights();
-        //double *sinThetaP = _quad->getSinThetas();
-        omega_a = track->getAzimuthalWeight();
-        wt = 0.5 * omega_a;
+        double *weights = track->getPolarWeights();
+        double *sinThetaP = _quad->getSinThetas();
 
         /* Obtains the surface that the segment crosses */
         meshSurface = meshSurfaces[surfID];
@@ -1063,8 +1056,8 @@ void Solver::tallyLooWeight(Track *track, segment *segment,
 
         for (p = 0; p < NUM_POLAR_ANGLES; p++)
         {
-            omega_a = track->getAzimuthalWeight() / sinThetaP[p];
-            wt = 0.5 * weights[p];
+            //omega_a = track->getAzimuthalWeight() / sinThetaP[p];
+            wt = 0.5 * weights[p] / sinThetaP[p];
 
             if ((s  == 0) || (s == 2))
                 meshSurface->incrementTotalWt(wt / cosTheta, index);
@@ -1073,6 +1066,7 @@ void Solver::tallyLooWeight(Track *track, segment *segment,
             else
             {
                 _num_crn += 1;
+                wt *= 0.5;
 
                 if (s < 5)
                 {
@@ -1203,7 +1197,7 @@ void Solver::initializeWeights()
     for (int s = 0; s < _cw * _ch * 8; s++)
     { 
         meshSurfaces[s]->setTotalWt((meshSurfaces[s]->getTotalWt(0) + 
-                                     meshSurfaces[s]->getTotalWt(1)) / 2.0, 2);
+                                     meshSurfaces[s]->getTotalWt(1)), 2);
        log_printf(ACTIVE, "surface %d has weight %.10f", s, 
                   meshSurfaces[s]->getTotalWt(2));
     }

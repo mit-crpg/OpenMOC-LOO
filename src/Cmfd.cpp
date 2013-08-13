@@ -856,15 +856,15 @@ void Cmfd::computeQuadFlux()
 
                     if (e == 0)
                     {
-                        log_printf(NORMAL, " cell %d surf %d wt = %f", 
-                                   y * _cw + x, i, s[i]->getTotalWt(2));
-
                         /* Prints to screen quad current and quad flux */
                         log_printf(DEBUG, "cell %d surface %d energy %d's "
                                    " quad fluxes: %.10f %.10f", 
                                    y * _cw + x, i, e, 
                                    s[i]->getQuadFlux(e, 0), 
                                    s[i]->getQuadFlux(e, 1));
+                        
+                        log_printf(DEBUG, " cell %d surf %d wt = %f", 
+                                   y * _cw + x, i, s[i]->getTotalWt(2));
                     }
                 }
             }
@@ -1750,13 +1750,11 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
                     sum_quad_flux[i][e] += delta / tau[i][e] + 
                         new_quad_src[i][d] / quad_xs[i][e];
 #endif
-                    net_current[i][e] -= flux * 
-                        getSurf(i, t, 0); 
-                    flux -= delta;
-                    net_current[i][e] += flux * 
-                        getSurf(i, t, 1);
+                    net_current[i][e] -= flux * getSurf(i, t, 0); 
+                    //flux -= delta;
+                    net_current[i][e] += flux * getSurf(i, t, 1);
 
-                    //net_current[i][e] -= delta;
+                    net_current[i][e] -= delta;
                 }
 
                 if (_bc[1] == REFLECTIVE)
@@ -1846,10 +1844,10 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
 #endif
 
                     net_current[i][e] -= flux * getSurf(i, t, 0); 
-                    flux -= delta;
+                    //flux -= delta;
                     net_current[i][e] += flux * getSurf(i, t, 1);
 
-                    //net_current[i][e] -= delta;
+                    net_current[i][e] -= delta;
                 }
 
                 if (_bc[1] == REFLECTIVE)
@@ -1885,7 +1883,7 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
                 for (int e = 0; e < _ng; e++)
                 {
 #if 1
-                    net_current[i][e] *= SIN_THETA_45 / vol / 2.0;
+                    net_current[i][e] *= SIN_THETA_45 / vol;
 #else
                     net_current[i][e] *= SIN_THETA_45 / d;
 #endif
@@ -1895,7 +1893,7 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
 
                     meshCell->setNewFlux(new_flux, e);
 					
-                    log_printf(NORMAL, "Cell %d energy %d net current true/now"
+                    log_printf(DEBUG, "Cell %d energy %d net current true/now"
                                " %f / %f = %f", 
                                i, e,  
                                FOUR_PI * new_src[i][e] - 
