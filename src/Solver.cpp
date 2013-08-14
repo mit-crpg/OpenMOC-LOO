@@ -1048,21 +1048,23 @@ void Solver::tallyLooWeight(Track *track, segment *segment,
         int x = i % _cw;
         int s = surfID % 8;
 
-        //cosTheta = fabs(cos(track->getPhi()));
-        //sinTheta = fabs(sin(track->getPhi()));
-
-        cosTheta = 1.0;
-        sinTheta = 1.0;
+        cosTheta = fabs(cos(track->getPhi()));
+        sinTheta = fabs(sin(track->getPhi()));
 
         for (p = 0; p < NUM_POLAR_ANGLES; p++)
         {
-            //omega_a = track->getAzimuthalWeight() / sinThetaP[p];
-            wt = 0.5 * weights[p] / sinThetaP[p];
+            wt = 0.5 * weights[p] / sinThetaP[p] / TWO_PI;
 
             if ((s  == 0) || (s == 2))
+            {
                 meshSurface->incrementTotalWt(wt / cosTheta, index);
+                meshSurface->incrementTotalWt(wt, index + 3);
+            }
             else if (s < 4)
+            {
                 meshSurface->incrementTotalWt(wt / sinTheta, index);
+                meshSurface->incrementTotalWt(wt, index + 3);
+            }
             else
             {
                 _num_crn += 1;
@@ -1074,17 +1076,25 @@ void Solver::tallyLooWeight(Track *track, segment *segment,
                         ->incrementTotalWt(wt / cosTheta, index);
                     meshSurfaces[surfID - 3]
                         ->incrementTotalWt(wt / sinTheta, index);
+                    meshSurfaces[surfID - 4]
+                        ->incrementTotalWt(wt, index + 3);
+                    meshSurfaces[surfID - 3]
+                        ->incrementTotalWt(wt, index + 3);
 
                     if (x > 0)
                     {
                         meshSurfaces[(i - 1) * 8 + 1]
                             ->incrementTotalWt(wt / sinTheta, index);
+                        meshSurfaces[(i - 1) * 8 + 1]
+                            ->incrementTotalWt(wt, index + 3);
                     }
 
                     if (y < _ch -1)
                     {
                         meshSurfaces[(i + _cw) * 8 + 0]
                             ->incrementTotalWt(wt / cosTheta, index);
+                        meshSurfaces[(i + _cw) * 8 + 0]
+                            ->incrementTotalWt(wt, index + 3);
                     }
                 }
                 else if (s < 6)
@@ -1094,16 +1104,25 @@ void Solver::tallyLooWeight(Track *track, segment *segment,
                     meshSurfaces[surfID - 3]
                         ->incrementTotalWt(wt / cosTheta, index);
 
+                    meshSurfaces[surfID - 4]
+                        ->incrementTotalWt(wt, index + 3);
+                    meshSurfaces[surfID - 3]
+                        ->incrementTotalWt(wt, index + 3);
+
                     if (x < _cw - 1)
                     {
                         meshSurfaces[(i + 1) * 8 + 1]
                             ->incrementTotalWt(wt / sinTheta, index);
+                        meshSurfaces[(i + 1) * 8 + 1]
+                            ->incrementTotalWt(wt, index + 3);
                     }
 
                     if (y < _ch -1)
                     {
                         meshSurfaces[(i + _cw) * 8 + 2]
                             ->incrementTotalWt(wt / cosTheta, index);
+                        meshSurfaces[(i + _cw) * 8 + 2]
+                            ->incrementTotalWt(wt, index + 3);
                     }
                 }
                 else if (s < 7)
@@ -1112,12 +1131,26 @@ void Solver::tallyLooWeight(Track *track, segment *segment,
                         ->incrementTotalWt(wt / cosTheta, index);
                     meshSurfaces[surfID - 3]
                         ->incrementTotalWt(wt / sinTheta, index);
+
+                    meshSurfaces[surfID - 4]
+                        ->incrementTotalWt(wt, index + 3);
+                    meshSurfaces[surfID - 3]
+                        ->incrementTotalWt(wt, index + 3);
+
                     if (x < _cw - 1)
+                    {
                         meshSurfaces[(i + 1) * 8 + 3]
                             ->incrementTotalWt(wt / sinTheta, index);
+                        meshSurfaces[(i + 1) * 8 + 3]
+                            ->incrementTotalWt(wt, index + 3);
+                    }
                     if (y > 0)
+                    {
                         meshSurfaces[(i - _cw) * 8 + 2]
                             ->incrementTotalWt(wt / cosTheta, index);
+                        meshSurfaces[(i - _cw) * 8 + 2]
+                            ->incrementTotalWt(wt, index + 3);
+                    }
                 }
                 else
                 {
@@ -1125,12 +1158,26 @@ void Solver::tallyLooWeight(Track *track, segment *segment,
                         ->incrementTotalWt(wt / sinTheta, index);
                     meshSurfaces[surfID - 7]
                         ->incrementTotalWt(wt / cosTheta, index);
+                    meshSurfaces[surfID - 4]
+                        ->incrementTotalWt(wt, index + 3);
+                    meshSurfaces[surfID - 7]
+                        ->incrementTotalWt(wt, index + 3);
+
+
                     if (x > 0)
+                    {
                         meshSurfaces[(i - 1) * 8 + 3]
                             ->incrementTotalWt(wt / sinTheta, index);
+                        meshSurfaces[(i - 1) * 8 + 3]
+                            ->incrementTotalWt(wt, index + 3);
+                    }
                     if (y > 0)
+                    {
                         meshSurfaces[(i - _cw) * 8 + 0]
                             ->incrementTotalWt(wt / cosTheta, index);
+                        meshSurfaces[(i - _cw) * 8 + 0]
+                            ->incrementTotalWt(wt, index + 3);
+                    }
                 }
             }
         }
@@ -1198,12 +1245,13 @@ void Solver::initializeWeights()
     { 
         meshSurfaces[s]->setTotalWt((meshSurfaces[s]->getTotalWt(0) + 
                                      meshSurfaces[s]->getTotalWt(1)), 2);
-       log_printf(ACTIVE, "surface %d has weight %.10f", s, 
-                  meshSurfaces[s]->getTotalWt(2));
+        meshSurfaces[s]->setTotalWt((meshSurfaces[s]->getTotalWt(3) + 
+                                     meshSurfaces[s]->getTotalWt(4)), 5);
+       log_printf(NORMAL, "surface %d has flux-wt %.10f, current-wt %.10f", s, 
+                  meshSurfaces[s]->getTotalWt(2), 
+                  meshSurfaces[s]->getTotalWt(5));
     }
 
-
-	
     return;
 } 
 

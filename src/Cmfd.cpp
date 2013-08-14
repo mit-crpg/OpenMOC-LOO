@@ -416,16 +416,6 @@ void Cmfd::computeXS()
         }
     }
 
-    /* FIXME: DEBUG */
-    /*
-      for (i = 0; i < _cw * _ch; i++)
-      {
-      double vol = _mesh->getCells(i)->getVolume();
-      _mesh->getCells(i)->setWidth(sqrt(vol));
-      _mesh->getCells(i)->setHeight(sqrt(vol));
-      }
-    */
-
     return;
 }
 
@@ -845,14 +835,14 @@ void Cmfd::computeQuadFlux()
                     double tmp = 0.0;
                     for (int j = 0; j < 2; j++)
                     {
-                        /* may need to check for wt > 0 before proceeding */
-                        double wt = s[i]->getTotalWt(j);
+                        /* it is important to use j+3 to get homo case work */
+                        double wt = s[i]->getTotalWt(j + 3);
                         flux = s[i]->getQuadCurrent(e, j) / SIN_THETA_45 / wt;
                         s[i]->setQuadFlux(flux, e, j);
                         s[i]->setOldQuadFlux(flux, e, j);                  
                         tmp += s[i]->getQuadCurrent(e,j);			
                     }		
-                    s[i]->setCurrent(tmp / s[i]->getTotalWt(2), e);
+                    s[i]->setCurrent(tmp / s[i]->getTotalWt(5), e);
 
                     if (e == 0)
                     {
@@ -1440,7 +1430,7 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
 
     if (moc_iter == 10000)
     {
-        max_outer = 1;
+        max_outer = 5;
         log_printf(NORMAL, "DEBUG mode on, max outer = %d", max_outer);
     }
 
@@ -1751,10 +1741,10 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
                         new_quad_src[i][d] / quad_xs[i][e];
 #endif
                     net_current[i][e] -= flux * getSurf(i, t, 0); 
-                    //flux -= delta;
+                    flux -= delta;
                     net_current[i][e] += flux * getSurf(i, t, 1);
 
-                    net_current[i][e] -= delta;
+                    //net_current[i][e] -= delta;
                 }
 
                 if (_bc[1] == REFLECTIVE)
@@ -1844,10 +1834,10 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
 #endif
 
                     net_current[i][e] -= flux * getSurf(i, t, 0); 
-                    //flux -= delta;
+                    flux -= delta;
                     net_current[i][e] += flux * getSurf(i, t, 1);
 
-                    net_current[i][e] -= delta;
+                    //net_current[i][e] -= delta;
                 }
 
                 if (_bc[1] == REFLECTIVE)
@@ -1869,41 +1859,36 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
 
         double new_flux = 0;
         /* Computs new cell-averaged scalar flux based on new_sum_quad_flux */
-        log_printf(ACTIVE, "true vol = %.10f, true vol / real width = %.10f", 
+        log_printf(ACTIVE, "as-tracked vol = %.20f, width = %.10f", 
                    _mesh->getCells(0)->getVolume(), 
-                   _mesh->getCells(0)->getVolume() 
-                   / _mesh->getCells(0)->getWidth());
+                   _mesh->getCells(0)->getWidth());
 
         if (_run_loo_phi)
         {
             for (int i = 0; i < _cw * _ch; i++)
             {
                 meshCell = _mesh->getCells(i);
-                double vol = meshCell->getVolume();
+                double vol = meshCell->getVolume(); 
+                //double vol = meshCell->getWidth() * meshCell->getHeight();
                 for (int e = 0; e < _ng; e++)
                 {
-#if 1
                     net_current[i][e] *= SIN_THETA_45 / vol;
-#else
-                    net_current[i][e] *= SIN_THETA_45 / d;
-#endif
 
                     new_flux = (FOUR_PI * new_src[i][e] - net_current[i][e])
                         / meshCell->getSigmaT()[e];
 
                     meshCell->setNewFlux(new_flux, e);
 					
-                    log_printf(DEBUG, "Cell %d energy %d net current true/now"
-                               " %f / %f = %f", 
-                               i, e,  
+                    log_printf(ACTIVE, "Cell %d e %d leakage lo/ho"
+                               " %f/ %f = %f", 
+                               i, e, net_current[i][e], 
                                FOUR_PI * new_src[i][e] - 
                                meshCell->getOldFlux()[e] 
                                 * meshCell->getSigmaT()[e], 
-                               net_current[i][e], 
+                               net_current[i][e] /  
                                (FOUR_PI * new_src[i][e] - 
                                 meshCell->getOldFlux()[e] 
-                                * meshCell->getSigmaT()[e])
-                               / net_current[i][e]);
+                                * meshCell->getSigmaT()[e]));
                 }
             }
         }
@@ -2058,6 +2043,7 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
 double Cmfd::getSurf(int i, int t, int d)
 {
     int id = -1;
+    int j;
     MeshCell *meshCell = _mesh->getCells(i);
 
     if (d == 0)
@@ -2083,11 +2069,19 @@ double Cmfd::getSurf(int i, int t, int d)
             id = 3;
     }  
 
-    MeshSurface *surface = meshCell->getMeshSurfaces(id); 
-    double length = surface->getTotalWt(2);
+    if ((t < 2) || (t == 4) || (t == 5))
+        j = 0;
+    else
+        j = 1;
 
-    log_printf(DEBUG, " find surf %d for i %d t %d, len = %f", 
-               id, i, t, length);
+
+    MeshSurface *surface = meshCell->getMeshSurfaces(id); 
+    double length = surface->getTotalWt(j);
+    //double length = surface->getTotalWt(2) / 2.0;
+    //length = meshCell->getWidth() * 2.0;
+    log_printf(DEBUG, " find surf %d for i %d t %d, at len = %f, physical %f", 
+               id, i, t, surface->getTotalWt(2) / 2.0, 
+               meshCell->getWidth() * 2.0);
 
     return length;
 }
@@ -2209,17 +2203,17 @@ void Cmfd::normalizeFlux(double normalize)
             {
                 for (int e = 0; e < _ng; e++)
                 {
+                    /*
                     log_printf(ACTIVE, " e %d jj %d: %f * %f", 
                                e, jj,  _mesh->getCells(i)->getMeshSurfaces(1)
                                ->getQuadFlux(e, jj), normalize);
-
+                    */
                     _mesh->getCells(i)->getMeshSurfaces(1)
                         ->updateQuadFlux(normalize, e, jj);
                 }        
             }
         }
 
-// /*
         int y;
         for (y = 0; y < _ch; y++)
         {
@@ -2263,7 +2257,6 @@ void Cmfd::normalizeFlux(double normalize)
                 }        
             }
         }
-        //   */
 #endif
     }
 

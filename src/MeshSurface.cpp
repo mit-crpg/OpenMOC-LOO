@@ -10,8 +10,8 @@
 MeshSurface::MeshSurface(){
 	
     try{
-        _total_wt = new double[3];
-        for (int i = 0; i < 3; i++)
+        _total_wt = new double[6];
+        for (int i = 0; i < 6; i++)
             _total_wt[i] = 0.0;
         
         _d_tilde = new double[NUM_ENERGY_GROUPS];
