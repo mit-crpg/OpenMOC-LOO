@@ -90,6 +90,7 @@ private:
     bool _acc_after_MOC_converge;
     bool _update_keff;
     bool _update_boundary;
+    bool _plot_loo;
     void precomputeFactors();
     void initializeFSRs();
 public:

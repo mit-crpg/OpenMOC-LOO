@@ -45,7 +45,8 @@ Solver::Solver(Geometry* geom, TrackGenerator* track_generator,
     _track_spacing = opts->getTrackSpacing();
     _boundary_iteration = opts->getBoundaryIteration();
     _update_boundary = opts->getUpdateBoundary();
-    
+    _plot_loo = opts->plotQuadFlux();
+
     _cmfd_k = _k_eff;
     _loo_k = _k_eff;
 
@@ -2063,7 +2064,7 @@ void Solver::plotEverything(int moc_iter)
     }
 
     /* plot LOO flux and xs */
-    if (_run_loo)
+    if ((_run_loo) && (_plot_loo))
     {
         _plotter->plotQuadFlux(_geom->getMesh(), moc_iter);
         _plotter->plotNetCurrents(_geom->getMesh(), moc_iter);
