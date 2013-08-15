@@ -571,19 +571,18 @@ void Mesh::splitCornerQuadCurrents()
     int max_y[] = {ch-1, ch-1, ch,   ch};
 
     int next_x[]    = {-1, 1, 1, -1};
-    int next_y[]    = {0,  0, 0, 0};
     int next_surf[] = {1,  1, 3, 3};
     
-    int next_x2[]   = {0, 0, 0, 0};
     int next_y2[]   = {1, 1, -1, -1};
     int next_surf2[]= {0, 2, 2, 0};
 
 
-    for (int x = 0; x < cw; x++)
+    for (int y = 0; y < ch; y++)
     {
-        for (int y = 0; y < ch; y++)
+        for (int x = 0; x < cw; x++)
         {
-            meshCell = &_cells[y * cw + x];
+            int ii = y * cw + x;
+            meshCell = &_cells[ii];
 
             for (int i = 0; i < 4; i++)
             {
@@ -604,11 +603,10 @@ void Mesh::splitCornerQuadCurrents()
                 }
 
                 /* if left or right cell exists */
-                if ((x > min_x[i]) && (x < max_x[i]) && 
-                    (y > min_y[i]) && (y < max_y[i]))
+                if ((x > min_x[i]) && (x < max_x[i]))
                 {
                     meshCellNext = 
-                        &_cells[(y + next_y[i]) * cw + x + next_x[i]];
+                        &_cells[ii + next_x[i]];
                     surface_next1 = meshCellNext->getMeshSurfaces(next_surf[i]);
                    
                      for (int j = 0; j < 2; j++)
@@ -619,11 +617,28 @@ void Mesh::splitCornerQuadCurrents()
                              surface_next1->incrementQuadCurrent(current, g, j);
                          }
                      }
-//                }
-//                if (y > min_y[i] && y < max_y[i])
-//                {
+                } 
+                else
+                {
+                    surface_next1 = meshCell->getMeshSurfaces(next_surf[i]);
+                   
+                     for (int j = 0; j < 2; j++)
+                     {
+                         for (int g = 0; g < NUM_ENERGY_GROUPS; g++)
+                         {
+                             current = f * surfaceCorner->getQuadCurrent(g, j);
+                             surface_next1->incrementQuadCurrent
+                                 (current, g, 1 - j);
+                         }
+                     }
+                }
+
+
+
+                if ((y > min_y[i]) && (y < max_y[i])) 
+                {
                      meshCellNext2 = 
-                        &_cells[(y + next_y2[i]) * cw + x + next_x2[i]];
+                        &_cells[ii + next_y2[i] * cw];
                      surface_next2 = meshCellNext2->getMeshSurfaces
                         (next_surf2[i]);
 
@@ -636,6 +651,23 @@ void Mesh::splitCornerQuadCurrents()
                          }
                      }
                 } 
+                else
+                {
+                     surface_next2 = meshCell->getMeshSurfaces(next_surf2[i]);
+
+                     for (int j = 0; j < 2; j++)
+                     {
+                         for (int g = 0; g < NUM_ENERGY_GROUPS; g++)
+                         {
+                             current = f * surfaceCorner->getQuadCurrent(g, j);
+                             surface_next2->incrementQuadCurrent
+                                 (current, g, 1 - j);
+                         }
+                     }
+                } 
+
+
+
             }
         }
     }
