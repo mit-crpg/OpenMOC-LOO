@@ -1040,10 +1040,9 @@ void Solver::tallyLooWeight(Track *track, segment *segment,
 
         /* Defines index */
         if (track->getPhi() > PI / 2.0)
-        {
             index = 1;
-            opposite_index = 0;
-        }
+
+        opposite_index = 1 - index;
 
         /* Cell ID */
         int i = surfID / 8;
@@ -1317,7 +1316,7 @@ void Solver::initializeWeights()
                                          meshSurfaces[s]->getTotalWt(1)), 2);
             meshSurfaces[s]->setTotalWt((meshSurfaces[s]->getTotalWt(3) + 
                                          meshSurfaces[s]->getTotalWt(4)), 5);
-            log_printf(NORMAL, "surface %d %.10f + %.10f = %.10f,"
+            log_printf(ACTIVE, "surface %d %.10f + %.10f = %.10f,"
                        " current-wt %.10f + %.10f = %.10f", s, 
                        meshSurfaces[s]->getTotalWt(0),
                        meshSurfaces[s]->getTotalWt(1),                   

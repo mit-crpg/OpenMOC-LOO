@@ -1565,36 +1565,6 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
                 } 
             } 
         } 
-
-        /*
-        for (int i = 0; i < _cw * _ch; i++)
-        {
-            for (int e = 0; e < _ng; e++)
-                _mesh->getCells(i)->setOldNetCurrent(ho_current[i][e], e);
-        }
-        */
-        
-        /*
-        for (int i = 0; i < _cw * _ch; i++)
-        {
-            meshCell = _mesh->getCells(i);
-            
-            for (int e = 0; e < _ng; e++)
-            {
-                ho_phi[i][e] = (FOUR_PI * meshCell->getOldSrc()[e] 
-                                - ho_current[i][e])
-                    / meshCell->getSigmaT()[e];
-                
-                meshCell->setOldNetCurrent(ho_phi[i][e], e);
-                
-                log_printf(DEBUG, "cell %d debug ratio = %.10f",
-                           i, ho_phi[i][e] / meshCell->getOldFlux()[e]);
-                
-		
-            }
-        }
-        */
-
     }
 #endif
 
@@ -1738,8 +1708,6 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
                     net_current[i][e] -= flux * getSurf(i, t, 0); 
                     flux -= delta;
                     net_current[i][e] += flux * getSurf(i, t, 1);
-
-                    //net_current[i][e] -= delta;
                 }
 
                 if (_bc[1] == REFLECTIVE)
@@ -1831,8 +1799,6 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
                     net_current[i][e] -= flux * getSurf(i, t, 0); 
                     flux -= delta;
                     net_current[i][e] += flux * getSurf(i, t, 1);
-
-                    //net_current[i][e] -= delta;
                 }
 
                 if (_bc[1] == REFLECTIVE)
@@ -1860,8 +1826,8 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
             for (int i = 0; i < _cw * _ch; i++)
             {
                 meshCell = _mesh->getCells(i);
-                double vol = meshCell->getATVolume(); 
-                //double vol = meshCell->getATWidth() * meshCell->getATHeight();
+                double vol = meshCell->getVolume(); 
+
                 for (int e = 0; e < _ng; e++)
                 {
                     net_current[i][e] *= SIN_THETA_45 / vol;
@@ -1872,7 +1838,7 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
                     meshCell->setNewFlux(new_flux, e);
 					
                     log_printf(ACTIVE, "Cell %d e %d leakage lo/ho"
-                               " %f/ %f = %f", 
+                               " %f/ %f = %.10f", 
                                i, e, net_current[i][e], 
                                FOUR_PI * new_src[i][e] - 
                                meshCell->getOldFlux()[e] 
@@ -2067,11 +2033,8 @@ double Cmfd::getSurf(int i, int t, int d)
         j = 1;
 
     MeshSurface *surface = meshCell->getMeshSurfaces(id); 
-
     double length = surface->getTotalWt(j + 3);
-    length = surface->getTotalWt(j + 3); 
-    // / surface->getTotalWt(2) * meshCell->getWidth();
-
+    //double length = surface->getTotalWt(5) / 2.0;
     return length;
 }
 
