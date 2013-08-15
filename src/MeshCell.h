@@ -25,6 +25,10 @@ class MeshCell {
 private:
     double _width;
     double _height;
+    double _volume;
+    double _at_width;
+    double _at_height;
+    double _at_volume;
     std::vector<int> _FSRs;
     MeshSurface* _mesh_surfaces;
     Material* _material;
@@ -39,11 +43,11 @@ private:
     double _diffusivity[NUM_ENERGY_GROUPS];
     double _old_flux[NUM_ENERGY_GROUPS];
     double _new_flux[NUM_ENERGY_GROUPS];
-    double _volume;
     int _cell_id;
 
     /* for LOO */
     double _l;
+    double _at_l;
     double _old_src[NUM_ENERGY_GROUPS]; /* $\bar{Q}^{(m)}$ */
     double _src[NUM_ENERGY_GROUPS]; /* $\bar{Q}^{(m+1/2)}$ */
     double _sum_quad_flux[NUM_ENERGY_GROUPS];
@@ -55,11 +59,23 @@ public:
     MeshCell();
     virtual ~MeshCell();
     double getWidth();
+    double getATWidth();
     double getHeight();
+    double getATHeight();
+    double getVolume();
+    double getATVolume();
     double getL();
+    double getATL();
+
     void setWidth(double width);
+    void setATWidth(double width);
     void setHeight(double height);
+    void setATHeight(double height);
+    void setVolume(double volume);
+    void setATVolume(double volume);
     void setL(double l);
+    void setATL(double l);
+
     std::vector<int>* getFSRs();
     void addFSR(int fsr);
     void setChi(double chi, int e);
@@ -87,8 +103,6 @@ public:
     double* getNewFlux();
     void setOldFlux(double flux, int e);
     double* getOldFlux();
-    void setVolume(double volume);
-    double getVolume();
     double getTemp();
     void setTemp(double temp);
     Material* getMaterial();

@@ -10,6 +10,10 @@
 MeshCell::MeshCell(){
     std::vector<int> _FSRs;
     _volume = 0;
+    _at_volume = 0;
+    _width = 0;
+    _height = 0;
+
     _bounds = new double[4];
     _cell_id = 0;
 	
@@ -66,8 +70,21 @@ double MeshCell::getHeight(){
     return _height;
 }
 
+double MeshCell::getATWidth(){
+    return _at_width;
+}
+
+double MeshCell::getATHeight(){
+    return _at_height;
+}
+
+
 double MeshCell::getL(){
     return _l;
+}
+
+double MeshCell::getATL(){
+    return _at_l;
 }
 
 void MeshCell::setWidth(double width){
@@ -78,8 +95,20 @@ void MeshCell::setHeight(double height){
     _height = height;
 }
 
+void MeshCell::setATWidth(double width){
+    _at_width = width;
+}
+
+void MeshCell::setATHeight(double height){
+    _at_height = height;
+}
+
 void MeshCell::setL(double l){
     _l = l;
+}
+
+void MeshCell::setATL(double l){
+    _at_l = l;
 }
 
 int MeshCell::getFSRStart(){
@@ -254,6 +283,14 @@ double MeshCell::getVolume(){
 
 void MeshCell::setVolume(double volume){
     _volume = volume;
+}
+
+double MeshCell::getATVolume(){
+    return _at_volume;
+}
+
+void MeshCell::setATVolume(double volume){
+    _at_volume = volume;
 }
 
 Material* MeshCell::getMaterial(){

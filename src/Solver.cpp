@@ -421,7 +421,6 @@ void Solver::zeroMeshCells() {
                 for (int j = 0; j < 2; j++)
                 {
                     meshCell->getMeshSurfaces(surface)->setQuadCurrent(0, e, j);
-                    //meshCell->getMeshSurfaces(surface)->setTotalWt(0,j);
                 }
                 
             }
@@ -1020,7 +1019,7 @@ void Solver::tallyLooWeight(Track *track, segment *segment,
 {
     int index = 0, p, surfID;
     MeshSurface *meshSurface;
-    double cosTheta, sinTheta, wt;
+    double cosTheta, sinTheta, wt, wt2;
 
     /* Get the ID of the surface that the segment ends on (forward), starts
      * on (backwards)*/
@@ -1053,46 +1052,45 @@ void Solver::tallyLooWeight(Track *track, segment *segment,
 
         for (p = 0; p < NUM_POLAR_ANGLES; p++)
         {
-            wt = 0.5 * weights[p] / sinThetaP[p] / TWO_PI;
+            wt = 0.5 * weights[p] / TWO_PI / sinThetaP[p];
+            wt2 = wt;
 
             if ((s  == 0) || (s == 2))
             {
-                meshSurface->incrementTotalWt(wt / cosTheta, index);
+                meshSurface->incrementTotalWt(wt2 / cosTheta, index);
                 meshSurface->incrementTotalWt(wt, index + 3);
             }
             else if (s < 4)
             {
-                meshSurface->incrementTotalWt(wt / sinTheta, index);
+                meshSurface->incrementTotalWt(wt2 / sinTheta, index);
                 meshSurface->incrementTotalWt(wt, index + 3);
             }
             else
             {
                 _num_crn += 1;
                 wt *= 0.5;
+                wt2 *= 0.5;
 
                 if (s < 5)
                 {
                     meshSurfaces[surfID - 4]
-                        ->incrementTotalWt(wt / cosTheta, index);
+                        ->incrementTotalWt(wt2 / cosTheta, index);
                     meshSurfaces[surfID - 3]
-                        ->incrementTotalWt(wt / sinTheta, index);
+                        ->incrementTotalWt(wt2 / sinTheta, index);
                     meshSurfaces[surfID - 4]
                         ->incrementTotalWt(wt, index + 3);
                     meshSurfaces[surfID - 3]
                         ->incrementTotalWt(wt, index + 3);
 
-                    if (x > 0)
+                    if ((x > 0) && (y < _ch - 1))
                     {
                         meshSurfaces[(i - 1) * 8 + 1]
-                            ->incrementTotalWt(wt / sinTheta, index);
+                            ->incrementTotalWt(wt2 / sinTheta, index);
                         meshSurfaces[(i - 1) * 8 + 1]
                             ->incrementTotalWt(wt, index + 3);
-                    }
-
-                    if (y < _ch -1)
-                    {
+                        //if (y < _ch -1)
                         meshSurfaces[(i + _cw) * 8 + 0]
-                            ->incrementTotalWt(wt / cosTheta, index);
+                            ->incrementTotalWt(wt2 / cosTheta, index);
                         meshSurfaces[(i + _cw) * 8 + 0]
                             ->incrementTotalWt(wt, index + 3);
                     }
@@ -1100,27 +1098,24 @@ void Solver::tallyLooWeight(Track *track, segment *segment,
                 else if (s < 6)
                 {
                     meshSurfaces[surfID - 4]
-                        ->incrementTotalWt(wt / sinTheta, index);
+                        ->incrementTotalWt(wt2 / sinTheta, index);
                     meshSurfaces[surfID - 3]
-                        ->incrementTotalWt(wt / cosTheta, index);
+                        ->incrementTotalWt(wt2 / cosTheta, index);
 
                     meshSurfaces[surfID - 4]
                         ->incrementTotalWt(wt, index + 3);
                     meshSurfaces[surfID - 3]
                         ->incrementTotalWt(wt, index + 3);
 
-                    if (x < _cw - 1)
+                    if ((x < _cw - 1) && (y < _ch - 1))
                     {
                         meshSurfaces[(i + 1) * 8 + 1]
-                            ->incrementTotalWt(wt / sinTheta, index);
+                            ->incrementTotalWt(wt2 / sinTheta, index);
                         meshSurfaces[(i + 1) * 8 + 1]
                             ->incrementTotalWt(wt, index + 3);
-                    }
-
-                    if (y < _ch -1)
-                    {
+//                    if (y < _ch -1)
                         meshSurfaces[(i + _cw) * 8 + 2]
-                            ->incrementTotalWt(wt / cosTheta, index);
+                            ->incrementTotalWt(wt2 / cosTheta, index);
                         meshSurfaces[(i + _cw) * 8 + 2]
                             ->incrementTotalWt(wt, index + 3);
                     }
@@ -1128,26 +1123,24 @@ void Solver::tallyLooWeight(Track *track, segment *segment,
                 else if (s < 7)
                 {
                     meshSurfaces[surfID - 4]
-                        ->incrementTotalWt(wt / cosTheta, index);
+                        ->incrementTotalWt(wt2 / cosTheta, index);
                     meshSurfaces[surfID - 3]
-                        ->incrementTotalWt(wt / sinTheta, index);
+                        ->incrementTotalWt(wt2 / sinTheta, index);
 
                     meshSurfaces[surfID - 4]
                         ->incrementTotalWt(wt, index + 3);
                     meshSurfaces[surfID - 3]
                         ->incrementTotalWt(wt, index + 3);
 
-                    if (x < _cw - 1)
+                    if ((x < _cw - 1) && (y > 0))
                     {
                         meshSurfaces[(i + 1) * 8 + 3]
-                            ->incrementTotalWt(wt / sinTheta, index);
+                            ->incrementTotalWt(wt2 / sinTheta, index);
                         meshSurfaces[(i + 1) * 8 + 3]
                             ->incrementTotalWt(wt, index + 3);
-                    }
-                    if (y > 0)
-                    {
+                        //if (y > 0)
                         meshSurfaces[(i - _cw) * 8 + 2]
-                            ->incrementTotalWt(wt / cosTheta, index);
+                            ->incrementTotalWt(wt2 / cosTheta, index);
                         meshSurfaces[(i - _cw) * 8 + 2]
                             ->incrementTotalWt(wt, index + 3);
                     }
@@ -1155,26 +1148,24 @@ void Solver::tallyLooWeight(Track *track, segment *segment,
                 else
                 {
                     meshSurfaces[surfID - 4]
-                        ->incrementTotalWt(wt / sinTheta, index);
+                        ->incrementTotalWt(wt2 / sinTheta, index);
                     meshSurfaces[surfID - 7]
-                        ->incrementTotalWt(wt / cosTheta, index);
+                        ->incrementTotalWt(wt2 / cosTheta, index);
                     meshSurfaces[surfID - 4]
                         ->incrementTotalWt(wt, index + 3);
                     meshSurfaces[surfID - 7]
                         ->incrementTotalWt(wt, index + 3);
 
 
-                    if (x > 0)
+                    if ((x > 0) && (y > 0))
                     {
                         meshSurfaces[(i - 1) * 8 + 3]
-                            ->incrementTotalWt(wt / sinTheta, index);
+                            ->incrementTotalWt(wt2 / sinTheta, index);
                         meshSurfaces[(i - 1) * 8 + 3]
                             ->incrementTotalWt(wt, index + 3);
-                    }
-                    if (y > 0)
-                    {
+//                    if (y > 0)
                         meshSurfaces[(i - _cw) * 8 + 0]
-                            ->incrementTotalWt(wt / cosTheta, index);
+                            ->incrementTotalWt(wt2 / cosTheta, index);
                         meshSurfaces[(i - _cw) * 8 + 0]
                             ->incrementTotalWt(wt, index + 3);
                     }
@@ -1240,16 +1231,33 @@ void Solver::initializeWeights()
 
     log_printf(NORMAL, "Number of corners tallied %d", _num_crn);
 	
+    MeshCell *meshCell;
+    double w, h;
+    for (int i = 0; i < _cw * _ch; i++)
+    {
+        meshCell = _geom->getMesh()->getCells(i);
+        for (int s = 8 * i; s < 8 * i + 4; s++)
+        {
+            meshSurfaces[s]->setTotalWt((meshSurfaces[s]->getTotalWt(0) + 
+                                         meshSurfaces[s]->getTotalWt(1)), 2);
+            meshSurfaces[s]->setTotalWt((meshSurfaces[s]->getTotalWt(3) + 
+                                         meshSurfaces[s]->getTotalWt(4)), 5);
+            log_printf(NORMAL, "surface %d physical %f, flux-wt %f, %.20f,"
+                       " current-wt %f, %.10f", s, 
+                       meshCell->getWidth(),
+                       meshSurfaces[s]->getTotalWt(0) / 
+                       meshSurfaces[s]->getTotalWt(1),                   
+                       meshSurfaces[s]->getTotalWt(2),
+                       meshSurfaces[s]->getTotalWt(3) / 
+                       meshSurfaces[s]->getTotalWt(4), 
+                       meshSurfaces[s]->getTotalWt(5));
+        }
 
-    for (int s = 0; s < _cw * _ch * 8; s++)
-    { 
-        meshSurfaces[s]->setTotalWt((meshSurfaces[s]->getTotalWt(0) + 
-                                     meshSurfaces[s]->getTotalWt(1)), 2);
-        meshSurfaces[s]->setTotalWt((meshSurfaces[s]->getTotalWt(3) + 
-                                     meshSurfaces[s]->getTotalWt(4)), 5);
-       log_printf(NORMAL, "surface %d has flux-wt %.10f, current-wt %.10f", s, 
-                  meshSurfaces[s]->getTotalWt(2), 
-                  meshSurfaces[s]->getTotalWt(5));
+        w = meshSurfaces[i * 8 + 1]->getTotalWt(2);
+        h = meshSurfaces[i * 8 + 2]->getTotalWt(2);
+        meshCell->setATWidth(w);
+        meshCell->setATHeight(h);
+        meshCell->setATL(0.5 * sqrt(w * w + h * h));
     }
 
     return;
@@ -2113,7 +2121,7 @@ void Solver::checkNeutronBalance()
                 src = 0;
 
                 flux = meshCell->getOldFlux()[e];
-                vol = meshCell->getVolume();
+                vol = meshCell->getATVolume();
 				
                 absorb += meshCell->getSigmaA()[e] * flux;
 
@@ -2272,9 +2280,9 @@ void Solver::checkNeutronBalanceWithDs()
         /* compute absorb and fis rates */
         for (int e = 0; e < ng; e ++)
         {
-            absorb += meshCell->getSigmaA()[e] * meshCell->getVolume() * 
+            absorb += meshCell->getSigmaA()[e] * meshCell->getATVolume() * 
                 meshCell->getOldFlux()[e];
-            fis += meshCell->getNuSigmaF()[e] * meshCell->getVolume()
+            fis += meshCell->getNuSigmaF()[e] * meshCell->getATVolume()
                 * meshCell->getOldFlux()[e];
         }	
 

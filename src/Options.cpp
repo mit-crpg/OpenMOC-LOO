@@ -48,7 +48,7 @@ Options::Options(int argc, char **argv)
         //"xml-sample/Cmfd/geometry_8x8_leakage3_2.xml"; 
     _material_file = _relative_path + "xml-sample/Cmfd/material_simple.xml";
 	
-    _track_spacing = 0.5;		/* Default track spacing in C4: 0.5cm */
+    _track_spacing = 0.05;		/* Default track spacing in C4: 0.5cm */
     _num_azim = 64;			/* Default # azimuthal angle in C4: 64*/
     //_track_spacing = 0.8909545443;
     //_num_azim = 4;

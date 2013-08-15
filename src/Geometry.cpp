@@ -2245,12 +2245,13 @@ void Geometry::defineMesh(Mesh* mesh, Universe* univ, int depth, int* meshCellNu
                         double w = lattice->getWidthX();
                         double h = lattice->getWidthY();
                         double l = sqrt(w * w + h * h) / 2;
-                        l /= 0.798184;
+                        //l /= P0;
                         mesh->getCells(*meshCellNum)->setWidth(w);
                         mesh->getCells(*meshCellNum)->setHeight(h);
+                        mesh->getCells(*meshCellNum)->setVolume(w * h);
                         mesh->getCells(*meshCellNum)->setL(l);
-                        log_printf(DEBUG, "mesh cell: %i, width: %f,"
-                                   " height: %f", *meshCellNum, w, h);
+                        log_printf(ACTIVE, "mesh cell: %i, width: %f,"
+                                   " height: %f, l: %f", *meshCellNum, w, h, l);
 						
                         /* increments the # of mesh cells */
                         *meshCellNum = *meshCellNum + 1;
@@ -2270,9 +2271,11 @@ void Geometry::defineMesh(Mesh* mesh, Universe* univ, int depth, int* meshCellNu
                     findFSRs(curr, mesh->getCells(*meshCellNum), &fsr_id);
                     double w = lattice->getWidthX();
                     double h = lattice->getWidthY();
-                    double l = 0.5 * sqrt(w * w + h * h) / SIN_THETA_45;	
+                    double l = 0.5 * sqrt(w * w + h * h);
+                    //l /= P0; 
                     mesh->getCells(*meshCellNum)->setWidth(w);
                     mesh->getCells(*meshCellNum)->setHeight(h);
+                    mesh->getCells(*meshCellNum)->setVolume(w * h);
                     mesh->getCells(*meshCellNum)->setL(l);
 
                     log_printf(DEBUG, "mesh cell: %i, width: %f,"

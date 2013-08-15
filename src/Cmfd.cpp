@@ -227,7 +227,7 @@ void Cmfd::computeXS_old()
 
             /* if multigroup, set the multigroup parameters */
             if (_mesh->getMultigroup() == true){
-                meshCell->setVolume(vol_tally_group);
+                meshCell->setATVolume(vol_tally_group);
                 meshCell->setSigmaA(abs_tally_group / rxn_tally_group, e);
                 meshCell->setSigmaT(tot_tally_group / rxn_tally_group, e);
                 meshCell->setNuSigmaF(nu_fis_tally_group / rxn_tally_group, e);
@@ -250,7 +250,7 @@ void Cmfd::computeXS_old()
 
         /* if single group, set single group parameters */
         if (_mesh->getMultigroup() == false){
-            meshCell->setVolume(vol_tally_group);
+            meshCell->setATVolume(vol_tally_group);
             meshCell->setSigmaT(tot_tally / rxn_tally, 0);
             meshCell->setSigmaA(abs_tally / rxn_tally, 0);
             meshCell->setNuSigmaF(nu_fis_tally / rxn_tally, 0);
@@ -368,7 +368,7 @@ void Cmfd::computeXS()
             /* if multigroup, set the multigroup parameters */
             if (_mesh->getMultigroup())
             {
-                meshCell->setVolume(vol_tally_group);
+                meshCell->setATVolume(vol_tally_group);
                 meshCell->setSigmaA(abs_tally_group / rxn_tally_group, e);
                 meshCell->setSigmaT(tot_tally_group / rxn_tally_group, e);
                 meshCell->setNuSigmaF(nu_fis_tally_group / rxn_tally_group, e);
@@ -399,7 +399,7 @@ void Cmfd::computeXS()
         /* if single group, set single group parameters */
         if (_mesh->getMultigroup() == false)
         {
-            meshCell->setVolume(vol_tally_group);
+            meshCell->setATVolume(vol_tally_group);
             meshCell->setSigmaT(tot_tally / rxn_tally, 0);
             meshCell->setSigmaA(abs_tally / rxn_tally, 0);
             meshCell->setNuSigmaF(nu_fis_tally / rxn_tally, 0);
@@ -840,7 +840,7 @@ void Cmfd::computeQuadFlux()
                         flux = s[i]->getQuadCurrent(e, j) / SIN_THETA_45 / wt;
                         s[i]->setQuadFlux(flux, e, j);
                         s[i]->setOldQuadFlux(flux, e, j);                  
-                        tmp += s[i]->getQuadCurrent(e,j);			
+                        tmp += s[i]->getQuadCurrent(e, j);
                     }		
                     s[i]->setCurrent(tmp / s[i]->getTotalWt(5), e);
 
@@ -1110,12 +1110,7 @@ void Cmfd::computeQuadSrc()
                 {
                     double src = xs * (out[e][t] - ex * in[e][t]) / (1.0 - ex);
 
-                    /* FIXME: debug */
-                    //double clip = -0.01;
-                    //if (src < clip)
-                    //	src = clip;
-
-                    log_printf(ACTIVE, "(%d %d) e %d t %d"
+                    log_printf(DEBUG, "(%d %d) e %d t %d"
                                " quad src = %f - %f * %f = %f",
                                x, y, e, t,
                                out[e][t], ex, in[e][t], 
@@ -1565,7 +1560,7 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
                         ho_current[i][e] -= meshCell->getMeshSurfaces(1)
                             ->getCurrent(e);
 
-                    ho_current[i][e] /= meshCell->getVolume();		
+                    ho_current[i][e] /= meshCell->getATVolume();		
 
                 } 
             } 
@@ -1645,7 +1640,7 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
                 /* getOldSrc()[e] returns the $\bar{Q}_g^{(m)}$ */
                 src_ratio = new_src[i][e] / meshCell->getOldSrc()[e];
 
-                log_printf(ACTIVE, " cell %d e %d, src_ratio -1 = %e",
+                log_printf(DEBUG, " cell %d e %d, src_ratio -1 = %e",
                            i, e, src_ratio - 1.0);
 
                 for (int t = 0; t < 8; t++)
@@ -1858,18 +1853,15 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
         } /* finish looping over energy; exit to iter level */
 
         double new_flux = 0;
-        /* Computs new cell-averaged scalar flux based on new_sum_quad_flux */
-        log_printf(ACTIVE, "as-tracked vol = %.20f, width = %.10f", 
-                   _mesh->getCells(0)->getVolume(), 
-                   _mesh->getCells(0)->getWidth());
 
+        /* Computs new cell-averaged scalar flux */
         if (_run_loo_phi)
         {
             for (int i = 0; i < _cw * _ch; i++)
             {
                 meshCell = _mesh->getCells(i);
-                double vol = meshCell->getVolume(); 
-                //double vol = meshCell->getWidth() * meshCell->getHeight();
+                double vol = meshCell->getATVolume(); 
+                //double vol = meshCell->getATWidth() * meshCell->getATHeight();
                 for (int e = 0; e < _ng; e++)
                 {
                     net_current[i][e] *= SIN_THETA_45 / vol;
@@ -1956,7 +1948,7 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
         for (int i = 0; i < _cw * _ch; i++)
         {
             meshCell = _mesh->getCells(i);
-            vol = meshCell->getVolume();
+            vol = meshCell->getATVolume();
             for (int e = 0; e < _ng; e++)
             {
                 double flux = meshCell->getNewFlux()[e];
@@ -2074,14 +2066,11 @@ double Cmfd::getSurf(int i, int t, int d)
     else
         j = 1;
 
-
     MeshSurface *surface = meshCell->getMeshSurfaces(id); 
-    double length = surface->getTotalWt(j);
-    //double length = surface->getTotalWt(2) / 2.0;
-    //length = meshCell->getWidth() * 2.0;
-    log_printf(DEBUG, " find surf %d for i %d t %d, at len = %f, physical %f", 
-               id, i, t, surface->getTotalWt(2) / 2.0, 
-               meshCell->getWidth() * 2.0);
+
+    double length = surface->getTotalWt(j + 3);
+    length = surface->getTotalWt(j + 3); 
+    // / surface->getTotalWt(2) * meshCell->getWidth();
 
     return length;
 }
@@ -2139,11 +2128,11 @@ double Cmfd::computeNormalization()
     for (int i = 0; i < _cw * _ch; i++)
     {
         meshCell = _mesh->getCells(i);
-        vol_tot += meshCell->getVolume();
+        vol_tot += meshCell->getATVolume();
         for (int e = 0; e < _ng; e++)
         {
             flux = meshCell->getNewFlux()[e];
-            vol = meshCell->getVolume();
+            vol = meshCell->getATVolume();
             fis_tot += meshCell->getNuSigmaF()[e] * flux * vol;
         }
     }
@@ -2428,7 +2417,7 @@ int Cmfd::constructAMPhi(Mat A, Mat M, Vec phi_old, solveType solveMethod)
         {
             /* get mesh cell */
             meshCell = _mesh->getCells(y * _cw + x);
-            vol = meshCell->getVolume();
+            vol = meshCell->getATVolume();
 
             /* loop over energy groups */
             for (int e = 0; e < _ng; e++)
@@ -3093,8 +3082,9 @@ void Cmfd::storePreMOCMeshSource(FlatSourceRegion* fsrs)
         if (_mesh->getMultigroup() == false)
             meshCell->setOldSrc(source_tally / vol_tally_cell, 0);
 
-        log_printf(ACTIVE, "As tracked volume of this mesh is %.10f", 
-                   vol_tally_cell);
+        log_printf(ACTIVE, "as tracked vol / physical =  %.10f", 
+                   vol_tally_cell / meshCell->getWidth() 
+                   / meshCell->getHeight());
     }
     return;
 }
