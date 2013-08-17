@@ -2647,10 +2647,12 @@ void Cmfd::updateMOCFlux(int moc_iter)
                 fsr = &_flat_source_regions[*iter];
                 flux = fsr->getFlux();
 
+#if NEW
                 if (moc_iter == 0)
                     fsr->setFlux(e, new_flux);
                 else
                 {
+#endif
                     if (tmp_cmco > max_range)
                         tmp_cmco = max_range;
                     else if (tmp_cmco < min_range)
@@ -2658,7 +2660,9 @@ void Cmfd::updateMOCFlux(int moc_iter)
                     
                     fsr->setFlux(e, under_relax * tmp_cmco * flux[e]
                                  + (1.0 - under_relax) * flux[e]);
+#if NEW
                 }
+#endif
 
             }
         } /* exit looping over energy */

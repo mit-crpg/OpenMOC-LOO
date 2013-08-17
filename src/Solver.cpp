@@ -543,10 +543,12 @@ void Solver::updateFlux(int moc_iter)
                 //_cmfd->updateBoundaryFluxByHalfSpace(moc_iter);
             }
         }
+#if NEW
         else if ((_diffusion) && (moc_iter == 0))
         {
             _cmfd->updateBoundaryFlux(moc_iter);
         }
+#endif
         else
         {
             log_printf(DEBUG, " iter %d prolongation: update by partial",
