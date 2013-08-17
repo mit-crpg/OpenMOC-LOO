@@ -1,39 +1,24 @@
 import matplotlib.pyplot as plt
+from matplotlib import cm
 from matplotlib.font_manager import FontProperties
-from itertools import cycle
 import numpy as np
 import os
 
-geometries = ['geometry_c5g7.xml']
-#['geometry_UO2.xml', 'geometry_c5g7.xml', 
-# 'geometry_c5g7_wo_refl.xml', 'geometry_UO2_leakage.xml']
+geometries = ['geometry_c5g7_fine.xml']
 
-materials = ['material_c5g7.xml', 'material_c5g7.xml', 
-             'material_c5g7.xml', 'material_c5g7.xml']
+materials = ['material_c5g7.xml']
 
 # C4 default is: 0.5cm, 64 azimuthal angle
-ts = [0.05]
-na = [64]
-fc = [1e-6]
+ts = [0.05] #0.05
+na = [64] #64
+fc = [1e-10]
 
-# plot color 
-plt.gca().set_color_cycle(['red', 'green', 'blue', 'yellow'])
-#num_plots = 4
-#colormap = plt.cm.gist_ncar
-#plt.gca().set_color_cycle([colormap(i) for i in np.linspace(0, 0.9, num_plots)])
-#colors = ('b','r','g','c', 'm', 'y', 'k')
-#colors=('red', 'green', 'blue', 'yellow')
-#colorcycle = cycle(colors)
-
-# line style
-lines = ['-o']
-linecycle = cycle(lines)
-
-# font sizes 
+ls = ['--o', '-s', '-.v']
 fontP = FontProperties()
 fontP.set_size('small')
-
 max_num_lines = 0
+num = 1;
+counter = 0;
 
 # run OpenMOC
 for i, geometry in enumerate(geometries):
@@ -45,14 +30,21 @@ for i, geometry in enumerate(geometries):
                       + ' -na ' + str(angle) 
                       + ' -ts ' + str(spacing) 
                       + ' -fc ' + str(fc[0]) 
-                      + ' -wc -df 1.0')
+                      + ' -wc -df 0.7 -bi 1')
             os.system('../bin/openmoc'
                       + ' -m ../xml-sample/Cmfd/' + materials[i]
                       + ' -g ../xml-sample/Cmfd/' + geometry 
                       + ' -na ' + str(angle) 
                       + ' -ts ' + str(spacing) 
                       + ' -fc ' + str(fc[0]) 
-                      + ' -wc -df 0.7')
+                      + ' -wl1 -bi 1')
+            os.system('../bin/openmoc'
+                      + ' -m ../xml-sample/Cmfd/' + materials[i]
+                      + ' -g ../xml-sample/Cmfd/' + geometry 
+                      + ' -na ' + str(angle) 
+                      + ' -ts ' + str(spacing) 
+                      + ' -fc ' + str(fc[0]) 
+                      + ' -wl2 -bi 1')
 
     l2_norm_files = []
 
@@ -60,31 +52,18 @@ for i, geometry in enumerate(geometries):
     for file in os.listdir("."):
         if file.startswith("l2_norm", 0, 7) and file.endswith(".txt"):
             l2_norm_files.append(file)
+            num = num + 1
 
     # parse output files
     for file in l2_norm_files:
+        counter = counter + 1
         logfile = open(file, "r").readlines()
         os.rename(file, geometry[:-4] + '_' + file)
         
-        for c_num, c in enumerate(file):
-            if c == '_':
-                method = file[-8:-4]
-                break
-
-        for c_num, c in enumerate(file):
-            if c == '_':
-                update = file[-15:-9]
-                break
-
-        for c_num, c in enumerate(file):
-            if c == '_':
-                damp = file[-19:-16]
-                break
-
-        for c_num, c in enumerate(file):
-            if c == '_':
-                bi = file[-21:-20]
-                break
+        method = file[-8:-4]
+        update = file[-15:-9]
+        damp = file[-19:-16]
+        bi = file[-21:-20]
 
         # find number of lines in file
         for num_lines, l in enumerate(logfile):
@@ -120,10 +99,9 @@ for i, geometry in enumerate(geometries):
         # plotting :)
         for i in range(5):  
             plt.figure(i)
-            plt.semilogy(iteration, var[i], next(linecycle), 
-                         label = ("%s bi %s %s damp %s" 
-                                  %(method, bi, update, damp)), 
-                         markersize=5)
+            plt.semilogy(iteration, var[i], ls[counter - 1],
+                         color=cm.jet(1.*counter / num),
+                         label = ("%s damp %s"%(method, damp)), markersize=5)
             plt.xlim(0, max_num_lines + 1)
             plt.legend(loc='upper center', ncol=3, prop = fontP, shadow=True, 
                        bbox_to_anchor=(0.5,-0.1),fancybox=True)
