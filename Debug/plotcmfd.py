@@ -8,7 +8,7 @@ import os.path
 
 
 flag = ''
-geometries = ['geometry_c5g7_coarse_refl.xml']
+geometries = ['geometry_c5g7_wo_coarse.xml']
 geometry = geometries[0]
 
 ls = ['--o', '-s', '-.v']
@@ -20,7 +20,7 @@ l2_norm_files = []
 num = 1;
 
 for file in os.listdir("."):
-    if file.startswith(geometry[0:-4]+"_l2_norm_64_0.05_bi_0") and file.endswith(flag+".txt"):
+    if file.startswith(geometry[0:-4]+"_l2_norm_32") and file.endswith(flag+".txt"):
         print("parsed file")
         l2_norm_files.append(file)
         num = num+1

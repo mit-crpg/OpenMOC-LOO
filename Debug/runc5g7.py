@@ -4,7 +4,7 @@ from matplotlib.font_manager import FontProperties
 import numpy as np
 import os
 
-geometries = ['geometry_c5g7_fine.xml']
+geometries = ['geometry_c5g7_cc.xml']
 
 materials = ['material_c5g7.xml']
 
@@ -30,21 +30,8 @@ for i, geometry in enumerate(geometries):
                       + ' -na ' + str(angle) 
                       + ' -ts ' + str(spacing) 
                       + ' -fc ' + str(fc[0]) 
-                      + ' -wc -df 0.7 -bi 1')
-            os.system('../bin/openmoc'
-                      + ' -m ../xml-sample/Cmfd/' + materials[i]
-                      + ' -g ../xml-sample/Cmfd/' + geometry 
-                      + ' -na ' + str(angle) 
-                      + ' -ts ' + str(spacing) 
-                      + ' -fc ' + str(fc[0]) 
-                      + ' -wl1 -bi 1')
-            os.system('../bin/openmoc'
-                      + ' -m ../xml-sample/Cmfd/' + materials[i]
-                      + ' -g ../xml-sample/Cmfd/' + geometry 
-                      + ' -na ' + str(angle) 
-                      + ' -ts ' + str(spacing) 
-                      + ' -fc ' + str(fc[0]) 
-                      + ' -wl2 -bi 1')
+                      )
+#                      + ' -wc -df 0.4 -bi 1')
 
     l2_norm_files = []
 
