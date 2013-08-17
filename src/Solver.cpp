@@ -84,8 +84,9 @@ Solver::Solver(Geometry* geom, TrackGenerator* track_generator,
         _ch = _geom->getMesh()->getCellHeight();
         _cmfd->setFSRs(_flat_source_regions);
         _cmfd->setTracks(_tracks);
+#if NEW
         initializeWeights();
-
+#endif
         if (_update_boundary)
         {
             log_printf(NORMAL, "Acceleration is on with %d boundary iteration,"

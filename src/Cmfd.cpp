@@ -835,14 +835,22 @@ void Cmfd::computeQuadFlux()
                     double tmp = 0.0;
                     for (int j = 0; j < 2; j++)
                     {
+#if NEW
                         /* it is important to use j+3 to get homo case work */
                         double wt = s[i]->getTotalWt(j + 3);
+#else
+                        double wt = _mesh->getCells(0)->getWidth();
+#endif
                         flux = s[i]->getQuadCurrent(e, j) / SIN_THETA_45 / wt;
                         s[i]->setQuadFlux(flux, e, j);
                         s[i]->setOldQuadFlux(flux, e, j);                  
                         tmp += s[i]->getQuadCurrent(e, j);
-                    }		
+                    }	
+#if NEW	
                     s[i]->setCurrent(tmp / s[i]->getTotalWt(5), e);
+#else
+                    s[i]->setCurrent(tmp, e);
+#endif
 
                     if (e == 0)
                     {
@@ -1705,9 +1713,15 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
                     sum_quad_flux[i][e] += delta / tau[i][e] + 
                         new_quad_src[i][d] / quad_xs[i][e];
 #endif
+
+#if NEW
                     net_current[i][e] -= flux * getSurf(i, t, 0); 
                     flux -= delta;
                     net_current[i][e] += flux * getSurf(i, t, 1);
+#else
+                    flux -= delta;
+                    net_current[i][e] -= delta;
+#endif
                 }
 
                 if (_bc[1] == REFLECTIVE)
@@ -1796,9 +1810,14 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
                         new_quad_src[i][d] / quad_xs[i][e];
 #endif
 
+#if NEW
                     net_current[i][e] -= flux * getSurf(i, t, 0); 
                     flux -= delta;
                     net_current[i][e] += flux * getSurf(i, t, 1);
+#else
+                    flux -= delta;
+                    net_current[i][e] -= delta;                 
+#endif
                 }
 
                 if (_bc[1] == REFLECTIVE)
@@ -1826,10 +1845,14 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
             for (int i = 0; i < _cw * _ch; i++)
             {
                 meshCell = _mesh->getCells(i);
-                double vol = meshCell->getVolume(); 
+#if NEW
+                double vol = meshCell->getATVolume(); 
+#else
+                double vol = meshCell->getATVolume() / meshCell->getWidth();
+#endif
 
                 for (int e = 0; e < _ng; e++)
-                {
+                {                    
                     net_current[i][e] *= SIN_THETA_45 / vol;
 
                     new_flux = (FOUR_PI * new_src[i][e] - net_current[i][e])
@@ -1909,8 +1932,14 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
                 fis_tot += meshCell->getNuSigmaF()[e] * flux * vol;
             }
         }
+#if NEW
         leak_tot *= SIN_THETA_45 * _mesh->getCells(0)->getMeshSurfaces(0)
             ->getTotalWt(5) / 2.0;
+#else
+        leak_tot *= SIN_THETA_45 * _mesh->getCells(0)->getWidth();
+#endif
+
+
         _keff = fis_tot / (abs_tot + leak_tot); 
         log_printf(ACTIVE, "%d: %.10f / (%.10f + %.10f)", 
                    loo_iter, fis_tot, abs_tot, leak_tot);
