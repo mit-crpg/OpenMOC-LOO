@@ -44,14 +44,12 @@ Options::Options(int argc, char **argv)
 
     /* Default geometry input file */
     _geometry_file = _relative_path + 
-        "xml-sample/Cmfd/geometry_c5g7_wo_coarse.xml";
+        "xml-sample/Cmfd/geometry_corner.xml";
         //"xml-sample/Cmfd/geometry_8x8_leakage3_2.xml"; 
     _material_file = _relative_path + "xml-sample/Cmfd/material_c5g7.xml";
 	
     _track_spacing = 0.5;		/* Default C4 track spacing: 0.05cm */
     _num_azim = 32;			/* Default C4 # azimuthal angle: 64*/
-    //_track_spacing = 0.8909545443;
-    //_num_azim = 4;
 
     /* MOC options */
     _verbosity = "NORMAL";		/* Default logging level */

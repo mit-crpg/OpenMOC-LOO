@@ -352,6 +352,195 @@ void Plotter::plotCMFDMesh(Mesh* mesh){
     deleteBitMap(bitMap);
 }
 
+void Plotter::plotNetCurrents_small(Mesh* mesh, int moc_iter)
+{
+    log_printf(NORMAL, "plotting net currents...");
+
+    /* set up bitMap */
+    BitMap<int>* bitMap = new BitMap<int>;
+    bitMap->pixel_x = _bit_length_x;
+    bitMap->pixel_y = _bit_length_y;
+    initialize(bitMap);
+    bitMap->geom_x = _width;
+    bitMap->geom_y = _height;
+    bitMap->color_type = SCALED;
+
+    BitMap<int>* bitMap2 = new BitMap<int>;
+    bitMap2->pixel_x = _bit_length_x;
+    bitMap2->pixel_y = _bit_length_y;
+    initialize(bitMap2);
+    bitMap2->geom_x = _width;
+    bitMap2->geom_y = _height;
+    bitMap2->color_type = SCALED;
+
+    double x_global;
+    double y_global;
+
+    /* find meshCell for each pixel */
+    for (int y=0;y < _bit_length_y; y++){
+        for (int x = 0; x < _bit_length_x; x++){
+            x_global = convertToGeometryX(x);
+            y_global = convertToGeometryY(y);
+            bitMap->pixels[y * _bit_length_x + x] = 
+                mesh->findMeshCell(x_global, y_global);
+            bitMap2->pixels[y * _bit_length_x + x] = 
+                mesh->findMeshCell(x_global, y_global);
+        }
+    }
+
+    double x_mid, y_mid;
+    MeshCell* meshCell;
+    std::stringstream text_stream;
+    std::string text;
+    double current0, current1, current2, current3;
+
+    text_stream.precision(10);
+
+    /* plot mesh currents next to surface */
+    for (int cellY = 0; cellY < mesh->getCellHeight(); cellY++){
+        for (int cellX = 0; cellX < mesh->getCellWidth(); cellX++){
+            meshCell = mesh->getCells(cellY * mesh->getCellWidth() + cellX);
+            current0 = 0;
+            current1 = 0;
+            current2 = 0;
+            current3 = 0;
+            for (int group = 0; group < NUM_ENERGY_GROUPS; group++){
+                current0 += meshCell->getMeshSurfaces(0)->getCurrent(group);
+                current1 += meshCell->getMeshSurfaces(1)->getCurrent(group);
+                current2 += meshCell->getMeshSurfaces(2)->getCurrent(group);
+                current3 += meshCell->getMeshSurfaces(3)->getCurrent(group);
+
+                /* SIDE 0 */
+                /* get midpoint of mesh surface */
+                x_mid = convertToPixelX(meshCell->getBounds()[0]);
+                y_mid = convertToPixelY((meshCell->getBounds()[1] + 
+                                         meshCell->getBounds()[3]) / 2.0);
+
+                /* create string and draw on bitMap */
+                text_stream << meshCell->getMeshSurfaces(0)->getCurrent(group);
+                text = text_stream.str();
+                text_stream.str("");
+                drawText(bitMap, text, x_mid + 20, y_mid - 10 * 
+                         (NUM_ENERGY_GROUPS / 2.0 - group));
+                text.clear();
+
+                /* SIDE 1 */
+                /* get midpoint of mesh surface */
+                x_mid = convertToPixelX((meshCell->getBounds()[0] + 
+                                         meshCell->getBounds()[2]) / 2.0);
+                y_mid = convertToPixelY(meshCell->getBounds()[1]);
+
+                /* create string and draw on bitMap */
+                text_stream << meshCell->getMeshSurfaces(1)->getCurrent(group);
+                text = text_stream.str();
+                text_stream.str("");
+                drawText(bitMap, text, x_mid - 20, y_mid - 10 * 
+                         (NUM_ENERGY_GROUPS - group));
+                text.clear();
+
+                /* SIDE 2 */
+                /* get midpoint of mesh surface */
+                x_mid = convertToPixelX(meshCell->getBounds()[2]);
+                y_mid = convertToPixelY((meshCell->getBounds()[1] + 
+                                         meshCell->getBounds()[3]) / 2.0);
+
+                /* create string and draw on bitMap */
+                text_stream << meshCell->getMeshSurfaces(2)->getCurrent(group);
+                text = text_stream.str();
+                text_stream.str("");
+                drawText(bitMap, text, x_mid - 80, y_mid - 10 * 
+                         (NUM_ENERGY_GROUPS / 2.0 - group));
+                text.clear();
+
+                /* SIDE 3 */
+                /* get midpoint of mesh surface */
+                x_mid = convertToPixelX((meshCell->getBounds()[0] + 
+                                         meshCell->getBounds()[2]) / 2.0);
+                y_mid = convertToPixelY(meshCell->getBounds()[3]);
+
+                /* create string and draw on bitMap */
+                text_stream << meshCell->getMeshSurfaces(3)->getCurrent(group);
+                text = text_stream.str();
+                text_stream.str("");
+                drawText(bitMap, text, x_mid - 20, y_mid + 10 * (group + 1.5));
+                text.clear();
+            }
+
+            /* SIDE 0 */
+            /* get midpoint of mesh surface */
+            x_mid = convertToPixelX(meshCell->getBounds()[0]);
+            y_mid = convertToPixelY((meshCell->getBounds()[1] + 
+                                     meshCell->getBounds()[3]) / 2.0);
+
+            /* create string and draw on bitMap */
+            text_stream << "" << current0;
+            text = text_stream.str();
+            text_stream.str("");
+            drawText(bitMap2, text, x_mid + 20, y_mid);
+            text.clear();
+
+            /* SIDE 1 */
+            /* get midpoint of mesh surface */
+            x_mid = convertToPixelX((meshCell->getBounds()[0] + meshCell->getBounds()[2]) / 2.0);
+            y_mid = convertToPixelY(meshCell->getBounds()[1]);
+
+            /* create string and draw on bitMap */
+            text_stream << "" << current1;
+            text = text_stream.str();
+            text_stream.str("");
+            drawText(bitMap2, text, x_mid - 20, y_mid - 10);
+            text.clear();
+
+            /* SIDE 2 */
+            /* get midpoint of mesh surface */
+            x_mid = convertToPixelX(meshCell->getBounds()[2]);
+            y_mid = convertToPixelY((meshCell->getBounds()[1] + meshCell->getBounds()[3]) / 2.0);
+
+            /* create string and draw on bitMap */
+            text_stream << "" << current2;
+            text = text_stream.str();
+            text_stream.str("");
+            drawText(bitMap2, text, x_mid - 80, y_mid); //-150
+            text.clear();
+
+            /* SIDE 3 */
+            /* get midpoint of mesh surface */
+            x_mid = convertToPixelX((meshCell->getBounds()[0] + meshCell->getBounds()[2]) / 2.0);
+            y_mid = convertToPixelY(meshCell->getBounds()[3]);
+
+            /* create string and draw on bitMap */
+            text_stream << "" << current3;
+            text = text_stream.str();
+            text_stream.str("");
+            drawText(bitMap2, text, x_mid - 20, y_mid + 15);
+            text.clear();
+
+
+        }
+    }
+    std::stringstream string, string2;
+    string << "surface_current_i_" << moc_iter;
+    string2 << "surface_current_1G_i_" << moc_iter;
+    std::string title_str = string.str();
+    std::string title_str2 = string2.str();
+
+
+    /* create filename with correct extension */
+    if (_extension == "tiff" || _extension == "jpg" || _extension == "png"){
+        plot(bitMap, title_str, _extension);
+        plot(bitMap2, title_str2, _extension);
+    }
+    else{
+        log_printf(WARNING, "Currents can only be plotted in tiff, jpg, and png. Plotting CMFD currents as png...");
+        plot(bitMap, title_str, "png");
+        plot(bitMap2, title_str2, "png");
+    }
+
+    deleteBitMap(bitMap);
+    deleteBitMap(bitMap2);
+}
+
+
 void Plotter::plotNetCurrents(Mesh* mesh, int moc_iter)
 {
     log_printf(NORMAL, "plotting net currents...");
