@@ -334,7 +334,7 @@ void Plotter::plotCMFDMesh(Mesh* mesh){
     initialize(bitMap);
     bitMap->geom_x = _width;
     bitMap->geom_y = _height;
-    bitMap->color_type = RANDOM;
+    bitMap->color_type = SCALED;
 
     double x_global;
     double y_global;

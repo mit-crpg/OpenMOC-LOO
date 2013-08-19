@@ -109,7 +109,9 @@ void plot(BitMap<U>* bitMap, std::string name, std::string extension){
 }
 
 template <typename U>
-void plotSilo(BitMap<U>* bitMap, float* pixMap, std::string name, std::string extension){
+void plotSilo(BitMap<U>* bitMap, float* pixMap, std::string name, 
+              std::string extension)
+{
     printf("plotting silo mesh...\n");
 
     /* Create file pointer */
@@ -123,10 +125,12 @@ void plotSilo(BitMap<U>* bitMap, float* pixMap, std::string name, std::string ex
 
     /* Create file */
     if (extension == "h5"){
-        file = DBCreate(title, DB_CLOBBER, DB_LOCAL, "structured mesh bitmap", DB_HDF5);
+        file = DBCreate(title, DB_CLOBBER, DB_LOCAL, "structured mesh bitmap", 
+                        DB_HDF5);
     }
     else{
-        file = DBCreate(title, DB_CLOBBER, DB_LOCAL, "structured mesh bitmap", DB_PDB);
+        file = DBCreate(title, DB_CLOBBER, DB_LOCAL, "structured mesh bitmap", 
+                        DB_PDB);
     }
 
     /* if color_type is RANDOM, randomize bitMapRGB */
@@ -141,10 +145,12 @@ void plotSilo(BitMap<U>* bitMap, float* pixMap, std::string name, std::string ex
 
     /* generate structured mesh */
     for (int i = 0; i < (bitMap->pixel_x + 1); i++){
-        mesh_x[i] = (double(i) - double(bitMap->pixel_x)/2.0 + 1.0) * (bitMap->geom_x/double(bitMap->pixel_x));
+        mesh_x[i] = (double(i) - double(bitMap->pixel_x)/2.0 + 1.0) * 
+            (bitMap->geom_x/double(bitMap->pixel_x));
     }
     for (int i = 0; i < (bitMap->pixel_y + 1); i++){
-        mesh_y[i] = (double(bitMap->pixel_y)/2.0 - double(i)) * (bitMap->geom_y/double(bitMap->pixel_y));
+        mesh_y[i] = (double(bitMap->pixel_y)/2.0 - double(i)) * 
+            (bitMap->geom_y/double(bitMap->pixel_y));
     }
 
     /* descriptions of mesh */
@@ -153,7 +159,8 @@ void plotSilo(BitMap<U>* bitMap, float* pixMap, std::string name, std::string ex
     int ndims = 2;
 
     /* Write structured mesh to file */
-    DBPutQuadmesh(file, "quadmesh", NULL, coords, dims, ndims, DB_DOUBLE, DB_COLLINEAR, NULL);
+    DBPutQuadmesh(file, "quadmesh", NULL, coords, dims, ndims, DB_DOUBLE, 
+                  DB_COLLINEAR, NULL);
 
     /* dimensions of mesh */
     int dimsvar[] = {bitMap->pixel_x, bitMap->pixel_y};
@@ -162,7 +169,8 @@ void plotSilo(BitMap<U>* bitMap, float* pixMap, std::string name, std::string ex
     const char* type_char = name.c_str();
 
     /* write pixMap data to file */
-    DBPutQuadvar1(file, type_char, "quadmesh", pixMap, dimsvar, ndims, NULL, 0, DB_FLOAT, DB_ZONECENT, NULL);
+    DBPutQuadvar1(file, type_char, "quadmesh", pixMap, dimsvar, ndims, NULL, 
+                  0, DB_FLOAT, DB_ZONECENT, NULL);
 
     /* close file */
     DBClose(file);
@@ -174,7 +182,8 @@ void plotSilo(BitMap<U>* bitMap, float* pixMap, std::string name, std::string ex
  * using Magick++
  */
 template <typename U>
-void plotMagick(BitMap<U>* bitMap, float* pixMap, std::string name, std::string extension){
+void plotMagick(BitMap<U>* bitMap, float* pixMap, std::string name, 
+                std::string extension){
     //printf("Writing Magick bitmap...\n");
 
     /* declare variables */

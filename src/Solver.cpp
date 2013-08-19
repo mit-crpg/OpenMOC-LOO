@@ -2061,7 +2061,6 @@ void Solver::plotEverything(int moc_iter)
         _cmfd->computeXS();
         _cmfd->computeDs();
         _plotter->plotDHats(_geom->getMesh(), moc_iter);
-        //_plotter->plotNetCurrents(_geom->getMesh(), moc_iter);
         _plotter->plotXS(_geom->getMesh(), moc_iter);
     }
 
