@@ -1375,7 +1375,8 @@ void Solver::MOCsweep(int max_iterations, int moc_iter)
         tally = 2;
         log_printf(ACTIVE, "tally quadrature current");
     }
-    else if ((_run_cmfd) || (_run_loo & _diffusion && (moc_iter == 0)))
+    //else if ((_run_cmfd) || (_run_loo & _diffusion && (moc_iter == 0)))
+    else if (_run_cmfd || _run_loo)
     {
         tally = 1;
         log_printf(ACTIVE, "tally partial current");

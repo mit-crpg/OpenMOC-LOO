@@ -4,14 +4,13 @@ from matplotlib.font_manager import FontProperties
 import numpy as np
 import os
 import os.path 
-#import sys
-
 
 flag = ''
-geometries = ['geometry_c5g7_wo_coarse.xml']
+geometries = ['geometry_c5g7_cc.xml']
 geometry = geometries[0]
+printgeometry='c5g7'
 
-ls = ['--o', '-s', '-.v']
+ls = ['--o', '-s', '-.v', '-<', '-^', '-.>', '--s', '-v']
 fontP = FontProperties()
 fontP.set_size('small')
 
@@ -20,12 +19,14 @@ l2_norm_files = []
 num = 1;
 
 for file in os.listdir("."):
-    if file.startswith(geometry[0:-4]+"_l2_norm_32") and file.endswith(flag+".txt"):
+    if file.startswith(geometry[0:-4]) and file.endswith(flag+".txt"):
         print("parsed file")
         l2_norm_files.append(file)
         num = num+1
 
     basepath = os.path.dirname('./')
+
+l2_norm_files.sort()
 
 # parse output files
 counter = 0;
@@ -59,7 +60,7 @@ for file in l2_norm_files:
         if i is not 0:
             iteration[i-1] = line.split()[0]
             cell_l2[i-1]   = line.split()[1]
-            fsr_linf[i-1]    = line.split()[2]
+            fsr_linf[i-1]  = line.split()[2]
             fsr_l2[i-1]    = line.split()[3]
             rho[i-1]       = line.split()[7]
 
@@ -84,7 +85,7 @@ for file in l2_norm_files:
 plt.figure(0)
 plt.xlabel('# MOC iteration')
 plt.ylabel('Mesh Cell L2 Norm on Fission Source Relative Change')
-plt.title('Geometry: %s,'%(geometry[9:-4]) + ' spacing: %s cm,'%str(ts)
+plt.title('Geometry: %s,'%(printgeometry) + ' spacing: %s cm,'%str(ts)
           + ' #angles: %s'%str(na))
 plt.savefig(geometry[9:-4] + '_cell_l2_' + flag + '.png', bbox_inches='tight')
 plt.clf()
@@ -92,22 +93,22 @@ plt.clf()
 plt.figure(1)
 plt.xlabel('# MOC iteration')
 plt.ylabel('FSR L-infinity Norm on Fission Source Relative Change')
-plt.title('Geometry: %s,'%(geometry[9:-4]) + ' spacing: %s,'%str(ts) 
+plt.title('Geometry: %s,'%(printgeometry) + ' spacing: %s,'%str(ts) 
           + ' #angles: %s'%str(na))
 plt.savefig(geometry[9:-4] + '_fsr_linf_' + flag + '.png', bbox_inches='tight')
 
 plt.figure(2)
 plt.xlabel('# MOC iteration')
 plt.ylabel('FSR L2 Norm on Fission Source Relative Change')
-plt.title('Geometry: %s,'%(geometry[9:-4]) + ' spacing: %s cm,'%str(ts) 
+plt.title('Geometry: %s,'%(printgeometry) + ' spacing: %s cm,'%str(ts) 
           + ' #angles: %s'%str(na))
 plt.savefig(geometry[9:-4] + '_fsr_l2_' + flag +  '.png', bbox_inches='tight')
 plt.clf()
 
 plt.figure(3)
 plt.xlabel('# MOC iteration')
-plt.ylabel('Spectral Radius')
-plt.title('Geometry: %s,'%(geometry[9:-4]) + ' spacing: %s cm,'%str(ts) 
+plt.ylabel('Apparent Spectral Radius')
+plt.title('Geometry: %s,'%(printgeometry) + ' spacing: %s cm,'%str(ts) 
           + ' #angles: %s'%str(na))
 plt.savefig(geometry[9:-4] + '_rho_' + flag + '.png', bbox_inches='tight')
 plt.clf()

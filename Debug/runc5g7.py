@@ -11,7 +11,7 @@ materials = ['material_c5g7.xml']
 # C4 default is: 0.5cm, 64 azimuthal angle
 ts = [0.05] #0.05
 na = [64] #64
-fc = [1e-10]
+fc = [1e-8]
 
 ls = ['--o', '-s', '-.v']
 fontP = FontProperties()
@@ -30,8 +30,24 @@ for i, geometry in enumerate(geometries):
                       + ' -na ' + str(angle) 
                       + ' -ts ' + str(spacing) 
                       + ' -fc ' + str(fc[0]) 
-                      )
-#                      + ' -wc -df 0.4 -bi 1')
+                      + ' -wc -df 0.7 -bi 0')
+
+            os.system('../bin/openmoc'
+                      + ' -m ../xml-sample/Cmfd/' + materials[i]
+                      + ' -g ../xml-sample/Cmfd/' + geometry 
+                      + ' -na ' + str(angle) 
+                      + ' -ts ' + str(spacing) 
+                      + ' -fc ' + str(fc[0]) 
+                      + ' -wl1 -bi 0')
+
+            os.system('../bin/openmoc'
+                      + ' -m ../xml-sample/Cmfd/' + materials[i]
+                      + ' -g ../xml-sample/Cmfd/' + geometry 
+                      + ' -na ' + str(angle) 
+                      + ' -ts ' + str(spacing) 
+                      + ' -fc ' + str(fc[0]) 
+                      + ' -wl2 -bi 0')
+
 
     l2_norm_files = []
 

@@ -11,7 +11,7 @@
 #include <math.h>
 
 /****** For debugging, NEW means the new implementation with weights *****/
-#define NEW 0
+#define NEW 1
 
 
 

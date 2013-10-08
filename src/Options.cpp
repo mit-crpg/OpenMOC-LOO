@@ -44,8 +44,8 @@ Options::Options(int argc, char **argv)
 
     /* Default geometry input file */
     _geometry_file = _relative_path + 
-        "xml-sample/Cmfd/geometry_corner.xml";
-        //"xml-sample/Cmfd/geometry_8x8_leakage3_2.xml"; 
+        "xml-sample/Cmfd/geometry_8x8_leakage3_2.xml"; 
+        //"xml-sample/Cmfd/geometry_corner.xml"; % homogeneous material
     _material_file = _relative_path + "xml-sample/Cmfd/material_c5g7.xml";
 	
     _track_spacing = 0.5;		/* Default C4 track spacing: 0.05cm */
@@ -113,7 +113,10 @@ Options::Options(int argc, char **argv)
             else if (strcmp(argv[i], "-noconv") == 0)
                 _acc_after_MOC_converge = false;
             else if (strcmp(argv[i], "-debug") == 0)
+            {
                 _acc_after_MOC_converge = true;
+                _diffusion = false;
+            }
             else if (strcmp(argv[i], "-ps") == 0 ||
                      strcmp(argv[i], "--plotspecs") == 0)
                 _plot_specs = true;
