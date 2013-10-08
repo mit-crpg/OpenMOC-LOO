@@ -1433,7 +1433,7 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
 
     if (moc_iter == 10000)
     {
-        max_outer = 5;
+        max_outer = 10;
         log_printf(NORMAL, "DEBUG mode on, max outer = %d", max_outer);
     }
 
@@ -1737,9 +1737,13 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
                 else
                     log_printf(ERROR, "spot unknonwn BC at surface 1");
 
-                log_printf(ACTIVE, "  Energy %d, loop %d, fwd, %f -> %f, %e",
-                           e, j, initial_flux, flux, 
-                           flux / (initial_flux + 1e-10) - 1.0);
+                if (initial_flux > 1e-10)
+                {
+                    log_printf(ACTIVE, "  Energy %d, loop %d, fwd, %f -> %f,"
+                               " %e",
+                               e, j, initial_flux, flux, 
+                               flux / initial_flux - 1.0);
+                }
             } /* exit this loop j */
 
             /* Backward Directions */
@@ -1831,9 +1835,13 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
                 else if (_bc[1] == VACUUM)
                     leak_tot += flux;
 
-                log_printf(ACTIVE, "  Energy %d, loop %d, bwd, %f -> %f, %e",
-                           e, j, initial_flux, flux, 
-                           flux / (initial_flux + 1e-10) - 1.0);
+                if (initial_flux > 1e-10) 
+                {
+                    log_printf(ACTIVE, "  Energy %d, loop %d, bwd, %f -> %f,"
+                               " %e",
+                               e, j, initial_flux, flux, 
+                               flux / initial_flux - 1.0);
+                }
             }
         } /* finish looping over energy; exit to iter level */
 
@@ -2015,10 +2023,11 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
     return _keff;
 }
 
+// FIXME: optimize by pre-generate table
 double Cmfd::getSurf(int i, int t, int d)
 {
     int id = -1;
-    int j;
+    int j = -1;
     MeshCell *meshCell = _mesh->getCells(i);
 
     if (d == 0)
@@ -2044,7 +2053,7 @@ double Cmfd::getSurf(int i, int t, int d)
             id = 3;
     }  
 
-    if ((t < 2) || (t == 4) || (t == 5))
+    if ((t < 2) || ((t > 3) && (t < 6)))
         j = 0;
     else
         j = 1;
