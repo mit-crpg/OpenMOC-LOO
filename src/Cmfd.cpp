@@ -1433,7 +1433,7 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
 
     if (moc_iter == 10000)
     {
-        max_outer = 10;
+        max_outer = 2;
         log_printf(NORMAL, "DEBUG mode on, max outer = %d", max_outer);
     }
 
@@ -1660,6 +1660,7 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
                 /* Store initial flux for debugging */
                 initial_flux = flux;
                 log_printf(ACTIVE, "Sweeping loop %d forward", j);
+
                 for (int x = _num_track * j; x < _num_track * (j + 1); x++)
                 {
                     i = _i_array[x];
@@ -1669,8 +1670,13 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
                     /* Set flux to zero if incoming from a vacuum boundary */
                     if (onVacuumBoundary(t, i, 0))
                     {
-                        leak_tot += flux; 
-                        flux = 0.0;
+                        // there is a hack here: if initial side is
+                        // vacuum, flux is already 0. 
+                        leak_tot += flux * getSurf(i, t, 0); 
+
+                        log_printf(DEBUG, "cell %d track %d (forward) starts"
+                                   " from a VAC", i, t);
+                        flux = 0.0; 
                     }
 	
                     if (_update_boundary)
@@ -1733,7 +1739,7 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
                                _i_array[_num_track * j], e);
                 }
                 else if (_bc[1] == VACUUM)
-                    leak_tot += flux;
+                    leak_tot += flux * getSurf(_num_track * j, 0, 0);
                 else
                     log_printf(ERROR, "spot unknonwn BC at surface 1");
 
@@ -1770,7 +1776,13 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
 
                     if (onVacuumBoundary(t, i, 1))
                     {							
-                        leak_tot += flux;
+                        // FIXME: should not need to add initial to leak_tot
+                        //if (x < _num_track * j + _num_track - 1)
+                        leak_tot += flux * getSurf(i, t, 0);
+
+                        log_printf(DEBUG, "cell %d track %d (backward)"
+                                   " starts from a VAC", i, t);
+
                         flux = 0.0;
                     }
 
@@ -1833,7 +1845,7 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
                                _i_array[_num_track * j], e);
                 }
                 else if (_bc[1] == VACUUM)
-                    leak_tot += flux;
+                    leak_tot += flux * getSurf(_num_track * j, 0, 0);
 
                 if (initial_flux > 1e-10) 
                 {
@@ -1846,6 +1858,8 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
         } /* finish looping over energy; exit to iter level */
 
         double new_flux = 0;
+        double ho_current = 0;
+        double ho_current_tot = 0;
 
         /* Computs new cell-averaged scalar flux */
         if (_run_loo_phi)
@@ -1861,23 +1875,31 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
 
                 for (int e = 0; e < _ng; e++)
                 {                    
-                    net_current[i][e] *= SIN_THETA_45 / vol;
+                    net_current[i][e] *= SIN_THETA_45;
 
-                    new_flux = (FOUR_PI * new_src[i][e] - net_current[i][e])
+                    new_flux = (FOUR_PI * new_src[i][e] 
+                                - net_current[i][e] / vol)
                         / meshCell->getSigmaT()[e];
 
+                    /*log_printf(ACTIVE, "Cell %d e %d new / old flux"
+                               " %f/ %f = %.10f",
+                               i, e, 
+                               new_flux, meshCell->getNewFlux()[e],
+                               new_flux / meshCell->getNewFlux()[e]);*/
+
                     meshCell->setNewFlux(new_flux, e);
-					
+			
+                    ho_current =  vol * (FOUR_PI * new_src[i][e] - 
+                                         meshCell->getOldFlux()[e] 
+                                         * meshCell->getSigmaT()[e]);
+
+                    ho_current_tot += ho_current;
+
+
                     log_printf(ACTIVE, "Cell %d e %d leakage lo/ho"
                                " %f/ %f = %.10f", 
-                               i, e, net_current[i][e], 
-                               FOUR_PI * new_src[i][e] - 
-                               meshCell->getOldFlux()[e] 
-                                * meshCell->getSigmaT()[e], 
-                               net_current[i][e] /  
-                               (FOUR_PI * new_src[i][e] - 
-                                meshCell->getOldFlux()[e] 
-                                * meshCell->getSigmaT()[e]));
+                               i, e, net_current[i][e], ho_current,
+                               net_current[i][e] / ho_current);
                 }
             }
         }
@@ -1912,14 +1934,21 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
 
         /* Computes normalization factor based on fission source */
         double normalize_factor = computeNormalization();
-        log_printf(ACTIVE, "normalize_factor = %.10f", normalize_factor);
+        log_printf(NORMAL, "normalize_factor = %.10f", normalize_factor);
+
+        //normalize_factor = 1;
+
 
         /* Normalizes leakage, scalar flux, angular flux */
-        leak_tot *= normalize_factor;
+        /* FIXME: should or should not normalize leak_tot? */
+        //leak_tot *= normalize_factor;
+
+        double net_current_tot = 0;
         for (int i = 0; i < _cw * _ch; i++)
         {
             for (int e = 0; e < _ng; e++)
             {
+                net_current_tot += net_current[i][e];
                 net_current[i][e] *= normalize_factor;
                 _mesh->getCells(i)->setNetCurrent(net_current[i][e], e);
             }
@@ -1941,16 +1970,18 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
             }
         }
 #if NEW
-        leak_tot *= SIN_THETA_45 * _mesh->getCells(0)->getMeshSurfaces(0)
-            ->getTotalWt(5) / 2.0;
+        leak_tot *= SIN_THETA_45;
 #else
         leak_tot *= SIN_THETA_45 * _mesh->getCells(0)->getWidth();
 #endif
 
+        log_printf(NORMAL, "ho_current_tot = %f, net_current_tot = %f,"
+                   " leak_tot = %f",
+                   ho_current_tot, net_current_tot, leak_tot);
 
         _keff = fis_tot / (abs_tot + leak_tot); 
-        log_printf(ACTIVE, "%d: %.10f / (%.10f + %.10f)", 
-                   loo_iter, fis_tot, abs_tot, leak_tot);
+        log_printf(NORMAL, "%d: %.10f / (%.10f + %.10f) = %f", 
+                   loo_iter, fis_tot, abs_tot, leak_tot, _keff);
 
         /* Computes the L2 norm of point-wise-division of energy-integrated
          * fission source of mesh cells between LOO iterations */
@@ -2077,13 +2108,16 @@ bool Cmfd::onAnyBoundary(int i, int surf_id)
     return false;
 }
 
+/* a track $t$ in cell $i$ starts from surface surf given it is a
+  forward or backward track. Technically dir is redundant as t already
+  includes that */
 bool Cmfd::onBoundary(int t, int i, int surf, int dir)
 {
     /* dir = 0 means forward:  t = 6, 0, 2, 4 
      * dir = 1 means backward: t = 5, 7, 1, 3 */
     if ((surf == 0) && (t == 6 - dir) && (i % _cw == 0))
         return true;
-    if ((surf == 1) && (t == 0 + dir * 7) && (i >= _cw * (_ch - 1)))
+    if ((surf == 1) && (t == dir * 7) && (i >= _cw * (_ch - 1)))
         return true;
     if ((surf == 2) && (t == 2 - dir) && ((i + 1) % _cw == 0))
         return true;

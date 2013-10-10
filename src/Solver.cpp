@@ -515,6 +515,9 @@ if (tot_abs < 0.0)
     log_printf(WARNING, "MOC total abs = %f should be positive", tot_abs);
 
 k = tot_fission / (tot_abs + leakage);
+
+log_printf(NORMAL, "MOC k = %f / (%f + %f) = %f", 
+           tot_fission, tot_abs, leakage, k);
 //_geom->getMesh()->setKeffMOC(_k_eff, iteration);
 return k;
 }
