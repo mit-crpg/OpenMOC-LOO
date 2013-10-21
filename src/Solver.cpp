@@ -406,7 +406,7 @@ void Solver::zeroMeshCells() {
     MeshCell* meshCell;
 
     /* loop over mesh cells */
-    for (int i = 0; i < mesh->getCellHeight() * mesh->getCellWidth(); i++)
+    for (int i = 0; i < _cw * _ch; i++)
     {
         meshCell = mesh->getCells(i);
 
@@ -421,10 +421,7 @@ void Solver::zeroMeshCells() {
 
                 /* set quad currents to zero */
                 for (int j = 0; j < 2; j++)
-                {
                     meshCell->getMeshSurfaces(surface)->setQuadCurrent(0, e, j);
-                }
-                
             }
         }
     }
@@ -436,9 +433,12 @@ void Solver::zeroLeakage(){
 
     for (int s = 1; s < 5; s++)
     {
-        for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
-            _geom->getSurface(s)->setLeakage(0.0,e);
+        log_printf(NORMAL, "geometry surface %d has leakage %f", s, 
+                   _geom->getSurface(s)->getLeakage()[0]);
     }
+
+    for (int s = 1; s < 5; s++)
+        _geom->getSurface(s)->zeroLeakage();
 }
 
 /**
@@ -499,6 +499,8 @@ double Solver::computeKeff(int iteration)
 }
 #endif
 
+// _geom->getSurface() uses index 1 through 4. These leakage terms are
+// surface integrated current. 
 for (int s = 1; s < 5; s++)
 {
     for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
@@ -768,18 +770,30 @@ void Solver::checkTrackSpacing() {
     delete [] FSR_segment_tallies;
 }
 
-/* Print out the four boundary conditions around the whole geometry in the 
- * order of left, bottom, right, top. 
+/* Print out the four boundary conditions around the whole geometry in
+ * the order of left, bottom, right, top.  FIXME: this feature does
+ * not work if no acceleration is turned on; will prduce results like
+ * unkonwn and unset.
  */
 void Solver::checkBoundary()
 {
     std::string bc[4];
     for (int s = 0; s < 4; s++)
     {
-        if (_geom->getMesh()->getBoundary(s) == REFLECTIVE)
+        bc[s] = "unset";
+
+        switch (_geom->getMesh()->getBoundary(s))
+        {
+        case REFLECTIVE:
             bc[s] = "reflective";
-        else
+            break;
+        case VACUUM:
             bc[s] = "vacuum";
+            break;
+        case BOUNDARY_NONE:
+            bc[s] = "unknown";
+            break;
+        }
     }
     log_printf(NORMAL, "Boundary conditions: %s %s %s %s", 
                bc[0].c_str(), bc[1].c_str(), bc[2].c_str(), bc[3].c_str()); 
@@ -1021,6 +1035,13 @@ void Solver::tallyCmfdCurrent(Track *track, segment *segment,
     return;
 }
 
+
+/* Effect: accumulates weights for each surface's each
+ * quadrature. 0,1,2 are the surface length accumulator (it needs a
+ * 1/sin or 1/cos to convert delta_m which is normal distance b/w
+ * tracks to the surface lenth). 3,4,5 are weight accumulator (exactly
+ * the weight used to accumulate currents).
+ */
 void Solver::tallyLooWeight(Track *track, segment *segment, 
                              MeshSurface **meshSurfaces, int direction)
 {
@@ -1712,6 +1733,15 @@ void Solver::normalizeFlux()
             _tracks[i][j].normalizeFluxes(factor);
     }
 
+    /* Renormalize leakage term for each of the four exterior surfaces */
+    for (int s = 1; s < 5; s++)
+    {
+        for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
+        {
+            _geom->getSurface(s)->updateLeakage(factor, e);
+        }
+    }
+
     /* Renormalize tallied current on each surface */
     if ((_run_cmfd) && !(_acc_after_MOC_converge))
     {
@@ -1851,7 +1881,10 @@ double Solver::runCmfd(int moc_iter)
 
     /* Check for neutron balance */
     if (moc_iter == 10000)
+    {
         checkNeutronBalance();
+        checkNeutronBalanceWithDs();
+    }
 
     /* Run diffusion problem on initial geometry */
     if (moc_iter == 0 && _diffusion == true)
@@ -2162,7 +2195,8 @@ void Solver::printToLog(int moc_iter, double eps_inf, double eps_2, double rho)
 
 
 /*
- * check neutron balance in each mesh cell
+ * check neutron balance in each mesh cell assuming reflective outter
+ * boundary condition FIXME: need to update to include vacuum BC. 
  */
 void Solver::checkNeutronBalance()
 {

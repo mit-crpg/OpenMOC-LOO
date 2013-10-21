@@ -88,7 +88,23 @@ Cmfd::Cmfd(Geometry* geom, Plotter* plotter, Mesh* mesh,
     _update_boundary = updateBoundary;
 
     for (int s = 0; s < 4; s++)
+    {
         _bc[s] = _mesh->getBoundary(s);
+
+        // DEBUG:
+        switch (_bc[s])
+        {
+        case REFLECTIVE:
+            log_printf(DEBUG, "mesh boundary %d reflective", s);
+            break;
+        case VACUUM:
+            log_printf(DEBUG, "mesh boundary %d vacuum", s);
+            break;
+        case BOUNDARY_NONE:
+            log_printf(DEBUG, "mesh boundary %d unknown", s);
+        break;
+        }
+    }
 
     if ((_bc[0] == REFLECTIVE) || (_bc[1] == REFLECTIVE) || 
         (_bc[2] == REFLECTIVE) || (_bc[3] == REFLECTIVE) )
@@ -266,10 +282,13 @@ void Cmfd::computeXS()
     /* split corner currents to side surfaces */
     if (_run_cmfd)
         _mesh->splitCornerCurrents();
-// /*
+
     if (_run_loo)
-         _mesh->splitCornerQuadCurrents();
-// */
+    {
+        _mesh->splitCornerCurrents();
+        _mesh->splitCornerQuadCurrents();
+    }
+
     /* initialize variables */
     double abs_tally_group, nu_fis_tally_group, dif_tally_group, 
         rxn_tally_group, vol_tally_group, tot_tally_group;
@@ -1506,8 +1525,13 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
         } 
     }
 
-#if 0
-    /* back out ho_phi using new_src from (m+1/2) */
+#if 1
+    /* Backs out high order current using currents accumulated in high
+     * order. Though keep in mind that we have already divided the
+     * current accumulator by the accumulated wt, so the current is
+     * surface-avg current. To compute ho_current compatible to
+     * net_current, we need to multiply back the wt[5].
+     */
     MeshCell *meshCellNext;
     if (_run_loo_phi)
     {
@@ -1524,55 +1548,94 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
                     for (int s = 0; s < 4; s++)
                     {
                         ho_current[i][e] += meshCell->getMeshSurfaces(s)
-                            ->getCurrent(e);
+                            ->getCurrent(e) * meshCell->getMeshSurfaces(s)
+                            ->getTotalWt(5);
                     }
 						
                     if (x > 0)
                     {
                         meshCellNext = _mesh->getCells(y * _cw + x - 1);
                         ho_current[i][e] -= meshCellNext->getMeshSurfaces(2)
-                            ->getCurrent(e);
+                            ->getCurrent(e) * meshCellNext->getMeshSurfaces(2)
+                            ->getTotalWt(5);
                     }
                     else if (_bc[0] == REFLECTIVE)
                         ho_current[i][e] -= meshCell->getMeshSurfaces(0)
-                            ->getCurrent(e);
+                            ->getCurrent(e) * meshCell->getMeshSurfaces(0)
+                            ->getTotalWt(5);
 							
 				
                     if (x < _cw - 1)
                     {
                         meshCellNext = _mesh->getCells(y * _cw + x + 1);
                         ho_current[i][e] -= meshCellNext->getMeshSurfaces(0)
-                            ->getCurrent(e);
+                            ->getCurrent(e) * meshCellNext->getMeshSurfaces(0)
+                            ->getTotalWt(5);
                     }
                     else if (_bc[2] == REFLECTIVE)
                         ho_current[i][e] -= meshCell->getMeshSurfaces(2)
-                            ->getCurrent(e);
+                            ->getCurrent(e) * meshCell->getMeshSurfaces(2)
+                            ->getTotalWt(5);
 
                     if (y > 0)
                     {
                         meshCellNext = _mesh->getCells((y - 1) * _cw + x);
                         ho_current[i][e] -= meshCellNext->getMeshSurfaces(1)
-                            ->getCurrent(e);
+                            ->getCurrent(e) * meshCellNext->getMeshSurfaces(1)
+                            ->getTotalWt(5);
                     }
                     else if (_bc[3] == REFLECTIVE)
                         ho_current[i][e] -= meshCell->getMeshSurfaces(3)
-                            ->getCurrent(e);
+                            ->getCurrent(e) * meshCell->getMeshSurfaces(3)
+                            ->getTotalWt(5);
 
                     if (y < _ch - 1)
                     {
                         meshCellNext = _mesh->getCells((y + 1) * _cw + x);
                         ho_current[i][e] -= meshCellNext->getMeshSurfaces(3)
-                            ->getCurrent(e);
+                            ->getCurrent(e) * meshCellNext->getMeshSurfaces(3)
+                            ->getTotalWt(5);
                     }
                     else if (_bc[1] == REFLECTIVE)
                         ho_current[i][e] -= meshCell->getMeshSurfaces(1)
-                            ->getCurrent(e);
+                            ->getCurrent(e) * meshCell->getMeshSurfaces(1)
+                            ->getTotalWt(5);
 
-                    ho_current[i][e] /= meshCell->getATVolume();		
+                    // both ho_current and net_current are
+                    // surface-integrated ones.  
+
+                    //ho_current[i][e] /= meshCell->getATVolume();
 
                 } 
             } 
         } 
+    }
+
+    log_printf(ACTIVE, " High order generates following balance: "
+               "cell #, energy #, 4 pi Q - Sigma_T Phi V - Current = 0");
+    for (int i = 0; i < _cw * _ch; i++)
+    {
+        meshCell = _mesh->getCells(i);
+        double vol = meshCell->getATVolume(); 
+
+        for (int e = 0; e < _ng; e++)
+        {
+            for (int g = 0; g < _ng; g++)
+            {
+                new_src[i][e] += meshCell->getSigmaS()[g * _ng + e] 
+                    * meshCell->getNewFlux()[g] * ONE_OVER_FOUR_PI;
+                new_src[i][e] += meshCell->getChi()[e] *
+                    meshCell->getNuSigmaF()[g] / _keff 
+                    * meshCell->getNewFlux()[g] * ONE_OVER_FOUR_PI;
+            }
+            
+            log_printf(ACTIVE, "%d, %d, %f - %f - %f = %f", 
+                       i, e, FOUR_PI * new_src[i][e] * vol, 
+                       meshCell->getSigmaT()[e] * meshCell->getNewFlux()[e] 
+                       * vol, ho_current[i][e], 
+                       FOUR_PI * new_src[i][e] * vol - meshCell->getSigmaT()[e] 
+                       * meshCell->getNewFlux()[e] * vol- ho_current[i][e]);
+        }
     }
 #endif
 
@@ -1858,7 +1921,7 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
         } /* finish looping over energy; exit to iter level */
 
         double new_flux = 0;
-        double ho_current = 0;
+        double ho_current_val = 0;
         double ho_current_tot = 0;
 
         /* Computs new cell-averaged scalar flux */
@@ -1887,19 +1950,21 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
                                new_flux, meshCell->getNewFlux()[e],
                                new_flux / meshCell->getNewFlux()[e]);*/
 
-                    meshCell->setNewFlux(new_flux, e);
-			
-                    ho_current =  vol * (FOUR_PI * new_src[i][e] - 
-                                         meshCell->getOldFlux()[e] 
+                    ho_current_val =  vol * (FOUR_PI * new_src[i][e] - 
+                                         meshCell->getNewFlux()[e] 
                                          * meshCell->getSigmaT()[e]);
 
-                    ho_current_tot += ho_current;
 
+                    meshCell->setNewFlux(new_flux, e);		       
+
+                    ho_current_tot += ho_current_val;
 
                     log_printf(ACTIVE, "Cell %d e %d leakage lo/ho"
-                               " %f/ %f = %.10f", 
-                               i, e, net_current[i][e], ho_current,
-                               net_current[i][e] / ho_current);
+                               " %f/ %f = %.10f, %f / %f = %.10f", 
+                               i, e, net_current[i][e], ho_current_val,
+                               net_current[i][e] / ho_current_val,
+                               net_current[i][e], ho_current[i][e], 
+                               net_current[i][e] / ho_current[i][e]);
                 }
             }
         }
@@ -1934,6 +1999,10 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
 
         /* Computes normalization factor based on fission source */
         double normalize_factor = computeNormalization();
+
+        
+        // DEBUG
+        normalize_factor = 1.0;
         log_printf(NORMAL, "normalize_factor = %.10f", normalize_factor);
 
         //normalize_factor = 1;
@@ -1949,7 +2018,7 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
             for (int e = 0; e < _ng; e++)
             {
                 net_current_tot += net_current[i][e];
-                net_current[i][e] *= normalize_factor;
+                //net_current[i][e] *= normalize_factor;
                 _mesh->getCells(i)->setNetCurrent(net_current[i][e], e);
             }
         }
@@ -2090,9 +2159,11 @@ double Cmfd::getSurf(int i, int t, int d)
         j = 1;
 
     MeshSurface *surface = meshCell->getMeshSurfaces(id); 
-    double length = surface->getTotalWt(j + 3);
-    //double length = surface->getTotalWt(5) / 2.0;
-    return length;
+
+    // getTotalWt(3) and getTotalWt(4) are the weights used in
+    // tallying current in HO. To get reflective BC cases to work, we
+    // need these weights instead of the actual physical lengths. 
+    return surface->getTotalWt(j + 3);
 }
 
 bool Cmfd::onAnyBoundary(int i, int surf_id)

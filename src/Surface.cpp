@@ -219,9 +219,9 @@ double Surface::getMinDistance(Point* point, double angle,
 }
 
 
-void Surface::setLeakage(double leakage, int e){
-
-    _leakage[e] = leakage;
+void Surface::zeroLeakage(){
+    for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
+        _leakage[e] = 0.0;
 }
 
 
@@ -237,8 +237,9 @@ void Surface::incrementLeakage(reflectType direction, double leakage, int e){
     }
 }
 
-
-
+void Surface::updateLeakage(double update_factor, int e){
+    _leakage[e] *= update_factor;
+}
 
 
 /**

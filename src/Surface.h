@@ -85,10 +85,10 @@ public:
     bool onSurface(Point* point);
     bool onSurface(LocalCoords* coord);
     double getMinDistance(Point* point, double angle, Point* intersection);
-    void setLeakage(double leakage, int e);
+    void zeroLeakage();
     double* getLeakage();
     void incrementLeakage(reflectType direction, double current, int e);
-
+    void updateLeakage(double update_factor, int e);
 };
 
 
