@@ -154,7 +154,7 @@ void Cmfd::computeXS_old()
 {
     /* split corner currents to side surfaces */
     if (_run_cmfd)
-        _mesh->splitCornerCurrents_old();
+        _mesh->splitCornerCurrents();
     if (_run_loo)
         _mesh->splitCornerQuadCurrents();
 
@@ -1452,7 +1452,7 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
 
     if (moc_iter == 10000)
     {
-        max_outer = 2;
+        max_outer = 10;
         log_printf(NORMAL, "DEBUG mode on, max outer = %d", max_outer);
     }
 
@@ -2003,7 +2003,7 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
         
         // DEBUG
         normalize_factor = 1.0;
-        log_printf(NORMAL, "normalize_factor = %.10f", normalize_factor);
+        log_printf(ACTIVE, "normalize_factor = %.10f", normalize_factor);
 
         //normalize_factor = 1;
 
@@ -2044,12 +2044,12 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
         leak_tot *= SIN_THETA_45 * _mesh->getCells(0)->getWidth();
 #endif
 
-        log_printf(NORMAL, "ho_current_tot = %f, net_current_tot = %f,"
+        log_printf(ACTIVE, "ho_current_tot = %f, net_current_tot = %f,"
                    " leak_tot = %f",
                    ho_current_tot, net_current_tot, leak_tot);
 
         _keff = fis_tot / (abs_tot + leak_tot); 
-        log_printf(NORMAL, "%d: %.10f / (%.10f + %.10f) = %f", 
+        log_printf(DEBUG, "%d: %.10f / (%.10f + %.10f) = %f", 
                    loo_iter, fis_tot, abs_tot, leak_tot, _keff);
 
         /* Computes the L2 norm of point-wise-division of energy-integrated

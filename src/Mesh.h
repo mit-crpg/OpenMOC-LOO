@@ -53,19 +53,16 @@ public:
     void setCellHeight(int cellHeight);
     MeshCell* getCells(int cell);
     void setCellBounds();
-    void setFSRBounds(boundaryType left, boundaryType right, boundaryType bottom, boundaryType top);
+    void setFSRBounds(boundaryType left, boundaryType right, 
+                      boundaryType bottom, boundaryType top);
     int findMeshCell(double x, double y);
     int findMeshSurface(int fsr_id, LocalCoords* coord);
     void printBounds();
     void printCurrents();
     void computeTotCurrents();
     void computeTotQuadCurrents();
-
     void splitCornerCurrents();
-    void splitCornerCurrents_old();
-
     void splitCornerQuadCurrents();
-    void splitCornerQuadCurrents_old();
     void setMultigroup(bool multigroup);
     bool getMultigroup();
     void setPrintMatrices(bool printMatrices);
