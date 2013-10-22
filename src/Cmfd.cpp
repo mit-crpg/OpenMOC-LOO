@@ -1802,7 +1802,7 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
                                _i_array[_num_track * j], e);
                 }
                 else if (_bc[1] == VACUUM)
-                    leak_tot += flux * getSurf(_num_track * j, 0, 0);
+                    leak_tot += flux * getSurf(_i_array[_num_track * j], 0, 0);
                 else
                     log_printf(ERROR, "spot unknonwn BC at surface 1");
 
@@ -1908,7 +1908,7 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
                                _i_array[_num_track * j], e);
                 }
                 else if (_bc[1] == VACUUM)
-                    leak_tot += flux * getSurf(_num_track * j, 0, 0);
+                    leak_tot += flux * getSurf(_i_array[_num_track * j], 0, 0);
 
                 if (initial_flux > 1e-10) 
                 {
