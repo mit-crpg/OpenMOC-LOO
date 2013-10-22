@@ -9,6 +9,7 @@
 #define MESHCELL_H_
 
 #define _USE_MATH_DEFINES
+#include <assert.h>
 #include <math.h>
 #include <stdlib.h>
 #include <string>

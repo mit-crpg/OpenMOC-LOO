@@ -45,8 +45,10 @@ void Mesh::setCellHeight(int cellHeight){
     _cell_height = cellHeight;
 }
 
-MeshCell* Mesh::getCells(int cell){
-    return &_cells[cell];
+MeshCell* Mesh::getCells(int cell_id){
+    assert(cell_id >= 0);
+    assert(cell_id < _cell_width * _cell_height);
+    return &_cells[cell_id];
 }
 
 void Mesh::setMultigroup(bool multigroup){
@@ -299,11 +301,15 @@ void Mesh::printCurrents()
 
 
 void Mesh::setBoundary(boundaryType boundary, int s){
+    assert(s >= 0);
+    assert(s < 4);
     _boundary[s] = boundary;
 }
 
 
 boundaryType Mesh::getBoundary(int s){
+    assert(s >= 0);
+    assert(s < 4);
     return _boundary[s];
 }
 

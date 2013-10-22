@@ -190,11 +190,15 @@ MeshSurface* MeshCell::findSurface(LocalCoords* coord, int i){
     return meshSurface;
 }
 
-MeshSurface* MeshCell::getMeshSurfaces(int surface){
-    return &_mesh_surfaces[surface];
+MeshSurface* MeshCell::getMeshSurfaces(int surface_id){
+    assert(surface_id >= 0);
+    assert(surface_id < 8);
+    return &_mesh_surfaces[surface_id];
 }
 
 void MeshCell::setChi(double chi, int e){
+    assert(e >= 0);
+    assert(e < NUM_ENERGY_GROUPS);
     _chi[e] = chi;
 }
 
@@ -203,6 +207,8 @@ double* MeshCell::getChi(){
 }
 
 void MeshCell::setSigmaA(double sigmaA, int e){
+    assert(e >= 0);
+    assert(e < NUM_ENERGY_GROUPS);
     _sigma_a[e] = sigmaA;
 }
 
@@ -211,6 +217,8 @@ double* MeshCell::getSigmaA(){
 }
 
 void MeshCell::setSigmaT(double sigmaT, int e){
+    assert(e >= 0);
+    assert(e < NUM_ENERGY_GROUPS);
     _sigma_t[e] = sigmaT;
 }
 
@@ -223,6 +231,10 @@ double* MeshCell::getSigmaS(){
 }
 
 void MeshCell::setSigmaS(double sigmaS, int e, int g){
+    assert(e >= 0);
+    assert(e < NUM_ENERGY_GROUPS);
+    assert(g >= 0);
+    assert(g < NUM_ENERGY_GROUPS);
     _sigma_s[e*NUM_ENERGY_GROUPS + g] = sigmaS;
 }
 
@@ -231,6 +243,8 @@ double* MeshCell::getNuSigmaF(){
 }
 
 void MeshCell::setNuSigmaF(double nuSigmaF, int e){
+    assert(e >= 0);
+    assert(e < NUM_ENERGY_GROUPS);
     _nu_sigma_f[e] = nuSigmaF;
 }
 
@@ -239,6 +253,8 @@ double* MeshCell::getDiffusivity(){
 }
 
 void MeshCell::setDiffusivity(double diffusivity, int e){
+    assert(e >= 0);
+    assert(e < NUM_ENERGY_GROUPS);
     _diffusivity[e] = diffusivity;
 }
 
@@ -247,6 +263,8 @@ double* MeshCell::getOldFlux(){
 }
 
 void MeshCell::setOldFlux(double flux, int e){
+    assert(e >= 0);
+    assert(e < NUM_ENERGY_GROUPS);
     _old_flux[e] = flux;
 }
 
@@ -255,10 +273,14 @@ double* MeshCell::getNewFlux(){
 }
 
 void MeshCell::setNewFlux(double flux, int e){
+    assert(e >= 0);
+    assert(e < NUM_ENERGY_GROUPS);
     _new_flux[e] = flux;
 }
 
 void MeshCell::updateNewFlux(double ratio, int e){
+    assert(e >= 0);
+    assert(e < NUM_ENERGY_GROUPS);
     _new_flux[e] *= ratio;
 }
 
@@ -267,6 +289,8 @@ double* MeshCell::getOldSrc(){
 }
 
 void MeshCell::setOldSrc(double flux, int e){
+    assert(e >= 0);
+    assert(e < NUM_ENERGY_GROUPS);
     _old_src[e] = flux;
 }
 double* MeshCell::getSrc(){
@@ -274,6 +298,8 @@ double* MeshCell::getSrc(){
 }
 
 void MeshCell::setSrc(double flux, int e){
+    assert(e >= 0);
+    assert(e < NUM_ENERGY_GROUPS);
     _src[e] = flux;
 }
 
@@ -310,6 +336,10 @@ double* MeshCell::getQuadFlux(){
 }
 
 void MeshCell::setQuadSrc(double quadSrc, int e, int index){
+    assert(e >= 0);
+    assert(e < NUM_ENERGY_GROUPS);
+    assert(index >= 0);
+    assert(index < 8);
     _quad_src[e * 8 + index] = quadSrc;
 }
 
@@ -322,6 +352,8 @@ double* MeshCell::getSumQuadFlux(){
 }
 
 void MeshCell::setSumQuadFlux(double flux, int e){
+    assert(e >= 0);
+    assert(e < NUM_ENERGY_GROUPS);
     _sum_quad_flux[e] = flux;
 }
 
@@ -330,6 +362,8 @@ double* MeshCell::getNetCurrent(){
 }
 
 void MeshCell::setNetCurrent(double current, int e){
+    assert(e >= 0);
+    assert(e < NUM_ENERGY_GROUPS);
     _net_current[e] = current;
 }
 
@@ -338,5 +372,7 @@ double* MeshCell::getOldNetCurrent(){
 }
 
 void MeshCell::setOldNetCurrent(double current, int e){
+    assert(e >= 0);
+    assert(e < NUM_ENERGY_GROUPS);
     _old_net_current[e] = current;
 }
