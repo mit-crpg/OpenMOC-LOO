@@ -569,9 +569,10 @@ void Solver::updateBoundaryFluxByQuadrature()
 {
     Track *track;
     segment *seg;
-    MeshSurface *meshSurface, **meshSurfaces;
+    MeshSurface *meshSurface1, *meshSurface2,  **meshSurfaces;
     double phi, factor;
     int ind, num_segments, pe, surf_id, num_updated = 0;
+    int surf_id1, surf_id2; 
 
     meshSurfaces = _geom->getMesh()->getSurfaces();
 
@@ -583,7 +584,7 @@ void Solver::updateBoundaryFluxByQuadrature()
             num_segments = track->getNumSegments();
             phi = track->getPhi();
             if (phi < PI / 2.0)
-                ind = 1;
+                ind = 1; //1
             else
                 ind = 0;
 
@@ -597,24 +598,41 @@ void Solver::updateBoundaryFluxByQuadrature()
                 else
                     surf_id = seg->_mesh_surface_fwd;
 
-                if ((surf_id % 8) < 4){}
-                else if ((surf_id % 8) < 6)
-                    surf_id = (surf_id / 8) * 8 + 1;
+                if ((surf_id % 8) < 4)
+                {
+                    surf_id1 = surf_id;
+                    surf_id2 = surf_id;
+                }
                 else if ((surf_id % 8) < 7)
-                    surf_id -= 4;
-                else
-                    surf_id -= 7;
+                {
+                    surf_id1 = surf_id - 4;
+                    surf_id2 = surf_id - 3;
+                }
+                else 
+                {
+                    surf_id1 = surf_id - 4;
+                    surf_id2 = surf_id - 7;
+                }
 
-                meshSurface = meshSurfaces[surf_id];
+                assert((surf_id1 % 8) < 4);
+                assert((surf_id2 % 8) < 4);
+
+                meshSurface1 = meshSurfaces[surf_id1];
+                meshSurface2 = meshSurfaces[surf_id2];
                 pe = dir * GRP_TIMES_ANG;
                 for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
                 {
-                    if (meshSurface->getOldQuadFlux(e, ind) > -100)
+                    if (meshSurface1->getOldQuadFlux(e, ind) > -INFINITY)
                     {
-                        factor = meshSurface->getQuadFlux(e, ind) 
-                            // / meshSurface->getCurrent(e);
-                            / meshSurface->getOldQuadFlux(e, ind);
-                        log_printf(DEBUG, "factor = %.10f", factor);
+                        factor = meshSurface1->getQuadFlux(e, ind) 
+                            / meshSurface1->getOldQuadFlux(e, ind) 
+                            + meshSurface2->getQuadFlux(e, ind) 
+                            / meshSurface2->getOldQuadFlux(e, ind);
+                        factor *= 0.5;
+                        
+                        if (e == 0)
+                            log_printf(DEBUG, "factor = %.10f", factor);
+
                         for (int p = 0; p < NUM_POLAR_ANGLES; p++)
                         {
                             track->updatePolarFluxes(pe, factor);
@@ -630,8 +648,8 @@ void Solver::updateBoundaryFluxByQuadrature()
                                        "e %d i %d j %d (total %d) %f -> %f"
                                        " forward phi %f",
                                        e, i, j, _num_tracks[i],
-                                       meshSurface->getOldQuadFlux(e, ind),
-                                       meshSurface->getQuadFlux(e, ind), phi);
+                                       meshSurface1->getOldQuadFlux(e, ind),
+                                       meshSurface1->getQuadFlux(e, ind), phi);
                         }		
                     }
                 }
