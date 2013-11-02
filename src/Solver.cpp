@@ -1120,7 +1120,7 @@ void Solver::tallyLooWeight(Track *track, segment *segment,
                             ->incrementTotalWt(wt, index + 3);
                     }
                     // geometry's boundary 1 is mesh's 0
-                    else if (_geom->getMesh()->getBoundary(1) == REFLECTIVE)
+                    else if (_geom->getMesh()->getBoundary(0) == REFLECTIVE)
                     {
                         meshSurfaces[i * 8 + 1]
                             ->incrementTotalWt(wt2 / sinTheta, opposite_index);
@@ -1136,7 +1136,7 @@ void Solver::tallyLooWeight(Track *track, segment *segment,
                         meshSurfaces[(i + _cw) * 8 + 0]
                             ->incrementTotalWt(wt, index + 3);
                     }
-                    else if (_geom->getMesh()->getBoundary(3) == REFLECTIVE)
+                    else if (_geom->getMesh()->getBoundary(1) == REFLECTIVE)
                     {
                         meshSurfaces[i * 8 + 0]
                             ->incrementTotalWt(wt2 / cosTheta, opposite_index);
@@ -1179,7 +1179,7 @@ void Solver::tallyLooWeight(Track *track, segment *segment,
                         meshSurfaces[(i + _cw) * 8 + 2]
                             ->incrementTotalWt(wt, index + 3);
                     }
-                    else if (_geom->getMesh()->getBoundary(3) == REFLECTIVE)
+                    else if (_geom->getMesh()->getBoundary(1) == REFLECTIVE)
                     {
                         meshSurfaces[i * 8 + 2]
                             ->incrementTotalWt(wt2 / cosTheta, opposite_index);
@@ -1221,7 +1221,7 @@ void Solver::tallyLooWeight(Track *track, segment *segment,
                         meshSurfaces[(i - _cw) * 8 + 2]
                             ->incrementTotalWt(wt, index + 3);
                     }
-                    else if (_geom->getMesh()->getBoundary(4) == REFLECTIVE)
+                    else if (_geom->getMesh()->getBoundary(3) == REFLECTIVE)
                     {
                         meshSurfaces[i * 8 + 2]
                             ->incrementTotalWt(wt2 / cosTheta, opposite_index);
@@ -1248,7 +1248,7 @@ void Solver::tallyLooWeight(Track *track, segment *segment,
                         meshSurfaces[(i - 1) * 8 + 3]
                             ->incrementTotalWt(wt, index + 3);
                     }
-                    else if (_geom->getMesh()->getBoundary(1) == REFLECTIVE)
+                    else if (_geom->getMesh()->getBoundary(0) == REFLECTIVE)
                     {
                         meshSurfaces[i * 8 + 3]
                             ->incrementTotalWt(wt2 / sinTheta, opposite_index);
@@ -1263,7 +1263,7 @@ void Solver::tallyLooWeight(Track *track, segment *segment,
                         meshSurfaces[(i - _cw) * 8 + 0]
                             ->incrementTotalWt(wt, index + 3);
                     }
-                    else if (_geom->getMesh()->getBoundary(4) == REFLECTIVE)
+                    else if (_geom->getMesh()->getBoundary(3) == REFLECTIVE)
                     {
                         meshSurfaces[i * 8 + 0]
                             ->incrementTotalWt(wt2 / cosTheta, opposite_index);
