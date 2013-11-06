@@ -1352,7 +1352,7 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter)
 
         /* check for convergence for the CMFD iterative solver using 
          * _l2_norm_conv_thresh as criteria */
-        if (iter > 3 && eps < _l2_norm_conv_thresh)
+        if ((iter > 5) && (eps < _l2_norm_conv_thresh))
             break;
     }
     _num_iter_to_conv = iter + 1;
@@ -1450,9 +1450,13 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
 
     int loo_iter, max_outer = 200; 
 
+    /* we set min_outer to make sure the low order system's
+     * convergence criteria is sufficiently tight */ 
+    int min_outer = 10;
+
     if (moc_iter == 10000)
     {
-        max_outer = 10;
+        max_outer = 30;
         log_printf(NORMAL, "DEBUG mode on, max outer = %d", max_outer);
     }
 
@@ -1658,8 +1662,10 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
         }
 
         /* FIXME: DEBUG */
+        /*
         if ((_run_loo_phi) && (loo_iter == -1))
             updateOldQuadFlux();
+        */
 
         /* Computes new cell averaged source, looping over energy groups */
         double src_ratio;
@@ -2001,12 +2007,9 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
         double normalize_factor = computeNormalization();
 
         
-        // DEBUG
-        normalize_factor = 1.0;
+        // DEBUG: need to normalize
+        //normalize_factor = 1.0;
         log_printf(ACTIVE, "normalize_factor = %.10f", normalize_factor);
-
-        //normalize_factor = 1;
-
 
         /* Normalizes leakage, scalar flux, angular flux */
         /* FIXME: should or should not normalize leak_tot? */
@@ -2048,6 +2051,7 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
                    " leak_tot = %f",
                    ho_current_tot, net_current_tot, leak_tot);
 
+        double old_keff = _keff;
         _keff = fis_tot / (abs_tot + leak_tot); 
         log_printf(DEBUG, "%d: %.10f / (%.10f + %.10f) = %f", 
                    loo_iter, fis_tot, abs_tot, leak_tot, _keff);
@@ -2079,14 +2083,15 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
         /* In DEBUG mode (run CMFD or LOO after MOC converges), 
          * moc_iter = 10000 */
         if (moc_iter == 10000)
-            log_printf(NORMAL, " %d-th LOO iteration k = %.10f, eps = %e", 
-                       loo_iter, _keff, eps);
+            log_printf(NORMAL, " %d-th LOO iteration k = %.10f, eps = %e"
+                       " k eps = %f", 
+                       loo_iter, _keff, eps, (_keff - old_keff) / old_keff);
         else
             log_printf(ACTIVE, " %d-th LOO iteration k = %.10f, eps = %e", 
                        loo_iter, _keff, eps);
 
         /* If LOO iterative solver converges */
-        if (eps < _l2_norm_conv_thresh)
+        if ((eps < _l2_norm_conv_thresh) && (loo_iter > min_outer))
         {
             if (_plotter->plotKeff())
                 _plotter->plotCMFDKeff(_mesh, moc_iter);
@@ -2710,11 +2715,8 @@ void Cmfd::updateMOCFlux(int moc_iter)
     if (_run_loo)
         under_relax = _damp_factor;
 
-    //int max_i = -10, max_e = -10; 
-    //double max = -100.0;
-
-    //double max_range = 2.0, min_range = 1.0 / max_range;
     double max_range = INFINITY, min_range = -INFINITY;
+    //double max_range = 5.0, min_range = 1.0 / max_range; 
 
     double tmp_max = 0, tmp_cmco;
 
@@ -2734,8 +2736,10 @@ void Cmfd::updateMOCFlux(int moc_iter)
 
             tmp_cmco = new_flux / old_flux;
             if (tmp_cmco < 0.0)
-                log_printf(WARNING, " iter %d update cell %d energy %d with %f",
-                           moc_iter, i, e, tmp_cmco);
+                log_printf(WARNING, " iter %d update cell %d energy %d with"
+                           " %f / %f = %f",
+                           moc_iter, i, e, 
+                           new_flux, old_flux, tmp_cmco);
 
             tmp_max = fabs(new_flux / old_flux - 1.0);
             CMCO[i] += tmp_max;
@@ -2837,7 +2841,7 @@ void Cmfd::updateBoundaryFlux(int moc_iter)
     return;
 }
 
-void Cmfd::updateBoundaryFluxByHalfSpace(int moc_iter)
+void Cmfd::updateBoundaryFluxByScalarFlux(int moc_iter)
 {
     Track *track;
     segment *seg;
@@ -3023,6 +3027,7 @@ void Cmfd::computeLooL2Norm(int moc_iter)
         } 
         if (old_power[i] > 0)
         {
+            //fprintf(stderr, "%f / %f\n", new_power[i], old_power[i]);
             eps += pow(new_power[i] / old_power[i] - 1.0, 2);
             num_counted++;
         }

@@ -3,7 +3,7 @@ COMPILEOPTS += -Wall
 COMPILEOPTS += -Werror=unused-variable
 COMPILEOPTS += -std=gnu++0x
 COMPILEOPTS += -fopenmp
-COMPILEOPTS += -O2
+#COMPILEOPTS += -O2
 COMPILEOPTS += -I/usr/include/petsc
 COMPILEOPTS += -I/usr/include/petsc/linux-gnu-cxx-debug/include
 COMPILEOPTS += -I/usr/include/petsc/linux-gnu-cxx-opt/include

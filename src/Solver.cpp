@@ -433,7 +433,7 @@ void Solver::zeroLeakage(){
 
     for (int s = 1; s < 5; s++)
     {
-        log_printf(NORMAL, "geometry surface %d has leakage %f", s, 
+        log_printf(ACTIVE, "geometry surface %d has leakage %f", s, 
                    _geom->getSurface(s)->getLeakage()[0]);
     }
 
@@ -518,7 +518,7 @@ if (tot_abs < 0.0)
 
 k = tot_fission / (tot_abs + leakage);
 
-log_printf(NORMAL, "MOC k = %f / (%f + %f) = %f", 
+log_printf(ACTIVE, "MOC k = %f / (%f + %f) = %f", 
            tot_fission, tot_abs, leakage, k);
 //_geom->getMesh()->setKeffMOC(_k_eff, iteration);
 return k;
@@ -530,38 +530,43 @@ return k;
  */
 void Solver::updateFlux(int moc_iter) 
 {
-    _cmfd->updateMOCFlux(moc_iter);
-
-    if (_update_boundary)
+    if (moc_iter > -10) //47 (2x2_leakage) 79 (2x2) 229 (4x4_leakage) 
     {
-        if (_run_loo && (!(_diffusion && (moc_iter == 0))))
+        log_printf(NORMAL, " update MOC Flux at moc_iter %d ", moc_iter);
+        _cmfd->updateMOCFlux(moc_iter);
+
+        /* updates boundary angular fluxes */
+        if (_update_boundary)
         {
-            log_printf(DEBUG, " iter %d prolongation: update by quadrature",
-                       moc_iter);
-            if (_run_loo1)
-                updateBoundaryFluxByQuadrature();
+            if (_run_loo && (!(_diffusion && (moc_iter == 0))))
+            {
+                if (moc_iter > -10)
+                {
+                    log_printf(NORMAL, " iter %d prolongation: by quadrature",
+                               moc_iter);
+                    updateBoundaryFluxByQuadrature();
+                    //_cmfd->updateBoundaryFluxByScalarFlux(moc_iter);
+                    //_cmfd->updateBoundaryFluxBySrc(moc_iter);
+                    //_cmfd->updateBoundaryFluxByNetCurrent(moc_iter);
+                }
+            }
+#if NEW
+            else if ((_diffusion) && (moc_iter == 0))
+            {
+                _cmfd->updateBoundaryFlux(moc_iter);
+            }
+#endif
             else
             {
-                updateBoundaryFluxByQuadrature();
-                //_cmfd->updateBoundaryFluxBySrc(moc_iter);
-                //_cmfd->updateBoundaryFluxByNetCurrent(moc_iter);
-                //_cmfd->updateBoundaryFluxByHalfSpace(moc_iter);
+                log_printf(NORMAL, " iter %d prolongation: update by scalar",
+                           moc_iter);
+                _cmfd->updateBoundaryFluxByScalarFlux(moc_iter);
             }
         }
-#if NEW
-        else if ((_diffusion) && (moc_iter == 0))
-        {
-            _cmfd->updateBoundaryFlux(moc_iter);
-        }
-#endif
-        else
-        {
-            log_printf(DEBUG, " iter %d prolongation: update by partial",
-                       moc_iter);
-            _cmfd->updateBoundaryFluxByHalfSpace(moc_iter);
-        }
+
+        /* normalize fluxes */
+        normalizeFlux();
     }
-    normalizeFlux();
     return;
 }
 
