@@ -13,25 +13,19 @@
 <!-- Definition of Lattices -->
   <lattice id="5">
     <type>rectangular</type>
-    <dimension>8 8</dimension>
+    <dimension>2 2</dimension>
     <width>1.26 1.26</width>
     <universes>
-      1 2 2 1 1 2 2 1  
-      2 1 1 2 2 1 1 2
-      2 1 1 2 2 1 1 2
-      1 2 2 1 1 2 2 1  
-      1 2 2 1 1 2 2 1  
-      2 1 1 2 2 1 1 2
-      2 1 1 2 2 1 1 2
-      1 2 2 1 1 2 2 1  
+      2 2
+      2 2
     </universes>
   </lattice>
 
 <!-- Definition of Surfaces -->
-  <surface id="1" type="x-plane" coeffs="-5.04" boundary="reflective"/>
-  <surface id="2" type="x-plane" coeffs="5.04"  boundary="reflective"/>
-  <surface id="3" type="y-plane" coeffs="-5.04" boundary="reflective" />
-  <surface id="4" type="y-plane" coeffs="5.04"  boundary="reflective"/>
-  <surface id="5" type="circle"  coeffs="0.0 0.0 0.60" />
+  <surface id="1" type="x-plane" coeffs="-1.26" boundary="reflective"/>
+  <surface id="2" type="x-plane" coeffs="1.26"  boundary="vacuum"/>
+  <surface id="3" type="y-plane" coeffs="-1.26" boundary="reflective" />
+  <surface id="4" type="y-plane" coeffs="1.26"  boundary="vacuum"/>
+  <surface id="5" type="circle"  coeffs="0.0 0.0 0.10" />
   <surface id="6" type="circle"  coeffs="0.0 0.0 0.60" />
 </geometry>
