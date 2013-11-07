@@ -532,17 +532,19 @@ void Solver::updateFlux(int moc_iter)
 {
     if (moc_iter > -10) //47 (2x2_leakage) 79 (2x2) 229 (4x4_leakage) 
     {
-        log_printf(NORMAL, " update MOC Flux at moc_iter %d ", moc_iter);
+        log_printf(NORMAL, " iter %d scalar flux prolongation", moc_iter);
         _cmfd->updateMOCFlux(moc_iter);
 
         /* updates boundary angular fluxes */
         if (_update_boundary)
         {
+            /* standard LOO update */
             if (_run_loo && (!(_diffusion && (moc_iter == 0))))
             {
                 if (moc_iter > -10)
                 {
-                    log_printf(NORMAL, " iter %d prolongation: by quadrature",
+                    log_printf(NORMAL, " iter %d boundary angular flux "
+                               "prolongation: by quadrature",
                                moc_iter);
                     updateBoundaryFluxByQuadrature();
                     //_cmfd->updateBoundaryFluxByScalarFlux(moc_iter);
@@ -550,15 +552,19 @@ void Solver::updateFlux(int moc_iter)
                     //_cmfd->updateBoundaryFluxByNetCurrent(moc_iter);
                 }
             }
-#if NEW
+            /* first diffusion step */
             else if ((_diffusion) && (moc_iter == 0))
             {
-                _cmfd->updateBoundaryFlux(moc_iter);
+                log_printf(NORMAL, " iter %d boundary angular flux "
+                           "prolongation: by scalar flux",
+                           moc_iter);
+                _cmfd->updateBoundaryFluxByScalarFlux(moc_iter);
             }
-#endif
+            /* standard CMFD update */
             else
             {
-                log_printf(NORMAL, " iter %d prolongation: update by scalar",
+                log_printf(NORMAL, " iter %d boundary angular flux "
+                           "prolongation: update by scalar",
                            moc_iter);
                 _cmfd->updateBoundaryFluxByScalarFlux(moc_iter);
             }
@@ -589,7 +595,7 @@ void Solver::updateBoundaryFluxByQuadrature()
             num_segments = track->getNumSegments();
             phi = track->getPhi();
             if (phi < PI / 2.0)
-                ind = 1; //1
+                ind = 1; 
             else
                 ind = 0;
 
@@ -597,7 +603,7 @@ void Solver::updateBoundaryFluxByQuadrature()
             for (int dir = 0; dir < 2; dir++)
             {
                 seg = track->getSegment(dir * (num_segments - 1));
-
+                
                 if (dir == 0)
                     surf_id = seg->_mesh_surface_bwd; 
                 else
