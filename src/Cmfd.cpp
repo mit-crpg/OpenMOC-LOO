@@ -1529,7 +1529,7 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
         } 
     }
 
-#if 1
+#if 0
     /* Backs out high order current using currents accumulated in high
      * order. Though keep in mind that we have already divided the
      * current accumulator by the accumulated wt, so the current is
@@ -1927,8 +1927,7 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
         } /* finish looping over energy; exit to iter level */
 
         double new_flux = 0;
-        double ho_current_val = 0;
-        double ho_current_tot = 0;
+        //double ho_current_val = 0, ho_current_tot = 0;
 
         /* Computs new cell-averaged scalar flux */
         if (_run_loo_phi)
@@ -1950,18 +1949,18 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
                                 - net_current[i][e] / vol)
                         / meshCell->getSigmaT()[e];
 
-                    /*log_printf(ACTIVE, "Cell %d e %d new / old flux"
+                    meshCell->setNewFlux(new_flux, e);		       
+
+                    log_printf(ACTIVE, "Cell %d e %d new / old flux"
                                " %f/ %f = %.10f",
                                i, e, 
                                new_flux, meshCell->getNewFlux()[e],
-                               new_flux / meshCell->getNewFlux()[e]);*/
+                               new_flux / meshCell->getNewFlux()[e]);
 
+                    /*
                     ho_current_val =  vol * (FOUR_PI * new_src[i][e] - 
                                          meshCell->getNewFlux()[e] 
                                          * meshCell->getSigmaT()[e]);
-
-
-                    meshCell->setNewFlux(new_flux, e);		       
 
                     ho_current_tot += ho_current_val;
 
@@ -1971,6 +1970,7 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
                                net_current[i][e] / ho_current_val,
                                net_current[i][e], ho_current[i][e], 
                                net_current[i][e] / ho_current[i][e]);
+                    */
                 }
             }
         }
@@ -2047,9 +2047,8 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
         leak_tot *= SIN_THETA_45 * _mesh->getCells(0)->getWidth();
 #endif
 
-        log_printf(ACTIVE, "ho_current_tot = %f, net_current_tot = %f,"
-                   " leak_tot = %f",
-                   ho_current_tot, net_current_tot, leak_tot);
+        log_printf(ACTIVE, "net_current_tot = %f,"
+                   " leak_tot = %f", net_current_tot, leak_tot);
 
         double old_keff = _keff;
         _keff = fis_tot / (abs_tot + leak_tot); 
