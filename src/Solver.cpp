@@ -532,7 +532,7 @@ void Solver::updateFlux(int moc_iter)
 {
     if (moc_iter > -10) //47 (2x2_leakage) 79 (2x2) 229 (4x4_leakage) 
     {
-        log_printf(NORMAL, " iter %d scalar flux prolongation", moc_iter);
+        log_printf(ACTIVE, " iter %d scalar flux prolongation", moc_iter);
         _cmfd->updateMOCFlux(moc_iter);
 
         /* updates boundary angular fluxes */
@@ -543,7 +543,7 @@ void Solver::updateFlux(int moc_iter)
             {
                 if (moc_iter > -10)
                 {
-                    log_printf(NORMAL, " iter %d boundary angular flux "
+                    log_printf(ACTIVE, " iter %d boundary angular flux "
                                "prolongation: by quadrature",
                                moc_iter);
                     updateBoundaryFluxByQuadrature();
@@ -576,11 +576,54 @@ void Solver::updateFlux(int moc_iter)
     return;
 }
 
+void Solver::storeMOCBoundaryFlux()
+{
+#if 1
+    MeshSurface *meshSurface, **meshSurfaces;
+    meshSurfaces = _geom->getMesh()->getSurfaces();
+    for (int i = 0; i < 8 * _cw * _ch; i++)
+    {
+        meshSurface = meshSurfaces[i];
+        for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
+        {
+            for (int ind = 0; ind < 2; ind++)
+            {
+                meshSurface->setOldQuadFlux(meshSurface->getQuadFlux(e, ind),
+                                        e, ind);
+            }
+        }
+    }
+#else
+    MeshCell *meshCell; 
+    MeshSurface *surf;
+
+    for (int i = 0; i < _cw * _ch; i++)
+    {
+        meshCell = _geom->getMesh()->getCells(i);
+        
+        for (int s = 0; s < 8; s++)
+        {
+            for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
+            {
+                for (int j = 0; j < 2; j++)
+                {
+                    surf = meshCell->getMeshSurfaces(s);
+                    surf->setOldQuadFlux(surf->getQuadFlux(e,j), e, j);
+                }
+            }
+        }
+    }
+#endif        
+    return;
+}
+
+
 void Solver::updateBoundaryFluxByQuadrature()
 {
     Track *track;
     segment *seg;
-    MeshSurface *meshSurface1, *meshSurface2,  **meshSurfaces;
+    MeshSurface *meshSurface1, *meshSurface2;
+    MeshSurface **meshSurfaces;  
     double phi, factor;
     int ind, num_segments, pe, surf_id, num_updated = 0;
     int surf_id1, surf_id2; 
@@ -594,6 +637,8 @@ void Solver::updateBoundaryFluxByQuadrature()
             track = &_tracks[i][j];
             num_segments = track->getNumSegments();
             phi = track->getPhi();
+
+            /* use the opposite quadrature */
             if (phi < PI / 2.0)
                 ind = 1; 
             else
@@ -603,17 +648,25 @@ void Solver::updateBoundaryFluxByQuadrature()
             for (int dir = 0; dir < 2; dir++)
             {
                 seg = track->getSegment(dir * (num_segments - 1));
-                
+         
+                /* find the boundary surface: if forward direction,
+                 * find the surface that the segment starts from.  */
                 if (dir == 0)
                     surf_id = seg->_mesh_surface_bwd; 
                 else
                     surf_id = seg->_mesh_surface_fwd;
 
+                // DEBUG: surf_id is correct. 
+                //log_printf(NORMAL, " boundary surface has %d", surf_id);
+
+                /* correct for corners -- find the adjacent boundary surfaces */
                 if ((surf_id % 8) < 4)
                 {
                     surf_id1 = surf_id;
                     surf_id2 = surf_id;
                 }
+                /* FIXME */
+                /* the corner treatment is not quite right */
                 else if ((surf_id % 8) < 7)
                 {
                     surf_id1 = surf_id - 4;
@@ -628,30 +681,23 @@ void Solver::updateBoundaryFluxByQuadrature()
                 assert((surf_id1 % 8) < 4);
                 assert((surf_id2 % 8) < 4);
 
+#if 1                
                 meshSurface1 = meshSurfaces[surf_id1];
                 meshSurface2 = meshSurfaces[surf_id2];
+#else                
+                meshSurface1 =  _geom->getMesh()->getCells(surf_id1 / 8)
+                    ->getMeshSurfaces(surf_id1 % 8);
+                meshSurface2 =  _geom->getMesh()->getCells(surf_id2 / 8)
+                    ->getMeshSurfaces(surf_id2 % 8);
+#endif
+                /* initialize starting point of pe which is 0 for
+                 * forward direction and GRP_TIMES_ANG for backward
+                 * direction */
                 pe = dir * GRP_TIMES_ANG;
+
                 for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
                 {
-                    if (meshSurface1->getOldQuadFlux(e, ind) > -INFINITY)
-                    {
-                        factor = meshSurface1->getQuadFlux(e, ind) 
-                            / meshSurface1->getOldQuadFlux(e, ind) 
-                            + meshSurface2->getQuadFlux(e, ind) 
-                            / meshSurface2->getOldQuadFlux(e, ind);
-                        factor *= 0.5;
-                        
-                        if (e == 0)
-                            log_printf(DEBUG, "factor = %.10f", factor);
-
-                        for (int p = 0; p < NUM_POLAR_ANGLES; p++)
-                        {
-                            track->updatePolarFluxes(pe, factor);
-                            pe++;
-                            num_updated++;
-                        }	
-                    }	
-                    else
+                    if (meshSurface1->getOldQuadFlux(e, ind) < 0)
                     {
                         if (e == 0)
                         {
@@ -662,7 +708,43 @@ void Solver::updateBoundaryFluxByQuadrature()
                                        meshSurface1->getOldQuadFlux(e, ind),
                                        meshSurface1->getQuadFlux(e, ind), phi);
                         }		
+                        pe += NUM_POLAR_ANGLES;
                     }
+                    else if (meshSurface1->getOldQuadFlux(e,ind) < 1e-10)
+                    {
+                        factor = meshSurface1->getQuadFlux(e, ind);
+                        for (int p = 0; p < NUM_POLAR_ANGLES; p++)
+                        {
+                            track->setPolarFluxesByIndex(pe, factor);
+                            pe++;
+                            num_updated++;
+                        }
+                    }
+                    else
+                    {
+                        /*
+                        factor = meshSurface1->getQuadFlux(e, ind) 
+                            / meshSurface1->getOldQuadFlux(e, ind) 
+                            + meshSurface2->getQuadFlux(e, ind) 
+                            / meshSurface2->getOldQuadFlux(e, ind);
+                        factor *= 0.5;
+                        */
+                        
+                        factor = (meshSurface1->getQuadFlux(e, ind) 
+                                  + meshSurface2->getQuadFlux(e, ind)) 
+                            / (meshSurface1->getOldQuadFlux(e, ind)
+                               + meshSurface2->getOldQuadFlux(e, ind));
+
+                        if (e == 0)
+                            log_printf(DEBUG, "factor = %.10f", factor);
+
+                        for (int p = 0; p < NUM_POLAR_ANGLES; p++)
+                        {
+                            track->updatePolarFluxes(pe, factor);
+                            pe++;
+                            num_updated++;
+                        }	
+                    }	
                 }
             }
         }
@@ -951,10 +1033,11 @@ void Solver::plotFluxes(int moc_iter)
 
     std::stringstream string;
     std::string title_str;
-    for (int i = 0; i < NUM_ENERGY_GROUPS; i++)
+    //for (int i = 0; i < NUM_ENERGY_GROUPS; i++)
+    for (int i = 0; i < 1; i++)
     {
         string.str("");
-        string << "flux" << i + 1 << "group";
+        string << "iter" << moc_iter << "flux" << i + 1 << "group";
         title_str = string.str();
         _plotter->makeRegionMap(bitMapFSR->pixels, bitMap->pixels, 
                                 _FSRs_to_fluxes[i]);
@@ -1438,6 +1521,9 @@ void Solver::MOCsweep(int max_iterations, int moc_iter)
     else
         tally = 0;
 
+    /* FIXME: for debug */
+    max_iterations = 10;
+
     /* Loop for until converged or max_iterations is reached */
     for (int i = 0; i < max_iterations; i++)
     {
@@ -1875,9 +1961,12 @@ void Solver::updateSource()
 double Solver::runLoo(int moc_iter)
 {
     double loo_keff;
-
     _cmfd->storePreMOCMeshSource(_flat_source_regions);
+ 
+    //storeMOCBoundaryFlux();
+
     MOCsweep(_boundary_iteration + 1, moc_iter);
+
     _k_half = computeKeff(100);
 
     _cmfd->computeXS();
@@ -1890,6 +1979,9 @@ double Solver::runLoo(int moc_iter)
     else 
     {
         _cmfd->computeQuadFlux();
+
+        storeMOCBoundaryFlux();
+
         _cmfd->computeQuadSrc();
         loo_keff = _cmfd->computeLooFluxPower(moc_iter, _k_eff);
     }
@@ -2090,6 +2182,8 @@ double Solver::kernel(int max_iterations) {
         /* Prints out keff & eps, may update keff too based on _update_keff */
         printToScreen(moc_iter, eps_inf);
         printToLog(moc_iter, eps_inf, eps_2, spectral_radius);
+
+        plotEverything(moc_iter);
 
         /* Alternative: if (_cmfd->getL2Norm() < _moc_conv_thresh) */
         if (eps_2 < _moc_conv_thresh) 

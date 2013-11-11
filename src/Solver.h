@@ -132,6 +132,7 @@ public:
     double computeFsrL2Norm(double *old_fsr_powers);
     double computeFsrLinf(double *old_fsr_powers);
     double computeSpectralRadius(double *old_fsr_powers); 
+    void storeMOCBoundaryFlux();
 
     /* getters and setters */
     double** getFSRtoFluxMap();

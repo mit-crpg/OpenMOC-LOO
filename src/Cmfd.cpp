@@ -862,7 +862,7 @@ void Cmfd::computeQuadFlux()
 #endif
                         flux = s[i]->getQuadCurrent(e, j) / SIN_THETA_45 / wt;
                         s[i]->setQuadFlux(flux, e, j);
-                        s[i]->setOldQuadFlux(flux, e, j);                  
+                        //s[i]->setOldQuadFlux(flux, e, j);                  
                         tmp += s[i]->getQuadCurrent(e, j);
                     }	
 #if NEW	

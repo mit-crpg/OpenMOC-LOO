@@ -53,7 +53,7 @@ MeshCell::MeshCell(){
         _old_net_current[e] = 0.0;
         for (int k = 0; k < 8; k++) 
         {
-            _quad_flux[e * 8 + k] = 0.0;
+            _quad_flux[e * 8 + k] = 1.0;
             _quad_src[e * 8 + k] = 0.0;
         }
     }

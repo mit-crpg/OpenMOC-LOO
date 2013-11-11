@@ -46,7 +46,8 @@ MeshSurface::MeshSurface(){
         for (int ind = 0; ind < 2; ind++)
         {
             _quad_current[e][ind] = 0.0;
-            _quad_flux[e][ind] = 0.0;
+            _quad_flux[e][ind] = 1.0;
+            _old_quad_flux[e][ind] = 1.0;
         }
     }
 
