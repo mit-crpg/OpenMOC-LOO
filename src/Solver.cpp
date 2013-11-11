@@ -735,6 +735,8 @@ void Solver::updateBoundaryFluxByQuadrature()
                             / (meshSurface1->getOldQuadFlux(e, ind)
                                + meshSurface2->getOldQuadFlux(e, ind));
 
+                        factor = _damp_factor * factor + 1.0 - _damp_factor; 
+
                         if (e == 0)
                             log_printf(DEBUG, "factor = %.10f", factor);
 
