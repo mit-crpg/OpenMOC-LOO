@@ -1521,9 +1521,6 @@ void Solver::MOCsweep(int max_iterations, int moc_iter)
     else
         tally = 0;
 
-    /* FIXME: for debug */
-    max_iterations = 10;
-
     /* Loop for until converged or max_iterations is reached */
     for (int i = 0; i < max_iterations; i++)
     {
