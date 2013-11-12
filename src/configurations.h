@@ -19,6 +19,7 @@
  ****************************** USER DEFINED **********************************
  *****************************************************************************/
 #define NUM_POLAR_ANGLES 1
+// P0 is shorthand for $\sin \theta_p$ for one polar angle.
 #define P0 0.798184
 #define NUM_ENERGY_GROUPS 7
 #define GRP_TIMES_ANG NUM_POLAR_ANGLES*NUM_ENERGY_GROUPS

@@ -860,7 +860,8 @@ void Cmfd::computeQuadFlux()
 #else
                         double wt = _mesh->getCells(0)->getWidth();
 #endif
-                        flux = s[i]->getQuadCurrent(e, j) / SIN_THETA_45 / wt;
+                        flux = s[i]->getQuadCurrent(e, j) / SIN_THETA_45 
+                            / wt / P0;
                         s[i]->setQuadFlux(flux, e, j);
                         //s[i]->setOldQuadFlux(flux, e, j);                  
                         tmp += s[i]->getQuadCurrent(e, j);
@@ -899,7 +900,6 @@ void Cmfd::computeCurrent()
     /* Initializations */
     MeshSurface *s[4];
     MeshCell* meshCell;
-    //double l = _mesh->getCells(0)->getWidth();
 
     /* loop over all mesh cells */
     for (int y = 0; y < _ch; y++)
@@ -1943,7 +1943,7 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
 
                 for (int e = 0; e < _ng; e++)
                 {                    
-                    net_current[i][e] *= SIN_THETA_45;
+                    net_current[i][e] *= SIN_THETA_45 * P0;
 
                     new_flux = (FOUR_PI * new_src[i][e] 
                                 - net_current[i][e] / vol)
