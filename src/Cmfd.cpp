@@ -1126,7 +1126,7 @@ void Cmfd::computeQuadSrc()
 
             /* Now that we have all the in's and out's, computes src */
             /* has to use get l to get the polar angle right */
-            double l = meshCell->getL();
+            double l = meshCell->getATL();
             for (int e = 0; e < _ng; e++)
             {
                 double xs = meshCell->getSigmaT()[e];
@@ -1508,7 +1508,7 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
             new_src[i][e] = 0.0;
             sum_quad_flux[i][e] = 0;
             quad_xs[i][e] = _mesh->getCells(i)->getSigmaT()[e];
-            tau[i][e] = quad_xs[i][e] * _mesh->getCells(i)->getL();
+            tau[i][e] = quad_xs[i][e] * _mesh->getCells(i)->getATL();
             expo[i][e] = exp(-tau[i][e]);
         }
         for (int t = 0; t < 8 * _ng; t++)
