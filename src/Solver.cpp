@@ -1406,7 +1406,6 @@ void Solver::initializeWeights()
     /* Loop over each thread */
     for (t = 0; t < num_threads; t++) 
     {
-
         /* Loop over the pair of azimuthal angles for this thread */
         j = t;
         while (j < _num_azim) 
@@ -1472,7 +1471,7 @@ void Solver::initializeWeights()
         h = meshSurfaces[i * 8 + 2]->getTotalWt(2);
         meshCell->setATWidth(w);
         meshCell->setATHeight(h);
-        meshCell->setATL(0.5 * sqrt(w * w + h * h));
+        meshCell->setATL(0.5 * sqrt(w * w + h * h) / P0);
     }
 
     return;
