@@ -10,8 +10,6 @@
 #ifndef CMFD_H_
 #define CMFD_H_
 
-#define phi_update 0
-
 #include <utility>
 #include <math.h>
 #include <unordered_map>

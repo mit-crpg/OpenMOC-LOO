@@ -1452,7 +1452,7 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
 
     /* we set min_outer to make sure the low order system's
      * convergence criteria is sufficiently tight */ 
-    int min_outer = 10;
+    int min_outer = 200;
 
     if (moc_iter == 10000)
     {
@@ -1698,11 +1698,6 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
             }
         } /* finishing looping over i; exit to iter level */
 
-        /* weighting on net current */
-#if phi_update	
-        double wq = 1.0 * FOUR_PI;
-        double wt = 1.0 / 8.0 * FOUR_PI;
-#endif
         double leak_tot = 0.0;
 
         /* Sweeps over geometry, solve LOO MOC */
@@ -1781,14 +1776,9 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
 
                     delta = (flux - new_quad_src[i][d] / (double)quad_xs[i][e])
                         * (1 - expo[i][e]);
-#if phi_update
-                    sum_quad_flux[i][e] += wt * delta / tau[i][e] 
-                        + wq * new_quad_src[i][d]/ quad_xs[i][e];
-#else
+
                     sum_quad_flux[i][e] += delta / tau[i][e] + 
                         new_quad_src[i][d] / quad_xs[i][e];
-#endif
-
 #if NEW
                     net_current[i][e] -= flux * getSurf(i, t, 0); 
                     flux -= delta;
@@ -1887,13 +1877,9 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
 
                     delta = (flux - new_quad_src[i][d] / quad_xs[i][e])
                         * (1.0 - expo[i][e]);
-#if phi_update
-                    sum_quad_flux[i][e] += wt * delta / tau[i][e] 
-                        + wq * new_quad_src[i][d]/ quad_xs[i][e];
-#else
+
                     sum_quad_flux[i][e] += delta / tau[i][e] + 
                         new_quad_src[i][d] / quad_xs[i][e];
-#endif
 
 #if NEW
                     net_current[i][e] -= flux * getSurf(i, t, 0); 
@@ -1990,9 +1976,6 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
                                i, e, phi_ratio - 1.0);
 
                     new_flux = meshCell->getOldFlux()[e] * phi_ratio;
-#if phi_update /* for debugging new feature */
-                    new_flux = sum_quad_flux[i][e];
-#endif
 
                     meshCell->setNewFlux(new_flux, e);
                 }
