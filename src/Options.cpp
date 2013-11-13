@@ -28,6 +28,7 @@ Options::Options(int argc, char **argv)
 
     /* most important acceleration options */
     _acc_after_MOC_converge = false;
+    _run_all = false;
     _cmfd = false; 					
     _loo = false;
     _loo1 = false;
@@ -183,6 +184,12 @@ Options::Options(int argc, char **argv)
                 _loo1 = false;
                 _loo2 = true;
                 _damp_factor = 1.0;
+            }
+            else if (strcmp(argv[i], "-wa") == 0 ||
+                     strcmp(argv[i], "--withall") == 0) 
+            {
+                _run_all = true;
+                _cmfd = true;
             }
             else if (strcmp(argv[i], "-pc") == 0 ||
                      strcmp(argv[i], "--plotcurrent") == 0)
@@ -451,6 +458,11 @@ bool Options::getPrintMatrices() {
 int Options::getCmfdLevel(){
     return _cmfd_level;
 }
+
+bool Options::getRunAll(){
+    return _run_all;
+}
+
 
 bool Options::getCmfd(){
     return _cmfd;

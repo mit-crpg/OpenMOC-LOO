@@ -39,6 +39,7 @@ private:
     bool _plot_fluxes;
     bool _compute_pin_powers;
     bool _compress_cross_sections;
+    bool _run_all;
     bool _cmfd;
     bool _loo;
     bool _loo1; //update by psi
@@ -89,6 +90,7 @@ public:
     bool updateKeff();
     bool getGroupStructure();
     bool getPrintMatrices();
+    bool getRunAll();
     bool getCmfd();
     bool getLoo();
     bool getLoo1();

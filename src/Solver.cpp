@@ -102,6 +102,33 @@ Solver::Solver(Geometry* geom, TrackGenerator* track_generator,
     }
 }
 
+void Solver::runCmfd() {
+    _run_cmfd = true;
+    _run_loo = false;
+    _run_loo1 = false;
+    _run_loo2 = false;
+    _cmfd->runCmfd();
+}
+
+void Solver::runLoo1() {
+    _run_cmfd = false;
+    _run_loo = true;
+    _run_loo1 = true;
+    _run_loo2 = false;
+    _cmfd->runLoo1();
+}
+
+void Solver::runLoo2() {
+    _run_cmfd = false;
+    _run_loo = true;
+    _run_loo1 = false;
+    _run_loo2 = true;
+    _cmfd->runLoo2();
+}
+
+void Solver::setK(double k) {
+    _k_eff = k;
+}
 
 /**
  * Solver destructor deletes flat source regions array
@@ -2129,6 +2156,7 @@ double Solver::kernel(int max_iterations) {
         for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
             old_fsr_fluxes[e][n] = _FSRs_to_fluxes[e][n];
     }
+
     /* Source iteration loop */
     for (moc_iter = 0; moc_iter < max_iterations; moc_iter++) 
     {

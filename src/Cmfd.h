@@ -94,6 +94,12 @@ public:
          double l2_norm_conv_thresh, double damp,
          TrackGenerator *track_generator);
     virtual ~Cmfd();
+
+    void runCmfd();
+    void runLoo1();
+    void runLoo2();
+
+
     int getNumIterToConv();
     double getL2Norm();
     double getKeff();

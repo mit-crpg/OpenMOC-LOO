@@ -98,6 +98,13 @@ public:
     Solver(Geometry* geom, TrackGenerator* track_generator, 
            Plotter* plotter, Cmfd* cmfd, Options* opts);
     virtual ~Solver();
+
+    /* setters */
+    void setK(double k);
+    void runCmfd();
+    void runLoo1();
+    void runLoo2();
+
     /* initialization */
     void initializeTrackFluxes(double flux);
     void oneFSRFluxOldSource();

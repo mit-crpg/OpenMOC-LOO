@@ -130,12 +130,45 @@ int main(int argc, char **argv) {
     cmfd.setFSRs(solver.getFSRs());
 
     /* Solve steady state problem */
-    timer.reset();
-    timer.start();
-    k_eff = solver.kernel(MAX_ITERATIONS);
-    timer.stop();
-    timer.recordSplit("Fixed source iteration");
-    log_printf(RESULT, "k_eff = %.10f", k_eff);
+    if (opts.getRunAll())
+    {
+        solver.runCmfd();
+        timer.reset();
+        timer.start();
+        k_eff = solver.kernel(MAX_ITERATIONS);
+        timer.stop();
+        timer.recordSplit("Fixed source iteration");
+        log_printf(RESULT, "k_eff = %.10f", k_eff);
+
+        geometry.setCmfd(false);
+        geometry.setLoo(true);
+        solver.setK(1.0);
+        solver.runLoo1();
+        timer.reset();
+        timer.start();
+        k_eff = solver.kernel(MAX_ITERATIONS);
+        timer.stop();
+        timer.recordSplit("Fixed source iteration");
+        log_printf(RESULT, "k_eff = %.10f", k_eff);
+
+        solver.runLoo2();
+        timer.reset();
+        timer.start();
+        solver.setK(1.0);
+        k_eff = solver.kernel(MAX_ITERATIONS);
+        timer.stop();
+        timer.recordSplit("Fixed source iteration");
+        log_printf(RESULT, "k_eff = %.10f", k_eff);
+    }
+    else
+    {
+        timer.reset();
+        timer.start();
+        k_eff = solver.kernel(MAX_ITERATIONS);
+        timer.stop();
+        timer.recordSplit("Fixed source iteration");
+        log_printf(RESULT, "k_eff = %.10f", k_eff);
+    }
 
     /* Finalize petsc */
     PetscFinalize();

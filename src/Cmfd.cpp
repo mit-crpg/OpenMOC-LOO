@@ -61,14 +61,14 @@ Cmfd::Cmfd(Geometry* geom, Plotter* plotter, Mesh* mesh,
     if (runLoo1)
     {
         _run_loo = true;
-        _run_loo_phi = false;
         _run_loo_psi = true;
+        _run_loo_phi = false;
     }
     else if (runLoo2)
     {
         _run_loo = true;
-        _run_loo_phi = true;
         _run_loo_psi = false;
+        _run_loo_phi = true;
     }
 
     _num_loop = _cw;
@@ -78,7 +78,7 @@ Cmfd::Cmfd(Geometry* geom, Plotter* plotter, Mesh* mesh,
     _t_array = new int[_num_loop * _num_track];
     _t_arrayb = new int[_num_loop * _num_track];
 
-    if (_run_loo)
+    if (1)//_run_loo)
     {
         generateTrack(_i_array, _t_array, _t_arrayb);
         //checkTrack();
@@ -118,6 +118,29 @@ Cmfd::Cmfd(Geometry* geom, Plotter* plotter, Mesh* mesh,
  */
 Cmfd::~Cmfd() {
 }
+
+void Cmfd::runCmfd() {
+    _run_cmfd = true;
+    _run_loo = false;
+    _run_loo_psi = false;
+    _run_loo_phi = false;
+}
+
+void Cmfd::runLoo1() {
+    _run_cmfd = false;
+    _run_loo = true;
+    _run_loo_psi = true;
+    _run_loo_phi = false;
+}
+
+void Cmfd::runLoo2() {
+    _run_cmfd = false;
+    _run_loo = true;
+    _run_loo_psi = false;
+    _run_loo_phi = true;
+}
+
+
 
 
 /**
