@@ -2042,7 +2042,7 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
             }
         }
 #if NEW
-        leak_tot *= SIN_THETA_45;
+        leak_tot *= SIN_THETA_45 * P0;
 #else
         leak_tot *= SIN_THETA_45 * _mesh->getCells(0)->getWidth();
 #endif
