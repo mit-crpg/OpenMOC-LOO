@@ -757,15 +757,15 @@ void Solver::updateBoundaryFluxByQuadrature()
     return;
 }
 
-void Solver::printToScreen(int moc_iter, double eps)
+/* Prints & Update keff for MOC sweep */
+void Solver::printToScreen(int moc_iter)
 {
-    /* Prints & Update keff for MOC sweep */
     if ((moc_iter == 0) && _diffusion)
     {
         printf("Iter %d, MOC k^(m+1) = %.10f, Diffusion k = %.10f,"
                " MOC k^(m+1/2) = %.10f" 
                " FS eps = %.4e,  k eps = %.4e, #Diffusion = %d\n", 
-               moc_iter, _k_eff, _cmfd_k, _k_half, eps,
+               moc_iter, _k_eff, _cmfd_k, _k_half, _old_eps_2.back(),
                (_old_k_effs.back() - _old_k_effs.front()) / _old_k_effs.back(),
                _cmfd->getNumIterToConv());
 
@@ -776,8 +776,9 @@ void Solver::printToScreen(int moc_iter, double eps)
     {
         printf("Iter %d, MOC k^(m+1) = %.10f, CMFD k = %.10f,"
                " MOC k^(m+1/2) = %.10f" 
-               " FS eps = %.4e,  k eps = %.4e, #CMFD = %d\n", 
-               moc_iter, _k_eff, _cmfd_k, _k_half, eps,
+               " FS eps = %.4e, FS ratio = %f, k eps = %.4e, #CMFD = %d\n", 
+               moc_iter, _k_eff, _cmfd_k, _k_half, _old_eps_2.back(),
+               _old_eps_2.front() / _old_eps_2.back(), 
                (_old_k_effs.back() - _old_k_effs.front()) / _old_k_effs.back(),
                _cmfd->getNumIterToConv());
 
@@ -786,30 +787,24 @@ void Solver::printToScreen(int moc_iter, double eps)
     }
     else if ((_run_loo) && !(_acc_after_MOC_converge))
     {
-#if 1
         printf("Iter %d, MOC k^(m+1) = %.10f, LOO k = %.10f,"
                " MOC k^(m+1/2) = %.10f"
-               " FS eps = %.4e, k eps = %.4e, #LOO = %d\n", 
-               moc_iter, _k_eff, _loo_k, _k_half, eps,
+               " FS eps = %.4e, FS ratio = %f, k eps = %.4e, #LOO = %d\n", 
+               moc_iter, _k_eff, _loo_k, _k_half,  _old_eps_2.back(),
+               _old_eps_2.front() / _old_eps_2.back(), 
                (_old_k_effs.back() - _old_k_effs.front()) / _old_k_effs.back(),
                _cmfd->getNumIterToConv());
-#else
-        log_printf(NORMAL, "Iter %d, MOC k^(m+1) = %.10f, LOO k = %.10f,"
-                   " MOC k^(m+1/2) = %.10f"
-                   " FS eps = %.4e, k eps = %.4e, #LOO = %d", 
-                   moc_iter, _k_eff, _loo_k, _k_half,
-                   eps, (_old_k_effs.back() - _old_k_effs.front()) / 
-                   _old_k_effs.back(),
-                   _cmfd->getNumIterToConv());
-#endif
+
         if (_update_keff)
             _k_eff = _loo_k;
     }
     else
     {
-        printf("Iter %d, MOC k = %.10f, FS eps = %.4e, k eps = %.4e\n", 
-               moc_iter, _k_eff, eps, 
-               (_old_k_effs.back() - _old_k_effs.front()) 
+        printf("Iter %d, MOC k = %.10f, FS eps = %.4e, "
+               "FS ratio = %f, k eps = %.4e\n", 
+               moc_iter, _k_eff,  _old_eps_2.back(),
+               _old_eps_2.back() / _old_eps_2.front(), 
+               (_old_k_effs.front() - _old_k_effs.back()) 
                / _old_k_effs.back());
     }
 
@@ -2100,6 +2095,7 @@ double Solver::kernel(int max_iterations) {
 
     /* Initial guess */
     _old_k_effs.push(_k_eff);
+    _old_eps_2.push(1.0);
     _delta_phi.push(1.0);
     log_printf(NORMAL, "Starting guess of k_eff = %f", _k_eff);
 
@@ -2169,6 +2165,10 @@ double Solver::kernel(int max_iterations) {
         eps_inf = computeFsrLinf(old_fsr_powers);
         eps_2 = computeFsrL2Norm(old_fsr_powers);
 
+        _old_eps_2.push(eps_2);
+        if (_old_eps_2.size() == NUM_KEFFS_TRACKED)
+            _old_eps_2.pop();
+
         /* book-keeping: save fsr fluxes and powers into old */
         for (int n = 0; n < _num_FSRs; n++)
         {
@@ -2178,7 +2178,7 @@ double Solver::kernel(int max_iterations) {
         }
 
         /* Prints out keff & eps, may update keff too based on _update_keff */
-        printToScreen(moc_iter, eps_inf);
+        printToScreen(moc_iter);
         printToLog(moc_iter, eps_inf, eps_2, spectral_radius);
 
         plotEverything(moc_iter);

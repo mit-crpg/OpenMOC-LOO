@@ -66,6 +66,7 @@ private:
     double *_FSRs_to_pin_absorption[NUM_ENERGY_GROUPS + 1];
 
     std::queue<double> _old_k_effs;
+    std::queue<double> _old_eps_2;
     std::queue<double> _delta_phi;
     Plotter* _plotter;
     float* _pix_map_total_flux;
@@ -141,7 +142,7 @@ public:
     void setOldFSRFlux();
 
     /* printing and plotting */
-    void printToScreen(int moc_iter, double eps);
+    void printToScreen(int moc_iter);
     void printToLog(int moc_iter, double eps_inf, double eps_2, double rho);
     void printToMinimumLog(int moc_iter);
     void plotFluxes(int moc_iter);
