@@ -98,7 +98,11 @@ public:
     int getFSREnd();
     void setFSRStart(int fsr);
     void setFSREnd(int fsr);
-    MeshSurface* getMeshSurfaces(int surface);
+    __inline__ MeshSurface* getMeshSurfaces(int surface_id){
+        assert(surface_id >= 0);
+        assert(surface_id < 8);
+        return &_mesh_surfaces[surface_id];
+    }
     void setNewFlux(double flux, int e);
     void updateNewFlux(double ratio, int e);
     double* getNewFlux();

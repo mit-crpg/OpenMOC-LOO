@@ -52,7 +52,11 @@ public:
     int getCellHeight();
     void setCellWidth(int cellWidth);
     void setCellHeight(int cellHeight);
-    MeshCell* getCells(int cell);
+    __inline__ MeshCell* getCells(int cell_id){
+            assert(cell_id >= 0);
+            assert(cell_id < _cell_width * _cell_height);
+            return &_cells[cell_id];
+    }
     void setCellBounds();
     void setFSRBounds(boundaryType left, boundaryType right, 
                       boundaryType bottom, boundaryType top);
