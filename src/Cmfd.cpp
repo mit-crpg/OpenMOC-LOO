@@ -8,6 +8,7 @@
  */
 
 #include "Cmfd.h"
+#include <cmath>
 
 /**
  * Acceleration constructor
