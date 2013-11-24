@@ -118,9 +118,6 @@ void MeshSurface::updateQuadCurrent(double factor, int group, int index)
     _quad_current[group][index] *= factor;
 }
 
-double MeshSurface::getTotalWt(int index){
-    return _total_wt[index];
-}
 
 /* QuadFlux */
 double MeshSurface::getQuadFlux(int group, int index){

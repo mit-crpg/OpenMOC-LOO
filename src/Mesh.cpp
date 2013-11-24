@@ -45,12 +45,6 @@ void Mesh::setCellHeight(int cellHeight){
     _cell_height = cellHeight;
 }
 
-MeshCell* Mesh::getCells(int cell_id){
-    assert(cell_id >= 0);
-    assert(cell_id < _cell_width * _cell_height);
-    return &_cells[cell_id];
-}
-
 void Mesh::setMultigroup(bool multigroup){
     _multigroup = multigroup;
 }

@@ -53,6 +53,7 @@ enum solveType {
 
 class Cmfd {
 private:
+    static int _surf_index[16];
     Geometry* _geom;
     Quadrature* _quad;
     Mesh* _mesh;
@@ -73,6 +74,7 @@ private:
     int _ch;
     int _ng;
     int *_i_array, *_t_array, *_t_arrayb;
+    //int _surf_index[16]; 
     double _damp_factor;
     double _keff;
     double _l2_norm;
@@ -134,7 +136,24 @@ public:
     void storePreMOCMeshSource(FlatSourceRegion* fsrs);
     void computeQuadSrc();
     void computeQuadFlux();
-    double getSurf(int t, int i, int ind);
+    __inline__ double getSurf(int i, int t, int d){
+        int id = -1;
+        int j = -1;
+        MeshCell *meshCell = _mesh->getCells(i);
+        id = _surf_index[d*8+t];
+        if ((t < 2) || ((t > 3) && (t < 6)))
+            j = 0;
+        else
+            j = 1;
+
+        MeshSurface *surface = meshCell->getMeshSurfaces(id); 
+
+        // getTotalWt(3) and getTotalWt(4) are the weights used in
+        // tallying current in HO. To get reflective BC cases to work, we
+        // need these weights instead of the actual physical lengths. 
+        return surface->getTotalWt(j + 3);
+    }
+
     double computeLooFluxPower(int moc_iter, double k);
     double computeNormalization();
     void normalizeFlux(double normalize_factor);

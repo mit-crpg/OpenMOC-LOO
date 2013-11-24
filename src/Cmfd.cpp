@@ -9,6 +9,8 @@
 
 #include "Cmfd.h"
 
+int Cmfd::_surf_index[] = {1,2,2,3,3,0,0,1,2,1,3,2,0,3,1,0};
+
 /**
  * Acceleration constructor
  * @param geom pointer to the geometry
@@ -86,6 +88,8 @@ Cmfd::Cmfd(Geometry* geom, Plotter* plotter, Mesh* mesh,
     _num_iter_to_conv = 0;
     _plot_prolongation = plotProlongation;
     _update_boundary = updateBoundary;
+
+
 
     for (int s = 0; s < 4; s++)
     {
@@ -1471,11 +1475,11 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
     else
         log_printf(ERROR, "Neither LOO psi nor phi is requested.");
 
-    int loo_iter, max_outer = 200; 
+    int loo_iter, max_outer = 100; 
 
     /* we set min_outer to make sure the low order system's
      * convergence criteria is sufficiently tight */ 
-    int min_outer = 200;
+    int min_outer = 10;
 
     if (moc_iter == 10000)
     {
@@ -1683,12 +1687,6 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
                 sum_quad_flux[i][e] = 0.0;
             }
         }
-
-        /* FIXME: DEBUG */
-        /*
-        if ((_run_loo_phi) && (loo_iter == -1))
-            updateOldQuadFlux();
-        */
 
         /* Computes new cell averaged source, looping over energy groups */
         double src_ratio;
@@ -2133,35 +2131,17 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
     return _keff;
 }
 
-// FIXME: optimize by pre-generate table
+// get the surface index of track t in cell i direction 0 using
+// pre-generate table
+/*
 double Cmfd::getSurf(int i, int t, int d)
 {
     int id = -1;
     int j = -1;
     MeshCell *meshCell = _mesh->getCells(i);
 
-    if (d == 0)
-    {
-        if ((t == 5) || (t == 6))
-            id = 0;
-        else if ((t == 0) || (t == 7))
-            id = 1;
-        else if ((t == 1) || (t == 2))
-            id = 2;
-        else
-            id = 3;
-    }
-    else
-    {
-        if ((t == 4) || (t == 7))
-            id = 0;
-        else if ((t == 1) || (t == 6))
-            id = 1;
-        else if ((t == 0) || (t == 3))
-            id = 2;
-        else
-            id = 3;
-    }  
+    id = _surf_index[d*8+t];
+
 
     if ((t < 2) || ((t > 3) && (t < 6)))
         j = 0;
@@ -2175,6 +2155,7 @@ double Cmfd::getSurf(int i, int t, int d)
     // need these weights instead of the actual physical lengths. 
     return surface->getTotalWt(j + 3);
 }
+*/
 
 bool Cmfd::onAnyBoundary(int i, int surf_id)
 {

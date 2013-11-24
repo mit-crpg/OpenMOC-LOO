@@ -49,7 +49,9 @@ public:
     void incrementQuadCurrent(double quad_current, int group, int index);
     void incrementTotalWt(double quad_current, int index);
     void setTotalWt(double wt, int index);
-    double getTotalWt(int index);
+    __inline__ double getTotalWt(int index){
+        return _total_wt[index];
+    }
     void updateQuadCurrent(double factor, int group, int index);
     double getQuadFlux(int group, int index);
     void setQuadFlux(double quad_current, int group, int index);

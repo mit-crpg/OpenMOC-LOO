@@ -1,27 +1,31 @@
-LANGUAGES   += c++
-COMPILEOPTS += -Wall
-COMPILEOPTS += -Werror=unused-variable
-COMPILEOPTS += -std=gnu++0x
-COMPILEOPTS += -fopenmp
-#COMPILEOPTS += -O2
-COMPILEOPTS += -I/usr/include/petsc
-COMPILEOPTS += -I/usr/include/petsc/linux-gnu-cxx-debug/include
-COMPILEOPTS += -I/usr/include/petsc/linux-gnu-cxx-opt/include
-COMPILEOPTS += -g
-COMPILEOPTS += `pkg-config Magick++ --cflags`
-COMPILEOPTS += -DPETSC_HAVE_MPI_WIN_CREATE
+LANGUAGES       += c++
+COMPILEOPTS     += -Wall
+COMPILEOPTS     += -Werror=unused-variable
+COMPILEOPTS     += -std=gnu++0x
+COMPILEOPTS     += -fopenmp
+COMPILEOPTS     += -O2
+COMPILEOPTS     += -march=native
+COMPILEOPTS     += -I/usr/include/petsc
+COMPILEOPTS     += -I/usr/include/petsc/linux-gnu-cxx-debug/include
+COMPILEOPTS     += -I/usr/include/petsc/linux-gnu-cxx-opt/include
+COMPILEOPTS     += -g
+LINKOPTS        += -lprofiler
+#COMPILEOPTS     += -pg
+#LINKOPTS        += -pg
+COMPILEOPTS     += -DPETSC_HAVE_MPI_WIN_CREATE
 
 LANGUAGES 	+= bash
 
-BINARIES    += openmoc
-LINKOPTS	+= -lm
-LINKOPTS    += -lexpat
-LINKOPTS    += -lsilo
+BINARIES        += openmoc
+LINKOPTS        += -lm
+LINKOPTS        += -lexpat
+LINKOPTS        += -lsilo
 LINKOPTS	+= -larmadillo
 LINKOPTS 	+= -lpetsc
 LINKOPTS 	+= -lmpi
-LINKOPTS    += `pkg-config Magick++ --libs`
-SOURCES     += openmoc.cpp
+COMPILEOPTS     += `pkg-config Magick++ --cflags`
+LINKOPTS        += `pkg-config Magick++ --libs`
+SOURCES         += openmoc.cpp
 
 TESTSRC		+= 1polar/unacc/pin5.bash
 TESTSRC		+= 1polar/cmfd/pin5.bash
