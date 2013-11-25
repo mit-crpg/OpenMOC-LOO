@@ -4,16 +4,16 @@ from matplotlib.font_manager import FontProperties
 import numpy as np
 import os
 
-geometries = ['geometry_c5g7_cc.xml']
+geometries = ['geometry_2x2_leakage.xml']
 
-materials = ['material_c5g7.xml']
+materials = ['material_simple.xml']
 
 # C4 default is: 0.5cm, 64 azimuthal angle
 ts = [0.05] #0.05
 na = [64] #64
 fc = [1e-8]
 
-ls = ['--o', '-s', '-.v']
+ls = ['--o', '-s', '-.v', '-<', '-^', '-.>', '--s', '-v']
 fontP = FontProperties()
 fontP.set_size('small')
 max_num_lines = 0
@@ -30,7 +30,7 @@ for i, geometry in enumerate(geometries):
                       + ' -na ' + str(angle) 
                       + ' -ts ' + str(spacing) 
                       + ' -fc ' + str(fc[0]) 
-                      + ' -wc -df 0.7 -bi 0')
+                      + ' -wl1 -nub')
 
             os.system('../bin/openmoc'
                       + ' -m ../xml-sample/Cmfd/' + materials[i]
@@ -38,7 +38,7 @@ for i, geometry in enumerate(geometries):
                       + ' -na ' + str(angle) 
                       + ' -ts ' + str(spacing) 
                       + ' -fc ' + str(fc[0]) 
-                      + ' -wl1 -bi 0')
+                      + ' -wl1')
 
             os.system('../bin/openmoc'
                       + ' -m ../xml-sample/Cmfd/' + materials[i]
@@ -46,8 +46,23 @@ for i, geometry in enumerate(geometries):
                       + ' -na ' + str(angle) 
                       + ' -ts ' + str(spacing) 
                       + ' -fc ' + str(fc[0]) 
-                      + ' -wl2 -bi 0')
+                      + ' -wl2 -nub')
 
+            os.system('../bin/openmoc'
+                      + ' -m ../xml-sample/Cmfd/' + materials[i]
+                      + ' -g ../xml-sample/Cmfd/' + geometry 
+                      + ' -na ' + str(angle) 
+                      + ' -ts ' + str(spacing) 
+                      + ' -fc ' + str(fc[0]) 
+                      + ' -wl2')
+
+            os.system('../bin/openmoc'
+                      + ' -m ../xml-sample/Cmfd/' + materials[i]
+                      + ' -g ../xml-sample/Cmfd/' + geometry 
+                      + ' -na ' + str(angle) 
+                      + ' -ts ' + str(spacing) 
+                      + ' -fc ' + str(fc[0]) 
+                      + ' -wc -df 0.7')
 
     l2_norm_files = []
 
@@ -67,6 +82,7 @@ for i, geometry in enumerate(geometries):
         update = file[-15:-9]
         damp = file[-19:-16]
         bi = file[-21:-20]
+        print("ts = %s, na = %s"%(ts, na))
 
         # find number of lines in file
         for num_lines, l in enumerate(logfile):
@@ -76,35 +92,26 @@ for i, geometry in enumerate(geometries):
 
         # create numpy arrays
         iteration = np.zeros(num_lines)
-        cell_l2   = np.zeros(num_lines)
-        fsr_linf  = np.zeros(num_lines)
         fsr_l2    = np.zeros(num_lines)
-        num       = np.zeros(num_lines)
         rho       = np.zeros(num_lines)
 
         # collect data together
-        for i, line in enumerate(logfile):
-            if i is not 0:
-                iteration[i-1] = line.split()[0]
-                cell_l2[i-1]   = line.split()[1]
-                fsr_linf[i-1]  = line.split()[2]
-                fsr_l2[i-1]    = line.split()[3]
-                num[i-1]       = line.split()[5]
-                rho[i-1]       = line.split()[7]
+        for k, line in enumerate(logfile):
+            if k is not 0:
+                iteration[k-1] = line.split()[0]
+                fsr_l2[k-1]    = line.split()[3]
+                rho[k-1]       = line.split()[7]
 
         var = []
-        var.append(cell_l2);
-        var.append(fsr_linf);
         var.append(fsr_l2);
-        var.append(num);
         var.append(rho);
 
         # plotting :)
-        for i in range(5):  
-            plt.figure(i)
-            plt.semilogy(iteration, var[i], ls[counter - 1],
+        for j in range(2):  
+            plt.figure(j)
+            plt.semilogy(iteration, var[j], ls[counter - 1],
                          color=cm.jet(1.*counter / num),
-                         label = ("%s damp %s"%(method, damp)), markersize=5)
+                         label = ("%s %s"%(method, update)), markersize=5)
             plt.xlim(0, max_num_lines + 1)
             plt.legend(loc='upper center', ncol=3, prop = fontP, shadow=True, 
                        bbox_to_anchor=(0.5,-0.1),fancybox=True)
@@ -113,37 +120,13 @@ for i, geometry in enumerate(geometries):
     # save figure including different configuration of the same geometries.
     plt.figure(0)
     plt.xlabel('# MOC iteration')
-    plt.ylabel('Mesh Cell L2 Norm on Fission Source Relative Change')
-    plt.title('Geometry: %s,'%(geometry[9:-4]) + ' spacing: %s,'%str(ts[0]) 
-    		  + ' #angles: %s'%str(na[0]))
-    plt.savefig(geometry[9:-4] + '_cell_l2.png', bbox_inches='tight')
-    plt.clf()
-
-    plt.figure(1)
-    plt.xlabel('# MOC iteration')
-    plt.ylabel('FSR L-infinity Norm on Fission Source Relative Change')
-    plt.title('Geometry: %s,'%(geometry[9:-4]) + ' spacing: %s,'%str(ts[0]) 
-			  + ' #angles: %s'%str(na[0]))
-    plt.savefig(geometry[9:-4] + '_fsr_linf.png', bbox_inches='tight')
-    plt.clf()
-
-    plt.figure(2)
-    plt.xlabel('# MOC iteration')
     plt.ylabel('FSR L2 Norm on Fission Source Relative Change')
     plt.title('Geometry: %s,'%(geometry[9:-4]) + ' spacing: %s,'%str(ts[0]) 
-			  + ' #angles: %s'%str(na[0]))
+              + ' #angles: %s'%str(na[0]))
     plt.savefig(geometry[9:-4] + '_fsr_l2.png', bbox_inches='tight')
     plt.clf()
 
-    plt.figure(3)
-    plt.xlabel('# MOC iteration')
-    plt.ylabel('# Acceleration Iterations Taken at Each MOC Iteration')
-    plt.title('Geometry: %s,'%(geometry[9:-4]) + ' spacing: %s,'%str(ts[0]) 
-			  + ' #angles: %s'%str(na[0]))
-    plt.savefig(geometry[9:-4] + '_num_acc.png', bbox_inches='tight')
-    plt.clf()
-
-    plt.figure(4)
+    plt.figure(1)
     plt.xlabel('# MOC iteration')
     plt.ylabel('Spectral Radius (numerical approximation)')
     plt.title('Geometry: %s,'%(geometry[9:-4]) + ' spacing: %s,'%str(ts[0]) 
