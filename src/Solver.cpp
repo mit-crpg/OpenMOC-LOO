@@ -830,7 +830,7 @@ void Solver::printToScreen(int moc_iter)
         printf("Iter %d, MOC k = %.10f, FS eps = %.4e, "
                "FS ratio = %f, k eps = %.4e\n", 
                moc_iter, _k_eff,  _old_eps_2.back(),
-               _old_eps_2.back() / _old_eps_2.front(), 
+               _old_eps_2.front() / _old_eps_2.back(), 
                (_old_k_effs.front() - _old_k_effs.back()) 
                / _old_k_effs.back());
     }
