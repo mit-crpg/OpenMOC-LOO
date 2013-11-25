@@ -2229,6 +2229,17 @@ double Solver::kernel(int max_iterations) {
 
             return _k_eff;
         }
+        else if (eps_2 > 10) 
+        {
+            printToMinimumLog(moc_iter);
+            plotEverything(moc_iter);
+
+            log_printf(NORMAL, "Exit OpenMOC: L2 norm blows up."
+                       "  Something bad happens. May need damping.");
+            return _k_eff;
+        }
+
+
     }
 
     log_printf(WARNING, "Unable to converge the source after %d iterations",
