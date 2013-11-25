@@ -2129,8 +2129,9 @@ double Solver::kernel(int max_iterations) {
     /* Check that each FSR has at least one segment crossing it */
     checkTrackSpacing();
 
-    /* Check boundary conditions */
-    checkBoundary();
+    /* Check and print out boundary conditions */
+    if ((_run_cmfd || _run_loo) && !(_acc_after_MOC_converge))
+        checkBoundary();
 
     /* Set scalar flux to unity for each region */
     oneFSRFluxOldSource();
