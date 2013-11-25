@@ -1655,9 +1655,13 @@ void Solver::MOCsweep(int max_iterations, int moc_iter)
                         fsr->incrementFlux(fsr_flux);
                     }
 
-                    /* Transfers flux to outgoing track */
+                    
+                    /* Transfer fluxes to outgoing track, or store them */
+                    track->setFwdFluxes(polar_fluxes);
+/*
                     track->getTrackOut()->setPolarFluxes(track->isReflOut(), 0, 
-                                                         polar_fluxes);
+                    polar_fluxes);
+*/
 
                     /* Tallys leakage */
                     pe = 0;
@@ -1672,6 +1676,7 @@ void Solver::MOCsweep(int max_iterations, int moc_iter)
                             pe++;
                         }
                     }
+
 
                     /* Loops over each segment in the reverse direction */
                     for (s = num_segments-1; s > -1; s--) 
@@ -1737,10 +1742,14 @@ void Solver::MOCsweep(int max_iterations, int moc_iter)
                         fsr->incrementFlux(fsr_flux);
                     }
 
-                    /* Transfers flux to incoming track */
+                    /* Transfers fluxes to incoming track, or store them */
+                    track->setBwdFluxes(polar_fluxes);
+/*
                     track->getTrackIn()->setPolarFluxes(track->isReflIn(), 
                                                         GRP_TIMES_ANG, 
                                                         polar_fluxes);
+*/
+
                     /* Tallies leakage */
                     pe = GRP_TIMES_ANG;
                     for (e = 0; e < NUM_ENERGY_GROUPS; e++) 
@@ -1755,6 +1764,7 @@ void Solver::MOCsweep(int max_iterations, int moc_iter)
                             pe++;
                         }
                     }
+
                 }
 
                 /* Update the azimuthal angle index for this thread
@@ -1767,6 +1777,29 @@ void Solver::MOCsweep(int max_iterations, int moc_iter)
                     break;
             }
         }
+
+
+        /* Loop over each track, updating all the incoming angular fluxes */
+        for (j = 0; j < _num_azim; j++) 
+        {
+
+            /* Loop over all tracks for this azimuthal angles */
+            for (k = 0; k < _num_tracks[j]; k++) 
+            {
+                /* Initialize pointers to track */
+                track = &_tracks[j][k];
+                /* Transfers flux to outgoing track */
+                track->getTrackOut()->setPolarFluxes(track->isReflOut(), 
+                                                     0, 
+                                                     track->getFwdFluxes());
+                
+                /* Transfers flux to incoming track */
+                track->getTrackIn()->setPolarFluxes(track->isReflIn(), 
+                                                    GRP_TIMES_ANG, 
+                                                    track->getBwdFluxes());
+            }
+        }
+
 
         /* If more than one iteration is requested, we only computes source for
          * the last iteration, all previous iterations are considered to be 

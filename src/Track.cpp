@@ -77,6 +77,22 @@ void Track::setPolarFluxesByIndex(int pe, double update)
     _polar_fluxes[pe] = update;
     return;
 }
+
+void Track::setFwdFluxes(double* polar_fluxes)
+{
+    for (int i = 0; i < 2*GRP_TIMES_ANG; i++)
+        _fwd_fluxes[i] = polar_fluxes[i];
+
+}
+
+void Track::setBwdFluxes(double* polar_fluxes)
+{
+    for (int i = 0; i < 2* GRP_TIMES_ANG; i++)
+        _bwd_fluxes[i] = polar_fluxes[i];
+
+}
+
+
 /**
  * Set this track's polar fluxes for a particular direction (0 or 1)
  * @param direction incoming/outgoing (0/1) flux for forward/reverse directions
@@ -248,6 +264,14 @@ double* Track::getPolarWeights() {
  */
 double* Track::getPolarFluxes() {
     return _polar_fluxes;
+}
+
+double* Track::getFwdFluxes() {
+    return _fwd_fluxes;
+}
+
+double* Track::getBwdFluxes() {
+    return _bwd_fluxes;
 }
 
 

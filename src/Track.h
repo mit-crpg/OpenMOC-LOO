@@ -54,7 +54,9 @@ private:
     double _spacing;
     double _azim_weight;
     double _polar_weights[NUM_POLAR_ANGLES];
-    double _polar_fluxes[2 * GRP_TIMES_ANG];
+    double _polar_fluxes[2*GRP_TIMES_ANG];
+    double _bwd_fluxes[2*GRP_TIMES_ANG];
+    double _fwd_fluxes[2*GRP_TIMES_ANG];
     std::vector<segment*> _segments;
     Track *_track_in, *_track_out;
     reflectType _refl_in, _refl_out;
@@ -88,6 +90,8 @@ public:
     double getAzimuthalWeight() const;
     double* getPolarWeights();
     double* getPolarFluxes();
+    double* getFwdFluxes();
+    double* getBwdFluxes();
     double* getNewPolarFluxes();
     segment* getSegment(int s);
     std::vector<segment*> getSegments();
@@ -106,6 +110,11 @@ public:
     void addSegment(segment* segment);
     void clearSegments();
     std::string toString();
+
+
+    void setFwdFluxes(double *fluxes);
+    void setBwdFluxes(double *fluxes);
+
 };
 
 #endif /* TRACK_H_ */
