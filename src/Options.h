@@ -56,6 +56,7 @@ private:
     bool _diffusion;
     bool _diffusion_correction;
     bool _update_boundary;
+    bool _reflect_outgoing;
 public:
     Options(int argc, char **argv);
     ~Options(void);
@@ -99,6 +100,7 @@ public:
     bool getDiffusionCorrection();
     bool getAccAfterMOCConverge();
     bool getUpdateBoundary();
+    bool getReflectOutgoing();
 };
 
 #endif

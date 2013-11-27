@@ -37,6 +37,7 @@ Options::Options(int argc, char **argv)
     _boundary_iteration = 0;
     _diffusion = true;			/* run diffusion for 1st iter */
     _update_boundary = true;            /* update boundary angular flux */
+    _reflect_outgoing = false;          /* newest incoming flux during HO MOC */
 
     if (std::string(getenv("PWD")).find("Release") != std::string::npos)
         _relative_path = "../";
@@ -146,6 +147,9 @@ Options::Options(int argc, char **argv)
             else if (strcmp(argv[i], "-nub") == 0 ||
                      strcmp(argv[i], "--noupdateboundary") == 0)
                 _update_boundary = false;
+            else if (strcmp(argv[i], "-ro") == 0 ||
+                     strcmp(argv[i], "--reflectoutgoing") == 0)
+                _reflect_outgoing = true;
             else if (strcmp(argv[i], "-nc") == 0 ||
                      strcmp(argv[i], "--nocmfd") == 0)
                 _cmfd = false;
@@ -510,4 +514,9 @@ int Options::getBoundaryIteration()
 bool Options::getUpdateBoundary()
 {
     return _update_boundary;
+}
+
+bool Options::getReflectOutgoing()
+{
+    return _reflect_outgoing;
 }

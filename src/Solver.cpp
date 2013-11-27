@@ -45,6 +45,7 @@ Solver::Solver(Geometry* geom, TrackGenerator* track_generator,
     _track_spacing = opts->getTrackSpacing();
     _boundary_iteration = opts->getBoundaryIteration();
     _update_boundary = opts->getUpdateBoundary();
+    _reflect_outgoing = opts->getReflectOutgoing();
     _plot_loo = opts->plotQuadFlux();
 
     _cmfd_k = _k_eff;
@@ -1657,11 +1658,13 @@ void Solver::MOCsweep(int max_iterations, int moc_iter)
 
                     
                     /* Transfer fluxes to outgoing track, or store them */
-                    track->setFwdFluxes(polar_fluxes);
-/*
-                    track->getTrackOut()->setPolarFluxes(track->isReflOut(), 0, 
-                    polar_fluxes);
-*/
+                    if (_reflect_outgoing)                    
+                    {
+                        track->getTrackOut()->setPolarFluxes(track->isReflOut(),
+                                                             0, polar_fluxes);
+                    }
+                    else
+                        track->setFwdFluxes(polar_fluxes);                      
 
                     /* Tallys leakage */
                     pe = 0;
@@ -1743,12 +1746,14 @@ void Solver::MOCsweep(int max_iterations, int moc_iter)
                     }
 
                     /* Transfers fluxes to incoming track, or store them */
-                    track->setBwdFluxes(polar_fluxes);
-/*
-                    track->getTrackIn()->setPolarFluxes(track->isReflIn(), 
-                                                        GRP_TIMES_ANG, 
-                                                        polar_fluxes);
-*/
+                    if (_reflect_outgoing)
+                    {
+                        track->getTrackIn()->setPolarFluxes(track->isReflIn(), 
+                                                            GRP_TIMES_ANG, 
+                                                            polar_fluxes);
+                    }
+                    else
+                        track->setBwdFluxes(polar_fluxes);
 
                     /* Tallies leakage */
                     pe = GRP_TIMES_ANG;
@@ -1779,27 +1784,27 @@ void Solver::MOCsweep(int max_iterations, int moc_iter)
         }
 
 
-        /* Loop over each track, updating all the incoming angular fluxes */
-        for (j = 0; j < _num_azim; j++) 
+        if (_reflect_outgoing) {}
+        else
         {
-
-            /* Loop over all tracks for this azimuthal angles */
-            for (k = 0; k < _num_tracks[j]; k++) 
+            /* Loop over each track, updating all the incoming angular fluxes */
+            for (j = 0; j < _num_azim; j++) 
             {
-                /* Initialize pointers to track */
-                track = &_tracks[j][k];
-                /* Transfers flux to outgoing track */
-                track->getTrackOut()->setPolarFluxes(track->isReflOut(), 
-                                                     0, 
-                                                     track->getFwdFluxes());
+                for (k = 0; k < _num_tracks[j]; k++) 
+                {
+                    track = &_tracks[j][k];
+                    /* Transfers flux to outgoing track */
+                    track->getTrackOut()->setPolarFluxes(track->isReflOut(), 
+                                                         0, 
+                                                         track->getFwdFluxes());
                 
-                /* Transfers flux to incoming track */
-                track->getTrackIn()->setPolarFluxes(track->isReflIn(), 
-                                                    GRP_TIMES_ANG, 
-                                                    track->getBwdFluxes());
+                    /* Transfers flux to incoming track */
+                    track->getTrackIn()->setPolarFluxes(track->isReflIn(), 
+                                                        GRP_TIMES_ANG, 
+                                                        track->getBwdFluxes());
+                }
             }
         }
-
 
         /* If more than one iteration is requested, we only computes source for
          * the last iteration, all previous iterations are considered to be 

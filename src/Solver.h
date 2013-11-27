@@ -92,6 +92,7 @@ private:
     bool _update_keff;
     bool _update_boundary;
     bool _plot_loo;
+    bool _reflect_outgoing;
     void precomputeFactors();
     void initializeFSRs();
 public:
