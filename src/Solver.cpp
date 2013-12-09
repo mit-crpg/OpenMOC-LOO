@@ -1260,9 +1260,9 @@ void Solver::tallyLooWeight(Track *track, segment *segment,
 }
 
 void Solver::tallyLooWeightIncoming(Track *track, segment *segment, 
-                             MeshSurface **meshSurfaces, int direction)
+                                    MeshSurface **meshSurfaces, int direction)
 {
-    int index = 2, opposite_index = 3, surfID;
+    int index = 6, opposite_index = 7, surfID;
 
     /* Get the ID of the surface that the segment starts on (forward), ends
      * on (backwards)*/
@@ -1273,12 +1273,11 @@ void Solver::tallyLooWeightIncoming(Track *track, segment *segment,
 
     if (surfID != -1)
     {    
-
         /* Defines index */
         if (track->getPhi() > PI / 2.0)
         {
-            index = 3;
-            opposite_index = 2;
+            index = 7; //3
+            opposite_index = 6; //2
         }
 
         tallyLooWeightSingle(track, segment, meshSurfaces, direction, 
@@ -1533,6 +1532,12 @@ void Solver::initializeWeights()
                 segments = track->getSegments();
                 num_segments = track->getNumSegments();
 
+                /* I decided that there is no reason to tally the
+                 * following two, because we can just use the weight
+                 * of the reflective tracks */
+                //tallyLooWeightIncoming(track, segments.at(0), meshSurfaces,1);
+                //tallyLooWeightIncoming(track, segments.at(num_segments-1), 
+                //meshSurfaces, -1);
 
                 /* Loop over each segment in forward direction */
                 for (s = 0; s < num_segments; s++) 

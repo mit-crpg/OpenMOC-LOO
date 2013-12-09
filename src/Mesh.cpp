@@ -128,7 +128,7 @@ void Mesh::setCellBounds(){
 void Mesh::setFSRBounds(boundaryType left, boundaryType right, boundaryType bottom, boundaryType top){
 
     _fsr_indices = new int        [2 * _cell_width * _cell_height];
-    _cell_bounds = new double     [4 * _cell_width * _cell_height];
+    _cell_bounds = new double     [4* _cell_width * _cell_height];
     _surfaces =  new MeshSurface *[8 * _cell_width * _cell_height];
 
     int min;
@@ -402,6 +402,8 @@ void Mesh::splitCornerQuadCurrents()
     int next_y2[]   = {1, 1, -1, -1};
     int next_surf2[]= {0, 2, 2, 0};
 
+    int nq = 4; // number of quadrature currents. 
+    int counter_j[] = {1, 0, 3, 2};
 
     for (int y = 0; y < ch; y++)
     {
@@ -420,7 +422,7 @@ void Mesh::splitCornerQuadCurrents()
                 surface1 = meshCell->getMeshSurfaces(surf[i]);
                 surface2 = meshCell->getMeshSurfaces(surf2[i]);
 
-                for (int j = 0; j < 2; j++)
+                for (int j = 0; j < nq; j++)
                 {
                     for (int g = 0; g < NUM_ENERGY_GROUPS; g++)
                     {
@@ -438,7 +440,7 @@ void Mesh::splitCornerQuadCurrents()
                         &_cells[ii + next_x[i]];
                     surface_next1 = meshCellNext->getMeshSurfaces(next_surf[i]);
                    
-                     for (int j = 0; j < 2; j++)
+                     for (int j = 0; j < nq; j++)
                      {
                          for (int g = 0; g < NUM_ENERGY_GROUPS; g++)
                          {
@@ -453,13 +455,13 @@ void Mesh::splitCornerQuadCurrents()
                 {
                     surface_next1 = meshCell->getMeshSurfaces(next_surf[i]);
                    
-                     for (int j = 0; j < 2; j++)
+                     for (int j = 0; j < nq; j++)
                      {
                          for (int g = 0; g < NUM_ENERGY_GROUPS; g++)
                          {
                              current = f * surfaceCorner->getQuadCurrent(g, j);
                              surface_next1->incrementQuadCurrent
-                                 (current, g, 1 - j);
+                                 (current, g, counter_j[j]);
                          }
                      }
                 }
@@ -473,7 +475,7 @@ void Mesh::splitCornerQuadCurrents()
                      surface_next2 = meshCellNext2->getMeshSurfaces
                         (next_surf2[i]);
 
-                     for (int j = 0; j < 2; j++)
+                     for (int j = 0; j < nq; j++)
                      {
                          for (int g = 0; g < NUM_ENERGY_GROUPS; g++)
                          {
@@ -487,13 +489,13 @@ void Mesh::splitCornerQuadCurrents()
                 {
                      surface_next2 = meshCell->getMeshSurfaces(next_surf2[i]);
 
-                     for (int j = 0; j < 2; j++)
+                     for (int j = 0; j < nq; j++)
                      {
                          for (int g = 0; g < NUM_ENERGY_GROUPS; g++)
                          {
                              current = f * surfaceCorner->getQuadCurrent(g, j);
                              surface_next2->incrementQuadCurrent
-                                 (current, g, 1 - j);
+                                 (current, g, counter_j[j]);
                          }
                      }
                 } 
@@ -575,9 +577,6 @@ void Mesh::computeTotQuadCurrents(){
                 /* set current at group 0 to total current */
                 surfaceSide->setQuadCurrent(sum_cur, 0, j);
             }
-
-
-
         }
     }
 }
