@@ -23,11 +23,13 @@ MeshSurface::MeshSurface(){
         _quad_flux = new double*[NUM_ENERGY_GROUPS];
         _old_quad_flux = new double*[NUM_ENERGY_GROUPS];
 		
+
+        /* FIXME: cheat for now by allocating 4 for each */
         for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
         {
-            _quad_current[e] = new double[2];
-            _quad_flux[e] = new double[2];
-            _old_quad_flux[e] = new double[2];
+            _quad_current[e] = new double[4];
+            _quad_flux[e] = new double[4];
+            _old_quad_flux[e] = new double[4];
         }
     }
     catch (std::exception &e)

@@ -879,19 +879,30 @@ void Cmfd::computeQuadFlux()
                 {
                     /* FIXME: debug */
                     double tmp = 0.0;
-                    for (int j = 0; j < 2; j++)
+                    double wt = 0;
+                    for (int j = 0; j < 4; j++)
                     {
 #if NEW
                         /* it is important to use j+3 to get homo case work */
-                        double wt = s[i]->getTotalWt(j + 3);
+                        if (j < 2)
+                            wt = s[i]->getTotalWt(j + 3);
+                        else /* FIXME: this is a special trick because
+                              * total wt is not calculated
+                              * correctly */
+                            wt = s[i]->getTotalWt(j + 1);
 #else
-                        double wt = _mesh->getCells(0)->getWidth();
+                        wt = _mesh->getCells(0)->getWidth();
 #endif
-                        flux = s[i]->getQuadCurrent(e, j) / SIN_THETA_45 
-                            / wt / P0;
-                        s[i]->setQuadFlux(flux, e, j);
-                        //s[i]->setOldQuadFlux(flux, e, j);                  
-                        tmp += s[i]->getQuadCurrent(e, j);
+                        if (wt > 1e-10)
+                        {
+                            flux = s[i]->getQuadCurrent(e, j) / SIN_THETA_45 
+                                / wt / P0;
+                            s[i]->setQuadFlux(flux, e, j);
+                            //s[i]->setOldQuadFlux(flux, e, j);        
+                            tmp += s[i]->getQuadCurrent(e, j);
+                        }
+                        else
+                            s[i]->setQuadFlux(0, e, j);
                     }	
 #if NEW	
                     s[i]->setCurrent(tmp / s[i]->getTotalWt(5), e);
@@ -935,7 +946,7 @@ void Cmfd::computeCurrent()
         {
             meshCell = _mesh->getCells(y * _cw + x);
 
-            for (int i = 0; i < 4; i++) 
+            for (int i = 0; i < 2; i++) 
             {
                 s[i] = meshCell->getMeshSurfaces(i);    
                 for (int e = 0; e < _ng; e++)
@@ -1032,8 +1043,14 @@ void Cmfd::computeQuadSrc()
                 {
                     for (int e = 0; e < _ng; e++)
                     {
-                        in[e][5] = out[e][7];
-                        in[e][6] = out[e][4]; 
+                        in[e][5] = s[0]->getQuadFlux(e,2);
+                        in[e][6] = s[0]->getQuadFlux(e,3);
+                        log_printf(ACTIVE, "x=%d, track 5, incoming now %f," 
+                                   " used to be %f", x, 
+                                   s[0]->getQuadFlux(e,2), out[e][7]);
+                        log_printf(ACTIVE, "x=%d, track 6, incoming now %f," 
+                                   " used to be %f", x, 
+                                   s[0]->getQuadFlux(e,3), out[e][4]);
                     }
                 }
                 else if (_mesh->getBoundary(0) == VACUUM)
@@ -1064,8 +1081,15 @@ void Cmfd::computeQuadSrc()
                 {
                     for (int e = 0; e < _ng; e++)
                     {
-                        in[e][1] = out[e][3]; 
-                        in[e][2] = out[e][0]; 
+                        in[e][1] = s[2]->getQuadFlux(e,2);
+                        in[e][2] = s[2]->getQuadFlux(e,3);
+                        log_printf(ACTIVE, "x=%d, track 1, incoming now %f," 
+                                   " used to be %f", x, 
+                                   s[2]->getQuadFlux(e,2), out[e][3]);
+                        log_printf(ACTIVE, "x=%d, track 2, incoming now %f," 
+                                   " used to be %f", x, 
+                                   s[2]->getQuadFlux(e,3), out[e][0]);
+
                     }
                 }
                 else if (_mesh->getBoundary(2) == VACUUM)
@@ -1095,8 +1119,14 @@ void Cmfd::computeQuadSrc()
                 {
                     for (int e = 0; e < _ng; e++)
                     {
-                        in[e][3] = out[e][5]; 
-                        in[e][4] = out[e][2]; 
+                        in[e][3] = s[3]->getQuadFlux(e,3);
+                        in[e][4] = s[3]->getQuadFlux(e,2);
+                        log_printf(ACTIVE, "y=%d, track 3, incoming now %f," 
+                                   " used to be %f", x, 
+                                   s[3]->getQuadFlux(e,3), out[e][5]);
+                        log_printf(ACTIVE, "y=%d, track 4, incoming now %f," 
+                                   " used to be %f", x, 
+                                   s[3]->getQuadFlux(e,2), out[e][2]);
                     }
                 }
                 else if (_mesh->getBoundary(3) == VACUUM)
@@ -1126,8 +1156,14 @@ void Cmfd::computeQuadSrc()
                 {
                     for (int e = 0; e < _ng; e++)
                     {
-                        in[e][7] = out[e][1]; 
-                        in[e][0] = out[e][6]; 
+                        in[e][7] = s[1]->getQuadFlux(e,3);
+                        in[e][0] = s[1]->getQuadFlux(e,2);
+                        log_printf(ACTIVE, "y=%d, track 7, incoming now %f," 
+                                   " used to be %f", x, 
+                                   s[1]->getQuadFlux(e,3), out[e][1]);
+                        log_printf(ACTIVE, "y=%d, track 0, incoming now %f," 
+                                   " used to be %f", x, 
+                                   s[1]->getQuadFlux(e,2), out[e][6]);
                     }
                 }
                 else if (_mesh->getBoundary(1) == VACUUM)
@@ -1724,7 +1760,7 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
         /* Sweeps over geometry, solve LOO MOC */
         for (int e = 0; e < _ng; e++)
         {
-            double flux, initial_flux, delta;
+            double flux = 0, initial_flux = 0, delta = 0;
             int i, t, d;
 
             /* Forward Directions */

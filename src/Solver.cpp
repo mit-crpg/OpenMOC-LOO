@@ -448,7 +448,8 @@ void Solver::zeroMeshCells() {
                 meshCell->getMeshSurfaces(surface)->setCurrent(0, e);
 
                 /* set quad currents to zero */
-                for (int j = 0; j < 2; j++)
+                /* FIXME: temperary */
+                for (int j = 0; j < 4; j++)
                     meshCell->getMeshSurfaces(surface)->setQuadCurrent(0, e, j);
             }
         }
@@ -461,7 +462,7 @@ void Solver::zeroLeakage(){
 
     for (int s = 1; s < 5; s++)
     {
-        log_printf(ACTIVE, "geometry surface %d has leakage %f", s, 
+        log_printf(DEBUG, "geometry surface %d has leakage %f", s, 
                    _geom->getSurface(s)->getLeakage()[0]);
     }
 
@@ -546,7 +547,7 @@ if (tot_abs < 0.0)
 
 k = tot_fission / (tot_abs + leakage);
 
-log_printf(ACTIVE, "MOC k = %f / (%f + %f) = %f", 
+log_printf(DEBUG, "MOC k = %f / (%f + %f) = %f", 
            tot_fission, tot_abs, leakage, k);
 //_geom->getMesh()->setKeffMOC(_k_eff, iteration);
 return k;
@@ -666,11 +667,12 @@ void Solver::updateBoundaryFluxByQuadrature()
             num_segments = track->getNumSegments();
             phi = track->getPhi();
 
-            /* use the opposite quadrature */
+            /* Old: use the opposite quadrature, say index 1 for < pi/2.
+             * New: use index 2 for < pi/2.  */
             if (phi < PI / 2.0)
-                ind = 1; 
+                ind = 2; 
             else
-                ind = 0;
+                ind = 3;
 
             /* Forward direction is 0, backward is 1 */
             for (int dir = 0; dir < 2; dir++)
@@ -1122,6 +1124,61 @@ void Solver::tallyLooCurrent(Track *track, segment *segment,
     return;
 }
 
+
+void Solver::tallyLooCurrentIncoming(Track *track, segment *segment, 
+                                     MeshSurface **meshSurfaces, int direction)
+{
+    int index = 2, pe = 0, pe_initial = 0, p, e, surfID;
+    MeshSurface *meshSurface;
+    double *weights, *polar_fluxes;
+
+    /* Get the ID of the surface that the segment starts on (forward),
+     * ends on (backwards). Notice this is the opposite of the regular
+     * tallyLooCurrent routine, because now we are trying to tally the
+     * incoming instead of the outgoing angular fluxes. */
+    if (direction == 1)
+        surfID = segment->_mesh_surface_bwd;
+    else 
+    {
+        surfID = segment->_mesh_surface_fwd;
+        pe_initial = GRP_TIMES_ANG;
+    }
+
+    if (surfID != -1)
+    {
+        /* notice this is polar flux weights, more than just polar weights */
+        weights = track->getPolarWeights();
+        polar_fluxes = track->getPolarFluxes();
+
+        /* Defines index: instead of 0, 1 now we have 2 (theta less
+         * than pi/2), 3 (theta larger than pi/2) */
+        if (track->getPhi() > PI / 2.0)
+            index = 3;
+        
+        /* Obtains the surface that the segment crosses */
+        meshSurface = meshSurfaces[surfID];
+        log_printf(DEBUG, " phi = %f, index = %d, surface ID = %d",
+                   track->getPhi(), index, 
+                   meshSurface->getId());
+
+        pe = pe_initial;
+        
+        for (e = 0; e < NUM_ENERGY_GROUPS; e++) 
+        {
+            for (p = 0; p < NUM_POLAR_ANGLES; p++)
+            {
+                /* FIXME: double check with the ro routine to make
+                 * sure this polar_fluxes[0, ..] is the incoming angular
+                 * flux, because I am not sure.... */
+                meshSurface->incrementQuadCurrent(polar_fluxes[pe] * weights[p] 
+                                                  / 2.0, e, index);
+                pe++;
+            }
+        }
+    }
+    return;
+}
+
 void Solver::tallyCmfdCurrent(Track *track, segment *segment, 
                               MeshSurface **meshSurfaces, int direction)
 {
@@ -1163,7 +1220,6 @@ void Solver::tallyCmfdCurrent(Track *track, segment *segment,
                  * track spacing now on the surface. The 1/2.0 takes into 
                  * account half space. */
                 currents[e] += polar_fluxes[pe] * weights[p]/2.0;
-                //meshSurface->incrementTotalWt(weights[p] / 2.0, 0);
                 pe++;
             }
         }
@@ -1182,9 +1238,7 @@ void Solver::tallyCmfdCurrent(Track *track, segment *segment,
 void Solver::tallyLooWeight(Track *track, segment *segment, 
                              MeshSurface **meshSurfaces, int direction)
 {
-    int index = 0, opposite_index = 1, p, surfID;
-    MeshSurface *meshSurface;
-    double cosTheta, sinTheta, wt, wt2;
+    int index = 0, opposite_index = 1, surfID;
 
     /* Get the ID of the surface that the segment ends on (forward), starts
      * on (backwards)*/
@@ -1195,224 +1249,262 @@ void Solver::tallyLooWeight(Track *track, segment *segment,
 
     if (surfID != -1)
     {
-        /* notice this is polar flux weights, more than just polar weights */
-        double *weights = track->getPolarWeights();
-        double *sinThetaP = _quad->getSinThetas();
+        /* Defines index */
+        if (track->getPhi() > PI / 2.0)
+            index = 1;    
+        opposite_index = 1 - index;
+ 
+        tallyLooWeightSingle(track, segment, meshSurfaces, direction, 
+                             surfID, index, opposite_index);
+    }
+}
 
-        /* Obtains the surface that the segment crosses */
-        meshSurface = meshSurfaces[surfID];
+void Solver::tallyLooWeightIncoming(Track *track, segment *segment, 
+                             MeshSurface **meshSurfaces, int direction)
+{
+    int index = 2, opposite_index = 3, surfID;
+
+    /* Get the ID of the surface that the segment starts on (forward), ends
+     * on (backwards)*/
+    if (direction == 1)
+        surfID = segment->_mesh_surface_bwd;
+    else 
+        surfID = segment->_mesh_surface_fwd;
+
+    if (surfID != -1)
+    {    
 
         /* Defines index */
         if (track->getPhi() > PI / 2.0)
-            index = 1;
-
-        opposite_index = 1 - index;
-
-        /* Cell ID */
-        int i = surfID / 8;
-        int y = i / _cw;
-        int x = i % _cw;
-        int s = surfID % 8;
-
-        cosTheta = fabs(cos(track->getPhi()));
-        sinTheta = fabs(sin(track->getPhi()));
-
-        for (p = 0; p < NUM_POLAR_ANGLES; p++)
         {
-            wt = 0.5 * weights[p] / TWO_PI / sinThetaP[p];
-            wt2 = wt;
+            index = 3;
+            opposite_index = 2;
+        }
 
-            if ((s  == 0) || (s == 2))
+        tallyLooWeightSingle(track, segment, meshSurfaces, direction, 
+                             surfID, index, opposite_index);
+    }
+}
+
+
+void Solver::tallyLooWeightSingle(Track *track, segment *segment, 
+                                  MeshSurface **meshSurfaces, int direction, 
+                                  int surfID, int index, int opposite_index)
+{        
+    int p;
+    double cosTheta, sinTheta, wt, wt2;
+    MeshSurface *meshSurface;
+
+    /* Obtains the surface that the segment crosses */
+    meshSurface = meshSurfaces[surfID];
+
+    /* notice this is polar flux weights, more than just polar weights */
+    double *weights = track->getPolarWeights();
+    double *sinThetaP = _quad->getSinThetas();
+
+    /* Cell ID */
+    int i = surfID / 8;
+    int y = i / _cw;
+    int x = i % _cw;
+    int s = surfID % 8;
+
+    cosTheta = fabs(cos(track->getPhi()));
+    sinTheta = fabs(sin(track->getPhi()));
+
+    for (p = 0; p < NUM_POLAR_ANGLES; p++)
+    {
+        wt = 0.5 * weights[p] / TWO_PI / sinThetaP[p];
+        wt2 = wt;
+
+        if ((s  == 0) || (s == 2))
+        {
+            meshSurface->incrementTotalWt(wt2 / cosTheta, index);
+            meshSurface->incrementTotalWt(wt, index + 3);
+        }
+        else if (s < 4)
+        {
+            meshSurface->incrementTotalWt(wt2 / sinTheta, index);
+            meshSurface->incrementTotalWt(wt, index + 3);
+        }
+        else
+        {
+            _num_crn += 1;
+            wt *= 0.5;
+            wt2 *= 0.5;
+
+            if (s < 5)
             {
-                meshSurface->incrementTotalWt(wt2 / cosTheta, index);
-                meshSurface->incrementTotalWt(wt, index + 3);
+                meshSurfaces[surfID - 4]
+                    ->incrementTotalWt(wt2 / cosTheta, index);
+                meshSurfaces[surfID - 3]
+                    ->incrementTotalWt(wt2 / sinTheta, index);
+                meshSurfaces[surfID - 4]
+                    ->incrementTotalWt(wt, index + 3);
+                meshSurfaces[surfID - 3]
+                    ->incrementTotalWt(wt, index + 3);
+
+                if (x > 0)
+                {
+                    meshSurfaces[(i - 1) * 8 + 1]
+                        ->incrementTotalWt(wt2 / sinTheta, index);
+                    meshSurfaces[(i - 1) * 8 + 1]
+                        ->incrementTotalWt(wt, index + 3);
+                }
+                // geometry's boundary 1 is mesh's 0
+                else if (_geom->getMesh()->getBoundary(0) == REFLECTIVE)
+                {
+                    meshSurfaces[i * 8 + 1]
+                        ->incrementTotalWt(wt2 / sinTheta, opposite_index);
+                    meshSurfaces[i * 8 + 1]
+                        ->incrementTotalWt(wt, opposite_index + 3);
+
+                }
+
+                if (y < _ch -1) 
+                {
+                    meshSurfaces[(i + _cw) * 8 + 0]
+                        ->incrementTotalWt(wt2 / cosTheta, index);
+                    meshSurfaces[(i + _cw) * 8 + 0]
+                        ->incrementTotalWt(wt, index + 3);
+                }
+                else if (_geom->getMesh()->getBoundary(1) == REFLECTIVE)
+                {
+                    meshSurfaces[i * 8 + 0]
+                        ->incrementTotalWt(wt2 / cosTheta, opposite_index);
+                    meshSurfaces[i * 8 + 0]
+                        ->incrementTotalWt(wt, opposite_index + 3);
+                }
+
             }
-            else if (s < 4)
+            else if (s < 6)
             {
-                meshSurface->incrementTotalWt(wt2 / sinTheta, index);
-                meshSurface->incrementTotalWt(wt, index + 3);
+                meshSurfaces[surfID - 4]
+                    ->incrementTotalWt(wt2 / sinTheta, index);
+                meshSurfaces[surfID - 3]
+                    ->incrementTotalWt(wt2 / cosTheta, index);
+
+                meshSurfaces[surfID - 4]
+                    ->incrementTotalWt(wt, index + 3);
+                meshSurfaces[surfID - 3]
+                    ->incrementTotalWt(wt, index + 3);
+
+                if (x < _cw - 1)
+                {
+                    meshSurfaces[(i + 1) * 8 + 1]
+                        ->incrementTotalWt(wt2 / sinTheta, index);
+                    meshSurfaces[(i + 1) * 8 + 1]
+                        ->incrementTotalWt(wt, index + 3);
+                } 
+                else if (_geom->getMesh()->getBoundary(2) == REFLECTIVE)
+                {
+                    meshSurfaces[i * 8 + 1]
+                        ->incrementTotalWt(wt2 / sinTheta, opposite_index);
+                    meshSurfaces[i * 8 + 1]
+                        ->incrementTotalWt(wt, opposite_index + 3);
+                } 
+                    
+                if (y < _ch -1) 
+                {
+                    meshSurfaces[(i + _cw) * 8 + 2]
+                        ->incrementTotalWt(wt2 / cosTheta, index);
+                    meshSurfaces[(i + _cw) * 8 + 2]
+                        ->incrementTotalWt(wt, index + 3);
+                }
+                else if (_geom->getMesh()->getBoundary(1) == REFLECTIVE)
+                {
+                    meshSurfaces[i * 8 + 2]
+                        ->incrementTotalWt(wt2 / cosTheta, opposite_index);
+                    meshSurfaces[i * 8 + 2]
+                        ->incrementTotalWt(wt, opposite_index + 3);
+                }                      
+            }
+            else if (s < 7)
+            {
+                meshSurfaces[surfID - 4]
+                    ->incrementTotalWt(wt2 / cosTheta, index);
+                meshSurfaces[surfID - 3]
+                    ->incrementTotalWt(wt2 / sinTheta, index);
+
+                meshSurfaces[surfID - 4]
+                    ->incrementTotalWt(wt, index + 3);
+                meshSurfaces[surfID - 3]
+                    ->incrementTotalWt(wt, index + 3);
+
+                if (x < _cw - 1)
+                {
+                    meshSurfaces[(i + 1) * 8 + 3]
+                        ->incrementTotalWt(wt2 / sinTheta, index);
+                    meshSurfaces[(i + 1) * 8 + 3]
+                        ->incrementTotalWt(wt, index + 3);
+                } 
+                else if (_geom->getMesh()->getBoundary(2) == REFLECTIVE)
+                {
+                    meshSurfaces[i * 8 + 3]
+                        ->incrementTotalWt(wt2 / sinTheta, opposite_index);
+                    meshSurfaces[i * 8 + 3]
+                        ->incrementTotalWt(wt, opposite_index + 3);
+                }                      
+
+                if (y > 0) 
+                {
+                    meshSurfaces[(i - _cw) * 8 + 2]
+                        ->incrementTotalWt(wt2 / cosTheta, index);
+                    meshSurfaces[(i - _cw) * 8 + 2]
+                        ->incrementTotalWt(wt, index + 3);
+                }
+                else if (_geom->getMesh()->getBoundary(3) == REFLECTIVE)
+                {
+                    meshSurfaces[i * 8 + 2]
+                        ->incrementTotalWt(wt2 / cosTheta, opposite_index);
+                    meshSurfaces[i * 8 + 2]
+                        ->incrementTotalWt(wt, opposite_index + 3);
+                }
             }
             else
             {
-                _num_crn += 1;
-                wt *= 0.5;
-                wt2 *= 0.5;
+                meshSurfaces[surfID - 4]
+                    ->incrementTotalWt(wt2 / sinTheta, index);
+                meshSurfaces[surfID - 7]
+                    ->incrementTotalWt(wt2 / cosTheta, index);
+                meshSurfaces[surfID - 4]
+                    ->incrementTotalWt(wt, index + 3);
+                meshSurfaces[surfID - 7]
+                    ->incrementTotalWt(wt, index + 3);
 
-                if (s < 5)
+
+                if ((x > 0))// && (y > 0))
                 {
-                    meshSurfaces[surfID - 4]
-                        ->incrementTotalWt(wt2 / cosTheta, index);
-                    meshSurfaces[surfID - 3]
+                    meshSurfaces[(i - 1) * 8 + 3]
                         ->incrementTotalWt(wt2 / sinTheta, index);
-                    meshSurfaces[surfID - 4]
+                    meshSurfaces[(i - 1) * 8 + 3]
                         ->incrementTotalWt(wt, index + 3);
-                    meshSurfaces[surfID - 3]
-                        ->incrementTotalWt(wt, index + 3);
-
-                    if (x > 0)
-                    {
-                        meshSurfaces[(i - 1) * 8 + 1]
-                            ->incrementTotalWt(wt2 / sinTheta, index);
-                        meshSurfaces[(i - 1) * 8 + 1]
-                            ->incrementTotalWt(wt, index + 3);
-                    }
-                    // geometry's boundary 1 is mesh's 0
-                    else if (_geom->getMesh()->getBoundary(0) == REFLECTIVE)
-                    {
-                        meshSurfaces[i * 8 + 1]
-                            ->incrementTotalWt(wt2 / sinTheta, opposite_index);
-                        meshSurfaces[i * 8 + 1]
-                            ->incrementTotalWt(wt, opposite_index + 3);
-
-                    }
-
-                    if (y < _ch -1) 
-                    {
-                        meshSurfaces[(i + _cw) * 8 + 0]
-                            ->incrementTotalWt(wt2 / cosTheta, index);
-                        meshSurfaces[(i + _cw) * 8 + 0]
-                            ->incrementTotalWt(wt, index + 3);
-                    }
-                    else if (_geom->getMesh()->getBoundary(1) == REFLECTIVE)
-                    {
-                        meshSurfaces[i * 8 + 0]
-                            ->incrementTotalWt(wt2 / cosTheta, opposite_index);
-                        meshSurfaces[i * 8 + 0]
-                            ->incrementTotalWt(wt, opposite_index + 3);
-                    }
-
                 }
-                else if (s < 6)
+                else if (_geom->getMesh()->getBoundary(0) == REFLECTIVE)
                 {
-                    meshSurfaces[surfID - 4]
-                        ->incrementTotalWt(wt2 / sinTheta, index);
-                    meshSurfaces[surfID - 3]
-                        ->incrementTotalWt(wt2 / cosTheta, index);
-
-                    meshSurfaces[surfID - 4]
-                        ->incrementTotalWt(wt, index + 3);
-                    meshSurfaces[surfID - 3]
-                        ->incrementTotalWt(wt, index + 3);
-
-                    if (x < _cw - 1)
-                    {
-                        meshSurfaces[(i + 1) * 8 + 1]
-                            ->incrementTotalWt(wt2 / sinTheta, index);
-                        meshSurfaces[(i + 1) * 8 + 1]
-                            ->incrementTotalWt(wt, index + 3);
-                    } 
-                    else if (_geom->getMesh()->getBoundary(2) == REFLECTIVE)
-                    {
-                        meshSurfaces[i * 8 + 1]
-                            ->incrementTotalWt(wt2 / sinTheta, opposite_index);
-                        meshSurfaces[i * 8 + 1]
-                            ->incrementTotalWt(wt, opposite_index + 3);
-                    } 
-                    
-                    if (y < _ch -1) 
-                    {
-                        meshSurfaces[(i + _cw) * 8 + 2]
-                            ->incrementTotalWt(wt2 / cosTheta, index);
-                        meshSurfaces[(i + _cw) * 8 + 2]
-                            ->incrementTotalWt(wt, index + 3);
-                    }
-                    else if (_geom->getMesh()->getBoundary(1) == REFLECTIVE)
-                    {
-                        meshSurfaces[i * 8 + 2]
-                            ->incrementTotalWt(wt2 / cosTheta, opposite_index);
-                        meshSurfaces[i * 8 + 2]
-                            ->incrementTotalWt(wt, opposite_index + 3);
-                    }                      
+                    meshSurfaces[i * 8 + 3]
+                        ->incrementTotalWt(wt2 / sinTheta, opposite_index);
+                    meshSurfaces[i * 8 + 3]
+                        ->incrementTotalWt(wt, opposite_index + 3);
                 }
-                else if (s < 7)
+
+                if (y > 0) 
                 {
-                    meshSurfaces[surfID - 4]
+                    meshSurfaces[(i - _cw) * 8 + 0]
                         ->incrementTotalWt(wt2 / cosTheta, index);
-                    meshSurfaces[surfID - 3]
-                        ->incrementTotalWt(wt2 / sinTheta, index);
-
-                    meshSurfaces[surfID - 4]
+                    meshSurfaces[(i - _cw) * 8 + 0]
                         ->incrementTotalWt(wt, index + 3);
-                    meshSurfaces[surfID - 3]
-                        ->incrementTotalWt(wt, index + 3);
-
-                    if (x < _cw - 1)
-                    {
-                        meshSurfaces[(i + 1) * 8 + 3]
-                            ->incrementTotalWt(wt2 / sinTheta, index);
-                        meshSurfaces[(i + 1) * 8 + 3]
-                            ->incrementTotalWt(wt, index + 3);
-                    } 
-                    else if (_geom->getMesh()->getBoundary(2) == REFLECTIVE)
-                    {
-                        meshSurfaces[i * 8 + 3]
-                            ->incrementTotalWt(wt2 / sinTheta, opposite_index);
-                        meshSurfaces[i * 8 + 3]
-                            ->incrementTotalWt(wt, opposite_index + 3);
-                    }                      
-
-                    if (y > 0) 
-                    {
-                        meshSurfaces[(i - _cw) * 8 + 2]
-                            ->incrementTotalWt(wt2 / cosTheta, index);
-                        meshSurfaces[(i - _cw) * 8 + 2]
-                            ->incrementTotalWt(wt, index + 3);
-                    }
-                    else if (_geom->getMesh()->getBoundary(3) == REFLECTIVE)
-                    {
-                        meshSurfaces[i * 8 + 2]
-                            ->incrementTotalWt(wt2 / cosTheta, opposite_index);
-                        meshSurfaces[i * 8 + 2]
-                            ->incrementTotalWt(wt, opposite_index + 3);
-                    }
                 }
-                else
+                else if (_geom->getMesh()->getBoundary(3) == REFLECTIVE)
                 {
-                    meshSurfaces[surfID - 4]
-                        ->incrementTotalWt(wt2 / sinTheta, index);
-                    meshSurfaces[surfID - 7]
-                        ->incrementTotalWt(wt2 / cosTheta, index);
-                    meshSurfaces[surfID - 4]
-                        ->incrementTotalWt(wt, index + 3);
-                    meshSurfaces[surfID - 7]
-                        ->incrementTotalWt(wt, index + 3);
+                    meshSurfaces[i * 8 + 0]
+                        ->incrementTotalWt(wt2 / cosTheta, opposite_index);
+                    meshSurfaces[i * 8 + 0]
+                        ->incrementTotalWt(wt, opposite_index + 3);
+                }                  
 
-
-                    if ((x > 0))// && (y > 0))
-                    {
-                        meshSurfaces[(i - 1) * 8 + 3]
-                            ->incrementTotalWt(wt2 / sinTheta, index);
-                        meshSurfaces[(i - 1) * 8 + 3]
-                            ->incrementTotalWt(wt, index + 3);
-                    }
-                    else if (_geom->getMesh()->getBoundary(0) == REFLECTIVE)
-                    {
-                        meshSurfaces[i * 8 + 3]
-                            ->incrementTotalWt(wt2 / sinTheta, opposite_index);
-                        meshSurfaces[i * 8 + 3]
-                            ->incrementTotalWt(wt, opposite_index + 3);
-                    }
-
-                    if (y > 0) 
-                    {
-                        meshSurfaces[(i - _cw) * 8 + 0]
-                            ->incrementTotalWt(wt2 / cosTheta, index);
-                        meshSurfaces[(i - _cw) * 8 + 0]
-                            ->incrementTotalWt(wt, index + 3);
-                    }
-                    else if (_geom->getMesh()->getBoundary(3) == REFLECTIVE)
-                    {
-                        meshSurfaces[i * 8 + 0]
-                            ->incrementTotalWt(wt2 / cosTheta, opposite_index);
-                        meshSurfaces[i * 8 + 0]
-                            ->incrementTotalWt(wt, opposite_index + 3);
-                    }                  
-
-                }
             }
         }
     }
-
     return;
 }
 
@@ -1440,6 +1532,7 @@ void Solver::initializeWeights()
                 track = &_tracks[j][k];
                 segments = track->getSegments();
                 num_segments = track->getNumSegments();
+
 
                 /* Loop over each segment in forward direction */
                 for (s = 0; s < num_segments; s++) 
@@ -1480,7 +1573,7 @@ void Solver::initializeWeights()
                                          meshSurfaces[s]->getTotalWt(1)), 2);
             meshSurfaces[s]->setTotalWt((meshSurfaces[s]->getTotalWt(3) + 
                                          meshSurfaces[s]->getTotalWt(4)), 5);
-            log_printf(ACTIVE, "surface %d %.10f + %.10f = %.10f,"
+            log_printf(DEBUG, "surface %d %.10f + %.10f = %.10f,"
                        " current-wt %.10f + %.10f = %.10f", s, 
                        meshSurfaces[s]->getTotalWt(0),
                        meshSurfaces[s]->getTotalWt(1),                   
@@ -1534,13 +1627,13 @@ void Solver::MOCsweep(int max_iterations, int moc_iter)
     if ((_run_loo) && (!(_diffusion && (moc_iter == 0))))
     {
         tally = 2;
-        log_printf(ACTIVE, "tally quadrature current");
+        log_printf(DEBUG, "tally quadrature current");
     }
     //else if ((_run_cmfd) || (_run_loo & _diffusion && (moc_iter == 0)))
     else if (_run_cmfd || _run_loo)
     {
         tally = 1;
-        log_printf(ACTIVE, "tally partial current");
+        log_printf(DEBUG, "tally partial current");
     }
     else
         tally = 0;
@@ -1589,6 +1682,16 @@ void Solver::MOCsweep(int max_iterations, int moc_iter)
                     num_segments = track->getNumSegments();
                     weights = track->getPolarWeights();
                     polar_fluxes = track->getPolarFluxes();
+
+
+
+                    /* Store all the incoming angular fluxes */
+                    segment = segments.at(0);
+                    tallyLooCurrentIncoming(track, segment, meshSurfaces, 1);
+                    segment = segments.at(num_segments-1);
+                    tallyLooCurrentIncoming(track, segment, meshSurfaces, -1);
+
+
 
                     /* Loop over each segment in forward direction */
                     for (s = 0; s < num_segments; s++) 
