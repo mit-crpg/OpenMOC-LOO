@@ -20,7 +20,6 @@ BINARIES        += openmoc
 LINKOPTS        += -lm
 LINKOPTS        += -lexpat
 LINKOPTS        += -lsilo
-LINKOPTS	+= -larmadillo
 LINKOPTS 	+= -lpetsc
 LINKOPTS 	+= -lmpi
 COMPILEOPTS     += `pkg-config Magick++ --cflags`
