@@ -73,8 +73,8 @@ private:
     int _cw;
     int _ch;
     int _ng;
+    int _nq;
     int *_i_array, *_t_array, *_t_arrayb;
-    //int _surf_index[16]; 
     double _damp_factor;
     double _keff;
     double _l2_norm;
@@ -88,13 +88,10 @@ private:
     bool _plot_prolongation;
     bool _reflective;
     bool _update_boundary;
+    bool _reflect_outgoing;
 public:
     Cmfd(Geometry* geom, Plotter* plotter, Mesh* mesh, 
-         bool runCmfd, bool runLoo, bool runLoo1, bool runLoo2,
-         bool useDiffusionCorrection, bool plotProlongation, 
-         bool updateBoundary,
-         double l2_norm_conv_thresh, double damp,
-         TrackGenerator *track_generator);
+         TrackGenerator *track_generator, Options *opts);
     virtual ~Cmfd();
 
     void runCmfd();

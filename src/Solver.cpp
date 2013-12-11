@@ -1691,10 +1691,15 @@ void Solver::MOCsweep(int max_iterations, int moc_iter)
 
 
                     /* Store all the incoming angular fluxes */
-                    segment = segments.at(0);
-                    tallyLooCurrentIncoming(track, segment, meshSurfaces, 1);
-                    segment = segments.at(num_segments-1);
-                    tallyLooCurrentIncoming(track, segment, meshSurfaces, -1);
+                    if (tally ==2)
+                    {
+                        tallyLooCurrentIncoming(track, segments.at(0), 
+                                                meshSurfaces, 1);
+                        tallyLooCurrentIncoming(track, 
+                                                segments.at(num_segments-1), 
+                                                meshSurfaces, -1);
+                    }
+                    /* FIXME: add in tallyCmfdCurrentIncoming */
 
 
 
