@@ -86,9 +86,9 @@ Cmfd::Cmfd(Geometry* geom, Plotter* plotter, Mesh* mesh,
     _update_boundary = opts->getUpdateBoundary();
     _reflect_outgoing = opts->getReflectOutgoing();
     if (_reflect_outgoing)
-        _nq = 4;
-    else
         _nq = 2;
+    else
+        _nq = 4;
 
     for (int s = 0; s < 4; s++)
     {
@@ -876,9 +876,10 @@ void Cmfd::computeQuadFlux()
                 s[i] = meshCell->getMeshSurfaces(i);    
                 for (int e = 0; e < _ng; e++)
                 {
-                    /* FIXME: debug */
                     double tmp = 0.0;
                     double wt = 0;
+
+                    /* FIXME: somehow _nq = 4 breaks the code for _ro case */
                     for (int j = 0; j < _nq; j++)
                     {
 #if NEW
@@ -902,6 +903,13 @@ void Cmfd::computeQuadFlux()
                         else
                             s[i]->setQuadFlux(0, e, j);
                     }	
+
+                    log_printf(ACTIVE, "incoming quad currents for cell %d,"
+                               " surface %d, energy %d, %f, %f",
+                               y * _cw + x, i, e, 
+                               s[i]->getQuadCurrent(e,2), 
+                               s[i]->getQuadCurrent(e,3));
+
 #if NEW	
                     s[i]->setCurrent(tmp / s[i]->getTotalWt(5), e);
 #else

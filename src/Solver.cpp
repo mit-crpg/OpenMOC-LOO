@@ -37,6 +37,7 @@ Solver::Solver(Geometry* geom, TrackGenerator* track_generator,
     _run_loo = opts->getLoo();
     _run_loo1 = opts->getLoo1();
     _run_loo2 = opts->getLoo2();
+
     _diffusion = opts->getDiffusion();
     _acc_after_MOC_converge = opts->getAccAfterMOCConverge();
     _k_eff = opts->getKGuess();
@@ -46,6 +47,11 @@ Solver::Solver(Geometry* geom, TrackGenerator* track_generator,
     _boundary_iteration = opts->getBoundaryIteration();
     _update_boundary = opts->getUpdateBoundary();
     _reflect_outgoing = opts->getReflectOutgoing();
+    if (_reflect_outgoing)
+        _nq = 2;
+    else
+        _nq = 4;
+    
     _plot_loo = opts->plotQuadFlux();
 
     _cmfd_k = _k_eff;
@@ -448,8 +454,7 @@ void Solver::zeroMeshCells() {
                 meshCell->getMeshSurfaces(surface)->setCurrent(0, e);
 
                 /* set quad currents to zero */
-                /* FIXME: temperary */
-                for (int j = 0; j < 4; j++)
+                for (int j = 0; j < _nq; j++)
                     meshCell->getMeshSurfaces(surface)->setQuadCurrent(0, e, j);
             }
         }
@@ -670,10 +675,27 @@ void Solver::updateBoundaryFluxByQuadrature()
             /* Old: use the opposite quadrature, say index 1 for < pi/2.
              * New: use index 2 for < pi/2.  */
             if (phi < PI / 2.0)
-                ind = 2; 
+                ind = 1;
             else
-                ind = 3;
+                ind = 0;
 
+
+/*
+            if (_reflect_outgoing)
+            {
+                if (phi < PI / 2.0)
+                    ind = 1;
+                else
+                    ind = 0;
+            }
+            else
+            {
+                if (phi < PI / 2.0)
+                    ind = 2; 
+                else
+                    ind = 3;
+            }
+*/
             /* Forward direction is 0, backward is 1 */
             for (int dir = 0; dir < 2; dir++)
             {
@@ -1691,7 +1713,7 @@ void Solver::MOCsweep(int max_iterations, int moc_iter)
 
 
                     /* Store all the incoming angular fluxes */
-                    if (tally ==2)
+                    if ((tally == 2) && (!_reflect_outgoing))
                     {
                         tallyLooCurrentIncoming(track, segments.at(0), 
                                                 meshSurfaces, 1);

@@ -45,6 +45,7 @@ private:
     Track** _tracks;
     int _cw;
     int _ch;
+    int _nq;
     int _num_crn;
     int _boundary_iteration;
     int _num_azim;
