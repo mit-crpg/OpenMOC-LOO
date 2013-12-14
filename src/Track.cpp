@@ -82,14 +82,14 @@ void Track::setFwdFluxes(double* polar_fluxes)
 {
     for (int i = 0; i < 2*GRP_TIMES_ANG; i++)
         _fwd_fluxes[i] = polar_fluxes[i];
-
+    return;
 }
 
 void Track::setBwdFluxes(double* polar_fluxes)
 {
     for (int i = 0; i < 2* GRP_TIMES_ANG; i++)
         _bwd_fluxes[i] = polar_fluxes[i];
-
+    return;
 }
 
 

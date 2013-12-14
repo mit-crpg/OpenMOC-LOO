@@ -953,7 +953,7 @@ void Cmfd::computeCurrent()
         {
             meshCell = _mesh->getCells(y * _cw + x);
 
-            for (int i = 0; i < 2; i++) 
+            for (int i = 0; i < 4; i++) 
             {
                 s[i] = meshCell->getMeshSurfaces(i);    
                 for (int e = 0; e < _ng; e++)
@@ -988,7 +988,7 @@ void Cmfd::updateOldQuadFlux()
                 s[i] = meshCell->getMeshSurfaces(i);
                 for (int e = 0; e < _ng; e++)
                 {
-                    for (int j = 0; j < 2; j++)
+                    for (int j = 0; j < _nq; j++)
                     {
                         s[i]->setOldQuadFlux(s[i]->getQuadFlux(e, j), e, j);
                     } 

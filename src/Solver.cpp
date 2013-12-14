@@ -463,8 +463,8 @@ void Solver::zeroMeshCells() {
 }
 
 
-void Solver::zeroLeakage(){
-
+void Solver::zeroLeakage()
+{
     for (int s = 1; s < 5; s++)
     {
         log_printf(DEBUG, "geometry surface %d has leakage %f", s, 
@@ -473,6 +473,7 @@ void Solver::zeroLeakage(){
 
     for (int s = 1; s < 5; s++)
         _geom->getSurface(s)->zeroLeakage();
+    return;
 }
 
 /**
@@ -620,7 +621,7 @@ void Solver::storeMOCBoundaryFlux()
         meshSurface = meshSurfaces[i];
         for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
         {
-            for (int ind = 0; ind < 2; ind++)
+            for (int ind = 0; ind < _nq; ind++)
             {
                 meshSurface->setOldQuadFlux(meshSurface->getQuadFlux(e, ind),
                                         e, ind);
@@ -639,7 +640,7 @@ void Solver::storeMOCBoundaryFlux()
         {
             for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
             {
-                for (int j = 0; j < 2; j++)
+                for (int j = 0; j < _nq; j++)
                 {
                     surf = meshCell->getMeshSurfaces(s);
                     surf->setOldQuadFlux(surf->getQuadFlux(e,j), e, j);
@@ -672,30 +673,15 @@ void Solver::updateBoundaryFluxByQuadrature()
             num_segments = track->getNumSegments();
             phi = track->getPhi();
 
-            /* Old: use the opposite quadrature, say index 1 for < pi/2.
-             * New: use index 2 for < pi/2.  */
-            if (phi < PI / 2.0)
-                ind = 1;
-            else
-                ind = 0;
+            /* Use the opposite quadrature, say index 1 for < pi/2.
+             * regardless of whether _reflect_outgoing is turned on or
+             * not, this is always the case because during LOO perfect
+             * reflectiveness is assumed. */
+             if (phi < PI / 2.0) 
+                 ind = 1; 
+             else 
+                 ind = 0;
 
-
-/*
-            if (_reflect_outgoing)
-            {
-                if (phi < PI / 2.0)
-                    ind = 1;
-                else
-                    ind = 0;
-            }
-            else
-            {
-                if (phi < PI / 2.0)
-                    ind = 2; 
-                else
-                    ind = 3;
-            }
-*/
             /* Forward direction is 0, backward is 1 */
             for (int dir = 0; dir < 2; dir++)
             {
@@ -707,9 +693,6 @@ void Solver::updateBoundaryFluxByQuadrature()
                     surf_id = seg->_mesh_surface_bwd; 
                 else
                     surf_id = seg->_mesh_surface_fwd;
-
-                // DEBUG: surf_id is correct. 
-                //log_printf(NORMAL, " boundary surface has %d", surf_id);
 
                 /* correct for corners -- find the adjacent boundary surfaces */
                 if ((surf_id % 8) < 4)
@@ -863,10 +846,6 @@ void Solver::printToScreen(int moc_iter)
     return;
 }
 
-
-
-
-
 /**
  * Return an array indexed by FSR ids which contains the corresponding
  * fluxes for each FSR
@@ -875,7 +854,6 @@ void Solver::printToScreen(int moc_iter)
 double** Solver::getFSRtoFluxMap() {
     return _FSRs_to_fluxes;
 }
-
 
 /**
  * Checks that each flat source region has at least one segment within it
@@ -1029,7 +1007,8 @@ void Solver::plotPinPowers() {
 
 
     log_printf(NORMAL, "Plotting pin powers...");
-    _plotter->makeRegionMap(bitMapFSR->pixels, bitMap->pixels, _FSRs_to_pin_powers);
+    _plotter->makeRegionMap(bitMapFSR->pixels, bitMap->pixels, 
+                            _FSRs_to_pin_powers);
     plot(bitMap, "pin_powers", _plotter->getExtension());
 
     /* delete bitMaps */
@@ -1082,7 +1061,6 @@ void Solver::plotFluxes(int moc_iter)
 
     std::stringstream string;
     std::string title_str;
-    //for (int i = 0; i < NUM_ENERGY_GROUPS; i++)
     for (int i = 0; i < 1; i++)
     {
         string.str("");
@@ -1710,8 +1688,6 @@ void Solver::MOCsweep(int max_iterations, int moc_iter)
                     weights = track->getPolarWeights();
                     polar_fluxes = track->getPolarFluxes();
 
-
-
                     /* Store all the incoming angular fluxes */
                     if ((tally == 2) && (!_reflect_outgoing))
                     {
@@ -1919,8 +1895,8 @@ void Solver::MOCsweep(int max_iterations, int moc_iter)
         }
 
 
-        if (_reflect_outgoing) {}
-        else
+#if 1
+        if (!_reflect_outgoing)
         {
             /* Loop over each track, updating all the incoming angular fluxes */
             for (j = 0; j < _num_azim; j++) 
@@ -1929,17 +1905,18 @@ void Solver::MOCsweep(int max_iterations, int moc_iter)
                 {
                     track = &_tracks[j][k];
                     /* Transfers flux to outgoing track */
-                    track->getTrackOut()->setPolarFluxes(track->isReflOut(), 
-                                                         0, 
-                                                         track->getFwdFluxes());
+                    track->getTrackOut()
+                        ->setPolarFluxes(track->isReflOut(), 
+                                         0, track->getFwdFluxes());
                 
                     /* Transfers flux to incoming track */
-                    track->getTrackIn()->setPolarFluxes(track->isReflIn(), 
-                                                        GRP_TIMES_ANG, 
-                                                        track->getBwdFluxes());
+                    track->getTrackIn()
+                        ->setPolarFluxes(track->isReflIn(), 
+                                         GRP_TIMES_ANG, track->getBwdFluxes());
                 }
             }
         }
+#endif
 
         /* If more than one iteration is requested, we only computes source for
          * the last iteration, all previous iterations are considered to be 
@@ -2081,6 +2058,8 @@ void Solver::normalizeFlux()
             {
                 for (int e = 0; e < ng; e++)
                 {
+                    /* FIXME: I changed 2 to _nq, which cases a
+                     * SIGFPE, Arithmetic exception */
                     for (int ind = 0; ind < 2; ind++)
                     {
                         meshCell->getMeshSurfaces(s)->updateQuadCurrent(
