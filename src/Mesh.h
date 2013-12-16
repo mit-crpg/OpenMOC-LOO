@@ -28,6 +28,7 @@ private:
     MeshCell* _cells;
     int _cell_width;
     int _cell_height;
+    int _mesh_level;
     double _width;
     double _height;
     bool _multigroup;
@@ -81,7 +82,8 @@ public:
     MeshSurface **getSurfaces();
     double getOldTime();
     void setOldTime(double time);
-
+    void setMeshLevel(int cmfd_level);
+    int getMeshLevel();
 };
 
 #endif /* MESH_H_ */

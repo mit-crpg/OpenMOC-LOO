@@ -469,8 +469,37 @@ int Track::getSurfBwd(){
 }
 
 
+/**
+ * @brief Initializes a track's unique ID. 
+ * @details This is set by the trackgenerator to correspond to the track's 
+ *          location in a 2D ragged array of all tracks.
+ * @param uid the track's unique ID
+ */
+void Track::setUid(int uid) {
+    _uid = uid;
+}
+
+/** 
+ * @brief Set the index for the track's azimuthal angle index.
+ * @details The azimuthal angle index corresponds to a an array of all
+ *          azimuthal angles for \f$ \theta \in [0, \pi] \f$ owned by
+ *          the TrackGenerator class.
+ * @param index the azimuthal angle index
+ */
+void Track::setAzimAngleIndex(const int index) {
+    _azim_angle_index = index;
+}
 
 
+/**
+ * @brief Return the index for the track's azimuthal angle (with respect to the
+ *        x-axis).
+ * @return th azimuthal angle index
+ */
+int Track::getAzimAngleIndex() const {
+    return _azim_angle_index;
+}
 
-
-
+int Track::getUid() {
+    return _uid;
+}

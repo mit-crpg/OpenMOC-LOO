@@ -14,8 +14,16 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <stdlib.h>
+#include <sstream>
 #include <iostream>
+#include <fstream>
+#include <iomanip>
 #include <string.h>
+#include <stdexcept>
+#include <time.h>
+#include <math.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 
 typedef enum logLevels {
     DEBUG,
@@ -35,6 +43,9 @@ void log_printf(logLevel level, const char *format, ...)
 void log_error(const char *format, ...)
     __attribute__((__noreturn__))
     __attribute__((__format__ (__printf__, 1, 2) ));
+
+void setOutputDirectory(char* directory);
+const char* getOutputDirectory();
 
 #ifndef LOG_C
 extern logLevel log_level;

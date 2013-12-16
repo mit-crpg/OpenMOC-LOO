@@ -78,7 +78,8 @@ int main(int argc, char **argv) {
 
     /* Initialize track generator */
     TrackGenerator track_generator(&geometry, &plotter, opts.getNumAzim(),
-                                   opts.getTrackSpacing());
+                                   opts.getTrackSpacing(), 
+                                   opts.getGeometryFile());
 
     /* Tell geometry whether CMFD is on/off */
     geometry.setCmfd(opts.getCmfd());
@@ -110,11 +111,13 @@ int main(int argc, char **argv) {
     timer.recordSplit("Generating tracks");
 
     /* Segment tracks */
+    /*
     timer.reset();
     timer.start();
     track_generator.segmentize();
     timer.stop();
     timer.recordSplit("Segmenting tracks");
+    */
 
     /* Create CMFD class */
     Cmfd cmfd(&geometry, &plotter, geometry.getMesh(), &track_generator, &opts);

@@ -62,6 +62,10 @@ private:
     reflectType _refl_in, _refl_out;
     int _surf_fwd;
     int _surf_bwd;
+    /** A monotonically increasing unique ID for each track */
+    int _uid;
+    /** The azimuthal angle index into the global 2D ragged array of tracks */
+    int _azim_angle_index;
 #if USE_OPENMP
     omp_lock_t _flux_lock;
 #endif
@@ -76,6 +80,8 @@ public:
                         double* polar_fluxes);
     void setPolarFluxesByIndex(int pe, double flux);
     void updatePolarFluxes(int pe, double factor);
+    void setUid(int uid);
+    void setAzimAngleIndex(const int index);
     void setPhi(const double phi);
     void setReflIn(reflectType refl_in);
     void setReflOut(reflectType refl_out);
@@ -86,7 +92,9 @@ public:
 
     Point* getEnd();
     Point* getStart();
+    int getUid();
     double getPhi() const;
+    int getAzimAngleIndex() const;
     double getAzimuthalWeight() const;
     double* getPolarWeights();
     double* getPolarFluxes();

@@ -609,3 +609,19 @@ void Mesh::setOldTime(double time){
     _old_time = time;
 }
 
+/**
+ * @brief Gets the mesh level
+ * @return _mesh_level mesh level
+ **/
+int Mesh::getMeshLevel(){
+    return _mesh_level;
+}
+
+
+/**
+ * @brief Sets the cmfd level
+ * @parap cmfd_level cmfd level
+ **/
+void Mesh::setMeshLevel(int mesh_level){
+    _mesh_level = mesh_level;
+}
