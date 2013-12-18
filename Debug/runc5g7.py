@@ -3,10 +3,10 @@ from matplotlib import cm
 from matplotlib.font_manager import FontProperties
 import numpy as np
 import os
+#import commands 
 
-geometries = ['geometry_2x2_leakage.xml']
-
-materials = ['material_simple.xml']
+geometries = ['geometry_c5g7_cc.xml']
+materials = ['material_c5g7.xml','material_c5g7.xml']
 
 # C4 default is: 0.5cm, 64 azimuthal angle
 ts = [0.05] #0.05
@@ -24,41 +24,25 @@ counter = 0;
 for i, geometry in enumerate(geometries):
     for spacing in ts:
         for angle in na:
-            os.system('../bin/openmoc'
-                      + ' -m ../xml-sample/Cmfd/' + materials[i]
-                      + ' -g ../xml-sample/Cmfd/' + geometry 
-                      + ' -na ' + str(angle) 
-                      + ' -ts ' + str(spacing) 
-                      + ' -fc ' + str(fc[0]) 
-                      + ' -wl1 -nub')
-
-            os.system('../bin/openmoc'
-                      + ' -m ../xml-sample/Cmfd/' + materials[i]
-                      + ' -g ../xml-sample/Cmfd/' + geometry 
+            os.system('cd .. && ./bin/openmoc'
+                      + ' -m xml-sample/Cmfd/' + materials[i]
+                      + ' -g xml-sample/Cmfd/' + geometry 
                       + ' -na ' + str(angle) 
                       + ' -ts ' + str(spacing) 
                       + ' -fc ' + str(fc[0]) 
                       + ' -wl1')
 
-            os.system('../bin/openmoc'
-                      + ' -m ../xml-sample/Cmfd/' + materials[i]
-                      + ' -g ../xml-sample/Cmfd/' + geometry 
-                      + ' -na ' + str(angle) 
-                      + ' -ts ' + str(spacing) 
-                      + ' -fc ' + str(fc[0]) 
-                      + ' -wl2 -nub')
-
-            os.system('../bin/openmoc'
-                      + ' -m ../xml-sample/Cmfd/' + materials[i]
-                      + ' -g ../xml-sample/Cmfd/' + geometry 
+            os.system('cd .. && ./bin/openmoc'
+                      + ' -m xml-sample/Cmfd/' + materials[i]
+                      + ' -g xml-sample/Cmfd/' + geometry 
                       + ' -na ' + str(angle) 
                       + ' -ts ' + str(spacing) 
                       + ' -fc ' + str(fc[0]) 
                       + ' -wl2')
 
-            os.system('../bin/openmoc'
-                      + ' -m ../xml-sample/Cmfd/' + materials[i]
-                      + ' -g ../xml-sample/Cmfd/' + geometry 
+            os.system('cd .. && ./bin/openmoc'
+                      + ' -m xml-sample/Cmfd/' + materials[i]
+                      + ' -g xml-sample/Cmfd/' + geometry 
                       + ' -na ' + str(angle) 
                       + ' -ts ' + str(spacing) 
                       + ' -fc ' + str(fc[0]) 
