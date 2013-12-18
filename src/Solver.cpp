@@ -41,11 +41,45 @@ Solver::Solver(Geometry* geom, TrackGenerator* track_generator,
     _diffusion = opts->getDiffusion();
     _acc_after_MOC_converge = opts->getAccAfterMOCConverge();
     _k_eff = opts->getKGuess();
-    _geometry_file = opts->getGeometryFile();
     _damp_factor = opts->getDampFactor();
     _track_spacing = opts->getTrackSpacing();
     _boundary_iteration = opts->getBoundaryIteration();
     _update_boundary = opts->getUpdateBoundary();
+
+    _geometry_file = opts->getGeometryFile();
+    _geometry_file_no_slash = opts->getGeometryFile();
+    for (unsigned i = 0; i < _geometry_file.length(); i++)
+    {
+        switch(_geometry_file[i]) {
+        case '/':
+            _geometry_file_no_slash[i] = '_';
+        }
+    }
+    std::stringstream string;
+
+    string << _geometry_file_no_slash << "_l2_norm_" << (_num_azim*2) 
+           << "_" << std::fixed 
+           << std::setprecision(2) <<  _track_spacing
+           << "_bi_" << _boundary_iteration
+           << "_"
+           << std::setprecision(1) << _damp_factor;
+
+    if (_update_boundary)
+        string << "_update";
+    else
+        string << "_noupda";
+
+    if (_run_cmfd)
+        string << "_cmfd.txt";
+    else if (_run_loo1)
+        string << "_loo1.txt";
+    else if (_run_loo2)
+        string << "_loo2.txt";
+    else
+        string << "_unac.txt";
+
+    _log_file = string.str();
+
     _reflect_outgoing = opts->getReflectOutgoing();
     if (_reflect_outgoing)
         _nq = 2;
@@ -2378,6 +2412,8 @@ double Solver::kernel(int max_iterations) {
 
             printToMinimumLog(moc_iter);
             plotEverything(moc_iter);
+            log_printf(NORMAL, "Printed log file to %s", 
+                       _geometry_file_no_slash.c_str());
 
             return _k_eff;
         }
@@ -2449,35 +2485,10 @@ void Solver::printToMinimumLog(int moc_iter)
 void Solver::printToLog(int moc_iter, double eps_inf, double eps_2, double rho)
 {
     std::ofstream logfile;
-    std::stringstream string;
-
-    string << "l2_norm_" << (_num_azim*2) 
-           << "_" << std::fixed 
-           << std::setprecision(2) <<  _track_spacing
-           << "_bi_" << _boundary_iteration
-           << "_"
-           << std::setprecision(1) << _damp_factor;
-
-    if (_update_boundary)
-        string << "_update";
-    else
-        string << "_noupda";
-
-    if (_run_cmfd)
-        string << "_cmfd.txt";
-    else if (_run_loo1)
-        string << "_loo1.txt";
-    else if (_run_loo2)
-        string << "_loo2.txt";
-    else
-        string << "_unac.txt";
-
-
-    std::string title_str = string.str();
 
     if (moc_iter == 0)
     {
-        logfile.open(title_str.c_str(), std::fstream::trunc);
+        logfile.open(_log_file.c_str(), std::fstream::trunc);
         logfile << "# iteration,"
                 << " cell l2 norm (m+1/2, m+1),"
                 << " fsr l-inf norm (m, m+1),"
@@ -2490,7 +2501,7 @@ void Solver::printToLog(int moc_iter, double eps_inf, double eps_2, double rho)
     }
     else
     {
-        logfile.open(title_str.c_str(), std::ios::app);
+        logfile.open(_log_file.c_str(), std::ios::app);
         logfile << moc_iter 
                 << " " << _cmfd->getL2Norm() 
                 << " " << eps_inf

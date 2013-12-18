@@ -73,6 +73,8 @@ private:
     float* _pix_map_total_flux;
     Cmfd* _cmfd;
     std::string _geometry_file;
+    std::string _geometry_file_no_slash;
+    std::string _log_file;
 
 #if !STORE_PREFACTORS
     double* _pre_factor_array;

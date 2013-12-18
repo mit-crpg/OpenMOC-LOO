@@ -2053,8 +2053,6 @@ bool Geometry::mapContainsKey(std::map<K, V> map, K key) {
 void Geometry::makeCMFDMesh(Mesh* mesh, int numAzim, 
                             bool multigroup, bool printMatrices, int cmfdLevel)
 {
-    log_printf(NORMAL, "Making mesh at level %i...", cmfdLevel);
-
     int max_cmfd_level = 0;
     Universe* univ = _universes.at(0);
 
@@ -2096,7 +2094,8 @@ void Geometry::makeCMFDMesh(Mesh* mesh, int numAzim,
     mesh->setWidth(getWidth());
     mesh->makeMeshCells();
 
-    log_printf(NORMAL, "Made mesh with %i mesh cells...", height*width);
+    log_printf(NORMAL, "Made %i mesh cells at level %i...", height*width, 
+        cmfdLevel);
 
     log_printf(DEBUG, "mesh cell width: %i", _mesh->getCellWidth());
     log_printf(DEBUG, "mesh cell height: %i", _mesh->getCellHeight());
