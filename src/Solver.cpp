@@ -57,10 +57,10 @@ Solver::Solver(Geometry* geom, TrackGenerator* track_generator,
     }
     std::stringstream string;
 
-    string << _geometry_file_no_slash << "_l2_norm_" << (_num_azim*2) 
+    string << _geometry_file_no_slash << "_" << (_num_azim*2) 
            << "_" << std::fixed 
            << std::setprecision(2) <<  _track_spacing
-           << "_bi_" << _boundary_iteration
+        //<< "_bi_" << _boundary_iteration
            << "_"
            << std::setprecision(1) << _damp_factor;
 
@@ -2395,7 +2395,6 @@ double Solver::kernel(int max_iterations) {
         /* Prints out keff & eps, may update keff too based on _update_keff */
         printToScreen(moc_iter);
         printToLog(moc_iter, eps_inf, eps_2, spectral_radius);
-
         plotEverything(moc_iter);
 
         /* Alternative: if (_cmfd->getL2Norm() < _moc_conv_thresh) */
@@ -2411,9 +2410,8 @@ double Solver::kernel(int max_iterations) {
             }
 
             printToMinimumLog(moc_iter);
-            plotEverything(moc_iter);
             log_printf(NORMAL, "Printed log file to %s", 
-                       _geometry_file_no_slash.c_str());
+                       _log_file.c_str());
 
             return _k_eff;
         }
