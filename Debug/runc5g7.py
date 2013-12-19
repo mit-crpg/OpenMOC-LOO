@@ -5,8 +5,8 @@ import numpy as np
 import os
 #import commands 
 
-geometries = ['xml-sample/Cmfd/geometry_c5g7_cc.xml']
-materials = ['material_c5g7.xml','material_c5g7.xml']
+geometries = ['xml-sample/geometry_c5g7_cc.xml']
+materials = ['xml-sample/material_c5g7.xml']
 
 # C4 default is: 0.5cm, 64 azimuthal angle
 ts = [0.05] #0.05
@@ -26,7 +26,7 @@ for i, geometry in enumerate(geometries):
     for spacing in ts:
         for angle in na:
             os.system('cd .. && ./bin/openmoc'
-                      + ' -m xml-sample/Cmfd/' + materials[i]
+                      + ' -m ' + materials[i]
                       + ' -g ' + geometry 
                       + ' -na ' + str(angle) 
                       + ' -ts ' + str(spacing) 
@@ -34,7 +34,7 @@ for i, geometry in enumerate(geometries):
                       + ' -wl1')
 
             os.system('cd .. && ./bin/openmoc'
-                      + ' -m xml-sample/Cmfd/' + materials[i]
+                      + ' -m ' + materials[i]
                       + ' -g ' + geometry 
                       + ' -na ' + str(angle) 
                       + ' -ts ' + str(spacing) 
@@ -42,7 +42,7 @@ for i, geometry in enumerate(geometries):
                       + ' -wl2')
 
             os.system('cd .. && ./bin/openmoc'
-                      + ' -m xml-sample/Cmfd/' + materials[i]
+                      + ' -m ' + materials[i]
                       + ' -g ' + geometry 
                       + ' -na ' + str(angle) 
                       + ' -ts ' + str(spacing) 
