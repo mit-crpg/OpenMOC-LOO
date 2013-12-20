@@ -2094,8 +2094,9 @@ void Geometry::makeCMFDMesh(Mesh* mesh, int numAzim,
     mesh->setWidth(getWidth());
     mesh->makeMeshCells();
 
-    log_printf(NORMAL, "Made %i mesh cells at level %i...", height*width, 
-        cmfdLevel);
+    log_printf(NORMAL, "Made %d mesh cells at level %i,"
+               " where 0 is the coarsest, and %i is the finest", 
+               height * width, cmfdLevel, max_cmfd_level);
 
     log_printf(DEBUG, "mesh cell width: %i", _mesh->getCellWidth());
     log_printf(DEBUG, "mesh cell height: %i", _mesh->getCellHeight());

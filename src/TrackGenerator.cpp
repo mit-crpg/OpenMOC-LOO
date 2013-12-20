@@ -127,8 +127,6 @@ void TrackGenerator::generateTracks() {
         }
     }
 
-    log_printf(NORMAL, "%s", _geometry_file.c_str());
-
     if (_geom->getCmfd() || _geom->getLoo()){
     	test_filename << directory.str() << "/"
                       << _geometry_file << "_"
@@ -412,7 +410,7 @@ void TrackGenerator::computeEndPoint(Point* start, Point* end,
  *  into the trackgenerator's 2d jagged array of tracks
  */
 void TrackGenerator::makeReflective() {
-    log_printf(NORMAL, "Creating reflective boundary conditions...");
+    log_printf(INFO, "Creating boundary conditions...");
 
     int nxi, nyi, nti; /* nx, ny, nt for a particular angle */
     Track *curr;

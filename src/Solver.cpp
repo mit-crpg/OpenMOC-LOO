@@ -130,14 +130,14 @@ Solver::Solver(Geometry* geom, TrackGenerator* track_generator,
 #endif
         if (_update_boundary)
         {
-            log_printf(NORMAL, "Acceleration is on with %d boundary iteration,"
-                       " %f damping, and update boundary flux" , 
+            log_printf(NORMAL, "Acceleration on: %d boundary iteration,"
+                       " %f damping, update boundary flux" , 
                        _boundary_iteration, _damp_factor);
         }
         else
         {
-            log_printf(NORMAL, "Acceleration is on with %d boundary iteration,"
-                       " %f damping, and no update boundary flux" , 
+            log_printf(NORMAL, "Acceleration on: %d boundary iteration,"
+                       " %f damping, no update boundary flux" , 
                        _boundary_iteration, _damp_factor);
         }  
     }
@@ -337,7 +337,7 @@ void Solver::computeRatios() {
  */
 void Solver::initializeFSRs() 
 {
-    log_printf(NORMAL, "Initializing FSRs...");
+    log_printf(INFO, "Initializing FSRs...");
 
     CellBasic* cell;
     Material* material;
@@ -632,7 +632,7 @@ void Solver::updateFlux(int moc_iter)
             /* standard CMFD update */
             else
             {
-                log_printf(NORMAL, " iter %d boundary angular flux "
+                log_printf(ACTIVE, " iter %d boundary angular flux "
                            "prolongation: update by scalar",
                            moc_iter);
                 _cmfd->updateBoundaryFluxByScalarFlux(moc_iter);
@@ -2304,13 +2304,14 @@ double Solver::computeSpectralRadius(double *old_fsr_powers)
 double Solver::kernel(int max_iterations) {
     int moc_iter;
 
-    log_printf(NORMAL, "Starting kernel ...");
+    log_printf(INFO, "Starting kernel ...");
 
     /* Initial guess */
     _old_k_effs.push(_k_eff);
     _old_eps_2.push(1.0);
     _delta_phi.push(1.0);
-    log_printf(NORMAL, "Starting guess of k_eff = %f", _k_eff);
+
+    log_printf(INFO, "Starting guess of k_eff = %f", _k_eff);
 
     /* Check that each FSR has at least one segment crossing it */
     checkTrackSpacing();

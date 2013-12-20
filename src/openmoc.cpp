@@ -34,7 +34,6 @@ int main(int argc, char **argv) {
     feenableexcept(FE_UNDERFLOW);
     feenableexcept(FE_OVERFLOW);
 
-    log_printf(NORMAL, "Starting OpenMOC...");
     double k_eff;
     Timer timer;
 
