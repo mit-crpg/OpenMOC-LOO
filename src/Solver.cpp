@@ -2062,7 +2062,10 @@ void Solver::normalizeFlux()
         }
     }
 
-    /* Renormalize tallied current on each surface */
+#if 0
+    /* This block normalizes tallied current on each surface. To get
+     * geometry_2x2.xml with 2 vacuum BC to converge, the tallied
+     * current cannot be normalized */
     if ((_run_cmfd) && !(_acc_after_MOC_converge))
     {
         int ng = NUM_ENERGY_GROUPS;
@@ -2103,6 +2106,7 @@ void Solver::normalizeFlux()
             }
         }		
     }
+#endif
 
     return;
 }
