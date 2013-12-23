@@ -87,6 +87,7 @@ Solver::Solver(Geometry* geom, TrackGenerator* track_generator,
         _nq = 4;
     
     _plot_loo = opts->plotQuadFlux();
+    _plot_flux = opts->plotFluxes();
 
     _cmfd_k = _k_eff;
     _loo_k = _k_eff;
@@ -2400,7 +2401,6 @@ double Solver::kernel(int max_iterations) {
         /* Prints out keff & eps, may update keff too based on _update_keff */
         printToScreen(moc_iter);
         printToLog(moc_iter, eps_inf, eps_2, spectral_radius);
-        plotEverything(moc_iter);
 
         /* Alternative: if (_cmfd->getL2Norm() < _moc_conv_thresh) */
         if (eps_2 < _moc_conv_thresh) 
@@ -2417,6 +2417,8 @@ double Solver::kernel(int max_iterations) {
             printToMinimumLog(moc_iter);
             log_printf(NORMAL, "Printed log file to %s", 
                        _log_file.c_str());
+
+            plotEverything(moc_iter);
 
             return _k_eff;
         }
@@ -2463,7 +2465,7 @@ void Solver::plotEverything(int moc_iter)
     }
 
     /* plot FSR scalar flux */
-    if (_plotter->plotFlux())
+    if (_plot_flux)
         plotFluxes(moc_iter);
 
     return;
