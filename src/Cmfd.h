@@ -86,7 +86,7 @@ private:
     bool _run_loo_phi;
     bool _run_cmfd;
     bool _plot_prolongation;
-    bool _reflective;
+    bool _any_reflective;
     bool _update_boundary;
     bool _reflect_outgoing;
 public:

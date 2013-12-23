@@ -76,7 +76,7 @@ Cmfd::Cmfd(Geometry* geom, Plotter* plotter, Mesh* mesh,
     _t_array = new int[_num_loop * _num_track];
     _t_arrayb = new int[_num_loop * _num_track];
 
-    if (1)//_run_loo)
+    if (_run_loo || opts->getAccAfterMOCConverge())
     {
         generateTrack(_i_array, _t_array, _t_arrayb);
         //checkTrack();
@@ -94,7 +94,6 @@ Cmfd::Cmfd(Geometry* geom, Plotter* plotter, Mesh* mesh,
     {
         _bc[s] = _mesh->getBoundary(s);
 
-        // DEBUG:
         switch (_bc[s])
         {
         case REFLECTIVE:
@@ -111,9 +110,9 @@ Cmfd::Cmfd(Geometry* geom, Plotter* plotter, Mesh* mesh,
 
     if ((_bc[0] == REFLECTIVE) || (_bc[1] == REFLECTIVE) || 
         (_bc[2] == REFLECTIVE) || (_bc[3] == REFLECTIVE) )
-        _reflective = true;
+        _any_reflective = true;
     else
-        _reflective = false;
+        _any_reflective = false;
 }
 
 /**
@@ -1840,7 +1839,7 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
                         flux = 0.0; 
                     }
 	
-                    if (_update_boundary)
+                    if (_update_boundary && _any_reflective)
                     {
                         /* FIXME: could cheat by not checking bc[1] case*/
                         if (onReflectiveBoundary(t, i, 0, 0))
@@ -1942,7 +1941,7 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
                         flux = 0.0;
                     }
 
-                    if (_update_boundary)
+                    if (_update_boundary && _any_reflective)
                     {
                         if (onReflectiveBoundary(t, i, 0, 1))
                         {
@@ -2085,10 +2084,6 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
 
         /* Computes normalization factor based on fission source */
         double normalize_factor = computeNormalization();
-
-        
-        // DEBUG: need to normalize
-        //normalize_factor = 1.0;
         log_printf(ACTIVE, "normalize_factor = %.10f", normalize_factor);
 
         /* Normalizes leakage, scalar flux, angular flux */
@@ -2294,7 +2289,7 @@ void Cmfd::normalizeFlux(double normalize)
         }
     }
 
-    if (_update_boundary)
+    if (_update_boundary && _any_reflective)
     {
         int x, i;
         for (x = 0; x < _cw; x++)
@@ -2799,12 +2794,10 @@ void Cmfd::updateMOCFlux(int moc_iter)
                 fsr = &_flat_source_regions[*iter];
                 flux = fsr->getFlux();
 
-#if NEW
                 if (moc_iter == 0)
                     fsr->setFlux(e, new_flux);
                 else
                 {
-#endif
                     if (tmp_cmco > max_range)
                         tmp_cmco = max_range;
                     else if (tmp_cmco < min_range)
@@ -2812,10 +2805,7 @@ void Cmfd::updateMOCFlux(int moc_iter)
                     
                     fsr->setFlux(e, under_relax * tmp_cmco * flux[e]
                                  + (1.0 - under_relax) * flux[e]);
-#if NEW
                 }
-#endif
-
             }
         } /* exit looping over energy */
     } /* exit mesh cells */
