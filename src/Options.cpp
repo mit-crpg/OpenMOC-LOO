@@ -46,10 +46,8 @@ Options::Options(int argc, char **argv)
 
     /* Default geometry input file */
     _geometry_file = _relative_path + 
-        "xml-sample/geometry_pin5.xml"; 
-    //"xml-sample/geometry_4x4_leakage.xml"; 
+        "xml-sample/geometry_2x2.xml"; 
     //"xml-sample/geometry_c5g7_cc.xml";
-    //"xml-sample/geometry_8x8_leakage3_3.xml"; 
     //"xml-sample/geometry_corner.xml"; % homogeneous material
     _material_file = _relative_path + 
         "xml-sample/material_simple.xml";
@@ -159,7 +157,7 @@ Options::Options(int argc, char **argv)
             {
                 _cmfd = true;
                 _loo = false;
-                _damp_factor = 0.66;
+                _damp_factor = 1; //0.66;
             }
             else if (strcmp(argv[i], "-nl") == 0 ||
                      strcmp(argv[i], "--noloo") == 0)

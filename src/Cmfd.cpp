@@ -1894,7 +1894,12 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
                                _i_array[_num_track * j], e);
                 }
                 else if (_bc[1] == VACUUM)
+                {
+                    // setting to zero should be redundant 
+                    //_mesh->getCells(_i_array[_num_track * j])
+                    //    ->getMeshSurfaces(1)->setQuadFlux(0.0, e, 1);
                     leak_tot += flux * getSurf(_i_array[_num_track * j], 0, 0);
+                }
                 else
                     log_printf(ERROR, "spot unknonwn BC at surface 1");
 
@@ -1996,7 +2001,12 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
                                _i_array[_num_track * j], e);
                 }
                 else if (_bc[1] == VACUUM)
+                {
+                    // again redundant
+                    //_mesh->getCells(_i_array[_num_track * j])
+                    //    ->getMeshSurfaces(1)->setQuadFlux(0.0, e, 0);
                     leak_tot += flux * getSurf(_i_array[_num_track * j], 0, 0);
+                }
 
                 if (initial_flux > 1e-10) 
                 {
@@ -2086,7 +2096,6 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
         double normalize_factor = computeNormalization();
         log_printf(ACTIVE, "normalize_factor = %.10f", normalize_factor);
 
-        /* Normalizes leakage, scalar flux, angular flux */
         /* FIXME: should or should not normalize leak_tot? */
         //leak_tot *= normalize_factor;
 
