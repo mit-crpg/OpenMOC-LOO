@@ -43,6 +43,8 @@ private:
     Quadrature* _quad;
     FlatSourceRegion* _flat_source_regions;
     Track** _tracks;
+
+    /* Number of cells in the x-direction */
     int _cw;
     int _ch;
     int _nq;
@@ -130,8 +132,6 @@ public:
     double runLoo(int moc_iter);
     double runCmfd(int moc_iter);
     void tallyLooWeight(Track *t, segment *seg, MeshSurface **surf, int dir);
-    void tallyLooWeightIncoming(Track *t, segment *seg, MeshSurface **surf, 
-                                int dir);
     void tallyLooWeightSingle(Track *t, segment *seg, MeshSurface **surf, 
                               int dir, int surfID, int index, int opposite);
     void tallyLooCurrent(Track *t, segment *seg, MeshSurface **surf, int dir);

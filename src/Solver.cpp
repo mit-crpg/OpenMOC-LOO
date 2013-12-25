@@ -598,29 +598,25 @@ return k;
 /**
  * Update FSR's scalar fluxes, normalize them and update the source
  */
-void Solver::updateFlux(int moc_iter) 
+void Solver::prolongation(int moc_iter) 
 {
     if (moc_iter > -10) //47 (2x2_leakage) 79 (2x2) 229 (4x4_leakage) 
     {
         log_printf(ACTIVE, " iter %d scalar flux prolongation", moc_iter);
         _cmfd->updateMOCFlux(moc_iter);
 
-        /* updates boundary angular fluxes */
         if (_update_boundary)
         {
             /* standard LOO update */
             if (_run_loo && (!(_diffusion && (moc_iter == 0))))
             {
-                if (moc_iter > -10)
-                {
-                    log_printf(ACTIVE, " iter %d boundary angular flux "
-                               "prolongation: by quadrature",
-                               moc_iter);
-                    updateBoundaryFluxByQuadrature();
-                    //_cmfd->updateBoundaryFluxByScalarFlux(moc_iter);
-                    //_cmfd->updateBoundaryFluxBySrc(moc_iter);
-                    //_cmfd->updateBoundaryFluxByNetCurrent(moc_iter);
-                }
+                log_printf(ACTIVE, " iter %d boundary angular flux "
+                           "prolongation: by quadrature",
+                           moc_iter);
+                updateBoundaryFluxByQuadrature();
+                //_cmfd->updateBoundaryFluxByScalarFlux(moc_iter);
+                //_cmfd->updateBoundaryFluxBySrc(moc_iter);
+                //_cmfd->updateBoundaryFluxByNetCurrent(moc_iter);
             }
             /* first diffusion step */
             else if ((_diffusion) && (moc_iter == 0))
@@ -1298,33 +1294,6 @@ void Solver::tallyLooWeight(Track *track, segment *segment,
     }
 }
 
-void Solver::tallyLooWeightIncoming(Track *track, segment *segment, 
-                                    MeshSurface **meshSurfaces, int direction)
-{
-    int index = 6, opposite_index = 7, surfID;
-
-    /* Get the ID of the surface that the segment starts on (forward), ends
-     * on (backwards)*/
-    if (direction == 1)
-        surfID = segment->_mesh_surface_bwd;
-    else 
-        surfID = segment->_mesh_surface_fwd;
-
-    if (surfID != -1)
-    {    
-        /* Defines index */
-        if (track->getPhi() > PI / 2.0)
-        {
-            index = 7; //3
-            opposite_index = 6; //2
-        }
-
-        tallyLooWeightSingle(track, segment, meshSurfaces, direction, 
-                             surfID, index, opposite_index);
-    }
-}
-
-
 void Solver::tallyLooWeightSingle(Track *track, segment *segment, 
                                   MeshSurface **meshSurfaces, int direction, 
                                   int surfID, int index, int opposite_index)
@@ -1570,13 +1539,6 @@ void Solver::initializeWeights()
                 track = &_tracks[j][k];
                 segments = track->getSegments();
                 num_segments = track->getNumSegments();
-
-                /* I decided that there is no reason to tally the
-                 * following two, because we can just use the weight
-                 * of the reflective tracks */
-                //tallyLooWeightIncoming(track, segments.at(0), meshSurfaces,1);
-                //tallyLooWeightIncoming(track, segments.at(num_segments-1), 
-                //meshSurfaces, -1);
 
                 /* Loop over each segment in forward direction */
                 for (s = 0; s < num_segments; s++) 
@@ -1934,7 +1896,6 @@ void Solver::MOCsweep(int max_iterations, int moc_iter)
         }
 
 
-#if 1
         if (!_reflect_outgoing)
         {
             /* Loop over each track, updating all the incoming angular fluxes */
@@ -1943,19 +1904,22 @@ void Solver::MOCsweep(int max_iterations, int moc_iter)
                 for (k = 0; k < _num_tracks[j]; k++) 
                 {
                     track = &_tracks[j][k];
-                    /* Transfers flux to outgoing track */
+
+                    /* Transfers outgoing flux to its reflective
+                     * track's incoming for the forward direction */
                     track->getTrackOut()
                         ->setPolarFluxes(track->isReflOut(), 
                                          0, track->getFwdFluxes());
-                
-                    /* Transfers flux to incoming track */
+
+                    /* Transfers outgoing flux to its reflective
+                     * track's incoming for the backward direction */
                     track->getTrackIn()
                         ->setPolarFluxes(track->isReflIn(), 
                                          GRP_TIMES_ANG, track->getBwdFluxes());
+            
                 }
             }
         }
-#endif
 
         /* If more than one iteration is requested, we only computes source for
          * the last iteration, all previous iterations are considered to be 
@@ -2409,7 +2373,7 @@ double Solver::kernel(int max_iterations) {
         /* Update FSR's flux based on cell-averaged flux coming from the
          * acceleration steps */
         if ((_run_cmfd || _run_loo) && !(_acc_after_MOC_converge))
-            updateFlux(moc_iter);
+            prolongation(moc_iter);
 
         /* Computes the new keff */
         _k_eff = computeKeff(moc_iter);
