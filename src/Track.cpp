@@ -130,6 +130,22 @@ void Track::setPolarFluxes(reflectType direction, int start_index,
     return;
 }
 
+/**
+ * Set this track's polar fluxes for a particular direction (0 or 1)
+ * @param direction incoming/outgoing (0/1) flux for forward/reverse directions
+ * @param polar_fluxes pointer to an array of fluxes
+ */
+void Track::resetPolarFluxes(reflectType direction, int start_index)
+{
+    if (direction == VAC_TRUE || direction == VAC_FALSE)
+    {
+        int start = (direction - 2) * GRP_TIMES_ANG;
+        for (int i = 0; i < GRP_TIMES_ANG; i++)
+            _polar_fluxes[start + i] = 0.0;
+    }
+
+    return;
+}
 
 /*
  * Set the track azimuthal angle

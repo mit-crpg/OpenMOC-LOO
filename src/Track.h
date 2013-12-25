@@ -58,7 +58,18 @@ private:
     double _bwd_fluxes[2*GRP_TIMES_ANG];
     double _fwd_fluxes[2*GRP_TIMES_ANG];
     std::vector<segment*> _segments;
-    Track *_track_in, *_track_out;
+
+    /** The track which reflects out of this track along its "forward"
+     * direction for reflective boundary conditions. */
+    Track* _track_in;
+
+    /** The track which reflects out of this track along its "reverse"
+     * direction for reflective boundary conditions. */
+    Track* _track_out;
+
+    /* whether to give the flux to the forward (false) or backward
+     * (true) direction of the track reflecting out of this one along
+     * its forward (in) or backward (out) direction. */
     reflectType _refl_in, _refl_out;
     int _surf_fwd;
     int _surf_bwd;
@@ -78,6 +89,7 @@ public:
     void setPolarWeight(const int angle, double polar_weight);
     void setPolarFluxes(reflectType direction, int start_index, 
                         double* polar_fluxes);
+    void resetPolarFluxes(reflectType direction, int start_index);
     void setPolarFluxesByIndex(int pe, double flux);
     void updatePolarFluxes(int pe, double factor);
     void setUid(int uid);
