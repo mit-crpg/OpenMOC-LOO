@@ -692,11 +692,10 @@ void Solver::updateBoundaryFluxByQuadrature()
 {
     Track *track;
     segment *seg;
-    MeshSurface *meshSurface1, *meshSurface2;
+    MeshSurface *meshSurface;
     MeshSurface **meshSurfaces;  
     double phi, factor;
     int ind, num_segments, pe, surf_id, num_updated = 0;
-    int surf_id1, surf_id2; 
 
     meshSurfaces = _geom->getMesh()->getSurfaces();
 
@@ -713,9 +712,13 @@ void Solver::updateBoundaryFluxByQuadrature()
              * not, this is always the case because during LOO perfect
              * reflectiveness is assumed. */
              if (phi < PI / 2.0) 
+             {
                  ind = 1; 
+             }
              else 
+             {
                  ind = 0;
+             }
 
             /* Forward direction is 0, backward is 1 */
             for (int dir = 0; dir < 2; dir++)
@@ -729,37 +732,79 @@ void Solver::updateBoundaryFluxByQuadrature()
                 else
                     surf_id = seg->_mesh_surface_fwd;
 
-                /* correct for corners -- find the adjacent boundary surfaces */
-                if ((surf_id % 8) < 4)
+
+                if (surf_id % 8 < 4) {}
+                else if (surf_id % 8 < 5)
                 {
-                    surf_id1 = surf_id;
-                    surf_id2 = surf_id;
+                    if ((surf_id / 8) % _cw == 0) /* on left column */
+                    {
+                        surf_id -= 4;
+                        surf_id += 8 * _cw;
+                    }
+                    else if ((surf_id / 8) >= _cw * (_ch - 1)) /* bottom row */
+                    {
+                        surf_id -= 3;
+                        surf_id -= 8;
+                    }
+                    else
+                        log_printf(ERROR, "something went wrong");
                 }
-                /* FIXME */
-                /* the corner treatment is not quite right */
-                else if ((surf_id % 8) < 7)
+                else if (surf_id % 8 < 6)
                 {
-                    surf_id1 = surf_id - 4;
-                    surf_id2 = surf_id - 3;
+                    if (((surf_id / 8) + 1) % _cw == 0) /* right column */
+                    {
+                        surf_id -= 3;
+                        surf_id += 8 * _cw;
+                    }
+                    else if ((surf_id / 8) >= _cw * (_ch - 1))
+                    {
+                        surf_id -= 4;
+                        surf_id += 8;
+                    }
+                    else
+                        log_printf(ERROR, "unexpected corner condition"
+                                   " in updating boundary flux");
                 }
-                else 
+                else if (surf_id % 8 < 7)
                 {
-                    surf_id1 = surf_id - 4;
-                    surf_id2 = surf_id - 7;
+                    if (((surf_id / 8) + 1) % _cw == 0) /* right column */
+                    {
+                        surf_id -= 4;
+                        surf_id -= 8 * _cw;
+                    }
+                    else if ((surf_id / 8) < _cw)
+                    {
+                        surf_id -= 3;
+                        surf_id += 8;
+                    }
+                    else
+                        log_printf(ERROR, "unexpected corner condition"
+                                   " in updating boundary flux");
+                }
+                else
+                {
+                    if ((surf_id / 8) % _cw == 0) /* left column */
+                    {
+                        surf_id -= 7;
+                        surf_id -= 8 * _cw;
+                    }
+                    else if ((surf_id / 8) < _cw)
+                    {
+                        surf_id -= 4;
+                        surf_id -= 8;
+                    }
+                    else
+                        log_printf(ERROR, "unexpected corner condition"
+                                   " in updating boundary flux");
                 }
 
-                assert((surf_id1 % 8) < 4);
-                assert((surf_id2 % 8) < 4);
 
-#if 1                
-                meshSurface1 = meshSurfaces[surf_id1];
-                meshSurface2 = meshSurfaces[surf_id2];
-#else                
-                meshSurface1 =  _geom->getMesh()->getCells(surf_id1 / 8)
-                    ->getMeshSurfaces(surf_id1 % 8);
-                meshSurface2 =  _geom->getMesh()->getCells(surf_id2 / 8)
-                    ->getMeshSurfaces(surf_id2 % 8);
-#endif
+                assert((surf_id % 8) < 4);
+                assert(surf_id >= 0);
+                assert(surf_id < 8 * _cw * _ch);
+
+                meshSurface = meshSurfaces[surf_id];
+
                 /* initialize starting point of pe which is 0 for
                  * forward direction and GRP_TIMES_ANG for backward
                  * direction */
@@ -767,7 +812,7 @@ void Solver::updateBoundaryFluxByQuadrature()
 
                 for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
                 {
-                    if (meshSurface1->getOldQuadFlux(e, ind) < 0)
+                    if (meshSurface->getOldQuadFlux(e, ind) < 0)
                     {
                         if (e == 0)
                         {
@@ -775,14 +820,14 @@ void Solver::updateBoundaryFluxByQuadrature()
                                        "e %d i %d j %d (total %d) %f -> %f"
                                        " forward phi %f",
                                        e, i, j, _num_tracks[i],
-                                       meshSurface1->getOldQuadFlux(e, ind),
-                                       meshSurface1->getQuadFlux(e, ind), phi);
+                                       meshSurface->getOldQuadFlux(e, ind),
+                                       meshSurface->getQuadFlux(e, ind), phi);
                         }		
                         pe += NUM_POLAR_ANGLES;
                     }
-                    else if (meshSurface1->getOldQuadFlux(e,ind) < 1e-10)
+                    else if (meshSurface->getOldQuadFlux(e,ind) < 1e-10)
                     {
-                        factor = meshSurface1->getQuadFlux(e, ind);
+                        factor = meshSurface->getQuadFlux(e, ind);
                         for (int p = 0; p < NUM_POLAR_ANGLES; p++)
                         {
                             track->setPolarFluxesByIndex(pe, factor);
@@ -792,18 +837,8 @@ void Solver::updateBoundaryFluxByQuadrature()
                     }
                     else
                     {
-                        /*
-                        factor = meshSurface1->getQuadFlux(e, ind) 
-                            / meshSurface1->getOldQuadFlux(e, ind) 
-                            + meshSurface2->getQuadFlux(e, ind) 
-                            / meshSurface2->getOldQuadFlux(e, ind);
-                        factor *= 0.5;
-                        */
-                        
-                        factor = (meshSurface1->getQuadFlux(e, ind) 
-                                  + meshSurface2->getQuadFlux(e, ind)) 
-                            / (meshSurface1->getOldQuadFlux(e, ind)
-                               + meshSurface2->getOldQuadFlux(e, ind));
+                        factor = meshSurface->getQuadFlux(e, ind)
+                            / meshSurface->getOldQuadFlux(e, ind);
 
                         factor = _damp_factor * factor + 1.0 - _damp_factor; 
 
