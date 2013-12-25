@@ -643,6 +643,10 @@ void Solver::updateFlux(int moc_iter)
         /* normalize fluxes */
         normalizeFlux();
     }
+
+    /* Re-enforce vacuum boundary conditions */
+    zeroVacuumBoundaries();
+
     return;
 }
 
@@ -2005,6 +2009,44 @@ void Solver::MOCsweep(int max_iterations, int moc_iter)
 		
     return;
 } /* end of MOCsweep */
+
+
+void Solver::zeroVacuumBoundaries() {
+    Track* track;
+    //double* polar_fluxes;
+    //reflectType direction;
+
+    /* Loop over azimuthal angle, track, polar angle, energy group
+     * and set each track's incoming and outgoing flux to zero */
+    for (int i = 0; i < _num_azim; i++) 
+    {
+        for (int j = 0; j < _num_tracks[i]; j++) {
+            track = &_tracks[i][j];
+            //polar_fluxes = _tracks[i][j].getPolarFluxes();
+
+            /* Forward direction */
+            /*
+            direction = track->isReflOut();
+
+            if ((direction == VAC_TRUE) || (direction == VAC_FALSE))
+            {
+                int start = (direction - 2) * GRP_TIMES_ANG;
+                for (int i = 0; i < GRP_TIMES_ANG; i++)
+                    polar_fluxes[start+i] = 0.0;
+            }
+            */
+            track->getTrackOut()
+                ->resetPolarFluxes(track->isReflOut(), 0);
+            
+            /* Transfers outgoing flux to its reflective
+             * track's incoming for the backward direction */
+            track->getTrackIn()
+                ->resetPolarFluxes(track->isReflIn(), GRP_TIMES_ANG);
+        }
+    }
+}
+
+
 
 /* Normalizes the scalar flux in each FSR and angular flux track to that total 
  * volume-integrated fission source add up to the total volume. */

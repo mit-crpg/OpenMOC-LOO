@@ -145,13 +145,14 @@ public:
     void normalizeFlux();
     void renormCurrents(Mesh* mesh, double keff);
     void updateSource();
-    void updateFlux(int moc_iter);
+    void prolongation(int moc_iter);
     void updateBoundaryFluxByQuadrature();
     void storeFsrFluxPower();
     double computeFsrL2Norm(double *old_fsr_powers);
     double computeFsrLinf(double *old_fsr_powers);
     double computeSpectralRadius(double *old_fsr_powers); 
     void storeMOCBoundaryFlux();
+    void zeroVacuumBoundaries();
 
     /* getters and setters */
     double** getFSRtoFluxMap();
