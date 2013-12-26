@@ -148,7 +148,7 @@ public:
         // getTotalWt(3) and getTotalWt(4) are the weights used in
         // tallying current in HO. To get reflective BC cases to work, we
         // need these weights instead of the actual physical lengths. 
-        return surface->getTotalWt(j + 3);
+        return surface->getTotalWt(j);
     }
 
     double computeLooFluxPower(int moc_iter, double k);

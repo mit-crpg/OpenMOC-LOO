@@ -10,10 +10,12 @@
 MeshSurface::MeshSurface(){
 	
     try{
-        _total_wt = new double[6];
-        for (int i = 0; i < 6; i++)
+        _total_wt = new double[3];
+        for (int i = 0; i < 3; i++)
             _total_wt[i] = 0.0;
-        
+       
+        _as_tracked_length = 0.0;
+
         _d_tilde = new double[NUM_ENERGY_GROUPS];
         _d_hat = new double[NUM_ENERGY_GROUPS];
         _current = new double[NUM_ENERGY_GROUPS];
@@ -113,6 +115,14 @@ void MeshSurface::incrementTotalWt(double quad_current, int index)
 void MeshSurface::setTotalWt(double wt, int index)
 {
     _total_wt[index] = wt;
+}
+
+double MeshSurface::getAsTrackedLength() {
+    return _as_tracked_length;
+}
+
+void MeshSurface::incrementAsTrackedLength(double length) {
+    _as_tracked_length += length;
 }
 
 void MeshSurface::updateQuadCurrent(double factor, int group, int index)

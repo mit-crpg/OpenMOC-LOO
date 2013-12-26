@@ -69,6 +69,7 @@ public:
     void computeTotQuadCurrents();
     void splitCornerCurrents();
     void splitCornerQuadCurrents();
+    void splitCornerQuadWeights();
     void setMultigroup(bool multigroup);
     bool getMultigroup();
     void setPrintMatrices(bool printMatrices);

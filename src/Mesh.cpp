@@ -375,6 +375,128 @@ void Mesh::splitCornerCurrents()
     return;
 }
 
+void Mesh::splitCornerQuadWeights()
+{
+    MeshSurface* surfaceCorner;
+    MeshSurface *surface1, *surface2, *surface_next1, *surface_next2;
+
+    int cw = getCellWidth();
+    int ch = getCellHeight();
+    MeshCell *meshCell, *meshCellNext, *meshCellNext2; 
+    double current;
+    double f = 0.50; 
+
+    /* associated with this current cell */
+    int surf[]      = {0, 2, 2, 0};
+    int surf2[]     = {1, 1, 3, 3};
+
+    /* associated with cells in the x-plane */
+    int min_x[] = {0,    -1,   -1,   0};
+    int max_x[] = {cw,   cw-1, cw-1, cw};
+    int min_y[] = {-1,   -1,   0,    0};
+    int max_y[] = {ch-1, ch-1, ch,   ch};
+
+    int next_x[]    = {-1, 1, 1, -1};
+    int next_surf[] = {1,  1, 3, 3};
+    
+    int next_y2[]   = {1, 1, -1, -1};
+    int next_surf2[]= {0, 2, 2, 0};
+
+    /* number of quadrature currents that we care to split.*/
+    int nq = 2; 
+
+    /* j is the index of the quadrature, counter_j stores the
+     * reflective quadrature index */
+    int counter_j[] = {1, 0, 3, 2};
+
+    for (int y = 0; y < ch; y++)
+    {
+        for (int x = 0; x < cw; x++)
+        {
+            int ii = y * cw + x;
+            meshCell = &_cells[ii];
+
+            for (int i = 0; i < 4; i++)
+            {
+                surfaceCorner = meshCell->getMeshSurfaces(i + 4);
+
+                /* perform splitting inside of this cell: distribute
+                 * evenly to the two surfaces surrounding the
+                 * corner */
+                surface1 = meshCell->getMeshSurfaces(surf[i]);
+                surface2 = meshCell->getMeshSurfaces(surf2[i]);
+
+                for (int j = 0; j < nq; j++)
+                {
+                    current = f * surfaceCorner->getTotalWt(j);
+                    surface1->incrementTotalWt(current, j);
+                    surface2->incrementTotalWt(current, j);
+                }
+
+                /* effects on the neighboring cells */
+                /* if left or right cell exists */
+                if ((x > min_x[i]) && (x < max_x[i]))
+                {
+                    meshCellNext = 
+                        &_cells[ii + next_x[i]];
+                    surface_next1 = meshCellNext->getMeshSurfaces(next_surf[i]);
+                   
+                     for (int j = 0; j < nq; j++)
+                     {
+                         current = f * surfaceCorner->getTotalWt(j);
+                         surface_next1->incrementTotalWt(current, j);
+                     }
+                } 
+                /* only need to worry about this when reflective */
+                else if (((x == min_x[i]) && (_boundary[0] == REFLECTIVE)) 
+                         || ((x == max_x[i]) && (_boundary[2] == REFLECTIVE)))
+                {
+                    surface_next1 = meshCell->getMeshSurfaces(next_surf[i]);
+                   
+                     for (int j = 0; j < nq; j++)
+                     {
+                         current = f * surfaceCorner->getTotalWt(j);
+                             surface_next1->incrementTotalWt
+                                 (current, counter_j[j]);
+                     }
+                }
+
+
+
+                if ((y > min_y[i]) && (y < max_y[i])) 
+                {
+                     meshCellNext2 = 
+                        &_cells[ii + next_y2[i] * cw];
+                     surface_next2 = meshCellNext2->getMeshSurfaces
+                        (next_surf2[i]);
+
+                     for (int j = 0; j < nq; j++)
+                     {
+                         current = f * surfaceCorner->getTotalWt(j);
+                         surface_next2->incrementTotalWt(current, j);
+                     }
+                } 
+                else if (((y == min_y[i]) && (_boundary[3] == REFLECTIVE)) 
+                         || ((y == max_y[i]) && (_boundary[1] == REFLECTIVE)))
+                {
+                     surface_next2 = meshCell->getMeshSurfaces(next_surf2[i]);
+
+                     for (int j = 0; j < nq; j++)
+                     {
+                         current = f * surfaceCorner->getTotalWt(j);
+                         surface_next2->incrementTotalWt
+                             (current, counter_j[j]);
+                     }
+                } 
+
+
+
+            }
+        }
+    }
+    return;
+}
+
 void Mesh::splitCornerQuadCurrents()
 {
     MeshSurface* surfaceCorner;

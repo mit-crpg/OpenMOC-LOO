@@ -1,6 +1,5 @@
 LANGUAGES       += c++
 COMPILEOPTS     += -Wall
-COMPILEOPTS     += -Werror=unused-variable
 COMPILEOPTS     += -std=gnu++0x
 COMPILEOPTS     += -fopenmp
 COMPILEOPTS     += -O2
@@ -18,6 +17,7 @@ LANGUAGES 	+= bash
 
 BINARIES        += openmoc
 LINKOPTS        += -lm
+LINKOPTS        += -lrt
 LINKOPTS        += -lexpat
 LINKOPTS        += -lsilo
 LINKOPTS 	+= -lpetsc

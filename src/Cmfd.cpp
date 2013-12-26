@@ -181,7 +181,10 @@ void Cmfd::computeXS_old()
     if (_run_cmfd)
         _mesh->splitCornerCurrents();
     if (_run_loo)
+    {
         _mesh->splitCornerQuadCurrents();
+        _mesh->splitCornerQuadWeights();
+    }
 
     /* initialize variables */
     double volume, flux, abs, tot, nu_fis, chi;
@@ -884,11 +887,11 @@ void Cmfd::computeQuadFlux()
 #if NEW
                         /* it is important to use j+3 to get homo case work */
                         if (j < 2)
-                            wt = s[i]->getTotalWt(j + 3);
+                            wt = s[i]->getTotalWt(j);
                         else /* FIXME: this is a special trick because
                               * total wt is not calculated
                               * correctly */
-                            wt = s[i]->getTotalWt(j + 1);
+                            wt = s[i]->getTotalWt(j - 2);
 #else
                         wt = _mesh->getCells(0)->getWidth();
 #endif
@@ -910,7 +913,7 @@ void Cmfd::computeQuadFlux()
                                s[i]->getQuadCurrent(e,3));
 
 #if NEW	
-                    s[i]->setCurrent(tmp / s[i]->getTotalWt(5), e);
+                    s[i]->setCurrent(tmp / s[i]->getTotalWt(2), e);
 #else
                     s[i]->setCurrent(tmp, e);
 #endif
@@ -1655,7 +1658,7 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
                     {
                         ho_current[i][e] += meshCell->getMeshSurfaces(s)
                             ->getCurrent(e) * meshCell->getMeshSurfaces(s)
-                            ->getTotalWt(5);
+                            ->getTotalWt(2);
                     }
 						
                     if (x > 0)
@@ -1663,12 +1666,12 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
                         meshCellNext = _mesh->getCells(y * _cw + x - 1);
                         ho_current[i][e] -= meshCellNext->getMeshSurfaces(2)
                             ->getCurrent(e) * meshCellNext->getMeshSurfaces(2)
-                            ->getTotalWt(5);
+                            ->getTotalWt(2);
                     }
                     else if (_bc[0] == REFLECTIVE)
                         ho_current[i][e] -= meshCell->getMeshSurfaces(0)
                             ->getCurrent(e) * meshCell->getMeshSurfaces(0)
-                            ->getTotalWt(5);
+                            ->getTotalWt(2);
 							
 				
                     if (x < _cw - 1)
@@ -1676,36 +1679,36 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
                         meshCellNext = _mesh->getCells(y * _cw + x + 1);
                         ho_current[i][e] -= meshCellNext->getMeshSurfaces(0)
                             ->getCurrent(e) * meshCellNext->getMeshSurfaces(0)
-                            ->getTotalWt(5);
+                            ->getTotalWt(2);
                     }
                     else if (_bc[2] == REFLECTIVE)
                         ho_current[i][e] -= meshCell->getMeshSurfaces(2)
                             ->getCurrent(e) * meshCell->getMeshSurfaces(2)
-                            ->getTotalWt(5);
+                            ->getTotalWt(2);
 
                     if (y > 0)
                     {
                         meshCellNext = _mesh->getCells((y - 1) * _cw + x);
                         ho_current[i][e] -= meshCellNext->getMeshSurfaces(1)
                             ->getCurrent(e) * meshCellNext->getMeshSurfaces(1)
-                            ->getTotalWt(5);
+                            ->getTotalWt(2);
                     }
                     else if (_bc[3] == REFLECTIVE)
                         ho_current[i][e] -= meshCell->getMeshSurfaces(3)
                             ->getCurrent(e) * meshCell->getMeshSurfaces(3)
-                            ->getTotalWt(5);
+                            ->getTotalWt(2);
 
                     if (y < _ch - 1)
                     {
                         meshCellNext = _mesh->getCells((y + 1) * _cw + x);
                         ho_current[i][e] -= meshCellNext->getMeshSurfaces(3)
                             ->getCurrent(e) * meshCellNext->getMeshSurfaces(3)
-                            ->getTotalWt(5);
+                            ->getTotalWt(2);
                     }
                     else if (_bc[1] == REFLECTIVE)
                         ho_current[i][e] -= meshCell->getMeshSurfaces(1)
                             ->getCurrent(e) * meshCell->getMeshSurfaces(1)
-                            ->getTotalWt(5);
+                            ->getTotalWt(2);
 
                     // both ho_current and net_current are
                     // surface-integrated ones.  
