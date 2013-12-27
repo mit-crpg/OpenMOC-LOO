@@ -1439,7 +1439,7 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter)
         }
         else
         {
-            log_printf(ACTIVE, " %d-th CMFD iteration k = %.10f, eps = %e"
+            log_printf(ACTIVE, " %d-th CMFD iter k = %.10f, eps = %e"
                        " GMRES # = %d" , 
                        iter, _keff, eps, (int)its);
         }

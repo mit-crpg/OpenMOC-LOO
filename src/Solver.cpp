@@ -126,9 +126,9 @@ Solver::Solver(Geometry* geom, TrackGenerator* track_generator,
         _ch = _geom->getMesh()->getCellHeight();
         _cmfd->setFSRs(_flat_source_regions);
         _cmfd->setTracks(_tracks);
-#if NEW
+
         initializeWeights();
-#endif
+
         if (_update_boundary)
         {
             log_printf(NORMAL, "Acceleration on: %d boundary iteration,"
@@ -1571,7 +1571,6 @@ void Solver::initializeWeights()
         meshCell = _geom->getMesh()->getCells(i);
         for (int s = 8 * i; s < 8 * i + 4; s++)
         {
-            /* FIXME: double check this is necessary */
             meshSurfaces[s]->setTotalWt((meshSurfaces[s]->getTotalWt(0) + 
                                          meshSurfaces[s]->getTotalWt(1)), 2);
         }
@@ -1581,6 +1580,10 @@ void Solver::initializeWeights()
         meshCell->setATWidth(w);
         meshCell->setATHeight(h);
         meshCell->setATL(0.5 * sqrt(w * w + h * h) / P0);
+
+        meshCell->setWidth(w);
+        meshCell->setHeight(h);
+        meshCell->setVolume(w * h);
     }
 
     return;
