@@ -1269,7 +1269,6 @@ void Solver::tallyCmfdCurrent(Track *track, segment *segment,
 
     if (surfID != -1)
     {
-
         weights = track->getPolarWeights();
         polar_fluxes = track->getPolarFluxes();
 
@@ -1289,11 +1288,11 @@ void Solver::tallyCmfdCurrent(Track *track, segment *segment,
                  * is cancelled out with the 1/cos theta needed to get the 
                  * track spacing now on the surface. The 1/2.0 takes into 
                  * account half space. */
-                currents[e] += polar_fluxes[pe] * weights[p]/2.0;
+                currents[e] += polar_fluxes[pe] * weights[p] / 2.0;
                 pe++;
             }
         }
-        meshSurface->incrementCurrent(currents);
+        meshSurface->incrementCurrents(currents);
     }
     return;
 }
@@ -1621,13 +1620,13 @@ void Solver::MOCsweep(int max_iterations, int moc_iter)
     if ((_run_loo) && (!(_diffusion && (moc_iter == 0))))
     {
         tally = 2;
-        log_printf(DEBUG, "tally quadrature current");
+        log_printf(INFO, "tally quadrature currents");
     }
     //else if ((_run_cmfd) || (_run_loo & _diffusion && (moc_iter == 0)))
     else if (_run_cmfd || _run_loo)
     {
         tally = 1;
-        log_printf(DEBUG, "tally partial current");
+        log_printf(INFO, "tally partial currents");
     }
     else
         tally = 0;
@@ -2214,7 +2213,7 @@ double Solver::runCmfd(int moc_iter)
     }
 
     /* Run diffusion problem on initial geometry */
-    if (moc_iter == 0 && _diffusion == true)
+    if ((moc_iter == 0) && _diffusion)
         cmfd_keff = _cmfd->computeCMFDFluxPower(DIFFUSION, moc_iter);
     else
         cmfd_keff = _cmfd->computeCMFDFluxPower(CMFD, moc_iter);
@@ -2558,7 +2557,7 @@ void Solver::checkNeutronBalance()
                 src = 0;
 
                 flux = meshCell->getOldFlux()[e];
-                vol = meshCell->getATVolume();
+                vol = meshCell->getVolume();
 				
                 absorb += meshCell->getSigmaA()[e] * flux;
 
@@ -2624,14 +2623,10 @@ void Solver::checkNeutronBalance()
                 /* residual = leakage + absorption - fission */
                 residual = leak + absorb - src;
                 log_printf(ACTIVE, "CMFD cell %d energy %d, residual %.10f"
-                           " leak: %.10f"
-                           " absorb: %.10f, src: %.10f,"
-                           "  fis: %.10f, keff: %.10f", 
-                           y * cell_width + x, e, 
-                           residual,
-                           leak,
-                           absorb, src, 
-                           fis, fis / (leak + absorb));
+                           " leak: %e, absorb: %.10f, src: %.10f,"
+                           " fis: %.10f, keff: %.10f", 
+                           y * cell_width + x, e, residual,
+                           leak, absorb, src, fis, fis / (leak + absorb));
                 tot_leak += leak;
                 tot_absorb += absorb;
                 tot_fis += fis;
@@ -2640,8 +2635,8 @@ void Solver::checkNeutronBalance()
         }
     }
 
-    log_printf(NORMAL, "CMFD over all cell, keff: %.10f"
-               " fis: %f, absorb: %f, leak: %f, src = %f, res = %f", 
+    log_printf(INFO, "Assume no boundary condition, keff: %.10f"
+               " fis: %f, absorb: %f, leak: %e, src = %f, res = %f", 
                tot_fis / (tot_leak + tot_absorb),
                tot_fis, tot_absorb, tot_leak, 
                tot_src, tot_leak + tot_absorb - tot_src);
@@ -2726,7 +2721,7 @@ void Solver::checkNeutronBalanceWithDs()
         /* compute total residual and average ratio */
         /* residual = leakage + absorption - fission */
         double residual = leak + absorb - fis;
-        log_printf(NORMAL, "CMFD residual %.10f"
+        log_printf(DEBUG, "CMFD residual %.10f"
                    " fis: %.10f, absorb: %.10f, leak: %.10f, keff: %.10f", 
                    residual, fis, absorb, leak, fis / (leak + absorb));
     } /* end of looping through cells */

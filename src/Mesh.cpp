@@ -367,13 +367,14 @@ void Mesh::splitCornerCurrents()
                 for (int group = 0; group < NUM_ENERGY_GROUPS; group++)
                     currents[group] = f * surfaceCorner->getCurrent(group);
 
-                surfaceSide->incrementCurrent(currents);
-                surfaceSideNext->incrementCurrent(currents); 			
+                surfaceSide->incrementCurrents(currents);
+                surfaceSideNext->incrementCurrents(currents); 			
             }
         }
     }
     return;
 }
+*/
 
 void Mesh::splitCornerQuadWeights()
 {

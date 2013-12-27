@@ -179,7 +179,9 @@ void Cmfd::computeXS_old()
 {
     /* split corner currents to side surfaces */
     if (_run_cmfd)
+    {
         _mesh->splitCornerCurrents();
+    }
     if (_run_loo)
     {
         _mesh->splitCornerQuadCurrents();
@@ -471,8 +473,8 @@ void Cmfd::computeDsxDirection(double x, double y, int e, MeshCell *meshCell,
                                double dt_weight)
 {
     /* initialize variables */
-    double d_next = 0, d_hat = 0, d_tilde = 0, 
-        current = 0, flux_next = 0, f_next = 0;
+    double d_next = 0, d_hat = 0, d_tilde = 0, current = 0, flux_next = 0, 
+        f_next = 0;
     MeshSurface *surf;
     MeshCell* meshCellNext;
 
@@ -885,12 +887,11 @@ void Cmfd::computeQuadFlux()
                     for (int j = 0; j < _nq; j++)
                     {
 #if NEW
-                        /* it is important to use j+3 to get homo case work */
                         if (j < 2)
                             wt = s[i]->getTotalWt(j);
-                        else /* FIXME: this is a special trick because
-                              * total wt is not calculated
-                              * correctly */
+                        else /* quadrature 2 & 3 do not have their own
+                              * weights, instead just use 0's and 1's
+                              * weights.  */
                             wt = s[i]->getTotalWt(j - 2);
 #else
                         wt = _mesh->getCells(0)->getWidth();
@@ -961,7 +962,7 @@ void Cmfd::computeCurrent()
                 for (int e = 0; e < _ng; e++)
                 {
                     /* FIXME: need to figure out what to do here */
-                    double wt = s[i]->getTotalWt(0); 
+                    double wt = s[i]->getTotalWt(2); 
                     
                     s[i]->setCurrent(s[i]->getCurrent(e) / wt, e);
                 }

@@ -82,11 +82,15 @@ void MeshSurface::setCurrent(double current, int group){
     _current[group] = current;
 }
 
-void MeshSurface::incrementCurrent(double* current){
+void MeshSurface::incrementCurrents(double* current){
     for (int group = 0; group < NUM_ENERGY_GROUPS; group++)
     {
         _current[group] += current[group];
     }
+}
+
+void MeshSurface::incrementCurrent(double current, int group){
+    _current[group] = current;
 }
 
 void MeshSurface::updateCurrent(double factor, int group){
