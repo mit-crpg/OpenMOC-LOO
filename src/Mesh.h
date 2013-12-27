@@ -40,6 +40,16 @@ private:
     int* _fsr_indices;
     double* _cell_bounds;
     MeshSurface **_surfaces;
+    static int _s1[4];
+    static int _s2[4];
+    static int _min_x[4];
+    int _max_x[4];
+    static int _min_y[4];
+    int _max_y[4];
+    static int _delta_x[4];
+    static int _delta_y[4];
+    static int _s_x[4];
+    static int _s_y[4];
 
 public:
     Mesh();
@@ -53,6 +63,8 @@ public:
     int getCellHeight();
     void setCellWidth(int cellWidth);
     void setCellHeight(int cellHeight);
+    void setMaxX(int width);
+    void setMaxY(int height);
     __inline__ MeshCell* getCells(int cell_id){
             assert(cell_id >= 0);
             assert(cell_id < _cell_width * _cell_height);

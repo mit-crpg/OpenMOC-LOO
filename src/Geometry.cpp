@@ -77,7 +77,6 @@ Geometry::Geometry(Parser* parser) {
     }
 
     _mesh = new Mesh;
-
 }
 
 
@@ -2090,6 +2089,9 @@ void Geometry::makeCMFDMesh(Mesh* mesh, int numAzim,
     /* set the cell and geometric width and height of mesh */
     mesh->setCellHeight(height);
     mesh->setCellWidth(width);
+    mesh->setMaxX(width);
+    mesh->setMaxY(height);
+
     mesh->setHeight(getHeight());
     mesh->setWidth(getWidth());
     mesh->makeMeshCells();

@@ -86,9 +86,11 @@ int main(int argc, char **argv) {
 
     /* Make CMFD mesh */
     if (opts.getCmfd() || opts.getLoo())
+    {
         geometry.makeCMFDMesh(geometry.getMesh(), opts.getNumAzim(), 
                               opts.getGroupStructure(), opts.getPrintMatrices(),
                               opts.getCmfdLevel());
+    }
 
     /* make FSR map for plotting */
     if (opts.plotCurrent() || opts.plotDiffusion() || opts.plotFluxes() || 
