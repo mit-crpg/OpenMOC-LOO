@@ -3,16 +3,16 @@ from matplotlib import cm
 from matplotlib.font_manager import FontProperties
 import numpy as np
 import os
-#import commands 
 
+
+# Control variables: where C4 default is 0.5cm and 64 azimuthal angle
 geometries = ['xml-sample/geometry_c5g7_cc.xml']
 materials = ['xml-sample/material_c5g7.xml']
-
-# C4 default is: 0.5cm, 64 azimuthal angle
-ts = [0.05] #0.05
-na = [64] #64
+ts = [0.05] 
+na = [64]
 fc = [1e-8]
 
+# Parameters for plotting
 ls = ['--o', '-s', '-.v', '-<', '-^', '-.>', '--s', '-v']
 fontP = FontProperties()
 fontP.set_size('small')
@@ -20,9 +20,13 @@ max_num_lines = 0
 num = 1;
 counter = 0;
 
-# run OpenMOC
 for i, geometry in enumerate(geometries):
+
+    # Generates the geometry names
     geometry_no_slash = geometry.replace("/", "_")
+    geometry_name = geometry_no_slash[25:-4]
+
+    # Runs OpenMOC
     for spacing in ts:
         for angle in na:
             os.system('cd .. && ./bin/openmoc'
@@ -51,18 +55,17 @@ for i, geometry in enumerate(geometries):
 
     l2_norm_files = []
 
-    # get all l2_norm file names in directory
+    # Obtain and sorts l2_norm file names in directory
     for file in os.listdir("../"):
-        #if file.startswith("l2_norm", 0, 7) and file.endswith(".txt"):
         if file.startswith(geometry_no_slash) and file.endswith(".txt"):
             l2_norm_files.append(file)
             num = num + 1
+    l2_norm_files.sort()
 
     # parse output files
     for file in l2_norm_files:
         counter = counter + 1
         logfile = open('../'+file, "r").readlines()
-        #os.rename(file, geometry_no_slash[:-4] + '_' + file)
         
         method = file[-8:-4]
         update = file[-15:-9]
@@ -109,7 +112,7 @@ for i, geometry in enumerate(geometries):
     plt.ylabel('FSR L2 Norm on Fission Source Relative Change')
     plt.title('Geometry: %s,'%(geometry[9:-4]) + ' spacing: %s,'%str(ts[0]) 
               + ' #angles: %s'%str(na[0]))
-    plt.savefig(geometry_no_slash[25:-4] + '_fsr_l2.png', bbox_inches='tight')
+    plt.savefig(geometry_name + '_fsr_l2.png', bbox_inches='tight')
     plt.clf()
 
     plt.figure(1)
@@ -117,5 +120,5 @@ for i, geometry in enumerate(geometries):
     plt.ylabel('Spectral Radius (numerical approximation)')
     plt.title('Geometry: %s,'%(geometry[9:-4]) + ' spacing: %s,'%str(ts[0]) 
               + ' #angles: %s'%str(na[0]))
-    plt.savefig(geometry_no_slash[25:-4] + '_rho.png', bbox_inches='tight')
+    plt.savefig(geometry_name + '_rho.png', bbox_inches='tight')
     plt.clf()

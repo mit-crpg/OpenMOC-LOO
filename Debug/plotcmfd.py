@@ -5,10 +5,15 @@ import numpy as np
 import os
 import os.path 
 
+# Control variables
 flag = ''
-geometries = ['geometry_2x2_leakage.xml']
+printgeometry='C5G7 Benchmark'
+geometries = ['xml-sample_geometry_c5g7_cc.xml']
+
+# Find the string of geometry name after "geometry_" before ".xml"
 geometry = geometries[0]
-printgeometry='c5g7'
+index = geometry.find("geometry_") + 9
+geometry_name = geometry[index:-4]
 
 ls = ['--o', '-s', '-.v', '-<', '-^', '-.>', '--s', '-v']
 fontP = FontProperties()
@@ -18,13 +23,13 @@ max_num_lines = 0
 l2_norm_files = []
 num = 1;
 
-for file in os.listdir("."):
+for file in os.listdir("../"):
     if file.startswith(geometry[0:-4]) and file.endswith(flag+".txt"):
         print("parsed file %s" % file)
         l2_norm_files.append(file)
         num = num+1
 
-    basepath = os.path.dirname('./')
+    basepath = os.path.dirname('../')
 
 l2_norm_files.sort()
 
@@ -35,12 +40,12 @@ for file in l2_norm_files:
     filepath = os.path.abspath(os.path.join(basepath, file))
     logfile = open(filepath, "r").readlines()
 
+    # sample: xml-sample_geometry_c5g7_cc.xml_64_0.05_1.0_update_loo1.txt
     method = file[-8:-4]
     update = file[-15:-9]
     damp = file[-19:-16]
-    bi = file[-21:-20]
-    ts = file[-29:-25]
-    na = file[-32:-30]
+    ts = file[-24:-20]
+    na = file[-27:-25]
     print("ts = %s, na = %s"%(ts, na))
 
     # find number of lines in file
@@ -81,7 +86,11 @@ plt.xlabel('# MOC iteration')
 plt.ylabel('FSR L2 Norm on Fission Source Relative Change')
 plt.title('Geometry: %s,'%(printgeometry) + ' spacing: %s cm,'%str(ts) 
           + ' #angles: %s'%str(na))
-plt.savefig(geometry[9:-4] + '_fsr_l2_' + flag +  '.png', bbox_inches='tight')
+
+if flag == '':
+    plt.savefig(geometry_name + '_fsr_l2' +  '.png', bbox_inches='tight')
+else:
+    plt.savefig(geometry_name + '_fsr_l2_' + flag + '.png', bbox_inches='tight')
 plt.clf()
 
 plt.figure(1)
@@ -89,5 +98,8 @@ plt.xlabel('# MOC iteration')
 plt.ylabel('Apparent Spectral Radius')
 plt.title('Geometry: %s,'%(printgeometry) + ' spacing: %s cm,'%str(ts) 
           + ' #angles: %s'%str(na))
-plt.savefig(geometry[9:-4] + '_rho_' + flag + '.png', bbox_inches='tight')
+if flag == '':
+    plt.savefig(geometry_name + '_rho' + '.png', bbox_inches='tight')
+else:
+    plt.savefig(geometry_name + '_rho_' + flag + '.png', bbox_inches='tight')
 plt.clf()
