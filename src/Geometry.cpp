@@ -8,7 +8,30 @@
  */
 
 #include "Geometry.h"
+#include <pthread.h>
 
+static pthread_mutex_t geometry_lock = PTHREAD_MUTEX_INITIALIZER;
+static Geometry *geometry = NULL;
+
+static void geom_addMaterial(Material *m)
+{
+    geometry->addMaterial(m);
+}
+
+static void geom_addSurface(Surface *s)
+{
+    geometry->addSurface(s);
+}
+
+static void geom_addCell(Cell *c)
+{
+    geometry->addCell(c);
+}
+
+static void geom_addLatice(Lattice *l)
+{
+    geometry->addLattice(l);
+}
 
 /**
  * Geometry constructor
@@ -29,33 +52,61 @@ Geometry::Geometry(Parser* parser) {
     _y_max = -INFINITY;
 
     /* Add each material from parser */
+#if 0
     parser->each_material([this](Material *m) -> void
                           {
                               addMaterial(m);
                               return;
                           });
+#else
+    pthread_mutex_lock(&geometry_lock);
+    geometry = this;
+    parser->each_material(&geom_addMaterial);
+    pthread_mutex_unlock(&geometry_lock);
+#endif
 
     /* Add each surface from parser */
+#if 0
     parser->each_surface([this](Surface *s) -> void
                          {
                              addSurface(s);
                              return;
                          });
+#else
+    pthread_mutex_lock(&geometry_lock);
+    geometry = this;
+    parser->each_surface(&geom_addSurface);
+    pthread_mutex_unlock(&geometry_lock);
+#endif
 
 
     /* Add each cell from parser */
+#if 0
     parser->each_cell([this](Cell *c) -> void
                       {
                           addCell(c);
                           return;
                       });
+#else
+    pthread_mutex_lock(&geometry_lock);
+    geometry = this;
+    parser->each_cell(&geom_addCell);
+    pthread_mutex_unlock(&geometry_lock);
+#endif
 
     /* Add each lattice from parser */
+#if 0
     parser->each_lattice([this](Lattice *l) -> void
                          {
                              addLattice(l);
                              return;
                          });
+#else
+    pthread_mutex_lock(&geometry_lock);
+    geometry = this;
+    parser->each_lattice(&geom_addLatice);
+    pthread_mutex_unlock(&geometry_lock);
+#endif
 
 
     /* Generate flat source regions */
