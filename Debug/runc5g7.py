@@ -6,11 +6,11 @@ import os
 
 
 # Control variables: where C4 default is 0.5cm and 64 azimuthal angle
-geometries = ['xml-sample/geometry_c5g7_cc.xml']
+geometries = ['xml-sample/geometry_c5g7_fine.xml']
 materials = ['xml-sample/material_c5g7.xml']
-ts = [0.05] 
+ts = [0.01] 
 na = [64]
-fc = [1e-8]
+fc = [1e-5]
 
 # Parameters for plotting
 ls = ['--o', '-s', '-.v', '-<', '-^', '-.>', '--s', '-v']

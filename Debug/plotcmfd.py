@@ -7,7 +7,7 @@ import os.path
 
 # Control variables
 flag = ''
-printgeometry='C5G7 Benchmark'
+printgeometry='2D C5G7 Benchmark'
 geometries = ['xml-sample_geometry_c5g7_cc.xml']
 
 # Find the string of geometry name after "geometry_" before ".xml"
@@ -74,7 +74,7 @@ for file in l2_norm_files:
         plt.figure(j)
         plt.semilogy(iteration, var[j], ls[counter-1], 
                      color=cm.jet(1.*counter/num), 
-                     label = ("%s %s"%(method, update)), markersize=5)
+                     label = ("%s DF: %s"%(method, damp)), markersize=5)
         plt.xlim(0, max_num_lines + 1)
         plt.legend(loc='upper center', ncol=3, prop = fontP, shadow=True, 
                    bbox_to_anchor=(0.5,-0.1),fancybox=True)
