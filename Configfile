@@ -4,13 +4,13 @@ COMPILEOPTS += -std=gnu++0x
 COMPILEOPTS += -fopenmp
 COMPILEOPTS += -O2
 COMPILEOPTS += -march=native
+#COMPILEOPTS += -g
 COMPILEOPTS += -I/usr/include/petsc
 COMPILEOPTS += -I/usr/include/petsc/linux-gnu-cxx-debug/include
 COMPILEOPTS += -I/usr/include/petsc/linux-gnu-cxx-opt/include
 COMPILEOPTS += -I$$HOME/.local/include
 LINKOPTS    += -L$$HOME/.local/lib
 LINKOPTS    += -Wl,-rpath,$$HOME/.local/lib
-COMPILEOPTS += -g
 #LINKOPTS    += -lprofiler
 COMPILEOPTS += `pkg-config Magick++ --cflags`
 COMPILEOPTS += -DPETSC_HAVE_MPI_WIN_CREATE
