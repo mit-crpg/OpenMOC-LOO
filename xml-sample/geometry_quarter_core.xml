@@ -210,10 +210,10 @@ simulated by a large neutron absorber.
     
     
     <!-- Definition of Surfaces -->
-    <surface id="1" type="x-plane" coeffs="-107.1" boundary="vacuum" />
+    <surface id="1" type="x-plane" coeffs="-107.1" boundary="reflective" />
     <surface id="2" type="x-plane" coeffs="107.1" boundary="vacuum" />
     <surface id="3" type="y-plane" coeffs="-107.1" boundary="vacuum" />
-    <surface id="4" type="y-plane" coeffs="107.1" boundary="vacuum"/>
+    <surface id="4" type="y-plane" coeffs="107.1" boundary="reflective"/>
     <surface id="5" type="circle" coeffs="0.0 0.0 0.54" />
     
 </geometry>
