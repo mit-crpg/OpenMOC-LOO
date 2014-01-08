@@ -735,6 +735,45 @@ void TrackGenerator::segmentize() {
     return;
 }
 
+/**
+ * Generate segments for each track and plot segments
+ * in bitmap array.
+ */
+void TrackGenerator::plotSpec() {
+    /* create BitMaps for plotting */
+    BitMap<int>* bitMapFSR = new BitMap<int>;
+    BitMap<int>* bitMap = new BitMap<int>;
+    bitMapFSR->pixel_x = _plotter->getBitLengthX();
+    bitMapFSR->pixel_y = _plotter->getBitLengthY();
+    bitMap->pixel_x = _plotter->getBitLengthX();
+    bitMap->pixel_y = _plotter->getBitLengthY();
+    initialize(bitMap);
+    initialize(bitMapFSR);
+    bitMapFSR->geom_x = _geom->getWidth();
+    bitMapFSR->geom_y = _geom->getHeight();
+    bitMap->geom_x = _geom->getWidth();
+    bitMap->geom_y = _geom->getHeight();
+    bitMapFSR->color_type = RANDOM;
+    bitMap->color_type = RANDOM;
+
+    if (_plotter->plotSpecs() == true){
+        _plotter->copyFSRMap(bitMapFSR->pixels);
+        plot(bitMapFSR, "FSRs", _plotter->getExtension());
+        _plotter->makeRegionMap(bitMapFSR->pixels, bitMap->pixels, 
+                                _geom->getFSRtoCellMap());
+        plot(bitMap, "cells", _plotter->getExtension());
+        _plotter->makeRegionMap(bitMapFSR->pixels, bitMap->pixels, 
+                                _geom->getFSRtoMaterialMap());
+        plot(bitMap, "materials", _plotter->getExtension());
+        
+    }
+    /* delete bitMaps */
+    deleteBitMap(bitMapFSR);
+    deleteBitMap(bitMap);
+
+    return;
+}
+
 
 /**
  * @brief Writes all track and segment data to a *.tracks file.

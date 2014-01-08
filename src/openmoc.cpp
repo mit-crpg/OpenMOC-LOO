@@ -117,6 +117,8 @@ int main(int argc, char **argv) {
     timer.stop();
     timer.recordSplit("Generating tracks");
 
+    track_generator.plotSpec();
+
     /* Segment tracks */
     /*
     timer.reset();

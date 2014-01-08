@@ -78,6 +78,7 @@ public:
 
     void makeReflective();
     void segmentize();
+    void plotSpec();
     void printTrackingTimers();
     bool containsTracks();
 
