@@ -852,17 +852,24 @@ bool TrackGenerator::readTracksFromFile() {
     in = fopen(_tracks_filename.c_str(), "r");
 
     int string_length;
-
     ret = fread(&string_length, sizeof(int), 1, in);
-    char* geometry_to_string = new char[string_length];
-    ret = fread(geometry_to_string, sizeof(char)*string_length, 1, in);
-    //geometry_to_string[ret-1] = '\0';
-    //log_printf(NORMAL, "%d %d", _geom->toString().size(), string_length);
-    //log_printf(NORMAL, "%s", _geom->toString().c_str());
-    //log_printf(NORMAL, "%s", geometry_to_string);
+    /*
+    fseek(in, 0, SEEK_END);
+    string_length = ftell(in);
+    rewind(in);
+    */
+    log_printf(NORMAL, "%d", string_length);
 
-    if (_geom->toString().compare(0, string_length, 
-                                  geometry_to_string, 0, string_length) != 0) {
+    char* geometry_to_string;
+    geometry_to_string = new char[string_length+1];
+
+    ret = fread(geometry_to_string, sizeof(char)*string_length, 1, in);
+    geometry_to_string[string_length] = '\0';
+
+    if (_geom->toString().compare(0, string_length-1, 
+                                  geometry_to_string, 
+                                  0, 
+                                  string_length-1) != 0) {
         log_printf(NORMAL, "Returning from readTracksFromFile, did not "
                    "find a matching file containing generated tracks.");
         return false;
@@ -889,7 +896,7 @@ bool TrackGenerator::readTracksFromFile() {
     for (int i=0; i < _num_azim; i++)
         _azim_weights[i] = azim_weights[i];
 
-    free(azim_weights);
+    delete[] azim_weights;
 
     Track* curr_track;
     double x0, y0, x1, y1;
