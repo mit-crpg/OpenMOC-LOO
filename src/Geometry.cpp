@@ -2136,6 +2136,10 @@ void Geometry::makeCMFDMesh(Mesh* mesh, int numAzim,
     mesh->setBoundary(getSurface(2)->getBoundary(), 2);
     mesh->setBoundary(getSurface(3)->getBoundary(), 1);
     mesh->setBoundary(getSurface(4)->getBoundary(), 3);
+    _mesh->setBoundary(getSurface(1)->getBoundary(), 0);
+    _mesh->setBoundary(getSurface(2)->getBoundary(), 2);
+    _mesh->setBoundary(getSurface(3)->getBoundary(), 1);
+    _mesh->setBoundary(getSurface(4)->getBoundary(), 3);
 
     /* set the cell and geometric width and height of mesh */
     mesh->setCellHeight(height);
@@ -2166,6 +2170,7 @@ void Geometry::makeCMFDMesh(Mesh* mesh, int numAzim,
 
     log_printf(DEBUG, "Setting multigroup and print flags");
     mesh->setMultigroup(multigroup);
+    _mesh->setMultigroup(multigroup);
     mesh->setPrintMatrices(printMatrices);
 
     return;

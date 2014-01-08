@@ -42,8 +42,8 @@ int main(int argc, char **argv) {
 
     /* initialize Petsc */
     int petsc_err = 0;
-    //PetscInitialize(&(opts.extra_argc), &(opts.extra_argv), (char*)0, NULL);
-    PetscInitializeNoArguments();
+    PetscInitialize(&(opts.extra_argc), &(opts.extra_argv), (char*)0, NULL);
+    //PetscInitializeNoArguments();
     CHKERRQ(petsc_err);
 
     /* Set the verbosity */

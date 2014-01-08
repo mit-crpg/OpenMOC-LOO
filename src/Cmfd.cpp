@@ -34,7 +34,7 @@ Cmfd::Cmfd(Geometry* geom, Plotter* plotter, Mesh* mesh,
     _use_diffusion_correction = opts->getDiffusionCorrection();
 
     _ng = NUM_ENERGY_GROUPS;
-    if (_mesh->getMultigroup() == false)
+    if (opts->getGroupStructure() == false)
         _ng = 1;
     _cw = _mesh->getCellWidth();
     _ch = _mesh->getCellHeight();
@@ -155,14 +155,18 @@ void Cmfd::runLoo2() {
 int Cmfd::createAMPhi(PetscInt size1, PetscInt size2, int cells){
 
     int petsc_err = 0;
-
+    //MatCreate(PETSC_COMM_WORLD,&_A);
+    //MatSetType(_A, MATSEQAIJ);
     petsc_err = MatCreateSeqAIJ(PETSC_COMM_WORLD, size1, size1, size2, 
-                                PETSC_NULL, &_A);
+                                PETSC_NULL, 
+                                &_A);
     size2 = size2 - 4;
     petsc_err = MatCreateSeqAIJ(PETSC_COMM_WORLD, size1, size1, size2, 
-                                PETSC_NULL, &_M);
+                                PETSC_NULL, 
+                                &_M);
     petsc_err = VecCreateSeq(PETSC_COMM_WORLD, cells, &_phi_new);
-    petsc_err = VecCreateSeq(PETSC_COMM_WORLD, cells, &_source_old);
+    //petsc_err = VecCreateSeq(PETSC_COMM_WORLD, cells, &_source_old);
+    VecDuplicate(_phi_new, &_source_old);
     CHKERRQ(petsc_err);
 
     return petsc_err;
