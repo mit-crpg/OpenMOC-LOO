@@ -128,8 +128,16 @@ Geometry::Geometry(Parser* parser) {
     }
 
     _mesh = new Mesh;
+    makeBoundary();
 }
 
+void Geometry::makeBoundary()
+{
+    _mesh->setBoundary(getSurface(1)->getBoundary(), 0);
+    _mesh->setBoundary(getSurface(2)->getBoundary(), 2);
+    _mesh->setBoundary(getSurface(3)->getBoundary(), 1);
+    _mesh->setBoundary(getSurface(4)->getBoundary(), 3);
+}
 
 
 
@@ -2130,16 +2138,6 @@ void Geometry::makeCMFDMesh(Mesh* mesh, int numAzim,
     findMeshHeight(univ, &height, cmfdLevel);
     univ = _universes.at(0);
     findMeshWidth(univ, &width, cmfdLevel);
-
-    /* set mesh boundary conditions */
-    mesh->setBoundary(getSurface(1)->getBoundary(), 0);
-    mesh->setBoundary(getSurface(2)->getBoundary(), 2);
-    mesh->setBoundary(getSurface(3)->getBoundary(), 1);
-    mesh->setBoundary(getSurface(4)->getBoundary(), 3);
-    _mesh->setBoundary(getSurface(1)->getBoundary(), 0);
-    _mesh->setBoundary(getSurface(2)->getBoundary(), 2);
-    _mesh->setBoundary(getSurface(3)->getBoundary(), 1);
-    _mesh->setBoundary(getSurface(4)->getBoundary(), 3);
 
     /* set the cell and geometric width and height of mesh */
     mesh->setCellHeight(height);
