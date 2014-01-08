@@ -29,6 +29,8 @@
 #pragma GCC diagnostic ignored "-Wunused"
 #pragma GCC diagnostic ignored "-Wunused-variable"
 
+static char help[] = "Running CMFD with Petsc";
+
 int main(int argc, char **argv) {
     feenableexcept(FE_DIVBYZERO);
     feenableexcept(FE_UNDERFLOW);
@@ -41,8 +43,12 @@ int main(int argc, char **argv) {
     Options opts(argc, argv);
 
     /* initialize Petsc */
+    /* FIXME: Valgrine shows bad read from the help parameter */
     int petsc_err = 0;
-    PetscInitialize(&(opts.extra_argc), &(opts.extra_argv), (char*)0, NULL);
+    PetscInitialize(&(opts.extra_argc), 
+                    &(opts.extra_argv), 
+                    (char*)0, 
+                    help);
     //PetscInitializeNoArguments();
     CHKERRQ(petsc_err);
 

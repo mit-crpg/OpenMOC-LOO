@@ -142,6 +142,7 @@ Solver::Solver(Geometry* geom, TrackGenerator* track_generator,
                        _boundary_iteration, _damp_factor);
         }  
     }
+    moc_iter = 0;
 }
 
 void Solver::runCmfd() {
@@ -863,7 +864,7 @@ void Solver::updateBoundaryFluxByQuadrature()
 }
 
 /* Prints & Update keff for MOC sweep */
-void Solver::printToScreen(int moc_iter)
+void Solver::printToScreen()
 {
     if ((moc_iter == 0) && _diffusion)
     {
@@ -913,6 +914,7 @@ void Solver::printToScreen(int moc_iter)
                / _old_k_effs.back());
     }
 
+    moc_iter++;
     return;
 }
 
@@ -2303,8 +2305,6 @@ double Solver::computeSpectralRadius(double *old_fsr_powers)
 }
 
 double Solver::kernel(int max_iterations) {
-    int moc_iter;
-
     log_printf(INFO, "Starting kernel ...");
 
     /* Initial guess */
@@ -2347,7 +2347,7 @@ double Solver::kernel(int max_iterations) {
     }
 
     /* Source iteration loop */
-    for (moc_iter = 0; moc_iter < max_iterations; moc_iter++) 
+    for (int moc_iter = 0; moc_iter < max_iterations; moc_iter++) 
     {
         log_printf(INFO, "Iteration %d: k_eff = %f", moc_iter, _k_eff);
 
@@ -2395,7 +2395,9 @@ double Solver::kernel(int max_iterations) {
         }
 
         /* Prints out keff & eps, may update keff too based on _update_keff */
-        printToScreen(moc_iter);
+        /* FIXME: the following line generates a bad read in
+         * Valgrine */
+        printToScreen();
         printToLog(moc_iter, eps_inf, eps_2, spectral_radius);
 
         /* Alternative: if (_cmfd->getL2Norm() < _moc_conv_thresh) */

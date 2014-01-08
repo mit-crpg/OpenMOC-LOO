@@ -50,7 +50,19 @@ Cmfd::Cmfd(Geometry* geom, Plotter* plotter, Mesh* mesh,
     PetscInt size1, size2;
     size1 = _cw * _ch * _ng;
     size2 = 4 + _ng;
-    createAMPhi(size1, size2, _ch * _cw * _ng);
+    //createAMPhi(size1, size2, _ch * _cw * _ng);
+    /* FIXME: Valgrind shows bad read (uninitialized, conditional
+     * jump) from _A, _M, _phi_new, _source_old */
+    MatCreateSeqAIJ(PETSC_COMM_WORLD, size1, size1, size2, 
+                                PETSC_NULL, 
+                                &_A);
+    MatCreateSeqAIJ(PETSC_COMM_WORLD, size1, size1, _ng, 
+                                PETSC_NULL, 
+                                &_M);
+    VecCreateSeq(PETSC_COMM_WORLD, size1, &_phi_new);
+    VecDuplicate(_phi_new, &_source_old);
+
+
 
     _run_loo = false;
     _run_loo_psi = false;
@@ -3232,7 +3244,8 @@ void Cmfd::setFSRs(FlatSourceRegion* fsrs)
     std::vector<int>::iterator iter;
     FlatSourceRegion *fsr;
 
-    for (int i = 0; i < _cw * _ch; i++)
+    // FIXME: the following line generates a bad read message in Valgrind
+    for (int i = 0; i < _ch * _cw; i++)
     {
         meshCell = _mesh->getCells(i);
         for (iter = meshCell->getFSRs()->begin(); 

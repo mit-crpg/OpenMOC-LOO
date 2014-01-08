@@ -53,6 +53,7 @@ private:
     int _num_azim;
     int _num_FSRs;
     int* _num_tracks;
+    int moc_iter;
     double _total_vol;
     double _damp_factor;
     double _track_spacing;
@@ -165,7 +166,7 @@ public:
     void setOldFSRFlux();
 
     /* printing and plotting */
-    void printToScreen(int moc_iter);
+    void printToScreen();
     void printToLog(int moc_iter, double eps_inf, double eps_2, double rho);
     void printToMinimumLog(int moc_iter);
     void plotFluxes(int moc_iter);
