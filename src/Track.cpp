@@ -77,6 +77,22 @@ void Track::setPolarFluxesByIndex(int pe, double update)
     _polar_fluxes[pe] = update;
     return;
 }
+
+void Track::setFwdFluxes(double* polar_fluxes)
+{
+    for (int i = 0; i < 2*GRP_TIMES_ANG; i++)
+        _fwd_fluxes[i] = polar_fluxes[i];
+    return;
+}
+
+void Track::setBwdFluxes(double* polar_fluxes)
+{
+    for (int i = 0; i < 2* GRP_TIMES_ANG; i++)
+        _bwd_fluxes[i] = polar_fluxes[i];
+    return;
+}
+
+
 /**
  * Set this track's polar fluxes for a particular direction (0 or 1)
  * @param direction incoming/outgoing (0/1) flux for forward/reverse directions
@@ -114,6 +130,22 @@ void Track::setPolarFluxes(reflectType direction, int start_index,
     return;
 }
 
+/**
+ * Set this track's polar fluxes for a particular direction (0 or 1)
+ * @param direction incoming/outgoing (0/1) flux for forward/reverse directions
+ * @param polar_fluxes pointer to an array of fluxes
+ */
+void Track::resetPolarFluxes(reflectType direction, int start_index)
+{
+    if (direction == VAC_TRUE || direction == VAC_FALSE)
+    {
+        int start = (direction - 2) * GRP_TIMES_ANG;
+        for (int i = 0; i < GRP_TIMES_ANG; i++)
+            _polar_fluxes[start + i] = 0.0;
+    }
+
+    return;
+}
 
 /*
  * Set the track azimuthal angle
@@ -248,6 +280,14 @@ double* Track::getPolarWeights() {
  */
 double* Track::getPolarFluxes() {
     return _polar_fluxes;
+}
+
+double* Track::getFwdFluxes() {
+    return _fwd_fluxes;
+}
+
+double* Track::getBwdFluxes() {
+    return _bwd_fluxes;
 }
 
 
@@ -445,8 +485,37 @@ int Track::getSurfBwd(){
 }
 
 
+/**
+ * @brief Initializes a track's unique ID. 
+ * @details This is set by the trackgenerator to correspond to the track's 
+ *          location in a 2D ragged array of all tracks.
+ * @param uid the track's unique ID
+ */
+void Track::setUid(int uid) {
+    _uid = uid;
+}
+
+/** 
+ * @brief Set the index for the track's azimuthal angle index.
+ * @details The azimuthal angle index corresponds to a an array of all
+ *          azimuthal angles for \f$ \theta \in [0, \pi] \f$ owned by
+ *          the TrackGenerator class.
+ * @param index the azimuthal angle index
+ */
+void Track::setAzimAngleIndex(const int index) {
+    _azim_angle_index = index;
+}
 
 
+/**
+ * @brief Return the index for the track's azimuthal angle (with respect to the
+ *        x-axis).
+ * @return th azimuthal angle index
+ */
+int Track::getAzimAngleIndex() const {
+    return _azim_angle_index;
+}
 
-
-
+int Track::getUid() {
+    return _uid;
+}

@@ -28,6 +28,7 @@ private:
     MeshCell* _cells;
     int _cell_width;
     int _cell_height;
+    int _mesh_level;
     double _width;
     double _height;
     bool _multigroup;
@@ -39,6 +40,16 @@ private:
     int* _fsr_indices;
     double* _cell_bounds;
     MeshSurface **_surfaces;
+    static int _s1[4];
+    static int _s2[4];
+    static int _min_x[4];
+    int _max_x[4];
+    static int _min_y[4];
+    int _max_y[4];
+    static int _delta_x[4];
+    static int _delta_y[4];
+    static int _s_x[4];
+    static int _s_y[4];
 
 public:
     Mesh();
@@ -52,7 +63,13 @@ public:
     int getCellHeight();
     void setCellWidth(int cellWidth);
     void setCellHeight(int cellHeight);
-    MeshCell* getCells(int cell);
+    void setMaxX(int width);
+    void setMaxY(int height);
+    __inline__ MeshCell* getCells(int cell_id){
+            assert(cell_id >= 0);
+            assert(cell_id < _cell_width * _cell_height);
+            return &_cells[cell_id];
+    }
     void setCellBounds();
     void setFSRBounds(boundaryType left, boundaryType right, 
                       boundaryType bottom, boundaryType top);
@@ -64,6 +81,7 @@ public:
     void computeTotQuadCurrents();
     void splitCornerCurrents();
     void splitCornerQuadCurrents();
+    void splitCornerQuadWeights();
     void setMultigroup(bool multigroup);
     bool getMultigroup();
     void setPrintMatrices(bool printMatrices);
@@ -77,7 +95,8 @@ public:
     MeshSurface **getSurfaces();
     double getOldTime();
     void setOldTime(double time);
-
+    void setMeshLevel(int cmfd_level);
+    int getMeshLevel();
 };
 
 #endif /* MESH_H_ */

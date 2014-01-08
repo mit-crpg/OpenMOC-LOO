@@ -26,6 +26,7 @@
 class MeshSurface {
 private:
     double *_total_wt; 
+    double _as_tracked_length;
     double *_current;
     double **_quad_current;
     double **_quad_flux;
@@ -49,7 +50,9 @@ public:
     void incrementQuadCurrent(double quad_current, int group, int index);
     void incrementTotalWt(double quad_current, int index);
     void setTotalWt(double wt, int index);
-    double getTotalWt(int index);
+    __inline__ double getTotalWt(int index){
+        return _total_wt[index];
+    }
     void updateQuadCurrent(double factor, int group, int index);
     double getQuadFlux(int group, int index);
     void setQuadFlux(double quad_current, int group, int index);
@@ -62,7 +65,10 @@ public:
     void setCurrent(double current, int group);
     double getCurrent(int group);
     void updateCurrent(double factor, int group);
-    void incrementCurrent(double *current);
+    void incrementCurrents(double *current);
+    void incrementCurrent(double current, int group);
+    double getAsTrackedLength();
+    void incrementAsTrackedLength(double length);
     void setDHat(double dHat, int e);
     double* getDHat();
     void setDTilde(double dTilde, int e);

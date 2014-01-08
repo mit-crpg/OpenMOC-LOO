@@ -37,15 +37,57 @@ Solver::Solver(Geometry* geom, TrackGenerator* track_generator,
     _run_loo = opts->getLoo();
     _run_loo1 = opts->getLoo1();
     _run_loo2 = opts->getLoo2();
+
     _diffusion = opts->getDiffusion();
     _acc_after_MOC_converge = opts->getAccAfterMOCConverge();
     _k_eff = opts->getKGuess();
-    _geometry_file = opts->getGeometryFile();
     _damp_factor = opts->getDampFactor();
     _track_spacing = opts->getTrackSpacing();
     _boundary_iteration = opts->getBoundaryIteration();
     _update_boundary = opts->getUpdateBoundary();
+
+    _geometry_file = opts->getGeometryFile();
+    _geometry_file_no_slash = opts->getGeometryFile();
+    for (unsigned i = 0; i < _geometry_file.length(); i++)
+    {
+        switch(_geometry_file[i]) {
+        case '/':
+            _geometry_file_no_slash[i] = '_';
+        }
+    }
+    std::stringstream string;
+
+    string << _geometry_file_no_slash << "_" << (_num_azim*2) 
+           << "_" << std::fixed 
+           << std::setprecision(2) <<  _track_spacing
+        //<< "_bi_" << _boundary_iteration
+           << "_"
+           << std::setprecision(1) << _damp_factor;
+
+    if (_update_boundary)
+        string << "_update";
+    else
+        string << "_noupda";
+
+    if (_run_cmfd)
+        string << "_cmfd.txt";
+    else if (_run_loo1)
+        string << "_loo1.txt";
+    else if (_run_loo2)
+        string << "_loo2.txt";
+    else
+        string << "_unac.txt";
+
+    _log_file = string.str();
+
+    _reflect_outgoing = opts->getReflectOutgoing();
+    if (_reflect_outgoing)
+        _nq = 2;
+    else
+        _nq = 4;
+    
     _plot_loo = opts->plotQuadFlux();
+    _plot_flux = opts->plotFluxes();
 
     _cmfd_k = _k_eff;
     _loo_k = _k_eff;
@@ -84,19 +126,19 @@ Solver::Solver(Geometry* geom, TrackGenerator* track_generator,
         _ch = _geom->getMesh()->getCellHeight();
         _cmfd->setFSRs(_flat_source_regions);
         _cmfd->setTracks(_tracks);
-#if NEW
+
         initializeWeights();
-#endif
+
         if (_update_boundary)
         {
-            log_printf(NORMAL, "Acceleration is on with %d boundary iteration,"
-                       " %f damping, and update boundary flux" , 
+            log_printf(NORMAL, "Acceleration on: %d boundary iteration,"
+                       " %f damping, update boundary flux" , 
                        _boundary_iteration, _damp_factor);
         }
         else
         {
-            log_printf(NORMAL, "Acceleration is on with %d boundary iteration,"
-                       " %f damping, and no update boundary flux" , 
+            log_printf(NORMAL, "Acceleration on: %d boundary iteration,"
+                       " %f damping, no update boundary flux" , 
                        _boundary_iteration, _damp_factor);
         }  
     }
@@ -296,7 +338,7 @@ void Solver::computeRatios() {
  */
 void Solver::initializeFSRs() 
 {
-    log_printf(NORMAL, "Initializing FSRs...");
+    log_printf(INFO, "Initializing FSRs...");
 
     CellBasic* cell;
     Material* material;
@@ -447,7 +489,7 @@ void Solver::zeroMeshCells() {
                 meshCell->getMeshSurfaces(surface)->setCurrent(0, e);
 
                 /* set quad currents to zero */
-                for (int j = 0; j < 2; j++)
+                for (int j = 0; j < _nq; j++)
                     meshCell->getMeshSurfaces(surface)->setQuadCurrent(0, e, j);
             }
         }
@@ -456,16 +498,17 @@ void Solver::zeroMeshCells() {
 }
 
 
-void Solver::zeroLeakage(){
-
+void Solver::zeroLeakage()
+{
     for (int s = 1; s < 5; s++)
     {
-        log_printf(ACTIVE, "geometry surface %d has leakage %f", s, 
+        log_printf(DEBUG, "geometry surface %d has leakage %f", s, 
                    _geom->getSurface(s)->getLeakage()[0]);
     }
 
     for (int s = 1; s < 5; s++)
         _geom->getSurface(s)->zeroLeakage();
+    return;
 }
 
 /**
@@ -545,7 +588,7 @@ if (tot_abs < 0.0)
 
 k = tot_fission / (tot_abs + leakage);
 
-log_printf(ACTIVE, "MOC k = %f / (%f + %f) = %f", 
+log_printf(DEBUG, "MOC k = %f / (%f + %f) = %f", 
            tot_fission, tot_abs, leakage, k);
 //_geom->getMesh()->setKeffMOC(_k_eff, iteration);
 return k;
@@ -555,29 +598,25 @@ return k;
 /**
  * Update FSR's scalar fluxes, normalize them and update the source
  */
-void Solver::updateFlux(int moc_iter) 
+void Solver::prolongation(int moc_iter) 
 {
     if (moc_iter > -10) //47 (2x2_leakage) 79 (2x2) 229 (4x4_leakage) 
     {
         log_printf(ACTIVE, " iter %d scalar flux prolongation", moc_iter);
         _cmfd->updateMOCFlux(moc_iter);
 
-        /* updates boundary angular fluxes */
         if (_update_boundary)
         {
             /* standard LOO update */
             if (_run_loo && (!(_diffusion && (moc_iter == 0))))
             {
-                if (moc_iter > -10)
-                {
-                    log_printf(ACTIVE, " iter %d boundary angular flux "
-                               "prolongation: by quadrature",
-                               moc_iter);
-                    updateBoundaryFluxByQuadrature();
-                    //_cmfd->updateBoundaryFluxByScalarFlux(moc_iter);
-                    //_cmfd->updateBoundaryFluxBySrc(moc_iter);
-                    //_cmfd->updateBoundaryFluxByNetCurrent(moc_iter);
-                }
+                log_printf(ACTIVE, " iter %d boundary angular flux "
+                           "prolongation: by quadrature",
+                           moc_iter);
+                updateBoundaryFluxByQuadrature();
+                //_cmfd->updateBoundaryFluxByScalarFlux(moc_iter);
+                //_cmfd->updateBoundaryFluxBySrc(moc_iter);
+                //_cmfd->updateBoundaryFluxByNetCurrent(moc_iter);
             }
             /* first diffusion step */
             else if ((_diffusion) && (moc_iter == 0))
@@ -590,7 +629,7 @@ void Solver::updateFlux(int moc_iter)
             /* standard CMFD update */
             else
             {
-                log_printf(NORMAL, " iter %d boundary angular flux "
+                log_printf(ACTIVE, " iter %d boundary angular flux "
                            "prolongation: update by scalar",
                            moc_iter);
                 _cmfd->updateBoundaryFluxByScalarFlux(moc_iter);
@@ -600,6 +639,10 @@ void Solver::updateFlux(int moc_iter)
         /* normalize fluxes */
         normalizeFlux();
     }
+
+    /* Re-enforce vacuum boundary conditions */
+    zeroVacuumBoundaries();
+
     return;
 }
 
@@ -613,7 +656,7 @@ void Solver::storeMOCBoundaryFlux()
         meshSurface = meshSurfaces[i];
         for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
         {
-            for (int ind = 0; ind < 2; ind++)
+            for (int ind = 0; ind < _nq; ind++)
             {
                 meshSurface->setOldQuadFlux(meshSurface->getQuadFlux(e, ind),
                                         e, ind);
@@ -632,7 +675,7 @@ void Solver::storeMOCBoundaryFlux()
         {
             for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
             {
-                for (int j = 0; j < 2; j++)
+                for (int j = 0; j < _nq; j++)
                 {
                     surf = meshCell->getMeshSurfaces(s);
                     surf->setOldQuadFlux(surf->getQuadFlux(e,j), e, j);
@@ -649,11 +692,10 @@ void Solver::updateBoundaryFluxByQuadrature()
 {
     Track *track;
     segment *seg;
-    MeshSurface *meshSurface1, *meshSurface2;
+    MeshSurface *meshSurface;
     MeshSurface **meshSurfaces;  
     double phi, factor;
     int ind, num_segments, pe, surf_id, num_updated = 0;
-    int surf_id1, surf_id2; 
 
     meshSurfaces = _geom->getMesh()->getSurfaces();
 
@@ -665,11 +707,18 @@ void Solver::updateBoundaryFluxByQuadrature()
             num_segments = track->getNumSegments();
             phi = track->getPhi();
 
-            /* use the opposite quadrature */
-            if (phi < PI / 2.0)
-                ind = 1; 
-            else
-                ind = 0;
+            /* Use the opposite quadrature, say index 1 for < pi/2.
+             * regardless of whether _reflect_outgoing is turned on or
+             * not, this is always the case because during LOO perfect
+             * reflectiveness is assumed. */
+             if (phi < PI / 2.0) 
+             {
+                 ind = 1; 
+             }
+             else 
+             {
+                 ind = 0;
+             }
 
             /* Forward direction is 0, backward is 1 */
             for (int dir = 0; dir < 2; dir++)
@@ -683,40 +732,79 @@ void Solver::updateBoundaryFluxByQuadrature()
                 else
                     surf_id = seg->_mesh_surface_fwd;
 
-                // DEBUG: surf_id is correct. 
-                //log_printf(NORMAL, " boundary surface has %d", surf_id);
 
-                /* correct for corners -- find the adjacent boundary surfaces */
-                if ((surf_id % 8) < 4)
+                if (surf_id % 8 < 4) {}
+                else if (surf_id % 8 < 5)
                 {
-                    surf_id1 = surf_id;
-                    surf_id2 = surf_id;
+                    if ((surf_id / 8) % _cw == 0) /* on left column */
+                    {
+                        surf_id -= 4;
+                        surf_id += 8 * _cw;
+                    }
+                    else if ((surf_id / 8) >= _cw * (_ch - 1)) /* bottom row */
+                    {
+                        surf_id -= 3;
+                        surf_id -= 8;
+                    }
+                    else
+                        log_printf(ERROR, "something went wrong");
                 }
-                /* FIXME */
-                /* the corner treatment is not quite right */
-                else if ((surf_id % 8) < 7)
+                else if (surf_id % 8 < 6)
                 {
-                    surf_id1 = surf_id - 4;
-                    surf_id2 = surf_id - 3;
+                    if (((surf_id / 8) + 1) % _cw == 0) /* right column */
+                    {
+                        surf_id -= 3;
+                        surf_id += 8 * _cw;
+                    }
+                    else if ((surf_id / 8) >= _cw * (_ch - 1))
+                    {
+                        surf_id -= 4;
+                        surf_id += 8;
+                    }
+                    else
+                        log_printf(ERROR, "unexpected corner condition"
+                                   " in updating boundary flux");
                 }
-                else 
+                else if (surf_id % 8 < 7)
                 {
-                    surf_id1 = surf_id - 4;
-                    surf_id2 = surf_id - 7;
+                    if (((surf_id / 8) + 1) % _cw == 0) /* right column */
+                    {
+                        surf_id -= 4;
+                        surf_id -= 8 * _cw;
+                    }
+                    else if ((surf_id / 8) < _cw)
+                    {
+                        surf_id -= 3;
+                        surf_id += 8;
+                    }
+                    else
+                        log_printf(ERROR, "unexpected corner condition"
+                                   " in updating boundary flux");
+                }
+                else
+                {
+                    if ((surf_id / 8) % _cw == 0) /* left column */
+                    {
+                        surf_id -= 7;
+                        surf_id -= 8 * _cw;
+                    }
+                    else if ((surf_id / 8) < _cw)
+                    {
+                        surf_id -= 4;
+                        surf_id -= 8;
+                    }
+                    else
+                        log_printf(ERROR, "unexpected corner condition"
+                                   " in updating boundary flux");
                 }
 
-                assert((surf_id1 % 8) < 4);
-                assert((surf_id2 % 8) < 4);
 
-#if 1                
-                meshSurface1 = meshSurfaces[surf_id1];
-                meshSurface2 = meshSurfaces[surf_id2];
-#else                
-                meshSurface1 =  _geom->getMesh()->getCells(surf_id1 / 8)
-                    ->getMeshSurfaces(surf_id1 % 8);
-                meshSurface2 =  _geom->getMesh()->getCells(surf_id2 / 8)
-                    ->getMeshSurfaces(surf_id2 % 8);
-#endif
+                assert((surf_id % 8) < 4);
+                assert(surf_id >= 0);
+                assert(surf_id < 8 * _cw * _ch);
+
+                meshSurface = meshSurfaces[surf_id];
+
                 /* initialize starting point of pe which is 0 for
                  * forward direction and GRP_TIMES_ANG for backward
                  * direction */
@@ -724,7 +812,7 @@ void Solver::updateBoundaryFluxByQuadrature()
 
                 for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
                 {
-                    if (meshSurface1->getOldQuadFlux(e, ind) < 0)
+                    if (meshSurface->getOldQuadFlux(e, ind) < 0)
                     {
                         if (e == 0)
                         {
@@ -732,14 +820,14 @@ void Solver::updateBoundaryFluxByQuadrature()
                                        "e %d i %d j %d (total %d) %f -> %f"
                                        " forward phi %f",
                                        e, i, j, _num_tracks[i],
-                                       meshSurface1->getOldQuadFlux(e, ind),
-                                       meshSurface1->getQuadFlux(e, ind), phi);
+                                       meshSurface->getOldQuadFlux(e, ind),
+                                       meshSurface->getQuadFlux(e, ind), phi);
                         }		
                         pe += NUM_POLAR_ANGLES;
                     }
-                    else if (meshSurface1->getOldQuadFlux(e,ind) < 1e-10)
+                    else if (meshSurface->getOldQuadFlux(e,ind) < 1e-10)
                     {
-                        factor = meshSurface1->getQuadFlux(e, ind);
+                        factor = meshSurface->getQuadFlux(e, ind);
                         for (int p = 0; p < NUM_POLAR_ANGLES; p++)
                         {
                             track->setPolarFluxesByIndex(pe, factor);
@@ -749,18 +837,8 @@ void Solver::updateBoundaryFluxByQuadrature()
                     }
                     else
                     {
-                        /*
-                        factor = meshSurface1->getQuadFlux(e, ind) 
-                            / meshSurface1->getOldQuadFlux(e, ind) 
-                            + meshSurface2->getQuadFlux(e, ind) 
-                            / meshSurface2->getOldQuadFlux(e, ind);
-                        factor *= 0.5;
-                        */
-                        
-                        factor = (meshSurface1->getQuadFlux(e, ind) 
-                                  + meshSurface2->getQuadFlux(e, ind)) 
-                            / (meshSurface1->getOldQuadFlux(e, ind)
-                               + meshSurface2->getOldQuadFlux(e, ind));
+                        factor = meshSurface->getQuadFlux(e, ind)
+                            / meshSurface->getOldQuadFlux(e, ind);
 
                         factor = _damp_factor * factor + 1.0 - _damp_factor; 
 
@@ -830,17 +908,13 @@ void Solver::printToScreen(int moc_iter)
         printf("Iter %d, MOC k = %.10f, FS eps = %.4e, "
                "FS ratio = %f, k eps = %.4e\n", 
                moc_iter, _k_eff,  _old_eps_2.back(),
-               _old_eps_2.back() / _old_eps_2.front(), 
+               _old_eps_2.front() / _old_eps_2.back(), 
                (_old_k_effs.front() - _old_k_effs.back()) 
                / _old_k_effs.back());
     }
 
     return;
 }
-
-
-
-
 
 /**
  * Return an array indexed by FSR ids which contains the corresponding
@@ -850,7 +924,6 @@ void Solver::printToScreen(int moc_iter)
 double** Solver::getFSRtoFluxMap() {
     return _FSRs_to_fluxes;
 }
-
 
 /**
  * Checks that each flat source region has at least one segment within it
@@ -1004,7 +1077,8 @@ void Solver::plotPinPowers() {
 
 
     log_printf(NORMAL, "Plotting pin powers...");
-    _plotter->makeRegionMap(bitMapFSR->pixels, bitMap->pixels, _FSRs_to_pin_powers);
+    _plotter->makeRegionMap(bitMapFSR->pixels, bitMap->pixels, 
+                            _FSRs_to_pin_powers);
     plot(bitMap, "pin_powers", _plotter->getExtension());
 
     /* delete bitMaps */
@@ -1057,7 +1131,6 @@ void Solver::plotFluxes(int moc_iter)
 
     std::stringstream string;
     std::string title_str;
-    //for (int i = 0; i < NUM_ENERGY_GROUPS; i++)
     for (int i = 0; i < 1; i++)
     {
         string.str("");
@@ -1121,6 +1194,61 @@ void Solver::tallyLooCurrent(Track *track, segment *segment,
     return;
 }
 
+
+void Solver::tallyLooCurrentIncoming(Track *track, segment *segment, 
+                                     MeshSurface **meshSurfaces, int direction)
+{
+    int index = 2, pe = 0, pe_initial = 0, p, e, surfID;
+    MeshSurface *meshSurface;
+    double *weights, *polar_fluxes;
+
+    /* Get the ID of the surface that the segment starts on (forward),
+     * ends on (backwards). Notice this is the opposite of the regular
+     * tallyLooCurrent routine, because now we are trying to tally the
+     * incoming instead of the outgoing angular fluxes. */
+    if (direction == 1)
+        surfID = segment->_mesh_surface_bwd;
+    else 
+    {
+        surfID = segment->_mesh_surface_fwd;
+        pe_initial = GRP_TIMES_ANG;
+    }
+
+    if (surfID != -1)
+    {
+        /* notice this is polar flux weights, more than just polar weights */
+        weights = track->getPolarWeights();
+        polar_fluxes = track->getPolarFluxes();
+
+        /* Defines index: instead of 0, 1 now we have 2 (theta less
+         * than pi/2), 3 (theta larger than pi/2) */
+        if (track->getPhi() > PI / 2.0)
+            index = 3;
+        
+        /* Obtains the surface that the segment crosses */
+        meshSurface = meshSurfaces[surfID];
+        log_printf(DEBUG, " phi = %f, index = %d, surface ID = %d",
+                   track->getPhi(), index, 
+                   meshSurface->getId());
+
+        pe = pe_initial;
+        
+        for (e = 0; e < NUM_ENERGY_GROUPS; e++) 
+        {
+            for (p = 0; p < NUM_POLAR_ANGLES; p++)
+            {
+                /* FIXME: double check with the ro routine to make
+                 * sure this polar_fluxes[0, ..] is the incoming angular
+                 * flux, because I am not sure.... */
+                meshSurface->incrementQuadCurrent(polar_fluxes[pe] * weights[p] 
+                                                  / 2.0, e, index);
+                pe++;
+            }
+        }
+    }
+    return;
+}
+
 void Solver::tallyCmfdCurrent(Track *track, segment *segment, 
                               MeshSurface **meshSurfaces, int direction)
 {
@@ -1141,7 +1269,6 @@ void Solver::tallyCmfdCurrent(Track *track, segment *segment,
 
     if (surfID != -1)
     {
-
         weights = track->getPolarWeights();
         polar_fluxes = track->getPolarFluxes();
 
@@ -1161,12 +1288,11 @@ void Solver::tallyCmfdCurrent(Track *track, segment *segment,
                  * is cancelled out with the 1/cos theta needed to get the 
                  * track spacing now on the surface. The 1/2.0 takes into 
                  * account half space. */
-                currents[e] += polar_fluxes[pe] * weights[p]/2.0;
-                //meshSurface->incrementTotalWt(weights[p] / 2.0, 0);
+                currents[e] += polar_fluxes[pe] * weights[p] / 2.0;
                 pe++;
             }
         }
-        meshSurface->incrementCurrent(currents);
+        meshSurface->incrementCurrents(currents);
     }
     return;
 }
@@ -1181,9 +1307,7 @@ void Solver::tallyCmfdCurrent(Track *track, segment *segment,
 void Solver::tallyLooWeight(Track *track, segment *segment, 
                              MeshSurface **meshSurfaces, int direction)
 {
-    int index = 0, opposite_index = 1, p, surfID;
-    MeshSurface *meshSurface;
-    double cosTheta, sinTheta, wt, wt2;
+    int index = 0, opposite_index = 1, surfID;
 
     /* Get the ID of the surface that the segment ends on (forward), starts
      * on (backwards)*/
@@ -1194,225 +1318,197 @@ void Solver::tallyLooWeight(Track *track, segment *segment,
 
     if (surfID != -1)
     {
-        /* notice this is polar flux weights, more than just polar weights */
-        double *weights = track->getPolarWeights();
-        double *sinThetaP = _quad->getSinThetas();
-
-        /* Obtains the surface that the segment crosses */
-        meshSurface = meshSurfaces[surfID];
-
         /* Defines index */
         if (track->getPhi() > PI / 2.0)
-            index = 1;
-
+            index = 1;    
         opposite_index = 1 - index;
+ 
+        tallyLooWeightSingle(track, segment, meshSurfaces, surfID, index);
+        tallyAsTrackedLengthSingle(track, segment, meshSurfaces, surfID, index,
+                                   opposite_index);
 
-        /* Cell ID */
-        int i = surfID / 8;
-        int y = i / _cw;
-        int x = i % _cw;
-        int s = surfID % 8;
+    }
+}
 
-        cosTheta = fabs(cos(track->getPhi()));
-        sinTheta = fabs(sin(track->getPhi()));
+void Solver::tallyLooWeightSingle(Track *track, segment *segment, 
+                                  MeshSurface **meshSurfaces,
+                                  int surfID, int index)
+{        
+    int p;
+    double wt;
+    MeshSurface *meshSurface;
 
-        for (p = 0; p < NUM_POLAR_ANGLES; p++)
+    /* Obtains the surface that the segment crosses */
+    meshSurface = meshSurfaces[surfID];
+
+    /* notice this is polar flux weights, more than just polar weights */
+    double *weights = track->getPolarWeights();
+    double *sinThetaP = _quad->getSinThetas();
+
+    for (p = 0; p < NUM_POLAR_ANGLES; p++)
+    {
+        wt = 0.5 * weights[p] / TWO_PI / sinThetaP[p];
+        meshSurface->incrementTotalWt(wt, index);
+    }
+}
+
+void Solver::tallyAsTrackedLengthSingle(Track *track, segment *segment, 
+                                  MeshSurface **meshSurfaces, 
+                                  int surfID, int index, int opposite_index)
+{        
+    int p;
+    double cosTheta, sinTheta, wt2;
+    MeshSurface *meshSurface;
+
+    /* Obtains the surface that the segment crosses */
+    meshSurface = meshSurfaces[surfID];
+
+    /* notice this is polar flux weights, more than just polar weights */
+    double *weights = track->getPolarWeights();
+    double *sinThetaP = _quad->getSinThetas();
+
+    /* Cell ID */
+    int i = surfID / 8;
+    int y = i / _cw;
+    int x = i % _cw;
+    int s = surfID % 8;
+
+    cosTheta = fabs(cos(track->getPhi()));
+    sinTheta = fabs(sin(track->getPhi()));
+
+    for (p = 0; p < NUM_POLAR_ANGLES; p++)
+    {
+        wt2 = 0.5 * weights[p] / TWO_PI / sinThetaP[p];
+
+        if ((s  == 0) || (s == 2))
+            meshSurface->incrementAsTrackedLength(wt2 / cosTheta);
+        else if (s < 4)
+            meshSurface->incrementAsTrackedLength(wt2 / sinTheta);
+        else
         {
-            wt = 0.5 * weights[p] / TWO_PI / sinThetaP[p];
-            wt2 = wt;
+            _num_crn += 1;
+            wt2 *= 0.5;
 
-            if ((s  == 0) || (s == 2))
+            if (s < 5)
             {
-                meshSurface->incrementTotalWt(wt2 / cosTheta, index);
-                meshSurface->incrementTotalWt(wt, index + 3);
+                meshSurfaces[surfID - 4]
+                    ->incrementAsTrackedLength(wt2 / cosTheta);
+                meshSurfaces[surfID - 3]
+                    ->incrementAsTrackedLength(wt2 / sinTheta);
+
+                if (x > 0)
+                {
+                    meshSurfaces[(i - 1) * 8 + 1]
+                        ->incrementAsTrackedLength(wt2 / sinTheta);
+                }
+                else //if (_geom->getMesh()->getBoundary(0) == REFLECTIVE)
+                {
+                    meshSurfaces[i * 8 + 1]->incrementAsTrackedLength(
+                        wt2 / sinTheta);
+                }
+
+                if (y < _ch -1) 
+                {
+                    meshSurfaces[(i + _cw) * 8 + 0]
+                        ->incrementAsTrackedLength(wt2 / cosTheta);
+                }
+                else //if (_geom->getMesh()->getBoundary(1) == REFLECTIVE)
+                {
+                    meshSurfaces[i * 8 + 0]->incrementAsTrackedLength(
+                        wt2 / cosTheta);
+                }
+
             }
-            else if (s < 4)
+            else if (s < 6)
             {
-                meshSurface->incrementTotalWt(wt2 / sinTheta, index);
-                meshSurface->incrementTotalWt(wt, index + 3);
+                meshSurfaces[surfID - 4]
+                    ->incrementAsTrackedLength(wt2 / sinTheta);
+                meshSurfaces[surfID - 3]
+                    ->incrementAsTrackedLength(wt2 / cosTheta);
+
+                if (x < _cw - 1)
+                {
+                    meshSurfaces[(i + 1) * 8 + 1]
+                        ->incrementAsTrackedLength(wt2 / sinTheta);
+                } 
+                else //if (_geom->getMesh()->getBoundary(2) == REFLECTIVE)
+                {
+                    meshSurfaces[i * 8 + 1]->incrementAsTrackedLength(
+                        wt2 / sinTheta);
+                } 
+                    
+                if (y < _ch -1) 
+                {
+                    meshSurfaces[(i + _cw) * 8 + 2]
+                        ->incrementAsTrackedLength(wt2 / cosTheta);
+                }
+                else //if (_geom->getMesh()->getBoundary(1) == REFLECTIVE)
+                {
+                    meshSurfaces[i * 8 + 2]->incrementAsTrackedLength(
+                        wt2 / cosTheta);
+                }                      
+            }
+            else if (s < 7)
+            {
+                meshSurfaces[surfID - 4]
+                    ->incrementAsTrackedLength(wt2 / cosTheta);
+                meshSurfaces[surfID - 3]
+                    ->incrementAsTrackedLength(wt2 / sinTheta);
+
+                if (x < _cw - 1)
+                {
+                    meshSurfaces[(i + 1) * 8 + 3]
+                        ->incrementAsTrackedLength(wt2 / sinTheta);
+                } 
+                else //if (_geom->getMesh()->getBoundary(2) == REFLECTIVE)
+                {
+                    meshSurfaces[i * 8 + 3]->incrementAsTrackedLength(
+                        wt2 / sinTheta);
+                }                      
+
+                if (y > 0) 
+                {
+                    meshSurfaces[(i - _cw) * 8 + 2]
+                        ->incrementAsTrackedLength(wt2 / cosTheta);
+                }
+                else //if (_geom->getMesh()->getBoundary(3) == REFLECTIVE)
+                {
+                    meshSurfaces[i * 8 + 2]->incrementAsTrackedLength(
+                        wt2 / cosTheta);
+                }
             }
             else
             {
-                _num_crn += 1;
-                wt *= 0.5;
-                wt2 *= 0.5;
+                meshSurfaces[surfID - 4]
+                    ->incrementAsTrackedLength(wt2 / sinTheta);
+                meshSurfaces[surfID - 7]
+                    ->incrementAsTrackedLength(wt2 / cosTheta);
 
-                if (s < 5)
+                if ((x > 0))// && (y > 0))
                 {
-                    meshSurfaces[surfID - 4]
-                        ->incrementTotalWt(wt2 / cosTheta, index);
-                    meshSurfaces[surfID - 3]
-                        ->incrementTotalWt(wt2 / sinTheta, index);
-                    meshSurfaces[surfID - 4]
-                        ->incrementTotalWt(wt, index + 3);
-                    meshSurfaces[surfID - 3]
-                        ->incrementTotalWt(wt, index + 3);
-
-                    if (x > 0)
-                    {
-                        meshSurfaces[(i - 1) * 8 + 1]
-                            ->incrementTotalWt(wt2 / sinTheta, index);
-                        meshSurfaces[(i - 1) * 8 + 1]
-                            ->incrementTotalWt(wt, index + 3);
-                    }
-                    // geometry's boundary 1 is mesh's 0
-                    else if (_geom->getMesh()->getBoundary(0) == REFLECTIVE)
-                    {
-                        meshSurfaces[i * 8 + 1]
-                            ->incrementTotalWt(wt2 / sinTheta, opposite_index);
-                        meshSurfaces[i * 8 + 1]
-                            ->incrementTotalWt(wt, opposite_index + 3);
-
-                    }
-
-                    if (y < _ch -1) 
-                    {
-                        meshSurfaces[(i + _cw) * 8 + 0]
-                            ->incrementTotalWt(wt2 / cosTheta, index);
-                        meshSurfaces[(i + _cw) * 8 + 0]
-                            ->incrementTotalWt(wt, index + 3);
-                    }
-                    else if (_geom->getMesh()->getBoundary(1) == REFLECTIVE)
-                    {
-                        meshSurfaces[i * 8 + 0]
-                            ->incrementTotalWt(wt2 / cosTheta, opposite_index);
-                        meshSurfaces[i * 8 + 0]
-                            ->incrementTotalWt(wt, opposite_index + 3);
-                    }
-
+                    meshSurfaces[(i - 1) * 8 + 3]
+                        ->incrementAsTrackedLength(wt2 / sinTheta);
                 }
-                else if (s < 6)
+                else //if (_geom->getMesh()->getBoundary(0) == REFLECTIVE)
                 {
-                    meshSurfaces[surfID - 4]
-                        ->incrementTotalWt(wt2 / sinTheta, index);
-                    meshSurfaces[surfID - 3]
-                        ->incrementTotalWt(wt2 / cosTheta, index);
-
-                    meshSurfaces[surfID - 4]
-                        ->incrementTotalWt(wt, index + 3);
-                    meshSurfaces[surfID - 3]
-                        ->incrementTotalWt(wt, index + 3);
-
-                    if (x < _cw - 1)
-                    {
-                        meshSurfaces[(i + 1) * 8 + 1]
-                            ->incrementTotalWt(wt2 / sinTheta, index);
-                        meshSurfaces[(i + 1) * 8 + 1]
-                            ->incrementTotalWt(wt, index + 3);
-                    } 
-                    else if (_geom->getMesh()->getBoundary(2) == REFLECTIVE)
-                    {
-                        meshSurfaces[i * 8 + 1]
-                            ->incrementTotalWt(wt2 / sinTheta, opposite_index);
-                        meshSurfaces[i * 8 + 1]
-                            ->incrementTotalWt(wt, opposite_index + 3);
-                    } 
-                    
-                    if (y < _ch -1) 
-                    {
-                        meshSurfaces[(i + _cw) * 8 + 2]
-                            ->incrementTotalWt(wt2 / cosTheta, index);
-                        meshSurfaces[(i + _cw) * 8 + 2]
-                            ->incrementTotalWt(wt, index + 3);
-                    }
-                    else if (_geom->getMesh()->getBoundary(1) == REFLECTIVE)
-                    {
-                        meshSurfaces[i * 8 + 2]
-                            ->incrementTotalWt(wt2 / cosTheta, opposite_index);
-                        meshSurfaces[i * 8 + 2]
-                            ->incrementTotalWt(wt, opposite_index + 3);
-                    }                      
+                    meshSurfaces[i * 8 + 3]->incrementAsTrackedLength(
+                        wt2 / sinTheta);
                 }
-                else if (s < 7)
+
+                if (y > 0) 
                 {
-                    meshSurfaces[surfID - 4]
-                        ->incrementTotalWt(wt2 / cosTheta, index);
-                    meshSurfaces[surfID - 3]
-                        ->incrementTotalWt(wt2 / sinTheta, index);
-
-                    meshSurfaces[surfID - 4]
-                        ->incrementTotalWt(wt, index + 3);
-                    meshSurfaces[surfID - 3]
-                        ->incrementTotalWt(wt, index + 3);
-
-                    if (x < _cw - 1)
-                    {
-                        meshSurfaces[(i + 1) * 8 + 3]
-                            ->incrementTotalWt(wt2 / sinTheta, index);
-                        meshSurfaces[(i + 1) * 8 + 3]
-                            ->incrementTotalWt(wt, index + 3);
-                    } 
-                    else if (_geom->getMesh()->getBoundary(2) == REFLECTIVE)
-                    {
-                        meshSurfaces[i * 8 + 3]
-                            ->incrementTotalWt(wt2 / sinTheta, opposite_index);
-                        meshSurfaces[i * 8 + 3]
-                            ->incrementTotalWt(wt, opposite_index + 3);
-                    }                      
-
-                    if (y > 0) 
-                    {
-                        meshSurfaces[(i - _cw) * 8 + 2]
-                            ->incrementTotalWt(wt2 / cosTheta, index);
-                        meshSurfaces[(i - _cw) * 8 + 2]
-                            ->incrementTotalWt(wt, index + 3);
-                    }
-                    else if (_geom->getMesh()->getBoundary(3) == REFLECTIVE)
-                    {
-                        meshSurfaces[i * 8 + 2]
-                            ->incrementTotalWt(wt2 / cosTheta, opposite_index);
-                        meshSurfaces[i * 8 + 2]
-                            ->incrementTotalWt(wt, opposite_index + 3);
-                    }
+                    meshSurfaces[(i - _cw) * 8 + 0]
+                        ->incrementAsTrackedLength(wt2 / cosTheta);
                 }
-                else
+                else //if (_geom->getMesh()->getBoundary(3) == REFLECTIVE)
                 {
-                    meshSurfaces[surfID - 4]
-                        ->incrementTotalWt(wt2 / sinTheta, index);
-                    meshSurfaces[surfID - 7]
-                        ->incrementTotalWt(wt2 / cosTheta, index);
-                    meshSurfaces[surfID - 4]
-                        ->incrementTotalWt(wt, index + 3);
-                    meshSurfaces[surfID - 7]
-                        ->incrementTotalWt(wt, index + 3);
+                    meshSurfaces[i * 8 + 0]->incrementAsTrackedLength(
+                        wt2 / cosTheta);
+                }                  
 
-
-                    if ((x > 0))// && (y > 0))
-                    {
-                        meshSurfaces[(i - 1) * 8 + 3]
-                            ->incrementTotalWt(wt2 / sinTheta, index);
-                        meshSurfaces[(i - 1) * 8 + 3]
-                            ->incrementTotalWt(wt, index + 3);
-                    }
-                    else if (_geom->getMesh()->getBoundary(0) == REFLECTIVE)
-                    {
-                        meshSurfaces[i * 8 + 3]
-                            ->incrementTotalWt(wt2 / sinTheta, opposite_index);
-                        meshSurfaces[i * 8 + 3]
-                            ->incrementTotalWt(wt, opposite_index + 3);
-                    }
-
-                    if (y > 0) 
-                    {
-                        meshSurfaces[(i - _cw) * 8 + 0]
-                            ->incrementTotalWt(wt2 / cosTheta, index);
-                        meshSurfaces[(i - _cw) * 8 + 0]
-                            ->incrementTotalWt(wt, index + 3);
-                    }
-                    else if (_geom->getMesh()->getBoundary(3) == REFLECTIVE)
-                    {
-                        meshSurfaces[i * 8 + 0]
-                            ->incrementTotalWt(wt2 / cosTheta, opposite_index);
-                        meshSurfaces[i * 8 + 0]
-                            ->incrementTotalWt(wt, opposite_index + 3);
-                    }                  
-
-                }
             }
         }
     }
-
-    return;
 }
 
 void Solver::initializeWeights() 
@@ -1477,23 +1573,17 @@ void Solver::initializeWeights()
         {
             meshSurfaces[s]->setTotalWt((meshSurfaces[s]->getTotalWt(0) + 
                                          meshSurfaces[s]->getTotalWt(1)), 2);
-            meshSurfaces[s]->setTotalWt((meshSurfaces[s]->getTotalWt(3) + 
-                                         meshSurfaces[s]->getTotalWt(4)), 5);
-            log_printf(ACTIVE, "surface %d %.10f + %.10f = %.10f,"
-                       " current-wt %.10f + %.10f = %.10f", s, 
-                       meshSurfaces[s]->getTotalWt(0),
-                       meshSurfaces[s]->getTotalWt(1),                   
-                       meshSurfaces[s]->getTotalWt(2),
-                       meshSurfaces[s]->getTotalWt(3),
-                       meshSurfaces[s]->getTotalWt(4), 
-                       meshSurfaces[s]->getTotalWt(5));
         }
 
-        w = meshSurfaces[i * 8 + 1]->getTotalWt(2);
-        h = meshSurfaces[i * 8 + 2]->getTotalWt(2);
+        w = meshSurfaces[i * 8 + 1]->getAsTrackedLength();
+        h = meshSurfaces[i * 8 + 2]->getAsTrackedLength();
         meshCell->setATWidth(w);
         meshCell->setATHeight(h);
         meshCell->setATL(0.5 * sqrt(w * w + h * h) / P0);
+
+        meshCell->setWidth(w);
+        meshCell->setHeight(h);
+        meshCell->setVolume(w * h);
     }
 
     return;
@@ -1533,13 +1623,13 @@ void Solver::MOCsweep(int max_iterations, int moc_iter)
     if ((_run_loo) && (!(_diffusion && (moc_iter == 0))))
     {
         tally = 2;
-        log_printf(ACTIVE, "tally quadrature current");
+        log_printf(INFO, "tally quadrature currents");
     }
     //else if ((_run_cmfd) || (_run_loo & _diffusion && (moc_iter == 0)))
     else if (_run_cmfd || _run_loo)
     {
         tally = 1;
-        log_printf(ACTIVE, "tally partial current");
+        log_printf(INFO, "tally partial currents");
     }
     else
         tally = 0;
@@ -1588,6 +1678,19 @@ void Solver::MOCsweep(int max_iterations, int moc_iter)
                     num_segments = track->getNumSegments();
                     weights = track->getPolarWeights();
                     polar_fluxes = track->getPolarFluxes();
+
+                    /* Store all the incoming angular fluxes */
+                    if ((tally == 2) && (!_reflect_outgoing))
+                    {
+                        tallyLooCurrentIncoming(track, segments.at(0), 
+                                                meshSurfaces, 1);
+                        tallyLooCurrentIncoming(track, 
+                                                segments.at(num_segments-1), 
+                                                meshSurfaces, -1);
+                    }
+                    /* FIXME: add in tallyCmfdCurrentIncoming */
+
+
 
                     /* Loop over each segment in forward direction */
                     for (s = 0; s < num_segments; s++) 
@@ -1655,9 +1758,15 @@ void Solver::MOCsweep(int max_iterations, int moc_iter)
                         fsr->incrementFlux(fsr_flux);
                     }
 
-                    /* Transfers flux to outgoing track */
-                    track->getTrackOut()->setPolarFluxes(track->isReflOut(), 0, 
-                                                         polar_fluxes);
+                    
+                    /* Transfer fluxes to outgoing track, or store them */
+                    if (_reflect_outgoing)                    
+                    {
+                        track->getTrackOut()->setPolarFluxes(track->isReflOut(),
+                                                             0, polar_fluxes);
+                    }
+                    else
+                        track->setFwdFluxes(polar_fluxes);                      
 
                     /* Tallys leakage */
                     pe = 0;
@@ -1672,6 +1781,7 @@ void Solver::MOCsweep(int max_iterations, int moc_iter)
                             pe++;
                         }
                     }
+
 
                     /* Loops over each segment in the reverse direction */
                     for (s = num_segments-1; s > -1; s--) 
@@ -1737,10 +1847,16 @@ void Solver::MOCsweep(int max_iterations, int moc_iter)
                         fsr->incrementFlux(fsr_flux);
                     }
 
-                    /* Transfers flux to incoming track */
-                    track->getTrackIn()->setPolarFluxes(track->isReflIn(), 
-                                                        GRP_TIMES_ANG, 
-                                                        polar_fluxes);
+                    /* Transfers fluxes to incoming track, or store them */
+                    if (_reflect_outgoing)
+                    {
+                        track->getTrackIn()->setPolarFluxes(track->isReflIn(), 
+                                                            GRP_TIMES_ANG, 
+                                                            polar_fluxes);
+                    }
+                    else
+                        track->setBwdFluxes(polar_fluxes);
+
                     /* Tallies leakage */
                     pe = GRP_TIMES_ANG;
                     for (e = 0; e < NUM_ENERGY_GROUPS; e++) 
@@ -1755,6 +1871,7 @@ void Solver::MOCsweep(int max_iterations, int moc_iter)
                             pe++;
                         }
                     }
+
                 }
 
                 /* Update the azimuthal angle index for this thread
@@ -1765,6 +1882,32 @@ void Solver::MOCsweep(int max_iterations, int moc_iter)
                     j = _num_azim - j - 1;
                 else
                     break;
+            }
+        }
+
+
+        if (!_reflect_outgoing)
+        {
+            /* Loop over each track, updating all the incoming angular fluxes */
+            for (j = 0; j < _num_azim; j++) 
+            {
+                for (k = 0; k < _num_tracks[j]; k++) 
+                {
+                    track = &_tracks[j][k];
+
+                    /* Transfers outgoing flux to its reflective
+                     * track's incoming for the forward direction */
+                    track->getTrackOut()
+                        ->setPolarFluxes(track->isReflOut(), 
+                                         0, track->getFwdFluxes());
+
+                    /* Transfers outgoing flux to its reflective
+                     * track's incoming for the backward direction */
+                    track->getTrackIn()
+                        ->setPolarFluxes(track->isReflIn(), 
+                                         GRP_TIMES_ANG, track->getBwdFluxes());
+            
+                }
             }
         }
 
@@ -1820,6 +1963,44 @@ void Solver::MOCsweep(int max_iterations, int moc_iter)
 		
     return;
 } /* end of MOCsweep */
+
+
+void Solver::zeroVacuumBoundaries() {
+    Track* track;
+    //double* polar_fluxes;
+    //reflectType direction;
+
+    /* Loop over azimuthal angle, track, polar angle, energy group
+     * and set each track's incoming and outgoing flux to zero */
+    for (int i = 0; i < _num_azim; i++) 
+    {
+        for (int j = 0; j < _num_tracks[i]; j++) {
+            track = &_tracks[i][j];
+            //polar_fluxes = _tracks[i][j].getPolarFluxes();
+
+            /* Forward direction */
+            /*
+            direction = track->isReflOut();
+
+            if ((direction == VAC_TRUE) || (direction == VAC_FALSE))
+            {
+                int start = (direction - 2) * GRP_TIMES_ANG;
+                for (int i = 0; i < GRP_TIMES_ANG; i++)
+                    polar_fluxes[start+i] = 0.0;
+            }
+            */
+            track->getTrackOut()
+                ->resetPolarFluxes(track->isReflOut(), 0);
+            
+            /* Transfers outgoing flux to its reflective
+             * track's incoming for the backward direction */
+            track->getTrackIn()
+                ->resetPolarFluxes(track->isReflIn(), GRP_TIMES_ANG);
+        }
+    }
+}
+
+
 
 /* Normalizes the scalar flux in each FSR and angular flux track to that total 
  * volume-integrated fission source add up to the total volume. */
@@ -1878,7 +2059,10 @@ void Solver::normalizeFlux()
         }
     }
 
-    /* Renormalize tallied current on each surface */
+#if 0
+    /* This block normalizes tallied current on each surface. To get
+     * geometry_2x2.xml with 2 vacuum BC to converge, the tallied
+     * current cannot be normalized */
     if ((_run_cmfd) && !(_acc_after_MOC_converge))
     {
         int ng = NUM_ENERGY_GROUPS;
@@ -1908,6 +2092,8 @@ void Solver::normalizeFlux()
             {
                 for (int e = 0; e < ng; e++)
                 {
+                    /* FIXME: I changed 2 to _nq, which cases a
+                     * SIGFPE, Arithmetic exception */
                     for (int ind = 0; ind < 2; ind++)
                     {
                         meshCell->getMeshSurfaces(s)->updateQuadCurrent(
@@ -1917,6 +2103,7 @@ void Solver::normalizeFlux()
             }
         }		
     }
+#endif
 
     return;
 }
@@ -2029,7 +2216,7 @@ double Solver::runCmfd(int moc_iter)
     }
 
     /* Run diffusion problem on initial geometry */
-    if (moc_iter == 0 && _diffusion == true)
+    if ((moc_iter == 0) && _diffusion)
         cmfd_keff = _cmfd->computeCMFDFluxPower(DIFFUSION, moc_iter);
     else
         cmfd_keff = _cmfd->computeCMFDFluxPower(CMFD, moc_iter);
@@ -2118,19 +2305,21 @@ double Solver::computeSpectralRadius(double *old_fsr_powers)
 double Solver::kernel(int max_iterations) {
     int moc_iter;
 
-    log_printf(NORMAL, "Starting kernel ...");
+    log_printf(INFO, "Starting kernel ...");
 
     /* Initial guess */
     _old_k_effs.push(_k_eff);
     _old_eps_2.push(1.0);
     _delta_phi.push(1.0);
-    log_printf(NORMAL, "Starting guess of k_eff = %f", _k_eff);
+
+    log_printf(INFO, "Starting guess of k_eff = %f", _k_eff);
 
     /* Check that each FSR has at least one segment crossing it */
     checkTrackSpacing();
 
-    /* Check boundary conditions */
-    checkBoundary();
+    /* Check and print out boundary conditions */
+    if ((_run_cmfd || _run_loo) && !(_acc_after_MOC_converge))
+        checkBoundary();
 
     /* Set scalar flux to unity for each region */
     oneFSRFluxOldSource();
@@ -2174,7 +2363,7 @@ double Solver::kernel(int max_iterations) {
         /* Update FSR's flux based on cell-averaged flux coming from the
          * acceleration steps */
         if ((_run_cmfd || _run_loo) && !(_acc_after_MOC_converge))
-            updateFlux(moc_iter);
+            prolongation(moc_iter);
 
         /* Computes the new keff */
         _k_eff = computeKeff(moc_iter);
@@ -2209,8 +2398,6 @@ double Solver::kernel(int max_iterations) {
         printToScreen(moc_iter);
         printToLog(moc_iter, eps_inf, eps_2, spectral_radius);
 
-        plotEverything(moc_iter);
-
         /* Alternative: if (_cmfd->getL2Norm() < _moc_conv_thresh) */
         if (eps_2 < _moc_conv_thresh) 
         {
@@ -2224,10 +2411,24 @@ double Solver::kernel(int max_iterations) {
             }
 
             printToMinimumLog(moc_iter);
+            log_printf(NORMAL, "Printed log file to %s", 
+                       _log_file.c_str());
+
             plotEverything(moc_iter);
 
             return _k_eff;
         }
+        else if (eps_2 > 10) 
+        {
+            printToMinimumLog(moc_iter);
+            plotEverything(moc_iter);
+
+            log_printf(NORMAL, "Exit OpenMOC: L2 norm blows up."
+                       "  Something bad happens. May need damping.");
+            return _k_eff;
+        }
+
+
     }
 
     log_printf(WARNING, "Unable to converge the source after %d iterations",
@@ -2260,7 +2461,7 @@ void Solver::plotEverything(int moc_iter)
     }
 
     /* plot FSR scalar flux */
-    if (_plotter->plotFlux())
+    if (_plot_flux)
         plotFluxes(moc_iter);
 
     return;
@@ -2285,35 +2486,10 @@ void Solver::printToMinimumLog(int moc_iter)
 void Solver::printToLog(int moc_iter, double eps_inf, double eps_2, double rho)
 {
     std::ofstream logfile;
-    std::stringstream string;
-
-    string << "l2_norm_" << (_num_azim*2) 
-           << "_" << std::fixed 
-           << std::setprecision(2) <<  _track_spacing
-           << "_bi_" << _boundary_iteration
-           << "_"
-           << std::setprecision(1) << _damp_factor;
-
-    if (_update_boundary)
-        string << "_update";
-    else
-        string << "_noupda";
-
-    if (_run_cmfd)
-        string << "_cmfd.txt";
-    else if (_run_loo1)
-        string << "_loo1.txt";
-    else if (_run_loo2)
-        string << "_loo2.txt";
-    else
-        string << "_unac.txt";
-
-
-    std::string title_str = string.str();
 
     if (moc_iter == 0)
     {
-        logfile.open(title_str.c_str(), std::fstream::trunc);
+        logfile.open(_log_file.c_str(), std::fstream::trunc);
         logfile << "# iteration,"
                 << " cell l2 norm (m+1/2, m+1),"
                 << " fsr l-inf norm (m, m+1),"
@@ -2326,7 +2502,7 @@ void Solver::printToLog(int moc_iter, double eps_inf, double eps_2, double rho)
     }
     else
     {
-        logfile.open(title_str.c_str(), std::ios::app);
+        logfile.open(_log_file.c_str(), std::ios::app);
         logfile << moc_iter 
                 << " " << _cmfd->getL2Norm() 
                 << " " << eps_inf
@@ -2384,7 +2560,7 @@ void Solver::checkNeutronBalance()
                 src = 0;
 
                 flux = meshCell->getOldFlux()[e];
-                vol = meshCell->getATVolume();
+                vol = meshCell->getVolume();
 				
                 absorb += meshCell->getSigmaA()[e] * flux;
 
@@ -2450,14 +2626,10 @@ void Solver::checkNeutronBalance()
                 /* residual = leakage + absorption - fission */
                 residual = leak + absorb - src;
                 log_printf(ACTIVE, "CMFD cell %d energy %d, residual %.10f"
-                           " leak: %.10f"
-                           " absorb: %.10f, src: %.10f,"
-                           "  fis: %.10f, keff: %.10f", 
-                           y * cell_width + x, e, 
-                           residual,
-                           leak,
-                           absorb, src, 
-                           fis, fis / (leak + absorb));
+                           " leak: %e, absorb: %.10f, src: %.10f,"
+                           " fis: %.10f, keff: %.10f", 
+                           y * cell_width + x, e, residual,
+                           leak, absorb, src, fis, fis / (leak + absorb));
                 tot_leak += leak;
                 tot_absorb += absorb;
                 tot_fis += fis;
@@ -2466,8 +2638,8 @@ void Solver::checkNeutronBalance()
         }
     }
 
-    log_printf(NORMAL, "CMFD over all cell, keff: %.10f"
-               " fis: %f, absorb: %f, leak: %f, src = %f, res = %f", 
+    log_printf(INFO, "Assume no boundary condition, keff: %.10f"
+               " fis: %f, absorb: %f, leak: %e, src = %f, res = %f", 
                tot_fis / (tot_leak + tot_absorb),
                tot_fis, tot_absorb, tot_leak, 
                tot_src, tot_leak + tot_absorb - tot_src);
@@ -2552,7 +2724,7 @@ void Solver::checkNeutronBalanceWithDs()
         /* compute total residual and average ratio */
         /* residual = leakage + absorption - fission */
         double residual = leak + absorb - fis;
-        log_printf(NORMAL, "CMFD residual %.10f"
+        log_printf(DEBUG, "CMFD residual %.10f"
                    " fis: %.10f, absorb: %.10f, leak: %.10f, keff: %.10f", 
                    residual, fis, absorb, leak, fis / (leak + absorb));
     } /* end of looping through cells */

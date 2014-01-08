@@ -37,6 +37,7 @@ Options::Options(int argc, char **argv)
     _boundary_iteration = 0;
     _diffusion = true;			/* run diffusion for 1st iter */
     _update_boundary = true;            /* update boundary angular flux */
+    _reflect_outgoing = false;          /* newest incoming flux during HO MOC */
 
     if (std::string(getenv("PWD")).find("Release") != std::string::npos)
         _relative_path = "../";
@@ -45,12 +46,12 @@ Options::Options(int argc, char **argv)
 
     /* Default geometry input file */
     _geometry_file = _relative_path + 
-        "xml-sample/Cmfd/geometry_4x4_leakage.xml"; 
-    //"xml-sample/Cmfd/geometry_8x8_leakage3_3.xml"; 
-        //"xml-sample/Cmfd/geometry_corner.xml"; % homogeneous material
+        "xml-sample/geometry_2x2.xml"; 
+    //"xml-sample/geometry_c5g7_cc.xml";
+    //"xml-sample/geometry_corner.xml"; % homogeneous material
     _material_file = _relative_path + 
-        "xml-sample/Cmfd/material_simple.xml";
-        //"xml-sample/Cmfd/material_c5g7.xml";
+        "xml-sample/material_simple.xml";
+    //"xml-sample/material_c5g7.xml";
 	
     _track_spacing = 0.05;		/* Default C4 track spacing: 0.05cm */
     _num_azim = 64;			/* Default C4 # azimuthal angle: 64*/
@@ -145,6 +146,9 @@ Options::Options(int argc, char **argv)
             else if (strcmp(argv[i], "-nub") == 0 ||
                      strcmp(argv[i], "--noupdateboundary") == 0)
                 _update_boundary = false;
+            else if (strcmp(argv[i], "-ro") == 0 ||
+                     strcmp(argv[i], "--reflectoutgoing") == 0)
+                _reflect_outgoing = true;
             else if (strcmp(argv[i], "-nc") == 0 ||
                      strcmp(argv[i], "--nocmfd") == 0)
                 _cmfd = false;
@@ -153,7 +157,7 @@ Options::Options(int argc, char **argv)
             {
                 _cmfd = true;
                 _loo = false;
-                _damp_factor = 0.66;
+                _damp_factor = 1; //0.66;
             }
             else if (strcmp(argv[i], "-nl") == 0 ||
                      strcmp(argv[i], "--noloo") == 0)
@@ -509,4 +513,9 @@ int Options::getBoundaryIteration()
 bool Options::getUpdateBoundary()
 {
     return _update_boundary;
+}
+
+bool Options::getReflectOutgoing()
+{
+    return _reflect_outgoing;
 }

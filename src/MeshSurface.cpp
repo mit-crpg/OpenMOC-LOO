@@ -10,10 +10,12 @@
 MeshSurface::MeshSurface(){
 	
     try{
-        _total_wt = new double[6];
-        for (int i = 0; i < 6; i++)
+        _total_wt = new double[3];
+        for (int i = 0; i < 3; i++)
             _total_wt[i] = 0.0;
-        
+       
+        _as_tracked_length = 0.0;
+
         _d_tilde = new double[NUM_ENERGY_GROUPS];
         _d_hat = new double[NUM_ENERGY_GROUPS];
         _current = new double[NUM_ENERGY_GROUPS];
@@ -23,11 +25,13 @@ MeshSurface::MeshSurface(){
         _quad_flux = new double*[NUM_ENERGY_GROUPS];
         _old_quad_flux = new double*[NUM_ENERGY_GROUPS];
 		
+
+        /* FIXME: cheat for now by allocating 4 for each */
         for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
         {
-            _quad_current[e] = new double[2];
-            _quad_flux[e] = new double[2];
-            _old_quad_flux[e] = new double[2];
+            _quad_current[e] = new double[4];
+            _quad_flux[e] = new double[4];
+            _old_quad_flux[e] = new double[4];
         }
     }
     catch (std::exception &e)
@@ -78,11 +82,15 @@ void MeshSurface::setCurrent(double current, int group){
     _current[group] = current;
 }
 
-void MeshSurface::incrementCurrent(double* current){
+void MeshSurface::incrementCurrents(double* current){
     for (int group = 0; group < NUM_ENERGY_GROUPS; group++)
     {
         _current[group] += current[group];
     }
+}
+
+void MeshSurface::incrementCurrent(double current, int group){
+    _current[group] = current;
 }
 
 void MeshSurface::updateCurrent(double factor, int group){
@@ -113,14 +121,19 @@ void MeshSurface::setTotalWt(double wt, int index)
     _total_wt[index] = wt;
 }
 
+double MeshSurface::getAsTrackedLength() {
+    return _as_tracked_length;
+}
+
+void MeshSurface::incrementAsTrackedLength(double length) {
+    _as_tracked_length += length;
+}
+
 void MeshSurface::updateQuadCurrent(double factor, int group, int index)
 {	
     _quad_current[group][index] *= factor;
 }
 
-double MeshSurface::getTotalWt(int index){
-    return _total_wt[index];
-}
 
 /* QuadFlux */
 double MeshSurface::getQuadFlux(int group, int index){

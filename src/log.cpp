@@ -50,6 +50,13 @@ void log_setlevel(logLevel newlevel) {
     }
 }
 
+/**
+ * @var output_directory
+ * @brief The directory in which a "log" folder will be created for logfiles.
+ * @details By default this is the same directory as that where the logger
+ *          is invoked by an input file.
+ */
+static std::string output_directory = ".";
 
 /**
  * Set the logging level from a character string which must correspond
@@ -150,3 +157,31 @@ void log_error(const char *format, ...) {
     fprintf(stderr, "[  EXIT   ]  Exiting program...\n");
     abort();
 }	
+
+/**
+ * @brief Sets the output directory for log files. 
+ * @details If the directory does not exist, it creates it for the user.
+ * @param directory a character array for the log file directory
+ */
+void setOutputDirectory(char* directory) {
+
+    output_directory = std::string(directory);
+
+    /* Check to see if directory exists - if not, create it */
+    struct stat st;
+    if (!stat(directory, &st) == 0) {
+		mkdir(directory, S_IRWXU);
+        mkdir((output_directory+"/log").c_str(), S_IRWXU);
+    }
+
+    return;
+}
+
+
+/**
+ * @brief Returns the output directory for log files.
+ * @return a character array for the log file directory
+ */
+const char* getOutputDirectory() {
+    return output_directory.c_str();
+}

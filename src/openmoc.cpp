@@ -34,7 +34,6 @@ int main(int argc, char **argv) {
     feenableexcept(FE_UNDERFLOW);
     feenableexcept(FE_OVERFLOW);
 
-    log_printf(NORMAL, "Starting OpenMOC...");
     double k_eff;
     Timer timer;
 
@@ -43,8 +42,8 @@ int main(int argc, char **argv) {
 
     /* initialize Petsc */
     int petsc_err = 0;
-    CHKERRQ(petsc_err);
-    PetscInitialize(&(opts.extra_argc), &(opts.extra_argv), (char*)0, NULL);
+    //PetscInitialize(&(opts.extra_argc), &(opts.extra_argv), (char*)0, NULL);
+    PetscInitializeNoArguments();
     CHKERRQ(petsc_err);
 
     /* Set the verbosity */
@@ -78,7 +77,8 @@ int main(int argc, char **argv) {
 
     /* Initialize track generator */
     TrackGenerator track_generator(&geometry, &plotter, opts.getNumAzim(),
-                                   opts.getTrackSpacing());
+                                   opts.getTrackSpacing(), 
+                                   opts.getGeometryFile());
 
     /* Tell geometry whether CMFD is on/off */
     geometry.setCmfd(opts.getCmfd());
@@ -86,9 +86,11 @@ int main(int argc, char **argv) {
 
     /* Make CMFD mesh */
     if (opts.getCmfd() || opts.getLoo())
+    {
         geometry.makeCMFDMesh(geometry.getMesh(), opts.getNumAzim(), 
                               opts.getGroupStructure(), opts.getPrintMatrices(),
                               opts.getCmfdLevel());
+    }
 
     /* make FSR map for plotting */
     if (opts.plotCurrent() || opts.plotDiffusion() || opts.plotFluxes() || 
@@ -110,19 +112,16 @@ int main(int argc, char **argv) {
     timer.recordSplit("Generating tracks");
 
     /* Segment tracks */
+    /*
     timer.reset();
     timer.start();
     track_generator.segmentize();
     timer.stop();
     timer.recordSplit("Segmenting tracks");
+    */
 
     /* Create CMFD class */
-    Cmfd cmfd(&geometry, &plotter, geometry.getMesh(), 
-              opts.getCmfd(), opts.getLoo(), opts.getLoo1(), opts.getLoo2(),
-              opts.getDiffusionCorrection(), opts.plotProlongation(), 
-              opts.getUpdateBoundary(),
-              opts.getL2NormConvThresh(), opts.getDampFactor(),
-              &track_generator);
+    Cmfd cmfd(&geometry, &plotter, geometry.getMesh(), &track_generator, &opts);
 
     /* Creat Solver class */
     Solver solver(&geometry, &track_generator, &plotter, &cmfd, &opts);

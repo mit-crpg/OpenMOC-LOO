@@ -190,12 +190,6 @@ MeshSurface* MeshCell::findSurface(LocalCoords* coord, int i){
     return meshSurface;
 }
 
-MeshSurface* MeshCell::getMeshSurfaces(int surface_id){
-    assert(surface_id >= 0);
-    assert(surface_id < 8);
-    return &_mesh_surfaces[surface_id];
-}
-
 void MeshCell::setChi(double chi, int e){
     assert(e >= 0);
     assert(e < NUM_ENERGY_GROUPS);

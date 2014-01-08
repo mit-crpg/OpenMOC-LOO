@@ -54,12 +54,29 @@ private:
     double _spacing;
     double _azim_weight;
     double _polar_weights[NUM_POLAR_ANGLES];
-    double _polar_fluxes[2 * GRP_TIMES_ANG];
+    double _polar_fluxes[2*GRP_TIMES_ANG];
+    double _bwd_fluxes[2*GRP_TIMES_ANG];
+    double _fwd_fluxes[2*GRP_TIMES_ANG];
     std::vector<segment*> _segments;
-    Track *_track_in, *_track_out;
+
+    /** The track which reflects out of this track along its "forward"
+     * direction for reflective boundary conditions. */
+    Track* _track_in;
+
+    /** The track which reflects out of this track along its "reverse"
+     * direction for reflective boundary conditions. */
+    Track* _track_out;
+
+    /* whether to give the flux to the forward (false) or backward
+     * (true) direction of the track reflecting out of this one along
+     * its forward (in) or backward (out) direction. */
     reflectType _refl_in, _refl_out;
     int _surf_fwd;
     int _surf_bwd;
+    /** A monotonically increasing unique ID for each track */
+    int _uid;
+    /** The azimuthal angle index into the global 2D ragged array of tracks */
+    int _azim_angle_index;
 #if USE_OPENMP
     omp_lock_t _flux_lock;
 #endif
@@ -72,8 +89,11 @@ public:
     void setPolarWeight(const int angle, double polar_weight);
     void setPolarFluxes(reflectType direction, int start_index, 
                         double* polar_fluxes);
+    void resetPolarFluxes(reflectType direction, int start_index);
     void setPolarFluxesByIndex(int pe, double flux);
     void updatePolarFluxes(int pe, double factor);
+    void setUid(int uid);
+    void setAzimAngleIndex(const int index);
     void setPhi(const double phi);
     void setReflIn(reflectType refl_in);
     void setReflOut(reflectType refl_out);
@@ -84,10 +104,14 @@ public:
 
     Point* getEnd();
     Point* getStart();
+    int getUid();
     double getPhi() const;
+    int getAzimAngleIndex() const;
     double getAzimuthalWeight() const;
     double* getPolarWeights();
     double* getPolarFluxes();
+    double* getFwdFluxes();
+    double* getBwdFluxes();
     double* getNewPolarFluxes();
     segment* getSegment(int s);
     std::vector<segment*> getSegments();
@@ -106,6 +130,11 @@ public:
     void addSegment(segment* segment);
     void clearSegments();
     std::string toString();
+
+
+    void setFwdFluxes(double *fluxes);
+    void setBwdFluxes(double *fluxes);
+
 };
 
 #endif /* TRACK_H_ */

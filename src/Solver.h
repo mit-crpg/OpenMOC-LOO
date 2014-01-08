@@ -43,8 +43,11 @@ private:
     Quadrature* _quad;
     FlatSourceRegion* _flat_source_regions;
     Track** _tracks;
+
+    /* Number of cells in the x-direction */
     int _cw;
     int _ch;
+    int _nq;
     int _num_crn;
     int _boundary_iteration;
     int _num_azim;
@@ -72,6 +75,8 @@ private:
     float* _pix_map_total_flux;
     Cmfd* _cmfd;
     std::string _geometry_file;
+    std::string _geometry_file_no_slash;
+    std::string _log_file;
 
 #if !STORE_PREFACTORS
     double* _pre_factor_array;
@@ -92,6 +97,8 @@ private:
     bool _update_keff;
     bool _update_boundary;
     bool _plot_loo;
+    bool _plot_flux;
+    bool _reflect_outgoing;
     void precomputeFactors();
     void initializeFSRs();
 public:
@@ -125,7 +132,15 @@ public:
     double runLoo(int moc_iter);
     double runCmfd(int moc_iter);
     void tallyLooWeight(Track *t, segment *seg, MeshSurface **surf, int dir);
+    void tallyLooWeightSingle(Track *t, segment *seg, MeshSurface **surf, 
+                              int surfID, int index);
+
+    void tallyAsTrackedLengthSingle(Track *t, segment *seg, MeshSurface **surf, 
+                              int surfID, int index, int opposite);
+
     void tallyLooCurrent(Track *t, segment *seg, MeshSurface **surf, int dir);
+    void tallyLooCurrentIncoming(Track *t, segment *seg, MeshSurface **surf, 
+                                 int dir);
     void tallyCmfdCurrent(Track *t, segment *seg, MeshSurface **surf, int dir);
 
     /* updates after transport sweep */
@@ -134,13 +149,14 @@ public:
     void normalizeFlux();
     void renormCurrents(Mesh* mesh, double keff);
     void updateSource();
-    void updateFlux(int moc_iter);
+    void prolongation(int moc_iter);
     void updateBoundaryFluxByQuadrature();
     void storeFsrFluxPower();
     double computeFsrL2Norm(double *old_fsr_powers);
     double computeFsrLinf(double *old_fsr_powers);
     double computeSpectralRadius(double *old_fsr_powers); 
     void storeMOCBoundaryFlux();
+    void zeroVacuumBoundaries();
 
     /* getters and setters */
     double** getFSRtoFluxMap();

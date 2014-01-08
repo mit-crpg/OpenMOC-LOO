@@ -128,7 +128,6 @@ Geometry::Geometry(Parser* parser) {
     }
 
     _mesh = new Mesh;
-
 }
 
 
@@ -1143,8 +1142,7 @@ std::string Geometry::toString() {
     std::map<int, Lattice*>::iterator iter5;
 
     string << "Geometry: width = " << getWidth() << ", height = " <<
-        getHeight() << ", base universe id = " << _base_universe <<
-        ", Bounding Box: (("
+        getHeight() << ", Bounding Box: (("
            << _x_min << ", " << _y_min << "), (" << _x_max << ", " << _y_max
            << ")";
 
@@ -1165,8 +1163,7 @@ std::string Geometry::toString() {
         string << iter4->second->toString() << "\n\t\t";
     }
 
-    string << "\n\tLattices:\n\t\t";	int findFSRId(LocalCoords* coords);
-
+    string << "\n\tLattices:\n\t\t";   
     for (iter5 = _lattices.begin(); iter5 != _lattices.end(); ++iter5) {
         string << iter5->second->toString()  << "\n\t\t";
     }
@@ -2106,8 +2103,6 @@ bool Geometry::mapContainsKey(std::map<K, V> map, K key) {
 void Geometry::makeCMFDMesh(Mesh* mesh, int numAzim, 
                             bool multigroup, bool printMatrices, int cmfdLevel)
 {
-    log_printf(NORMAL, "Making mesh at level %i...", cmfdLevel);
-
     int max_cmfd_level = 0;
     Universe* univ = _universes.at(0);
 
@@ -2127,6 +2122,7 @@ void Geometry::makeCMFDMesh(Mesh* mesh, int numAzim,
     /* converts bottom up index into top down index as the below functions 
 	 * actually uses the latter */
     cmfdLevel = max_cmfd_level - cmfdLevel;
+    _mesh->setMeshLevel(cmfdLevel);
 
     /* find cell width and height at CMFD_LEVEL lattice */
     int width = 0;
@@ -2144,11 +2140,16 @@ void Geometry::makeCMFDMesh(Mesh* mesh, int numAzim,
     /* set the cell and geometric width and height of mesh */
     mesh->setCellHeight(height);
     mesh->setCellWidth(width);
+    mesh->setMaxX(width);
+    mesh->setMaxY(height);
+
     mesh->setHeight(getHeight());
     mesh->setWidth(getWidth());
     mesh->makeMeshCells();
 
-    log_printf(NORMAL, "Made mesh with %i mesh cells...", height*width);
+    log_printf(NORMAL, "Made %d mesh cells at level %i,"
+               " where 0 is the coarsest, and %i is the finest", 
+               height * width, cmfdLevel, max_cmfd_level);
 
     log_printf(DEBUG, "mesh cell width: %i", _mesh->getCellWidth());
     log_printf(DEBUG, "mesh cell height: %i", _mesh->getCellHeight());
@@ -2739,4 +2740,11 @@ void Geometry::setLoo(bool runLoo){
     _run_loo = runLoo;
 }
 
+bool Geometry::getCmfd(){
+    return _run_cmfd;
+}
+
+bool Geometry::getLoo(){
+   return _run_loo;
+}
 

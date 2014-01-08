@@ -10,17 +10,15 @@
 #include "Cmfd.h"
 #include <cmath>
 
+int Cmfd::_surf_index[] = {1,2,2,3,3,0,0,1,2,1,3,2,0,3,1,0};
+
 /**
  * Acceleration constructor
  * @param geom pointer to the geometry
  * @param track_generator pointer to the trackgenerator
  */
 Cmfd::Cmfd(Geometry* geom, Plotter* plotter, Mesh* mesh, 
-           bool runCmfd, bool runLoo, bool runLoo1, bool runLoo2,
-           bool useDiffusionCorrection, bool plotProlongation, 
-           bool updateBoundary,
-           double l2_norm_conv_thresh, double damp,
-           TrackGenerator *track_generator) 
+           TrackGenerator *track_generator, Options *opts) 
 {
     _geom = geom;
     _plotter = plotter;
@@ -32,8 +30,8 @@ Cmfd::Cmfd(Geometry* geom, Plotter* plotter, Mesh* mesh,
     _num_tracks = track_generator->getNumTracks();
 
     _l2_norm = 1.0;
-    _l2_norm_conv_thresh = l2_norm_conv_thresh;
-    _use_diffusion_correction = useDiffusionCorrection;
+    _l2_norm_conv_thresh = opts->getL2NormConvThresh();
+    _use_diffusion_correction = opts->getDiffusionCorrection();
 
     _ng = NUM_ENERGY_GROUPS;
     if (_mesh->getMultigroup() == false)
@@ -41,10 +39,10 @@ Cmfd::Cmfd(Geometry* geom, Plotter* plotter, Mesh* mesh,
     _cw = _mesh->getCellWidth();
     _ch = _mesh->getCellHeight();
 
-    _damp_factor = damp;
+    _damp_factor = opts->getDampFactor();
 
     _run_cmfd = false;
-    if (runCmfd)
+    if (opts->getCmfd())
         _run_cmfd = true;
 
     /* since we need to run diffusion at 1st iteration, AMPhi needs to be 
@@ -57,15 +55,15 @@ Cmfd::Cmfd(Geometry* geom, Plotter* plotter, Mesh* mesh,
     _run_loo = false;
     _run_loo_psi = false;
     _run_loo_phi = false;
-    if (runLoo)
+    if (opts->getLoo())
         _run_loo = true;
-    if (runLoo1)
+    if (opts->getLoo1())
     {
         _run_loo = true;
         _run_loo_psi = true;
         _run_loo_phi = false;
     }
-    else if (runLoo2)
+    else if (opts->getLoo2())
     {
         _run_loo = true;
         _run_loo_psi = false;
@@ -79,20 +77,24 @@ Cmfd::Cmfd(Geometry* geom, Plotter* plotter, Mesh* mesh,
     _t_array = new int[_num_loop * _num_track];
     _t_arrayb = new int[_num_loop * _num_track];
 
-    if (1)//_run_loo)
+    if (_run_loo || opts->getAccAfterMOCConverge())
     {
         generateTrack(_i_array, _t_array, _t_arrayb);
         //checkTrack();
     }
     _num_iter_to_conv = 0;
-    _plot_prolongation = plotProlongation;
-    _update_boundary = updateBoundary;
+    _plot_prolongation = opts->plotProlongation();
+    _update_boundary = opts->getUpdateBoundary();
+    _reflect_outgoing = opts->getReflectOutgoing();
+    if (_reflect_outgoing)
+        _nq = 2;
+    else
+        _nq = 4;
 
     for (int s = 0; s < 4; s++)
     {
         _bc[s] = _mesh->getBoundary(s);
 
-        // DEBUG:
         switch (_bc[s])
         {
         case REFLECTIVE:
@@ -109,9 +111,9 @@ Cmfd::Cmfd(Geometry* geom, Plotter* plotter, Mesh* mesh,
 
     if ((_bc[0] == REFLECTIVE) || (_bc[1] == REFLECTIVE) || 
         (_bc[2] == REFLECTIVE) || (_bc[3] == REFLECTIVE) )
-        _reflective = true;
+        _any_reflective = true;
     else
-        _reflective = false;
+        _any_reflective = false;
 }
 
 /**
@@ -178,9 +180,14 @@ void Cmfd::computeXS_old()
 {
     /* split corner currents to side surfaces */
     if (_run_cmfd)
+    {
         _mesh->splitCornerCurrents();
+    }
     if (_run_loo)
+    {
         _mesh->splitCornerQuadCurrents();
+        _mesh->splitCornerQuadWeights();
+    }
 
     /* initialize variables */
     double volume, flux, abs, tot, nu_fis, chi;
@@ -467,8 +474,8 @@ void Cmfd::computeDsxDirection(double x, double y, int e, MeshCell *meshCell,
                                double dt_weight)
 {
     /* initialize variables */
-    double d_next = 0, d_hat = 0, d_tilde = 0, 
-        current = 0, flux_next = 0, f_next = 0;
+    double d_next = 0, d_hat = 0, d_tilde = 0, current = 0, flux_next = 0, 
+        f_next = 0;
     MeshSurface *surf;
     MeshCell* meshCellNext;
 
@@ -874,24 +881,41 @@ void Cmfd::computeQuadFlux()
                 s[i] = meshCell->getMeshSurfaces(i);    
                 for (int e = 0; e < _ng; e++)
                 {
-                    /* FIXME: debug */
                     double tmp = 0.0;
-                    for (int j = 0; j < 2; j++)
+                    double wt = 0;
+
+                    /* FIXME: somehow _nq = 4 breaks the code for _ro case */
+                    for (int j = 0; j < _nq; j++)
                     {
 #if NEW
-                        /* it is important to use j+3 to get homo case work */
-                        double wt = s[i]->getTotalWt(j + 3);
+                        if (j < 2)
+                            wt = s[i]->getTotalWt(j);
+                        else /* quadrature 2 & 3 do not have their own
+                              * weights, instead just use 0's and 1's
+                              * weights.  */
+                            wt = s[i]->getTotalWt(j - 2);
 #else
-                        double wt = _mesh->getCells(0)->getWidth();
+                        wt = _mesh->getCells(0)->getWidth();
 #endif
-                        flux = s[i]->getQuadCurrent(e, j) / SIN_THETA_45 
-                            / wt / P0;
-                        s[i]->setQuadFlux(flux, e, j);
-                        //s[i]->setOldQuadFlux(flux, e, j);                  
-                        tmp += s[i]->getQuadCurrent(e, j);
+                        if (wt > 1e-10)
+                        {
+                            flux = s[i]->getQuadCurrent(e, j) / SIN_THETA_45 
+                                / wt / P0;
+                            s[i]->setQuadFlux(flux, e, j);
+                            tmp += s[i]->getQuadCurrent(e, j);
+                        }
+                        else
+                            s[i]->setQuadFlux(0, e, j);
                     }	
+
+                    log_printf(ACTIVE, "incoming quad currents for cell %d,"
+                               " surface %d, energy %d, %f, %f",
+                               y * _cw + x, i, e, 
+                               s[i]->getQuadCurrent(e,2), 
+                               s[i]->getQuadCurrent(e,3));
+
 #if NEW	
-                    s[i]->setCurrent(tmp / s[i]->getTotalWt(5), e);
+                    s[i]->setCurrent(tmp / s[i]->getTotalWt(2), e);
 #else
                     s[i]->setCurrent(tmp, e);
 #endif
@@ -919,6 +943,7 @@ void Cmfd::computeQuadFlux()
 
     return;
 }
+
 void Cmfd::computeCurrent()
 {
     /* Initializations */
@@ -938,7 +963,7 @@ void Cmfd::computeCurrent()
                 for (int e = 0; e < _ng; e++)
                 {
                     /* FIXME: need to figure out what to do here */
-                    double wt = s[i]->getTotalWt(0); 
+                    double wt = s[i]->getTotalWt(2); 
                     
                     s[i]->setCurrent(s[i]->getCurrent(e) / wt, e);
                 }
@@ -967,7 +992,7 @@ void Cmfd::updateOldQuadFlux()
                 s[i] = meshCell->getMeshSurfaces(i);
                 for (int e = 0; e < _ng; e++)
                 {
-                    for (int j = 0; j < 2; j++)
+                    for (int j = 0; j < _nq; j++)
                     {
                         s[i]->setOldQuadFlux(s[i]->getQuadFlux(e, j), e, j);
                     } 
@@ -1029,8 +1054,22 @@ void Cmfd::computeQuadSrc()
                 {
                     for (int e = 0; e < _ng; e++)
                     {
-                        in[e][5] = out[e][7];
-                        in[e][6] = out[e][4]; 
+                        if (_reflect_outgoing)
+                        {
+                            in[e][5] = out[e][7];
+                            in[e][6] = out[e][4];
+                        }
+                        else
+                        {
+                            in[e][5] = s[0]->getQuadFlux(e,2);
+                            in[e][6] = s[0]->getQuadFlux(e,3);
+                        }
+                        log_printf(ACTIVE, "x=%d, track 5, incoming now %f," 
+                                   " used to be %f", x, 
+                                   s[0]->getQuadFlux(e,2), out[e][7]);
+                        log_printf(ACTIVE, "x=%d, track 6, incoming now %f," 
+                                   " used to be %f", x, 
+                                   s[0]->getQuadFlux(e,3), out[e][4]);
                     }
                 }
                 else if (_mesh->getBoundary(0) == VACUUM)
@@ -1061,8 +1100,23 @@ void Cmfd::computeQuadSrc()
                 {
                     for (int e = 0; e < _ng; e++)
                     {
-                        in[e][1] = out[e][3]; 
-                        in[e][2] = out[e][0]; 
+                        if (_reflect_outgoing)
+                        {
+                            in[e][1] = out[e][3];
+                            in[e][2] = out[e][0];
+                        }
+                        else
+                        {
+                            in[e][1] = s[2]->getQuadFlux(e,2);
+                            in[e][2] = s[2]->getQuadFlux(e,3);
+                        }
+                        log_printf(ACTIVE, "x=%d, track 1, incoming now %f," 
+                                   " used to be %f", x, 
+                                   s[2]->getQuadFlux(e,2), out[e][3]);
+                        log_printf(ACTIVE, "x=%d, track 2, incoming now %f," 
+                                   " used to be %f", x, 
+                                   s[2]->getQuadFlux(e,3), out[e][0]);
+
                     }
                 }
                 else if (_mesh->getBoundary(2) == VACUUM)
@@ -1092,8 +1146,22 @@ void Cmfd::computeQuadSrc()
                 {
                     for (int e = 0; e < _ng; e++)
                     {
-                        in[e][3] = out[e][5]; 
-                        in[e][4] = out[e][2]; 
+                        if (_reflect_outgoing)
+                        {
+                            in[e][3] = out[e][5];
+                            in[e][4] = out[e][2];
+                        }
+                        else
+                        {
+                            in[e][3] = s[3]->getQuadFlux(e,3);
+                            in[e][4] = s[3]->getQuadFlux(e,2);
+                        }
+                        log_printf(ACTIVE, "y=%d, track 3, incoming now %f," 
+                                   " used to be %f", x, 
+                                   s[3]->getQuadFlux(e,3), out[e][5]);
+                        log_printf(ACTIVE, "y=%d, track 4, incoming now %f," 
+                                   " used to be %f", x, 
+                                   s[3]->getQuadFlux(e,2), out[e][2]);
                     }
                 }
                 else if (_mesh->getBoundary(3) == VACUUM)
@@ -1123,8 +1191,22 @@ void Cmfd::computeQuadSrc()
                 {
                     for (int e = 0; e < _ng; e++)
                     {
-                        in[e][7] = out[e][1]; 
-                        in[e][0] = out[e][6]; 
+                        if (_reflect_outgoing)
+                        {
+                            in[e][7] = out[e][1];
+                            in[e][0] = out[e][6];
+                        }
+                        else
+                        {
+                            in[e][7] = s[1]->getQuadFlux(e,3);
+                            in[e][0] = s[1]->getQuadFlux(e,2);
+                        }
+                        log_printf(ACTIVE, "y=%d, track 7, incoming now %f," 
+                                   " used to be %f", x, 
+                                   s[1]->getQuadFlux(e,3), out[e][1]);
+                        log_printf(ACTIVE, "y=%d, track 0, incoming now %f," 
+                                   " used to be %f", x, 
+                                   s[1]->getQuadFlux(e,2), out[e][6]);
                     }
                 }
                 else if (_mesh->getBoundary(1) == VACUUM)
@@ -1182,6 +1264,7 @@ void Cmfd::computeQuadSrc()
             }
         }
     }
+    return;
 }	 
 
 /*
@@ -1357,7 +1440,7 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter)
         }
         else
         {
-            log_printf(ACTIVE, " %d-th CMFD iteration k = %.10f, eps = %e"
+            log_printf(ACTIVE, " %d-th CMFD iter k = %.10f, eps = %e"
                        " GMRES # = %d" , 
                        iter, _keff, eps, (int)its);
         }
@@ -1476,7 +1559,7 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
 
     /* we set min_outer to make sure the low order system's
      * convergence criteria is sufficiently tight */ 
-    int min_outer = 200;
+    int min_outer = 20;
 
     if (moc_iter == 10000)
     {
@@ -1577,7 +1660,7 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
                     {
                         ho_current[i][e] += meshCell->getMeshSurfaces(s)
                             ->getCurrent(e) * meshCell->getMeshSurfaces(s)
-                            ->getTotalWt(5);
+                            ->getTotalWt(2);
                     }
 						
                     if (x > 0)
@@ -1585,12 +1668,12 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
                         meshCellNext = _mesh->getCells(y * _cw + x - 1);
                         ho_current[i][e] -= meshCellNext->getMeshSurfaces(2)
                             ->getCurrent(e) * meshCellNext->getMeshSurfaces(2)
-                            ->getTotalWt(5);
+                            ->getTotalWt(2);
                     }
                     else if (_bc[0] == REFLECTIVE)
                         ho_current[i][e] -= meshCell->getMeshSurfaces(0)
                             ->getCurrent(e) * meshCell->getMeshSurfaces(0)
-                            ->getTotalWt(5);
+                            ->getTotalWt(2);
 							
 				
                     if (x < _cw - 1)
@@ -1598,36 +1681,36 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
                         meshCellNext = _mesh->getCells(y * _cw + x + 1);
                         ho_current[i][e] -= meshCellNext->getMeshSurfaces(0)
                             ->getCurrent(e) * meshCellNext->getMeshSurfaces(0)
-                            ->getTotalWt(5);
+                            ->getTotalWt(2);
                     }
                     else if (_bc[2] == REFLECTIVE)
                         ho_current[i][e] -= meshCell->getMeshSurfaces(2)
                             ->getCurrent(e) * meshCell->getMeshSurfaces(2)
-                            ->getTotalWt(5);
+                            ->getTotalWt(2);
 
                     if (y > 0)
                     {
                         meshCellNext = _mesh->getCells((y - 1) * _cw + x);
                         ho_current[i][e] -= meshCellNext->getMeshSurfaces(1)
                             ->getCurrent(e) * meshCellNext->getMeshSurfaces(1)
-                            ->getTotalWt(5);
+                            ->getTotalWt(2);
                     }
                     else if (_bc[3] == REFLECTIVE)
                         ho_current[i][e] -= meshCell->getMeshSurfaces(3)
                             ->getCurrent(e) * meshCell->getMeshSurfaces(3)
-                            ->getTotalWt(5);
+                            ->getTotalWt(2);
 
                     if (y < _ch - 1)
                     {
                         meshCellNext = _mesh->getCells((y + 1) * _cw + x);
                         ho_current[i][e] -= meshCellNext->getMeshSurfaces(3)
                             ->getCurrent(e) * meshCellNext->getMeshSurfaces(3)
-                            ->getTotalWt(5);
+                            ->getTotalWt(2);
                     }
                     else if (_bc[1] == REFLECTIVE)
                         ho_current[i][e] -= meshCell->getMeshSurfaces(1)
                             ->getCurrent(e) * meshCell->getMeshSurfaces(1)
-                            ->getTotalWt(5);
+                            ->getTotalWt(2);
 
                     // both ho_current and net_current are
                     // surface-integrated ones.  
@@ -1685,12 +1768,6 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
             }
         }
 
-        /* FIXME: DEBUG */
-        /*
-        if ((_run_loo_phi) && (loo_iter == -1))
-            updateOldQuadFlux();
-        */
-
         /* Computes new cell averaged source, looping over energy groups */
         double src_ratio;
         for (int i = 0; i < _cw * _ch; i++)
@@ -1727,7 +1804,7 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
         /* Sweeps over geometry, solve LOO MOC */
         for (int e = 0; e < _ng; e++)
         {
-            double flux, initial_flux, delta;
+            double flux = 0, initial_flux = 0, delta = 0;
             int i, t, d;
 
             /* Forward Directions */
@@ -1767,7 +1844,7 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
                         flux = 0.0; 
                     }
 	
-                    if (_update_boundary)
+                    if (_update_boundary && _any_reflective)
                     {
                         /* FIXME: could cheat by not checking bc[1] case*/
                         if (onReflectiveBoundary(t, i, 0, 0))
@@ -1822,7 +1899,12 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
                                _i_array[_num_track * j], e);
                 }
                 else if (_bc[1] == VACUUM)
+                {
+                    // setting to zero should be redundant 
+                    //_mesh->getCells(_i_array[_num_track * j])
+                    //    ->getMeshSurfaces(1)->setQuadFlux(0.0, e, 1);
                     leak_tot += flux * getSurf(_i_array[_num_track * j], 0, 0);
+                }
                 else
                     log_printf(ERROR, "spot unknonwn BC at surface 1");
 
@@ -1869,7 +1951,7 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
                         flux = 0.0;
                     }
 
-                    if (_update_boundary)
+                    if (_update_boundary && _any_reflective)
                     {
                         if (onReflectiveBoundary(t, i, 0, 1))
                         {
@@ -1924,7 +2006,12 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
                                _i_array[_num_track * j], e);
                 }
                 else if (_bc[1] == VACUUM)
+                {
+                    // again redundant
+                    //_mesh->getCells(_i_array[_num_track * j])
+                    //    ->getMeshSurfaces(1)->setQuadFlux(0.0, e, 0);
                     leak_tot += flux * getSurf(_i_array[_num_track * j], 0, 0);
+                }
 
                 if (initial_flux > 1e-10) 
                 {
@@ -2012,13 +2099,8 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
 
         /* Computes normalization factor based on fission source */
         double normalize_factor = computeNormalization();
-
-        
-        // DEBUG: need to normalize
-        //normalize_factor = 1.0;
         log_printf(ACTIVE, "normalize_factor = %.10f", normalize_factor);
 
-        /* Normalizes leakage, scalar flux, angular flux */
         /* FIXME: should or should not normalize leak_tot? */
         //leak_tot *= normalize_factor;
 
@@ -2080,6 +2162,9 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
             if (old_power[i] > 0.0)
                 eps += pow(new_power[i] / old_power[i] - 1.0, 2);
         }
+        /* Assume all meshes are the same volume, thus instead of
+           doing sigma(error * vol) / total_vol, it simplifies to
+           divide by number of meshes. */
         eps /= (double) num_counted;
         eps = pow(eps, 0.5);
 
@@ -2090,7 +2175,7 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
          * moc_iter = 10000 */
         if (moc_iter == 10000)
             log_printf(NORMAL, " %d-th LOO iteration k = %.10f, eps = %e"
-                       " k eps = %f", 
+                       " k eps = %e", 
                        loo_iter, _keff, eps, (_keff - old_keff) / old_keff);
         else
             log_printf(ACTIVE, " %d-th LOO iteration k = %.10f, eps = %e", 
@@ -2132,49 +2217,6 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
     delete[] new_quad_src;
 
     return _keff;
-}
-
-// FIXME: optimize by pre-generate table
-double Cmfd::getSurf(int i, int t, int d)
-{
-    int id = -1;
-    int j = -1;
-    MeshCell *meshCell = _mesh->getCells(i);
-
-    if (d == 0)
-    {
-        if ((t == 5) || (t == 6))
-            id = 0;
-        else if ((t == 0) || (t == 7))
-            id = 1;
-        else if ((t == 1) || (t == 2))
-            id = 2;
-        else
-            id = 3;
-    }
-    else
-    {
-        if ((t == 4) || (t == 7))
-            id = 0;
-        else if ((t == 1) || (t == 6))
-            id = 1;
-        else if ((t == 0) || (t == 3))
-            id = 2;
-        else
-            id = 3;
-    }  
-
-    if ((t < 2) || ((t > 3) && (t < 6)))
-        j = 0;
-    else
-        j = 1;
-
-    MeshSurface *surface = meshCell->getMeshSurfaces(id); 
-
-    // getTotalWt(3) and getTotalWt(4) are the weights used in
-    // tallying current in HO. To get reflective BC cases to work, we
-    // need these weights instead of the actual physical lengths. 
-    return surface->getTotalWt(j + 3);
 }
 
 bool Cmfd::onAnyBoundary(int i, int surf_id)
@@ -2261,7 +2303,7 @@ void Cmfd::normalizeFlux(double normalize)
         }
     }
 
-    if (_update_boundary)
+    if (_update_boundary && _any_reflective)
     {
         int x, i;
         for (x = 0; x < _cw; x++)
@@ -2332,11 +2374,6 @@ void Cmfd::generateTrack(int *i_array, int *t_array, int *t_arrayb)
     int nl, nt, i;
     int len1, len2; 
     int nw = _cw;
-    /*
-      int i_array[]  = {2,3,1,1,1,0,2,2, 3,3,1,0,0,0,2,3};
-      int t_array[]  = {0,5,0,2,4,1,4,6, 0,2,7,2,4,6,3,6};
-      int t_arrayb[] = {1,4,1,3,5,0,5,7, 1,3,6,3,5,7,2,7};
-    */
     int i_start; 
 
     len1 = _num_track / 2 - 1;
@@ -2771,12 +2808,10 @@ void Cmfd::updateMOCFlux(int moc_iter)
                 fsr = &_flat_source_regions[*iter];
                 flux = fsr->getFlux();
 
-#if NEW
                 if (moc_iter == 0)
                     fsr->setFlux(e, new_flux);
                 else
                 {
-#endif
                     if (tmp_cmco > max_range)
                         tmp_cmco = max_range;
                     else if (tmp_cmco < min_range)
@@ -2784,10 +2819,7 @@ void Cmfd::updateMOCFlux(int moc_iter)
                     
                     fsr->setFlux(e, under_relax * tmp_cmco * flux[e]
                                  + (1.0 - under_relax) * flux[e]);
-#if NEW
                 }
-#endif
-
             }
         } /* exit looping over energy */
     } /* exit mesh cells */
@@ -3033,7 +3065,6 @@ void Cmfd::computeLooL2Norm(int moc_iter)
         } 
         if (old_power[i] > 0)
         {
-            //fprintf(stderr, "%f / %f\n", new_power[i], old_power[i]);
             eps += pow(new_power[i] / old_power[i] - 1.0, 2);
             num_counted++;
         }
@@ -3044,8 +3075,6 @@ void Cmfd::computeLooL2Norm(int moc_iter)
     log_printf(DEBUG, " iteration %d, L2 norm of cell power error = %e", 
                moc_iter, _l2_norm);
 }
-
-
 
 /* compute the L2 norm of consecutive fission sources
  * @retun L2 norm

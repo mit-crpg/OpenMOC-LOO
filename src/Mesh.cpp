@@ -7,12 +7,46 @@
 
 #include "Mesh.h"
 
-Mesh::Mesh(){
+/* neighboring surfaces' indexes in the current cell for corners for x
+ * direction (_s1) and y direction (_s2) */
+int Mesh::_s1[] = {0, 2, 2, 0};
+int Mesh::_s2[] = {1, 1, 3, 3};
 
+/* cell index lower bounds in x (_min_x) and y (_min_y) directions
+ * within which a cell is considered an inner cell; the higher bounds
+ * are set in geometry's make mesh method. */
+int Mesh::_min_x[] = {0, -1, -1, 0};
+int Mesh::_min_y[] = {-1, -1, 0, 0};
+
+/* cell index shift in x (_delta_x) and y (_delta_y) directions to
+ * obtain the neighboring cell if the current cell is not on the
+ * boundary */
+int Mesh::_delta_x[]= {-1, 1, 1, -1};
+int Mesh::_delta_y[]= {1, 1, -1, -1};
+
+/* surface indexes for the neiboring cells to tally on */
+int Mesh::_s_x[]    = {1, 1, 3, 3};    
+int Mesh::_s_y[]    = {0, 2, 2, 0};
+
+Mesh::Mesh(){
 }
 
 Mesh::~Mesh(){
     delete [] _cells;
+}
+
+void Mesh::setMaxX(int width){
+    _max_x[0] = width;
+    _max_x[1] = width-1; 
+    _max_x[2] = width-1;
+    _max_x[3] = width;
+}
+
+void Mesh::setMaxY(int height){
+    _max_y[0] = height-1;
+    _max_y[1] = height-1;
+    _max_y[2] = height;
+    _max_y[3] = height;
 }
 
 void Mesh::makeMeshCells(){
@@ -45,12 +79,6 @@ void Mesh::setCellHeight(int cellHeight){
     _cell_height = cellHeight;
 }
 
-MeshCell* Mesh::getCells(int cell_id){
-    assert(cell_id >= 0);
-    assert(cell_id < _cell_width * _cell_height);
-    return &_cells[cell_id];
-}
-
 void Mesh::setMultigroup(bool multigroup){
     _multigroup = multigroup;
 }
@@ -68,8 +96,6 @@ bool Mesh::getPrintMatrices(){
 }
 
 /* given an x,y coordinate, find what mesh cell the point is in */
-
-
 int Mesh::findMeshCell(double pointX, double pointY)
 {
     double left = - _width / 2.0;
@@ -134,7 +160,7 @@ void Mesh::setCellBounds(){
 void Mesh::setFSRBounds(boundaryType left, boundaryType right, boundaryType bottom, boundaryType top){
 
     _fsr_indices = new int        [2 * _cell_width * _cell_height];
-    _cell_bounds = new double     [4 * _cell_width * _cell_height];
+    _cell_bounds = new double     [4* _cell_width * _cell_height];
     _surfaces =  new MeshSurface *[8 * _cell_width * _cell_height];
 
     int min;
@@ -316,65 +342,164 @@ boundaryType Mesh::getBoundary(int s){
 void Mesh::splitCornerCurrents()
 {
     MeshSurface* surfaceCorner;
-    MeshSurface* surfaceSide;
-    MeshSurface* surfaceSideNext;
+    MeshSurface *surface1, *surface2, *surface_x, *surface_y;
 
     int cw = getCellWidth();
     int ch = getCellHeight();
-    MeshCell* meshCell;
-    MeshCell* meshCellNext;
+    MeshCell *meshCell, *meshCellNext, *meshCellNext2; 
     double currents[NUM_ENERGY_GROUPS];
-    double f = 1.0; 
+    double f = 0.50;
 
-#if 0
-    int min_x[] = {0, -1, -1, 0};
-    int max_x[] = {cw, cw-1, cw-1, cw};
-    int min_y[] = {-1, -1, 0, 0};
-    int max_y[] = {ch-1, ch-1, ch, ch};
-#else
-    int min_x[] = {-1,   -1,   -1,   0};
-    int max_x[] = {cw,   cw,   cw-1, cw};
-    int min_y[] = {-1,   -1,   -1,    -1};
-    int max_y[] = {ch-1, ch-1, ch,   ch};
-#endif
 
-    int next_x[] = {0, 0, 1, -1};
-    int next_y[] = {1, 1, 0, 0};
+    for (int y = 0; y < ch; y++)
+    {
+        for (int x = 0; x < cw; x++)
+        {
+            int ii = y * cw + x;
+            meshCell = &_cells[ii];
 
-    int surf[]      = {1, 1, 2, 0};
-    int crn[]       = {4, 5, 6, 7};
-    int next_surf[] = {0, 2, 3, 3};
-
-    for (int x = 0; x < cw; x++){
-        for (int y = 0; y < ch; y++){
-            meshCell = &_cells[y * cw + x];
-
-            log_printf(DEBUG, "cell %d's four corners' have current: %e %e"
-                       " %e %e", y * cw + x, 
-                       meshCell->getMeshSurfaces(4)->getCurrent(0),
-                       meshCell->getMeshSurfaces(5)->getCurrent(0), 
-                       meshCell->getMeshSurfaces(6)->getCurrent(0),
-                       meshCell->getMeshSurfaces(7)->getCurrent(0));
-					   
             for (int i = 0; i < 4; i++)
             {
-                if (x > min_x[i] && x < max_x[i] && 
-                    y > min_y[i] && y < max_y[i])
+                surfaceCorner = meshCell->getMeshSurfaces(i + 4);
+                for (int g = 0; g < NUM_ENERGY_GROUPS; g++)
+                    currents[g] = f * surfaceCorner->getCurrent(g);
+
+                /* perform splitting inside of this cell: distribute
+                 * evenly to the two surfaces surrounding the corner */
+                surface1 = meshCell->getMeshSurfaces(_s1[i]);
+                surface2 = meshCell->getMeshSurfaces(_s2[i]);
+
+                surface1->incrementCurrents(currents);
+                surface2->incrementCurrents(currents);
+
+                /* distributes on the neighboring cells, three
+                 * posibilities: inner cells: distribute on
+                 * neighboring cells; reflective boundaries: reflect
+                 * in the current cell; vacuum boundaries: do nothing
+                 * as the current just leaves the surface. */
+                if ((x > _min_x[i]) && (x < _max_x[i]))
                 {
-                    meshCellNext = 
-                        &_cells[(y + next_y[i]) * cw + x + next_x[i]];
+                    meshCellNext = &_cells[ii + _delta_x[i]];
+                    surface_x = meshCellNext->getMeshSurfaces(_s_x[i]);
+                    surface_x->incrementCurrents(currents);
                 }
-                else 
+                else if (((x == _min_x[i]) && (_boundary[0] == REFLECTIVE)) 
+                         || ((x == _max_x[i]) && (_boundary[2] == REFLECTIVE)))
+                {
                     meshCellNext = meshCell;
+                    surface_x = meshCellNext->getMeshSurfaces(_s_x[i]);
+                    surface_x->incrementCurrents(currents);
+                }
 
-                surfaceSide = meshCell->getMeshSurfaces(surf[i]);
-                surfaceSideNext = meshCellNext->getMeshSurfaces(next_surf[i]);
-                surfaceCorner = meshCell->getMeshSurfaces(crn[i]);
-                for (int group = 0; group < NUM_ENERGY_GROUPS; group++)
-                    currents[group] = f * surfaceCorner->getCurrent(group);
+                if ((y > _min_y[i]) && (y < _max_y[i])) 
+                {
+                    meshCellNext2 = &_cells[ii + _delta_y[i] * cw];
+                    surface_y = meshCellNext2->getMeshSurfaces(_s_y[i]);
+                    surface_y->incrementCurrents(currents);
+                }
+                else if (((y == _min_y[i]) && (_boundary[3] == REFLECTIVE)) 
+                         || ((y == _max_y[i]) && (_boundary[1] == REFLECTIVE)))
+                {
+                    meshCellNext2 = meshCell;                    
+                    surface_y = meshCellNext2->getMeshSurfaces(_s_y[i]);
+                    surface_y->incrementCurrents(currents);
+                }
+            } 
+        }
+    }
+    return;
+}
 
-                surfaceSide->incrementCurrent(currents);
-                surfaceSideNext->incrementCurrent(currents); 			
+void Mesh::splitCornerQuadWeights()
+{
+    MeshSurface* surfaceCorner;
+    MeshSurface *surface1, *surface2, *surface_next1, *surface_next2;
+
+    int cw = getCellWidth();
+    int ch = getCellHeight();
+    MeshCell *meshCell, *meshCellNext, *meshCellNext2; 
+    double current;
+    double f = 0.50; 
+
+    /* number of quadrature currents that we care to split.*/
+    int nq = 2; 
+
+    /* j is the index of the quadrature, counter_j stores the
+     * reflective quadrature index */
+    int counter_j[] = {1, 0, 3, 2};
+
+    for (int y = 0; y < ch; y++)
+    {
+        for (int x = 0; x < cw; x++)
+        {
+            int ii = y * cw + x;
+            meshCell = &_cells[ii];
+
+            for (int i = 0; i < 4; i++)
+            {
+                surfaceCorner = meshCell->getMeshSurfaces(i + 4);
+
+                /* perform splitting inside of this cell: distribute
+                 * evenly to the two surfaces surrounding the
+                 * corner */
+                surface1 = meshCell->getMeshSurfaces(_s1[i]);
+                surface2 = meshCell->getMeshSurfaces(_s2[i]);
+
+                for (int j = 0; j < nq; j++)
+                {
+                    current = f * surfaceCorner->getTotalWt(j);
+                    surface1->incrementTotalWt(current, j);
+                    surface2->incrementTotalWt(current, j);
+                }
+
+                /* effects on the neighboring cells */
+                /* if left or right cell exists */
+                if ((x > _min_x[i]) && (x < _max_x[i]))
+                {
+                    meshCellNext = &_cells[ii + _delta_x[i]];
+                    surface_next1 = meshCellNext->getMeshSurfaces(_s_x[i]);
+                   
+                    for (int j = 0; j < nq; j++)
+                    {
+                        current = f * surfaceCorner->getTotalWt(j);
+                        surface_next1->incrementTotalWt(current, j);
+                    }
+                } 
+                /* only need to worry about this when reflective */
+                else if (((x == _min_x[i]) && (_boundary[0] == REFLECTIVE)) 
+                         || ((x == _max_x[i]) && (_boundary[2] == REFLECTIVE)))
+                {
+                    surface_next1 = meshCell->getMeshSurfaces(_s_x[i]);
+                   
+                    for (int j = 0; j < nq; j++)
+                    {
+                        current = f * surfaceCorner->getTotalWt(j);
+                        surface_next1->incrementTotalWt(current, counter_j[j]);
+                    }
+                }
+
+                if ((y > _min_y[i]) && (y < _max_y[i])) 
+                {
+                    meshCellNext2 = &_cells[ii + _delta_y[i] * cw];
+                    surface_next2 = meshCellNext2->getMeshSurfaces(_s_y[i]);
+
+                    for (int j = 0; j < nq; j++)
+                    {
+                        current = f * surfaceCorner->getTotalWt(j);
+                        surface_next2->incrementTotalWt(current, j);
+                    }
+                } 
+                else if (((y == _min_y[i]) && (_boundary[3] == REFLECTIVE)) 
+                         || ((y == _max_y[i]) && (_boundary[1] == REFLECTIVE)))
+                {
+                    surface_next2 = meshCell->getMeshSurfaces(_s_y[i]);
+
+                    for (int j = 0; j < nq; j++)
+                    {
+                        current = f * surfaceCorner->getTotalWt(j);
+                        surface_next2->incrementTotalWt(current, counter_j[j]);
+                    }
+                } 
             }
         }
     }
@@ -392,22 +517,8 @@ void Mesh::splitCornerQuadCurrents()
     double current;
     double f = 0.50; 
 
-    /* associated with this current cell */
-    int surf[]      = {0, 2, 2, 0};
-    int surf2[]     = {1, 1, 3, 3};
-
-    /* associated with cells in the x-plane */
-    int min_x[] = {0,    -1,   -1,   0};
-    int max_x[] = {cw,   cw-1, cw-1, cw};
-    int min_y[] = {-1,   -1,   0,    0};
-    int max_y[] = {ch-1, ch-1, ch,   ch};
-
-    int next_x[]    = {-1, 1, 1, -1};
-    int next_surf[] = {1,  1, 3, 3};
-    
-    int next_y2[]   = {1, 1, -1, -1};
-    int next_surf2[]= {0, 2, 2, 0};
-
+    int nq = 4; // number of quadrature currents. 
+    int counter_j[] = {1, 0, 3, 2};
 
     for (int y = 0; y < ch; y++)
     {
@@ -423,10 +534,10 @@ void Mesh::splitCornerQuadCurrents()
                 /* perform splitting inside of this cell: distribute
                  * evenly to the two surfaces surrounding the
                  * corner */
-                surface1 = meshCell->getMeshSurfaces(surf[i]);
-                surface2 = meshCell->getMeshSurfaces(surf2[i]);
+                surface1 = meshCell->getMeshSurfaces(_s1[i]);
+                surface2 = meshCell->getMeshSurfaces(_s2[i]);
 
-                for (int j = 0; j < 2; j++)
+                for (int j = 0; j < nq; j++)
                 {
                     for (int g = 0; g < NUM_ENERGY_GROUPS; g++)
                     {
@@ -438,74 +549,66 @@ void Mesh::splitCornerQuadCurrents()
 
                 /* effects on the neighboring cells */
                 /* if left or right cell exists */
-                if ((x > min_x[i]) && (x < max_x[i]))
+                if ((x > _min_x[i]) && (x < _max_x[i]))
                 {
-                    meshCellNext = 
-                        &_cells[ii + next_x[i]];
-                    surface_next1 = meshCellNext->getMeshSurfaces(next_surf[i]);
+                    meshCellNext = &_cells[ii + _delta_x[i]];
+                    surface_next1 = meshCellNext->getMeshSurfaces(_s_x[i]);
                    
-                     for (int j = 0; j < 2; j++)
-                     {
-                         for (int g = 0; g < NUM_ENERGY_GROUPS; g++)
-                         {
-                             current = f * surfaceCorner->getQuadCurrent(g, j);
-                             surface_next1->incrementQuadCurrent(current, g, j);
-                         }
-                     }
+                    for (int j = 0; j < nq; j++)
+                    {
+                        for (int g = 0; g < NUM_ENERGY_GROUPS; g++)
+                        {
+                            current = f * surfaceCorner->getQuadCurrent(g, j);
+                            surface_next1->incrementQuadCurrent(current, g, j);
+                        }
+                    }
                 } 
                 /* only need to worry about this when reflective */
-                else if (((x == min_x[i]) && (_boundary[0] == REFLECTIVE)) 
-                         || ((x == max_x[i]) && (_boundary[2] == REFLECTIVE)))
+                else if (((x == _min_x[i]) && (_boundary[0] == REFLECTIVE)) 
+                         || ((x == _max_x[i]) && (_boundary[2] == REFLECTIVE)))
                 {
-                    surface_next1 = meshCell->getMeshSurfaces(next_surf[i]);
+                    surface_next1 = meshCell->getMeshSurfaces(_s_x[i]);
                    
-                     for (int j = 0; j < 2; j++)
-                     {
-                         for (int g = 0; g < NUM_ENERGY_GROUPS; g++)
-                         {
-                             current = f * surfaceCorner->getQuadCurrent(g, j);
-                             surface_next1->incrementQuadCurrent
-                                 (current, g, 1 - j);
-                         }
-                     }
+                    for (int j = 0; j < nq; j++)
+                    {
+                        for (int g = 0; g < NUM_ENERGY_GROUPS; g++)
+                        {
+                            current = f * surfaceCorner->getQuadCurrent(g, j);
+                            surface_next1->incrementQuadCurrent
+                                (current, g, counter_j[j]);
+                        }
+                    }
                 }
 
-
-
-                if ((y > min_y[i]) && (y < max_y[i])) 
+                if ((y > _min_y[i]) && (y < _max_y[i])) 
                 {
-                     meshCellNext2 = 
-                        &_cells[ii + next_y2[i] * cw];
-                     surface_next2 = meshCellNext2->getMeshSurfaces
-                        (next_surf2[i]);
+                    meshCellNext2 = &_cells[ii + _delta_y[i] * cw];
+                    surface_next2 = meshCellNext2->getMeshSurfaces(_s_y[i]);
 
-                     for (int j = 0; j < 2; j++)
-                     {
-                         for (int g = 0; g < NUM_ENERGY_GROUPS; g++)
-                         {
-                             current = f * surfaceCorner->getQuadCurrent(g, j);
-                             surface_next2->incrementQuadCurrent(current, g, j);
-                         }
-                     }
+                    for (int j = 0; j < nq; j++)
+                    {
+                        for (int g = 0; g < NUM_ENERGY_GROUPS; g++)
+                        {
+                            current = f * surfaceCorner->getQuadCurrent(g, j);
+                            surface_next2->incrementQuadCurrent(current, g, j);
+                        }
+                    }
                 } 
-                else if (((y == min_y[i]) && (_boundary[3] == REFLECTIVE)) 
-                         || ((y == max_y[i]) && (_boundary[1] == REFLECTIVE)))
+                else if (((y == _min_y[i]) && (_boundary[3] == REFLECTIVE)) 
+                         || ((y == _max_y[i]) && (_boundary[1] == REFLECTIVE)))
                 {
-                     surface_next2 = meshCell->getMeshSurfaces(next_surf2[i]);
-
-                     for (int j = 0; j < 2; j++)
-                     {
-                         for (int g = 0; g < NUM_ENERGY_GROUPS; g++)
-                         {
-                             current = f * surfaceCorner->getQuadCurrent(g, j);
-                             surface_next2->incrementQuadCurrent
-                                 (current, g, 1 - j);
-                         }
-                     }
+                    surface_next2 = meshCell->getMeshSurfaces(_s_y[i]);
+                    
+                    for (int j = 0; j < nq; j++)
+                    {
+                        for (int g = 0; g < NUM_ENERGY_GROUPS; g++)
+                        {
+                            current = f * surfaceCorner->getQuadCurrent(g, j);
+                            surface_next2->incrementQuadCurrent
+                                (current, g, counter_j[j]);
+                        }
+                    }
                 } 
-
-
-
             }
         }
     }
@@ -581,9 +684,6 @@ void Mesh::computeTotQuadCurrents(){
                 /* set current at group 0 to total current */
                 surfaceSide->setQuadCurrent(sum_cur, 0, j);
             }
-
-
-
         }
     }
 }
@@ -616,3 +716,19 @@ void Mesh::setOldTime(double time){
     _old_time = time;
 }
 
+/**
+ * @brief Gets the mesh level
+ * @return _mesh_level mesh level
+ **/
+int Mesh::getMeshLevel(){
+    return _mesh_level;
+}
+
+
+/**
+ * @brief Sets the cmfd level
+ * @parap cmfd_level cmfd level
+ **/
+void Mesh::setMeshLevel(int mesh_level){
+    _mesh_level = mesh_level;
+}

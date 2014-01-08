@@ -1,9 +1,9 @@
 LANGUAGES   += c++
 COMPILEOPTS += -Wall
-COMPILEOPTS += -Werror=unused-variable
 COMPILEOPTS += -std=gnu++0x
 COMPILEOPTS += -fopenmp
-#COMPILEOPTS += -O2
+COMPILEOPTS += -O2
+COMPILEOPTS += -march=native
 COMPILEOPTS += -I/usr/include/petsc
 COMPILEOPTS += -I/usr/include/petsc/linux-gnu-cxx-debug/include
 COMPILEOPTS += -I/usr/include/petsc/linux-gnu-cxx-opt/include
@@ -11,22 +11,27 @@ COMPILEOPTS += -I$$HOME/.local/include
 LINKOPTS    += -L$$HOME/.local/lib
 LINKOPTS    += -Wl,-rpath,$$HOME/.local/lib
 COMPILEOPTS += -g
+#LINKOPTS    += -lprofiler
 COMPILEOPTS += `pkg-config Magick++ --cflags`
 COMPILEOPTS += -DPETSC_HAVE_MPI_WIN_CREATE
+#COMPILEOPTS += -pg
+#LINKOPTS    += -pg
 
-LANGUAGES 	+= bash
+LANGUAGES   += bash
 
 BINARIES    += openmoc
-LINKOPTS	+= -lm
+LINKOPTS    += -lm
+LINKOPTS    += -lrt
 LINKOPTS    += -lexpat
 LINKOPTS    += -lsilo
-LINKOPTS 	+= -lpetsc
-LINKOPTS 	+= -lmpi
-LINKOPTS        += -lblas
-LINKOPTS        += -llapack
-LINKOPTS        += -lcblas
-LINKOPTS        += -lblas
-LINKOPTS        += -lgfortran
+LINKOPTS    += -lpetsc
+LINKOPTS    += -lmpi
+LINKOPTS    += -lblas
+LINKOPTS    += -llapack
+LINKOPTS    += -lcblas
+LINKOPTS    += -lblas
+LINKOPTS    += -lgfortran
+COMPILEOPTS += `pkg-config Magick++ --cflags`
 LINKOPTS    += `pkg-config Magick++ --libs`
 SOURCES     += openmoc.cpp
 

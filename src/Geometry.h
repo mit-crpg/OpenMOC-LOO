@@ -96,7 +96,8 @@ public:
     void compressCrossSections();
     void computePinPowers(double* FSRs_to_powers, double* FSRs_to_pin_powers);
     double computePinPowers(Universe* univ, char* output_file_prefix,
-                            int FSR_id, double* FSRs_to_powers, double* FSRs_to_pin_powers);
+                            int FSR_id, double* FSRs_to_powers, 
+                            double* FSRs_to_pin_powers);
     void computePinAbsorption
         (double* FSRs_to_absorption[NUM_ENERGY_GROUPS + 1],
          double* FSRs_to_pin_absorption[NUM_ENERGY_GROUPS + 1]);
@@ -120,6 +121,8 @@ public:
     int findMeshDepth(Universe* univ, int cmfd_level);
     void setCmfd(bool runCmfd);
     void setLoo(bool runLoo);
+    bool getCmfd();
+    bool getLoo();
 };
 
 #endif /* GEOMETRY_H_ */
