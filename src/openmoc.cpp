@@ -33,7 +33,7 @@ static char help[] = "Running CMFD with Petsc";
 
 int main(int argc, char **argv) {
     feenableexcept(FE_DIVBYZERO);
-    feenableexcept(FE_UNDERFLOW);
+    //feenableexcept(FE_UNDERFLOW);
     feenableexcept(FE_OVERFLOW);
 
     double k_eff;
