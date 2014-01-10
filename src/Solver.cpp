@@ -131,15 +131,37 @@ Solver::Solver(Geometry* geom, TrackGenerator* track_generator,
 
         if (_update_boundary)
         {
-            log_printf(NORMAL, "Acceleration on: %d boundary iteration,"
-                       " %f damping, update boundary flux" , 
-                       _boundary_iteration, _damp_factor);
+            if (_reflect_outgoing)
+            {
+                log_printf(NORMAL, "Acceleration on: %d boundary iteration,"
+                           " %f damping, update boundary flux,"
+                           " reflect outgoing" , 
+                           _boundary_iteration, _damp_factor);
+            }
+            else
+            {
+                log_printf(NORMAL, "Acceleration on: %d boundary iteration,"
+                           " %f damping, update boundary flux,"
+                           " no reflect outgoing",
+                           _boundary_iteration, _damp_factor);
+            }               
         }
         else
         {
-            log_printf(NORMAL, "Acceleration on: %d boundary iteration,"
-                       " %f damping, no update boundary flux" , 
-                       _boundary_iteration, _damp_factor);
+            if (_reflect_outgoing)
+            {
+                log_printf(NORMAL, "Acceleration on: %d boundary iteration,"
+                           " %f damping, no update boundary flux,"
+                           " reflect outgoing", 
+                           _boundary_iteration, _damp_factor);
+            }
+            else
+             {
+                log_printf(NORMAL, "Acceleration on: %d boundary iteration,"
+                           " %f damping, no update boundary flux"
+                           " no reflect outgoing", 
+                           _boundary_iteration, _damp_factor);
+            }               
         }  
     }
     moc_iter = 0;
