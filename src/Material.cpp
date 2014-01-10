@@ -28,23 +28,23 @@ Material::Material(int id,
     _n++;
 
     if (sigma_a_cnt != NUM_ENERGY_GROUPS)
-        log_printf(ERROR, "Wrong number of sigma_a");
+        log_printf(ERROR, "Wrong number of sigma_a in material %d", id);
     memcpy(_sigma_a, sigma_a, NUM_ENERGY_GROUPS*sizeof(*_sigma_a));
 
     if (sigma_t_cnt != NUM_ENERGY_GROUPS)
-        log_printf(ERROR, "Wrong number of sigma_t");
+        log_printf(ERROR, "Wrong number of sigma_t in material %d", id);
     memcpy(_sigma_t, sigma_t, NUM_ENERGY_GROUPS*sizeof(*_sigma_t));
 
     if (nu_sigma_f_cnt != NUM_ENERGY_GROUPS)
-        log_printf(ERROR, "Wrong number of sigma_f");
+        log_printf(ERROR, "Wrong number of sigma_f in material %d", id);
     memcpy(_sigma_f, sigma_f, NUM_ENERGY_GROUPS*sizeof(*_sigma_f));
 
     if (nu_sigma_f_cnt != NUM_ENERGY_GROUPS)
-        log_printf(ERROR, "Wrong number of nu_sigma_f");
+        log_printf(ERROR, "Wrong number of nu_sigma_f in material %d", id);
     memcpy(_nu_sigma_f, nu_sigma_f, NUM_ENERGY_GROUPS*sizeof(*_nu_sigma_f));
 
     if (chi_cnt != NUM_ENERGY_GROUPS)
-        log_printf(ERROR, "Wrong number of chi");
+        log_printf(ERROR, "Wrong number of chi in material %d", id);
 
     /* Normalize chi: each material, the sum of chi over all energy groups
      * should add up to 1 */
@@ -60,7 +60,7 @@ Material::Material(int id,
         memcpy(_chi, chi, NUM_ENERGY_GROUPS*sizeof(*_chi));
 
     if (sigma_s_cnt != NUM_ENERGY_GROUPS*NUM_ENERGY_GROUPS)
-        log_printf(ERROR, "Wrong number of sigma_s");
+        log_printf(ERROR, "Wrong number of sigma_s in material %d", id);
 	
     /* Set the material's scattering matrix. This assumes that the scattering
      * matrix passed in has the notation: the ij element is for scattering
