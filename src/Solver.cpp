@@ -1704,7 +1704,8 @@ void Solver::MOCsweep(int max_iterations, int moc_iter)
                     polar_fluxes = track->getPolarFluxes();
 
                     /* Store all the incoming angular fluxes */
-                    if ((tally == 2) && (!_reflect_outgoing))
+                    //if ((tally == 2) && (!_reflect_outgoing))
+                    if (tally == 2)
                     {
                         tallyLooCurrentIncoming(track, segments.at(0), 
                                                 meshSurfaces, 1);
