@@ -1591,11 +1591,16 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
     MeshCell* meshCell;
 
     /* Allocate memories for terms internal to the LOO iterative solver */
+    double eps = 0.0;
+    double *old_power = NULL, *new_power = NULL;
     double **sum_quad_flux, **quad_xs, **expo, **tau, **new_src;
     double **new_quad_src, **net_current;
 
     try
     {
+        old_power = new double[_cw * _ch];
+        new_power = new double[_cw * _ch];
+
         sum_quad_flux = new double*[_cw*_ch];
         quad_xs = new double*[_cw*_ch];
         expo = new double*[_cw*_ch];
@@ -1623,34 +1628,21 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
 
     for (int i = 0; i < _cw * _ch; i++)
     {
-        for (int e = 0; e < _ng; e++)
-        {
-            new_src[i][e] = 0.0;
-            sum_quad_flux[i][e] = 0;
-            quad_xs[i][e] = _mesh->getCells(i)->getSigmaT()[e];
-            tau[i][e] = quad_xs[i][e] * _mesh->getCells(i)->getATL();
-            expo[i][e] = exp(-tau[i][e]);
-        }
-        for (int t = 0; t < 8 * _ng; t++)
-            new_quad_src[i][t] = 0.0;
-    }
-
-    /* Initialize energy integrated fission source and new scalar flux */
-    double eps = 0.0;
-    double *old_power = NULL, *new_power = NULL;
-    old_power = new double[_cw * _ch];
-    new_power = new double[_cw * _ch];
-
-    for (int i = 0; i < _cw * _ch; i++)
-    {
         meshCell = _mesh->getCells(i);
         old_power[i] = 0;
         for (int e = 0; e < _ng; e++)
         {
+            new_src[i][e] = 0.0;
+            sum_quad_flux[i][e] = 0;
+            quad_xs[i][e] = meshCell->getSigmaT()[e];
+            tau[i][e] = quad_xs[i][e] * meshCell->getATL();
+            expo[i][e] = exp(-tau[i][e]);
             old_power[i] +=  meshCell->getNuSigmaF()[e] 
                 * meshCell->getOldFlux()[e];
             meshCell->setNewFlux(meshCell->getOldFlux()[e], e);
-        } 
+        }
+        for (int t = 0; t < 8 * _ng; t++)
+            new_quad_src[i][t] = 0.0;
     }
 
     /* Starts LOO acceleration iteration, we do not update src, quad_src, 
@@ -2640,7 +2632,8 @@ void Cmfd::updateMOCFlux(int moc_iter)
     FlatSourceRegion* fsr;
     double old_flux, new_flux;
     double* flux;
-    double CMCO[_cw * _ch];
+    double *CMCO = NULL;
+    CMCO = new double[_cw * _ch];
     int i, e;
     std::vector<int>::iterator iter;
     double under_relax = 1.0;
@@ -2719,6 +2712,7 @@ void Cmfd::updateMOCFlux(int moc_iter)
     if (_plot_prolongation)
         _plotter->plotCmfdFluxUpdate(_mesh, moc_iter);
 
+    delete[] CMCO;
     return;
 }
 
@@ -2940,7 +2934,10 @@ void Cmfd::computeLooL2Norm(int moc_iter)
     MeshCell *meshCell;
     double eps = 0;
     int num_counted = 0;
-    double xs, old_power[_cw * _ch], new_power[_cw * _ch];
+    double xs;
+    double *old_power = NULL, *new_power = NULL;
+    old_power = new double[_cw * _ch];
+    new_power = new double[_cw * _ch];
 
     for (int i = 0; i < _cw * _ch; i++)
     {
@@ -2965,6 +2962,9 @@ void Cmfd::computeLooL2Norm(int moc_iter)
 
     log_printf(DEBUG, " iteration %d, L2 norm of cell power error = %e", 
                moc_iter, _l2_norm);
+
+    delete[] old_power;
+    delete[] new_power;
 }
 
 /* compute the L2 norm of consecutive fission sources

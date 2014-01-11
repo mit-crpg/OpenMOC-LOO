@@ -2330,6 +2330,14 @@ double Solver::computeSpectralRadius(double *old_fsr_powers)
 double Solver::kernel(int max_iterations) {
     log_printf(INFO, "Starting kernel ...");
 
+    double spectral_radius, eps_inf, eps_2;
+    double *old_fsr_powers;
+    old_fsr_powers = new double[_num_FSRs];
+    double **old_fsr_fluxes;
+    old_fsr_fluxes = new double*[NUM_ENERGY_GROUPS];
+    for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
+        old_fsr_fluxes[e] = new double[_num_FSRs];
+
     /* Initial guess */
     _old_k_effs.push(_k_eff);
     _old_eps_2.push(1.0);
@@ -2350,13 +2358,6 @@ double Solver::kernel(int max_iterations) {
 
     normalizeFlux();
     updateSource();
-
-    double spectral_radius, eps_inf, eps_2;
-    double old_fsr_powers[_num_FSRs];
-    double **old_fsr_fluxes;
-    old_fsr_fluxes = new double*[NUM_ENERGY_GROUPS];
-    for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
-        old_fsr_fluxes[e] = new double[_num_FSRs];
 
     /* Computes and store initial FSR powers, store initial fluxes */
     storeFsrFluxPower();
@@ -2458,6 +2459,11 @@ double Solver::kernel(int max_iterations) {
 
     log_printf(WARNING, "Unable to converge the source after %d iterations",
                max_iterations);
+
+    delete[] old_fsr_powers;
+    for (int i = 0; i < NUM_ENERGY_GROUPS; i++)
+        delete[] old_fsr_fluxes[i];
+    delete[] old_fsr_fluxes;
 
     return _k_eff;
 }
