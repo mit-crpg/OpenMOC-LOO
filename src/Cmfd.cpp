@@ -1594,9 +1594,6 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
     double **sum_quad_flux, **quad_xs, **expo, **tau, **new_src;
     double **new_quad_src, **net_current;
 
-    /* DEBUG: for comparing leakage between high order & low order */
-    double **ho_current, **ho_phi;
-
     try
     {
         sum_quad_flux = new double*[_cw*_ch];
@@ -1606,8 +1603,6 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
         new_src = new double*[_cw*_ch];
         new_quad_src = new double*[_cw*_ch];
         net_current = new double*[_cw*_ch];
-        ho_current = new double*[_cw*_ch];
-        ho_phi = new double*[_cw*_ch];
 
         for (int i = 0; i < _cw * _ch; i++)
         {
@@ -1618,14 +1613,12 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
             expo[i] = new double[_ng];
             net_current[i] = new double[_ng];
             new_quad_src[i] = new double[8 * _ng];
-            ho_current[i] = new double[_ng];
-            ho_phi[i] = new double[_ng];
         }
     }
     catch (std::exception &e)
     {
-        log_error("Unable to allocate memory for variables inside loo. "
-                  "Backtrace: \n%s", e.what());
+        log_error("Unable to allocate memory for LOO."
+                  " Backtrace: \n%s", e.what());
     }
 
     for (int i = 0; i < _cw * _ch; i++)
@@ -1643,7 +1636,11 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
     }
 
     /* Initialize energy integrated fission source and new scalar flux */
-    double eps = 0.0, old_power[_cw*_ch], new_power[_cw*_ch];
+    double eps = 0.0;
+    double *old_power = NULL, *new_power = NULL;
+    old_power = new double[_cw * _ch];
+    new_power = new double[_cw * _ch];
+
     for (int i = 0; i < _cw * _ch; i++)
     {
         meshCell = _mesh->getCells(i);
@@ -1655,121 +1652,6 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
             meshCell->setNewFlux(meshCell->getOldFlux()[e], e);
         } 
     }
-
-#if 0
-    /* Backs out high order current using currents accumulated in high
-     * order. Though keep in mind that we have already divided the
-     * current accumulator by the accumulated wt, so the current is
-     * surface-avg current. To compute ho_current compatible to
-     * net_current, we need to multiply back the wt[5].
-     */
-    MeshCell *meshCellNext;
-    if (_run_loo_phi)
-    {
-        for (int y = 0; y < _ch; y++)
-        {
-            for (int x = 0; x < _cw; x++)
-            {
-                int i = y * _cw + x;
-                meshCell = _mesh->getCells(i);
-                for (int e = 0; e < _ng; e++)
-                {
-                    ho_current[i][e] = 0.0;
-					
-                    for (int s = 0; s < 4; s++)
-                    {
-                        ho_current[i][e] += meshCell->getMeshSurfaces(s)
-                            ->getCurrent(e) * meshCell->getMeshSurfaces(s)
-                            ->getTotalWt(2);
-                    }
-						
-                    if (x > 0)
-                    {
-                        meshCellNext = _mesh->getCells(y * _cw + x - 1);
-                        ho_current[i][e] -= meshCellNext->getMeshSurfaces(2)
-                            ->getCurrent(e) * meshCellNext->getMeshSurfaces(2)
-                            ->getTotalWt(2);
-                    }
-                    else if (_bc[0] == REFLECTIVE)
-                        ho_current[i][e] -= meshCell->getMeshSurfaces(0)
-                            ->getCurrent(e) * meshCell->getMeshSurfaces(0)
-                            ->getTotalWt(2);
-							
-				
-                    if (x < _cw - 1)
-                    {
-                        meshCellNext = _mesh->getCells(y * _cw + x + 1);
-                        ho_current[i][e] -= meshCellNext->getMeshSurfaces(0)
-                            ->getCurrent(e) * meshCellNext->getMeshSurfaces(0)
-                            ->getTotalWt(2);
-                    }
-                    else if (_bc[2] == REFLECTIVE)
-                        ho_current[i][e] -= meshCell->getMeshSurfaces(2)
-                            ->getCurrent(e) * meshCell->getMeshSurfaces(2)
-                            ->getTotalWt(2);
-
-                    if (y > 0)
-                    {
-                        meshCellNext = _mesh->getCells((y - 1) * _cw + x);
-                        ho_current[i][e] -= meshCellNext->getMeshSurfaces(1)
-                            ->getCurrent(e) * meshCellNext->getMeshSurfaces(1)
-                            ->getTotalWt(2);
-                    }
-                    else if (_bc[3] == REFLECTIVE)
-                        ho_current[i][e] -= meshCell->getMeshSurfaces(3)
-                            ->getCurrent(e) * meshCell->getMeshSurfaces(3)
-                            ->getTotalWt(2);
-
-                    if (y < _ch - 1)
-                    {
-                        meshCellNext = _mesh->getCells((y + 1) * _cw + x);
-                        ho_current[i][e] -= meshCellNext->getMeshSurfaces(3)
-                            ->getCurrent(e) * meshCellNext->getMeshSurfaces(3)
-                            ->getTotalWt(2);
-                    }
-                    else if (_bc[1] == REFLECTIVE)
-                        ho_current[i][e] -= meshCell->getMeshSurfaces(1)
-                            ->getCurrent(e) * meshCell->getMeshSurfaces(1)
-                            ->getTotalWt(2);
-
-                    // both ho_current and net_current are
-                    // surface-integrated ones.  
-
-                    //ho_current[i][e] /= meshCell->getATVolume();
-
-                } 
-            } 
-        } 
-    }
-
-    log_printf(ACTIVE, " High order generates following balance: "
-               "cell #, energy #, 4 pi Q - Sigma_T Phi V - Current = 0");
-    for (int i = 0; i < _cw * _ch; i++)
-    {
-        meshCell = _mesh->getCells(i);
-        double vol = meshCell->getATVolume(); 
-
-        for (int e = 0; e < _ng; e++)
-        {
-            for (int g = 0; g < _ng; g++)
-            {
-                new_src[i][e] += meshCell->getSigmaS()[g * _ng + e] 
-                    * meshCell->getNewFlux()[g] * ONE_OVER_FOUR_PI;
-                new_src[i][e] += meshCell->getChi()[e] *
-                    meshCell->getNuSigmaF()[g] / _keff 
-                    * meshCell->getNewFlux()[g] * ONE_OVER_FOUR_PI;
-            }
-            
-            log_printf(ACTIVE, "%d, %d, %f - %f - %f = %f", 
-                       i, e, FOUR_PI * new_src[i][e] * vol, 
-                       meshCell->getSigmaT()[e] * meshCell->getNewFlux()[e] 
-                       * vol, ho_current[i][e], 
-                       FOUR_PI * new_src[i][e] * vol - meshCell->getSigmaT()[e] 
-                       * meshCell->getNewFlux()[e] * vol- ho_current[i][e]);
-        }
-    }
-#endif
-
 
     /* Starts LOO acceleration iteration, we do not update src, quad_src, 
      * quad_flux, old_flux, as they are computed from the MOC step (i.e., 
@@ -2043,10 +1925,9 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
             }
         } /* finish looping over energy; exit to iter level */
 
-        double new_flux = 0;
-        //double ho_current_val = 0, ho_current_tot = 0;
 
         /* Computs new cell-averaged scalar flux */
+        double new_flux = 0;
         if (_run_loo_phi)
         {
             for (int i = 0; i < _cw * _ch; i++)
@@ -2073,21 +1954,6 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
                                i, e, 
                                new_flux, meshCell->getNewFlux()[e],
                                new_flux / meshCell->getNewFlux()[e]);
-
-                    /*
-                    ho_current_val =  vol * (FOUR_PI * new_src[i][e] - 
-                                         meshCell->getNewFlux()[e] 
-                                         * meshCell->getSigmaT()[e]);
-
-                    ho_current_tot += ho_current_val;
-
-                    log_printf(ACTIVE, "Cell %d e %d leakage lo/ho"
-                               " %f/ %f = %.10f, %f / %f = %.10f", 
-                               i, e, net_current[i][e], ho_current_val,
-                               net_current[i][e] / ho_current_val,
-                               net_current[i][e], ho_current[i][e], 
-                               net_current[i][e] / ho_current[i][e]);
-                    */
                 }
             }
         }
@@ -2229,12 +2095,17 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
         delete[] tau[i];
         delete[] new_src[i];
         delete[] new_quad_src[i];
+        delete[] net_current[i];
     }
     delete[] sum_quad_flux;
     delete[] quad_xs;
     delete[] tau;
     delete[] new_src;
     delete[] new_quad_src;
+    delete[] net_current;
+
+    delete[] old_power;
+    delete[] new_power;
 
     return _keff;
 }
