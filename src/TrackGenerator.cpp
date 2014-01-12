@@ -892,12 +892,6 @@ bool TrackGenerator::readTracksFromFile() {
 
     int string_length;
     ret = fread(&string_length, sizeof(int), 1, in);
-    /*
-    fseek(in, 0, SEEK_END);
-    string_length = ftell(in);
-    rewind(in);
-    */
-    log_printf(NORMAL, "%d", string_length);
 
     char* geometry_to_string;
     geometry_to_string = new char[string_length+1];

@@ -131,7 +131,6 @@ public:
     void clearSegments();
     std::string toString();
 
-
     void setFwdFluxes(double *fluxes);
     void setBwdFluxes(double *fluxes);
 

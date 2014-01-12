@@ -98,6 +98,7 @@ Cmfd::Cmfd(Geometry* geom, Plotter* plotter, Mesh* mesh,
     _plot_prolongation = opts->plotProlongation();
     _update_boundary = opts->getUpdateBoundary();
     _reflect_outgoing = opts->getReflectOutgoing();
+    
     if (_reflect_outgoing)
         _nq = 2;
     else
@@ -1025,9 +1026,14 @@ void Cmfd::computeQuadSrc()
 {
     /* Initializations */
     MeshSurface *s[4];
-    MeshCell* meshCell;
-    MeshCell* meshCellNext;
-    double out[_ng][8], in[_ng][8];
+    MeshCell *meshCell, *meshCellNext;
+    double **out = new double*[_ng];
+    double **in = new double*[_ng];
+    for (int i = 0; i < _ng; i++)
+    {
+        out[i] = new double[8];
+        in[i] = new double[8];
+    }
 
     /* loop over all mesh cells */
     for (int y = 0; y < _ch; y++)
@@ -1040,8 +1046,7 @@ void Cmfd::computeQuadSrc()
             for (int i = 0; i < 4; i++) 
                 s[i] = meshCell->getMeshSurfaces(i);
 
-            /* copy the 8 outgoing quad flux associated with this mesh cell to
-             * corresponding intermediate outgoing flux */
+            /* initialize the 8 outgoing quad fluxes */
             for (int e = 0; e < _ng; e++)
             {
                 out[e][0] = s[2]->getQuadFlux(e,0);
@@ -1052,23 +1057,10 @@ void Cmfd::computeQuadSrc()
                 out[e][5] = s[3]->getQuadFlux(e,0);
                 out[e][6] = s[1]->getQuadFlux(e,1);
                 out[e][7] = s[0]->getQuadFlux(e,1);
-            }
 
-
-            log_printf(DEBUG, "Cell (x,y) = (%d, %d), surface[0].flux[0] = %f",
-                       x, y, s[0]->getQuadFlux(0, 0));
-            log_printf(DEBUG, "Cell (x,y) = (%d, %d), surface[0].flux[1] = %f",
-                       x,y, s[0]->getQuadFlux(0, 1));
-            log_printf(DEBUG, "Cell (x,y) = (%d, %d), surface[2].flux[0] = %f",
-                       x,y, s[2]->getQuadFlux(0, 0));
-            log_printf(DEBUG, "Cell (x,y) = (%d, %d), surface[2].flux[1] = %f",
-                       x,y, s[2]->getQuadFlux(0, 1));
-
-            if (x == 0)
-            {
-                if (_mesh->getBoundary(0) == REFLECTIVE)
+                if (x == 0)
                 {
-                    for (int e = 0; e < _ng; e++)
+                    if (_bc[0] == REFLECTIVE)
                     {
                         if (_reflect_outgoing)
                         {
@@ -1081,41 +1073,25 @@ void Cmfd::computeQuadSrc()
                             in[e][5] = s[0]->getQuadFlux(e,2);
                             in[e][6] = s[0]->getQuadFlux(e,3);
                         }
-                        log_printf(ACTIVE, "x=%d, track 5, incoming now %f," 
-                                   " used to be %f", x, 
-                                   s[0]->getQuadFlux(e,2), out[e][7]);
-                        log_printf(ACTIVE, "x=%d, track 6, incoming now %f," 
-                                   " used to be %f", x, 
-                                   s[0]->getQuadFlux(e,3), out[e][4]);
                     }
-                }
-                else if (_mesh->getBoundary(0) == VACUUM)
-                {
-                    for (int e = 0; e < _ng; e++)
+                    else if (_bc[0] == VACUUM)
                     {
                         in[e][5] = 0;
                         in[e][6] = 0;
                     }
                 }
-            }
-            else
-            {
-                meshCellNext = _mesh->getCells(y * _cw + x - 1);
-                for (int e = 0; e < _ng; e++)
+                else
                 {
+                    meshCellNext = _mesh->getCells(y * _cw + x - 1);
                     in[e][5] = meshCellNext->getMeshSurfaces(2)
                         ->getQuadFlux(e,0);
                     in[e][6] = meshCellNext->getMeshSurfaces(2)
                         ->getQuadFlux(e,1);
                 }			
-            }
 
-
-            if (x == _cw - 1)
-            {
-                if (_mesh->getBoundary(2) == REFLECTIVE)
+                if (x == _cw - 1)
                 {
-                    for (int e = 0; e < _ng; e++)
+                    if (_bc[2] == REFLECTIVE)
                     {
                         if (_reflect_outgoing)
                         {
@@ -1128,41 +1104,25 @@ void Cmfd::computeQuadSrc()
                             in[e][1] = s[2]->getQuadFlux(e,2);
                             in[e][2] = s[2]->getQuadFlux(e,3);
                         }
-                        log_printf(ACTIVE, "x=%d, track 1, incoming now %f," 
-                                   " used to be %f", x, 
-                                   s[2]->getQuadFlux(e,2), out[e][3]);
-                        log_printf(ACTIVE, "x=%d, track 2, incoming now %f," 
-                                   " used to be %f", x, 
-                                   s[2]->getQuadFlux(e,3), out[e][0]);
-
                     }
-                }
-                else if (_mesh->getBoundary(2) == VACUUM)
-                {
-                    for (int e = 0; e < _ng; e++)
+                    else if (_bc[2] == VACUUM)
                     {
                         in[e][1] = 0;
                         in[e][2] = 0;
                     }
                 }
-            }
-            else
-            {
-                meshCellNext = _mesh->getCells(y * _cw + x + 1);
-                for (int e = 0; e < _ng; e++)
+                else
                 {
+                    meshCellNext = _mesh->getCells(y * _cw + x + 1);
                     in[e][1] = meshCellNext->getMeshSurfaces(0)
                         ->getQuadFlux(e,0);
                     in[e][2] = meshCellNext->getMeshSurfaces(0)
                         ->getQuadFlux(e,1);
                 }			
-            }			
 			
-            if (y == 0)
-            {
-                if (_mesh->getBoundary(3) == REFLECTIVE)
+                if (y == 0)
                 {
-                    for (int e = 0; e < _ng; e++)
+                    if (_bc[3] == REFLECTIVE)
                     {
                         if (_reflect_outgoing)
                         {
@@ -1175,40 +1135,25 @@ void Cmfd::computeQuadSrc()
                             in[e][3] = s[3]->getQuadFlux(e,3);
                             in[e][4] = s[3]->getQuadFlux(e,2);
                         }
-                        log_printf(ACTIVE, "y=%d, track 3, incoming now %f," 
-                                   " used to be %f", x, 
-                                   s[3]->getQuadFlux(e,3), out[e][5]);
-                        log_printf(ACTIVE, "y=%d, track 4, incoming now %f," 
-                                   " used to be %f", x, 
-                                   s[3]->getQuadFlux(e,2), out[e][2]);
                     }
-                }
-                else if (_mesh->getBoundary(3) == VACUUM)
-                {
-                    for (int e = 0; e < _ng; e++)
+                    else if (_bc[3] == VACUUM)
                     {
                         in[e][3] = 0;
                         in[e][4] = 0;
                     }
                 }
-            }
-            else
-            {
-                meshCellNext = _mesh->getCells((y - 1) * _cw + x);
-                for (int e = 0; e < _ng; e++)
+                else
                 {
+                    meshCellNext = _mesh->getCells((y - 1) * _cw + x);
                     in[e][3] = meshCellNext->getMeshSurfaces(1)
                         ->getQuadFlux(e,1);
                     in[e][4] = meshCellNext->getMeshSurfaces(1)
                         ->getQuadFlux(e,0);
-                }			
-            }
+                }
 
-            if (y == _ch - 1)
-            {
-                if (_mesh->getBoundary(1) == REFLECTIVE)
+                if (y == _ch - 1)
                 {
-                    for (int e = 0; e < _ng; e++)
+                    if (_bc[1] == REFLECTIVE)
                     {
                         if (_reflect_outgoing)
                         {
@@ -1221,52 +1166,40 @@ void Cmfd::computeQuadSrc()
                             in[e][7] = s[1]->getQuadFlux(e,3);
                             in[e][0] = s[1]->getQuadFlux(e,2);
                         }
-                        log_printf(ACTIVE, "y=%d, track 7, incoming now %f," 
-                                   " used to be %f", x, 
-                                   s[1]->getQuadFlux(e,3), out[e][1]);
-                        log_printf(ACTIVE, "y=%d, track 0, incoming now %f," 
-                                   " used to be %f", x, 
-                                   s[1]->getQuadFlux(e,2), out[e][6]);
                     }
-                }
-                else if (_mesh->getBoundary(1) == VACUUM)
-                {
-                    for (int e = 0; e < _ng; e++)
+                    else if (_bc[1] == VACUUM)
                     {
                         in[e][7] = 0;
                         in[e][0] = 0;
                     }
                 }
-            }
-            else
-            {
-                meshCellNext = _mesh->getCells( (y + 1) * _cw + x);
-                for (int e = 0; e < _ng; e++)
+                else
                 {
+                    meshCellNext = _mesh->getCells( (y + 1) * _cw + x);
                     in[e][7] = meshCellNext->getMeshSurfaces(3)
                         ->getQuadFlux(e,1);
                     in[e][0] = meshCellNext->getMeshSurfaces(3)
                         ->getQuadFlux(e,0);
-                }			
+                }
             }
 
             /* Now that we have all the in's and out's, computes src */
             /* has to use get l to get the polar angle right */
             double l = meshCell->getATL();
+            double xs = 0, ex = 0, sum_quad_flux = 0, tmp_src = 0, src = 0;
             for (int e = 0; e < _ng; e++)
             {
-                double xs = meshCell->getSigmaT()[e];
-                double ex = exp(-xs * l);
-                double sum_quad_flux = 0;
-                double tmp_src = 0;
+                xs = meshCell->getSigmaT()[e];
+                ex = exp(-xs * l);
+                sum_quad_flux = 0;
+                tmp_src = 0;
                 for (int t = 0; t < 8; t++)
                 {
-                    double src = xs * (out[e][t] - ex * in[e][t]) / (1.0 - ex);
+                    src = xs * (out[e][t] - ex * in[e][t]) / (1.0 - ex);
 
                     log_printf(DEBUG, "(%d %d) e %d t %d"
-                               " quad src = %f - %f * %f = %f",
-                               x, y, e, t,
-                               out[e][t], ex, in[e][t], 
+                               " quad src = %f *( %f - %f * %f) / %f = %f",
+                               x, y, e, t, xs, out[e][t], ex, in[e][t], 1 - ex,
                                out[e][t] - ex * in[e][t]);
 
                     meshCell->setQuadSrc(src, e, t);
@@ -1284,6 +1217,15 @@ void Cmfd::computeQuadSrc()
             }
         }
     }
+    
+    for (int i = 0; i < _ng; i++)
+    {
+        delete[] in[i];
+        delete[] out[i];
+    }
+    delete[] in;
+    delete[] out;
+
     return;
 }	 
 

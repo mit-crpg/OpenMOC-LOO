@@ -1231,7 +1231,10 @@ void Solver::tallyLooCurrentIncoming(Track *track, segment *segment,
      * tallyLooCurrent routine, because now we are trying to tally the
      * incoming instead of the outgoing angular fluxes. */
     if (direction == 1)
+    {
         surfID = segment->_mesh_surface_bwd;
+        pe_initial = 0;
+    }
     else 
     {
         surfID = segment->_mesh_surface_fwd;
@@ -1246,15 +1249,13 @@ void Solver::tallyLooCurrentIncoming(Track *track, segment *segment,
 
         /* Defines index: instead of 0, 1 now we have 2 (theta less
          * than pi/2), 3 (theta larger than pi/2) */
-        if (track->getPhi() > PI / 2.0)
+        if (track->getPhi() < PI / 2.0)
+            index = 2;
+        else
             index = 3;
         
         /* Obtains the surface that the segment crosses */
         meshSurface = meshSurfaces[surfID];
-        log_printf(DEBUG, " phi = %f, index = %d, surface ID = %d",
-                   track->getPhi(), index, 
-                   meshSurface->getId());
-
         pe = pe_initial;
         
         for (e = 0; e < NUM_ENERGY_GROUPS; e++) 
@@ -1688,7 +1689,6 @@ void Solver::MOCsweep(int max_iterations, int moc_iter)
         /* Loop over each thread */
         for (t = 0; t < num_threads; t++) 
         {
-
             /* Loop over the pair of azimuthal angles for this thread */
             j = t;
             while (j < _num_azim) 
@@ -1739,6 +1739,7 @@ void Solver::MOCsweep(int max_iterations, int moc_iter)
 
                             fsr_flux[e] = 0;
                             sigma_t_l = sigma_t[e] * segment->_length;
+                            /* FIXME: may take out */
                             sigma_t_l = std::min(sigma_t_l,10.0);
                             index = sigma_t_l / _pre_factor_spacing;
                             index = std::min(index * 2 * NUM_POLAR_ANGLES,
@@ -1749,11 +1750,10 @@ void Solver::MOCsweep(int max_iterations, int moc_iter)
                                 delta = (polar_fluxes[pe] - ratios[e]) *
                                     (1 - (_pre_factor_array[index + 2 * p] 
                                           * sigma_t_l + 
-                                          _pre_factor_array[index + 2 * p + 1]));
+                                          _pre_factor_array[index + 2 * p +1]));
                                 fsr_flux[e] += delta * weights[p];
                                 polar_fluxes[pe] -= delta;
                                 pe++;
-								
                             }
                         }
 
@@ -2117,7 +2117,7 @@ void Solver::normalizeFlux()
             {
                 for (int e = 0; e < ng; e++)
                 {
-                    /* FIXME: I changed 2 to _nq, which cases a
+                    /* FIXME: I changed 2 to 4, which cases a
                      * SIGFPE, Arithmetic exception */
                     for (int ind = 0; ind < 2; ind++)
                     {
