@@ -164,7 +164,6 @@ Solver::Solver(Geometry* geom, TrackGenerator* track_generator,
             }               
         }  
     }
-    moc_iter = 0;
 }
 
 void Solver::runCmfd() {
@@ -886,7 +885,7 @@ void Solver::updateBoundaryFluxByQuadrature()
 }
 
 /* Prints & Update keff for MOC sweep */
-void Solver::printToScreen()
+void Solver::printToScreen(int moc_iter)
 {
     if ((moc_iter == 0) && _diffusion)
     {
@@ -935,8 +934,6 @@ void Solver::printToScreen()
                (_old_k_effs.front() - _old_k_effs.back()) 
                / _old_k_effs.back());
     }
-
-    moc_iter++;
     return;
 }
 
@@ -1378,8 +1375,9 @@ void Solver::tallyLooWeightSingle(Track *track, segment *segment,
 }
 
 void Solver::tallyAsTrackedLengthSingle(Track *track, segment *segment, 
-                                  MeshSurface **meshSurfaces, 
-                                  int surfID, int index, int opposite_index)
+                                        MeshSurface **meshSurfaces, 
+                                        int surfID, int index, 
+                                        int opposite_index)
 {        
     int p;
     double cosTheta, sinTheta, wt2;
@@ -1426,10 +1424,11 @@ void Solver::tallyAsTrackedLengthSingle(Track *track, segment *segment,
                     meshSurfaces[(i - 1) * 8 + 1]
                         ->incrementAsTrackedLength(wt2 / sinTheta);
                 }
+                // FIXME 
                 else //if (_geom->getMesh()->getBoundary(0) == REFLECTIVE)
                 {
-                    meshSurfaces[i * 8 + 1]->incrementAsTrackedLength(
-                        wt2 / sinTheta);
+                    meshSurfaces[i * 8 + 1]->incrementAsTrackedLength
+                        (wt2 / sinTheta);
                 }
 
                 if (y < _ch -1) 
@@ -1439,8 +1438,8 @@ void Solver::tallyAsTrackedLengthSingle(Track *track, segment *segment,
                 }
                 else //if (_geom->getMesh()->getBoundary(1) == REFLECTIVE)
                 {
-                    meshSurfaces[i * 8 + 0]->incrementAsTrackedLength(
-                        wt2 / cosTheta);
+                    meshSurfaces[i * 8 + 0]->incrementAsTrackedLength
+                        (wt2 / cosTheta);
                 }
 
             }
@@ -1458,8 +1457,8 @@ void Solver::tallyAsTrackedLengthSingle(Track *track, segment *segment,
                 } 
                 else //if (_geom->getMesh()->getBoundary(2) == REFLECTIVE)
                 {
-                    meshSurfaces[i * 8 + 1]->incrementAsTrackedLength(
-                        wt2 / sinTheta);
+                    meshSurfaces[i * 8 + 1]->incrementAsTrackedLength
+                        (wt2 / sinTheta);
                 } 
                     
                 if (y < _ch -1) 
@@ -1469,8 +1468,8 @@ void Solver::tallyAsTrackedLengthSingle(Track *track, segment *segment,
                 }
                 else //if (_geom->getMesh()->getBoundary(1) == REFLECTIVE)
                 {
-                    meshSurfaces[i * 8 + 2]->incrementAsTrackedLength(
-                        wt2 / cosTheta);
+                    meshSurfaces[i * 8 + 2]->incrementAsTrackedLength
+                        (wt2 / cosTheta);
                 }                      
             }
             else if (s < 7)
@@ -1487,8 +1486,8 @@ void Solver::tallyAsTrackedLengthSingle(Track *track, segment *segment,
                 } 
                 else //if (_geom->getMesh()->getBoundary(2) == REFLECTIVE)
                 {
-                    meshSurfaces[i * 8 + 3]->incrementAsTrackedLength(
-                        wt2 / sinTheta);
+                    meshSurfaces[i * 8 + 3]->incrementAsTrackedLength
+                        (wt2 / sinTheta);
                 }                      
 
                 if (y > 0) 
@@ -1498,8 +1497,8 @@ void Solver::tallyAsTrackedLengthSingle(Track *track, segment *segment,
                 }
                 else //if (_geom->getMesh()->getBoundary(3) == REFLECTIVE)
                 {
-                    meshSurfaces[i * 8 + 2]->incrementAsTrackedLength(
-                        wt2 / cosTheta);
+                    meshSurfaces[i * 8 + 2]->incrementAsTrackedLength
+                        (wt2 / cosTheta);
                 }
             }
             else
@@ -1516,8 +1515,8 @@ void Solver::tallyAsTrackedLengthSingle(Track *track, segment *segment,
                 }
                 else //if (_geom->getMesh()->getBoundary(0) == REFLECTIVE)
                 {
-                    meshSurfaces[i * 8 + 3]->incrementAsTrackedLength(
-                        wt2 / sinTheta);
+                    meshSurfaces[i * 8 + 3]->incrementAsTrackedLength
+                        (wt2 / sinTheta);
                 }
 
                 if (y > 0) 
@@ -1527,10 +1526,9 @@ void Solver::tallyAsTrackedLengthSingle(Track *track, segment *segment,
                 }
                 else //if (_geom->getMesh()->getBoundary(3) == REFLECTIVE)
                 {
-                    meshSurfaces[i * 8 + 0]->incrementAsTrackedLength(
-                        wt2 / cosTheta);
+                    meshSurfaces[i * 8 + 0]->incrementAsTrackedLength
+                        (wt2 / cosTheta);
                 }                  
-
             }
         }
     }
@@ -2421,7 +2419,7 @@ double Solver::kernel(int max_iterations) {
         /* Prints out keff & eps, may update keff too based on _update_keff */
         /* FIXME: the following line generates a bad read in
          * Valgrine */
-        printToScreen();
+        printToScreen(moc_iter);
         printToLog(moc_iter, eps_inf, eps_2, spectral_radius);
 
         /* Alternative: if (_cmfd->getL2Norm() < _moc_conv_thresh) */
