@@ -128,41 +128,11 @@ Solver::Solver(Geometry* geom, TrackGenerator* track_generator,
         _cmfd->setTracks(_tracks);
 
         initializeWeights();
-
-        if (_update_boundary)
-        {
-            if (_reflect_outgoing)
-            {
-                log_printf(NORMAL, "Acceleration on: %d boundary iteration,"
-                           " %f damping, update boundary flux,"
-                           " reflect outgoing" , 
-                           _boundary_iteration, _damp_factor);
-            }
-            else
-            {
-                log_printf(NORMAL, "Acceleration on: %d boundary iteration,"
-                           " %f damping, update boundary flux,"
-                           " no reflect outgoing",
-                           _boundary_iteration, _damp_factor);
-            }               
-        }
-        else
-        {
-            if (_reflect_outgoing)
-            {
-                log_printf(NORMAL, "Acceleration on: %d boundary iteration,"
-                           " %f damping, no update boundary flux,"
-                           " reflect outgoing", 
-                           _boundary_iteration, _damp_factor);
-            }
-            else
-             {
-                log_printf(NORMAL, "Acceleration on: %d boundary iteration,"
-                           " %f damping, no update boundary flux"
-                           " no reflect outgoing", 
-                           _boundary_iteration, _damp_factor);
-            }               
-        }  
+        
+        log_printf(NORMAL, "Acceleration on: boundary iteration = %d,"
+                   " damping = %.2f, update boundary flux = %d,"
+                   " reflect outgoing = %d", _boundary_iteration, 
+                   _damp_factor, _update_boundary, _reflect_outgoing);
     }
 }
 
@@ -999,10 +969,8 @@ void Solver::checkTrackSpacing() {
     delete [] FSR_segment_tallies;
 }
 
-/* Print out the four boundary conditions around the whole geometry in
- * the order of left, bottom, right, top.  FIXME: this feature does
- * not work if no acceleration is turned on; will prduce results like
- * unkonwn and unset.
+/* Print out the four boundary conditions around the exterior geometry in
+ * the order of left, bottom, right, top.  
  */
 void Solver::checkBoundary()
 {
@@ -1024,9 +992,8 @@ void Solver::checkBoundary()
             break;
         }
     }
-    log_printf(NORMAL, "Boundary conditions: %s %s %s %s", 
+    log_printf(NORMAL, "Boundary conditions = %s %s %s %s", 
                bc[0].c_str(), bc[1].c_str(), bc[2].c_str(), bc[3].c_str()); 
-
     return;
 }
 
