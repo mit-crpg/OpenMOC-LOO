@@ -39,9 +39,11 @@ simulated by a large neutron absorber.
     <cell id="28" universe="18" fill="58" surfaces="" />
     <cell id="29" universe="19" fill="59" surfaces="" />
     <cell id="30" universe="20" fill="60" surfaces="" />       
+    <!-- this is u15 rotate 270 degrees clock-wise -->
+    <cell id="31" universe="21" fill="65" surfaces="" />
 
 <!-- Full core, filling -->
-    <cell id="31" universe="0" fill="80" surfaces="1 -2 3 -4" />       
+    <cell id="32" universe="0" fill="80" surfaces="1 -2 3 -4" />       
 
 
 <!-- ASSEMBLIES, definition, the lattice id is used to fill ones above -->    
@@ -158,6 +160,29 @@ simulated by a large neutron absorber.
           8 8 8 8 8 8 8 8 8 8 8 8 8 8 8
           8 8 8 8 8 8 8 8 8 8 8 8 8 8 8
           8 8 8 8 8 8 8 8 8 8 8 8 8 8 8
+        </universes>
+    </lattice>
+
+    <lattice id="65">
+        <type>rectangular</type>
+        <dimension>15 15</dimension>
+        <width>1.63576 1.63576</width>
+        <universes>
+          1 1 1 8 8 8 8 8 8 8 8 8 8 8 8
+          1 1 1 8 8 8 8 8 8 8 8 8 8 8 8
+          1 1 1 8 8 8 8 8 8 8 8 8 8 8 8
+          1 1 1 8 8 8 8 8 8 8 8 8 8 8 8
+          1 1 1 8 8 8 8 8 8 8 8 8 8 8 8
+          1 1 1 8 8 8 8 8 8 8 8 8 8 8 8
+          1 1 1 8 8 8 8 8 8 8 8 8 8 8 8
+          1 1 1 8 8 8 8 8 8 8 8 8 8 8 8
+          1 1 1 8 8 8 8 8 8 8 8 8 8 8 8
+          1 1 1 8 8 8 8 8 8 8 8 8 8 8 8
+          1 1 1 8 8 8 8 8 8 8 8 8 8 8 8
+          1 1 1 8 8 8 8 8 8 8 8 8 8 8 8
+          1 1 1 8 8 8 8 8 8 8 8 8 8 8 8
+          1 1 1 8 8 8 8 8 8 8 8 8 8 8 8
+          1 1 1 8 8 8 8 8 8 8 8 8 8 8 8
         </universes>
     </lattice>
 
@@ -283,7 +308,7 @@ simulated by a large neutron absorber.
         <dimension>5 5</dimension>
         <width>24.5364 24.5364</width>
         <universes>
-          11 13 14 15 20
+          11 13 14 21 20
           13 12 16 19 20 
           14 17 18 20 20
           15 19 20 20 20
