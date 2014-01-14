@@ -874,18 +874,13 @@ void Cmfd::computeDs()
 /* Computes _quad_flux based on _quad_current */
 void Cmfd::computeQuadFlux()
 {
-    /* Initializations */
     MeshSurface *s[4];
     MeshCell* meshCell;
+    double flux = 0, tmp = 0, wt = 0;
 
     if (_mesh->getMultigroup() == false)
         _mesh->computeTotQuadCurrents();
 
-    /* the factor that we devide everyone by is cos(45degree) * surface len */
-    /* May need to fixme */
-    double flux;
-
-    /* loop over all mesh cells */
     for (int y = 0; y < _ch; y++)
     {
         for (int x = 0; x < _cw; x++)
@@ -898,11 +893,11 @@ void Cmfd::computeQuadFlux()
                 s[i] = meshCell->getMeshSurfaces(i);    
                 for (int e = 0; e < _ng; e++)
                 {
-                    double tmp = 0.0;
-                    double wt = 0;
+                    tmp = 0.0;
+                    wt = 0;
 
                     /* FIXME: somehow _nq = 4 breaks the code for _ro case */
-                    for (int j = 0; j < _nq; j++)
+                    for (int j = 0; j < 4; j++)
                     {
 #if NEW
                         if (j < 2)
@@ -914,51 +909,27 @@ void Cmfd::computeQuadFlux()
 #else
                         wt = _mesh->getCells(0)->getWidth();
 #endif
-                        if (wt > 1e-10)
-                        {
+
+                        //if (wt > 1e-10)
+                        //{
                             flux = s[i]->getQuadCurrent(e, j) / SIN_THETA_45 
                                 / wt / P0;
                             s[i]->setQuadFlux(flux, e, j);
                             tmp += s[i]->getQuadCurrent(e, j);
-                        }
-                        else
-                            s[i]->setQuadFlux(0, e, j);
+                            //}
+                            //else
+                            //s[i]->setQuadFlux(0, e, j);
                     }	
-
-                    log_printf(ACTIVE, "incoming quad currents for cell %d,"
-                               " surface %d, energy %d, %f, %f",
-                               y * _cw + x, i, e, 
-                               s[i]->getQuadCurrent(e,2), 
-                               s[i]->getQuadCurrent(e,3));
 
 #if NEW	
                     s[i]->setCurrent(tmp / s[i]->getTotalWt(2), e);
 #else
                     s[i]->setCurrent(tmp, e);
 #endif
-
-                    if (e == 0)
-                    {
-                        /* Prints to screen quad current and quad flux */
-                        log_printf(DEBUG, "cell %d surface %d energy %d's "
-                                   " quad fluxes: %.10f %.10f", 
-                                   y * _cw + x, i, e, 
-                                   s[i]->getQuadFlux(e, 0), 
-                                   s[i]->getQuadFlux(e, 1));
-                        
-                        log_printf(DEBUG, " cell %d surf %d wt = %f", 
-                                   y * _cw + x, i, s[i]->getTotalWt(2));
-                    }
                 }
             }
         }
     }
-
-    /* Debugging */
-    log_printf(DEBUG, "set cell 2 side 1 track 0: %f", 
-               _mesh->getCells(2)->getMeshSurfaces(1)->getQuadFlux(0, 0));
-
-    return;
 }
 
 void Cmfd::computeCurrent()
@@ -991,7 +962,7 @@ void Cmfd::computeCurrent()
     return;
 }
 
-/* Update old_quad_flux with new_quad_flux */
+/* Store new_quad_flux into old_quad_flux for book-keeping */
 void Cmfd::updateOldQuadFlux()
 {
     /* Initializations */
@@ -1009,7 +980,8 @@ void Cmfd::updateOldQuadFlux()
                 s[i] = meshCell->getMeshSurfaces(i);
                 for (int e = 0; e < _ng; e++)
                 {
-                    for (int j = 0; j < _nq; j++)
+                    // FIXME: _nq
+                    for (int j = 0; j < 4; j++)
                     {
                         s[i]->setOldQuadFlux(s[i]->getQuadFlux(e, j), e, j);
                     } 
@@ -1062,17 +1034,18 @@ void Cmfd::computeQuadSrc()
                 {
                     if (_bc[0] == REFLECTIVE)
                     {
+                        in[e][5] = s[0]->getQuadFlux(e,2);
+                        //log_printf(NORMAL, "%f %f", in[e][5], out[e][7]);
                         if (_reflect_outgoing)
-                        {
-                            //in[e][5] = out[e][7];
-                            in[e][5] = s[0]->getQuadFlux(e,2);
                             in[e][6] = out[e][4];
-                        }
                         else
-                        {
-                            in[e][5] = s[0]->getQuadFlux(e,2);
                             in[e][6] = s[0]->getQuadFlux(e,3);
-                        }
+
+                        // FIXME? Debug?
+                        s[0]->setQuadFlux(in[e][5], e, 1);
+                        s[0]->setQuadFlux(in[e][6], e, 0);
+                        //s[0]->setOldQuadFlux(in[e][5], e, 1);
+                        //s[0]->setOldQuadFlux(in[e][6], e, 0);
                     }
                     else if (_bc[0] == VACUUM)
                     {
@@ -1093,17 +1066,15 @@ void Cmfd::computeQuadSrc()
                 {
                     if (_bc[2] == REFLECTIVE)
                     {
+                        in[e][1] = s[2]->getQuadFlux(e,2);
                         if (_reflect_outgoing)
-                        {
-                            //in[e][1] = out[e][3];
-                            in[e][1] = s[2]->getQuadFlux(e,2);
                             in[e][2] = out[e][0];
-                        }
                         else
-                        {
-                            in[e][1] = s[2]->getQuadFlux(e,2);
                             in[e][2] = s[2]->getQuadFlux(e,3);
-                        }
+                        s[2]->setQuadFlux(in[e][1], e, 1);
+                        s[2]->setQuadFlux(in[e][2], e, 0);
+                        //s[2]->setOldQuadFlux(in[e][1], e, 1);
+                        //s[2]->setOldQuadFlux(in[e][2], e, 0);
                     }
                     else if (_bc[2] == VACUUM)
                     {
@@ -1124,17 +1095,16 @@ void Cmfd::computeQuadSrc()
                 {
                     if (_bc[3] == REFLECTIVE)
                     {
+                        in[e][4] = s[3]->getQuadFlux(e,2);
                         if (_reflect_outgoing)
-                        {
                             in[e][3] = out[e][5];
-                            //in[e][4] = out[e][2];
-                            in[e][4] = s[3]->getQuadFlux(e,2);
-                        }
                         else
-                        {
                             in[e][3] = s[3]->getQuadFlux(e,3);
-                            in[e][4] = s[3]->getQuadFlux(e,2);
-                        }
+
+                        s[3]->setQuadFlux(in[e][4], e, 1);
+                        s[3]->setQuadFlux(in[e][3], e, 0); 
+                        //s[3]->setOldQuadFlux(in[e][4], e, 1);
+                        //s[3]->setOldQuadFlux(in[e][3], e, 0);
                     }
                     else if (_bc[3] == VACUUM)
                     {
@@ -1155,17 +1125,15 @@ void Cmfd::computeQuadSrc()
                 {
                     if (_bc[1] == REFLECTIVE)
                     {
+                        in[e][0] = s[1]->getQuadFlux(e,2);
                         if (_reflect_outgoing)
-                        {
                             in[e][7] = out[e][1];
-                            //in[e][0] = out[e][6];
-                            in[e][0] = s[1]->getQuadFlux(e,2);
-                        }
                         else
-                        {
                             in[e][7] = s[1]->getQuadFlux(e,3);
-                            in[e][0] = s[1]->getQuadFlux(e,2);
-                        }
+                        s[1]->setQuadFlux(in[e][0], e, 1);
+                        s[1]->setQuadFlux(in[e][7], e, 0);
+                        //s[1]->setOldQuadFlux(in[e][0], e, 1);
+                        //s[1]->setOldQuadFlux(in[e][7], e, 0);
                     }
                     else if (_bc[1] == VACUUM)
                     {
@@ -1979,7 +1947,7 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
 
             break;
         }
-    } /* exit iteration level */
+    } 
 
     _num_iter_to_conv = loo_iter + 1;
 
@@ -1987,7 +1955,7 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
      * fission source of mesh cells relative to (m+1/2) */
     computeLooL2Norm(moc_iter);
 	
-    /* Cleaning up; FIXME: more cleaning */
+    /* Cleaning up; */
     for (int i = 0; i < _cw * _ch; i++)
     {
         delete[] sum_quad_flux[i];

@@ -81,10 +81,8 @@ Solver::Solver(Geometry* geom, TrackGenerator* track_generator,
     _log_file = string.str();
 
     _reflect_outgoing = opts->getReflectOutgoing();
-    if (_reflect_outgoing)
-        _nq = 2;
-    else
-        _nq = 4;
+
+    _nq = 4;
     
     _plot_loo = opts->plotQuadFlux();
     _plot_flux = opts->plotFluxes();
