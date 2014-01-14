@@ -1652,13 +1652,15 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
                     {
                         int surf_id = onReflectiveBoundary(t, i, 0);
 
-                        if (surf_id > -1)
+                        if ((surf_id == 0) || (surf_id == 2))
                         {
                             _mesh->getCells(i)->getMeshSurfaces(surf_id)
                                 ->setQuadFlux(flux, e, 0);
-                            log_printf(ACTIVE, "update boundary for cell %d"
-                                       " energy %d surface %d forward", 
-                                       i, e, surf_id);
+                        }
+                        else if (surf_id > -1)
+                        {
+                            _mesh->getCells(i)->getMeshSurfaces(surf_id)
+                                ->setQuadFlux(flux, e, 1);
                         }
                     }
 
@@ -1742,13 +1744,15 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
                     {
                         int surf_id = onReflectiveBoundary(t, i, 1);
 
-                        if (surf_id > -1)
+                        if ((surf_id == 0) || (surf_id == 2))
                         {
                             _mesh->getCells(i)->getMeshSurfaces(surf_id)
                                 ->setQuadFlux(flux, e, 1);
-                            log_printf(ACTIVE, "update boundary for cell %d"
-                                       " energy %d surface %d backward", 
-                                       i, e, surf_id);	
+                        }
+                        else if (surf_id > -1)
+                        {
+                            _mesh->getCells(i)->getMeshSurfaces(surf_id)
+                                ->setQuadFlux(flux, e, 0);
                         }
                     } 
 
