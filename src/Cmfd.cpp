@@ -1046,7 +1046,7 @@ void Cmfd::computeQuadSrc()
                             in[e][6] = s[0]->getQuadFlux(e,3);
                         }
 
-                        // FIXME? Debug?
+                        // FIXME? 
                         /*
                         s[0]->setQuadFlux(in[e][5], e, 1);
                         s[0]->setQuadFlux(in[e][6], e, 0);
@@ -1973,6 +1973,9 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
 
         /* If LOO iterative solver converges */
         if ((eps < _l2_norm_conv_thresh) && (loo_iter > min_outer))
+            _converged = true;
+
+        if (loo_iter > max_outer - 3)
             _converged = true;
     } 
 
