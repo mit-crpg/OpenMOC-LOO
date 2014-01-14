@@ -89,6 +89,7 @@ private:
     bool _any_reflective;
     bool _update_boundary;
     bool _reflect_outgoing;
+    bool _converged;
 public:
     Cmfd(Geometry* geom, Plotter* plotter, Mesh* mesh, 
          TrackGenerator *track_generator, Options *opts);

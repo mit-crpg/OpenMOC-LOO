@@ -127,6 +127,8 @@ Cmfd::Cmfd(Geometry* geom, Plotter* plotter, Mesh* mesh,
         _any_reflective = true;
     else
         _any_reflective = false;
+
+    _converged = false;
 }
 
 /**
@@ -1498,6 +1500,7 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
     }
 
     _keff = k_MOC;
+    _converged = false;
     MeshCell* meshCell;
 
     /* Allocate memories for terms internal to the LOO iterative solver */
@@ -1648,7 +1651,7 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
                         flux = 0.0; 
                     }
 	
-                    if (_update_boundary && _any_reflective)
+                    if (_converged && _update_boundary)
                     {
                         int surf_id = onReflectiveBoundary(t, i, 0);
 
@@ -1740,7 +1743,7 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
                         flux = 0.0;
                     }
 
-                    if (_update_boundary && _any_reflective)
+                    if (_converged && _update_boundary)
                     {
                         int surf_id = onReflectiveBoundary(t, i, 1);
 
@@ -1903,6 +1906,17 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
         log_printf(DEBUG, "%d: %.10f / (%.10f + %.10f) = %f", 
                    loo_iter, fis_tot, abs_tot, leak_tot, _keff);
 
+        if (_converged)
+        {
+            if (_plotter->plotKeff())
+                _plotter->plotCMFDKeff(_mesh, moc_iter);
+
+            if (_plotter->plotCurrent())
+                _plotter->plotNetCurrents(_mesh, moc_iter);
+
+            break;
+        }
+
         /* Computes the L2 norm of point-wise-division of energy-integrated
          * fission source of mesh cells between LOO iterations */
         eps = 0;
@@ -1942,18 +1956,10 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
 
         /* If LOO iterative solver converges */
         if ((eps < _l2_norm_conv_thresh) && (loo_iter > min_outer))
-        {
-            if (_plotter->plotKeff())
-                _plotter->plotCMFDKeff(_mesh, moc_iter);
-
-            if (_plotter->plotCurrent())
-                _plotter->plotNetCurrents(_mesh, moc_iter);
-
-            break;
-        }
+            _converged = true;
     } 
 
-    _num_iter_to_conv = loo_iter + 1;
+    _num_iter_to_conv = loo_iter;
 
     /* Computes the L2 norm of point-wise-division of energy-integrated
      * fission source of mesh cells relative to (m+1/2) */
