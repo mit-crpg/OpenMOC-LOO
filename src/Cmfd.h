@@ -161,7 +161,7 @@ public:
     bool onAnyBoundary(int i, int surf_id);
     bool onBoundary(int track_id, int cell_id, int surf, int dir);
     bool onVacuumBoundary(int track_id, int cell_id, int dir);
-    bool onReflectiveBoundary(int track_id, int cell_id, int surf, int dir);
+    int onReflectiveBoundary(int track_id, int cell_id, int dir);
 };
 
 #endif /* CMFD_H_ */
