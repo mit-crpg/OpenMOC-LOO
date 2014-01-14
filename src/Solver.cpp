@@ -638,7 +638,6 @@ void Solver::prolongation(int moc_iter)
 
 void Solver::storeMOCBoundaryFlux()
 {
-#if 1
     MeshSurface *meshSurface, **meshSurfaces;
     meshSurfaces = _geom->getMesh()->getSurfaces();
     for (int i = 0; i < 8 * _cw * _ch; i++)
@@ -653,28 +652,6 @@ void Solver::storeMOCBoundaryFlux()
             }
         }
     }
-#else
-    MeshCell *meshCell; 
-    MeshSurface *surf;
-
-    for (int i = 0; i < _cw * _ch; i++)
-    {
-        meshCell = _geom->getMesh()->getCells(i);
-        
-        for (int s = 0; s < 8; s++)
-        {
-            for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
-            {
-                for (int j = 0; j < _nq; j++)
-                {
-                    surf = meshCell->getMeshSurfaces(s);
-                    surf->setOldQuadFlux(surf->getQuadFlux(e,j), e, j);
-                }
-            }
-        }
-    }
-#endif        
-    return;
 }
 
 
@@ -806,16 +783,16 @@ void Solver::updateBoundaryFluxByQuadrature()
                     {
                         if (e == 0)
                         {
-                            log_printf(WARNING, 
-                                       "e %d i %d j %d (total %d) %f -> %f"
-                                       " forward phi %f",
-                                       e, i, j, _num_tracks[i],
+                            log_printf(WARNING, "e %d i %d j %d (total %d) %f"
+                                       " -> %f forward phi %f", e, i, j, 
+                                       _num_tracks[i],
                                        meshSurface->getOldQuadFlux(e, ind),
                                        meshSurface->getQuadFlux(e, ind), phi);
                         }		
                         pe += NUM_POLAR_ANGLES;
                     }
-                    else if (meshSurface->getOldQuadFlux(e,ind) < 1e-10)
+                    /* If old quad fluxes are all 0s, set them to new ones */
+                    else if (meshSurface->getOldQuadFlux(e,ind) < 1e-8)
                     {
                         factor = meshSurface->getQuadFlux(e, ind);
                         for (int p = 0; p < NUM_POLAR_ANGLES; p++)
@@ -2158,8 +2135,6 @@ double Solver::runLoo(int moc_iter)
     double loo_keff;
     _cmfd->storePreMOCMeshSource(_flat_source_regions);
  
-    //storeMOCBoundaryFlux();
-
     MOCsweep(_boundary_iteration + 1, moc_iter);
 
     _k_half = computeKeff(100);

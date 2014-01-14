@@ -912,15 +912,15 @@ void Cmfd::computeQuadFlux()
                         wt = _mesh->getCells(0)->getWidth();
 #endif
 
-                        //if (wt > 1e-10)
-                        //{
+                        if (wt > 1e-10)
+                        {
                             flux = s[i]->getQuadCurrent(e, j) / SIN_THETA_45 
                                 / wt / P0;
                             s[i]->setQuadFlux(flux, e, j);
                             tmp += s[i]->getQuadCurrent(e, j);
-                            //}
-                            //else
-                            //s[i]->setQuadFlux(0, e, j);
+                        }
+                        else
+                            s[i]->setQuadFlux(0, e, j);
                     }	
 
 #if NEW	
@@ -998,9 +998,8 @@ void Cmfd::updateOldQuadFlux()
 /* Computes _quad_src based on (m+1/2) results */
 void Cmfd::computeQuadSrc()
 {
-    /* Initializations */
     MeshSurface *s[4];
-    MeshCell *meshCell, *meshCellNext;
+    MeshCell *meshCell, *nextCell;
     double **out = new double*[_ng];
     double **in = new double*[_ng];
     for (int i = 0; i < _ng; i++)
@@ -1036,18 +1035,23 @@ void Cmfd::computeQuadSrc()
                 {
                     if (_bc[0] == REFLECTIVE)
                     {
-                        in[e][5] = s[0]->getQuadFlux(e,2);
-                        //log_printf(NORMAL, "%f %f", in[e][5], out[e][7]);
                         if (_reflect_outgoing)
+                        {
+                            in[e][5] = out[e][7];
                             in[e][6] = out[e][4];
+                        }
                         else
+                        {
+                            in[e][5] = s[0]->getQuadFlux(e,2);
                             in[e][6] = s[0]->getQuadFlux(e,3);
+                        }
 
                         // FIXME? Debug?
+                        /*
                         s[0]->setQuadFlux(in[e][5], e, 1);
                         s[0]->setQuadFlux(in[e][6], e, 0);
-                        //s[0]->setOldQuadFlux(in[e][5], e, 1);
-                        //s[0]->setOldQuadFlux(in[e][6], e, 0);
+                        s[0]->setOldQuadFlux(in[e][5], e, 1);
+                        s[0]->setOldQuadFlux(in[e][6], e, 0); */
                     }
                     else if (_bc[0] == VACUUM)
                     {
@@ -1057,26 +1061,32 @@ void Cmfd::computeQuadSrc()
                 }
                 else
                 {
-                    meshCellNext = _mesh->getCells(y * _cw + x - 1);
-                    in[e][5] = meshCellNext->getMeshSurfaces(2)
-                        ->getQuadFlux(e,0);
-                    in[e][6] = meshCellNext->getMeshSurfaces(2)
-                        ->getQuadFlux(e,1);
+                    nextCell = _mesh->getCells(y * _cw + x - 1);
+                    in[e][5] = nextCell->getMeshSurfaces(2)->getQuadFlux(e,0);
+                    in[e][6] = nextCell->getMeshSurfaces(2)->getQuadFlux(e,1);
                 }			
 
                 if (x == _cw - 1)
                 {
                     if (_bc[2] == REFLECTIVE)
                     {
-                        in[e][1] = s[2]->getQuadFlux(e,2);
                         if (_reflect_outgoing)
+                        {
+                            in[e][1] = out[e][3];
                             in[e][2] = out[e][0];
+                        }
                         else
+                        {
+                            in[e][1] = s[2]->getQuadFlux(e,2);
                             in[e][2] = s[2]->getQuadFlux(e,3);
+                        }
+
+                        /*
                         s[2]->setQuadFlux(in[e][1], e, 1);
                         s[2]->setQuadFlux(in[e][2], e, 0);
-                        //s[2]->setOldQuadFlux(in[e][1], e, 1);
-                        //s[2]->setOldQuadFlux(in[e][2], e, 0);
+                        s[2]->setOldQuadFlux(in[e][1], e, 1);
+                        s[2]->setOldQuadFlux(in[e][2], e, 0);
+                        */
                     }
                     else if (_bc[2] == VACUUM)
                     {
@@ -1086,27 +1096,31 @@ void Cmfd::computeQuadSrc()
                 }
                 else
                 {
-                    meshCellNext = _mesh->getCells(y * _cw + x + 1);
-                    in[e][1] = meshCellNext->getMeshSurfaces(0)
-                        ->getQuadFlux(e,0);
-                    in[e][2] = meshCellNext->getMeshSurfaces(0)
-                        ->getQuadFlux(e,1);
+                    nextCell = _mesh->getCells(y * _cw + x + 1);
+                    in[e][1] = nextCell->getMeshSurfaces(0)->getQuadFlux(e,0);
+                    in[e][2] = nextCell->getMeshSurfaces(0)->getQuadFlux(e,1);
                 }			
 			
                 if (y == 0)
                 {
                     if (_bc[3] == REFLECTIVE)
                     {
-                        in[e][4] = s[3]->getQuadFlux(e,2);
                         if (_reflect_outgoing)
+                        {
+                            in[e][4] = out[e][2];
                             in[e][3] = out[e][5];
+                        }
                         else
+                        {
+                            in[e][4] = s[3]->getQuadFlux(e,2);
                             in[e][3] = s[3]->getQuadFlux(e,3);
+                        }
 
+                        /*
                         s[3]->setQuadFlux(in[e][4], e, 1);
                         s[3]->setQuadFlux(in[e][3], e, 0); 
-                        //s[3]->setOldQuadFlux(in[e][4], e, 1);
-                        //s[3]->setOldQuadFlux(in[e][3], e, 0);
+                        s[3]->setOldQuadFlux(in[e][4], e, 1);
+                        s[3]->setOldQuadFlux(in[e][3], e, 0); */
                     }
                     else if (_bc[3] == VACUUM)
                     {
@@ -1116,26 +1130,31 @@ void Cmfd::computeQuadSrc()
                 }
                 else
                 {
-                    meshCellNext = _mesh->getCells((y - 1) * _cw + x);
-                    in[e][3] = meshCellNext->getMeshSurfaces(1)
-                        ->getQuadFlux(e,1);
-                    in[e][4] = meshCellNext->getMeshSurfaces(1)
-                        ->getQuadFlux(e,0);
+                    nextCell = _mesh->getCells((y - 1) * _cw + x);
+                    in[e][3] = nextCell->getMeshSurfaces(1)->getQuadFlux(e,1);
+                    in[e][4] = nextCell->getMeshSurfaces(1)->getQuadFlux(e,0);
                 }
 
                 if (y == _ch - 1)
                 {
                     if (_bc[1] == REFLECTIVE)
                     {
-                        in[e][0] = s[1]->getQuadFlux(e,2);
                         if (_reflect_outgoing)
+                        {
+                            in[e][0] = out[e][6];
                             in[e][7] = out[e][1];
+                        }
                         else
+                        {
+                            in[e][0] = s[1]->getQuadFlux(e,2);
                             in[e][7] = s[1]->getQuadFlux(e,3);
+                        }
+
+                        /*
                         s[1]->setQuadFlux(in[e][0], e, 1);
                         s[1]->setQuadFlux(in[e][7], e, 0);
-                        //s[1]->setOldQuadFlux(in[e][0], e, 1);
-                        //s[1]->setOldQuadFlux(in[e][7], e, 0);
+                        s[1]->setOldQuadFlux(in[e][0], e, 1);
+                        s[1]->setOldQuadFlux(in[e][7], e, 0); */
                     }
                     else if (_bc[1] == VACUUM)
                     {
@@ -1145,11 +1164,9 @@ void Cmfd::computeQuadSrc()
                 }
                 else
                 {
-                    meshCellNext = _mesh->getCells( (y + 1) * _cw + x);
-                    in[e][7] = meshCellNext->getMeshSurfaces(3)
-                        ->getQuadFlux(e,1);
-                    in[e][0] = meshCellNext->getMeshSurfaces(3)
-                        ->getQuadFlux(e,0);
+                    nextCell = _mesh->getCells( (y + 1) * _cw + x);
+                    in[e][7] = nextCell->getMeshSurfaces(3)->getQuadFlux(e,1);
+                    in[e][0] = nextCell->getMeshSurfaces(3)->getQuadFlux(e,0);
                 }
             }
 
