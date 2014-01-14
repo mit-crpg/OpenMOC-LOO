@@ -1037,7 +1037,8 @@ void Cmfd::computeQuadSrc()
                     {
                         if (_reflect_outgoing)
                         {
-                            in[e][5] = out[e][7];
+                            //in[e][5] = out[e][7];
+                            in[e][5] = s[0]->getQuadFlux(e,2);
                             in[e][6] = out[e][4];
                         }
                         else
@@ -1072,7 +1073,8 @@ void Cmfd::computeQuadSrc()
                     {
                         if (_reflect_outgoing)
                         {
-                            in[e][1] = out[e][3];
+                            //in[e][1] = out[e][3];
+                            in[e][1] = s[2]->getQuadFlux(e,2);
                             in[e][2] = out[e][0];
                         }
                         else
@@ -1107,7 +1109,8 @@ void Cmfd::computeQuadSrc()
                     {
                         if (_reflect_outgoing)
                         {
-                            in[e][4] = out[e][2];
+                            //in[e][4] = out[e][2];
+                            in[e][4] = s[3]->getQuadFlux(e,2);
                             in[e][3] = out[e][5];
                         }
                         else
@@ -1141,7 +1144,8 @@ void Cmfd::computeQuadSrc()
                     {
                         if (_reflect_outgoing)
                         {
-                            in[e][0] = out[e][6];
+                            //in[e][0] = out[e][6];
+                            in[e][0] = s[1]->getQuadFlux(e,2);
                             in[e][7] = out[e][1];
                         }
                         else
@@ -2552,8 +2556,8 @@ void Cmfd::updateMOCFlux(int moc_iter)
     if (_run_loo)
         under_relax = _damp_factor;
 
-    double max_range = INFINITY, min_range = -INFINITY;
-    //double max_range = 5.0, min_range = 1.0 / max_range; 
+    //double max_range = INFINITY, min_range = -INFINITY;
+    double max_range = 100.0, min_range = 1.0 / max_range; 
 
     double tmp_max = 0, tmp_cmco;
 
@@ -2572,15 +2576,20 @@ void Cmfd::updateMOCFlux(int moc_iter)
             new_flux = meshCell->getNewFlux()[e];
 
             tmp_cmco = new_flux / old_flux;
+
+            // Safety precaution: if negative number shows up, force it to zero
             if (tmp_cmco < 0.0)
+            {
+                /*
                 log_printf(WARNING, " iter %d update cell %d energy %d with"
-                           " %f / %f = %f",
-                           moc_iter, i, e, 
+                           " %f / %f = %f", moc_iter, i, e, 
                            new_flux, old_flux, tmp_cmco);
+                */
+                tmp_cmco = 0;
+            }
 
             tmp_max = fabs(new_flux / old_flux - 1.0);
             CMCO[i] += tmp_max;
-
 
             /*
             if (tmp_max > max)

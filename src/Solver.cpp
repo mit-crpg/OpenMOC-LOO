@@ -783,11 +783,13 @@ void Solver::updateBoundaryFluxByQuadrature()
                     {
                         if (e == 0)
                         {
+                            /*
                             log_printf(WARNING, "e %d i %d j %d (total %d) %f"
                                        " -> %f forward phi %f", e, i, j, 
                                        _num_tracks[i],
                                        meshSurface->getOldQuadFlux(e, ind),
                                        meshSurface->getQuadFlux(e, ind), phi);
+                            */
                         }		
                         pe += NUM_POLAR_ANGLES;
                     }
@@ -837,7 +839,7 @@ void Solver::printToScreen(int moc_iter)
         printf("Iter %d, MOC k^(m+1) = %.10f, Diffusion k = %.10f,"
                " MOC k^(m+1/2) = %.10f" 
                " FS eps = %.4e,  k eps = %.4e, #Diffusion = %d\n", 
-               moc_iter, _k_eff, _cmfd_k, _k_half, _old_eps_2.back(),
+               moc_iter, _k_eff, _loo_k, _k_half, _old_eps_2.back(),
                (_old_k_effs.back() - _old_k_effs.front()) / _old_k_effs.back(),
                _cmfd->getNumIterToConv());
 
