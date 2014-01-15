@@ -1048,11 +1048,12 @@ void Cmfd::computeQuadSrc()
                         }
 
                         // FIXME? 
-                        /*
                         s[0]->setQuadFlux(in[e][5], e, 1);
                         s[0]->setQuadFlux(in[e][6], e, 0);
+                        /*
                         s[0]->setOldQuadFlux(in[e][5], e, 1);
-                        s[0]->setOldQuadFlux(in[e][6], e, 0); */
+                        s[0]->setOldQuadFlux(in[e][6], e, 0); 
+                        */
                     }
                     else if (_bc[0] == VACUUM)
                     {
@@ -1083,9 +1084,9 @@ void Cmfd::computeQuadSrc()
                             in[e][2] = s[2]->getQuadFlux(e,3);
                         }
 
-                        /*
                         s[2]->setQuadFlux(in[e][1], e, 1);
                         s[2]->setQuadFlux(in[e][2], e, 0);
+                        /*
                         s[2]->setOldQuadFlux(in[e][1], e, 1);
                         s[2]->setOldQuadFlux(in[e][2], e, 0);
                         */
@@ -1119,11 +1120,12 @@ void Cmfd::computeQuadSrc()
                             in[e][3] = s[3]->getQuadFlux(e,3);
                         }
 
-                        /*
                         s[3]->setQuadFlux(in[e][4], e, 1);
                         s[3]->setQuadFlux(in[e][3], e, 0); 
+                        /*
                         s[3]->setOldQuadFlux(in[e][4], e, 1);
-                        s[3]->setOldQuadFlux(in[e][3], e, 0); */
+                        s[3]->setOldQuadFlux(in[e][3], e, 0);
+                        */
                     }
                     else if (_bc[3] == VACUUM)
                     {
@@ -1154,11 +1156,12 @@ void Cmfd::computeQuadSrc()
                             in[e][7] = s[1]->getQuadFlux(e,3);
                         }
 
-                        /*
                         s[1]->setQuadFlux(in[e][0], e, 1);
                         s[1]->setQuadFlux(in[e][7], e, 0);
+                        /*
                         s[1]->setOldQuadFlux(in[e][0], e, 1);
-                        s[1]->setOldQuadFlux(in[e][7], e, 0); */
+                        s[1]->setOldQuadFlux(in[e][7], e, 0); 
+                        */
                     }
                     else if (_bc[1] == VACUUM)
                     {
@@ -2556,8 +2559,8 @@ void Cmfd::updateMOCFlux(int moc_iter)
     if (_run_loo)
         under_relax = _damp_factor;
 
-    //double max_range = INFINITY, min_range = -INFINITY;
-    double max_range = 100.0, min_range = 1.0 / max_range; 
+    double max_range = INFINITY, min_range = -INFINITY;
+    //double max_range = 100.0, min_range = 1.0 / max_range; 
 
     double tmp_max = 0, tmp_cmco;
 
@@ -2578,15 +2581,15 @@ void Cmfd::updateMOCFlux(int moc_iter)
             tmp_cmco = new_flux / old_flux;
 
             // Safety precaution: if negative number shows up, force it to zero
-            if (tmp_cmco < 0.0)
+            /*
+            if (tmp_cmco < 0)
             {
-                /*
                 log_printf(WARNING, " iter %d update cell %d energy %d with"
                            " %f / %f = %f", moc_iter, i, e, 
                            new_flux, old_flux, tmp_cmco);
-                */
                 tmp_cmco = 0;
             }
+            */
 
             tmp_max = fabs(new_flux / old_flux - 1.0);
             CMCO[i] += tmp_max;

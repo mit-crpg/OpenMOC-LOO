@@ -46,15 +46,15 @@ Options::Options(int argc, char **argv)
 
     /* Default geometry input file */
     _geometry_file = _relative_path + 
-        "xml-sample/geometry_2x2.xml"; 
+        "xml-sample/geometry_baw_01.xml"; 
     //"xml-sample/geometry_c5g7_cc.xml";
     //"xml-sample/geometry_corner.xml"; % homogeneous material
     _material_file = _relative_path + 
-        "xml-sample/material_simple.xml";
+        "xml-sample/material_baw.xml";
     //"xml-sample/material_c5g7.xml";
 	
-    _track_spacing = 0.05;		/* Default C4 track spacing: 0.05cm */
-    _num_azim = 64;			/* Default C4 # azimuthal angle: 64*/
+    _track_spacing = 0.1;		/* Default C4 track spacing: 0.05cm */
+    _num_azim = 32;			/* Default C4 # azimuthal angle: 64*/
 
     /* MOC options */
     _verbosity = "NORMAL";		/* Default logging level */
