@@ -1655,7 +1655,7 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
 
                 /* Store initial flux for debugging */
                 initial_flux = flux;
-                log_printf(ACTIVE, "Sweeping loop %d forward", j);
+                log_printf(INFO, "Sweeping loop %d forward", j);
 
                 for (int x = _num_track * j; x < _num_track * (j + 1); x++)
                 {
@@ -1747,7 +1747,7 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
                     log_printf(ERROR, "spot unknown BC at surface 1");
 					
                 initial_flux = flux; 
-                log_printf(ACTIVE, "Sweeping loop %d backward", j);
+                log_printf(INFO, "Sweeping loop %d backward", j);
                 for (int x = _num_track * j + _num_track - 1; 
                      x > _num_track * j - 1; x--)
                 {
@@ -1927,7 +1927,7 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
 
         double old_keff = _keff;
         _keff = fis_tot / (abs_tot + leak_tot); 
-        log_printf(DEBUG, "%d: %.10f / (%.10f + %.10f) = %f", 
+        log_printf(ACTIVE, "%d: %.10f / (%.10f + %.10f) = %f", 
                    loo_iter, fis_tot, abs_tot, leak_tot, _keff);
 
         if (_converged)
@@ -2110,7 +2110,7 @@ void Cmfd::normalizeFlux(double normalize)
         {
             i = (_ch - 1) * _cw + x;
             
-            log_printf(ACTIVE, "update cell %d, surface 1", i);
+            log_printf(INFO, "update cell %d, surface 1", i);
             for (int jj = 0; jj < 2; jj++)
             {
                 for (int e = 0; e < _ng; e++)
@@ -2125,7 +2125,7 @@ void Cmfd::normalizeFlux(double normalize)
         for (y = 0; y < _ch; y++)
         {
             i = y * _cw;
-            log_printf(ACTIVE, "update cell %d, surface 0", i);
+            log_printf(INFO, "update cell %d, surface 0", i);
             for (int e = 0; e < _ng; e++)
             {
                 for (int jj = 0; jj < 2; jj++)
@@ -2140,7 +2140,7 @@ void Cmfd::normalizeFlux(double normalize)
         {
             i = y * _cw + _cw - 1;
 
-            log_printf(ACTIVE, "update cell %d, surface 2", i);
+            log_printf(INFO, "update cell %d, surface 2", i);
             for (int e = 0; e < _ng; e++)
             {
                 for (int jj = 0; jj < 2; jj++)
@@ -2154,7 +2154,7 @@ void Cmfd::normalizeFlux(double normalize)
         for (x = 0; x < _cw; x++)
         {
             i = x;
-            log_printf(ACTIVE, "update cell %d, surface 3", i);
+            log_printf(INFO, "update cell %d, surface 3", i);
             for (int e = 0; e < _ng; e++)
             {
                 for (int jj = 0; jj < 2; jj++)
@@ -3003,7 +3003,7 @@ void Cmfd::storePreMOCMeshSource(FlatSourceRegion* fsrs)
         if (_mesh->getMultigroup() == false)
             meshCell->setOldSrc(source_tally / vol_tally_cell, 0);
 
-        log_printf(ACTIVE, "as tracked vol / physical =  %.10f", 
+        log_printf(INFO, "as tracked vol / physical =  %.10f", 
                    vol_tally_cell / meshCell->getWidth() 
                    / meshCell->getHeight());
     }

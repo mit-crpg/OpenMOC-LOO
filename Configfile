@@ -2,9 +2,10 @@ LANGUAGES   += c++
 COMPILEOPTS += -Wall
 COMPILEOPTS += -std=gnu++0x
 COMPILEOPTS += -fopenmp
-COMPILEOPTS += -O2
-COMPILEOPTS += -march=native
-#COMPILEOPTS += -g
+#COMPILEOPTS += -O2
+#COMPILEOPTS += -march=native
+COMPILEOPTS += -g
+LINKOPTS    += -g
 COMPILEOPTS += -I/usr/include/petsc
 COMPILEOPTS += -I/usr/include/petsc/linux-gnu-cxx-debug/include
 COMPILEOPTS += -I/usr/include/petsc/linux-gnu-cxx-opt/include
