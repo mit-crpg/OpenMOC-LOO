@@ -1037,8 +1037,8 @@ void Cmfd::computeQuadSrc()
                     {
                         if (_reflect_outgoing)
                         {
-                            //in[e][5] = out[e][7];
-                            in[e][5] = s[0]->getQuadFlux(e,2);
+                            in[e][5] = out[e][7];
+                            //in[e][5] = s[0]->getQuadFlux(e,2);
                             in[e][6] = out[e][4];
                         }
                         else
@@ -1074,8 +1074,8 @@ void Cmfd::computeQuadSrc()
                     {
                         if (_reflect_outgoing)
                         {
-                            //in[e][1] = out[e][3];
-                            in[e][1] = s[2]->getQuadFlux(e,2);
+                            in[e][1] = out[e][3];
+                            //in[e][1] = s[2]->getQuadFlux(e,2);
                             in[e][2] = out[e][0];
                         }
                         else
@@ -1110,8 +1110,8 @@ void Cmfd::computeQuadSrc()
                     {
                         if (_reflect_outgoing)
                         {
-                            //in[e][4] = out[e][2];
-                            in[e][4] = s[3]->getQuadFlux(e,2);
+                            in[e][4] = out[e][2];
+                            //in[e][4] = s[3]->getQuadFlux(e,2);
                             in[e][3] = out[e][5];
                         }
                         else
@@ -1146,8 +1146,8 @@ void Cmfd::computeQuadSrc()
                     {
                         if (_reflect_outgoing)
                         {
-                            //in[e][0] = out[e][6];
-                            in[e][0] = s[1]->getQuadFlux(e,2);
+                            in[e][0] = out[e][6];
+                            //in[e][0] = s[1]->getQuadFlux(e,2);
                             in[e][7] = out[e][1];
                         }
                         else
