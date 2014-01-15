@@ -1847,13 +1847,16 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
                                 - net_current[i][e] / vol)
                         / meshCell->getSigmaT()[e];
 
+                    if (new_flux < 0)
+                    {
+                        log_printf(ACTIVE, "Cell %d e %d new / old flux"
+                                   " %f/ %f", i, e, 
+                                   new_flux, meshCell->getNewFlux()[e]);
+                        new_flux = 1e-5;
+                    }
+
                     meshCell->setNewFlux(new_flux, e);		       
 
-                    log_printf(ACTIVE, "Cell %d e %d new / old flux"
-                               " %f/ %f = %.10f",
-                               i, e, 
-                               new_flux, meshCell->getNewFlux()[e],
-                               new_flux / meshCell->getNewFlux()[e]);
                 }
             }
         }
@@ -1868,9 +1871,13 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
                     phi_ratio =  sum_quad_flux[i][e] 
                         / meshCell->getSumQuadFlux()[e];
 
-                    log_printf(DEBUG, "Cell %d energy %d scalar flux update "
-                               "by (before normalization) - 1 = %e", 
-                               i, e, phi_ratio - 1.0);
+                    if (phi_ratio < 0)
+                    {
+                        log_printf(ACTIVE, "Cell %d e %d scalar flux update"
+                                   "by (before normalization) = %e", 
+                                   i, e, phi_ratio);
+                        phi_ratio = 1e-5;
+                    }
 
                     new_flux = meshCell->getOldFlux()[e] * phi_ratio;
 
