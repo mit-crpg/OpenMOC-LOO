@@ -21,8 +21,8 @@ simulated by a large neutron absorber.
     <cell id="9" universe="7" material="7" surfaces="21" sectors="8"/>
 
  <!-- PIN 8: MOD, MOD !-->
-    <cell id="11" universe="8" material="6" surfaces="-8" rings = "2" sectors="4"/>
-    <cell id="12" universe="8" material="7" surfaces="8" sectors="8"/>    
+    <cell id="11" universe="8" material="6" surfaces="-18" rings = "2" sectors="4"/>
+    <cell id="12" universe="8" material="7" surfaces="18" sectors="8"/>    
 
     <!-- PIN 9: AIR, MI4, MI9, MI4, COO !-->
     <cell id="13" universe="9" material="8" surfaces="-9" rings="2" sectors="4"/>
@@ -32,8 +32,8 @@ simulated by a large neutron absorber.
     <cell id="17" universe="9" material="12" surfaces="12 -13" rings="2" sectors="8"/>
     <cell id="18" universe="9" material="12" surfaces="13" sectors="8"/>
     <!-- PIN 0: Moderator cell !-->
-    <cell id="19" universe="10" material="1" surfaces="-8" rings="2" sectors="8"/>
-    <cell id="20" universe="10" material="1" surfaces="8" sectors="8"/>
+    <cell id="19" universe="10" material="1" surfaces="-18" rings="2" sectors="8"/>
+    <cell id="20" universe="10" material="1" surfaces="18" sectors="8"/>
 
 
 <!-- ASSEMBLIES, filling -->
