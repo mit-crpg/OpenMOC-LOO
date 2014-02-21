@@ -203,6 +203,7 @@ double Cmfd::computeCellSource()
     MeshCell* meshCell;
     FlatSourceRegion* fsr;
     std::vector<int>::iterator iter;
+    int count = 0;
 
     for (i = 0; i < _cw * _ch; i++)
     {
@@ -227,17 +228,19 @@ double Cmfd::computeCellSource()
             }
         }
 
-        if (old_cell_source[i] > 1e-10)
+        /* check new source */
+        if (_cell_source[i] > 1e-10)
         {
             source_residual[i] = pow(_cell_source[i] / old_cell_source[i] 
                                      - 1.0, 2);
+            count += 1;
         }
         else
             source_residual[i] = 0.0;
     }
 
     l2_norm = pairwise_sum<double>(source_residual, _ch * _cw);
-    l2_norm /= (double) (_ch * _cw * NUM_ENERGY_GROUPS);
+    l2_norm /= (double) count;
     l2_norm = sqrt(l2_norm);
 
     return l2_norm;
