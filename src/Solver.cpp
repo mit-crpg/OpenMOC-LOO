@@ -2193,20 +2193,25 @@ double Solver::computeFsrL2Norm(double *old_fsr_powers)
 {
     double l2_norm = 0.0;
     int num_counted = 0;
+    double source_residual[_num_FSRs];
+
     for (int i = 0; i < _num_FSRs; i++)
     {
-        if (old_fsr_powers[i] > 0.0)
+        if (old_fsr_powers[i] > 1e-10)
         {
             log_printf(INFO, "new power = %f, old power = %f", 
                        _FSRs_to_powers[i], old_fsr_powers[i]);
 
-            l2_norm += pow(_FSRs_to_powers[i] 
+            source_residual[i] = pow(_FSRs_to_powers[i] 
                            / old_fsr_powers[i] - 1.0, 2.0);
             num_counted++;
         }
+        else
+            source_residual[i] = 0;
     }
-    l2_norm /= (double) num_counted;
-    l2_norm = pow(l2_norm, 0.5);
+    l2_norm = pairwise_sum<double>(source_residual, _num_FSRs);
+    l2_norm /= (double) _num_FSRs * NUM_ENERGY_GROUPS;
+    l2_norm = sqrt(l2_norm);
    
     return l2_norm;
 }

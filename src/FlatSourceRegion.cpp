@@ -318,7 +318,7 @@ void FlatSourceRegion::computeRatios() {
  */
 double FlatSourceRegion::computeFissionRate() {
     double power = 0.0;
-    double* sigma_f = _material->getSigmaF();
+    double* sigma_f = _material->getNuSigmaF();
 
     /* Add the fission rates from each energy group */
     for (int e=0; e < NUM_ENERGY_GROUPS; e++)

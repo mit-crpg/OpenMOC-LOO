@@ -13,8 +13,6 @@
 /****** For debugging, NEW means the new implementation with weights *****/
 #define NEW 1
 
-
-
 /******************************************************************************
  ****************************** USER DEFINED **********************************
  *****************************************************************************/
@@ -22,7 +20,7 @@
 // P0 is shorthand for $\sin \theta_p$ for one polar angle.
 // 0.425 works for 4x4 case. 
 #define P0 0.798184
-#define NUM_ENERGY_GROUPS 8
+#define NUM_ENERGY_GROUPS 7
 #define GRP_TIMES_ANG NUM_POLAR_ANGLES*NUM_ENERGY_GROUPS
 
 /* The number of old k_eff values which will be stored. Keeping track of more

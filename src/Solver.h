@@ -17,6 +17,7 @@
 #include <string>
 #include <sstream>
 #include <queue>
+#include "pairwise_sum.h"
 #include "Geometry.h"
 #include "Quadrature.h"
 #include "Track.h"
