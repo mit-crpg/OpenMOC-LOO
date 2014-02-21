@@ -129,6 +129,11 @@ Cmfd::Cmfd(Geometry* geom, Plotter* plotter, Mesh* mesh,
         _any_reflective = false;
 
     _converged = false;
+
+    _cell_source = new double[_cw * _ch];
+
+    for (int i = 0; i < _cw * _ch; i++)
+        _cell_source[i] = 1.0;
 }
 
 /**
@@ -186,6 +191,60 @@ int Cmfd::createAMPhi(PetscInt size1, PetscInt size2, int cells){
 
     return petsc_err;
 }
+
+double Cmfd::computeCellSource()
+{
+    /* initialize variables */
+    int i,e;
+    double volume, flux, nu_fis, l2_norm;
+    double *old_cell_source, *source_residual;
+    old_cell_source = new double[_cw * _ch];
+    source_residual = new double[_cw * _ch];
+    MeshCell* meshCell;
+    FlatSourceRegion* fsr;
+    std::vector<int>::iterator iter;
+
+    for (i = 0; i < _cw * _ch; i++)
+    {
+        /* copy new source into the old one */
+        old_cell_source[i] = _cell_source[i];
+        _cell_source[i] = 0.0;
+
+        meshCell = _mesh->getCells(i);
+
+        /* loop over energy groups */
+        for (e = 0; e < NUM_ENERGY_GROUPS; e++) 
+        {
+            /* loop over FSRs in mesh cell */
+            for (iter = meshCell->getFSRs()->begin(); 
+                 iter != meshCell->getFSRs()->end(); ++iter)
+            {
+                fsr = &_flat_source_regions[*iter];
+                volume = fsr->getVolume();
+                flux = fsr->getFlux()[e];
+                nu_fis = fsr->getMaterial()->getNuSigmaF()[e];
+                _cell_source[i] += nu_fis * flux * volume;
+            }
+        }
+
+        if (old_cell_source[i] > 1e-10)
+        {
+            source_residual[i] = pow(_cell_source[i] / old_cell_source[i] 
+                                     - 1.0, 2);
+        }
+        else
+            source_residual[i] = 0.0;
+    }
+
+    l2_norm = pairwise_sum<double>(source_residual, _ch * _cw);
+    l2_norm /= (double) (_ch * _cw * NUM_ENERGY_GROUPS);
+    l2_norm = sqrt(l2_norm);
+
+    return l2_norm;
+}
+
+
+
 
 /** Computes the cross section for all MeshCells in the Mesh 
  * Create cross sections and fluxes for each cmfd cell by

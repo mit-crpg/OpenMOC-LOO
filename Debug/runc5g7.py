@@ -6,7 +6,7 @@ import os
 
 
 # Control variables: where C4 default is 0.5cm and 64 azimuthal angle
-geometries = ['xml-sample/geometry_c5g7_fine2.xml']
+geometries = ['xml-sample/geometry_c5g7_cc.xml']
 materials = ['xml-sample/material_c5g7.xml']
 ts = [0.1] 
 na = [32]
@@ -29,7 +29,7 @@ for i, geometry in enumerate(geometries):
     # Runs OpenMOC
     for spacing in ts:
         for angle in na:
-            os.system('cd .. && ./bin/openmoc'
+            os.system('cd .. && ./bin2/openmoc'
                       + ' -m ' + materials[i]
                       + ' -g ' + geometry 
                       + ' -na ' + str(angle) 
@@ -37,7 +37,7 @@ for i, geometry in enumerate(geometries):
                       + ' -fc ' + str(fc[0]) 
                       + ' -wc -df 0.7')
 
-            os.system('cd .. && ./bin/openmoc'
+            os.system('cd .. && ./bin2/openmoc'
                       + ' -m ' + materials[i]
                       + ' -g ' + geometry 
                       + ' -na ' + str(angle) 
@@ -45,7 +45,7 @@ for i, geometry in enumerate(geometries):
                       + ' -fc ' + str(fc[0]) 
                       + ' -wl1')
 
-            os.system('cd .. && ./bin/openmoc'
+            os.system('cd .. && ./bin2/openmoc'
                       + ' -m ' + materials[i]
                       + ' -g ' + geometry 
                       + ' -na ' + str(angle) 
@@ -81,21 +81,18 @@ for i, geometry in enumerate(geometries):
         # create numpy arrays
         iteration = np.zeros(num_lines)
         fsr_l2    = np.zeros(num_lines)
-        rho       = np.zeros(num_lines)
 
         # collect data together
         for k, line in enumerate(logfile):
             if k is not 0:
                 iteration[k-1] = line.split()[0]
-                fsr_l2[k-1]    = line.split()[3]
-                rho[k-1]       = line.split()[7]
+                fsr_l2[k-1]    = line.split()[1]
 
         var = []
         var.append(fsr_l2);
-        var.append(rho);
 
         # plotting :)
-        for j in range(2):  
+        for j in range(1):  
             plt.figure(j)
             plt.semilogy(iteration, var[j], ls[counter - 1],
                          color=cm.jet(1.*counter / num),
@@ -108,16 +105,8 @@ for i, geometry in enumerate(geometries):
     # save figure including different configuration of the same geometries.
     plt.figure(0)
     plt.xlabel('# MOC iteration')
-    plt.ylabel('FSR L2 Norm on Fission Source Relative Change')
+    plt.ylabel('L2 Norm on Cell Fission Source Relative Change')
     plt.title('Geometry: %s,'%(geometry[9:-4]) + ' spacing: %s,'%str(ts[0]) 
               + ' #angles: %s'%str(na[0]))
-    plt.savefig(geometry_name + '_fsr_l2.png', bbox_inches='tight')
-    plt.clf()
-
-    plt.figure(1)
-    plt.xlabel('# MOC iteration')
-    plt.ylabel('Spectral Radius (numerical approximation)')
-    plt.title('Geometry: %s,'%(geometry[9:-4]) + ' spacing: %s,'%str(ts[0]) 
-              + ' #angles: %s'%str(na[0]))
-    plt.savefig(geometry_name + '_rho.png', bbox_inches='tight')
+    plt.savefig(geometry_name + '_l2.png', bbox_inches='tight')
     plt.clf()

@@ -17,7 +17,6 @@
 #include <string>
 #include <sstream>
 #include <queue>
-#include "pairwise_sum.h"
 #include "Geometry.h"
 #include "Quadrature.h"
 #include "Track.h"
@@ -152,10 +151,6 @@ public:
     void updateSource();
     void prolongation(int moc_iter);
     void updateBoundaryFluxByQuadrature();
-    void storeFsrFluxPower();
-    double computeFsrL2Norm(double *old_fsr_powers);
-    double computeFsrLinf(double *old_fsr_powers);
-    double computeSpectralRadius(double *old_fsr_powers); 
     void storeMOCBoundaryFlux();
     void zeroVacuumBoundaries();
 
@@ -167,7 +162,7 @@ public:
 
     /* printing and plotting */
     void printToScreen(int moc_iter);
-    void printToLog(int moc_iter, double eps_inf, double eps_2, double rho);
+    void printToLog(int moc_iter, double eps_2);
     void printToMinimumLog(int moc_iter);
     void plotFluxes(int moc_iter);
     void plotPinPowers();

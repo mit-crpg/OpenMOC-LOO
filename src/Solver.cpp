@@ -1053,25 +1053,6 @@ void Solver::plotPinPowers() {
     return;
 }
 
-void Solver::storeFsrFluxPower() {
-
-    log_printf(INFO, "Computing pin powers...");
-    FlatSourceRegion* fsr;
-    double *fluxes;
-
-    /* Loop over all FSRs and compute the fission rate*/
-    for (int i = 0; i < _num_FSRs; i++) 
-    {
-        fsr = &_flat_source_regions[i];
-        _FSRs_to_powers[i] = fsr->computeFissionRate();
-        fluxes = _flat_source_regions[i].getFlux();
-        for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
-            _FSRs_to_fluxes[e][i] = fluxes[e];
-    }
-
-    return;
-}
-
 /*
  * Plot the fluxes for each FSR
  */
@@ -1912,8 +1893,6 @@ void Solver::MOCsweep(int max_iterations, int moc_iter)
             /* Normalize scalar fluxes and computes Q for each FSR */
             updateSource();
 
-            storeFsrFluxPower();
-
             /* Book-keeping: update old source in each FSR */
             double *source, *old_source;
             for (int r = 0; r < _num_FSRs; r++) 
@@ -2189,99 +2168,10 @@ double Solver::runCmfd(int moc_iter)
     return cmfd_keff;
 }
 
-double Solver::computeFsrL2Norm(double *old_fsr_powers)
-{
-    double l2_norm = 0.0;
-    int num_counted = 0;
-    double source_residual[_num_FSRs];
-
-    for (int i = 0; i < _num_FSRs; i++)
-    {
-        if (old_fsr_powers[i] > 1e-10)
-        {
-            log_printf(INFO, "new power = %f, old power = %f", 
-                       _FSRs_to_powers[i], old_fsr_powers[i]);
-
-            source_residual[i] = pow(_FSRs_to_powers[i] 
-                           / old_fsr_powers[i] - 1.0, 2.0);
-            num_counted++;
-        }
-        else
-            source_residual[i] = 0;
-    }
-    l2_norm = pairwise_sum<double>(source_residual, _num_FSRs);
-    l2_norm /= (double) _num_FSRs * NUM_ENERGY_GROUPS;
-    l2_norm = sqrt(l2_norm);
-   
-    return l2_norm;
-}
-
-double Solver::computeFsrLinf(double *old_fsr_powers)
-{
-    double l2_norm = 0.0;
-    double new_norm = 0.0;
-    for (int i = 0; i < _num_FSRs; i++)
-    {
-        if (_FSRs_to_powers[i] > 0.0)
-        {
-            new_norm = fabs((double) old_fsr_powers[i] / 
-                            ((double) _FSRs_to_powers[i]) - 1.0);
-            l2_norm = fmax(new_norm, l2_norm);
-        }
-    }
-    log_printf(DEBUG, "L2 norm = %e", l2_norm);
-    return l2_norm;
-}
-
-double Solver::computeSpectralRadius(double *old_fsr_powers)
-{
-    double l2_norm = 0.0, rho = 0;
-    int num_counted = 0; 
-    //double tmp = 0, tmp_old = 0;
-    for (int i = 0; i < _num_FSRs; i++)
-    {
-        if (old_fsr_powers[i] > 0.0)
-        {
-            log_printf(INFO, "new power = %f, old power = %f", 
-                       _FSRs_to_powers[i], old_fsr_powers[i]);
-
-            l2_norm += pow(_FSRs_to_powers[i] - old_fsr_powers[i], 2.0);
-            num_counted++;
-        }
-    }
-        /*
-        tmp = 0;
-        tmp_old = 0;
-        for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
-        {
-            tmp += _FSRs_to_fluxes[e][i];
-            tmp_old += old_fsr_fluxes[e][i];
-        }
-        l2_norm += pow(tmp - tmp_old, 2.0);
-        */
-
-    l2_norm /= (double) num_counted;
-    l2_norm = pow(l2_norm, 0.5);
-
-    _delta_phi.push(l2_norm);
-    if (_delta_phi.size() == 3)
-        _delta_phi.pop();
-
-    rho = _delta_phi.back() / _delta_phi.front();
-    
-    return rho;
-}
-
 double Solver::kernel(int max_iterations) {
     log_printf(INFO, "Starting kernel ...");
 
-    double spectral_radius, eps_inf, eps_2;
-    double *old_fsr_powers;
-    old_fsr_powers = new double[_num_FSRs];
-    double **old_fsr_fluxes;
-    old_fsr_fluxes = new double*[NUM_ENERGY_GROUPS];
-    for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
-        old_fsr_fluxes[e] = new double[_num_FSRs];
+    double eps_2;
 
     /* Initial guess */
     _old_k_effs.push(_k_eff);
@@ -2303,17 +2193,6 @@ double Solver::kernel(int max_iterations) {
 
     normalizeFlux();
     updateSource();
-
-    /* Computes and store initial FSR powers, store initial fluxes */
-    storeFsrFluxPower();
-
-    /* Stores the initial FSR powers into old_fsr_powers */
-    for (int n = 0; n < _num_FSRs; n++)
-    {
-        old_fsr_powers[n] = _FSRs_to_powers[n];
-        for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
-            old_fsr_fluxes[e][n] = _FSRs_to_fluxes[e][n];
-    }
 
     /* Source iteration loop */
     for (int moc_iter = 0; moc_iter < max_iterations; moc_iter++) 
@@ -2345,29 +2224,17 @@ double Solver::kernel(int max_iterations) {
         if (_old_k_effs.size() == NUM_KEFFS_TRACKED)
             _old_k_effs.pop();
 
-        storeFsrFluxPower();
-
-        spectral_radius = computeSpectralRadius(old_fsr_powers);
-        eps_inf = computeFsrLinf(old_fsr_powers);
-        eps_2 = computeFsrL2Norm(old_fsr_powers);
+        eps_2 = _cmfd->computeCellSource();
 
         _old_eps_2.push(eps_2);
         if (_old_eps_2.size() == NUM_KEFFS_TRACKED)
             _old_eps_2.pop();
 
-        /* book-keeping: save fsr fluxes and powers into old */
-        for (int n = 0; n < _num_FSRs; n++)
-        {
-            old_fsr_powers[n] = _FSRs_to_powers[n];
-            for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
-                old_fsr_fluxes[e][n] = _FSRs_to_fluxes[e][n];
-        }
-
         /* Prints out keff & eps, may update keff too based on _update_keff */
         /* FIXME: the following line generates a bad read in
          * Valgrine */
         printToScreen(moc_iter);
-        printToLog(moc_iter, eps_inf, eps_2, spectral_radius);
+        printToLog(moc_iter, eps_2);
 
         /* Alternative: if (_cmfd->getL2Norm() < _moc_conv_thresh) */
         if (eps_2 < _moc_conv_thresh) 
@@ -2389,7 +2256,7 @@ double Solver::kernel(int max_iterations) {
 
             return _k_eff;
         }
-        else if (eps_2 > 10) 
+        else if (eps_2 > 2) 
         {
             printToMinimumLog(moc_iter);
             plotEverything(moc_iter);
@@ -2398,17 +2265,10 @@ double Solver::kernel(int max_iterations) {
                        "  Something bad happens. May need damping.");
             return _k_eff;
         }
-
-
     }
 
     log_printf(WARNING, "Unable to converge the source after %d iterations",
                max_iterations);
-
-    delete[] old_fsr_powers;
-    for (int i = 0; i < NUM_ENERGY_GROUPS; i++)
-        delete[] old_fsr_fluxes[i];
-    delete[] old_fsr_fluxes;
 
     return _k_eff;
 }
@@ -2459,7 +2319,7 @@ void Solver::printToMinimumLog(int moc_iter)
 }
 
 
-void Solver::printToLog(int moc_iter, double eps_inf, double eps_2, double rho)
+void Solver::printToLog(int moc_iter, double eps_2)
 {
     std::ofstream logfile;
 
@@ -2467,26 +2327,22 @@ void Solver::printToLog(int moc_iter, double eps_inf, double eps_2, double rho)
     {
         logfile.open(_log_file.c_str(), std::fstream::trunc);
         logfile << "# iteration,"
+                << " cell l2 norm (m, m+1),"
                 << " cell l2 norm (m+1/2, m+1),"
-                << " fsr l-inf norm (m, m+1),"
-                << " fsr l2 norm (m, m+1)," 
                 << " keff relative change,"
                 << " #lo iterations, "
-                << " keff,"
-                << " spectral radius"
+                << " keff"
                 << std::endl;
     }
     else
     {
         logfile.open(_log_file.c_str(), std::ios::app);
         logfile << moc_iter 
-                << " " << _cmfd->getL2Norm() 
-                << " " << eps_inf
                 << " " << eps_2
+                << " " << _cmfd->getL2Norm() 
                 << " " << 1.0 -  _old_k_effs.front() / _old_k_effs.back()
                 << " " << _cmfd->getNumIterToConv() 
                 << " " << std::setprecision(11) << _old_k_effs.back()
-                << " " << rho
                 << std::endl;
     }
 

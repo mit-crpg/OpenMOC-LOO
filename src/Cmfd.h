@@ -19,6 +19,7 @@
 #include <queue>
 #include <iostream>
 #include <fstream>
+#include "pairwise_sum.h"
 #include "Track.h"
 #include "TrackGenerator.h"
 #include "Geometry.h"
@@ -80,6 +81,7 @@ private:
     double _l2_norm;
     double _l2_norm_conv_thresh;
     double _spacing;
+    double *_cell_source;
     bool _use_diffusion_correction;
     bool _run_loo;
     bool _run_loo_psi;
@@ -90,6 +92,7 @@ private:
     bool _update_boundary;
     bool _reflect_outgoing;
     bool _converged;
+
 public:
     Cmfd(Geometry* geom, Plotter* plotter, Mesh* mesh, 
          TrackGenerator *track_generator, Options *opts);
@@ -108,6 +111,7 @@ public:
     void computeXS();
     void computeXS_old();	
     void updateMOCFlux(int moc_iter);
+    double computeCellSource();
 
     /* CMFD */
     void computeCurrent();

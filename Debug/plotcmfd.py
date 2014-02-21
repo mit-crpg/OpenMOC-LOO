@@ -57,20 +57,17 @@ for file in l2_norm_files:
     # create numpy arras
     iteration = np.zeros(num_lines)
     fsr_l2    = np.zeros(num_lines)
-    rho       = np.zeros(num_lines)
 
     for i, line in enumerate(logfile):
         if i is not 0:
             iteration[i-1] = line.split()[0]
-            fsr_l2[i-1]    = line.split()[3]
-            rho[i-1]       = line.split()[7]
+            fsr_l2[i-1]    = line.split()[1]
 
     # plot l2 norm
     var = [];
     var.append(fsr_l2);
-    var.append(rho);
 
-    for j in range(2):
+    for j in range(1):
         plt.figure(j)
         plt.semilogy(iteration, var[j], ls[counter-1], 
                      color=cm.jet(1.*counter/num), 
@@ -88,18 +85,7 @@ plt.title('Geometry: %s,'%(printgeometry) + ' spacing: %s cm,'%str(ts)
           + ' #angles: %s'%str(na))
 
 if flag == '':
-    plt.savefig(geometry_name + '_fsr_l2' +  '.png', bbox_inches='tight')
+    plt.savefig(geometry_name + '_l2' +  '.png', bbox_inches='tight')
 else:
-    plt.savefig(geometry_name + '_fsr_l2_' + flag + '.png', bbox_inches='tight')
-plt.clf()
-
-plt.figure(1)
-plt.xlabel('# MOC iteration')
-plt.ylabel('Apparent Spectral Radius')
-plt.title('Geometry: %s,'%(printgeometry) + ' spacing: %s cm,'%str(ts) 
-          + ' #angles: %s'%str(na))
-if flag == '':
-    plt.savefig(geometry_name + '_rho' + '.png', bbox_inches='tight')
-else:
-    plt.savefig(geometry_name + '_rho_' + flag + '.png', bbox_inches='tight')
+    plt.savefig(geometry_name + '_l2_' + flag + '.png', bbox_inches='tight')
 plt.clf()
