@@ -732,33 +732,40 @@ void Solver::updateBoundaryFluxByQuadrature()
                         surf1 = surf_id - 4;
                         surf2 = surf1 + 8 * _cw;
                     }
-                    else if (y == _ch) /* bottom row */
+                    else if (y == _ch - 1) /* bottom row */
                     {
                         surf1 = surf_id - 3;
                         surf2 = surf2 - 8;
                     }
                     else
-                        log_printf(ERROR, "something went wrong");
+                    {
+                        log_printf(ERROR, "boundary update fail in cell %d"
+                                   " (x: %d y: %d) corner %d", cell_id, 
+                                   x, y, corner_id);
+                    }
                 }
                 else if (corner_id < 6)
                 {
-                    if (x == _cw) /* right column */
+                    if (x == _cw - 1) /* right column */
                     {
                         surf1 = surf_id - 3;
                         surf2 = surf1 + 8 * _cw;
                     }
-                    else if (y == _ch) /* bottom row */
+                    else if (y == _ch - 1) /* bottom row */
                     {
                         surf1 = surf_id - 4;
                         surf2 = surf1 + 8;
                     }
                     else
-                        log_printf(ERROR, "unexpected corner condition"
-                                   " in updating boundary flux");
+                    {
+                        log_printf(ERROR, "boundary update fail in cell %d"
+                                   " (x: %d y: %d) corner %d", cell_id, 
+                                   x, y, corner_id);
+                    }
                 }
                 else if (corner_id < 7)
                 {
-                    if (x == _cw) /* right column */
+                    if (x == _cw - 1) /* right column */
                     {
                         surf1 = surf_id - 4;
                         surf2 = surf1 - 8 * _cw;
@@ -769,8 +776,11 @@ void Solver::updateBoundaryFluxByQuadrature()
                         surf2 = surf1 + 8;
                     }
                     else
-                        log_printf(ERROR, "unexpected corner condition"
-                                   " in updating boundary flux");
+                    {
+                        log_printf(ERROR, "boundary update fail in cell %d"
+                                   " (x: %d y: %d) corner %d", cell_id, 
+                                   x, y, corner_id);
+                    }
                 }
                 else
                 {
@@ -785,8 +795,11 @@ void Solver::updateBoundaryFluxByQuadrature()
                         surf2 = surf1 - 8;
                     }
                     else
-                        log_printf(ERROR, "unexpected corner condition"
-                                   " in updating boundary flux");
+                    {
+                        log_printf(ERROR, "boundary update fail in cell %d"
+                                   " (x: %d y: %d) corner %d", cell_id, 
+                                   x, y, corner_id);
+                    }
                 }
 
 
