@@ -721,7 +721,7 @@ void Solver::updateBoundaryFluxByQuadrature()
                         (corner_id ==1)))
                     break;
 
-                int surf1, surf2;
+                int surf1 = surf_id, surf2 = surf_id;
 
                 if (corner_id < 4)
                 {
@@ -738,7 +738,7 @@ void Solver::updateBoundaryFluxByQuadrature()
                     else if (y == _ch - 1) /* bottom row */
                     {
                         surf1 = surf_id - 3;
-                        surf2 = surf2 - 8;
+                        surf2 = surf1 - 8;
                     }
                     else
                     {
