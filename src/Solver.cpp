@@ -705,17 +705,20 @@ void Solver::updateBoundaryFluxByQuadrature()
                 int x = cell_id % _cw; 
 
 
-                if ((x == 0) && (_geom->getMesh()->getBoundary(0) == VACUUM) 
-                    && ((corner_id == 4) || (corner_id == 7)))
+                if ((x == 0) && (_geom->getMesh()->getBoundary(0) == VACUUM) &&
+                    ((corner_id == 4) || (corner_id == 7) || (corner_id == 0)))
                     break;
-                if ((x == _cw) && (_geom->getMesh()->getBoundary(2) == VACUUM)
-                    && ((corner_id == 5) || (corner_id == 6)))
+                if ((x == _cw - 1) 
+                    && (_geom->getMesh()->getBoundary(2) == VACUUM)&&
+                    ((corner_id == 5) || (corner_id == 6) || (corner_id == 2)))
                     break;
-                if ((y == 0) && (_geom->getMesh()->getBoundary(3) == VACUUM)
-                    && ((corner_id == 6) || (corner_id == 7)))
+                if ((y == 0) && (_geom->getMesh()->getBoundary(3) == VACUUM) &&
+                    ((corner_id == 6) || (corner_id == 7) || (corner_id == 3)))
                     break;
-                if ((y == _ch) && (_geom->getMesh()->getBoundary(1) == VACUUM) 
-                    && ((corner_id == 4) || (corner_id == 5)))
+                if ((y == _ch - 1) 
+                    && (_geom->getMesh()->getBoundary(1) == VACUUM)
+                    && ((corner_id == 4) || (corner_id == 5) || 
+                        (corner_id ==1)))
                     break;
 
                 int surf1, surf2;
