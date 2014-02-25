@@ -385,7 +385,7 @@ void Solver::initializeFSRs()
  */
 void Solver::initializeTrackFluxes(double flux) {
 
-    log_printf(INFO, "Setting all track polar fluxes to zero...");
+    log_printf(INFO, "Setting all track polar fluxes to %f...", flux);
 
     double* polar_fluxes;
 
@@ -397,9 +397,41 @@ void Solver::initializeTrackFluxes(double flux) {
     for (int i = 0; i < _num_azim; i++) {
         for (int j = 0; j < _num_tracks[i]; j++) {
             polar_fluxes = _tracks[i][j].getPolarFluxes();
+            double x0 = _tracks[i][j].getStart()->getX();
+            double y0 = _tracks[i][j].getStart()->getY();
+            double x1 = _tracks[i][j].getEnd()->getX();
+            double y1 = _tracks[i][j].getEnd()->getY();
 
-            for (int i = 0; i < GRP_TIMES_ANG * 2; i++)
-                polar_fluxes[i] = flux;
+            /* forward */
+            for (int i = 0; i < GRP_TIMES_ANG; i++)
+            {
+                if (((_geom->getMesh()->getBoundary(0) == VACUUM) 
+                     && (x0 < 1e-8)) ||
+                    ((_geom->getMesh()->getBoundary(2) == VACUUM) 
+                     && (x0 > _geom->getWidth() - 1e-5)) ||
+                    ((_geom->getMesh()->getBoundary(1) == VACUUM) 
+                     && (y0 < 1e-8)) ||
+                    ((_geom->getMesh()->getBoundary(3) == VACUUM) 
+                     && (y0 > _geom->getWidth() - 1e-5)))
+                    polar_fluxes[i] = 0;
+                else
+                    polar_fluxes[i] = flux;
+            }
+            for (int i = GRP_TIMES_ANG; i < GRP_TIMES_ANG * 2; i++)
+            {
+                if (((_geom->getMesh()->getBoundary(0) == VACUUM) 
+                     && (x1 < 1e-8)) ||
+                    ((_geom->getMesh()->getBoundary(2) == VACUUM) 
+                     && (x1 > _geom->getWidth() - 1e-5)) ||
+                    ((_geom->getMesh()->getBoundary(1) == VACUUM) 
+                     && (y1 < 1e-8)) ||
+                    ((_geom->getMesh()->getBoundary(3) == VACUUM) 
+                     && (y1 > _geom->getWidth() - 1e-5)))
+                    polar_fluxes[i] = 0;
+                else
+                    polar_fluxes[i] = flux;
+            }
+            
         }
     }
 }
@@ -662,7 +694,7 @@ void Solver::updateBoundaryFluxByQuadrature(int moc_iter)
     MeshSurface *meshSurface1, *meshSurface2;
     MeshSurface **meshSurfaces;  
     double phi, factor;
-    int ind, num_segments, pe, surf_id, num_updated = 0;
+    int ind, this_ind, num_segments, pe, surf_id, num_updated = 0;
 
     meshSurfaces = _geom->getMesh()->getSurfaces();
 
@@ -681,10 +713,12 @@ void Solver::updateBoundaryFluxByQuadrature(int moc_iter)
              if (phi < PI / 2.0) 
              {
                  ind = 1; 
+                 this_ind = 0;
              }
              else 
              {
                  ind = 0;
+                 this_ind = 0;
              }
 
             /* Forward direction is 0, backward is 1 */
@@ -704,24 +738,66 @@ void Solver::updateBoundaryFluxByQuadrature(int moc_iter)
                 int y = cell_id / _cw;
                 int x = cell_id % _cw; 
 
+#if 0
                 /* FIXME: need to comment out to get c5g7_cc working */
-                if (moc_iter < -1)
+                if (moc_iter > -1)
                 {
                 if ((x == 0) && (_geom->getMesh()->getBoundary(0) == VACUUM) &&
                     (corner_id == 0))
+                {
+                    if (meshSurfaces[surf_id]->getOldQuadFlux(0,ind) > 1e-8)
+                    {
+                        log_printf(NORMAL, "cell %d (%d %d) surface %d has old"
+                                   " flux %f new flux %f", 
+                                   cell_id, x, y, corner_id, 
+                                   meshSurfaces[surf_id]->getOldQuadFlux(0,ind),
+                                   meshSurfaces[surf_id]->getQuadFlux(0,ind));
+                    }
                     break;
+                }
                 if ((x == _cw - 1) 
                     && (_geom->getMesh()->getBoundary(2) == VACUUM) &&
                     (corner_id == 2))
+                    {
+                        log_printf(NORMAL, "cell %d (%d %d) surface %d has old"
+                                   " flux %f new flux %f, this index %f %f", 
+                                   cell_id, x, y, corner_id, 
+                                   meshSurfaces[surf_id]->getOldQuadFlux(0,ind),
+                                   meshSurfaces[surf_id]->getQuadFlux(0,ind),
+                                   meshSurfaces[surf_id]->getOldQuadFlux(0, this_ind),
+                                   meshSurfaces[surf_id]->getQuadFlux(0,this_ind)
+                            );
+                    }
                     break;
                 if ((y == 0) && (_geom->getMesh()->getBoundary(3) == VACUUM) &&
                     (corner_id == 3))
+                    {
+                        log_printf(NORMAL, "cell %d (%d %d) surface %d has old"
+                                   " flux %f new flux %f, this index %f %f", 
+                                   cell_id, x, y, corner_id, 
+                                   meshSurfaces[surf_id]->getOldQuadFlux(0,ind),
+                                   meshSurfaces[surf_id]->getQuadFlux(0,ind),
+                                   meshSurfaces[surf_id]->getOldQuadFlux(0, this_ind),
+                                   meshSurfaces[surf_id]->getQuadFlux(0,this_ind)
+                            );
+                    }
                     break;
                 if ((y == _ch - 1) 
                     && (_geom->getMesh()->getBoundary(1) == VACUUM)
                     && (corner_id ==1))
+                    {
+                        log_printf(NORMAL, "cell %d (%d %d) surface %d has old"
+                                   " flux %f new flux %f, this index %f %f", 
+                                   cell_id, x, y, corner_id, 
+                                   meshSurfaces[surf_id]->getOldQuadFlux(0,ind),
+                                   meshSurfaces[surf_id]->getQuadFlux(0,ind),
+                                   meshSurfaces[surf_id]->getOldQuadFlux(0, this_ind),
+                                   meshSurfaces[surf_id]->getQuadFlux(0,this_ind)
+                            );
+                    }
                     break;
                 }
+#endif
 
                 int surf1 = surf_id, surf2 = surf_id;
 
@@ -2226,7 +2302,10 @@ double Solver::kernel(int max_iterations) {
 
     /* Set scalar flux to unity for each region */
     oneFSRFluxOldSource();
+
+    /* FIXME: */
     initializeTrackFluxes(ONE_OVER_FOUR_PI);
+    //initializeTrackFluxes(0.0);
 
     normalizeFlux();
     updateSource();
