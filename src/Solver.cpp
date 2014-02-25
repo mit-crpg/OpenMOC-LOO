@@ -603,7 +603,7 @@ void Solver::prolongation(int moc_iter)
                 log_printf(ACTIVE, " iter %d boundary angular flux "
                            "prolongation: by quadrature",
                            moc_iter);
-                updateBoundaryFluxByQuadrature();
+                updateBoundaryFluxByQuadrature(moc_iter);
                 //_cmfd->updateBoundaryFluxByScalarFlux(moc_iter);
                 //_cmfd->updateBoundaryFluxBySrc(moc_iter);
                 //_cmfd->updateBoundaryFluxByNetCurrent(moc_iter);
@@ -655,7 +655,7 @@ void Solver::storeMOCBoundaryFlux()
 }
 
 
-void Solver::updateBoundaryFluxByQuadrature()
+void Solver::updateBoundaryFluxByQuadrature(int moc_iter)
 {
     Track *track;
     segment *seg;
@@ -704,22 +704,24 @@ void Solver::updateBoundaryFluxByQuadrature()
                 int y = cell_id / _cw;
                 int x = cell_id % _cw; 
 
-
+                /* FIXME: need to comment out to get c5g7_cc working */
+                if (moc_iter < -1)
+                {
                 if ((x == 0) && (_geom->getMesh()->getBoundary(0) == VACUUM) &&
-                    ((corner_id == 4) || (corner_id == 7) || (corner_id == 0)))
+                    (corner_id == 0))
                     break;
                 if ((x == _cw - 1) 
-                    && (_geom->getMesh()->getBoundary(2) == VACUUM)&&
-                    ((corner_id == 5) || (corner_id == 6) || (corner_id == 2)))
+                    && (_geom->getMesh()->getBoundary(2) == VACUUM) &&
+                    (corner_id == 2))
                     break;
                 if ((y == 0) && (_geom->getMesh()->getBoundary(3) == VACUUM) &&
-                    ((corner_id == 6) || (corner_id == 7) || (corner_id == 3)))
+                    (corner_id == 3))
                     break;
                 if ((y == _ch - 1) 
                     && (_geom->getMesh()->getBoundary(1) == VACUUM)
-                    && ((corner_id == 4) || (corner_id == 5) || 
-                        (corner_id ==1)))
+                    && (corner_id ==1))
                     break;
+                }
 
                 int surf1 = surf_id, surf2 = surf_id;
 
@@ -824,14 +826,14 @@ void Solver::updateBoundaryFluxByQuadrature()
 
                 for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
                 {
-                    if (meshSurface1->getOldQuadFlux(e, ind) < 0)
+                    if (meshSurface2->getOldQuadFlux(e, ind) < 1e-8)
                     {		
                         pe += NUM_POLAR_ANGLES;
                     }
-                    /* If old quad fluxes are all 0s, set them to new ones */
+                    /*
                     else if (meshSurface1->getOldQuadFlux(e,ind) < 1e-8)
                     {
-                        factor = 0.5 * (meshSurface1->getQuadFlux(e, ind) + 
+                        factor = 0.5 * (meshSurface2->getQuadFlux(e, ind) + 
                                         meshSurface2->getQuadFlux(e, ind));
                         for (int p = 0; p < NUM_POLAR_ANGLES; p++)
                         {
@@ -840,6 +842,7 @@ void Solver::updateBoundaryFluxByQuadrature()
                             num_updated++;
                         }
                     }
+                    */
                     else
                     {
                         factor = 0.5 * (meshSurface1->getQuadFlux(e, ind)
