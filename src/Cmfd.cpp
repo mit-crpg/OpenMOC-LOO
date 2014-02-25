@@ -203,7 +203,7 @@ double Cmfd::computeCellSource()
     MeshCell* meshCell;
     FlatSourceRegion* fsr;
     std::vector<int>::iterator iter;
-    int count = 0;
+    int counter = 0;
 
     for (i = 0; i < _cw * _ch; i++)
     {
@@ -233,14 +233,14 @@ double Cmfd::computeCellSource()
         {
             source_residual[i] = pow(_cell_source[i] / old_cell_source[i] 
                                      - 1.0, 2);
-            count += 1;
+            counter += 1;
         }
         else
             source_residual[i] = 0.0;
     }
 
     l2_norm = pairwise_sum<double>(source_residual, _ch * _cw);
-    l2_norm /= (double) count;
+    l2_norm /= (double) (counter);
     l2_norm = sqrt(l2_norm);
 
     return l2_norm;
@@ -1329,6 +1329,8 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter)
     else
         max_outer = 200;
 
+    int min_outer = 5;
+
     /* create old source and residual vectors */
     petsc_err = VecCreateSeq(PETSC_COMM_WORLD, _ch * _cw * _ng, &sold);
     petsc_err = VecCreateSeq(PETSC_COMM_WORLD, _ch * _cw * _ng, &snew);
@@ -1481,9 +1483,7 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter)
 
         /* check for convergence for the CMFD iterative solver using 
          * _l2_norm_conv_thresh as criteria */
-        if ((iter > 5) && (eps < _l2_norm_conv_thresh))
-        {
-            log_printf(NORMAL, "CMFD converge at %d", eps);
+        if ((iter > min_outer) && (eps < _l2_norm_conv_thresh))
             break;
         }
     }
@@ -1580,11 +1580,11 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
     else
         log_printf(ERROR, "Neither LOO psi nor phi is requested.");
 
-    int loo_iter, max_outer = 200; 
+    int loo_iter, max_outer = 500; 
 
     /* we set min_outer to make sure the low order system's
      * convergence criteria is sufficiently tight */ 
-    int min_outer = 20;
+    int min_outer = 5;
 
     if (moc_iter == 10000)
     {

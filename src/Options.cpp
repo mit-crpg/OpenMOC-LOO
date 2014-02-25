@@ -23,8 +23,8 @@
 Options::Options(int argc, char **argv) 
 {
     /* convergence options */
-    _l2_norm_conv_thresh = 1e-10; /* convergence on acceleration iteration */
-    _moc_conv_thresh = 1e-8;      /* convergence on MOC sweeps */
+    _moc_conv_thresh = 1e-6;      /* convergence on MOC sweeps */
+    _l2_norm_conv_thresh = 1e-8; /* convergence on acceleration iteration */
 
     /* most important acceleration options */
     _acc_after_MOC_converge = false;
@@ -46,12 +46,12 @@ Options::Options(int argc, char **argv)
 
     /* Default geometry input file */
     _geometry_file = _relative_path + 
-        "xml-sample/geometry_baw_01.xml"; 
-    //"xml-sample/geometry_c5g7_cc.xml";
+        //"xml-sample/geometry_baw_01.xml"; 
+        "xml-sample/geometry_c5g7_cc.xml";
     //"xml-sample/geometry_corner.xml"; % homogeneous material
     _material_file = _relative_path + 
-        "xml-sample/material_baw.xml";
-    //"xml-sample/material_c5g7.xml";
+        //"xml-sample/material_baw.xml";
+        "xml-sample/material_c5g7.xml";
 	
     _track_spacing = 0.1;		/* Default C4 track spacing: 0.05cm */
     _num_azim = 32;			/* Default C4 # azimuthal angle: 64*/

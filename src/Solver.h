@@ -150,7 +150,7 @@ public:
     void renormCurrents(Mesh* mesh, double keff);
     void updateSource();
     void prolongation(int moc_iter);
-    void updateBoundaryFluxByQuadrature();
+    void updateBoundaryFluxByQuadrature(int moc_iter);
     void storeMOCBoundaryFlux();
     void zeroVacuumBoundaries();
 
