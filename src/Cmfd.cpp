@@ -615,6 +615,7 @@ void Cmfd::computeDsxDirection(double x, double y, int e, MeshCell *meshCell,
 
     }
 
+#if 0
     /* if abs(d_tilde) > abs(d_hat), make them equal in magnitude */
     if (fabs(d_tilde) > fabs(d_hat))
     {
@@ -634,6 +635,7 @@ void Cmfd::computeDsxDirection(double x, double y, int e, MeshCell *meshCell,
             d_tilde = - current/(2*flux_next*meshCell->getHeight());
         }
     }
+#endif
 
 
     log_printf(DEBUG, "cell: %f, group: %i, side: LEFT,"
@@ -745,6 +747,7 @@ void Cmfd::computeDs()
 
                 log_printf(DEBUG, "cell: %i, group: %i, side:  RIGHT, current: %f, dhat: %f, dtilde: %f", y*_cw + x, e, current, d_hat, d_tilde);
 
+#if 0
                 /* if abs(d_tilde) > abs(d_hat) -> make them equal to each other */
                 if (fabs(d_tilde) > fabs(d_hat)){
                     log_printf(INFO, "correcting Ds: RIGHT  group: %i, x: %i, y: %i, dh: %f, dt: %f, c: %f", e, x, y, d_hat, d_tilde, current);
@@ -759,7 +762,7 @@ void Cmfd::computeDs()
                         d_tilde = - current/(2*flux*meshCell->getHeight());
                     }
                 }
-
+#endif
                 /* set d_hat and d_tilde */
                 d_tilde = meshCell->getMeshSurfaces(2)->getDTilde()[e] 
                     * (1.0 - dt_weight) + dt_weight * d_tilde;
@@ -829,6 +832,8 @@ void Cmfd::computeDs()
 
                 log_printf(DEBUG, "cell: %i, group: %i, side: BOTTOM, current: %f, dhat: %f, dtilde: %f", y*_cw + x, e, current, d_hat, d_tilde);
 
+
+#if 0
                 /* if abs(d_tilde) > abs(d_hat) -> make them equal to each other */
                 if (fabs(d_tilde) > fabs(d_hat)){
                     log_printf(INFO, "correcting Ds: BOTTOM group: %i, x: %i, y: %i, dh: %f, dt: %f, c:%f", e, x, y, d_hat, d_tilde, current);
@@ -843,6 +848,7 @@ void Cmfd::computeDs()
                         d_tilde = - current/(2*flux*meshCell->getWidth());
                     }
                 }
+#endif
 
                 /* set d_hat and d_tilde */
                 d_tilde = meshCell->getMeshSurfaces(1)->getDTilde()[e] 
@@ -910,6 +916,7 @@ void Cmfd::computeDs()
 
                 log_printf(DEBUG, "cell: %i, group: %i, side:    TOP, current: %f, dhat: %f, dtilde: %f", y*_cw + x, e, current, d_hat, d_tilde);
 
+#if 0
                 /* if abs(d_tilde) > abs(d_hat) -> make them equal to each other */
                 if (fabs(d_tilde) > fabs(d_hat)){
                     log_printf(INFO, "correcting Ds: TOP    group: %i, x: %i, y: %i, dh: %f, dt: %f, c:%f", e, x, y, d_hat, d_tilde, current);
@@ -924,7 +931,7 @@ void Cmfd::computeDs()
                         d_tilde = - current/(2*flux_next*meshCell->getWidth());
                     }
                 }
-
+#endif
                 /* set d_hat and d_tilde */
                 d_tilde = meshCell->getMeshSurfaces(3)->getDTilde()[e] 
                     * (1.0 - dt_weight) + dt_weight * d_tilde;
@@ -1323,7 +1330,7 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter)
     if (solveMethod == DIFFUSION)
         max_outer = 1000;
     else
-        max_outer = 200;
+        max_outer = 500;
 
     int min_outer = 5;
 
