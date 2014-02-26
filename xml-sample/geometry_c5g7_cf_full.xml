@@ -32,10 +32,12 @@ simulated by a large neutron absorber.
     <cell id="26" universe="6" material="6" surfaces="-5"/>
     <cell id="27" universe="6" material="7" surfaces="5"/>
     
-    <!-- Moderator cell !-->
-    <cell id="53" universe="7" material="7" surfaces=""/>
+  <!-- Moderator cell !-->
+  <cell id="53" universe="117" material="7" surfaces=""/>
+  <cell id="253" universe="7" fill="227" surfaces=""/>
 
-    <!-- FUEL ASSEMBLIES -->
+<!-- FUEL ASSEMBLIES -->
+
     <!-- top left, bottom right -->
     <cell id="44" universe="10" fill="14" surfaces="" />
 
@@ -136,33 +138,43 @@ simulated by a large neutron absorber.
         </universes>
     </lattice>
 
+    <lattice id="227">
+        <type>rectangular</type>
+        <dimension>3 3</dimension>
+        <width>0.42 0.42</width>
+        <universes>                                                                       117 117 117 
+          117 117 117
+          117 117 117
+        </universes>
+    </lattice>
+
+
+
 
 <!-- FULL CORE -->
-
-    
     <!-- 3 x 3 core -->
     <lattice id="18">
         <type>rectangular</type>
-        <dimension>4 4</dimension>
+        <dimension>6 6</dimension>
         <width>21.42 21.42</width>
         <universes>
-          10 11 11 10 
-          11 10 10 11
-          11 10 10 11
-          10 11 11 10
+          12 12 12 12 12 12
+          12 10 11 11 10 12
+          12 11 10 10 11 12
+          12 11 10 10 11 12
+          12 10 11 11 10 12
+          12 12 12 12 12 12
         </universes>
     </lattice>
     
     
     <!-- Definition of Surfaces -->
-    <surface id="1" type="x-plane" coeffs="-42.84" boundary="vacuum" />
-    <surface id="2" type="x-plane" coeffs="42.84" boundary="vacuum" />
-    <surface id="3" type="y-plane" coeffs="-42.84" boundary="vacuum" />
-    <surface id="4" type="y-plane" coeffs="42.84" boundary="vacuum"/>
+    <surface id="1" type="x-plane" coeffs="-64.26" boundary="vacuum" />
+    <surface id="2" type="x-plane" coeffs="64.26" boundary="vacuum" />
+    <surface id="3" type="y-plane" coeffs="-64.26" boundary="vacuum" />
+    <surface id="4" type="y-plane" coeffs="64.26" boundary="vacuum"/>
     <surface id="5" type="circle" coeffs="0.0 0.0 0.54" />
-    <surface id="6" type="circle" coeffs="0.0 0.0 0.57" />
-    <surface id="7" type="circle" coeffs="0.0 0.0 0.60" />
-    <surface id="8" type="circle" coeffs="0.0 0.0 0.63" />
-    <surface id="9" type="circle" coeffs="0.0 0.0 0.66" />
     
 </geometry>
+
+

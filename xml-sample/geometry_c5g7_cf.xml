@@ -33,26 +33,21 @@ simulated by a large neutron absorber.
     <cell id="27" universe="6" material="7" surfaces="5"/>
     
   <!-- Moderator cell !-->
-  <cell id="53" universe="7" material="7" surfaces=""/>
+  <cell id="53" universe="117" material="7" surfaces=""/>
+  <cell id="253" universe="7" fill="227" surfaces=""/>
 
 <!-- FUEL ASSEMBLIES -->
 
     <!-- top left, bottom right -->
-    <cell id="44" universe="10" fill="34" surfaces="" />
+    <cell id="44" universe="10" fill="14" surfaces="" />
 
     <!-- top right, bottom left -->
     <cell id="45" universe="11" fill="15" surfaces="" />
 
 <!-- MODERATOR ASSEMBLIES -->
     
-    <!-- moderator lattice, coarsely spaced cells -->
-    <cell id="46" universe="13" fill="16" surfaces="" />
-
-    <!-- moderator lattice, semi-finely spaced cells -->
-    <cell id="47" universe="14" fill="17" surfaces="" />
-
-    <!-- Moderator lattice - semi finely spaced !-->
-    <cell id="48" universe="12" fill="24" surfaces="" />
+    <!-- moderator -->
+    <cell id="46" universe="12" fill="16" surfaces="" />
 
 <!-- FULL GEOMETRY -->
 
@@ -63,7 +58,7 @@ simulated by a large neutron absorber.
     
     <!-- Definition of Lattices -->
     <!-- Top left, bottom right 17 x 17 assemblies !-->
-    <lattice id="34">
+    <lattice id="14">
         <type>rectangular</type>
         <dimension>17 17</dimension>
         <width>1.26 1.26</width>
@@ -117,7 +112,7 @@ simulated by a large neutron absorber.
 
 <!-- MODERATOR ASSEMBLIES -->
 
-    <!-- coarsely spaced: 17x17 water pins, represent lattice universe 13 -->
+    <!-- Top right, bottom left 17 x 17 assemblies !-->
     <lattice id="16">
         <type>rectangular</type>
         <dimension>17 17</dimension>
@@ -143,77 +138,39 @@ simulated by a large neutron absorber.
         </universes>
     </lattice>
 
-    <!-- semi-finely spaced: 17x17 water pins, represent lattice universe 14 -->
-    <lattice id="17">
+    <lattice id="227">
         <type>rectangular</type>
-        <dimension>17 17</dimension>
-        <width>1.26 1.26</width>
-        <universes>
-          12 12 12 12 12 12 12 12 12 12 12 12 12 12 12 12 12
-          12 12 12 12 12 12 12 12 12 12 12 12 12 12 12 12 12
-          12 12 12 12 12 12 12 12 12 12 12 12 12 12 12 12 12
-          12 12 12 12 12 12 12 12 12 12 12 12 12 12 12 12 12
-          12 12 12 12 12 12 12 12 12 12 12 12 12 12 12 12 12
-          12 12 12 12 12 12 12 12 12 12 12 12 12 12 12 12 12
-          12 12 12 12 12 12 12 12 12 12 12 12 12 12 12 12 12
-          12 12 12 12 12 12 12 12 12 12 12 12 12 12 12 12 12
-          12 12 12 12 12 12 12 12 12 12 12 12 12 12 12 12 12
-          12 12 12 12 12 12 12 12 12 12 12 12 12 12 12 12 12
-          12 12 12 12 12 12 12 12 12 12 12 12 12 12 12 12 12
-          12 12 12 12 12 12 12 12 12 12 12 12 12 12 12 12 12
-          12 12 12 12 12 12 12 12 12 12 12 12 12 12 12 12 12
-          12 12 12 12 12 12 12 12 12 12 12 12 12 12 12 12 12
-          12 12 12 12 12 12 12 12 12 12 12 12 12 12 12 12 12
-          12 12 12 12 12 12 12 12 12 12 12 12 12 12 12 12 12
-          12 12 12 12 12 12 12 12 12 12 12 12 12 12 12 12 12
+        <dimension>3 3</dimension>
+        <width>0.42 0.42</width>
+        <universes>                                                                                                                                                        
+          117 117 117 
+          117 117 117
+          117 117 117
         </universes>
     </lattice>
 
- <!-- Sliced up water cells to fill semi-finely spaced lattice (above) -->
-  <lattice id="24">
-   <type>rectangular</type>
-   <dimension>10 10</dimension>
-   <width>0.126 0.126</width>
-   <universes>
-	 7 7 7 7 7 7 7 7 7 7
-	 7 7 7 7 7 7 7 7 7 7
-	 7 7 7 7 7 7 7 7 7 7
-	 7 7 7 7 7 7 7 7 7 7
-	 7 7 7 7 7 7 7 7 7 7
-	 7 7 7 7 7 7 7 7 7 7
-	 7 7 7 7 7 7 7 7 7 7
-	 7 7 7 7 7 7 7 7 7 7
-	 7 7 7 7 7 7 7 7 7 7
-	 7 7 7 7 7 7 7 7 7 7
-   </universes>
-  </lattice>
+
+
 
 <!-- FULL CORE -->
-    <!-- 21 x 21 core -->
+    <!-- 3 x 3 core -->
     <lattice id="18">
         <type>rectangular</type>
-        <dimension>10 10</dimension>
+        <dimension>3 3</dimension>
         <width>21.42 21.42</width>
         <universes>
-          11 10 11 10 11 10 11 10 14 13
-          10 11 10 11 10 11 10 11 14 13
-          11 10 11 10 11 10 11 10 14 13
-          10 11 10 11 10 11 10 14 13 13
-          11 10 11 10 11 10 11 14 13 13
-          10 11 10 11 10 11 14 13 13 13
-          11 10 11 10 11 14 13 13 13 13
-          10 11 10 14 14 13 13 13 13 13
-          14 14 14 13 13 13 13 13 13 13
-          13 13 13 13 13 13 13 13 13 13
+            10 11 12
+            11 10 12
+            12 12 12
         </universes>
     </lattice>
     
     
     <!-- Definition of Surfaces -->
-    <surface id="1" type="x-plane" coeffs="-107.1" boundary="reflective" />
-    <surface id="2" type="x-plane" coeffs="107.1" boundary="vacuum" />
-    <surface id="3" type="y-plane" coeffs="-107.1" boundary="vacuum" />
-    <surface id="4" type="y-plane" coeffs="107.1" boundary="reflective"/>
+    <surface id="1" type="x-plane" coeffs="-32.13" boundary="reflective" />
+    <surface id="2" type="x-plane" coeffs="32.13" boundary="vacuum" />
+    <surface id="3" type="y-plane" coeffs="-32.13" boundary="vacuum" />
+    <surface id="4" type="y-plane" coeffs="32.13" boundary="reflective"/>
     <surface id="5" type="circle" coeffs="0.0 0.0 0.54" />
     
 </geometry>

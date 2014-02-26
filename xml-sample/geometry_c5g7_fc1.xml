@@ -10,40 +10,28 @@
 <!-- Definition of Cells -->
   <!-- UO2 pin cell !-->
   <cell id="1" universe="1" material="1" surfaces="-5" sectors="4"/>
-  <cell id="2" universe="1" material="7" surfaces="5 -6" sectors="8"/>
-  <cell id="3" universe="1" material="7" surfaces="6 -7" sectors="8"/>
-  <cell id="4" universe="1" material="7" surfaces="7" sectors="8"/>
+  <cell id="2" universe="1" material="7" surfaces="5 " sectors="8"/>
 
   <!-- 4.3% MOX pin cell !-->
   <cell id="5" universe="2" material="2" surfaces="-5" sectors="4"/>
-  <cell id="6" universe="2" material="7" surfaces="5 -6" sectors="8"/>
-  <cell id="7" universe="2" material="7" surfaces="6 -7" sectors="8"/>
-  <cell id="8" universe="2" material="7" surfaces="7" sectors="8"/>
+  <cell id="6" universe="2" material="7" surfaces="5" sectors="8"/>
 
   <!-- 7% MOX pin cell !-->
   <cell id="9" universe="3" material="3" surfaces="-5" sectors="4"/>
-  <cell id="10" universe="3" material="7" surfaces="5 -6" sectors="8"/>
-  <cell id="11" universe="3" material="7" surfaces="6 -7" sectors="8"/>
-  <cell id="12" universe="3" material="7" surfaces="7" sectors="8"/>
+  <cell id="10" universe="3" material="7" surfaces="5" sectors="8"/>
 
   <!-- 8.7% MOX pin cell !-->
   <cell id="13" universe="4" material="4" surfaces="-5" sectors="4"/>
-  <cell id="14" universe="4" material="7" surfaces="5 -6" sectors="8"/>
-  <cell id="15" universe="4" material="7" surfaces="6 -7" sectors="8"/>
-  <cell id="16" universe="4" material="7" surfaces="7" sectors="8"/>
+  <cell id="14" universe="4" material="7" surfaces="5" sectors="8"/>
 
   <!-- Fission chamber pin cell !-->
   <cell id="17" universe="5" material="5" surfaces="-5" sectors="4"/>
-  <cell id="18" universe="5" material="7" surfaces="5 -6" sectors="8"/>
-  <cell id="19" universe="5" material="7" surfaces="6 -7" sectors="8"/>
-  <cell id="20" universe="5" material="7" surfaces="7" sectors="8"/>
+  <cell id="18" universe="5" material="7" surfaces="5" sectors="8"/>
 
   <!-- Guide tube pin cell !-->
   <cell id="21" universe="6" material="6" surfaces="-5" sectors="4"/>
-  <cell id="22" universe="6" material="7" surfaces="5 -6" sectors="8"/>
-  <cell id="23" universe="6" material="7" surfaces="6 -7" sectors="8"/>
-  <cell id="24" universe="6" material="7" surfaces="7" sectors="8"/>
- 
+  <cell id="22" universe="6" material="7" surfaces="5" sectors="8"/>
+
   <!-- Moderator lattice - very finely spaced !-->
   <cell id="25" universe="11" fill="23" surfaces="" />
 
@@ -51,16 +39,8 @@
   <cell id="26" universe="12" fill="24" surfaces="" />
 
   <!-- Moderator lattice - bottom of geometry!-->
-  <cell id="27" universe="13" fill="25" surfaces="" />
+  <cell id="27" universe="13" fill="27" surfaces="" />
 
-  <!-- Moderator lattice - bottom corner of geometry!-->
-  <cell id="28" universe="14" fill="26" surfaces="" />
-
-  <!-- Moderator lattice - right side of geometry!-->
-  <cell id="29" universe="15" fill="27" surfaces="" />
-
-  <!-- Moderator lattice - right side of geometry!-->
-  <cell id="41" universe="16" fill="28" surfaces="" />
 
   <!-- Moderator cell !-->
   <cell id="30" universe="7" material="7" surfaces="" />
@@ -214,23 +194,23 @@
    <dimension>17 17</dimension>
    <width>1.26 1.26</width>
    <universes>
-	 12 12 12 12 12 12 12 12 12 12 12 7 7 7 7 7 7
-	 12 12 12 12 12 12 12 12 12 12 12 7 7 7 7 7 7
-	 12 12 12 12 12 12 12 12 12 12 12 7 7 7 7 7 7
-	 12 12 12 12 12 12 12 12 12 12 12 7 7 7 7 7 7
-	 12 12 12 12 12 12 12 12 12 12 12 7 7 7 7 7 7
-	 12 12 12 12 12 12 12 12 12 12 12 7 7 7 7 7 7
-	 12 12 12 12 12 12 12 12 12 12 12 7 7 7 7 7 7
-	 12 12 12 12 12 12 12 12 12 12 12 7 7 7 7 7 7
-	 12 12 12 12 12 12 12 12 12 12 12 7 7 7 7 7 7
-	 12 12 12 12 12 12 12 12 12 12 12 7 7 7 7 7 7
-	 12 12 12 12 12 12 12 12 12 12 12 7 7 7 7 7 7
-	 12 12 12 12 12 12 12 12 12 12 12 7 7 7 7 7 7
-	 12 12 12 12 12 12 12 12 12 12 12 7 7 7 7 7 7
-	 12 12 12 12 12 12 12 12 12 12 12 7 7 7 7 7 7
-	 12 12 12 12 12 12 12 12 12 12 12 7 7 7 7 7 7
-	 12 12 12 12 12 12 12 12 12 12 12 7 7 7 7 7 7
-	 12 12 12 12 12 12 12 12 12 12 12 7 7 7 7 7 7
+     7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7
+     7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7
+     7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7
+     7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7
+     7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7
+     7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7
+     7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7
+     7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7
+     7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7
+     7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7
+     7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7
+     7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7
+     7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7
+     7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7
+     7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7
+     7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7
+     7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7
    </universes>
   </lattice>
 
@@ -240,23 +220,24 @@
    <dimension>17 17</dimension>
    <width>1.26 1.26</width>
    <universes>
-     12 12 12 12 12 12 12 12 12 12 12 12 12 12 12 12 12
-     12 12 12 12 12 12 12 12 12 12 12 12 12 12 12 12 12
-     12 12 12 12 12 12 12 12 12 12 12 12 12 12 12 12 12
-     12 12 12 12 12 12 12 12 12 12 12 12 12 12 12 12 12
-     12 12 12 12 12 12 12 12 12 12 12 12 12 12 12 12 12
-     12 12 12 12 12 12 12 12 12 12 12 12 12 12 12 12 12
-	 12 12 12 12 12 12 12 7 7 7 7 7 7 7 7 7 7
-	 12 12 12 12 12 12 12 7 7 7 7 7 7 7 7 7 7
-	 12 12 12 12 12 12 12 7 7 7 7 7 7 7 7 7 7
-	 12 12 12 12 12 12 12 7 7 7 7 7 7 7 7 7 7
-	 12 12 12 12 12 12 12 7 7 7 7 7 7 7 7 7 7
-	 12 12 12 12 12 12 12 7 7 7 7 7 7 7 7 7 7
-	 12 12 12 12 12 12 12 7 7 7 7 7 7 7 7 7 7
-	 12 12 12 12 12 12 12 7 7 7 7 7 7 7 7 7 7
-	 12 12 12 12 12 12 12 7 7 7 7 7 7 7 7 7 7
-	 12 12 12 12 12 12 12 7 7 7 7 7 7 7 7 7 7
-	 12 12 12 12 12 12 12 7 7 7 7 7 7 7 7 7 7
+	 12 12 12 12 12 12 12 12 12 12 12 7 7 7 7 7 7
+	 12 12 12 12 12 12 12 12 12 12 12 7 7 7 7 7 7
+	 12 12 12 12 12 12 12 12 12 12 12 7 7 7 7 7 7
+	 12 12 12 12 12 12 12 12 12 12 12 7 7 7 7 7 7
+	 12 12 12 12 12 12 12 12 12 12 12 7 7 7 7 7 7
+	 12 12 12 12 12 12 12 12 12 12 12 7 7 7 7 7 7
+	 12 12 12 12 12 12 12 12 12 12 12 7 7 7 7 7 7
+	 12 12 12 12 12 12 12 12 12 12 12 7 7 7 7 7 7
+	 12 12 12 12 12 12 12 12 12 12 12 7 7 7 7 7 7
+	 12 12 12 12 12 12 12 12 12 12 12 7 7 7 7 7 7
+	 12 12 12 12 12 12 12 12 12 12 12 7 7 7 7 7 7
+	 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7
+	 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7
+	 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7
+	 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7
+	 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7
+	 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7
+	 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7
    </universes>
   </lattice>
 
@@ -275,6 +256,8 @@
      12 12 12 12 12 12 12 12 12 12 12 12 12 12 12 12 12
      12 12 12 12 12 12 12 12 12 12 12 12 12 12 12 12 12
      12 12 12 12 12 12 12 12 12 12 12 12 12 12 12 12 12
+     12 12 12 12 12 12 12 12 12 12 12 12 12 12 12 12 12
+     12 12 12 12 12 12 12 12 12 12 12 12 12 12 12 12 12
 	 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7
 	 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7
 	 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7
@@ -286,53 +269,24 @@
    </universes>
   </lattice>
 
-  <!-- Sliced up water cells for bottom of geometry !-->
-  <lattice id="28">
-   <type>rectangular</type>
-   <dimension>17 17</dimension>
-   <width>1.26 1.26</width>
-   <universes>
-	 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7
-	 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7
-	 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7
-	 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7
-	 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7
-	 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7
-	 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7
-	 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7
-	 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7
-	 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7
-	 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7
-	 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7
-	 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7
-	 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7
-	 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7
-	 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7
-	 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7
-   </universes>
-  </lattice>
-
-  <!-- 6x6 core -->
+  <!-- 3 x 3 core -->
   <lattice id="22">
     <type>rectangular</type>
-    <dimension>6 6</dimension>
+    <dimension>3 3</dimension>
     <width>21.42 21.42</width>
     <universes>
-       9 10  9 10  9 15 
-      10  9 10  9 10 15
-       9 10  9 10  9 15
-      10  9 10  9 14 16 
-       9 10  9 14 16 16
-      13 13 13 16 16 16  
+      9  10 13 
+      10  9 13 
+      13 13 13 
   </universes>
   </lattice>
 
 
 <!-- Definition of Surfaces -->
-  <surface id="1" type="x-plane" coeffs="-64.26" boundary="reflective" />
-  <surface id="2" type="x-plane" coeffs="64.26" boundary="vacuum" />
-  <surface id="3" type="y-plane" coeffs="-64.26" boundary="vacuum" />
-  <surface id="4" type="y-plane" coeffs="64.26" boundary="reflective"/>
+  <surface id="1" type="x-plane" coeffs="-32.13" boundary="reflective" />
+  <surface id="2" type="x-plane" coeffs="32.13" boundary="vacuum" />
+  <surface id="3" type="y-plane" coeffs="-32.13" boundary="vacuum" />
+  <surface id="4" type="y-plane" coeffs="32.13" boundary="reflective"/>
   <surface id="5" type="circle" coeffs="0.0 0.0 0.54" />
   <surface id="6" type="circle" coeffs="0.0 0.0 0.58" />
   <surface id="7" type="circle" coeffs="0.0 0.0 0.62" />
