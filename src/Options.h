@@ -57,6 +57,7 @@ private:
     bool _diffusion_correction;
     bool _update_boundary;
     bool _reflect_outgoing;
+    bool _use_up_scattering_xs;
 public:
     Options(int argc, char **argv);
     ~Options(void);
@@ -101,6 +102,7 @@ public:
     bool getAccAfterMOCConverge();
     bool getUpdateBoundary();
     bool getReflectOutgoing();
+    bool getUseUpScatteringXS();
 };
 
 #endif

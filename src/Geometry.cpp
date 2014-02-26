@@ -40,8 +40,9 @@ static void geom_addLatice(Lattice *l)
  * @param sector_offset the angular offset for computing angular sectors
  * @param parser pointer to the parser object
  */
-Geometry::Geometry(Parser* parser) {
+Geometry::Geometry(Parser* parser, Options *opts) {
 
+    _opts = opts;
     _max_seg_length = 0;
     _min_seg_length = INFINITY;
 
@@ -231,6 +232,10 @@ void Geometry::addMaterial(Material* material) {
         try {
             /* Check that the sum of the material's absorption and scattering
              * cross-sections equals its total cross-section */
+            if (_opts->getUseUpScatteringXS() == true)
+            {}
+            else
+                material->clearUpScattering();
             material->checkSigmaT();
             _materials.insert(std::pair<int, Material*>(material->getId(),
                                                         material));

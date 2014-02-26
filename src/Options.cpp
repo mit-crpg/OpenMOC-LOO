@@ -38,6 +38,7 @@ Options::Options(int argc, char **argv)
     _diffusion = true;			/* run diffusion for 1st iter */
     _update_boundary = true;            /* update boundary angular flux */
     _reflect_outgoing = false;          /* newest incoming flux during HO MOC */
+    _use_up_scattering_xs = true; 
 
     if (std::string(getenv("PWD")).find("Release") != std::string::npos)
         _relative_path = "../";
@@ -231,6 +232,9 @@ Options::Options(int argc, char **argv)
             else if (strcmp(argv[i], "-dc")==0 || 
                      strcmp(argv[i], "--diffusioncorrection") == 0)
                 _diffusion_correction = true;
+            else if (strcmp(argv[i], "-nup")==0 || 
+                     strcmp(argv[i], "--noupscattering") == 0)
+                _use_up_scattering_xs = false;
             else
                 this->extra_argv[this->extra_argc++] = strdup(argv[i]);
         }
@@ -518,4 +522,9 @@ bool Options::getUpdateBoundary()
 bool Options::getReflectOutgoing()
 {
     return _reflect_outgoing;
+}
+
+bool Options::getUseUpScatteringXS()
+{
+    return _use_up_scattering_xs;
 }
