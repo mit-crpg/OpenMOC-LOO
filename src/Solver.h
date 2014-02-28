@@ -17,6 +17,7 @@
 #include <string>
 #include <sstream>
 #include <queue>
+#include <forward_list>
 #include "Geometry.h"
 #include "Quadrature.h"
 #include "Track.h"
@@ -68,6 +69,7 @@ private:
     double *_FSRs_to_absorption[NUM_ENERGY_GROUPS + 1];
     double *_FSRs_to_pin_absorption[NUM_ENERGY_GROUPS + 1];
 
+    std::forward_list<double> _pin_powers;
     std::queue<double> _old_k_effs;
     std::queue<double> _old_eps_2;
     std::queue<double> _delta_phi;
@@ -143,6 +145,8 @@ public:
     void tallyLooCurrentIncoming(Track *t, segment *seg, MeshSurface **surf, 
                                  int dir);
     void tallyCmfdCurrent(Track *t, segment *seg, MeshSurface **surf, int dir);
+    int computePinPowers();
+    double computePinPowerNorm();
 
     /* updates after transport sweep */
     void computeRatios();

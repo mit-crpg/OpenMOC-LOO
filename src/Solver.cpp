@@ -140,6 +140,9 @@ Solver::Solver(Geometry* geom, TrackGenerator* track_generator,
                    _use_up_scattering_xs, _boundary_iteration, 
                    _damp_factor, _update_boundary, _reflect_outgoing);
     }
+
+    /* FIXME: this is just an arbitrary number ofr now! may need to increase */
+    _pin_powers.assign(2000, 1.0);
 }
 
 void Solver::runCmfd() {
@@ -702,8 +705,8 @@ void Solver::updateBoundaryFluxByQuadrature(int moc_iter)
     MeshSurface *meshSurface1, *meshSurface2;
     MeshSurface **meshSurfaces;  
     double phi, factor;
-    int ind, this_ind, num_segments, pe, surf_id, num_updated = 0;
-
+    int ind, num_segments, pe, surf_id, num_updated = 0;
+    int this_ind;
     meshSurfaces = _geom->getMesh()->getSurfaces();
 
     for (int i = 0; i < _num_azim; i++) 
@@ -1094,12 +1097,11 @@ void Solver::checkBoundary()
                bc[0].c_str(), bc[1].c_str(), bc[2].c_str(), bc[3].c_str()); 
     return;
 }
-
 /**
  * Plot the fission rates in each FSR and save them in a map of
  * FSR ids to fission rates
  */
-void Solver::plotPinPowers() {
+int Solver::computePinPowers() {
 
     log_printf(INFO, "Computing pin powers...");
 
@@ -1109,23 +1111,6 @@ void Solver::plotPinPowers() {
     double num_nonzero_pins = 0;
     double curr_pin_power = 0;
     double prev_pin_power = 0;
-
-    /* create BitMaps for plotting */
-    BitMap<int>* bitMapFSR = new BitMap<int>;
-    BitMap<float>* bitMap = new BitMap<float>;
-    bitMapFSR->pixel_x = _plotter->getBitLengthX();
-    bitMapFSR->pixel_y = _plotter->getBitLengthY();
-    bitMap->pixel_x = _plotter->getBitLengthX();
-    bitMap->pixel_y = _plotter->getBitLengthY();
-    initialize(bitMapFSR);
-    initialize(bitMap);
-    bitMap->geom_x = _geom->getWidth();
-    bitMap->geom_y = _geom->getHeight();
-    bitMapFSR->color_type = RANDOM;
-    bitMap->color_type = SCALED;
-
-    /* make FSR BitMap */
-    _plotter->copyFSRMap(bitMapFSR->pixels);
 
     /* Loop over all FSRs and compute the fission rate*/
     for (int i=0; i < _num_FSRs; i++) {
@@ -1150,17 +1135,79 @@ void Solver::plotPinPowers() {
             tot_pin_power += curr_pin_power;
             num_nonzero_pins++;
             prev_pin_power = curr_pin_power;
+            _pin_powers.push_front(curr_pin_power);
         }
     }
 
-    /* Compute the average pin power */
+/*
     avg_pin_power = tot_pin_power / num_nonzero_pins;
 
-    /* Normalize each pin power to the average non-zero pin power */
     for (int i=0; i < _num_FSRs; i++) {
         _FSRs_to_pin_powers[i] /= avg_pin_power;
     }
+*/
 
+    return num_nonzero_pins;
+}
+
+double Solver::computePinPowerNorm()
+{
+    double new_power, old_power, norm = 0; 
+    int counter = 0;
+    std::forward_list<double> old_pin_powers;
+
+    /* copy all items from _pin_powers into old_pin_powers; clear the former */
+    while (!_pin_powers.empty())
+    {
+        old_pin_powers.push_front(_pin_powers.front());
+        _pin_powers.pop_front();
+    }
+
+    /* fill up _pin_powers with new values */
+    int num_cells = computePinPowers();
+    log_printf(DEBUG, "I found %d number of pin cells", num_cells);
+    for (auto it = _pin_powers.begin(); it != _pin_powers.end(); it++)
+    {
+        new_power = *it;
+        old_power = old_pin_powers.front();
+        if (new_power > 1e-10)
+        {
+            log_printf(NORMAL, "new = %f, old = %f", new_power, old_power);
+            norm += pow(new_power / old_power - 1.0, 2);
+            counter += 1;
+        }
+        old_pin_powers.pop_front();
+    }
+    log_printf(NORMAL, "counter = %d", counter);
+
+    norm /= (double) counter;
+    norm = sqrt(norm);
+    return norm;
+}
+
+/**
+ * Plot the fission rates in each FSR and save them in a map of
+ * FSR ids to fission rates
+ */
+void Solver::plotPinPowers() {
+    /* create BitMaps for plotting */
+    BitMap<int>* bitMapFSR = new BitMap<int>;
+    BitMap<float>* bitMap = new BitMap<float>;
+    bitMapFSR->pixel_x = _plotter->getBitLengthX();
+    bitMapFSR->pixel_y = _plotter->getBitLengthY();
+    bitMap->pixel_x = _plotter->getBitLengthX();
+    bitMap->pixel_y = _plotter->getBitLengthY();
+    initialize(bitMapFSR);
+    initialize(bitMap);
+    bitMap->geom_x = _geom->getWidth();
+    bitMap->geom_y = _geom->getHeight();
+    bitMapFSR->color_type = RANDOM;
+    bitMap->color_type = SCALED;
+
+    computePinPowers();
+
+    /* make FSR BitMap */
+    _plotter->copyFSRMap(bitMapFSR->pixels);
 
     log_printf(NORMAL, "Plotting pin powers...");
     _plotter->makeRegionMap(bitMapFSR->pixels, bitMap->pixels, 
@@ -2348,7 +2395,10 @@ double Solver::kernel(int max_iterations) {
         if (_old_k_effs.size() == NUM_KEFFS_TRACKED)
             _old_k_effs.pop();
 
-        eps_2 = _cmfd->computeCellSource();
+        if ((_run_cmfd || _run_loo))
+            eps_2 = _cmfd->computeCellSource();
+        else
+            eps_2 = computePinPowerNorm();
 
         _old_eps_2.push(eps_2);
         if (_old_eps_2.size() == NUM_KEFFS_TRACKED)
@@ -2380,6 +2430,7 @@ double Solver::kernel(int max_iterations) {
 
             return _k_eff;
         }
+        /* FIXME: this is an arbitrary number */
         else if (eps_2 > 10) 
         {
             printToMinimumLog(moc_iter);
