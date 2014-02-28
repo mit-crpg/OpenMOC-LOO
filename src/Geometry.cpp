@@ -232,9 +232,7 @@ void Geometry::addMaterial(Material* material) {
         try {
             /* Check that the sum of the material's absorption and scattering
              * cross-sections equals its total cross-section */
-            if (_opts->getUseUpScatteringXS() == true)
-            {}
-            else
+            if (_opts->getUseUpScatteringXS() == false)
                 material->clearUpScattering();
             material->checkSigmaT();
             _materials.insert(std::pair<int, Material*>(material->getId(),
@@ -2755,4 +2753,3 @@ bool Geometry::getCmfd(){
 bool Geometry::getLoo(){
    return _run_loo;
 }
-

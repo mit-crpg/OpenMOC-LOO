@@ -9,14 +9,13 @@
  * @param spacing track spacing
  */
 TrackGenerator::TrackGenerator(Geometry* geom, Plotter* plotter,
-                               const int num_azim, const double spacing,
-                               std::string geoFile) {
-
+                               Options* opts) {
     _plotter = plotter;
     _geom = geom;
-    _num_azim = num_azim / 2.0;
-    _spacing = spacing;
-    _geometry_file = geoFile;
+    _opts = opts;
+    _num_azim = opts->getNumAzim() / 2.0;
+    _spacing = opts->getTrackSpacing();
+    _geometry_file = opts->getGeometryFile();
     _tot_num_tracks = 0;
     _tot_num_segments = 0;
     _num_segments = NULL;
@@ -127,19 +126,21 @@ void TrackGenerator::generateTracks() {
         }
     }
 
+    test_filename << directory.str() << "/"
+                  << _geometry_file << "_"
+                  << _num_azim*2.0 << "_"
+                  << _spacing;
+
+    if (_opts->getUseUpScatteringXS() == true)
+        test_filename << "_up";
+    else
+        test_filename << "_no"; 
+    
     if (_geom->getCmfd() || _geom->getLoo()){
-    	test_filename << directory.str() << "/"
-                      << _geometry_file << "_"
-                      << _num_azim*2.0 << "_"
-                      << _spacing << "_cmfd_"
-		      << _geom->getMesh()->getMeshLevel() << ".data";
+    	test_filename << "_cmfd_"
+		      << _geom->getMesh()->getMeshLevel();
     }
-    else{
-    	test_filename << directory.str() << "/"
-                      << _geometry_file << "_"
-                      << _num_azim*2.0 << "_"
-                      << _spacing << ".data";
-    }
+    test_filename  << ".data";
 
     _tracks_filename = test_filename.str();
 

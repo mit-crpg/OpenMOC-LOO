@@ -39,7 +39,7 @@
 
 class Geometry {
 private:
-    Options *_opts;
+    Options*_opts;
     double _x_min, _y_min, _x_max, _y_max; 		/* the corners */
     int _base_universe;
     int _num_FSRs;

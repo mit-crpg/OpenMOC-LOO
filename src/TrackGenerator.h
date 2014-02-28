@@ -49,7 +49,7 @@ private:
     int* _num_segments;
     int _tot_num_tracks;
     int _tot_num_segments;
-
+    Options* _opts;
 
     /** Boolean or whether to use track input file (true) or not (false) */
     bool _use_input_file;
@@ -65,9 +65,7 @@ private:
     bool readTracksFromFile();
 
 public:
-    TrackGenerator(Geometry* geom, Plotter* plotter,
-                   const int num_azim, const double spacing, 
-                   std::string geoFile);
+    TrackGenerator(Geometry* geom, Plotter* plotter, Options* opts);
     virtual ~TrackGenerator();
     double *getAzimWeights() const;
     int getNumAzim() const;

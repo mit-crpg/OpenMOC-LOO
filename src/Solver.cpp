@@ -45,6 +45,7 @@ Solver::Solver(Geometry* geom, TrackGenerator* track_generator,
     _track_spacing = opts->getTrackSpacing();
     _boundary_iteration = opts->getBoundaryIteration();
     _update_boundary = opts->getUpdateBoundary();
+    _use_up_scattering_xs = opts->getUseUpScatteringXS();
 
     _geometry_file = opts->getGeometryFile();
     _geometry_file_no_slash = opts->getGeometryFile();
@@ -68,6 +69,11 @@ Solver::Solver(Geometry* geom, TrackGenerator* track_generator,
         string << "_update";
     else
         string << "_noupda";
+
+    if (_use_up_scattering_xs)
+        string << "_upscat";
+    else
+        string << "_noupsc";
 
     if (_run_cmfd)
         string << "_cmfd.txt";
@@ -127,9 +133,11 @@ Solver::Solver(Geometry* geom, TrackGenerator* track_generator,
 
         initializeWeights();
         
-        log_printf(NORMAL, "Acceleration on: boundary iteration = %d,"
+        log_printf(NORMAL, "Acceleration on:"
+                   " upscattering = %d, boundary iteration = %d,"
                    " damping = %.2f, update boundary flux = %d,"
-                   " reflect outgoing = %d", _boundary_iteration, 
+                   " reflect outgoing = %d", 
+                   _use_up_scattering_xs, _boundary_iteration, 
                    _damp_factor, _update_boundary, _reflect_outgoing);
     }
 }
@@ -2304,8 +2312,8 @@ double Solver::kernel(int max_iterations) {
     oneFSRFluxOldSource();
 
     /* FIXME: */
-    initializeTrackFluxes(ONE_OVER_FOUR_PI);
-    //initializeTrackFluxes(0.0);
+    //initializeTrackFluxes(ONE_OVER_FOUR_PI);
+    initializeTrackFluxes(0.0);
 
     normalizeFlux();
     updateSource();

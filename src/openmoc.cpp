@@ -82,9 +82,7 @@ int main(int argc, char **argv) {
                     opts.plotDiffusion(), opts.plotKeff(), opts.plotQuadFlux());
 
     /* Initialize track generator */
-    TrackGenerator track_generator(&geometry, &plotter, opts.getNumAzim(),
-                                   opts.getTrackSpacing(), 
-                                   opts.getGeometryFile());
+    TrackGenerator track_generator(&geometry, &plotter, &opts);
 
     /* Tell geometry whether CMFD is on/off */
     geometry.setCmfd(opts.getCmfd());

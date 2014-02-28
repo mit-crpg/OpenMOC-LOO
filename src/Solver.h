@@ -99,6 +99,7 @@ private:
     bool _plot_loo;
     bool _plot_flux;
     bool _reflect_outgoing;
+    bool _use_up_scattering_xs;
     void precomputeFactors();
     void initializeFSRs();
 public:
