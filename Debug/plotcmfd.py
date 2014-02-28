@@ -7,15 +7,18 @@ import os.path
 
 # Control variables
 flag = ''
-printgeometry='2D C5G7 Benchmark'
+#printgeometry='2D C5G7 (c5g7_cc_full)'
 geometries = ['xml-sample_geometry_c5g7_cc.xml']
+ts = [0.1]
+na = [32]
+
 
 # Find the string of geometry name after "geometry_" before ".xml"
 geometry = geometries[0]
 index = geometry.find("geometry_") + 9
 geometry_name = geometry[index:-4]
 
-ls = ['--o', '-s', '-.v', '-<', '-^', '-.>', '--s', '-v']
+ls = ['--o', '-s', '-.v', '-<', '-^', '-.>', '--s', '-v', '-o', '-.<', '--<', '-->', '-.s']
 fontP = FontProperties()
 fontP.set_size('small')
 
@@ -24,7 +27,7 @@ l2_norm_files = []
 num = 1;
 
 for file in os.listdir("../"):
-    if file.startswith(geometry[0:-4]) and file.endswith(flag+".txt"):
+    if file.startswith(geometry) and file.endswith(flag+".txt"):
         print("parsed file %s" % file)
         l2_norm_files.append(file)
         num = num+1
@@ -40,13 +43,14 @@ for file in l2_norm_files:
     filepath = os.path.abspath(os.path.join(basepath, file))
     logfile = open(filepath, "r").readlines()
 
-    # sample: xml-sample_geometry_c5g7_cc.xml_64_0.05_1.0_update_loo1.txt
+    # sample: xml-sample_geometry_c5g7_cc.xml_64_0.05_1.0_update_upscat_loo1.txt
     method = file[-8:-4]
-    update = file[-15:-9]
-    damp = file[-19:-16]
-    ts = file[-24:-20]
-    na = file[-27:-25]
-    print("ts = %s, na = %s"%(ts, na))
+    upscat = file[-15:-9]
+    update = file[-22:-16]
+    damp = file[-26:-23]
+    ts = file[-31:-27]
+    na = file[-34:-32]
+    print("plotted geometry %s, upscat = %s, update = %s, damp = %s, ts = %s, na = %s"%(geometry_name, upscat, update, damp, ts, na))
 
     # find number of lines in file
     for num_lines, l in enumerate(logfile):
@@ -69,9 +73,11 @@ for file in l2_norm_files:
 
     for j in range(1):
         plt.figure(j)
-        plt.semilogy(iteration, var[j], ls[counter-1], 
+        plt.semilogy(iteration, 
+                     var[j], 
+                     ls[counter], 
                      color=cm.jet(1.*counter/num), 
-                     label = ("%s DF: %s"%(method, damp)), markersize=5)
+                     label = ("%s %s DF: %s"%(method, upscat, damp)), markersize=5)
         plt.xlim(0, max_num_lines + 1)
         plt.legend(loc='upper center', ncol=3, prop = fontP, shadow=True, 
                    bbox_to_anchor=(0.5,-0.1),fancybox=True)
@@ -81,11 +87,11 @@ for file in l2_norm_files:
 plt.figure(0)
 plt.xlabel('# MOC iteration')
 plt.ylabel('FSR L2 Norm on Fission Source Relative Change')
-plt.title('Geometry: %s,'%(printgeometry) + ' spacing: %s cm,'%str(ts) 
+plt.title('Geometry: %s,'%(geometry_name) + ' spacing: %s cm,'%str(ts) 
           + ' #angles: %s'%str(na))
 
 if flag == '':
-    plt.savefig(geometry_name + '_l2' +  '.png', bbox_inches='tight')
+    plt.savefig(geometry_name +  '.png', bbox_inches='tight')
 else:
-    plt.savefig(geometry_name + '_l2_' + flag + '.png', bbox_inches='tight')
+    plt.savefig(geometry_name + flag + '.png', bbox_inches='tight')
 plt.clf()
