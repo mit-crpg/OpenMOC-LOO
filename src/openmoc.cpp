@@ -89,12 +89,12 @@ int main(int argc, char **argv) {
     geometry.setLoo(opts.getLoo());
 
     /* Make CMFD mesh */
-    if (opts.getCmfd() || opts.getLoo())
-    {
+    //if (opts.getCmfd() || opts.getLoo())
+    //{
         geometry.makeCMFDMesh(geometry.getMesh(), opts.getNumAzim(), 
                               opts.getGroupStructure(), opts.getPrintMatrices(),
                               opts.getCmfdLevel());
-    }
+        //}
 
     /* make FSR map for plotting */
     if (opts.plotCurrent() || opts.plotDiffusion() || opts.plotFluxes() || 

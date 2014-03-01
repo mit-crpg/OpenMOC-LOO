@@ -145,7 +145,7 @@ public:
     void tallyLooCurrentIncoming(Track *t, segment *seg, MeshSurface **surf, 
                                  int dir);
     void tallyCmfdCurrent(Track *t, segment *seg, MeshSurface **surf, int dir);
-    int computePinPowers();
+    void computePinPowers();
     double computePinPowerNorm();
 
     /* updates after transport sweep */

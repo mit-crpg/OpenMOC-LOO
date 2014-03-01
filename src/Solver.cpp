@@ -123,11 +123,11 @@ Solver::Solver(Geometry* geom, TrackGenerator* track_generator,
     for (int r = 0; r < _num_FSRs; r++) 
         _total_vol += _flat_source_regions[r].getVolume();
 
+    _cw = _geom->getMesh()->getCellWidth();
+    _ch = _geom->getMesh()->getCellHeight();
     /* Gives cmfd a pointer to the FSRs */
     if (_run_cmfd || _run_loo || _acc_after_MOC_converge) 
     {
-        _cw = _geom->getMesh()->getCellWidth();
-        _ch = _geom->getMesh()->getCellHeight();
         _cmfd->setFSRs(_flat_source_regions);
         _cmfd->setTracks(_tracks);
 
@@ -142,7 +142,7 @@ Solver::Solver(Geometry* geom, TrackGenerator* track_generator,
     }
 
     /* FIXME: this is just an arbitrary number ofr now! may need to increase */
-    _pin_powers.assign(2000, 1.0);
+    _pin_powers.assign(_ch * _cw, 1.0);
 }
 
 void Solver::runCmfd() {
@@ -1101,16 +1101,11 @@ void Solver::checkBoundary()
  * Plot the fission rates in each FSR and save them in a map of
  * FSR ids to fission rates
  */
-int Solver::computePinPowers() {
+void Solver::computePinPowers() {
 
     log_printf(INFO, "Computing pin powers...");
 
     FlatSourceRegion* fsr;
-    double tot_pin_power = 0;
-    double avg_pin_power = 0;
-    double num_nonzero_pins = 0;
-    double curr_pin_power = 0;
-    double prev_pin_power = 0;
 
     /* Loop over all FSRs and compute the fission rate*/
     for (int i=0; i < _num_FSRs; i++) {
@@ -1125,18 +1120,11 @@ int Solver::computePinPowers() {
 
     /* Compute the total power based by accumulating the power of each unique
      * pin with a nonzero power */
-    for (int i=0; i < _num_FSRs; i++) {
-        curr_pin_power = _FSRs_to_pin_powers[i];
 
-        /* If this pin power is unique and nozero (doesn't match the previous
-         * pin's power), then tally it
-         */
-        if (curr_pin_power > 0 && curr_pin_power != prev_pin_power) {
-            tot_pin_power += curr_pin_power;
-            num_nonzero_pins++;
-            prev_pin_power = curr_pin_power;
-            _pin_powers.push_front(curr_pin_power);
-        }
+    for (int i = 0; i < _cw * _ch; i++)
+    {
+        int j = _geom->getMesh()->getCells(i)->getFSRStart();
+        _pin_powers.push_front(_FSRs_to_pin_powers[j]);
     }
 
 /*
@@ -1146,8 +1134,7 @@ int Solver::computePinPowers() {
         _FSRs_to_pin_powers[i] /= avg_pin_power;
     }
 */
-
-    return num_nonzero_pins;
+    return;
 }
 
 double Solver::computePinPowerNorm()
@@ -1164,15 +1151,16 @@ double Solver::computePinPowerNorm()
     }
 
     /* fill up _pin_powers with new values */
-    int num_cells = computePinPowers();
-    log_printf(DEBUG, "I found %d number of pin cells", num_cells);
+    computePinPowers();
+    
     for (auto it = _pin_powers.begin(); it != _pin_powers.end(); it++)
     {
         new_power = *it;
         old_power = old_pin_powers.front();
         if (new_power > 1e-10)
         {
-            log_printf(NORMAL, "new = %f, old = %f", new_power, old_power);
+            log_printf(NORMAL, "new power = %f, old power = %f", 
+                       new_power, old_power);
             norm += pow(new_power / old_power - 1.0, 2);
             counter += 1;
         }
