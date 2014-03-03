@@ -958,7 +958,7 @@ void Solver::updateBoundaryFluxByQuadrature(int moc_iter)
 /* Prints & Update keff for MOC sweep */
 void Solver::printToScreen(int moc_iter)
 {
-    if ((moc_iter == 0) && _diffusion)
+    if ((moc_iter == 0) && (_run_cmfd || _run_loo) && _diffusion)
     {
         printf("Iter %d, MOC k^(m+1) = %.10f, Diffusion k = %.10f,"
                " MOC k^(m+1/2) = %.10f" 
