@@ -958,7 +958,19 @@ void Solver::updateBoundaryFluxByQuadrature(int moc_iter)
 /* Prints & Update keff for MOC sweep */
 void Solver::printToScreen(int moc_iter)
 {
-    if ((moc_iter == 0) && (_run_cmfd || _run_loo) && _diffusion)
+    if ((moc_iter == 0) && (_run_cmfd) && _diffusion)
+    {
+        printf("Iter %d, MOC k^(m+1) = %.10f, Diffusion k = %.10f,"
+               " MOC k^(m+1/2) = %.10f" 
+               " FS eps = %.4e,  k eps = %.4e, #Diffusion = %d\n", 
+               moc_iter, _k_eff, _cmfd_k, _k_half, _old_eps_2.back(),
+               (_old_k_effs.back() - _old_k_effs.front()) / _old_k_effs.back(),
+               _cmfd->getNumIterToConv());
+
+        if (_update_keff)
+            _k_eff = _cmfd_k;
+    }
+    else if ((moc_iter == 0) && (_run_loo) && _diffusion)
     {
         printf("Iter %d, MOC k^(m+1) = %.10f, Diffusion k = %.10f,"
                " MOC k^(m+1/2) = %.10f" 
@@ -1159,14 +1171,13 @@ double Solver::computePinPowerNorm()
         old_power = old_pin_powers.front();
         if (new_power > 1e-10)
         {
-            log_printf(NORMAL, "new power = %f, old power = %f", 
-                       new_power, old_power);
+            log_printf(DEBUG, "new power = %e",
+                       new_power - 2.25);
             norm += pow(new_power / old_power - 1.0, 2);
             counter += 1;
         }
         old_pin_powers.pop_front();
     }
-    log_printf(NORMAL, "counter = %d", counter);
 
     norm /= (double) counter;
     norm = sqrt(norm);
@@ -1782,6 +1793,10 @@ void Solver::MOCsweep(int max_iterations, int moc_iter)
                     weights = track->getPolarWeights();
                     polar_fluxes = track->getPolarFluxes();
 
+                    if ((t == 0) && (k == 0))
+                        log_printf(DEBUG, "one boundary angular flux = %f", 
+                                   polar_fluxes[0]);
+
                     /* Store all the incoming angular fluxes */
                     //if ((tally == 2) && (!_reflect_outgoing))
                     if (tally == 2)
@@ -1851,6 +1866,7 @@ void Solver::MOCsweep(int max_iterations, int moc_iter)
                         }
 #endif
 
+
                         /* if segment crosses a surface in fwd direction, 
                            tally current/weight */
                         if (tally == 2)
@@ -1861,6 +1877,9 @@ void Solver::MOCsweep(int max_iterations, int moc_iter)
                         /* Increments the scalar flux for this FSR */
                         fsr->incrementFlux(fsr_flux);
                     }
+
+                    log_printf(DEBUG, "flux (end of forward) %f", 
+                               polar_fluxes[0]);
 
                     
                     /* Transfer fluxes to outgoing track, or store them */
@@ -1939,8 +1958,10 @@ void Solver::MOCsweep(int max_iterations, int moc_iter)
                             }
                         }
 #endif
+                    log_printf(DEBUG, "flux (end of bacward) %f", 
+                               polar_fluxes[0]);
 
-                        /* if segment crosses a surface in bwd direction, 
+                    /* if segment crosses a surface in bwd direction, 
                            tally quadrature flux for LOO acceleration */
                         if (tally == 2)
                             tallyLooCurrent(track, segment, meshSurfaces, -1);
@@ -2135,22 +2156,19 @@ void Solver::normalizeFlux()
 
     /* Renormalize scalar fluxes in each region */
     factor = _total_vol / fission_source;
+    log_printf(ACTIVE, "normalization factor = %f", factor);
 
-#if USE_OPENMP
-#pragma omp parallel for
-#endif
     for (int r = 0; r < _num_FSRs; r++)
         _flat_source_regions[r].normalizeFluxes(factor);
 
+#if 1
     /* Renormalize angular boundary fluxes for each track */
-#if USE_OPENMP
-#pragma omp parallel for
-#endif
     for (int i = 0; i < _num_azim; i++) 
     {
         for (int j = 0; j < _num_tracks[i]; j++)
             _tracks[i][j].normalizeFluxes(factor);
     }
+#endif
 
     /* Renormalize leakage term for each of the four exterior surfaces */
     for (int s = 1; s < 5; s++)
@@ -2161,7 +2179,7 @@ void Solver::normalizeFlux()
         }
     }
 
-#if 0
+
     /* This block normalizes tallied current on each surface. To get
      * geometry_2x2.xml with 2 vacuum BC to converge, the tallied
      * current cannot be normalized */
@@ -2205,7 +2223,6 @@ void Solver::normalizeFlux()
             }
         }		
     }
-#endif
 
     return;
 }
@@ -2232,6 +2249,9 @@ void Solver::updateSource()
         /* Initialize the fission source to zero for this region */
         fission_source = 0;
         scalar_flux = fsr->getFlux();
+
+        log_printf(DEBUG, " cell %d flux %e", r, scalar_flux[0]);
+
         source = fsr->getSource();
         material = fsr->getMaterial();
         nu_sigma_f = material->getNuSigmaF();
@@ -2384,7 +2404,7 @@ double Solver::kernel(int max_iterations) {
             _old_k_effs.pop();
 
         if ((_run_cmfd || _run_loo))
-            eps_2 = _cmfd->computeCellSource();
+            eps_2 = _cmfd->computeCellSourceNorm();
         else
             eps_2 = computePinPowerNorm();
 
@@ -2397,6 +2417,8 @@ double Solver::kernel(int max_iterations) {
          * Valgrine */
         printToScreen(moc_iter);
         printToLog(moc_iter, eps_2);
+        if (_plot_flux)
+            plotFluxes(moc_iter);
 
         /* Alternative: if (_cmfd->getL2Norm() < _moc_conv_thresh) */
         if (eps_2 < _moc_conv_thresh) 
@@ -2415,6 +2437,16 @@ double Solver::kernel(int max_iterations) {
                        _log_file.c_str());
 
             plotEverything(moc_iter);
+
+            for (int j = 0; j < _num_azim; j++)
+            {
+                for (int k = 0; k < _num_tracks[j]; k++)
+                {
+                    log_printf(DEBUG, "final boundary flux = %f %f",
+                               _tracks[0][0].getPolarFluxes()[0], 
+                               _tracks[0][0].getPolarFluxes()[1]);
+                }
+            }
 
             return _k_eff;
         }
@@ -2620,7 +2652,7 @@ void Solver::checkNeutronBalance()
                 /* compute total residual and average ratio */
                 /* residual = leakage + absorption - fission */
                 residual = leak + absorb - src;
-                log_printf(ACTIVE, "CMFD cell %d energy %d, residual %.10f"
+                log_printf(DEBUG, "CMFD cell %d energy %d, residual %.10f"
                            " leak: %e, absorb: %.10f, src: %.10f,"
                            " fis: %.10f, keff: %.10f", 
                            y * cell_width + x, e, residual,
