@@ -1550,26 +1550,20 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter)
     }
     _num_iter_to_conv = iter + 1;
 
-    /* rescale the new and old flux */
+    /* scale new flux such that its sum equals that of the old flux */
     petsc_err = MatMult(_M, _phi_new, snew);
     petsc_err = VecSum(snew, &sumnew);
-    scale_val = (_cw * _ch * _ng) / sumnew;
-    petsc_err = VecScale(_phi_new, scale_val);
     petsc_err = MatMult(_M, phi_old, sold);
     petsc_err = VecSum(sold, &sumold);
-    scale_val = (_cw * _ch * _ng) / sumold;
-    petsc_err = VecScale(phi_old, scale_val);
+    scale_val = sumold / sumnew;
+    petsc_err = VecScale(_phi_new, scale_val);
     CHKERRQ(petsc_err);
 
-    log_printf(INFO, " CMFD total fission source = %f", sumnew);
-
-    PetscScalar *old_phi;
-    PetscScalar *new_phi;
     petsc_err = VecGetArray(phi_old, &old_phi);
     petsc_err = VecGetArray(_phi_new, &new_phi);
     CHKERRQ(petsc_err);
 
-    log_printf(DEBUG, "CMFD converged flux update (relative to m+1/2):");
+    log_printf(ACTIVE, "CMFD converged flux:");
     for (int i = 0; i < _cw*_ch; i++)
     {
         meshCell = _mesh->getCells(i);
