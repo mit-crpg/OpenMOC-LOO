@@ -2854,7 +2854,15 @@ void Cmfd::updateBoundaryFluxByScalarFlux(int moc_iter)
                         log_printf(DEBUG, "factor = %.10f", factor);
                         for (int p = 0; p < NUM_POLAR_ANGLES; p++)
                         {
-                            track->updatePolarFluxes(pe, factor);
+                            if (moc_iter == 0)
+                            {
+                                track->setPolarFluxesByIndex
+                                    (pe, meshCell->getNewFlux()[e] 
+                                     * ONE_OVER_FOUR_PI);
+                            }
+                            else
+                                track->updatePolarFluxes(pe, factor);
+                            
                             pe++;
                             num_updated++;
                         }	
