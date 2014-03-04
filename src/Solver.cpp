@@ -635,15 +635,15 @@ void Solver::prolongation(int moc_iter)
 {
     if (moc_iter > -10) //47 (2x2_leakage) 79 (2x2) 229 (4x4_leakage) 
     {
-        log_printf(ACTIVE, " iter %d scalar flux prolongation", moc_iter);
-        _cmfd->updateMOCFlux(moc_iter);
+        log_printf(DEBUG, " iter %d scalar flux prolongation", moc_iter);
+        _cmfd->updateFSRScalarFlux(moc_iter);
 
         if (_update_boundary)
         {
             /* standard LOO update */
             if (_run_loo && (!(_diffusion && (moc_iter == 0))))
             {
-                log_printf(ACTIVE, " iter %d boundary angular flux "
+                log_printf(DEBUG, " iter %d boundary angular flux "
                            "prolongation: by quadrature",
                            moc_iter);
                 updateBoundaryFluxByQuadrature(moc_iter);
