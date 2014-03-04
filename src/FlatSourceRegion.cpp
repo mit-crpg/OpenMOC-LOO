@@ -24,12 +24,6 @@ FlatSourceRegion::FlatSourceRegion()
         _old_flux[e] = 0.0;
         _source[e] = 0.0;
         _old_source[e] = 0.0;
-        /*
-        for (int i = 0; i < 2; i++)
-        {
-            _boundary_update[e * 2 + i] = 1.0;
-        }
-        */
     }
 
 #if USE_OPENMP

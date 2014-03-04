@@ -2311,7 +2311,7 @@ void Geometry::defineMesh(Mesh* mesh, Universe* univ, int depth,
                         mesh->getCells(*meshCellNum)->setHeight(h);
                         mesh->getCells(*meshCellNum)->setVolume(w * h);
                         mesh->getCells(*meshCellNum)->setL(l);
-                        log_printf(ACTIVE, "mesh cell: %i, width: %f,"
+                        log_printf(DEBUG, "mesh cell: %i, width: %f,"
                                    " height: %f, l: %f", *meshCellNum, w, h, l);
 						
                         /* increments the # of mesh cells */
