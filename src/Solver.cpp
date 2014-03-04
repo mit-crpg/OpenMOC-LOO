@@ -2366,12 +2366,13 @@ double Solver::kernel(int max_iterations) {
     /* Set scalar flux to unity for each region */
     oneFSRFluxOldSource();
 
-    /* FIXME: */
-    //initializeTrackFluxes(ONE_OVER_FOUR_PI);
-    initializeTrackFluxes(0.0);
-
     normalizeFlux();
     updateSource();
+    /* FIXME: */
+    initializeTrackFluxes(ONE_OVER_FOUR_PI);
+    //initializeTrackFluxes(1.0);
+    /* computes the initial pin cell fission source */
+    _cmfd->computeCellSource();
 
     /* Source iteration loop */
     for (int moc_iter = 0; moc_iter < max_iterations; moc_iter++) 
@@ -2387,15 +2388,12 @@ double Solver::kernel(int max_iterations) {
         else 
             MOCsweep(1, moc_iter);
 
-        /* Update FSR's flux based on cell-averaged flux coming from the
-         * acceleration steps */
+        /* Update FSR's scalar flux and boundary angular fluxes */
         if ((_run_cmfd || _run_loo) && !(_acc_after_MOC_converge))
             prolongation(moc_iter);
 
-        /* Computes the new keff */
+        normalizeFlux();
         _k_eff = computeKeff(moc_iter);
-
-        /* Computes new FSR source now we have new flux and new k */
         updateSource();
 
         /* We only store $k^{(m+1)}$; other intermediate keff does not matter */
