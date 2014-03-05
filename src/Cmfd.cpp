@@ -364,7 +364,7 @@ void Cmfd::computeXS_old()
                 meshCell->setSigmaA(abs_tally_group / rxn_tally_group, e);
                 meshCell->setSigmaT(tot_tally_group / rxn_tally_group, e);
                 meshCell->setNuSigmaF(nu_fis_tally_group / rxn_tally_group, e);
-                meshCell->setDiffusivity(dif_tally_group / rxn_tally_group, e);
+                meshCell->setDiffusion(dif_tally_group / rxn_tally_group, e);
                 meshCell->setOldFlux(rxn_tally_group / vol_tally_group, e);
 
                 for (int g = 0; g < NUM_ENERGY_GROUPS; g++){
@@ -387,7 +387,7 @@ void Cmfd::computeXS_old()
             meshCell->setSigmaT(tot_tally / rxn_tally, 0);
             meshCell->setSigmaA(abs_tally / rxn_tally, 0);
             meshCell->setNuSigmaF(nu_fis_tally / rxn_tally, 0);
-            meshCell->setDiffusivity(dif_tally / rxn_tally, 0);
+            meshCell->setDiffusion(dif_tally / rxn_tally, 0);
             meshCell->setOldFlux(rxn_tally / vol_tally_group, 0);
             meshCell->setChi(1,0);
         }
@@ -508,7 +508,7 @@ void Cmfd::computeXS()
                 meshCell->setSigmaA(abs_tally_group / rxn_tally_group, e);
                 meshCell->setSigmaT(tot_tally_group / rxn_tally_group, e);
                 meshCell->setNuSigmaF(nu_fis_tally_group / rxn_tally_group, e);
-                meshCell->setDiffusivity(dif_tally_group / rxn_tally_group, e);
+                meshCell->setDiffusion(dif_tally_group / rxn_tally_group, e);
                 meshCell->setOldFlux(rxn_tally_group / vol_tally_group, e);
                 meshCell->setSrc(src_tally_group / vol_tally_group, e);
 
@@ -539,7 +539,7 @@ void Cmfd::computeXS()
             meshCell->setSigmaT(tot_tally / rxn_tally, 0);
             meshCell->setSigmaA(abs_tally / rxn_tally, 0);
             meshCell->setNuSigmaF(nu_fis_tally / rxn_tally, 0);
-            meshCell->setDiffusivity(dif_tally / rxn_tally, 0);
+            meshCell->setDiffusion(dif_tally / rxn_tally, 0);
             meshCell->setOldFlux(rxn_tally / vol_tally_group, 0);
             log_printf(INFO, "mesh = %d, rxn tally = %.10f, vol = %.10f,"
                        " mesh's old flux = %.10f", 
@@ -591,7 +591,7 @@ void Cmfd::computeDsxDirection(double x, double y, int e, MeshCell *meshCell,
     {
         /* get mesh cell to left */
         meshCellNext = _mesh->getCells(y*_cw + x - 1);
-        d_next = meshCellNext->getDiffusivity()[e];
+        d_next = meshCellNext->getDiffusion()[e];
         flux_next = meshCellNext->getOldFlux()[e];
 
         /* set d_dif */
@@ -679,7 +679,7 @@ void Cmfd::computeDs(int moc_iter)
             {
 
                 /* get diffusivity and flux for mesh cell */
-                d = meshCell->getDiffusivity()[e];
+                d = meshCell->getDiffusion()[e];
                 flux = meshCell->getOldFlux()[e];
 
                 /* get diffusion correction term for meshCell */
@@ -720,7 +720,7 @@ void Cmfd::computeDs(int moc_iter)
                 {
                     /* get mesh cell to the right */
                     meshCellNext = _mesh->getCells(y*_cw + x + 1);
-                    d_next = meshCellNext->getDiffusivity()[e];
+                    d_next = meshCellNext->getDiffusion()[e];
                     flux_next = meshCellNext->getOldFlux()[e];
 
                     /* set d_dif */
@@ -819,7 +819,7 @@ void Cmfd::computeDs(int moc_iter)
                 {
                     /* get mesh cell below */
                     meshCellNext = _mesh->getCells((y+1)*_cw + x);
-                    d_next = meshCellNext->getDiffusivity()[e];
+                    d_next = meshCellNext->getDiffusion()[e];
                     /* FIXME: double check this is the right flux */
                     flux_next = meshCellNext->getOldFlux()[e];
 
@@ -928,7 +928,7 @@ void Cmfd::computeDs(int moc_iter)
                 {
                     /* get mesh cell above */
                     meshCellNext = _mesh->getCells((y-1)*_cw + x);
-                    d_next = meshCellNext->getDiffusivity()[e];
+                    d_next = meshCellNext->getDiffusion()[e];
                     flux_next = meshCellNext->getOldFlux()[e];
 
                     /* set d_dif */
