@@ -2300,7 +2300,7 @@ double Solver::runLoo(int moc_iter)
 			 
     if (moc_iter == 0 && _first_diffusion == true)
     {
-        _cmfd->computeDs();
+        _cmfd->computeDs(moc_iter);
         loo_keff = _cmfd->computeCMFDFluxPower(DIFFUSION, moc_iter);
     }
     else 
@@ -2326,7 +2326,7 @@ double Solver::runCmfd(int moc_iter)
     /* compute cross sections and diffusion coefficients */
     //_cmfd->computeCurrent();
     _cmfd->computeXS();
-    _cmfd->computeDs();
+    _cmfd->computeDs(moc_iter);
 
     /* Check for neutron balance */
     if (moc_iter == 10000)
@@ -2476,7 +2476,7 @@ void Solver::plotEverything(int moc_iter)
     if (_run_cmfd && _plotter->plotCurrent() )
     {
         _cmfd->computeXS();
-        _cmfd->computeDs();
+        _cmfd->computeDs(moc_iter);
         _plotter->plotDHats(_geom->getMesh(), moc_iter);
         _plotter->plotXS(_geom->getMesh(), moc_iter);
     }

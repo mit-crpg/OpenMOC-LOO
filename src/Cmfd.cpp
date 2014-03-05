@@ -654,7 +654,7 @@ void Cmfd::computeDsxDirection(double x, double y, int e, MeshCell *meshCell,
 }
 
 /* compute the xs for all MeshCells in the Mesh */
-void Cmfd::computeDs()
+void Cmfd::computeDs(int moc_iter)
 {
     /* initialize variables */
     double d = 0, d_next = 0, d_hat = 0, d_tilde = 0, 
@@ -751,8 +751,6 @@ void Cmfd::computeDs()
                     /* compute d_tilde */
                     d_tilde = - (d_hat * (flux_next - flux) + current / 
                                  meshCell->getHeight()) / (flux_next + flux);
-
-
                 }
 
                 log_printf(DEBUG, "cell: %i, group: %i, side:  RIGHT,"
@@ -996,6 +994,25 @@ void Cmfd::computeDs()
             }
         }
     }
+
+    /* if a regular diffusion is requested, set dtilde to zero. */
+    if ((moc_iter == 0) && (_first_diffusion))
+    {
+        for (y = 0; y < _ch; y++)
+        {
+            for (x = 0; x < _cw; x++)
+            {
+                meshCell = _mesh->getCells(y * _cw + x);
+                
+                for (e = 0; e < _ng; e++)
+                {
+                    for (int s = 0; s < 4; s++)
+                        meshCell->getMeshSurfaces(s)->setDTilde(0.0, e);
+                }
+            }
+        }
+    }
+
 }
 
 /* Computes _quad_flux based on _quad_current */

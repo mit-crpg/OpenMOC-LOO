@@ -117,7 +117,7 @@ public:
 
     /* CMFD */
     void computeCurrent();
-    void computeDs();
+    void computeDs(int moc_iter);
     void computeDsxDirection(double x, double y, int e, MeshCell *meshCell, 
                              double d, double f, double flux, double dt_weight);
     double computeDiffCorrect(double d, double h);
