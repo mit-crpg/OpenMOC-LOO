@@ -38,7 +38,7 @@ Solver::Solver(Geometry* geom, TrackGenerator* track_generator,
     _run_loo1 = opts->getLoo1();
     _run_loo2 = opts->getLoo2();
 
-    _diffusion = opts->getDiffusion();
+    _first_diffusion = opts->getFirstDiffusion();
     _acc_after_MOC_converge = opts->getAccAfterMOCConverge();
     _k_eff = opts->getKGuess();
     _damp_factor = opts->getDampFactor();
@@ -641,7 +641,7 @@ void Solver::prolongation(int moc_iter)
         if (_update_boundary)
         {
             /* standard LOO update */
-            if (_run_loo && (!(_diffusion && (moc_iter == 0))))
+            if (_run_loo && (!(_first_diffusion && (moc_iter == 0))))
             {
                 log_printf(DEBUG, " iter %d boundary angular flux "
                            "prolongation: by quadrature",
@@ -652,7 +652,7 @@ void Solver::prolongation(int moc_iter)
                 //_cmfd->updateBoundaryFluxByNetCurrent(moc_iter);
             }
             /* first diffusion step */
-            else if ((_diffusion) && (moc_iter == 0))
+            else if ((_first_diffusion) && (moc_iter == 0))
             {
                 log_printf(NORMAL, " iter %d boundary angular flux "
                            "prolongation: by scalar flux",
@@ -958,7 +958,7 @@ void Solver::updateBoundaryFluxByQuadrature(int moc_iter)
 /* Prints & Update keff for MOC sweep */
 void Solver::printToScreen(int moc_iter)
 {
-    if ((moc_iter == 0) && (_run_cmfd) && _diffusion)
+    if ((moc_iter == 0) && (_run_cmfd) && _first_diffusion)
     {
         printf("Iter %d, MOC k^(m+1) = %.10f, Diffusion k = %.10f,"
                " MOC k^(m+1/2) = %.10f" 
@@ -970,7 +970,7 @@ void Solver::printToScreen(int moc_iter)
         if (_update_keff)
             _k_eff = _cmfd_k;
     }
-    else if ((moc_iter == 0) && (_run_loo) && _diffusion)
+    else if ((moc_iter == 0) && (_run_loo) && _first_diffusion)
     {
         printf("Iter %d, MOC k^(m+1) = %.10f, Diffusion k = %.10f,"
                " MOC k^(m+1/2) = %.10f" 
@@ -1735,12 +1735,12 @@ void Solver::MOCsweep(int max_iterations, int moc_iter)
     _num_crn = 0;
 
     int tally; 
-    if ((_run_loo) && (!(_diffusion && (moc_iter == 0))))
+    if ((_run_loo) && (!(_first_diffusion && (moc_iter == 0))))
     {
         tally = 2;
         log_printf(INFO, "tally quadrature currents");
     }
-    //else if ((_run_cmfd) || (_run_loo & _diffusion && (moc_iter == 0)))
+    //else if ((_run_cmfd) || (_run_loo & _first_diffusion && (moc_iter == 0)))
     else if (_run_cmfd || _run_loo)
     {
         tally = 1;
@@ -2298,7 +2298,7 @@ double Solver::runLoo(int moc_iter)
 
     _cmfd->computeXS();
 			 
-    if (moc_iter == 0 && _diffusion == true)
+    if (moc_iter == 0 && _first_diffusion == true)
     {
         _cmfd->computeDs();
         loo_keff = _cmfd->computeCMFDFluxPower(DIFFUSION, moc_iter);
@@ -2336,7 +2336,7 @@ double Solver::runCmfd(int moc_iter)
     }
 
     /* Run diffusion problem on initial geometry */
-    if ((moc_iter == 0) && _diffusion)
+    if ((moc_iter == 0) && _first_diffusion)
         cmfd_keff = _cmfd->computeCMFDFluxPower(DIFFUSION, moc_iter);
     else
         cmfd_keff = _cmfd->computeCMFDFluxPower(CMFD, moc_iter);

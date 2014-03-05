@@ -98,7 +98,8 @@ Cmfd::Cmfd(Geometry* geom, Plotter* plotter, Mesh* mesh,
     _plot_prolongation = opts->plotProlongation();
     _update_boundary = opts->getUpdateBoundary();
     _reflect_outgoing = opts->getReflectOutgoing();
-    
+    _first_diffusion = opts->getFirstDiffusion();
+
     if (_reflect_outgoing)
         _nq = 2;
     else

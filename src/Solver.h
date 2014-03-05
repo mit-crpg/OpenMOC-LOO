@@ -94,7 +94,7 @@ private:
     bool _run_loo;
     bool _run_loo1;
     bool _run_loo2;
-    bool _diffusion;
+    bool _first_diffusion;
     bool _acc_after_MOC_converge;
     bool _update_keff;
     bool _update_boundary;

@@ -92,6 +92,7 @@ private:
     bool _update_boundary;
     bool _reflect_outgoing;
     bool _converged;
+    bool _first_diffusion;
 
 public:
     Cmfd(Geometry* geom, Plotter* plotter, Mesh* mesh, 
