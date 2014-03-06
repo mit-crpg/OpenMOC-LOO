@@ -289,8 +289,10 @@ void Cmfd::computeXS_old()
     /* initialize variables */
     double volume, flux, abs, tot, nu_fis, chi;
     double* scat;
-    double abs_tally_group, nu_fis_tally_group, dif_tally_group, rxn_tally_group, vol_tally_group, tot_tally_group;
-    double nu_fis_tally = 0, dif_tally = 0, rxn_tally = 0, abs_tally = 0, tot_tally = 0;
+    double abs_tally_group, nu_fis_tally_group, dif_tally_group, 
+        rxn_tally_group, vol_tally_group, tot_tally_group;
+    double nu_fis_tally = 0, dif_tally = 0, rxn_tally = 0, abs_tally = 0, 
+        tot_tally = 0;
     double scat_tally_group[NUM_ENERGY_GROUPS];
     std::vector<int>::iterator iter;
     int i, e, g;
@@ -300,13 +302,6 @@ void Cmfd::computeXS_old()
     FlatSourceRegion* fsr;
     Material* material;
 
-#if USE_OPENMP
-#pragma omp parallel for private(i, e, g, volume, flux, abs, tot, nu_fis, \
-                                 chi, scat, abs_tally_group, nu_fis_tally_group, \
-                                 dif_tally_group, rxn_tally_group, vol_tally_group, tot_tally_group, \
-                                 nu_fis_tally, dif_tally, rxn_tally, abs_tally, tot_tally, \
-                                 scat_tally_group, iter, meshCell, fsr, material)
-#endif
     /* loop over mesh cells */
     for (i = 0; i < _cw * _ch; i++){
         meshCell = _mesh->getCells(i);
@@ -337,7 +332,8 @@ void Cmfd::computeXS_old()
             }
 
             /* loop over FSRs in mesh cell */
-            for (iter = meshCell->getFSRs()->begin(); iter != meshCell->getFSRs()->end(); ++iter){
+            for (iter = meshCell->getFSRs()->begin(); 
+                 iter != meshCell->getFSRs()->end(); ++iter){
                 fsr = &_flat_source_regions[*iter];
 
                 /* Gets FSR specific data. */
@@ -360,8 +356,10 @@ void Cmfd::computeXS_old()
 
                 /* increment group to group scattering tallies */
                 for (g = 0; g < NUM_ENERGY_GROUPS; g++){
-                    scat_tally_group[g] += scat[g*NUM_ENERGY_GROUPS + e] * flux * volume;
-                    log_printf(DEBUG, "scattering from group %i to %i: %f", e, g, scat[g*NUM_ENERGY_GROUPS + e]);
+                    scat_tally_group[g] += scat[g*NUM_ENERGY_GROUPS + e] * 
+                        flux * volume;
+                    log_printf(DEBUG, "scattering from group %i to %i: %f", 
+                               e, g, scat[g*NUM_ENERGY_GROUPS + e]);
                 }
 
                 /* choose a chi for this group */
@@ -370,7 +368,8 @@ void Cmfd::computeXS_old()
             }
 
             /* if multigroup, set the multigroup parameters */
-            if (_mesh->getMultigroup() == true){
+            if (_mesh->getMultigroup() == true)
+            {
                 meshCell->setATVolume(vol_tally_group);
                 meshCell->setSigmaA(abs_tally_group / rxn_tally_group, e);
                 meshCell->setSigmaT(tot_tally_group / rxn_tally_group, e);
@@ -378,12 +377,15 @@ void Cmfd::computeXS_old()
                 meshCell->setDiffusion(dif_tally_group / rxn_tally_group, e);
                 meshCell->setOldFlux(rxn_tally_group / vol_tally_group, e);
 
-                for (int g = 0; g < NUM_ENERGY_GROUPS; g++){
-                    meshCell->setSigmaS(scat_tally_group[g] / rxn_tally_group,e,g);
+                for (int g = 0; g < NUM_ENERGY_GROUPS; g++)
+                {
+                    meshCell->setSigmaS(scat_tally_group[g] / rxn_tally_group,
+                                        e, g);
                 }
             }
-            /* if single group, add group-wise tallies to group independent tallies */
-            else{
+            /* if single group, add group-wise tallies to tallies */
+            else
+            {
                 abs_tally += abs_tally_group;
                 tot_tally += tot_tally_group;
                 nu_fis_tally += nu_fis_tally_group;
@@ -435,14 +437,6 @@ void Cmfd::computeXS()
     Material* material;
 
     /* loop over mesh cells */
-#if USE_OPENMP
-#pragma omp parallel for private(i, e, g, volume, flux, abs, tot, nu_fis, \
-                                 chi, scat, abs_tally_group, nu_fis_tally_group, \
-                                 dif_tally_group, rxn_tally_group, vol_tally_group, tot_tally_group, \
-                                 nu_fis_tally, dif_tally, rxn_tally, abs_tally, tot_tally, \
-                                 scat_tally_group, iter, meshCell, fsr, material)
-#endif 
-
     for (i = 0; i < _cw * _ch; i++){
         meshCell = _mesh->getCells(i);
 

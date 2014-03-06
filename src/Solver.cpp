@@ -414,35 +414,44 @@ void Solver::initializeTrackFluxes(double flux) {
             double y1 = _tracks[i][j].getEnd()->getY();
 
             /* forward */
-            for (int i = 0; i < GRP_TIMES_ANG; i++)
+            if (((_geom->getMesh()->getBoundary(0) == VACUUM) 
+                 && (x0 < 1e-8)) ||
+                ((_geom->getMesh()->getBoundary(2) == VACUUM) 
+                 && (x0 > _geom->getWidth() - 1e-5)) ||
+                ((_geom->getMesh()->getBoundary(1) == VACUUM) 
+                 && (y0 < 1e-8)) ||
+                ((_geom->getMesh()->getBoundary(3) == VACUUM) 
+                 && (y0 > _geom->getWidth() - 1e-5)))
             {
-                if (((_geom->getMesh()->getBoundary(0) == VACUUM) 
-                     && (x0 < 1e-8)) ||
-                    ((_geom->getMesh()->getBoundary(2) == VACUUM) 
-                     && (x0 > _geom->getWidth() - 1e-5)) ||
-                    ((_geom->getMesh()->getBoundary(1) == VACUUM) 
-                     && (y0 < 1e-8)) ||
-                    ((_geom->getMesh()->getBoundary(3) == VACUUM) 
-                     && (y0 > _geom->getWidth() - 1e-5)))
-                    polar_fluxes[i] = 0;
-                else
+                for (int i = 0; i < GRP_TIMES_ANG; i++)
+                    polar_fluxes[i] = 0.0;
+            }
+            else
+            {
+                log_printf(DEBUG, "set forward angular flux %f", flux);
+                for (int i = 0; i < GRP_TIMES_ANG; i++)
                     polar_fluxes[i] = flux;
             }
-            for (int i = GRP_TIMES_ANG; i < GRP_TIMES_ANG * 2; i++)
+
+            /* backward */
+            if (((_geom->getMesh()->getBoundary(0) == VACUUM) 
+                 && (x1 < 1e-8)) ||
+                ((_geom->getMesh()->getBoundary(2) == VACUUM) 
+                 && (x1 > _geom->getWidth() - 1e-5)) ||
+                ((_geom->getMesh()->getBoundary(1) == VACUUM) 
+                 && (y1 < 1e-8)) ||
+                ((_geom->getMesh()->getBoundary(3) == VACUUM) 
+                 && (y1 > _geom->getWidth() - 1e-5)))
             {
-                if (((_geom->getMesh()->getBoundary(0) == VACUUM) 
-                     && (x1 < 1e-8)) ||
-                    ((_geom->getMesh()->getBoundary(2) == VACUUM) 
-                     && (x1 > _geom->getWidth() - 1e-5)) ||
-                    ((_geom->getMesh()->getBoundary(1) == VACUUM) 
-                     && (y1 < 1e-8)) ||
-                    ((_geom->getMesh()->getBoundary(3) == VACUUM) 
-                     && (y1 > _geom->getWidth() - 1e-5)))
+                for (int i = GRP_TIMES_ANG; i < 2 * GRP_TIMES_ANG; i++)
                     polar_fluxes[i] = 0;
-                else
+            }
+            else
+            {
+                log_printf(DEBUG, "set backward angular flux %f", flux);
+                for (int i = GRP_TIMES_ANG; i < 2 * GRP_TIMES_ANG; i++)
                     polar_fluxes[i] = flux;
             }
-            
         }
     }
 }
@@ -662,19 +671,17 @@ void Solver::prolongation(int moc_iter)
             /* standard CMFD update */
             else
             {
-                log_printf(ACTIVE, " iter %d boundary angular flux "
+                log_printf(DEBUG, " iter %d boundary angular flux "
                            "prolongation: update by scalar",
                            moc_iter);
                 _cmfd->updateBoundaryFluxByScalarFlux(moc_iter);
             }
         }
-
-        /* normalize fluxes */
-        normalizeFlux();
     }
 
     /* Re-enforce vacuum boundary conditions */
-    zeroVacuumBoundaries();
+    /* FIXME: what is this function doing? */
+    //zeroVacuumBoundaries();
 
     return;
 }
