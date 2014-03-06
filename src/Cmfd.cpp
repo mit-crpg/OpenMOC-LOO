@@ -193,23 +193,34 @@ int Cmfd::createAMPhi(PetscInt size1, PetscInt size2, int cells){
 double Cmfd::computeCellSourceNorm()
 {
     /* initialize variables */
-    double *old_cell_source, *source_residual; 
+    double *old_cell_source; 
     old_cell_source = new double[_cw * _ch];
-    source_residual = new double[_cw * _ch];
-    std::vector<int>::iterator iter;
-    int counter = 0;
     double l2_norm;
 
     for (int i = 0; i < _cw * _ch; i++)
         old_cell_source[i] = _cell_source[i];
  
-    computeCellSource();
+    computeCellSourceFromFSR();
+
+    l2_norm = computeCellSourceNormGivenTwoSources(old_cell_source, 
+                                                   _cell_source);
+
+    return l2_norm;
+}
+
+double Cmfd::computeCellSourceNormGivenTwoSources(double *old_cell_source, 
+                                                  double *new_cell_source)
+{
+    double l2_norm;
+    double *source_residual;
+    source_residual = new double[_cw * _ch];
+    int counter = 0;
 
     for (int i = 0; i < _cw * _ch; i++)
     {
-        if (_cell_source[i] > 1e-10)
+        if (new_cell_source[i] > 1e-10)
         {
-            source_residual[i] = pow(_cell_source[i] / old_cell_source[i] 
+            source_residual[i] = pow(new_cell_source[i] / old_cell_source[i] 
                                      - 1.0, 2);
             counter += 1;
         }
@@ -224,7 +235,7 @@ double Cmfd::computeCellSourceNorm()
     return l2_norm;
 }
 
-void Cmfd::computeCellSource()
+void Cmfd::computeCellSourceFromFSR()
 {
     double volume, flux, nu_fis;
     MeshCell* meshCell;
@@ -1317,7 +1328,7 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter)
     int max_outer, iter = 0, petsc_err;
     Vec phi_old, sold, snew, res;
     PetscInt size, its;
-    PetscScalar sumold, sumnew, scale_val, eps;
+    PetscScalar sumold, sumnew, scale_val, eps = 0;
     PetscScalar rtol = 1e-10, atol = rtol;
     std::string string;
     PetscScalar *old_phi, *new_phi;
@@ -1388,10 +1399,6 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter)
     }
     */
 
-    /* set _phi_new to phi_old */
-    petsc_err = VecCopy(phi_old, _phi_new);
-    CHKERRQ(petsc_err);
-
     /* initialize KSP solver */
     KSP ksp;
     petsc_err = KSPCreate(PETSC_COMM_WORLD, &ksp);
@@ -1408,22 +1415,33 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter)
     CHKERRQ(petsc_err);
 
     /* get initial source and find initial k_eff */
-    petsc_err = MatMult(_M, _phi_new, snew);
+    petsc_err = MatMult(_M, phi_old, snew);
     petsc_err = VecSum(snew, &sumnew);
-    petsc_err = MatMult(_A, _phi_new, sold);
+    petsc_err = MatMult(_A, phi_old, sold);
     petsc_err = VecSum(sold, &sumold);
     _keff = (double) sumnew / (double) sumold;
 
-    log_printf(ACTIVE, " prior to CMFD, xs collapsed from MOC"
-               " produce keff of %.10f = %.10f / %.10f", 
-               _keff, (double) sumnew, (double) sumold);
+    if (moc_iter == 10000)
+    {
+        log_printf(NORMAL, " prior to CMFD, xs collapsed from MOC"
+                   " produce keff of %.10f = %.10f / %.10f", 
+                   _keff, (double) sumnew, (double) sumold);
+    }
 
     petsc_err = VecCopy(snew, _source_old);
-    CHKERRQ(petsc_err);
 
+
+    /*
     VecCopy(snew, sold);
-    VecScale(sold, 1/_keff);
+    VecScale(sold, 1 / _keff);
     sumold = sumnew / _keff;
+    */
+    petsc_err = MatMult(_M, phi_old, sold);
+    petsc_err = VecSum(sold, &sumold);
+    scale_val = 1/_keff;
+    petsc_err = VecScale(sold, scale_val);
+    sumold *= scale_val;
+
     //VecView(_phi_new, PETSC_VIEWER_STDOUT_SELF);
 
     /* diffusion solver */
@@ -1442,21 +1460,49 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter)
         petsc_err = VecSum(snew, &sumnew);
         _keff =  sumnew / sumold;
 
-        /* compute the L2 norm of source error */
-        petsc_err = VecScale(sold, _keff);
-        petsc_err = VecShift(snew, 1e-20);
-        petsc_err = VecPointwiseDivide(res, sold, snew);
-        scale_val = -1;
-        petsc_err = VecShift(res, scale_val);
-        petsc_err = VecNorm(res, NORM_2, &eps);
+        /* divide new RHS by keff for the next iteration */
+        scale_val = 1/_keff;
+        petsc_err = VecScale(snew, scale_val);
+        sumnew *= scale_val;
         CHKERRQ(petsc_err);
+
+        /* compute the L2 norm of source error */
+        PetscScalar *old_source, *new_source;
+        petsc_err = VecGetArray(sold, &old_source);
+        petsc_err = VecGetArray(snew, &new_source);     
+        
+        double *old_source_energy_integrated, *new_source_energy_integrated;
+        old_source_energy_integrated = new double[_cw * _ch];
+        new_source_energy_integrated = new double[_cw * _ch];
+        
+        for (int ii = 0; ii < _cw * _ch; ii++)
+        {
+            old_source_energy_integrated[ii] = 0;
+            new_source_energy_integrated[ii] = 0;
+            
+            for (int e = 0; e < _ng; e++)
+            { 
+                old_source_energy_integrated[ii] += 
+                    (double) old_source[ii * _ng + e];
+                new_source_energy_integrated[ii] += 
+                    (double) new_source[ii * _ng + e];
+            }
+        }
+
+        eps = computeCellSourceNormGivenTwoSources(old_source_energy_integrated,
+                                                   new_source_energy_integrated
+            );
+
+        petsc_err = VecRestoreArray(sold, &old_source);
+        petsc_err = VecRestoreArray(snew, &new_source);
+
 
         /* prints keff and error */
         if (moc_iter == 10000)
         {
             log_printf(NORMAL, " %d-th CMFD iter k = %.10f = %.10f / %.10f,"
                        " eps = %e, taking %d KSP iterations", 
-                       iter, _keff, sumnew, sumold, eps, (int)its);
+                       iter, _keff, sumold * _keff, sumold, eps, (int)its);
 
             petsc_err = VecGetArray(phi_old, &old_phi);
             petsc_err = VecGetArray(_phi_new, &new_phi);
@@ -1466,9 +1512,12 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter)
                 meshCell = _mesh->getCells(i);
                 for (int e = 0; e < _ng; e++)
                 {
-                    log_printf(DEBUG, " Update from (m+1/2) - 1.0: %e",
+                    log_printf(ACTIVE, " Update from (m+1/2) %e =  %f / %f - 1",
                                (double)(old_phi[i*_ng + e]) 
-                               / (double)(new_phi[i*_ng + e]) - 1.0);
+                               / (double)(new_phi[i*_ng + e]) - 1.0,
+                               (double)(old_phi[i*_ng + e]), 
+                               (double)(new_phi[i*_ng + e])
+                        );
                 }
             }			
             petsc_err = VecRestoreArray(phi_old, &old_phi);
@@ -1481,13 +1530,7 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter)
                        iter, _keff, eps, (int)its);
         }
 
-        /* divide new RHS by keff for the next iteration */
-        scale_val = 1/_keff;
-        petsc_err = VecScale(snew, scale_val);
-        sumnew *= scale_val;
-        CHKERRQ(petsc_err);
-
-        /* set old source to new source */
+        /* book-keeping: set old source to new source */
         petsc_err = VecCopy(snew, sold);
         VecSum(sold, &sumold);
         CHKERRQ(petsc_err);
@@ -1497,7 +1540,7 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter)
         if ((iter > min_outer) && (eps < _l2_norm_conv_thresh))
             break;
     }
-    _num_iter_to_conv = iter + 1;
+    _num_iter_to_conv = iter;
 
     /* scale new flux such that its sum equals that of the old flux */
     petsc_err = MatMult(_M, _phi_new, snew);
@@ -2026,27 +2069,18 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
 
         /* Computes the L2 norm of point-wise-division of energy-integrated
          * fission source of mesh cells between LOO iterations */
-        eps = 0;
-        int num_counted = 0;
         for (int i = 0; i < _cw * _ch; i++)
         {
             meshCell = _mesh->getCells(i);
             new_power[i] = 0;
-            /* integrates over energy */
             for (int e = 0; e < _ng; e++)
             {
                 new_power[i] += meshCell->getNuSigmaF()[e] 
                     * meshCell->getNewFlux()[e];
-                num_counted++;
             }
-            if (old_power[i] > 0.0)
-                eps += pow(new_power[i] / old_power[i] - 1.0, 2);
         }
-        /* Assume all meshes are the same volume, thus instead of
-           doing sigma(error * vol) / total_vol, it simplifies to
-           divide by number of meshes. */
-        eps /= (double) num_counted;
-        eps = pow(eps, 0.5);
+        
+        eps = computeCellSourceNormGivenTwoSources(old_power, new_power);
 
         for (int i = 0; i < _cw * _ch; i++)
             old_power[i] = new_power[i];

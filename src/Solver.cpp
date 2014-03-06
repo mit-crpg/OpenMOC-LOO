@@ -2370,9 +2370,9 @@ double Solver::kernel(int max_iterations) {
     updateSource();
     /* FIXME: */
     initializeTrackFluxes(ONE_OVER_FOUR_PI);
-    //initializeTrackFluxes(1.0);
+    //initializeTrackFluxes(0.0);
     /* computes the initial pin cell fission source */
-    _cmfd->computeCellSource();
+    _cmfd->computeCellSourceFromFSR();
 
     /* Source iteration loop */
     for (int moc_iter = 0; moc_iter < max_iterations; moc_iter++) 

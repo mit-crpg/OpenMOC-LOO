@@ -109,11 +109,12 @@ public:
     double getKeff();
 
     /* Shared by two methods */
-    void computeCellSource();
+    void computeCellSourceFromFSR();
     void computeXS();
     void computeXS_old();	
     void updateFSRScalarFlux(int moc_iter);
     double computeCellSourceNorm();
+    double computeCellSourceNormGivenTwoSources(double *olds, double *news);
 
     /* CMFD */
     void computeCurrent();
@@ -130,6 +131,7 @@ public:
     void setOldFSRFlux();
     void setFSRs(FlatSourceRegion *fsrs);
     void setTracks(Track **tracks);
+
     int computeCmfdL2Norm(Vec snew, int moc_iter);
     void updateBoundaryFluxByScalarFlux(int moc_iter);
     void updateBoundaryFlux(int moc_iter);
