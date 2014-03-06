@@ -33,7 +33,6 @@ private:
     double **_old_quad_flux;
     double *_d_hat;
     double *_d_tilde;
-    double *_d_dif;
 
     /* Surface ID could be 0,1,2,3 and is later set in MeshCell.cpp */
     int _id; 
@@ -73,8 +72,6 @@ public:
     double* getDHat();
     void setDTilde(double dTilde, int e);
     double* getDTilde();
-    void setDDif(double dTilde, int e);
-    double* getDDif();
 
     /* General Purpose */
     int getId();

@@ -570,16 +570,13 @@ void Cmfd::computeDsxDirection(double x, double y, int e, MeshCell *meshCell,
     {
         if (_mesh->getBoundary(0) == REFLECTIVE)
         {
-            meshCell->getMeshSurfaces(0)->setDDif(0.0, e);
+            d_hat = 0; 
+            d_tilde = 0;
         }
         else if (_mesh->getBoundary(0) == VACUUM)
         {
             surf = meshCell->getMeshSurfaces(0);
             current = - surf->getCurrent(e);
-
-            /* set d_dif */
-            surf->setDDif(2 * d / meshCell->getWidth() / 
-                          (1 + 4 * d / meshCell->getWidth()), e);
             d_hat = 2 * d * f / meshCell->getWidth() 
                 / (1 + 4 * d*f / meshCell->getWidth());
             d_tilde = - (d_hat * flux + current 
@@ -593,12 +590,6 @@ void Cmfd::computeDsxDirection(double x, double y, int e, MeshCell *meshCell,
         meshCellNext = _mesh->getCells(y*_cw + x - 1);
         d_next = meshCellNext->getDiffusion()[e];
         flux_next = meshCellNext->getOldFlux()[e];
-
-        /* set d_dif */
-        MeshSurface *surf = meshCell->getMeshSurfaces(0);
-        surf->setDDif(2.0 * d * d_next 
-                      / (meshCell->getWidth() * d 
-                         + meshCellNext->getWidth() * d_next), e);
 
         /* get diffusion correction term for meshCellNext */
         f_next = computeDiffCorrect(d_next, meshCellNext->getWidth());
@@ -697,21 +688,12 @@ void Cmfd::computeDs(int moc_iter)
                         d_hat = 0.0;
                         d_tilde = 0.0;
                         current = 0.0;
-
-                        /* set d_dif */
-                        meshCell->getMeshSurfaces(2)->setDDif(0.0, e);
                     }
                     else if (_mesh->getBoundary(2) == VACUUM)
                     {
                         current = meshCell->getMeshSurfaces(2)->getCurrent(e);
-
-                        /* set d_dif */
-                        meshCell->getMeshSurfaces(2)->setDDif(
-                            2 * d / meshCell->getWidth() / 
-                            (1 + 4 * d / meshCell->getWidth()), e);
-
-                        d_hat = 2 * d*f / meshCell->getWidth() / 
-                            (1 + 4 * d*f / meshCell->getWidth());
+                        d_hat = 2 * d * f / meshCell->getWidth() / 
+                            (1 + 4 * d * f / meshCell->getWidth());
                         d_tilde = (d_hat * flux - current / 
                                    meshCell->getHeight()) / flux;
                     }
@@ -722,12 +704,6 @@ void Cmfd::computeDs(int moc_iter)
                     meshCellNext = _mesh->getCells(y*_cw + x + 1);
                     d_next = meshCellNext->getDiffusion()[e];
                     flux_next = meshCellNext->getOldFlux()[e];
-
-                    /* set d_dif */
-                    meshCell->getMeshSurfaces(2)->setDDif(
-                        2.0 * d * d_next / 
-                        (meshCell->getWidth() * d
-                         + meshCellNext->getWidth() * d_next), e);
 
                     /* get diffusion correction term for meshCellNext */
                     f_next = computeDiffCorrect(d_next, 
@@ -740,12 +716,7 @@ void Cmfd::computeDs(int moc_iter)
 
                     /* get net outward current across surface */
                     current = 0.0;
-
-                    /* increment current by outward current on right side */
                     current += meshCell->getMeshSurfaces(2)->getCurrent(e);
-
-                    /* decrement current by outward current on next cell's 
-                       left side */
                     current -= meshCellNext->getMeshSurfaces(0)->getCurrent(e);
 
                     /* compute d_tilde */
@@ -796,19 +767,10 @@ void Cmfd::computeDs(int moc_iter)
                         d_hat = 0.0;
                         d_tilde = 0.0;
                         current = 0.0;
-
-                        /* set d_dif */
-                        meshCell->getMeshSurfaces(1)->setDDif(0.0, e);
                     }
                     else if (_mesh->getBoundary(1) == VACUUM)
                     {
                         current = meshCell->getMeshSurfaces(1)->getCurrent(e);
-
-                        /* set d_dif */
-                        meshCell->getMeshSurfaces(1)->setDDif(
-                            2 * d / meshCell->getHeight() / 
-                            (1 + 4 * d / meshCell->getHeight()), e);
-
                         d_hat = 2 * d*f / meshCell->getHeight() / 
                             (1 + 4 * d*f / meshCell->getHeight());
                         d_tilde = (d_hat * flux - current / 
@@ -823,12 +785,6 @@ void Cmfd::computeDs(int moc_iter)
                     /* FIXME: double check this is the right flux */
                     flux_next = meshCellNext->getOldFlux()[e];
 
-                    /* set d_dif */
-                    meshCell->getMeshSurfaces(1)->setDDif(
-                        2.0 * d * d_next / (meshCell->getHeight() * d 
-                                            + meshCellNext->getHeight() * 
-                                            d_next), e);
-
                     /* get diffusion correction term for meshCellNext */
                     f_next = computeDiffCorrect(d_next, 
                                                 meshCellNext->getHeight());
@@ -840,12 +796,7 @@ void Cmfd::computeDs(int moc_iter)
 
                     /* get net outward current across surface */
                     current = 0.0;
-
-                    /* increment current by outward current on bottom side */
                     current += meshCell->getMeshSurfaces(1)->getCurrent(e);
-
-                    /* decrement current by outward current on next cell's 
-                       top side */
                     current -= meshCellNext->getMeshSurfaces(3)->getCurrent(e);
 
                     /* compute d_tilde */
@@ -904,19 +855,10 @@ void Cmfd::computeDs(int moc_iter)
                         d_hat = 0.0;
                         d_tilde = 0.0;
                         current = 0.0;
-
-                        /* set d_dif */
-                        meshCell->getMeshSurfaces(3)->setDDif(0.0, e);
                     }
                     else if (_mesh->getBoundary(3) == VACUUM)
                     {
                         current = - meshCell->getMeshSurfaces(3)->getCurrent(e);
-
-                        /* set d_dif */
-                        meshCell->getMeshSurfaces(3)->setDDif(
-                            2 * d / meshCell->getHeight() / 
-                            (1 + 4 * d / meshCell->getHeight()), e);
-
                         d_hat = 2 * d*f / meshCell->getHeight() / 
                             (1 + 4 * d*f / meshCell->getHeight());
 
@@ -931,12 +873,6 @@ void Cmfd::computeDs(int moc_iter)
                     d_next = meshCellNext->getDiffusion()[e];
                     flux_next = meshCellNext->getOldFlux()[e];
 
-                    /* set d_dif */
-                    meshCell->getMeshSurfaces(3)->setDDif(
-                        2.0 * d * d_next / 
-                        (meshCell->getHeight() * d + 
-                         meshCellNext->getHeight() * d_next), e);
-
                     /* get diffusion correction term for meshCellNext */
                     f_next = computeDiffCorrect(d_next, 
                                                 meshCellNext->getHeight());
@@ -948,12 +884,7 @@ void Cmfd::computeDs(int moc_iter)
 
                     /* get net outward current across surface */
                     current = 0.0;
-
-                    /* increment current by outward current on next cell's 
-                       bottom side */
                     current += meshCellNext->getMeshSurfaces(1)->getCurrent(e);
-
-                    /* decrement current by outward current on top side */
                     current -= meshCell->getMeshSurfaces(3)->getCurrent(e);
 
                     /* compute d_tilde */
@@ -2547,7 +2478,7 @@ int Cmfd::constructAMPhi(Mat A, Mat M, Vec phi_old, solveType solveMethod)
                 }
                 else if (solveMethod == DIFFUSION)
                 {
-                    value = meshCell->getMeshSurfaces(2)->getDDif()[e] 
+                    value = meshCell->getMeshSurfaces(2)->getDHat()[e] 
                         * meshCell->getHeight();
                 }
                 petsc_err = MatSetValues(A, 1, &indice1,1 , &indice1, &value, 
@@ -2565,7 +2496,7 @@ int Cmfd::constructAMPhi(Mat A, Mat M, Vec phi_old, solveType solveMethod)
                     }
                     else if (solveMethod == DIFFUSION)
                     {
-                        value = - meshCell->getMeshSurfaces(2)->getDDif()[e] 
+                        value = - meshCell->getMeshSurfaces(2)->getDHat()[e] 
                             * meshCell->getHeight();
                     }
                     indice2 = (y*_cw + x + 1)*_ng + e;
@@ -2581,7 +2512,7 @@ int Cmfd::constructAMPhi(Mat A, Mat M, Vec phi_old, solveType solveMethod)
                              meshCell->getMeshSurfaces(0)->getDTilde()[e]) 
                         * meshCell->getHeight();
                 else if (solveMethod == DIFFUSION)
-                    value = meshCell->getMeshSurfaces(0)->getDDif()[e] 
+                    value = meshCell->getMeshSurfaces(0)->getDHat()[e] 
                         * meshCell->getHeight();
 
                 petsc_err = MatSetValues(A, 1, &indice1, 1, &indice1, 
@@ -2597,7 +2528,7 @@ int Cmfd::constructAMPhi(Mat A, Mat M, Vec phi_old, solveType solveMethod)
                                    meshCell->getMeshSurfaces(0)->getDTilde()[e])
                             * meshCell->getHeight();
                     else if (solveMethod == DIFFUSION)
-                        value = - meshCell->getMeshSurfaces(0)->getDDif()[e] 
+                        value = - meshCell->getMeshSurfaces(0)->getDHat()[e] 
                             * meshCell->getHeight();
 
                     indice2 = (y*_cw + x - 1)*_ng + e;
@@ -2617,7 +2548,7 @@ int Cmfd::constructAMPhi(Mat A, Mat M, Vec phi_old, solveType solveMethod)
                 }
                 else if (solveMethod == DIFFUSION)
                 {
-                    value = meshCell->getMeshSurfaces(1)->getDDif()[e] 
+                    value = meshCell->getMeshSurfaces(1)->getDHat()[e] 
                         * meshCell->getWidth();
                 }
                 petsc_err = MatSetValues(A, 1, &indice1, 1, &indice1, &value, 
@@ -2636,7 +2567,7 @@ int Cmfd::constructAMPhi(Mat A, Mat M, Vec phi_old, solveType solveMethod)
                     }
                     else if (solveMethod == DIFFUSION)
                     {
-                        value = - meshCell->getMeshSurfaces(1)->getDDif()[e] 
+                        value = - meshCell->getMeshSurfaces(1)->getDHat()[e] 
                             * meshCell->getWidth();
                     }
 
@@ -2657,7 +2588,7 @@ int Cmfd::constructAMPhi(Mat A, Mat M, Vec phi_old, solveType solveMethod)
                 }
                 else if (solveMethod == DIFFUSION)
                 {
-                    value = meshCell->getMeshSurfaces(3)->getDDif()[e] 
+                    value = meshCell->getMeshSurfaces(3)->getDHat()[e] 
                         * meshCell->getWidth();
                 }
 
@@ -2677,7 +2608,7 @@ int Cmfd::constructAMPhi(Mat A, Mat M, Vec phi_old, solveType solveMethod)
                     }
                     else if (solveMethod == DIFFUSION)
                     {
-                        value = - meshCell->getMeshSurfaces(3)->getDDif()[e] 
+                        value = - meshCell->getMeshSurfaces(3)->getDHat()[e] 
                             * meshCell->getWidth();
                     }
                     indice2 = ((y-1)*_cw + x)*_ng + e;
