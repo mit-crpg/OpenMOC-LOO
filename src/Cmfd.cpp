@@ -1031,8 +1031,9 @@ void Cmfd::computeQuadFlux()
 void Cmfd::computeCurrent()
 {
     /* Initializations */
-    MeshSurface *s[4];
+    MeshSurface *s;
     MeshCell* meshCell;
+    double wt; 
 
     /* loop over all mesh cells */
     for (int y = 0; y < _ch; y++)
@@ -1043,14 +1044,9 @@ void Cmfd::computeCurrent()
 
             for (int i = 0; i < 4; i++) 
             {
-                s[i] = meshCell->getMeshSurfaces(i);    
-                for (int e = 0; e < _ng; e++)
-                {
-                    /* FIXME: need to figure out what to do here */
-                    double wt = s[i]->getTotalWt(2); 
-                    
-                    s[i]->setCurrent(s[i]->getCurrent(e) / wt, e);
-                }
+                s = meshCell->getMeshSurfaces(i);    
+                wt = s->getTotalWt(2); 
+                s->updateCurrents(1.0 / wt);
             }
         }
     }

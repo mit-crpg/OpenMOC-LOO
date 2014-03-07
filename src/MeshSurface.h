@@ -64,6 +64,7 @@ public:
     void setCurrent(double current, int group);
     double getCurrent(int group);
     void updateCurrent(double factor, int group);
+    void updateCurrents(double factor);
     void incrementCurrents(double *current);
     void incrementCurrent(double current, int group);
     double getAsTrackedLength();

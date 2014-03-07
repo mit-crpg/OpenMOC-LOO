@@ -1704,8 +1704,6 @@ void Solver::initializeWeights()
         meshCell->setATHeight(h);
         meshCell->setATL(0.5 * sqrt(w * w + h * h) / P0);
 
-
-        
         meshCell->setATVolume(w * h);
         // Alternatively 
         double vol = 0;
@@ -1715,7 +1713,7 @@ void Solver::initializeWeights()
             fsr = &_flat_source_regions[*it];
             vol += fsr->getVolume();
         }
-        meshCell->setATVolume(vol);
+        //meshCell->setATVolume(vol);
 
         if (i == 0)
         {
