@@ -151,7 +151,7 @@ public:
     /* updates after transport sweep */
     void computeRatios();
     double computeKeff(int moc_iter);
-    void normalizeFlux();
+    void normalizeFlux(double moc_iter);
     void renormCurrents(Mesh* mesh, double keff);
     void updateSource();
     void prolongation(int moc_iter);

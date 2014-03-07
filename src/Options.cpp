@@ -47,10 +47,11 @@ Options::Options(int argc, char **argv)
 
     /* Default geometry input file */
     _geometry_file = _relative_path + 
-        //"xml-sample/geometry_baw_01.xml"; 
+        //"xml-sample/geometry_infinite.xml";
         "xml-sample/geometry_c5g7_cc.xml";
     //"xml-sample/geometry_corner.xml"; % homogeneous material
     _material_file = _relative_path + 
+        //"xml-sample/material_infinite.xml";
         //"xml-sample/material_baw.xml";
         "xml-sample/material_c5g7.xml";
 	

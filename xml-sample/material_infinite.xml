@@ -1,11 +1,11 @@
 <materials>
   <material id="1" energy="1"
             sigma_a="1.0"
-            sigma_t="1.0"
+            sigma_t="1.5"
             sigma_f="0.5"
-            nu_sigma_f="1.0"
+            nu_sigma_f="2"
             chi="1.0"
-            sigma_s="0.0"
+            sigma_s="0.5"
     />
 </materials>
 

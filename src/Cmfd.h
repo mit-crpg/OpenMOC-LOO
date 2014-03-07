@@ -109,12 +109,15 @@ public:
     double getKeff();
 
     /* Shared by two methods */
-    void computeCellSourceFromFSR();
+    double* computeCellSourceFromFSR();
     void computeXS();
     void computeXS_old();	
     void updateFSRScalarFlux(int moc_iter);
+    double *getCellSource();
+    void setCellSource(double *source);
     double computeCellSourceNorm();
     double computeCellSourceNormGivenTwoSources(double *olds, double *news);
+    void printCellSource(double moc_iter);
 
     /* CMFD */
     void computeCurrent();

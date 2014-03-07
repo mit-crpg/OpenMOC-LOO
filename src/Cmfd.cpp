@@ -200,7 +200,7 @@ double Cmfd::computeCellSourceNorm()
     for (int i = 0; i < _cw * _ch; i++)
         old_cell_source[i] = _cell_source[i];
  
-    computeCellSourceFromFSR();
+    _cell_source = computeCellSourceFromFSR();
 
     l2_norm = computeCellSourceNormGivenTwoSources(old_cell_source, 
                                                    _cell_source);
@@ -235,35 +235,42 @@ double Cmfd::computeCellSourceNormGivenTwoSources(double *old_cell_source,
     return l2_norm;
 }
 
-void Cmfd::computeCellSourceFromFSR()
+double* Cmfd::computeCellSourceFromFSR()
 {
     double volume, flux, nu_fis;
     MeshCell* meshCell;
     FlatSourceRegion* fsr;
-    std::vector<int>::iterator iter;
+    double *cell_source;
+    cell_source = new double[_cw * _ch];
 
     for (int i = 0; i < _cw * _ch; i++)
     {
         meshCell = _mesh->getCells(i);
-        _cell_source[i] = 0;
+        cell_source[i] = 0;
         for (int e = 0; e < NUM_ENERGY_GROUPS; e++) 
         {
-            for (iter = meshCell->getFSRs()->begin(); 
-                 iter != meshCell->getFSRs()->end(); ++iter)
+            for (auto it = meshCell->getFSRs()->begin(); 
+                 it != meshCell->getFSRs()->end(); ++it)
             {
-                fsr = &_flat_source_regions[*iter];
+                fsr = &_flat_source_regions[*it];
                 volume = fsr->getVolume();
                 flux = fsr->getFlux()[e];
                 nu_fis = fsr->getMaterial()->getNuSigmaF()[e];
-                _cell_source[i] += nu_fis * flux * volume;
+                cell_source[i] += nu_fis * flux * volume;
             }
         }
-        log_printf(ACTIVE, "cell %d nu_fis %f flux %f vol %f source %f", i, 
-                   nu_fis, flux, volume, _cell_source[i]);
     }
-    return;
+    return cell_source;
 }
 
+void Cmfd::printCellSource(double moc_iter)
+{
+    for (int i = 0; i < _cw * _ch; i++)
+    {   
+        log_printf(ACTIVE, "iter %.1f cell %d energy-integrated source %f", 
+                   moc_iter, i, _cell_source[i]);
+    }
+}
 
 /** Computes the cross section for all MeshCells in the Mesh 
  * Create cross sections and fluxes for each cmfd cell by
@@ -1323,7 +1330,7 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter)
     Vec phi_old, sold, snew, res;
     PetscInt size, its;
     PetscScalar sumold, sumnew, scale_val, eps = 0;
-    PetscScalar rtol = 1e-10, atol = rtol;
+    PetscScalar rtol = 1e-8, atol = rtol;
     std::string string;
     PetscScalar *old_phi, *new_phi;
 
@@ -1356,7 +1363,7 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter)
     else
         max_outer = 500;
 
-    int min_outer = 5;
+    int min_outer = 300;
 
     /* create old source and residual vectors */
     petsc_err = VecCreateSeq(PETSC_COMM_WORLD, _ch * _cw * _ng, &sold);
@@ -1483,9 +1490,8 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter)
             }
         }
 
-        eps = computeCellSourceNormGivenTwoSources(old_source_energy_integrated,
-                                                   new_source_energy_integrated
-            );
+        eps = computeCellSourceNormGivenTwoSources(
+            old_source_energy_integrated, new_source_energy_integrated);
 
         petsc_err = VecRestoreArray(sold, &old_source);
         petsc_err = VecRestoreArray(snew, &new_source);
@@ -1497,25 +1503,6 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter)
             log_printf(NORMAL, " %d-th CMFD iter k = %.10f = %.10f / %.10f,"
                        " eps = %e, taking %d KSP iterations", 
                        iter, _keff, sumold * _keff, sumold, eps, (int)its);
-
-            petsc_err = VecGetArray(phi_old, &old_phi);
-            petsc_err = VecGetArray(_phi_new, &new_phi);
-			
-            for (int i = 0; i < _cw * _ch; i++)
-            {
-                meshCell = _mesh->getCells(i);
-                for (int e = 0; e < _ng; e++)
-                {
-                    log_printf(ACTIVE, " Update from (m+1/2) %e =  %f / %f - 1",
-                               (double)(old_phi[i*_ng + e]) 
-                               / (double)(new_phi[i*_ng + e]) - 1.0,
-                               (double)(old_phi[i*_ng + e]), 
-                               (double)(new_phi[i*_ng + e])
-                        );
-                }
-            }			
-            petsc_err = VecRestoreArray(phi_old, &old_phi);
-            petsc_err = VecRestoreArray(_phi_new, &new_phi);
         }
         else
         {
@@ -1543,6 +1530,7 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter)
     petsc_err = VecSum(sold, &sumold);
     scale_val = sumold / sumnew;
     petsc_err = VecScale(_phi_new, scale_val);
+    petsc_err = VecScale(snew, scale_val);
     CHKERRQ(petsc_err);
 
     petsc_err = VecGetArray(phi_old, &old_phi);
@@ -1559,13 +1547,43 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter)
             meshCell->setNewFlux(double(new_phi[i*_ng + e]), e);
         }
 
-        log_printf(ACTIVE, " cell %d energy 0 new flux %f, old flux %f", 
+        log_printf(DEBUG, " cell %d energy 0 new flux %f, old flux %f", 
                    i, new_phi[i * _ng + 0], old_phi[i * _ng + 0]);
     }
 
     petsc_err = VecRestoreArray(phi_old, &old_phi);
     petsc_err = VecRestoreArray(_phi_new, &new_phi);
     CHKERRQ(petsc_err);
+
+    /* compute the L2 norm of source error */
+    PetscScalar *old_source, *new_source;
+    petsc_err = VecGetArray(_source_old, &old_source);
+    petsc_err = VecGetArray(snew, &new_source);     
+    
+    double *old_source_energy_integrated, *new_source_energy_integrated;
+    old_source_energy_integrated = new double[_cw * _ch];
+    new_source_energy_integrated = new double[_cw * _ch];
+    
+    for (int ii = 0; ii < _cw * _ch; ii++)
+    {
+        old_source_energy_integrated[ii] = 0;
+        new_source_energy_integrated[ii] = 0;
+        
+        for (int e = 0; e < _ng; e++)
+        { 
+            old_source_energy_integrated[ii] += 
+                (double) old_source[ii * _ng + e];
+            new_source_energy_integrated[ii] += 
+                (double) new_source[ii * _ng + e];
+        }
+        log_printf(ACTIVE, "energy-integrated sources that go in and come out"
+                   " of CMFD for cell %d: %f %f",
+                   ii, old_source_energy_integrated[ii], 
+                   new_source_energy_integrated[ii]);
+    }
+    
+    petsc_err = VecRestoreArray(_source_old, &old_source);
+    petsc_err = VecRestoreArray(snew, &new_source);
 
     /* Computes L2 norm between the source that enters the CMFD acceleration 
      * step and the one coming out of converged CMFD step to decided whether 
@@ -1576,6 +1594,8 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter)
     /* Copies source new to source old */
     petsc_err = VecCopy(snew, _source_old);
     CHKERRQ(petsc_err);
+
+
 
     /* compute the residual */
     MatMult(_A,_phi_new, sold);
@@ -2441,6 +2461,7 @@ int Cmfd::constructAMPhi(Mat A, Mat M, Vec phi_old, solveType solveMethod)
             /* get mesh cell */
             meshCell = _mesh->getCells(y * _cw + x);
             vol = meshCell->getATVolume();
+            //vol = meshCell->getVolume();
 
             /* loop over energy groups */
             for (int e = 0; e < _ng; e++)
@@ -3187,3 +3208,15 @@ int Cmfd::getNumIterToConv()
     return _num_iter_to_conv;
 }
 
+double *Cmfd::getCellSource()
+{
+    return _cell_source;
+}
+
+void Cmfd::setCellSource(double *cell_source)
+{
+    for (int i = 0; i < _cw * _ch; i++)
+    {
+        _cell_source[i] = cell_source[i];
+    }
+}

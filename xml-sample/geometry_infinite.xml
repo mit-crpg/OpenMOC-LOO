@@ -10,17 +10,19 @@
 <!-- Definition of Lattices -->
   <lattice id="5">
     <type>rectangular</type>
-    <dimension>2 2</dimension>
-    <width>0.5 0.5</width>
+    <dimension>4 4</dimension>
+    <width>1.5 1.5</width>
     <universes>
-      1 1
-      1 1
+      1 1 1 1
+      1 1 1 1 
+      1 1 1 1
+      1 1 1 1
     </universes>
   </lattice>
 
 <!-- Definition of Surfaces -->
-  <surface id="1" type="x-plane" coeffs="-0.5" boundary="reflective"/>
-  <surface id="2" type="x-plane" coeffs="0.5"  boundary="reflective"/>
-  <surface id="3" type="y-plane" coeffs="-0.5" boundary="reflective" />
-  <surface id="4" type="y-plane" coeffs="0.5"  boundary="reflective"/>
+  <surface id="1" type="x-plane" coeffs="-3" boundary="reflective"/>
+  <surface id="2" type="x-plane" coeffs="3"  boundary="reflective"/>
+  <surface id="3" type="y-plane" coeffs="-3" boundary="reflective" />
+  <surface id="4" type="y-plane" coeffs="3"  boundary="reflective"/>
 </geometry>

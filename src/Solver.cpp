@@ -663,7 +663,7 @@ void Solver::prolongation(int moc_iter)
             /* first diffusion step */
             else if ((_first_diffusion) && (moc_iter == 0))
             {
-                log_printf(NORMAL, " iter %d boundary angular flux "
+                log_printf(DEBUG, " iter %d boundary angular flux "
                            "prolongation: by scalar flux",
                            moc_iter);
                 _cmfd->updateBoundaryFluxByScalarFlux(moc_iter);
@@ -1687,6 +1687,7 @@ void Solver::initializeWeights()
     log_printf(NORMAL, "Number of corners tallied %d", _num_crn);
 	
     MeshCell *meshCell;
+    FlatSourceRegion* fsr;
     double w, h;
     for (int i = 0; i < _cw * _ch; i++)
     {
@@ -1703,9 +1704,28 @@ void Solver::initializeWeights()
         meshCell->setATHeight(h);
         meshCell->setATL(0.5 * sqrt(w * w + h * h) / P0);
 
-        meshCell->setWidth(w);
-        meshCell->setHeight(h);
-        meshCell->setVolume(w * h);
+
+        
+        meshCell->setATVolume(w * h);
+        // Alternatively 
+        double vol = 0;
+        for (auto it = meshCell->getFSRs()->begin(); 
+             it != meshCell->getFSRs()->end(); it++)
+        {
+            fsr = &_flat_source_regions[*it];
+            vol += fsr->getVolume();
+        }
+        meshCell->setATVolume(vol);
+
+        if (i == 0)
+        {
+            log_printf(NORMAL, "physical: %f %f %f; as-tracked: %f %f %f", 
+                       meshCell->getWidth(),  meshCell->getHeight(), 
+                       meshCell->getVolume(), meshCell->getATWidth(), 
+                       meshCell->getATHeight(), meshCell->getATVolume());
+        }
+        //meshCell->setWidth(w);
+        //meshCell->setHeight(h);
     }
 
     return;
@@ -2068,7 +2088,7 @@ void Solver::MOCsweep(int max_iterations, int moc_iter)
                 }
             }
 		
-            normalizeFlux();
+            normalizeFlux(moc_iter+0.5);
 
             /* computes new _k_eff; it is important that we compute new k 
              * before computing new source */
@@ -2134,48 +2154,35 @@ void Solver::zeroVacuumBoundaries() {
 
 /* Normalizes the scalar flux in each FSR and angular flux track to that total 
  * volume-integrated fission source add up to the total volume. */
-void Solver::normalizeFlux()
+void Solver::normalizeFlux(double moc_iter)
 {			
-    double fission_source = 0;
-    double factor, volume;
-    double* nu_sigma_f;
-    double* scalar_flux;
-    FlatSourceRegion* fsr;
-    Material* material;
-    int start_index, end_index;
+    int counter = 0; 
+    double fission_source = 0, factor;
+    double *cell_source;
 
-    /* Compute total fission source for this region */
-    for (int r = 0; r < _num_FSRs; r++) 
+    cell_source = _cmfd->computeCellSourceFromFSR();
+    for (int i = 0; i < _cw * _ch; i++)
     {
-        /* Get pointers to important data structures */
-        fsr = &_flat_source_regions[r];
-        material = fsr->getMaterial();
-        nu_sigma_f = material->getNuSigmaF();
-        scalar_flux = fsr->getFlux();
-        volume = fsr->getVolume();
-
-        start_index = fsr->getMaterial()->getNuSigmaFStart();
-        end_index = fsr->getMaterial()->getNuSigmaFEnd();
-
-        for (int e = start_index; e < end_index; e++)
-            fission_source += nu_sigma_f[e] * scalar_flux[e] * volume;
+        if (cell_source[i] > 1e-10)
+        {
+            counter += 1;
+            fission_source += cell_source[i];
+        }
     }
 
     /* Renormalize scalar fluxes in each region */
-    factor = _total_vol / fission_source;
-    log_printf(ACTIVE, "normalization factor = %f", factor);
+    factor = counter / fission_source;
+    log_printf(ACTIVE, "iter %.1f normalization factor = %f", moc_iter, factor);
 
     for (int r = 0; r < _num_FSRs; r++)
         _flat_source_regions[r].normalizeFluxes(factor);
 
-#if 1
     /* Renormalize angular boundary fluxes for each track */
     for (int i = 0; i < _num_azim; i++) 
     {
         for (int j = 0; j < _num_tracks[i]; j++)
             _tracks[i][j].normalizeFluxes(factor);
     }
-#endif
 
     /* Renormalize leakage term for each of the four exterior surfaces */
     for (int s = 1; s < 5; s++)
@@ -2373,13 +2380,14 @@ double Solver::kernel(int max_iterations) {
     /* Set scalar flux to unity for each region */
     oneFSRFluxOldSource();
 
-    normalizeFlux();
+    normalizeFlux(0);
     updateSource();
     /* FIXME: */
     initializeTrackFluxes(ONE_OVER_FOUR_PI);
     //initializeTrackFluxes(0.0);
-    /* computes the initial pin cell fission source */
-    _cmfd->computeCellSourceFromFSR();
+
+    _cmfd->setCellSource(_cmfd->computeCellSourceFromFSR());
+    _cmfd->printCellSource(0);
 
     /* Source iteration loop */
     for (int moc_iter = 0; moc_iter < max_iterations; moc_iter++) 
@@ -2399,7 +2407,8 @@ double Solver::kernel(int max_iterations) {
         if ((_run_cmfd || _run_loo) && !(_acc_after_MOC_converge))
             prolongation(moc_iter);
 
-        normalizeFlux();
+        normalizeFlux(moc_iter+1);
+        _cmfd->printCellSource(moc_iter+1);
         _k_eff = computeKeff(moc_iter);
         updateSource();
 
