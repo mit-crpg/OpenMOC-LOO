@@ -200,11 +200,19 @@ double Cmfd::computeCellSourceNorm()
     for (int i = 0; i < _cw * _ch; i++)
         old_cell_source[i] = _cell_source[i];
  
-    _cell_source = computeCellSourceFromFSR();
+    setCellSource(computeCellSourceFromFSR());
 
+/*
+    for (int i = 0; i < _cw * _ch; i ++)
+        printf(" %f,",_cell_source[i]);
+    printf("\n");
+    for (int i = 0; i < _cw * _ch; i ++)
+        printf(" %f,", old_cell_source[i]);
+    printf("\n");
+*/
     l2_norm = computeCellSourceNormGivenTwoSources(old_cell_source, 
                                                    _cell_source);
-
+    delete [] old_cell_source;
     return l2_norm;
 }
 
@@ -232,6 +240,7 @@ double Cmfd::computeCellSourceNormGivenTwoSources(double *old_cell_source,
     l2_norm /= (double) (counter);
     l2_norm = sqrt(l2_norm);
 
+    delete [] source_residual;
     return l2_norm;
 }
 

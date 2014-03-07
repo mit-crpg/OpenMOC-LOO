@@ -1791,18 +1791,6 @@ void Solver::MOCsweep(int max_iterations, int moc_iter)
          * If we are using OpenMP then we create a separate thread
          * for each pair of reflecting azimuthal angles - angles which
          * wrap into cycles on each other */
-#if USE_OPENMP && STORE_PREFACTORS
-#pragma omp parallel for num_threads(num_threads)               \
-    private(t, k, j, i, s, p, e, pe, track, segments,           \
-            num_segments, weights, polar_fluxes,                \
-            segment, fsr, ratios, delta, fsr_flux, currents)
-#elif USE_OPENMP && !STORE_PREFACTORS
-#pragma omp parallel for num_threads(num_threads)       \
-    private(t, k, j, i, s, p, e, pe, track, segments,   \
-            num_segments, weights, polar_fluxes,        \
-            segment, fsr, ratios, delta, fsr_flux,      \
-            sigma_t_l, index, currents)
-#endif
         /* Loop over each thread */
         for (t = 0; t < num_threads; t++) 
         {
@@ -2068,9 +2056,6 @@ void Solver::MOCsweep(int max_iterations, int moc_iter)
          * converging boundary fluxes */
         if (i == max_iterations - 1)
         {
-#if USE_OPENMP
-#pragma omp parallel for private(fsr, scalar_flux, ratios,  sigma_t, volume)
-#endif
             /* Add in source term and normalize flux to volume for each FSR */
             for (int r = 0; r < _num_FSRs; r++) 
             {
@@ -2096,6 +2081,8 @@ void Solver::MOCsweep(int max_iterations, int moc_iter)
 
             /* Normalize scalar fluxes and computes Q for each FSR */
             updateSource();
+
+            //_cmfd->setCellSource(_cmfd->computeCellSourceFromFSR());
 
             /* Book-keeping: update old source in each FSR */
             double *source, *old_source;
