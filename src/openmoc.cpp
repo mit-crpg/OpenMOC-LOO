@@ -29,7 +29,7 @@
 #pragma GCC diagnostic ignored "-Wunused"
 #pragma GCC diagnostic ignored "-Wunused-variable"
 
-static char help[] = "Running CMFD with Petsc";
+static char help[] = "Running CMFD with Petsc\n";
 
 int main(int argc, char **argv) {
     feenableexcept(FE_DIVBYZERO);

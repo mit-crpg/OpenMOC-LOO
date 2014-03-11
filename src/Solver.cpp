@@ -141,7 +141,6 @@ Solver::Solver(Geometry* geom, TrackGenerator* track_generator,
                    _damp_factor, _update_boundary, _reflect_outgoing);
     }
 
-    /* FIXME: this is just an arbitrary number ofr now! may need to increase */
     _pin_powers.assign(_ch * _cw, 1.0);
 }
 

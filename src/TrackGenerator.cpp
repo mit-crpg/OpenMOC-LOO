@@ -807,7 +807,7 @@ void TrackGenerator::dumpTracksToFile() {
     for (int i=0; i < _num_azim; i++)
         azim_weights[i] = _azim_weights[i];
     fwrite(azim_weights, sizeof(double), _num_azim, out);
-    free(azim_weights);
+    delete[] azim_weights;
     
     Track* curr_track;
     double x0, y0, x1, y1;

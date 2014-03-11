@@ -1,7 +1,7 @@
 LANGUAGES   += c++
 COMPILEOPTS += -Wall
 COMPILEOPTS += -Wno-unused-but-set-variable
-COMPILEOPTS += -std=gnu++0x
+COMPILEOPTS += -std=c++11
 COMPILEOPTS += -fopenmp
 #COMPILEOPTS += -O2
 #COMPILEOPTS += -march=native

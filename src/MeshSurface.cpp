@@ -64,10 +64,12 @@ MeshSurface::~MeshSurface()
     for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
     {
         delete []_quad_current[e];
-        delete []_quad_current[e];
+        delete []_quad_flux[e];
+        delete []_old_quad_flux[e];
     }
     delete []_quad_current;
     delete []_quad_flux;
+    delete []_old_quad_flux;
 }
 
 /* Current */

@@ -37,7 +37,7 @@ Options::Options(int argc, char **argv)
     _boundary_iteration = 0;
     _first_diffusion = true;			/* run diffusion for 1st iter */
     _update_boundary = true;            /* update boundary angular flux */
-    _reflect_outgoing = false;          /* newest incoming flux during HO MOC */
+    _reflect_outgoing = true;          /* newest incoming flux during HO MOC */
     _use_up_scattering_xs = true; 
 
     if (std::string(getenv("PWD")).find("Release") != std::string::npos)
