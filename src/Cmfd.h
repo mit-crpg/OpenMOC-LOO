@@ -71,6 +71,7 @@ private:
     int _num_loop;
     int _num_track;
     int *_num_tracks; 
+    int _num_FSRs;
     int _cw;
     int _ch;
     int _ng;
@@ -82,6 +83,7 @@ private:
     double _l2_norm_conv_thresh;
     double _spacing;
     double *_cell_source;
+    double *_fsr_source;
     bool _use_diffusion_correction;
     bool _run_loo;
     bool _run_loo_psi;
@@ -116,7 +118,8 @@ public:
     double *getCellSource();
     void setCellSource(double *source);
     double computeCellSourceNorm();
-    double computeCellSourceNormGivenTwoSources(double *olds, double *news);
+    double computeCellSourceNormGivenTwoSources(double *olds, double *news, 
+                                                int num);
     void printCellSource(double moc_iter);
 
     /* CMFD */

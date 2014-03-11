@@ -28,6 +28,7 @@ Cmfd::Cmfd(Geometry* geom, Plotter* plotter, Mesh* mesh,
     _num_azim = track_generator->getNumAzim();
     _spacing = track_generator->getSpacing();
     _num_tracks = track_generator->getNumTracks();
+    _num_FSRs = _geom->getNumFSRs();
 
     _l2_norm = 1.0;
     _l2_norm_conv_thresh = opts->getL2NormConvThresh();
@@ -132,6 +133,7 @@ Cmfd::Cmfd(Geometry* geom, Plotter* plotter, Mesh* mesh,
     _converged = false;
 
     _cell_source = new double[_cw * _ch];
+    _fsr_source = new double[_num_FSRs];
     for (int i = 0; i < _cw * _ch; i++)
         _cell_source[i] = 1.0;
 }
@@ -192,39 +194,50 @@ int Cmfd::createAMPhi(PetscInt size1, PetscInt size2, int cells){
 
 double Cmfd::computeCellSourceNorm()
 {
-    /* initialize variables */
+    double l2_norm;
+#if 1
     double *old_cell_source; 
     old_cell_source = new double[_cw * _ch];
-    double l2_norm;
 
     for (int i = 0; i < _cw * _ch; i++)
         old_cell_source[i] = _cell_source[i];
  
     setCellSource(computeCellSourceFromFSR());
 
-/*
-    for (int i = 0; i < _cw * _ch; i ++)
-        printf(" %f,",_cell_source[i]);
-    printf("\n");
-    for (int i = 0; i < _cw * _ch; i ++)
-        printf(" %f,", old_cell_source[i]);
-    printf("\n");
-*/
     l2_norm = computeCellSourceNormGivenTwoSources(old_cell_source, 
-                                                   _cell_source);
+                                                   _cell_source, _cw * _ch);
     delete [] old_cell_source;
+#else
+    FlatSourceRegion *fsr;
+    double *old_source; 
+    old_source = new double[_num_FSRs];
+    for (int i = 0; i < _num_FSRs; i++)
+        old_source[i] = _fsr_source[i];
+
+    for (int i = 0; i < _num_FSRs; i++)
+    {
+        fsr = &_flat_source_regions[i]; 
+        _fsr_source[i] = fsr->computeFissionRate(); // has vol in it 
+    }
+    l2_norm = computeCellSourceNormGivenTwoSources(old_source, _fsr_source, 
+                                                   _num_FSRs);
+    
+#endif
+
+
     return l2_norm;
 }
 
 double Cmfd::computeCellSourceNormGivenTwoSources(double *old_cell_source, 
-                                                  double *new_cell_source)
+                                                  double *new_cell_source,
+                                                  int num)
 {
     double l2_norm;
     double *source_residual;
-    source_residual = new double[_cw * _ch];
+    source_residual = new double[num];
     int counter = 0;
 
-    for (int i = 0; i < _cw * _ch; i++)
+    for (int i = 0; i < num; i++)
     {
         if (new_cell_source[i] > 1e-10)
         {
@@ -1496,7 +1509,8 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter)
         }
 
         eps = computeCellSourceNormGivenTwoSources(
-            old_source_energy_integrated, new_source_energy_integrated);
+            old_source_energy_integrated, new_source_energy_integrated, 
+            _cw * _ch);
 
         petsc_err = VecRestoreArray(sold, &old_source);
         petsc_err = VecRestoreArray(snew, &new_source);
@@ -1582,9 +1596,11 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter)
                 (double) new_source[ii * _ng + e];
         }
         log_printf(ACTIVE, "energy-integrated sources that go in and come out"
-                   " of CMFD for cell %d: %f %f",
+                   " of CMFD for cell %d: %f %f, ratio %e",
                    ii, old_source_energy_integrated[ii], 
-                   new_source_energy_integrated[ii]);
+                   new_source_energy_integrated[ii], 
+                   new_source_energy_integrated[ii] / 
+                   old_source_energy_integrated[ii] - 1.0);
     }
     
     petsc_err = VecRestoreArray(_source_old, &old_source);
@@ -2099,7 +2115,8 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
             }
         }
         
-        eps = computeCellSourceNormGivenTwoSources(old_power, new_power);
+        eps = computeCellSourceNormGivenTwoSources(old_power, new_power, 
+            _ch * _cw);
 
         for (int i = 0; i < _cw * _ch; i++)
             old_power[i] = new_power[i];

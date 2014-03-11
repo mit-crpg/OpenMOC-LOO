@@ -2394,7 +2394,12 @@ double Solver::kernel(int max_iterations) {
 
         normalizeFlux(moc_iter+1);
         _cmfd->printCellSource(moc_iter+1);
-        _k_eff = computeKeff(moc_iter);
+        /* FIXME: for consistency, use Cmfd k */
+        //_k_eff = computeKeff(moc_iter);
+        if (_run_cmfd)
+            _k_eff = _cmfd_k;
+        else if (_run_loo)
+            _k_eff = _loo_k;
         updateSource();
 
         /* We only store $k^{(m+1)}$; other intermediate keff does not matter */
@@ -2405,7 +2410,8 @@ double Solver::kernel(int max_iterations) {
         if ((_run_cmfd || _run_loo))
             eps_2 = _cmfd->computeCellSourceNorm();
         else
-            eps_2 = computePinPowerNorm();
+            eps_2 = _cmfd->computeCellSourceNorm();
+            //eps_2 = computePinPowerNorm();
 
         _old_eps_2.push(eps_2);
         if (_old_eps_2.size() == NUM_KEFFS_TRACKED)
