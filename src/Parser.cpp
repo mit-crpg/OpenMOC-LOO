@@ -1374,8 +1374,7 @@ int *strtok_int(const char *str, int *count) {
     }
     free(duplicated);
 	
-    if (cnt > 0)
-        arr = (int *) malloc(sizeof(*arr) * cnt);
+    arr = (int *) malloc(sizeof(*arr) * cnt);
 	
     duplicated = strdup(str);
     i = 0;
@@ -1415,8 +1414,7 @@ double *strtok_double(const char *str, int *count) {
     }
     free(duplicated);
 	
-    if (cnt > 0)
-        arr = (double *) malloc(sizeof(*arr) * cnt);
+    arr = (double *) malloc(sizeof(*arr) * cnt);
 	
     duplicated = strdup(str);
     i = 0;
