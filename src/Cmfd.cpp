@@ -180,13 +180,16 @@ int Cmfd::createAMPhi(PetscInt size1, PetscInt size2, int cells){
     petsc_err = MatCreateSeqAIJ(PETSC_COMM_WORLD, size1, size1, size2, 
                                 PETSC_NULL, 
                                 &_A);
+    CHKERRQ(petsc_err);
     size2 = size2 - 4;
     petsc_err = MatCreateSeqAIJ(PETSC_COMM_WORLD, size1, size1, size2, 
                                 PETSC_NULL, 
                                 &_M);
+    CHKERRQ(petsc_err);
     petsc_err = VecCreateSeq(PETSC_COMM_WORLD, cells, &_phi_new);
+    CHKERRQ(petsc_err);
     //petsc_err = VecCreateSeq(PETSC_COMM_WORLD, cells, &_source_old);
-    VecDuplicate(_phi_new, &_source_old);
+    petsc_err = VecDuplicate(_phi_new, &_source_old);
     CHKERRQ(petsc_err);
 
     return petsc_err;
@@ -1003,7 +1006,6 @@ void Cmfd::computeQuadFlux()
                 for (int e = 0; e < _ng; e++)
                 {
                     tmp = 0.0;
-                    wt = 0;
 
                     /* FIXME: somehow _nq = 4 breaks the code for _ro case */
                     for (int j = 0; j < 4; j++)
@@ -1348,7 +1350,7 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter)
     Vec phi_old, sold, snew, res;
     PetscInt size, its;
     PetscScalar sumold, sumnew, scale_val, eps = 0;
-    PetscScalar rtol = 1e-8, atol = rtol;
+    PetscScalar rtol = 1e-10, atol = rtol;
     std::string string;
     PetscScalar *old_phi, *new_phi;
 
@@ -1360,7 +1362,9 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter)
     /* zero out and construct memory efficient versions of
      * A matrix, M matrix, and flux vector */
     petsc_err = MatZeroEntries(_A);
+    CHKERRQ(petsc_err);
     petsc_err = MatZeroEntries(_M);
+    CHKERRQ(petsc_err);
     petsc_err = constructAMPhi(_A, _M, phi_old, solveMethod);
     CHKERRQ(petsc_err);
 
@@ -1385,26 +1389,43 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter)
 
     /* create old source and residual vectors */
     petsc_err = VecCreateSeq(PETSC_COMM_WORLD, _ch * _cw * _ng, &sold);
+    CHKERRQ(petsc_err);
     petsc_err = VecCreateSeq(PETSC_COMM_WORLD, _ch * _cw * _ng, &snew);
+    CHKERRQ(petsc_err);
     petsc_err = VecCreateSeq(PETSC_COMM_WORLD, _ch * _cw * _ng, &res);
     CHKERRQ(petsc_err);
 
     /* assembly vectors and matrices*/
     petsc_err = VecAssemblyBegin(phi_old);
+    CHKERRQ(petsc_err);
     petsc_err = VecAssemblyEnd(phi_old);
+    CHKERRQ(petsc_err);
     petsc_err = VecAssemblyBegin(_phi_new);
+    CHKERRQ(petsc_err);
     petsc_err = VecAssemblyEnd(_phi_new);
+    CHKERRQ(petsc_err);
     petsc_err = VecAssemblyBegin(_source_old);
+    CHKERRQ(petsc_err);
     petsc_err = VecAssemblyEnd(_source_old);
+    CHKERRQ(petsc_err);
     petsc_err = VecAssemblyBegin(sold);
+    CHKERRQ(petsc_err);
     petsc_err = VecAssemblyEnd(sold);
+    CHKERRQ(petsc_err);
     petsc_err = VecAssemblyBegin(snew);
+    CHKERRQ(petsc_err);
     petsc_err = VecAssemblyEnd(snew);
+    CHKERRQ(petsc_err);
     petsc_err = VecAssemblyBegin(res);
+    CHKERRQ(petsc_err);
     petsc_err = VecAssemblyEnd(res);
+    CHKERRQ(petsc_err);
     petsc_err = MatAssemblyBegin(_A, MAT_FINAL_ASSEMBLY);
+    CHKERRQ(petsc_err);
     petsc_err = MatAssemblyEnd(_A, MAT_FINAL_ASSEMBLY);
+    CHKERRQ(petsc_err);
     petsc_err = MatAssemblyBegin(_M, MAT_FINAL_ASSEMBLY);
+    CHKERRQ(petsc_err);
     petsc_err = MatAssemblyEnd(_M, MAT_FINAL_ASSEMBLY);
     CHKERRQ(petsc_err);
 
@@ -1421,23 +1442,33 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter)
     /* initialize KSP solver */
     KSP ksp;
     petsc_err = KSPCreate(PETSC_COMM_WORLD, &ksp);
+    CHKERRQ(petsc_err);
     petsc_err = KSPSetTolerances(ksp, rtol, atol, PETSC_DEFAULT, PETSC_DEFAULT);
+    CHKERRQ(petsc_err);
     petsc_err = KSPSetType(ksp, KSPGMRES);
+    CHKERRQ(petsc_err);    
     //petsc_err = PetscObjectSetPrecision((_p_PetscObject*) ksp, 
     //					  PETSC_PRECISION_DOUBLE);
     petsc_err = KSPSetInitialGuessNonzero(ksp, PETSC_TRUE);
+    CHKERRQ(petsc_err);
     petsc_err = KSPSetOperators(ksp, _A, _A, SAME_NONZERO_PATTERN);
-
+    CHKERRQ(petsc_err);
+    
     /* from options must be called before KSPSetUp() */
     petsc_err = KSPSetFromOptions(ksp);
+    CHKERRQ(petsc_err);
     petsc_err = KSPSetUp(ksp);
     CHKERRQ(petsc_err);
 
     /* get initial source and find initial k_eff */
     petsc_err = MatMult(_M, phi_old, snew);
+    CHKERRQ(petsc_err);
     petsc_err = VecSum(snew, &sumnew);
+    CHKERRQ(petsc_err);
     petsc_err = MatMult(_A, phi_old, sold);
+    CHKERRQ(petsc_err);
     petsc_err = VecSum(sold, &sumold);
+    CHKERRQ(petsc_err);
     _keff = (double) sumnew / (double) sumold;
 
     if (moc_iter == 10000)
@@ -1448,7 +1479,8 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter)
     }
 
     petsc_err = VecCopy(snew, _source_old);
-
+    CHKERRQ(petsc_err);
+    
 
     /*
     VecCopy(snew, sold);
@@ -1456,9 +1488,13 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter)
     sumold = sumnew / _keff;
     */
     petsc_err = MatMult(_M, phi_old, sold);
+    CHKERRQ(petsc_err);
     petsc_err = VecSum(sold, &sumold);
+    CHKERRQ(petsc_err);
     scale_val = 1/_keff;
+    CHKERRQ(petsc_err);
     petsc_err = VecScale(sold, scale_val);
+    CHKERRQ(petsc_err);
     sumold *= scale_val;
 
     //VecView(_phi_new, PETSC_VIEWER_STDOUT_SELF);
@@ -1468,6 +1504,7 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter)
     {
         /* Solve x = A_inverse * b problem and compute new source */
         petsc_err = KSPSolve(ksp, sold, _phi_new);
+        CHKERRQ(petsc_err);
         petsc_err = KSPGetIterationNumber(ksp,&its);
         CHKERRQ(petsc_err);
 
@@ -1476,20 +1513,24 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter)
 		
         /* compute and set keff */
         petsc_err = MatMult(_M, _phi_new, snew);
+        CHKERRQ(petsc_err);
         petsc_err = VecSum(snew, &sumnew);
+        CHKERRQ(petsc_err);
         _keff =  sumnew / sumold;
 
         /* divide new RHS by keff for the next iteration */
         scale_val = 1/_keff;
         petsc_err = VecScale(snew, scale_val);
-        sumnew *= scale_val;
         CHKERRQ(petsc_err);
+        sumnew *= scale_val;
 
         /* compute the L2 norm of source error */
         PetscScalar *old_source, *new_source;
         petsc_err = VecGetArray(sold, &old_source);
+        CHKERRQ(petsc_err);                
         petsc_err = VecGetArray(snew, &new_source);     
-        
+        CHKERRQ(petsc_err);             
+       
         double *old_source_energy_integrated, *new_source_energy_integrated;
         old_source_energy_integrated = new double[_cw * _ch];
         new_source_energy_integrated = new double[_cw * _ch];
@@ -1513,8 +1554,9 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter)
             _cw * _ch);
 
         petsc_err = VecRestoreArray(sold, &old_source);
+        CHKERRQ(petsc_err);         
         petsc_err = VecRestoreArray(snew, &new_source);
-
+        CHKERRQ(petsc_err);         
 
         /* prints keff and error */
         if (moc_iter == 10000)
@@ -1532,7 +1574,8 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter)
 
         /* book-keeping: set old source to new source */
         petsc_err = VecCopy(snew, sold);
-        VecSum(sold, &sumold);
+        CHKERRQ(petsc_err);
+        petsc_err = VecSum(sold, &sumold);
         CHKERRQ(petsc_err);
 
         /* check for convergence for the CMFD iterative solver using 
@@ -1544,15 +1587,21 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter)
 
     /* scale new flux such that its sum equals that of the old flux */
     petsc_err = MatMult(_M, _phi_new, snew);
+    CHKERRQ(petsc_err);         
     petsc_err = VecSum(snew, &sumnew);
+    CHKERRQ(petsc_err);         
     petsc_err = MatMult(_M, phi_old, sold);
+    CHKERRQ(petsc_err);         
     petsc_err = VecSum(sold, &sumold);
+    CHKERRQ(petsc_err);         
     scale_val = sumold / sumnew;
     petsc_err = VecScale(_phi_new, scale_val);
+    CHKERRQ(petsc_err);         
     petsc_err = VecScale(snew, scale_val);
     CHKERRQ(petsc_err);
 
     petsc_err = VecGetArray(phi_old, &old_phi);
+    CHKERRQ(petsc_err);         
     petsc_err = VecGetArray(_phi_new, &new_phi);
     CHKERRQ(petsc_err);
 
@@ -1571,14 +1620,17 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter)
     }
 
     petsc_err = VecRestoreArray(phi_old, &old_phi);
+    CHKERRQ(petsc_err);
     petsc_err = VecRestoreArray(_phi_new, &new_phi);
     CHKERRQ(petsc_err);
 
     /* compute the L2 norm of source error */
     PetscScalar *old_source, *new_source;
     petsc_err = VecGetArray(_source_old, &old_source);
+    CHKERRQ(petsc_err);
     petsc_err = VecGetArray(snew, &new_source);     
-    
+    CHKERRQ(petsc_err);
+  
     double *old_source_energy_integrated, *new_source_energy_integrated;
     old_source_energy_integrated = new double[_cw * _ch];
     new_source_energy_integrated = new double[_cw * _ch];
@@ -1604,13 +1656,18 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter)
     }
     
     petsc_err = VecRestoreArray(_source_old, &old_source);
+    CHKERRQ(petsc_err);
     petsc_err = VecRestoreArray(snew, &new_source);
+    CHKERRQ(petsc_err);
 
     /* Computes L2 norm between the source that enters the CMFD acceleration 
      * step and the one coming out of converged CMFD step to decided whether 
      * the outter MOC iteration / source iteration should quit */
     if (moc_iter > 0)
+    {
         petsc_err = computeCmfdL2Norm(snew, moc_iter);
+        CHKERRQ(petsc_err);
+    }
 
     /* Copies source new to source old */
     petsc_err = VecCopy(snew, _source_old);
@@ -1630,9 +1687,13 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter)
 
     /* destroy matrices and vectors */
     petsc_err = VecDestroy(&phi_old);
+    CHKERRQ(petsc_err);
     petsc_err = VecDestroy(&snew);
+    CHKERRQ(petsc_err);
     petsc_err = VecDestroy(&sold);
+    CHKERRQ(petsc_err);
     petsc_err = VecDestroy(&res);
+    CHKERRQ(petsc_err);
     petsc_err = KSPDestroy(&ksp);
     CHKERRQ(petsc_err);
 
@@ -2495,7 +2556,9 @@ int Cmfd::constructAMPhi(Mat A, Mat M, Vec phi_old, solveType solveMethod)
                 value = (PetscScalar) meshCell->getOldFlux()[e];
                 petsc_err = VecSetValues(phi_old, 1, &indice1, 
                                          &value, INSERT_VALUES);
+                CHKERRQ(petsc_err);
                 petsc_err = VecAssemblyBegin(phi_old);
+                CHKERRQ(petsc_err);
                 petsc_err = VecAssemblyEnd(phi_old);
                 CHKERRQ(petsc_err);
 
@@ -2504,7 +2567,9 @@ int Cmfd::constructAMPhi(Mat A, Mat M, Vec phi_old, solveType solveMethod)
                 value = (PetscScalar) meshCell->getSigmaA()[e] * vol;
                 petsc_err = MatSetValues(A, 1, &indice1, 1, &indice1, &value, 
                                          ADD_VALUES);
+                CHKERRQ(petsc_err);
                 petsc_err = MatAssemblyBegin(A, MAT_FLUSH_ASSEMBLY);
+                CHKERRQ(petsc_err);
                 petsc_err = MatAssemblyEnd(A, MAT_FLUSH_ASSEMBLY);
                 CHKERRQ(petsc_err);
 
@@ -2514,7 +2579,9 @@ int Cmfd::constructAMPhi(Mat A, Mat M, Vec phi_old, solveType solveMethod)
                     value += meshCell->getSigmaS()[e*_ng + g] * vol;
                 petsc_err = MatSetValues(A, 1, &indice1, 1, &indice1, 
                                          &value, ADD_VALUES);
+                CHKERRQ(petsc_err);
                 petsc_err = MatAssemblyBegin(A, MAT_FLUSH_ASSEMBLY);
+                CHKERRQ(petsc_err);
                 petsc_err = MatAssemblyEnd(A, MAT_FLUSH_ASSEMBLY);
                 CHKERRQ(petsc_err);
 
@@ -2536,8 +2603,8 @@ int Cmfd::constructAMPhi(Mat A, Mat M, Vec phi_old, solveType solveMethod)
                     indice2 = (y*_cw + x)*_ng + g;
                     petsc_err = MatSetValues(M, 1, &indice1, 1, &indice2, 
                                              &value, INSERT_VALUES);
+                    CHKERRQ(petsc_err);
                 }
-                CHKERRQ(petsc_err);
 				
                 /* RIGHT SURFACE */
                 /* set transport-out term on diagonal of A */
@@ -2573,8 +2640,8 @@ int Cmfd::constructAMPhi(Mat A, Mat M, Vec phi_old, solveType solveMethod)
                     indice2 = (y*_cw + x + 1)*_ng + e;
                     petsc_err = MatSetValues(A, 1, &indice1, 1, &indice2, 
                                              &value, ADD_VALUES);
+                    CHKERRQ(petsc_err);
                 }
-                CHKERRQ(petsc_err);
 
                 /* LEFT SURFACE */
                 /* set transport term on diagonal */
@@ -2588,7 +2655,9 @@ int Cmfd::constructAMPhi(Mat A, Mat M, Vec phi_old, solveType solveMethod)
 
                 petsc_err = MatSetValues(A, 1, &indice1, 1, &indice1, 
                                          &value, ADD_VALUES);
+                CHKERRQ(petsc_err);
                 petsc_err = MatAssemblyBegin(A, MAT_FLUSH_ASSEMBLY);
+                CHKERRQ(petsc_err);
                 petsc_err = MatAssemblyEnd(A, MAT_FLUSH_ASSEMBLY);
                 CHKERRQ(petsc_err);
 
@@ -3060,6 +3129,7 @@ int Cmfd::computeCmfdL2Norm(Vec snew, int moc_iter)
     PetscScalar *old_source;
     PetscScalar *new_source;
     petsc_err = VecGetArray(_source_old, &old_source);
+    CHKERRQ(petsc_err);
     petsc_err = VecGetArray(snew, &new_source);
     CHKERRQ(petsc_err);
 
@@ -3082,6 +3152,7 @@ int Cmfd::computeCmfdL2Norm(Vec snew, int moc_iter)
     _l2_norm = pow(_l2_norm, 0.5);
 
     petsc_err = VecRestoreArray(_source_old, &old_source);
+    CHKERRQ(petsc_err);
     petsc_err = VecRestoreArray(snew, &new_source);
     CHKERRQ(petsc_err);
 

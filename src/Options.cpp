@@ -151,6 +151,9 @@ Options::Options(int argc, char **argv)
             else if (strcmp(argv[i], "-ro") == 0 ||
                      strcmp(argv[i], "--reflectoutgoing") == 0)
                 _reflect_outgoing = true;
+            else if (strcmp(argv[i], "-nro") == 0 ||
+                     strcmp(argv[i], "--noreflectoutgoing") == 0)
+                _reflect_outgoing = false;
             else if (strcmp(argv[i], "-nc") == 0 ||
                      strcmp(argv[i], "--nocmfd") == 0)
                 _cmfd = false;

@@ -2242,14 +2242,8 @@ void Solver::updateSource()
     for (int r = 0; r < _num_FSRs; r++) {
 
         fsr = &_flat_source_regions[r];
-        material = fsr->getMaterial();
 
-        /* Initialize the fission source to zero for this region */
-        fission_source = 0;
         scalar_flux = fsr->getFlux();
-
-        log_printf(DEBUG, " cell %d flux %e", r, scalar_flux[0]);
-
         source = fsr->getSource();
         material = fsr->getMaterial();
         nu_sigma_f = material->getNuSigmaF();
@@ -2260,11 +2254,13 @@ void Solver::updateSource()
         end_index = material->getNuSigmaFEnd();
 
         /* Compute total fission source for current region */
+        fission_source = 0;
         for (int e = start_index; e < end_index; e++)
             fission_source += scalar_flux[e] * nu_sigma_f[e];
 
         /* Compute total scattering source for group G */
-        for (int G = 0; G < NUM_ENERGY_GROUPS; G++) {
+        for (int G = 0; G < NUM_ENERGY_GROUPS; G++) 
+        {
             scatter_source = 0;
 
             start_index = material->getSigmaSStart(G);
@@ -2367,7 +2363,7 @@ double Solver::kernel(int max_iterations) {
     normalizeFlux(0);
     updateSource();
     /* FIXME: */
-    initializeTrackFluxes(ONE_OVER_FOUR_PI);
+    initializeTrackFluxes(2.0 * ONE_OVER_FOUR_PI);
     //initializeTrackFluxes(0.0);
 
     _cmfd->setCellSource(_cmfd->computeCellSourceFromFSR());
@@ -2575,11 +2571,6 @@ void Solver::checkNeutronBalance()
     {
         for (int x = 0; x < cell_width; x++)
         {
-            leak = 0; 
-            absorb = 0;
-            fis = 0;
-            src = 0;
-
             /* get mesh cell */
             meshCell = mesh->getCells(y * cell_width + x);
 
