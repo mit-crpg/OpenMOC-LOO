@@ -134,7 +134,6 @@ public:
     Mat getM();
     Vec getPhiNew();
     int createAMPhi(PetscInt size1, PetscInt size2, int cells);
-    void setOldFSRFlux();
     void setFSRs(FlatSourceRegion *fsrs);
     void setTracks(Track **tracks);
 

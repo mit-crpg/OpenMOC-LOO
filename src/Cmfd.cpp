@@ -272,13 +272,14 @@ double* Cmfd::computeCellSourceFromFSR()
     {
         meshCell = _mesh->getCells(i);
         cell_source[i] = 0;
-        for (int e = 0; e < NUM_ENERGY_GROUPS; e++) 
+        for (auto it = meshCell->getFSRs()->begin(); 
+             it != meshCell->getFSRs()->end(); ++it)
         {
-            for (auto it = meshCell->getFSRs()->begin(); 
-                 it != meshCell->getFSRs()->end(); ++it)
+            fsr = &_flat_source_regions[*it];
+            volume = fsr->getVolume();
+
+            for (int e = 0; e < NUM_ENERGY_GROUPS; e++) 
             {
-                fsr = &_flat_source_regions[*it];
-                volume = fsr->getVolume();
                 flux = fsr->getFlux()[e];
                 nu_fis = fsr->getMaterial()->getNuSigmaF()[e];
                 cell_source[i] += nu_fis * flux * volume;
@@ -402,7 +403,6 @@ void Cmfd::computeXS_old()
             /* if multigroup, set the multigroup parameters */
             if (_mesh->getMultigroup() == true)
             {
-                meshCell->setATVolume(vol_tally_group);
                 meshCell->setSigmaA(abs_tally_group / rxn_tally_group, e);
                 meshCell->setSigmaT(tot_tally_group / rxn_tally_group, e);
                 meshCell->setNuSigmaF(nu_fis_tally_group / rxn_tally_group, e);
@@ -428,7 +428,6 @@ void Cmfd::computeXS_old()
 
         /* if single group, set single group parameters */
         if (_mesh->getMultigroup() == false){
-            meshCell->setATVolume(vol_tally_group);
             meshCell->setSigmaT(tot_tally / rxn_tally, 0);
             meshCell->setSigmaA(abs_tally / rxn_tally, 0);
             meshCell->setNuSigmaF(nu_fis_tally / rxn_tally, 0);
@@ -541,7 +540,6 @@ void Cmfd::computeXS()
             /* if multigroup, set the multigroup parameters */
             if (_mesh->getMultigroup())
             {
-                meshCell->setATVolume(vol_tally_group);
                 meshCell->setSigmaA(abs_tally_group / rxn_tally_group, e);
                 meshCell->setSigmaT(tot_tally_group / rxn_tally_group, e);
                 meshCell->setNuSigmaF(nu_fis_tally_group / rxn_tally_group, e);
@@ -572,7 +570,6 @@ void Cmfd::computeXS()
         /* if single group, set single group parameters */
         if (_mesh->getMultigroup() == false)
         {
-            meshCell->setATVolume(vol_tally_group);
             meshCell->setSigmaT(tot_tally / rxn_tally, 0);
             meshCell->setSigmaA(abs_tally / rxn_tally, 0);
             meshCell->setNuSigmaF(nu_fis_tally / rxn_tally, 0);
@@ -3242,26 +3239,6 @@ void Cmfd::storePreMOCMeshSource(FlatSourceRegion* fsrs)
     }
     return;
 }
-
-/* Set the old flux for each FSR equal to FSR flux */
-void Cmfd::setOldFSRFlux()
-{
-    /* initialize variables */
-    FlatSourceRegion* fsr;
-    int num_fsrs = _geom->getNumFSRs();
-
-    /* Compute total fission source for this region */
-    for (int r = 0; r < num_fsrs; r++) 
-    {
-        /* Get pointers to important data structures */
-        fsr = &_flat_source_regions[r];
-	  
-        /* loop over energy groups */
-        for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
-            fsr->setOldFlux(e, fsr->getFlux()[e]);
-    }
-}
-
 
 /* set pointer to array of fsrs, give each fsr the ID of the mesh cell it is in
  * @param pointer to arrary of fsrs

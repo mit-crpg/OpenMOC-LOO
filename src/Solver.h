@@ -58,8 +58,7 @@ private:
     double _damp_factor;
     double _track_spacing;
     double _k_eff;
-    double _cmfd_k;
-    double _loo_k;
+    double _acc_k;
     double _k_half;
     double *_FSRs_to_fluxes[NUM_ENERGY_GROUPS + 1];
     double *_FSRs_to_powers;
@@ -72,7 +71,6 @@ private:
     std::forward_list<double> _pin_powers;
     std::queue<double> _old_k_effs;
     std::queue<double> _old_eps_2;
-    std::queue<double> _delta_phi;
     Plotter* _plotter;
     float* _pix_map_total_flux;
     Cmfd* _cmfd;
@@ -117,7 +115,7 @@ public:
 
     /* initialization */
     void initializeTrackFluxes(double flux);
-    void oneFSRFluxOldSource();
+    void oneFSRFlux();
     void zeroFSRFluxes();
     void zeroMeshCells();
     void zeroLeakage();
@@ -163,7 +161,6 @@ public:
     double** getFSRtoFluxMap();
     double getEps(Mesh* mesh, double keff, double renorm_factor);
     FlatSourceRegion* getFSRs();
-    void setOldFSRFlux();
 
     /* printing and plotting */
     void printToScreen(int moc_iter);

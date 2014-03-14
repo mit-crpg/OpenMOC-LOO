@@ -93,9 +93,7 @@ Solver::Solver(Geometry* geom, TrackGenerator* track_generator,
     _plot_loo = opts->plotQuadFlux();
     _plot_flux = opts->plotFluxes();
 
-    _cmfd_k = _k_eff;
-    _loo_k = _k_eff;
-
+    _acc_k = _k_eff;
 
     try{
         _flat_source_regions = new FlatSourceRegion[_num_FSRs];
@@ -460,23 +458,17 @@ void Solver::initializeTrackFluxes(double flux) {
  * Set the scalar flux for each energy group inside each FSR
  * to unity
  */
-void Solver::oneFSRFluxOldSource() 
+void Solver::oneFSRFlux() 
 {
     log_printf(INFO, "Setting all FSR scalar fluxes to unity...");
     FlatSourceRegion* fsr;
 
     /* Loop over all FSRs and energy groups */
-#if USE_OPENMP
-#pragma omp parallel for private(fsr)
-#endif
     for (int r = 0; r < _num_FSRs; r++) 
     {
         fsr = &_flat_source_regions[r];
         for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
-        {
             fsr->setFlux(e, 1.0);
-            fsr->setOldSource(e, 1.0);
-        }
     }
 
     return;
@@ -585,12 +577,6 @@ double Solver::computeKeff(int iteration)
 
             for (int e = 0; e < NUM_ENERGY_GROUPS; e++) 
             {
-                  if (sigma_a[e] * flux[e] * vol < 0.0)
-                  {
-                      log_printf(DEBUG, "  FSR %d energy %d has abs xs %f, "
-                                 " flux %f, vol %f", 
-                                 r, e, sigma_a[e], flux[e], vol);
-                  }
 	        abs += sigma_a[e] * flux[e] * vol;
                 fission += nu_sigma_f[e] * flux[e] * vol;
             }
@@ -612,6 +598,7 @@ double Solver::computeKeff(int iteration)
 
 // _geom->getSurface() uses index 1 through 4. These leakage terms are
 // surface integrated current. 
+leakage = 0;
 for (int s = 1; s < 5; s++)
 {
     for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
@@ -969,50 +956,38 @@ void Solver::printToScreen(int moc_iter)
         printf("Iter %d, MOC k^(m+1) = %.10f, Diffusion k = %.10f,"
                " MOC k^(m+1/2) = %.10f" 
                " FS eps = %.4e,  k eps = %.4e, #Diffusion = %d\n", 
-               moc_iter, _k_eff, _cmfd_k, _k_half, _old_eps_2.back(),
+               moc_iter, _k_eff, _acc_k, _k_half, _old_eps_2.back(),
                (_old_k_effs.back() - _old_k_effs.front()) / _old_k_effs.back(),
                _cmfd->getNumIterToConv());
-
-        if (_update_keff)
-            _k_eff = _cmfd_k;
     }
     else if ((moc_iter == 0) && (_run_loo) && _first_diffusion)
     {
         printf("Iter %d, MOC k^(m+1) = %.10f, Diffusion k = %.10f,"
                " MOC k^(m+1/2) = %.10f" 
                " FS eps = %.4e,  k eps = %.4e, #Diffusion = %d\n", 
-               moc_iter, _k_eff, _loo_k, _k_half, _old_eps_2.back(),
+               moc_iter, _k_eff, _acc_k, _k_half, _old_eps_2.back(),
                (_old_k_effs.back() - _old_k_effs.front()) / _old_k_effs.back(),
                _cmfd->getNumIterToConv());
-
-        if (_update_keff)
-            _k_eff = _cmfd_k;
     }
     else if ((_run_cmfd) && !(_acc_after_MOC_converge))
     {
         printf("Iter %d, MOC k^(m+1) = %.10f, CMFD k = %.10f,"
                " MOC k^(m+1/2) = %.10f" 
                " FS eps = %.4e, FS ratio = %f, k eps = %.4e, #CMFD = %d\n", 
-               moc_iter, _k_eff, _cmfd_k, _k_half, _old_eps_2.back(),
+               moc_iter, _k_eff, _acc_k, _k_half, _old_eps_2.back(),
                _old_eps_2.front() / _old_eps_2.back(), 
                (_old_k_effs.back() - _old_k_effs.front()) / _old_k_effs.back(),
                _cmfd->getNumIterToConv());
-
-        if (_update_keff)
-            _k_eff = _cmfd_k;
     }
     else if ((_run_loo) && !(_acc_after_MOC_converge))
     {
         printf("Iter %d, MOC k^(m+1) = %.10f, LOO k = %.10f,"
                " MOC k^(m+1/2) = %.10f"
                " FS eps = %.4e, FS ratio = %f, k eps = %.4e, #LOO = %d\n", 
-               moc_iter, _k_eff, _loo_k, _k_half,  _old_eps_2.back(),
+               moc_iter, _k_eff, _acc_k, _k_half,  _old_eps_2.back(),
                _old_eps_2.front() / _old_eps_2.back(), 
                (_old_k_effs.back() - _old_k_effs.front()) / _old_k_effs.back(),
                _cmfd->getNumIterToConv());
-
-        if (_update_keff)
-            _k_eff = _loo_k;
     }
     else
     {
@@ -1703,8 +1678,7 @@ void Solver::initializeWeights()
         meshCell->setATHeight(h);
         meshCell->setATL(0.5 * sqrt(w * w + h * h) / P0);
 
-        meshCell->setATVolume(w * h);
-        // Alternatively 
+        // Compute mesh cell as-tracked volume by adding up all the FSRs'. 
         double vol = 0;
         for (auto it = meshCell->getFSRs()->begin(); 
              it != meshCell->getFSRs()->end(); it++)
@@ -1712,7 +1686,7 @@ void Solver::initializeWeights()
             fsr = &_flat_source_regions[*it];
             vol += fsr->getVolume();
         }
-        //meshCell->setATVolume(vol);
+        meshCell->setATVolume(vol);
 
         if (i == 0)
         {
@@ -1721,8 +1695,6 @@ void Solver::initializeWeights()
                        meshCell->getVolume(), meshCell->getATWidth(), 
                        meshCell->getATHeight(), meshCell->getATVolume());
         }
-        //meshCell->setWidth(w);
-        //meshCell->setHeight(h);
     }
 
     return;
@@ -1764,7 +1736,6 @@ void Solver::MOCsweep(int max_iterations, int moc_iter)
         tally = 2;
         log_printf(INFO, "tally quadrature currents");
     }
-    //else if ((_run_cmfd) || (_run_loo & _first_diffusion && (moc_iter == 0)))
     else if (_run_cmfd || _run_loo)
     {
         tally = 1;
@@ -1830,10 +1801,6 @@ void Solver::MOCsweep(int max_iterations, int moc_iter)
                         fsr = &_flat_source_regions[segment->_region_id];
                         ratios = fsr->getRatios();
 
-                        /* Zero out temporary FSR flux array */
-                        for (e = 0; e < NUM_ENERGY_GROUPS; e++)
-                            fsr_flux[e] = 0.0;
-
                         /* Initialize the polar angle, energy group counter */
                         pe = 0;
 
@@ -1867,6 +1834,7 @@ void Solver::MOCsweep(int max_iterations, int moc_iter)
                         /* Loop over all polar angles and energy groups */
                         for (e = 0; e < NUM_ENERGY_GROUPS; e++) 
                         {
+                            fsr_flux[e] = 0.0;
                             for (p = 0; p < NUM_POLAR_ANGLES; p++) 
                             {
                                 delta = (polar_fluxes[pe] -ratios[e]) *
@@ -1925,11 +1893,6 @@ void Solver::MOCsweep(int max_iterations, int moc_iter)
                         fsr = &_flat_source_regions[segment->_region_id];
                         ratios = fsr->getRatios();
 
-                        /* Zero out temporary FSR flux array */
-                        for (e = 0; e < NUM_ENERGY_GROUPS; e++)
-                            fsr_flux[e] = 0.0;
-
-
                         /* Initialize the polar angle, energy group counter */
                         pe = GRP_TIMES_ANG;
 
@@ -1960,6 +1923,7 @@ void Solver::MOCsweep(int max_iterations, int moc_iter)
                         /* Loop over all polar angles and energy groups */
                         for (e = 0; e < NUM_ENERGY_GROUPS; e++) 
                         {
+                            fsr_flux[e] = 0.0;
                             for (p = 0; p < NUM_POLAR_ANGLES; p++) 
                             {
                                 delta = (polar_fluxes[pe] - ratios[e]) *
@@ -2064,9 +2028,9 @@ void Solver::MOCsweep(int max_iterations, int moc_iter)
 
                 for (int e = 0; e < NUM_ENERGY_GROUPS; e++) 
                 {
-                    fsr->setFlux(e, FOUR_PI * ratios[e] 
-                                 + (scalar_flux[e] / 
-                                    (2.0 * sigma_t[e] * volume)));
+                    double f = FOUR_PI * ratios[e] + 
+                        (scalar_flux[e] / (2.0 * sigma_t[e] * volume)); 
+                    fsr->setFlux(e, f);
                 }
             }
 		
@@ -2080,18 +2044,6 @@ void Solver::MOCsweep(int max_iterations, int moc_iter)
             updateSource();
 
             //_cmfd->setCellSource(_cmfd->computeCellSourceFromFSR());
-
-            /* Book-keeping: update old source in each FSR */
-            double *source, *old_source;
-            for (int r = 0; r < _num_FSRs; r++) 
-            {
-                fsr = &_flat_source_regions[r];
-                source = fsr->getSource();
-                old_source = fsr->getOldSource();
-				
-                for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
-                    old_source[e] = source[e];
-            }
         }
     } /* exit iteration loops */
 		
@@ -2284,9 +2236,6 @@ void Solver::updateSource()
 double Solver::runLoo(int moc_iter)
 {
     double loo_keff;
-    _cmfd->storePreMOCMeshSource(_flat_source_regions);
- 
-    MOCsweep(_boundary_iteration + 1, moc_iter);
 
     _k_half = computeKeff(100);
 
@@ -2314,7 +2263,6 @@ double Solver::runCmfd(int moc_iter)
 {
     double cmfd_keff;
 
-    MOCsweep(_boundary_iteration + 1, moc_iter);
     _k_half = computeKeff(100);
 
     /* compute cross sections and diffusion coefficients */
@@ -2346,7 +2294,6 @@ double Solver::kernel(int max_iterations) {
     /* Initial guess */
     _old_k_effs.push(_k_eff);
     _old_eps_2.push(1.0);
-    _delta_phi.push(1.0);
 
     log_printf(INFO, "Starting guess of k_eff = %f", _k_eff);
 
@@ -2358,13 +2305,11 @@ double Solver::kernel(int max_iterations) {
         checkBoundary();
 
     /* Set scalar flux to unity for each region */
-    oneFSRFluxOldSource();
-
+    oneFSRFlux();
+    initializeTrackFluxes(1.0);
     normalizeFlux(0);
     updateSource();
-    /* FIXME: */
     initializeTrackFluxes(2.0 * ONE_OVER_FOUR_PI);
-    //initializeTrackFluxes(0.0);
 
     _cmfd->setCellSource(_cmfd->computeCellSourceFromFSR());
     _cmfd->printCellSource(0);
@@ -2374,28 +2319,32 @@ double Solver::kernel(int max_iterations) {
     {
         log_printf(INFO, "Iteration %d: k_eff = %f", moc_iter, _k_eff);
 
-        /* Perform one sweep for no acceleration, or call one of the 
-         * acceleration function which performs two sweeps plus acceleration */
+        if (_run_loo)
+            _cmfd->storePreMOCMeshSource(_flat_source_regions);
+ 
+        /* Perform one sweep for no acceleration */
+        MOCsweep(_boundary_iteration + 1, moc_iter);
+
+        /* Perform acceleration */
         if ((_run_cmfd) && !(_acc_after_MOC_converge))
-            _cmfd_k = runCmfd(moc_iter);
+            _acc_k = runCmfd(moc_iter);
         else if ((_run_loo) && !(_acc_after_MOC_converge))
-            _loo_k = runLoo(moc_iter);
-        else 
-            MOCsweep(1, moc_iter);
+            _acc_k = runLoo(moc_iter);
 
         /* Update FSR's scalar flux and boundary angular fluxes */
         if ((_run_cmfd || _run_loo) && !(_acc_after_MOC_converge))
+        {
             prolongation(moc_iter);
+            normalizeFlux(moc_iter+1);
+            _cmfd->printCellSource(moc_iter+1);
+        }
 
-        normalizeFlux(moc_iter+1);
-        _cmfd->printCellSource(moc_iter+1);
-        /* FIXME: for consistency, use Cmfd k */
-        //_k_eff = computeKeff(moc_iter);
-        if (_run_cmfd)
-            _k_eff = _cmfd_k;
-        else if (_run_loo)
-            _k_eff = _loo_k;
-        updateSource();
+        /* for consistency, use acceleration's k instead of prolongated */
+        if (_run_cmfd || _run_loo)
+        {
+            _k_eff = _acc_k;
+            updateSource();
+        }
 
         /* We only store $k^{(m+1)}$; other intermediate keff does not matter */
         _old_k_effs.push(_k_eff);
@@ -2427,9 +2376,9 @@ double Solver::kernel(int max_iterations) {
             if (_acc_after_MOC_converge)
             {
                 if (_run_loo)
-                    _loo_k = runLoo(10000);
+                    _acc_k = runLoo(10000);
                 if (_run_cmfd)
-                    _cmfd_k = runCmfd(10000);
+                    _acc_k = runCmfd(10000);
             }
 
             printToMinimumLog(moc_iter);
@@ -2447,6 +2396,9 @@ double Solver::kernel(int max_iterations) {
                                _tracks[0][0].getPolarFluxes()[1]);
                 }
             }
+
+            
+
 
             return _k_eff;
         }
@@ -2760,24 +2712,4 @@ FlatSourceRegion* Solver::getFSRs(){
     return _flat_source_regions;
 }
 
-
-/* Set the Old Flux for each FSR equal to FSR flux */
-void Solver::setOldFSRFlux()
-{
-    FlatSourceRegion* fsr;
-
-    /* Compute total fission source for this region */
-    for (int r = 0; r < _num_FSRs; r++) 
-    {
-        /* Get pointers to important data structures */
-        fsr = &_flat_source_regions[r];
-
-        /* loop over energy groups */
-        for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
-        {
-            fsr->setOldFlux(e, fsr->getFlux()[e]);
-
-        }
-    }
-}
 
