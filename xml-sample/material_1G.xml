@@ -1,24 +1,24 @@
 <?xml version="1.0"?>
 <materials>
-<!-- One group fictitious cross sections -->
+<!-- One group cross sections, generated from LRA fast group cross sections -->
+<!-- fuel 1 blade out fast group -->
   <material id="1" energy="1"
-            sigma_a="0.15"
-            sigma_t="0.3"
-            sigma_f="0.108002"
-            nu_sigma_f="0.28285525"
+            sigma_a="0.025025"
+            sigma_t="0.262881"
+            sigma_f="0.0141236"
+            nu_sigma_f="0.0277682"
 	    chi="1.0"
-            sigma_s="0.15"
+            sigma_s="0.237856"
             />
 
+<!-- fuel 2 blade out fast group -->
   <material id="2" energy="1"
-            sigma_a="0.15"
-            sigma_t="0.3"
-            sigma_f="0.108002"
-            nu_sigma_f="0.26285525"
+            sigma_a="0.0251837"
+            sigma_t="0.26476"
+            sigma_f="0.0133103"
+            nu_sigma_f="0.0302919"
 	    chi="1.0"
-            sigma_s="0.15"
+            sigma_s="0.239577"
             />
-
-
 
 </materials>

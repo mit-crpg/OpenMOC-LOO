@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<materials>
+<!-- One group fictitious cross sections -->
+  <material id="1" energy="1"
+            sigma_a="0.15"
+            sigma_t="0.3"
+            sigma_f="0.108002"
+            nu_sigma_f="0.28285525"
+	    chi="1.0"
+            sigma_s="0.15"
+            />
+
+  <material id="2" energy="1"
+            sigma_a="0.15"
+            sigma_t="0.3"
+            sigma_f="0.108002"
+            nu_sigma_f="0.26285525"
+	    chi="1.0"
+            sigma_s="0.15"
+            />
+
+</materials>
