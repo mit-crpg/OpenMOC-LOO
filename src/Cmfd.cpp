@@ -20,6 +20,7 @@ int Cmfd::_surf_index[] = {1,2,2,3,3,0,0,1,2,1,3,2,0,3,1,0};
 Cmfd::Cmfd(Geometry* geom, Plotter* plotter, Mesh* mesh, 
            TrackGenerator *track_generator, Options *opts) 
 {
+    _moc_iter = 0;
     _geom = geom;
     _plotter = plotter;
     _mesh = mesh;
@@ -235,25 +236,57 @@ double Cmfd::computeCellSourceNormGivenTwoSources(double *old_cell_source,
                                                   double *new_cell_source,
                                                   int num)
 {
-    double l2_norm;
-    double *source_residual;
+    double l2_norm = 0;
+    double *source_residual, *s2;
     source_residual = new double[num];
+    s2 = new double[num];
     int counter = 0;
 
     for (int i = 0; i < num; i++)
     {
         if (new_cell_source[i] > 1e-10)
         {
-            source_residual[i] = pow(new_cell_source[i] / old_cell_source[i] 
+            source_residual[i] = pow(new_cell_source[i] / old_cell_source[i]
                                      - 1.0, 2);
+            s2[i] = new_cell_source[i] - old_cell_source[i];
             counter += 1;
         }
         else
             source_residual[i] = 0.0;
+        log_printf(ACTIVE, "iter %d cell %d new %f old %f residual %e", 
+                   _moc_iter, i,
+                   new_cell_source[i], old_cell_source[i], source_residual[i]);
     }
 
-    l2_norm = pairwise_sum<double>(source_residual, _ch * _cw);
-    l2_norm /= (double) (counter);
+    double max = 0;
+    int location = -1;
+    for (int i = 0; i < num; i++)
+    {
+        if (source_residual[i] > max)
+        {
+            max = source_residual[i];
+            location = i;
+        }
+    }
+
+/*
+    log_printf(NORMAL, "iter %d pin cell %d, change %e, new %e, old %e", 
+               _moc_iter, 
+               location, source_residual[location], new_cell_source[location],
+               old_cell_source[location]);
+*/
+    log_printf(ACTIVE, "iter %d pin cell 0, 1, 5, change %e %e, %e %e, %e %e",
+               _moc_iter, 
+               s2[0], s2[3], s2[1], s2[4], s2[5], s2[6]); 
+
+    //l2_norm = pairwise_sum<double>(source_residual, _ch * _cw);
+    for (int i = 0; i < _ch * _cw; i++)
+        l2_norm += source_residual[i];
+
+    if (counter > 0)
+        l2_norm /= (double) (counter);
+    else
+        log_printf(ERROR, "no positive pin source");
     l2_norm = sqrt(l2_norm);
 
     delete [] source_residual;
@@ -293,7 +326,7 @@ void Cmfd::printCellSource(double moc_iter)
 {
     for (int i = 0; i < _cw * _ch; i++)
     {   
-        log_printf(ACTIVE, "iter %.1f cell %d energy-integrated source %f", 
+        log_printf(DEBUG, "iter %.1f cell %d energy-integrated source %f", 
                    moc_iter, i, _cell_source[i]);
     }
 }
@@ -3289,4 +3322,14 @@ void Cmfd::setCellSource(double *cell_source)
     {
         _cell_source[i] = cell_source[i];
     }
+}
+
+void Cmfd::setMOCIter(int iter)
+{
+    _moc_iter = iter;
+}
+
+void Cmfd::incrementMOCIter()
+{
+    _moc_iter += 1;
 }

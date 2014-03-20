@@ -102,6 +102,7 @@ private:
     bool _use_up_scattering_xs;
     void precomputeFactors();
     void initializeFSRs();
+
 public:
     Solver(Geometry* geom, TrackGenerator* track_generator, 
            Plotter* plotter, Cmfd* cmfd, Options* opts);
@@ -145,6 +146,8 @@ public:
     void tallyCmfdCurrent(Track *t, segment *seg, MeshSurface **surf, int dir);
     void computePinPowers();
     double computePinPowerNorm();
+    bool onVacuumBoundary(double x, double y);
+    bool onBoundary(double x, double y, int s);
 
     /* updates after transport sweep */
     void computeRatios();

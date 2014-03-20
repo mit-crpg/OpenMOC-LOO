@@ -32,9 +32,11 @@
 static char help[] = "Running CMFD with Petsc\n";
 
 int main(int argc, char **argv) {
-    feenableexcept(FE_DIVBYZERO);
+    //feenableexcept(FE_DIVBYZERO);
     //feenableexcept(FE_UNDERFLOW);
     feenableexcept(FE_OVERFLOW);
+    //feenableexcept(FE_INVALID);
+    //feenableexcept(FE_INEXACT);
 
     double k_eff;
     Timer timer;
@@ -45,11 +47,11 @@ int main(int argc, char **argv) {
     /* initialize Petsc */
     /* FIXME: Valgrine shows bad read from the help parameter */
     int petsc_err = 0;
-    PetscInitialize(&(opts.extra_argc), 
-                    &(opts.extra_argv), 
-                    (char*)0, 
-                    help);
-    //PetscInitializeNoArguments();
+    //PetscInitialize(&(opts.extra_argc), 
+    //                &(opts.extra_argv), 
+    //                (char*)0, 
+    //                help);
+    PetscInitializeNoArguments();
     CHKERRQ(petsc_err);
 
     /* Set the verbosity */

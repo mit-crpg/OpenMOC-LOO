@@ -22,9 +22,13 @@
  */
 Options::Options(int argc, char **argv) 
 {
+    /* Default geometry input file */
+    _geometry_file = _relative_path + "xml-sample/geometry_2x2.xml";
+    _material_file = _relative_path + "xml-sample/material_1G.xml";
+	
     /* convergence options */
-    _moc_conv_thresh = 1e-6;      /* convergence on MOC sweeps */
-    _l2_norm_conv_thresh = 1e-8; /* convergence on acceleration iteration */
+    _moc_conv_thresh = 1e-10;      /* convergence on MOC sweeps */
+    _l2_norm_conv_thresh = 1e-10; /* convergence on acceleration iteration */
 
     /* most important acceleration options */
     _acc_after_MOC_converge = false;
@@ -45,18 +49,8 @@ Options::Options(int argc, char **argv)
     else
         _relative_path = "";
 
-    /* Default geometry input file */
-    _geometry_file = _relative_path + 
-        //"xml-sample/geometry_infinite.xml";
-        "xml-sample/geometry_c5g7_cc.xml";
-    //"xml-sample/geometry_corner.xml"; % homogeneous material
-    _material_file = _relative_path + 
-        //"xml-sample/material_infinite.xml";
-        //"xml-sample/material_baw.xml";
-        "xml-sample/material_c5g7.xml";
-	
-    _track_spacing = 0.1;		/* Default C4 track spacing: 0.05cm */
-    _num_azim = 32;			/* Default C4 # azimuthal angle: 64*/
+    _track_spacing = 0.5;		/* Default C4 track spacing: 0.05cm */
+    _num_azim = 4;			/* Default C4 # azimuthal angle: 64*/
 
     /* MOC options */
     _verbosity = "NORMAL";		/* Default logging level */
@@ -68,7 +62,7 @@ Options::Options(int argc, char **argv)
     /* other acceleration options */
     _cmfd_level = 0;			/* Default cmfd level is 0: pin-wise */
     _multigroup = true;			/* sets CMFD to one group structure */
-    _k_guess = 1.0;
+    _k_guess = 1.5;
     _update_keff = false;  		/* Default: not use CMFD's k */
     _print_matrices = false;		/* Default will not print matrices */
     _diffusion_correction = false; 

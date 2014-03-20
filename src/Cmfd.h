@@ -66,6 +66,7 @@ private:
     Mat _M;
     Vec _phi_new;
     Vec _source_old;
+    int _moc_iter;
     int _num_azim;
     int _num_iter_to_conv;
     int _num_loop;
@@ -105,7 +106,8 @@ public:
     void runLoo1();
     void runLoo2();
 
-
+    void setMOCIter(int iter);
+    void incrementMOCIter();
     int getNumIterToConv();
     double getL2Norm();
     double getKeff();

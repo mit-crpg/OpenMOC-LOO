@@ -72,39 +72,66 @@ void Track::updatePolarFluxes(int pe, double update)
     _polar_fluxes[pe] *= update;
     return;
 }
-void Track::setPolarFluxesByIndex(int pe, double update)
+void Track::setPolarFluxesByIndex(int pe, double flux)
 {
-    _polar_fluxes[pe] = update;
+    _polar_fluxes[pe] = flux;
     return;
 }
 
-void Track::setFwdFluxes(double* polar_fluxes)
+void Track::setNewFluxes(int index, double* polar_fluxes)
 {
-    for (int i = 0; i < 2*GRP_TIMES_ANG; i++)
-        _fwd_fluxes[i] = polar_fluxes[i];
+    for (int i = index; i < index + GRP_TIMES_ANG; i++)
+        _new_fluxes[i] = polar_fluxes[i];
     return;
 }
 
-void Track::setBwdFluxes(double* polar_fluxes)
+void Track::zeroNewFluxes()
 {
-    for (int i = 0; i < 2* GRP_TIMES_ANG; i++)
-        _bwd_fluxes[i] = polar_fluxes[i];
+    for (int i = 0; i < 2 * GRP_TIMES_ANG; i++)
+        _new_fluxes[i] = 0.0; 
     return;
 }
-
 
 /**
  * Set this track's polar fluxes for a particular direction (0 or 1)
- * @param direction incoming/outgoing (0/1) flux for forward/reverse directions
+ * @param direction 0 through 3 describing boundaries: REFL_FALSE, REFL_TRUE, 
+ *        VAC_FALSE, VAC_TRUE
+ * @param polar_fluxes pointer to an array of fluxes
+ */
+void Track::setPolarFluxes(reflectType direction, double* polar_fluxes) 
+{
+
+    if (direction == REFL_TRUE || direction == REFL_FALSE)
+    {
+        int start = direction * GRP_TIMES_ANG;
+        for (int i = 0; i < GRP_TIMES_ANG; i++)
+            _polar_fluxes[start + i] = polar_fluxes[i];
+    }
+    else if (direction == VAC_TRUE || direction == VAC_FALSE)
+    {
+        int start = (direction - 2) * GRP_TIMES_ANG;
+        for (int i = 0; i < GRP_TIMES_ANG; i++)
+            _polar_fluxes[start + i] = 0.0;
+    }
+    else
+    {
+        log_printf(ERROR, "Tried to set this track's polar flux in a direction"
+                   " which does not exist; try using: reflective, vacuume");
+    }
+
+    return;
+}
+
+/**
+ * Set this track's polar fluxes for a particular direction (0 or 1)
+ * @param direction 0 through 3 describing boundaries: REFL_FALSE, REFL_TRUE, 
+ *        VAC_FALSE, VAC_TRUE
+ * @param start_index 0 for forward, and GRP_TIMES_ANG for backward direction
  * @param polar_fluxes pointer to an array of fluxes
  */
 void Track::setPolarFluxes(reflectType direction, int start_index,
                            double* polar_fluxes) 
 {
-#if USE_OPENMP
-    omp_set_lock(&_flux_lock);
-#endif
-
     if (direction == REFL_TRUE || direction == REFL_FALSE)
     {
         int start = direction * GRP_TIMES_ANG;
@@ -123,11 +150,27 @@ void Track::setPolarFluxes(reflectType direction, int start_index,
                    " which does not exist; try using: reflective, vacuume");
     }
 
-#if USE_OPENMP
-    omp_unset_lock(&_flux_lock);
-#endif
-
     return;
+}
+
+void Track::printOutInfo()
+{
+    log_printf(ACTIVE, "(%.3f %.3f)->(%.3f %.3f), forward %f backward %f", 
+               _start.getX(), _start.getY(), _end.getX(), _end.getY(),
+               _polar_fluxes[0], 
+               _polar_fluxes[1]);
+}
+
+void Track::printOutNewFluxes()
+{
+    log_printf(ACTIVE, "(%.3f %.3f)->(%.3f %.3f) %f,"
+               " (%.3f %.3f)->(%.3f %.3f) %f",
+               _track_out->_start.getX(), _track_out->_start.getY(), 
+               _track_out->_end.getX(), _track_out->_end.getY(),
+               _new_fluxes[0], 
+               _track_in->_start.getX(), _track_in->_start.getY(), 
+               _track_in->_end.getX(), _track_in->_end.getY(),        
+               _new_fluxes[1]);
 }
 
 /**
@@ -282,14 +325,9 @@ double* Track::getPolarFluxes() {
     return _polar_fluxes;
 }
 
-double* Track::getFwdFluxes() {
-    return _fwd_fluxes;
+double* Track::getNewFluxes() {
+    return _new_fluxes;
 }
-
-double* Track::getBwdFluxes() {
-    return _bwd_fluxes;
-}
-
 
 /**
  * Returns the incoming track
