@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+<materials>
+
+<!-- Two group fictitious cross sections -->
+
+<!-- material 1: a homogenized one-to-one mix of Fuel 1  & reflector-->
+<material id="1" energy="2"
+sigma_a ="0.0045533 0.10972351"
+sigma_t ="0.2654 1.8868"
+sigma_f ="0.001 0.025"
+nu_sigma_f="0.002301 0.0545"
+chi ="1 0"
+sigma_s ="0.2244117 0.036435
+          0.00 1.77707649"
+/>
+
+<!-- material 2: material 1 but with slight smaller (0.01) nu_sigma_f in the thermal group -->
+<material id="2" energy="2"
+sigma_a ="0.0045533 0.10972351"
+sigma_t ="0.2654 1.8868"
+sigma_f ="0.001 0.025"
+nu_sigma_f="0.002301 0.0345"
+chi ="1 0"
+sigma_s ="0.2244117 0.036435
+          0.00 1.77707649"
+/>
+    
+
+    
+    
+</materials>
