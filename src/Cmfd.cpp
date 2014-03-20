@@ -20,6 +20,7 @@ int Cmfd::_surf_index[] = {1,2,2,3,3,0,0,1,2,1,3,2,0,3,1,0};
 Cmfd::Cmfd(Geometry* geom, Plotter* plotter, Mesh* mesh, 
            TrackGenerator *track_generator, Options *opts) 
 {
+    _moc_iter = 0;
     _geom = geom;
     _plotter = plotter;
     _mesh = mesh;
@@ -28,6 +29,7 @@ Cmfd::Cmfd(Geometry* geom, Plotter* plotter, Mesh* mesh,
     _num_azim = track_generator->getNumAzim();
     _spacing = track_generator->getSpacing();
     _num_tracks = track_generator->getNumTracks();
+    _num_FSRs = _geom->getNumFSRs();
 
     _l2_norm = 1.0;
     _l2_norm_conv_thresh = opts->getL2NormConvThresh();
@@ -98,7 +100,8 @@ Cmfd::Cmfd(Geometry* geom, Plotter* plotter, Mesh* mesh,
     _plot_prolongation = opts->plotProlongation();
     _update_boundary = opts->getUpdateBoundary();
     _reflect_outgoing = opts->getReflectOutgoing();
-    
+    _first_diffusion = opts->getFirstDiffusion();
+
     if (_reflect_outgoing)
         _nq = 2;
     else
@@ -131,7 +134,7 @@ Cmfd::Cmfd(Geometry* geom, Plotter* plotter, Mesh* mesh,
     _converged = false;
 
     _cell_source = new double[_cw * _ch];
-
+    _fsr_source = new double[_num_FSRs];
     for (int i = 0; i < _cw * _ch; i++)
         _cell_source[i] = 1.0;
 }
@@ -164,8 +167,6 @@ void Cmfd::runLoo2() {
 }
 
 
-
-
 /**
  * Create the loss matrix (A), fission matrix (A), and flux vector (phi)
  * @param number of columns needed in A matrix
@@ -180,74 +181,155 @@ int Cmfd::createAMPhi(PetscInt size1, PetscInt size2, int cells){
     petsc_err = MatCreateSeqAIJ(PETSC_COMM_WORLD, size1, size1, size2, 
                                 PETSC_NULL, 
                                 &_A);
+    CHKERRQ(petsc_err);
     size2 = size2 - 4;
     petsc_err = MatCreateSeqAIJ(PETSC_COMM_WORLD, size1, size1, size2, 
                                 PETSC_NULL, 
                                 &_M);
+    CHKERRQ(petsc_err);
     petsc_err = VecCreateSeq(PETSC_COMM_WORLD, cells, &_phi_new);
+    CHKERRQ(petsc_err);
     //petsc_err = VecCreateSeq(PETSC_COMM_WORLD, cells, &_source_old);
-    VecDuplicate(_phi_new, &_source_old);
+    petsc_err = VecDuplicate(_phi_new, &_source_old);
     CHKERRQ(petsc_err);
 
     return petsc_err;
 }
 
-double Cmfd::computeCellSource()
+double Cmfd::computeCellSourceNorm()
 {
-    /* initialize variables */
-    int i,e;
-    double volume, flux, nu_fis, l2_norm;
-    double *old_cell_source, *source_residual;
+    double l2_norm;
+#if 1
+    double *old_cell_source; 
     old_cell_source = new double[_cw * _ch];
-    source_residual = new double[_cw * _ch];
-    MeshCell* meshCell;
-    FlatSourceRegion* fsr;
-    std::vector<int>::iterator iter;
-    int counter = 0;
 
-    for (i = 0; i < _cw * _ch; i++)
-    {
-        /* copy new source into the old one */
+    for (int i = 0; i < _cw * _ch; i++)
         old_cell_source[i] = _cell_source[i];
-        _cell_source[i] = 0.0;
+ 
+    setCellSource(computeCellSourceFromFSR());
 
-        meshCell = _mesh->getCells(i);
+    l2_norm = computeCellSourceNormGivenTwoSources(old_cell_source, 
+                                                   _cell_source, _cw * _ch);
+    delete [] old_cell_source;
+#else
+    FlatSourceRegion *fsr;
+    double *old_source; 
+    old_source = new double[_num_FSRs];
+    for (int i = 0; i < _num_FSRs; i++)
+        old_source[i] = _fsr_source[i];
 
-        /* loop over energy groups */
-        for (e = 0; e < NUM_ENERGY_GROUPS; e++) 
-        {
-            /* loop over FSRs in mesh cell */
-            for (iter = meshCell->getFSRs()->begin(); 
-                 iter != meshCell->getFSRs()->end(); ++iter)
-            {
-                fsr = &_flat_source_regions[*iter];
-                volume = fsr->getVolume();
-                flux = fsr->getFlux()[e];
-                nu_fis = fsr->getMaterial()->getNuSigmaF()[e];
-                _cell_source[i] += nu_fis * flux * volume;
-            }
-        }
-
-        /* check new source */
-        if (_cell_source[i] > 1e-10)
-        {
-            source_residual[i] = pow(_cell_source[i] / old_cell_source[i] 
-                                     - 1.0, 2);
-            counter += 1;
-        }
-        else
-            source_residual[i] = 0.0;
+    for (int i = 0; i < _num_FSRs; i++)
+    {
+        fsr = &_flat_source_regions[i]; 
+        _fsr_source[i] = fsr->computeFissionRate(); // has vol in it 
     }
+    l2_norm = computeCellSourceNormGivenTwoSources(old_source, _fsr_source, 
+                                                   _num_FSRs);
+    
+#endif
 
-    l2_norm = pairwise_sum<double>(source_residual, _ch * _cw);
-    l2_norm /= (double) (counter);
-    l2_norm = sqrt(l2_norm);
 
     return l2_norm;
 }
 
+double Cmfd::computeCellSourceNormGivenTwoSources(double *old_cell_source, 
+                                                  double *new_cell_source,
+                                                  int num)
+{
+    double l2_norm = 0;
+    double *source_residual, *s2;
+    source_residual = new double[num];
+    s2 = new double[num];
+    int counter = 0;
 
+    for (int i = 0; i < num; i++)
+    {
+        if (new_cell_source[i] > 1e-10)
+        {
+            source_residual[i] = pow(new_cell_source[i] / old_cell_source[i]
+                                     - 1.0, 2);
+            s2[i] = new_cell_source[i] - old_cell_source[i];
+            counter += 1;
+        }
+        else
+            source_residual[i] = 0.0;
+        log_printf(ACTIVE, "iter %d cell %d new %f old %f residual %e", 
+                   _moc_iter, i,
+                   new_cell_source[i], old_cell_source[i], source_residual[i]);
+    }
 
+    double max = 0;
+    int location = -1;
+    for (int i = 0; i < num; i++)
+    {
+        if (source_residual[i] > max)
+        {
+            max = source_residual[i];
+            location = i;
+        }
+    }
+
+/*
+    log_printf(NORMAL, "iter %d pin cell %d, change %e, new %e, old %e", 
+               _moc_iter, 
+               location, source_residual[location], new_cell_source[location],
+               old_cell_source[location]);
+*/
+    log_printf(ACTIVE, "iter %d pin cell 0, 1, 5, change %e %e, %e %e, %e %e",
+               _moc_iter, 
+               s2[0], s2[3], s2[1], s2[4], s2[5], s2[6]); 
+
+    //l2_norm = pairwise_sum<double>(source_residual, _ch * _cw);
+    for (int i = 0; i < _ch * _cw; i++)
+        l2_norm += source_residual[i];
+
+    if (counter > 0)
+        l2_norm /= (double) (counter);
+    else
+        log_printf(ERROR, "no positive pin source");
+    l2_norm = sqrt(l2_norm);
+
+    delete [] source_residual;
+    return l2_norm;
+}
+
+double* Cmfd::computeCellSourceFromFSR()
+{
+    double volume, flux, nu_fis;
+    MeshCell* meshCell;
+    FlatSourceRegion* fsr;
+    double *cell_source;
+    cell_source = new double[_cw * _ch];
+
+    for (int i = 0; i < _cw * _ch; i++)
+    {
+        meshCell = _mesh->getCells(i);
+        cell_source[i] = 0;
+        for (auto it = meshCell->getFSRs()->begin(); 
+             it != meshCell->getFSRs()->end(); ++it)
+        {
+            fsr = &_flat_source_regions[*it];
+            volume = fsr->getVolume();
+
+            for (int e = 0; e < NUM_ENERGY_GROUPS; e++) 
+            {
+                flux = fsr->getFlux()[e];
+                nu_fis = fsr->getMaterial()->getNuSigmaF()[e];
+                cell_source[i] += nu_fis * flux * volume;
+            }
+        }
+    }
+    return cell_source;
+}
+
+void Cmfd::printCellSource(double moc_iter)
+{
+    for (int i = 0; i < _cw * _ch; i++)
+    {   
+        log_printf(DEBUG, "iter %.1f cell %d energy-integrated source %f", 
+                   moc_iter, i, _cell_source[i]);
+    }
+}
 
 /** Computes the cross section for all MeshCells in the Mesh 
  * Create cross sections and fluxes for each cmfd cell by
@@ -273,8 +355,10 @@ void Cmfd::computeXS_old()
     /* initialize variables */
     double volume, flux, abs, tot, nu_fis, chi;
     double* scat;
-    double abs_tally_group, nu_fis_tally_group, dif_tally_group, rxn_tally_group, vol_tally_group, tot_tally_group;
-    double nu_fis_tally = 0, dif_tally = 0, rxn_tally = 0, abs_tally = 0, tot_tally = 0;
+    double abs_tally_group, nu_fis_tally_group, dif_tally_group, 
+        rxn_tally_group, vol_tally_group, tot_tally_group;
+    double nu_fis_tally = 0, dif_tally = 0, rxn_tally = 0, abs_tally = 0, 
+        tot_tally = 0;
     double scat_tally_group[NUM_ENERGY_GROUPS];
     std::vector<int>::iterator iter;
     int i, e, g;
@@ -284,13 +368,6 @@ void Cmfd::computeXS_old()
     FlatSourceRegion* fsr;
     Material* material;
 
-#if USE_OPENMP
-#pragma omp parallel for private(i, e, g, volume, flux, abs, tot, nu_fis, \
-                                 chi, scat, abs_tally_group, nu_fis_tally_group, \
-                                 dif_tally_group, rxn_tally_group, vol_tally_group, tot_tally_group, \
-                                 nu_fis_tally, dif_tally, rxn_tally, abs_tally, tot_tally, \
-                                 scat_tally_group, iter, meshCell, fsr, material)
-#endif
     /* loop over mesh cells */
     for (i = 0; i < _cw * _ch; i++){
         meshCell = _mesh->getCells(i);
@@ -321,7 +398,8 @@ void Cmfd::computeXS_old()
             }
 
             /* loop over FSRs in mesh cell */
-            for (iter = meshCell->getFSRs()->begin(); iter != meshCell->getFSRs()->end(); ++iter){
+            for (iter = meshCell->getFSRs()->begin(); 
+                 iter != meshCell->getFSRs()->end(); ++iter){
                 fsr = &_flat_source_regions[*iter];
 
                 /* Gets FSR specific data. */
@@ -344,8 +422,10 @@ void Cmfd::computeXS_old()
 
                 /* increment group to group scattering tallies */
                 for (g = 0; g < NUM_ENERGY_GROUPS; g++){
-                    scat_tally_group[g] += scat[g*NUM_ENERGY_GROUPS + e] * flux * volume;
-                    log_printf(DEBUG, "scattering from group %i to %i: %f", e, g, scat[g*NUM_ENERGY_GROUPS + e]);
+                    scat_tally_group[g] += scat[g*NUM_ENERGY_GROUPS + e] * 
+                        flux * volume;
+                    log_printf(DEBUG, "scattering from group %i to %i: %f", 
+                               e, g, scat[g*NUM_ENERGY_GROUPS + e]);
                 }
 
                 /* choose a chi for this group */
@@ -354,20 +434,23 @@ void Cmfd::computeXS_old()
             }
 
             /* if multigroup, set the multigroup parameters */
-            if (_mesh->getMultigroup() == true){
-                meshCell->setATVolume(vol_tally_group);
+            if (_mesh->getMultigroup() == true)
+            {
                 meshCell->setSigmaA(abs_tally_group / rxn_tally_group, e);
                 meshCell->setSigmaT(tot_tally_group / rxn_tally_group, e);
                 meshCell->setNuSigmaF(nu_fis_tally_group / rxn_tally_group, e);
-                meshCell->setDiffusivity(dif_tally_group / rxn_tally_group, e);
+                meshCell->setDiffusion(dif_tally_group / rxn_tally_group, e);
                 meshCell->setOldFlux(rxn_tally_group / vol_tally_group, e);
 
-                for (int g = 0; g < NUM_ENERGY_GROUPS; g++){
-                    meshCell->setSigmaS(scat_tally_group[g] / rxn_tally_group,e,g);
+                for (int g = 0; g < NUM_ENERGY_GROUPS; g++)
+                {
+                    meshCell->setSigmaS(scat_tally_group[g] / rxn_tally_group,
+                                        e, g);
                 }
             }
-            /* if single group, add group-wise tallies to group independent tallies */
-            else{
+            /* if single group, add group-wise tallies to tallies */
+            else
+            {
                 abs_tally += abs_tally_group;
                 tot_tally += tot_tally_group;
                 nu_fis_tally += nu_fis_tally_group;
@@ -378,11 +461,10 @@ void Cmfd::computeXS_old()
 
         /* if single group, set single group parameters */
         if (_mesh->getMultigroup() == false){
-            meshCell->setATVolume(vol_tally_group);
             meshCell->setSigmaT(tot_tally / rxn_tally, 0);
             meshCell->setSigmaA(abs_tally / rxn_tally, 0);
             meshCell->setNuSigmaF(nu_fis_tally / rxn_tally, 0);
-            meshCell->setDiffusivity(dif_tally / rxn_tally, 0);
+            meshCell->setDiffusion(dif_tally / rxn_tally, 0);
             meshCell->setOldFlux(rxn_tally / vol_tally_group, 0);
             meshCell->setChi(1,0);
         }
@@ -419,14 +501,6 @@ void Cmfd::computeXS()
     Material* material;
 
     /* loop over mesh cells */
-#if USE_OPENMP
-#pragma omp parallel for private(i, e, g, volume, flux, abs, tot, nu_fis, \
-                                 chi, scat, abs_tally_group, nu_fis_tally_group, \
-                                 dif_tally_group, rxn_tally_group, vol_tally_group, tot_tally_group, \
-                                 nu_fis_tally, dif_tally, rxn_tally, abs_tally, tot_tally, \
-                                 scat_tally_group, iter, meshCell, fsr, material)
-#endif 
-
     for (i = 0; i < _cw * _ch; i++){
         meshCell = _mesh->getCells(i);
 
@@ -499,11 +573,10 @@ void Cmfd::computeXS()
             /* if multigroup, set the multigroup parameters */
             if (_mesh->getMultigroup())
             {
-                meshCell->setATVolume(vol_tally_group);
                 meshCell->setSigmaA(abs_tally_group / rxn_tally_group, e);
                 meshCell->setSigmaT(tot_tally_group / rxn_tally_group, e);
                 meshCell->setNuSigmaF(nu_fis_tally_group / rxn_tally_group, e);
-                meshCell->setDiffusivity(dif_tally_group / rxn_tally_group, e);
+                meshCell->setDiffusion(dif_tally_group / rxn_tally_group, e);
                 meshCell->setOldFlux(rxn_tally_group / vol_tally_group, e);
                 meshCell->setSrc(src_tally_group / vol_tally_group, e);
 
@@ -530,11 +603,10 @@ void Cmfd::computeXS()
         /* if single group, set single group parameters */
         if (_mesh->getMultigroup() == false)
         {
-            meshCell->setATVolume(vol_tally_group);
             meshCell->setSigmaT(tot_tally / rxn_tally, 0);
             meshCell->setSigmaA(abs_tally / rxn_tally, 0);
             meshCell->setNuSigmaF(nu_fis_tally / rxn_tally, 0);
-            meshCell->setDiffusivity(dif_tally / rxn_tally, 0);
+            meshCell->setDiffusion(dif_tally / rxn_tally, 0);
             meshCell->setOldFlux(rxn_tally / vol_tally_group, 0);
             log_printf(INFO, "mesh = %d, rxn tally = %.10f, vol = %.10f,"
                        " mesh's old flux = %.10f", 
@@ -565,16 +637,13 @@ void Cmfd::computeDsxDirection(double x, double y, int e, MeshCell *meshCell,
     {
         if (_mesh->getBoundary(0) == REFLECTIVE)
         {
-            meshCell->getMeshSurfaces(0)->setDDif(0.0, e);
+            d_hat = 0; 
+            d_tilde = 0;
         }
         else if (_mesh->getBoundary(0) == VACUUM)
         {
             surf = meshCell->getMeshSurfaces(0);
             current = - surf->getCurrent(e);
-
-            /* set d_dif */
-            surf->setDDif(2 * d / meshCell->getWidth() / 
-                          (1 + 4 * d / meshCell->getWidth()), e);
             d_hat = 2 * d * f / meshCell->getWidth() 
                 / (1 + 4 * d*f / meshCell->getWidth());
             d_tilde = - (d_hat * flux + current 
@@ -586,14 +655,8 @@ void Cmfd::computeDsxDirection(double x, double y, int e, MeshCell *meshCell,
     {
         /* get mesh cell to left */
         meshCellNext = _mesh->getCells(y*_cw + x - 1);
-        d_next = meshCellNext->getDiffusivity()[e];
+        d_next = meshCellNext->getDiffusion()[e];
         flux_next = meshCellNext->getOldFlux()[e];
-
-        /* set d_dif */
-        MeshSurface *surf = meshCell->getMeshSurfaces(0);
-        surf->setDDif(2.0 * d * d_next 
-                      / (meshCell->getWidth() * d 
-                         + meshCellNext->getWidth() * d_next), e);
 
         /* get diffusion correction term for meshCellNext */
         f_next = computeDiffCorrect(d_next, meshCellNext->getWidth());
@@ -612,11 +675,10 @@ void Cmfd::computeDsxDirection(double x, double y, int e, MeshCell *meshCell,
         /* compute d_tilde */
         d_tilde = -(d_hat * (flux - flux_next) + current  
                     / meshCell->getHeight()) / (flux_next + flux);
-
     }
 
-    /* if abs(d_tilde) > abs(d_hat), make them equal in magnitude */
 #if 0
+    /* if abs(d_tilde) > abs(d_hat), make them equal in magnitude */
     if (fabs(d_tilde) > fabs(d_hat))
     {
         log_printf(DEBUG, "correcting Ds: LEFT group: %i, x: %f,"
@@ -649,7 +711,7 @@ void Cmfd::computeDsxDirection(double x, double y, int e, MeshCell *meshCell,
 }
 
 /* compute the xs for all MeshCells in the Mesh */
-void Cmfd::computeDs()
+void Cmfd::computeDs(int moc_iter)
 {
     /* initialize variables */
     double d = 0, d_next = 0, d_hat = 0, d_tilde = 0, 
@@ -664,11 +726,6 @@ void Cmfd::computeDs()
         _mesh->computeTotCurrents();
 
     /* loop over all mesh cells */
-#if USE_OPENMP
-#pragma omp parallel for private(meshCell, x, y, e,                     \
-                                 d, flux, f, d_hat, d_tilde, current, d_next, \
-                                 flux_next, meshCellNext)
-#endif 
     for (y = 0; y < _ch; y++)
     {
         for (x = 0; x < _cw; x++)
@@ -679,50 +736,44 @@ void Cmfd::computeDs()
             {
 
                 /* get diffusivity and flux for mesh cell */
-                d = meshCell->getDiffusivity()[e];
+                d = meshCell->getDiffusion()[e];
                 flux = meshCell->getOldFlux()[e];
 
                 /* get diffusion correction term for meshCell */
                 f = computeDiffCorrect(d, meshCell->getWidth());
 
                 /* LEFT */
-                computeDsxDirection(x, y, e, meshCell, d, f, flux,
-                                    dt_weight);
+                computeDsxDirection(x, y, e, meshCell, d, f, flux, dt_weight);
 
                 /* RIGHT */
                 /* if cell on right side, set d_hat and d_tilde to 0 */
-                if (x == _cw - 1){
-                    if (_mesh->getBoundary(2) == REFLECTIVE){
+                if (x == _cw - 1)
+                {
+                    if (_mesh->getBoundary(2) == REFLECTIVE)
+                    {
                         d_hat = 0.0;
                         d_tilde = 0.0;
                         current = 0.0;
-
-                        /* set d_dif */
-                        meshCell->getMeshSurfaces(2)->setDDif(0.0, e);
                     }
-                    else if (_mesh->getBoundary(2) == VACUUM){
+                    else if (_mesh->getBoundary(2) == VACUUM)
+                    {
                         current = meshCell->getMeshSurfaces(2)->getCurrent(e);
-
-                        /* set d_dif */
-                        meshCell->getMeshSurfaces(2)->setDDif(2 * d / meshCell->getWidth() / (1 + 4 * d / meshCell->getWidth()), e);
-
-                        d_hat = 2 * d*f / meshCell->getWidth() / (1 + 4 * d*f / meshCell->getWidth());
-                        d_tilde = (d_hat * flux - current / meshCell->getHeight()) / flux;
-
+                        d_hat = 2 * d * f / meshCell->getWidth() / 
+                            (1 + 4 * d * f / meshCell->getWidth());
+                        d_tilde = (d_hat * flux - current / 
+                                   meshCell->getHeight()) / flux;
                     }
                 }
-                else{
-
+                else
+                {
                     /* get mesh cell to the right */
                     meshCellNext = _mesh->getCells(y*_cw + x + 1);
-                    d_next = meshCellNext->getDiffusivity()[e];
+                    d_next = meshCellNext->getDiffusion()[e];
                     flux_next = meshCellNext->getOldFlux()[e];
 
-                    /* set d_dif */
-                    meshCell->getMeshSurfaces(2)->setDDif(2.0 * d * d_next / (meshCell->getWidth() * d + meshCellNext->getWidth() * d_next), e);
-
                     /* get diffusion correction term for meshCellNext */
-                    f_next = computeDiffCorrect(d_next, meshCellNext->getWidth());
+                    f_next = computeDiffCorrect(d_next, 
+                                                meshCellNext->getWidth());
 
                     /* compute d_hat */
                     d_hat = 2.0 * d * f * d_next * f_next / 
@@ -731,32 +782,34 @@ void Cmfd::computeDs()
 
                     /* get net outward current across surface */
                     current = 0.0;
-
-                    /* increment current by outward current on right side */
                     current += meshCell->getMeshSurfaces(2)->getCurrent(e);
-
-                    /* decrement current by outward current on next cell's left side */
                     current -= meshCellNext->getMeshSurfaces(0)->getCurrent(e);
 
                     /* compute d_tilde */
-                    d_tilde = -(d_hat * (flux_next - flux) + current / meshCell->getHeight()) / (flux_next + flux);
-
-
+                    d_tilde = - (d_hat * (flux_next - flux) + current / 
+                                 meshCell->getHeight()) / (flux_next + flux);
                 }
 
-                log_printf(DEBUG, "cell: %i, group: %i, side:  RIGHT, current: %f, dhat: %f, dtilde: %f", y*_cw + x, e, current, d_hat, d_tilde);
+                log_printf(DEBUG, "cell: %i, group: %i, side:  RIGHT,"
+                           " current: %f, dhat: %f, dtilde: %f", 
+                           y*_cw + x, e, current, d_hat, d_tilde);
 
 #if 0
-                /* if abs(d_tilde) > abs(d_hat) -> make them equal to each other */
-                if (fabs(d_tilde) > fabs(d_hat)){
-                    log_printf(INFO, "correcting Ds: RIGHT  group: %i, x: %i, y: %i, dh: %f, dt: %f, c: %f", e, x, y, d_hat, d_tilde, current);
+                /* if abs(d_tilde) > abs(d_hat) make them equal to each other */
+                if (fabs(d_tilde) > fabs(d_hat))
+                {
+                    log_printf(INFO, "correcting Ds: RIGHT group: %i,"
+                               " x: %i, y: %i, dh: %f, dt: %f, c: %f", 
+                               e, x, y, d_hat, d_tilde, current);
 
                     /* d_tilde is positive */
-                    if (1 - fabs(d_tilde)/d_tilde < 1e-8){
+                    if (1 - fabs(d_tilde)/d_tilde < 1e-8)
+                    {
                         d_hat   = - current/(2*flux_next*meshCell->getHeight());
                         d_tilde = - current/(2*flux_next*meshCell->getHeight());
                     }
-                    else{
+                    else
+                    {
                         d_hat   = current/(2*flux*meshCell->getHeight());
                         d_tilde = - current/(2*flux*meshCell->getHeight());
                     }
@@ -768,47 +821,39 @@ void Cmfd::computeDs()
                 meshCell->getMeshSurfaces(2)->setDHat(d_hat, e);
                 meshCell->getMeshSurfaces(2)->setDTilde(d_tilde, e);
 
-//////////////////////////////////////////////////////////////////////////////////////////////////
-
-
 
                 /* BOTTOM */
-                /* if cell on bottom side, set d_hat and d_tilde to 0 */
-
                 /* get diffusion correction term for meshCell */
                 f = computeDiffCorrect(d, meshCell->getHeight());
 
-                if (y == _ch - 1){
-                    if (_mesh->getBoundary(1) == REFLECTIVE){
+                if (y == _ch - 1)
+                {
+                    if (_mesh->getBoundary(1) == REFLECTIVE)
+                    {
                         d_hat = 0.0;
                         d_tilde = 0.0;
                         current = 0.0;
-
-                        /* set d_dif */
-                        meshCell->getMeshSurfaces(1)->setDDif(0.0, e);
                     }
-                    else if (_mesh->getBoundary(1) == VACUUM){
+                    else if (_mesh->getBoundary(1) == VACUUM)
+                    {
                         current = meshCell->getMeshSurfaces(1)->getCurrent(e);
-
-                        /* set d_dif */
-                        meshCell->getMeshSurfaces(1)->setDDif(2 * d / meshCell->getHeight() / (1 + 4 * d / meshCell->getHeight()), e);
-
-                        d_hat = 2 * d*f / meshCell->getHeight() / (1 + 4 * d*f / meshCell->getHeight());
-                        d_tilde = (d_hat * flux - current / meshCell->getWidth()) / flux;
-
+                        d_hat = 2 * d*f / meshCell->getHeight() / 
+                            (1 + 4 * d*f / meshCell->getHeight());
+                        d_tilde = (d_hat * flux - current / 
+                                   meshCell->getWidth()) / flux;
                     }
                 }
-                else{
+                else
+                {
                     /* get mesh cell below */
                     meshCellNext = _mesh->getCells((y+1)*_cw + x);
-                    d_next = meshCellNext->getDiffusivity()[e];
+                    d_next = meshCellNext->getDiffusion()[e];
+                    /* FIXME: double check this is the right flux */
                     flux_next = meshCellNext->getOldFlux()[e];
 
-                    /* set d_dif */
-                    meshCell->getMeshSurfaces(1)->setDDif(2.0 * d * d_next / (meshCell->getHeight() * d + meshCellNext->getHeight() * d_next), e);
-
                     /* get diffusion correction term for meshCellNext */
-                    f_next = computeDiffCorrect(d_next, meshCellNext->getHeight());
+                    f_next = computeDiffCorrect(d_next, 
+                                                meshCellNext->getHeight());
 
                     /* compute d_hat */
                     d_hat = 2.0 * d * f * d_next * f_next / 
@@ -817,31 +862,39 @@ void Cmfd::computeDs()
 
                     /* get net outward current across surface */
                     current = 0.0;
-
-                    /* increment current by outward current on bottom side */
                     current += meshCell->getMeshSurfaces(1)->getCurrent(e);
-
-                    /* decrement current by outward current on next cell's top side */
                     current -= meshCellNext->getMeshSurfaces(3)->getCurrent(e);
 
                     /* compute d_tilde */
-                    d_tilde = -(d_hat * (flux_next - flux) + current / meshCell->getWidth()) / (flux_next + flux);
-
+                    d_tilde = -(d_hat * (flux_next - flux) + current / 
+                                meshCell->getWidth()) / (flux_next + flux);
                 }
 
-                log_printf(DEBUG, "cell: %i, group: %i, side: BOTTOM, current: %f, dhat: %f, dtilde: %f", y*_cw + x, e, current, d_hat, d_tilde);
+                if ((x == 0) && (y == 0))
+                {
+                    log_printf(ACTIVE, "cell (%d %d), group: %i, side: BOTTOM, "
+                               "current: %f, flux %f, %f, dhat: %f, dtilde: %f",
+                               x, y, e, current, flux, flux_next, 
+                               d_hat, d_tilde);
+                }
+
 
 #if 0
-                /* if abs(d_tilde) > abs(d_hat) -> make them equal to each other */
-                if (fabs(d_tilde) > fabs(d_hat)){
-                    log_printf(INFO, "correcting Ds: BOTTOM group: %i, x: %i, y: %i, dh: %f, dt: %f, c:%f", e, x, y, d_hat, d_tilde, current);
+                /* if abs(d_tilde) > abs(d_hat), equates them */
+                if (fabs(d_tilde) > fabs(d_hat))
+                {
+                    log_printf(INFO, "correcting Ds: BOTTOM group: %i, x: %i, "
+                               "y: %i, dh: %f, dt: %f, c:%f", 
+                               e, x, y, d_hat, d_tilde, current);
 
                     /* d_tilde is positive */
-                    if (1 - fabs(d_tilde)/d_tilde < 1e-8){
+                    if (1 - fabs(d_tilde)/d_tilde < 1e-8)
+                    {
                         d_hat   = - current/(2*flux_next*meshCell->getWidth());
                         d_tilde = - current/(2*flux_next*meshCell->getWidth());
                     }
-                    else{
+                    else
+                    {
                         d_hat   = current/(2*flux*meshCell->getWidth());
                         d_tilde = - current/(2*flux*meshCell->getWidth());
                     }
@@ -853,45 +906,41 @@ void Cmfd::computeDs()
                 meshCell->getMeshSurfaces(1)->setDHat(d_hat, e);
                 meshCell->getMeshSurfaces(1)->setDTilde(d_tilde, e);
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
+///////////////////////////////////////////////////////////////////////////////
 
                 /* TOP */
-
                 /* get diffusion correction term for meshCell */
                 f = computeDiffCorrect(d, meshCell->getHeight());
 
                 /* if cell on top side, set d_hat and d_tilde to 0 */
-                if (y == 0){
-                    if (_mesh->getBoundary(3) == REFLECTIVE){
+                if (y == 0)
+                {
+                    if (_mesh->getBoundary(3) == REFLECTIVE)
+                    {
                         d_hat = 0.0;
                         d_tilde = 0.0;
                         current = 0.0;
-
-                        /* set d_dif */
-                        meshCell->getMeshSurfaces(3)->setDDif(0.0, e);
                     }
-                    else if (_mesh->getBoundary(3) == VACUUM){
+                    else if (_mesh->getBoundary(3) == VACUUM)
+                    {
                         current = - meshCell->getMeshSurfaces(3)->getCurrent(e);
+                        d_hat = 2 * d*f / meshCell->getHeight() / 
+                            (1 + 4 * d*f / meshCell->getHeight());
 
-                        /* set d_dif */
-                        meshCell->getMeshSurfaces(3)->setDDif(2 * d / meshCell->getHeight() / (1 + 4 * d / meshCell->getHeight()), e);
-
-                        d_hat = 2 * d*f / meshCell->getHeight() / (1 + 4 * d*f / meshCell->getHeight());
-                        d_tilde = - (d_hat * flux + current / meshCell->getWidth()) / flux;
+                        d_tilde = - (d_hat * flux + 
+                                     current / meshCell->getWidth()) / flux;
                     }
                 }
-                else{
+                else
+                {
                     /* get mesh cell above */
                     meshCellNext = _mesh->getCells((y-1)*_cw + x);
-                    d_next = meshCellNext->getDiffusivity()[e];
+                    d_next = meshCellNext->getDiffusion()[e];
                     flux_next = meshCellNext->getOldFlux()[e];
 
-                    /* set d_dif */
-                    meshCell->getMeshSurfaces(3)->setDDif(2.0 * d * d_next / (meshCell->getHeight() * d + meshCellNext->getHeight() * d_next), e);
-
                     /* get diffusion correction term for meshCellNext */
-                    f_next = computeDiffCorrect(d_next, meshCellNext->getHeight());
+                    f_next = computeDiffCorrect(d_next, 
+                                                meshCellNext->getHeight());
 
                     /* compute d_hat */
                     d_hat = 2.0 * d * f * d_next * f_next / 
@@ -900,30 +949,34 @@ void Cmfd::computeDs()
 
                     /* get net outward current across surface */
                     current = 0.0;
-
-                    /* increment current by outward current on next cell's bottom side */
                     current += meshCellNext->getMeshSurfaces(1)->getCurrent(e);
-
-                    /* decrement current by outward current on top side */
                     current -= meshCell->getMeshSurfaces(3)->getCurrent(e);
 
                     /* compute d_tilde */
-                    d_tilde = -(d_hat * (flux - flux_next) + current / meshCell->getWidth()) / (flux_next + flux);
+                    d_tilde = - (d_hat * (flux - flux_next) + 
+                                 current / meshCell->getWidth()) / 
+                        (flux_next + flux);
                 }
 
-                log_printf(DEBUG, "cell: %i, group: %i, side:    TOP, current: %f, dhat: %f, dtilde: %f", y*_cw + x, e, current, d_hat, d_tilde);
+                log_printf(DEBUG, "cell: %i, group: %i, side: TOP, current: %f,"
+                           " dhat: %f, dtilde: %f", 
+                           y*_cw + x, e, current, d_hat, d_tilde);
 
 #if 0
-                /* if abs(d_tilde) > abs(d_hat) -> make them equal to each other */
+                /* if abs(d_tilde) > abs(d_hat) make them equal to each other */
                 if (fabs(d_tilde) > fabs(d_hat)){
-                    log_printf(INFO, "correcting Ds: TOP    group: %i, x: %i, y: %i, dh: %f, dt: %f, c:%f", e, x, y, d_hat, d_tilde, current);
+                    log_printf(INFO, "correcting Ds: TOP group: %i, x: %i, "
+                               "y: %i, dh: %f, dt: %f, c:%f", 
+                               e, x, y, d_hat, d_tilde, current);
 
                     /* d_tilde is positive */
-                    if (1 - fabs(d_tilde)/d_tilde < 1e-8){
+                    if (1 - fabs(d_tilde)/d_tilde < 1e-8)
+                    {
                         d_hat   = - current/(2*flux*meshCell->getWidth());
                         d_tilde = - current/(2*flux*meshCell->getWidth());
                     }
-                    else{
+                    else
+                    {
                         d_hat   = current/(2*flux_next*meshCell->getWidth());
                         d_tilde = - current/(2*flux_next*meshCell->getWidth());
                     }
@@ -937,6 +990,25 @@ void Cmfd::computeDs()
             }
         }
     }
+
+    /* if a regular diffusion is requested, set dtilde to zero. */
+    if ((moc_iter == 0) && (_first_diffusion))
+    {
+        for (y = 0; y < _ch; y++)
+        {
+            for (x = 0; x < _cw; x++)
+            {
+                meshCell = _mesh->getCells(y * _cw + x);
+                
+                for (e = 0; e < _ng; e++)
+                {
+                    for (int s = 0; s < 4; s++)
+                        meshCell->getMeshSurfaces(s)->setDTilde(0.0, e);
+                }
+            }
+        }
+    }
+
 }
 
 /* Computes _quad_flux based on _quad_current */
@@ -962,7 +1034,6 @@ void Cmfd::computeQuadFlux()
                 for (int e = 0; e < _ng; e++)
                 {
                     tmp = 0.0;
-                    wt = 0;
 
                     /* FIXME: somehow _nq = 4 breaks the code for _ro case */
                     for (int j = 0; j < 4; j++)
@@ -1003,8 +1074,9 @@ void Cmfd::computeQuadFlux()
 void Cmfd::computeCurrent()
 {
     /* Initializations */
-    MeshSurface *s[4];
+    MeshSurface *s;
     MeshCell* meshCell;
+    double wt; 
 
     /* loop over all mesh cells */
     for (int y = 0; y < _ch; y++)
@@ -1015,14 +1087,9 @@ void Cmfd::computeCurrent()
 
             for (int i = 0; i < 4; i++) 
             {
-                s[i] = meshCell->getMeshSurfaces(i);    
-                for (int e = 0; e < _ng; e++)
-                {
-                    /* FIXME: need to figure out what to do here */
-                    double wt = s[i]->getTotalWt(2); 
-                    
-                    s[i]->setCurrent(s[i]->getCurrent(e) / wt, e);
-                }
+                s = meshCell->getMeshSurfaces(i);    
+                wt = s->getTotalWt(2); 
+                s->updateCurrents(1.0 / wt);
             }
         }
     }
@@ -1257,10 +1324,14 @@ void Cmfd::computeQuadSrc()
                 {
                     src = xs * (out[e][t] - ex * in[e][t]) / (1.0 - ex);
 
-                    log_printf(DEBUG, "(%d %d) e %d t %d"
-                               " quad src = %f *( %f - %f * %f) / %f = %f",
-                               x, y, e, t, xs, out[e][t], ex, in[e][t], 1 - ex,
-                               out[e][t] - ex * in[e][t]);
+                    if (src < 0)
+                    {
+                        log_printf(NORMAL, "(%d %d) e %d t %d"
+                                   " quad src = %f * (%f - %f * %f) / %f = %f",
+                                   x, y, e, t, xs, out[e][t], ex, in[e][t], 
+                                   1 - ex, 
+                                   (out[e][t] - ex * in[e][t]) / (1-ex));
+                    }
 
                     meshCell->setQuadSrc(src, e, t);
                     tmp_src += src;
@@ -1300,15 +1371,16 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter)
     if (solveMethod == DIFFUSION)
         log_printf(NORMAL, "Running coarse-mesh diffusion solver...");
     else
-        log_printf(ACTIVE, "Running CMFD Acceleration");
+        log_printf(DEBUG, "Running CMFD Acceleration");
 
     MeshCell* meshCell;
     int max_outer, iter = 0, petsc_err;
     Vec phi_old, sold, snew, res;
     PetscInt size, its;
-    PetscScalar sumold, sumnew, scale_val, eps;
+    PetscScalar sumold, sumnew, scale_val, eps = 0;
     PetscScalar rtol = 1e-10, atol = rtol;
     std::string string;
+    PetscScalar *old_phi, *new_phi;
 
     /* create petsc array to store old flux */
     size = _ch * _cw * _ng;
@@ -1318,41 +1390,70 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter)
     /* zero out and construct memory efficient versions of
      * A matrix, M matrix, and flux vector */
     petsc_err = MatZeroEntries(_A);
+    CHKERRQ(petsc_err);
     petsc_err = MatZeroEntries(_M);
+    CHKERRQ(petsc_err);
     petsc_err = constructAMPhi(_A, _M, phi_old, solveMethod);
     CHKERRQ(petsc_err);
+
+    /*
+    petsc_err = VecGetArray(phi_old, &old_phi);
+    log_printf(ACTIVE, "CMFD initial flux from MOC:");
+    for (int i = 0; i < _cw*_ch; i++)
+    {
+        log_printf(ACTIVE, " cell %d energy 0 flux %f", 
+                   i, (double)old_phi[i*_ng + 0]);
+    }
+    */
 
     /* if solve method is DIFFUSION, set max_outer to large number to allow 
      * the solver to fully converge; for CMFD, 50 is probably sufficient */
     if (solveMethod == DIFFUSION)
         max_outer = 1000;
     else
-        max_outer = 200;
+        max_outer = 500;
 
-    int min_outer = 5;
+    int min_outer = 300;
 
     /* create old source and residual vectors */
     petsc_err = VecCreateSeq(PETSC_COMM_WORLD, _ch * _cw * _ng, &sold);
+    CHKERRQ(petsc_err);
     petsc_err = VecCreateSeq(PETSC_COMM_WORLD, _ch * _cw * _ng, &snew);
+    CHKERRQ(petsc_err);
     petsc_err = VecCreateSeq(PETSC_COMM_WORLD, _ch * _cw * _ng, &res);
     CHKERRQ(petsc_err);
 
     /* assembly vectors and matrices*/
     petsc_err = VecAssemblyBegin(phi_old);
+    CHKERRQ(petsc_err);
     petsc_err = VecAssemblyEnd(phi_old);
+    CHKERRQ(petsc_err);
     petsc_err = VecAssemblyBegin(_phi_new);
+    CHKERRQ(petsc_err);
     petsc_err = VecAssemblyEnd(_phi_new);
+    CHKERRQ(petsc_err);
     petsc_err = VecAssemblyBegin(_source_old);
+    CHKERRQ(petsc_err);
     petsc_err = VecAssemblyEnd(_source_old);
+    CHKERRQ(petsc_err);
     petsc_err = VecAssemblyBegin(sold);
+    CHKERRQ(petsc_err);
     petsc_err = VecAssemblyEnd(sold);
+    CHKERRQ(petsc_err);
     petsc_err = VecAssemblyBegin(snew);
+    CHKERRQ(petsc_err);
     petsc_err = VecAssemblyEnd(snew);
+    CHKERRQ(petsc_err);
     petsc_err = VecAssemblyBegin(res);
+    CHKERRQ(petsc_err);
     petsc_err = VecAssemblyEnd(res);
+    CHKERRQ(petsc_err);
     petsc_err = MatAssemblyBegin(_A, MAT_FINAL_ASSEMBLY);
+    CHKERRQ(petsc_err);
     petsc_err = MatAssemblyEnd(_A, MAT_FINAL_ASSEMBLY);
+    CHKERRQ(petsc_err);
     petsc_err = MatAssemblyBegin(_M, MAT_FINAL_ASSEMBLY);
+    CHKERRQ(petsc_err);
     petsc_err = MatAssemblyEnd(_M, MAT_FINAL_ASSEMBLY);
     CHKERRQ(petsc_err);
 
@@ -1366,57 +1467,72 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter)
     }
     */
 
-    /* set _phi_new to phi_old */
-    petsc_err = VecCopy(phi_old, _phi_new);
-    CHKERRQ(petsc_err);
-
     /* initialize KSP solver */
     KSP ksp;
     petsc_err = KSPCreate(PETSC_COMM_WORLD, &ksp);
+    CHKERRQ(petsc_err);
     petsc_err = KSPSetTolerances(ksp, rtol, atol, PETSC_DEFAULT, PETSC_DEFAULT);
+    CHKERRQ(petsc_err);
     petsc_err = KSPSetType(ksp, KSPGMRES);
+    CHKERRQ(petsc_err);    
     //petsc_err = PetscObjectSetPrecision((_p_PetscObject*) ksp, 
     //					  PETSC_PRECISION_DOUBLE);
     petsc_err = KSPSetInitialGuessNonzero(ksp, PETSC_TRUE);
+    CHKERRQ(petsc_err);
     petsc_err = KSPSetOperators(ksp, _A, _A, SAME_NONZERO_PATTERN);
-
+    CHKERRQ(petsc_err);
+    
     /* from options must be called before KSPSetUp() */
     petsc_err = KSPSetFromOptions(ksp);
+    CHKERRQ(petsc_err);
     petsc_err = KSPSetUp(ksp);
     CHKERRQ(petsc_err);
 
     /* get initial source and find initial k_eff */
-    petsc_err = MatMult(_M, _phi_new, snew);
+    petsc_err = MatMult(_M, phi_old, snew);
+    CHKERRQ(petsc_err);
     petsc_err = VecSum(snew, &sumnew);
-    petsc_err = MatMult(_A, _phi_new, sold);
+    CHKERRQ(petsc_err);
+    petsc_err = MatMult(_A, phi_old, sold);
+    CHKERRQ(petsc_err);
     petsc_err = VecSum(sold, &sumold);
+    CHKERRQ(petsc_err);
     _keff = (double) sumnew / (double) sumold;
+
     if (moc_iter == 10000)
     {
-        log_printf(NORMAL, "Before CMFD, xs collapsed from MOC"
+        log_printf(NORMAL, " prior to CMFD, xs collapsed from MOC"
                    " produce keff of %.10f = %.10f / %.10f", 
                    _keff, (double) sumnew, (double) sumold);
     }
+
     petsc_err = VecCopy(snew, _source_old);
     CHKERRQ(petsc_err);
-
-    VecCopy(snew, sold);
-    VecScale(sold, 1/_keff);
-    sumold = sumnew / _keff;
-    //VecView(_phi_new, PETSC_VIEWER_STDOUT_SELF);
+    
 
     /*
-      MatMult(_M, _phi_new, sold);
-      VecSum(sold, &sumold);
-      VecScale(sold, _cw * _ch * _ng / sumold);
-      sumold = _cw * _ch * _ng;
+    VecCopy(snew, sold);
+    VecScale(sold, 1 / _keff);
+    sumold = sumnew / _keff;
     */
+    petsc_err = MatMult(_M, phi_old, sold);
+    CHKERRQ(petsc_err);
+    petsc_err = VecSum(sold, &sumold);
+    CHKERRQ(petsc_err);
+    scale_val = 1/_keff;
+    CHKERRQ(petsc_err);
+    petsc_err = VecScale(sold, scale_val);
+    CHKERRQ(petsc_err);
+    sumold *= scale_val;
+
+    //VecView(_phi_new, PETSC_VIEWER_STDOUT_SELF);
 
     /* diffusion solver */
     for (iter = 0; iter < max_outer; iter++)
     {
         /* Solve x = A_inverse * b problem and compute new source */
         petsc_err = KSPSolve(ksp, sold, _phi_new);
+        CHKERRQ(petsc_err);
         petsc_err = KSPGetIterationNumber(ksp,&its);
         CHKERRQ(petsc_err);
 
@@ -1425,60 +1541,69 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter)
 		
         /* compute and set keff */
         petsc_err = MatMult(_M, _phi_new, snew);
+        CHKERRQ(petsc_err);
         petsc_err = VecSum(snew, &sumnew);
+        CHKERRQ(petsc_err);
         _keff =  sumnew / sumold;
 
-        /* compute the L2 norm of source error */
-        petsc_err = VecScale(sold, _keff);
-        petsc_err = VecShift(snew, 1e-20);
-        petsc_err = VecPointwiseDivide(res, sold, snew);
-        scale_val = -1;
-        petsc_err = VecShift(res, scale_val);
-        petsc_err = VecNorm(res, NORM_2, &eps);
+        /* divide new RHS by keff for the next iteration */
+        scale_val = 1/_keff;
+        petsc_err = VecScale(snew, scale_val);
         CHKERRQ(petsc_err);
+        sumnew *= scale_val;
+
+        /* compute the L2 norm of source error */
+        PetscScalar *old_source, *new_source;
+        petsc_err = VecGetArray(sold, &old_source);
+        CHKERRQ(petsc_err);                
+        petsc_err = VecGetArray(snew, &new_source);     
+        CHKERRQ(petsc_err);             
+       
+        double *old_source_energy_integrated, *new_source_energy_integrated;
+        old_source_energy_integrated = new double[_cw * _ch];
+        new_source_energy_integrated = new double[_cw * _ch];
+        
+        for (int ii = 0; ii < _cw * _ch; ii++)
+        {
+            old_source_energy_integrated[ii] = 0;
+            new_source_energy_integrated[ii] = 0;
+            
+            for (int e = 0; e < _ng; e++)
+            { 
+                old_source_energy_integrated[ii] += 
+                    (double) old_source[ii * _ng + e];
+                new_source_energy_integrated[ii] += 
+                    (double) new_source[ii * _ng + e];
+            }
+        }
+
+        eps = computeCellSourceNormGivenTwoSources(
+            old_source_energy_integrated, new_source_energy_integrated, 
+            _cw * _ch);
+
+        petsc_err = VecRestoreArray(sold, &old_source);
+        CHKERRQ(petsc_err);         
+        petsc_err = VecRestoreArray(snew, &new_source);
+        CHKERRQ(petsc_err);         
 
         /* prints keff and error */
         if (moc_iter == 10000)
         {
             log_printf(NORMAL, " %d-th CMFD iter k = %.10f = %.10f / %.10f,"
                        " eps = %e, taking %d KSP iterations", 
-                       iter, _keff, sumnew, sumold, eps, (int)its);
-
-            PetscScalar *old_phi;
-            PetscScalar *new_phi;
-            petsc_err = VecGetArray(phi_old, &old_phi);
-            petsc_err = VecGetArray(_phi_new, &new_phi);
-			
-            for (int i = 0; i < _cw * _ch; i++)
-            {
-                meshCell = _mesh->getCells(i);
-                for (int e = 0; e < _ng; e++)
-                {
-                    log_printf(ACTIVE, " Update from (m+1/2) - 1.0: %e",
-                               (double)(old_phi[i*_ng + e]) 
-                               / (double)(new_phi[i*_ng + e]) - 1.0);
-                }
-            }			
-            petsc_err = VecRestoreArray(phi_old, &old_phi);
-            petsc_err = VecRestoreArray(_phi_new, &new_phi);
+                       iter, _keff, sumold * _keff, sumold, eps, (int)its);
         }
         else
         {
-            log_printf(ACTIVE, " %d-th CMFD iter k = %.10f, eps = %e"
+            log_printf(DEBUG, " %d-th CMFD iter k = %.10f, eps = %e"
                        " GMRES # = %d" , 
                        iter, _keff, eps, (int)its);
         }
 
-        /* divide new RHS by keff for the next iteration */
-        //scale_val = tot_vol / sumnew;
-        scale_val = 1/_keff;
-        petsc_err = VecScale(snew, scale_val);
-        sumnew *= scale_val;
-        CHKERRQ(petsc_err);
-
-        /* set old source to new source */
+        /* book-keeping: set old source to new source */
         petsc_err = VecCopy(snew, sold);
-        VecSum(sold, &sumold);
+        CHKERRQ(petsc_err);
+        petsc_err = VecSum(sold, &sumold);
         CHKERRQ(petsc_err);
 
         /* check for convergence for the CMFD iterative solver using 
@@ -1487,28 +1612,29 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter)
             break;
         }
     }
-    _num_iter_to_conv = iter + 1;
+    _num_iter_to_conv = iter;
 
-    /* rescale the new and old flux */
+    /* scale new flux such that its sum equals that of the old flux */
     petsc_err = MatMult(_M, _phi_new, snew);
+    CHKERRQ(petsc_err);         
     petsc_err = VecSum(snew, &sumnew);
-    scale_val = (_cw * _ch * _ng) / sumnew;
-    petsc_err = VecScale(_phi_new, scale_val);
+    CHKERRQ(petsc_err);         
     petsc_err = MatMult(_M, phi_old, sold);
+    CHKERRQ(petsc_err);         
     petsc_err = VecSum(sold, &sumold);
-    scale_val = (_cw * _ch * _ng) / sumold;
-    petsc_err = VecScale(phi_old, scale_val);
+    CHKERRQ(petsc_err);         
+    scale_val = sumold / sumnew;
+    petsc_err = VecScale(_phi_new, scale_val);
+    CHKERRQ(petsc_err);         
+    petsc_err = VecScale(snew, scale_val);
     CHKERRQ(petsc_err);
 
-    log_printf(INFO, " CMFD total fission source = %f", sumnew);
-
-    PetscScalar *old_phi;
-    PetscScalar *new_phi;
     petsc_err = VecGetArray(phi_old, &old_phi);
+    CHKERRQ(petsc_err);         
     petsc_err = VecGetArray(_phi_new, &new_phi);
     CHKERRQ(petsc_err);
 
-    log_printf(DEBUG, "CMFD converged flux update (relative to m+1/2):");
+    log_printf(ACTIVE, "CMFD converged flux:");
     for (int i = 0; i < _cw*_ch; i++)
     {
         meshCell = _mesh->getCells(i);
@@ -1517,21 +1643,66 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter)
             meshCell->setOldFlux(double(old_phi[i*_ng + e]), e);
             meshCell->setNewFlux(double(new_phi[i*_ng + e]), e);
         }
+
+        log_printf(DEBUG, " cell %d energy 0 new flux %f, old flux %f", 
+                   i, new_phi[i * _ng + 0], old_phi[i * _ng + 0]);
     }
 
     petsc_err = VecRestoreArray(phi_old, &old_phi);
+    CHKERRQ(petsc_err);
     petsc_err = VecRestoreArray(_phi_new, &new_phi);
+    CHKERRQ(petsc_err);
+
+    /* compute the L2 norm of source error */
+    PetscScalar *old_source, *new_source;
+    petsc_err = VecGetArray(_source_old, &old_source);
+    CHKERRQ(petsc_err);
+    petsc_err = VecGetArray(snew, &new_source);     
+    CHKERRQ(petsc_err);
+  
+    double *old_source_energy_integrated, *new_source_energy_integrated;
+    old_source_energy_integrated = new double[_cw * _ch];
+    new_source_energy_integrated = new double[_cw * _ch];
+    
+    for (int ii = 0; ii < _cw * _ch; ii++)
+    {
+        old_source_energy_integrated[ii] = 0;
+        new_source_energy_integrated[ii] = 0;
+        
+        for (int e = 0; e < _ng; e++)
+        { 
+            old_source_energy_integrated[ii] += 
+                (double) old_source[ii * _ng + e];
+            new_source_energy_integrated[ii] += 
+                (double) new_source[ii * _ng + e];
+        }
+        log_printf(ACTIVE, "energy-integrated sources that go in and come out"
+                   " of CMFD for cell %d: %f %f, ratio %e",
+                   ii, old_source_energy_integrated[ii], 
+                   new_source_energy_integrated[ii], 
+                   new_source_energy_integrated[ii] / 
+                   old_source_energy_integrated[ii] - 1.0);
+    }
+    
+    petsc_err = VecRestoreArray(_source_old, &old_source);
+    CHKERRQ(petsc_err);
+    petsc_err = VecRestoreArray(snew, &new_source);
     CHKERRQ(petsc_err);
 
     /* Computes L2 norm between the source that enters the CMFD acceleration 
      * step and the one coming out of converged CMFD step to decided whether 
      * the outter MOC iteration / source iteration should quit */
     if (moc_iter > 0)
+    {
         petsc_err = computeCmfdL2Norm(snew, moc_iter);
+        CHKERRQ(petsc_err);
+    }
 
     /* Copies source new to source old */
     petsc_err = VecCopy(snew, _source_old);
     CHKERRQ(petsc_err);
+
+
 
     /* compute the residual */
     MatMult(_A,_phi_new, sold);
@@ -1545,9 +1716,13 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter)
 
     /* destroy matrices and vectors */
     petsc_err = VecDestroy(&phi_old);
+    CHKERRQ(petsc_err);
     petsc_err = VecDestroy(&snew);
+    CHKERRQ(petsc_err);
     petsc_err = VecDestroy(&sold);
+    CHKERRQ(petsc_err);
     petsc_err = VecDestroy(&res);
+    CHKERRQ(petsc_err);
     petsc_err = KSPDestroy(&ksp);
     CHKERRQ(petsc_err);
 
@@ -1574,9 +1749,9 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter)
 double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
 {
     if (_run_loo_phi)
-        log_printf(ACTIVE, "Running LOO (phi) ...");
+        log_printf(DEBUG, "Running LOO (phi) ...");
     else if (_run_loo_psi)
-        log_printf(ACTIVE, "Running LOO (psi) ...");
+        log_printf(DEBUG, "Running LOO (psi) ...");
     else
         log_printf(ERROR, "Neither LOO psi nor phi is requested.");
 
@@ -1656,7 +1831,7 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
      * order m+1/2) and should not be updated during acceleration step. */
     for (loo_iter = 0; loo_iter < max_outer; loo_iter++)
     {
-        log_printf(ACTIVE, "k passed into LOO = %.10f", _keff);
+        log_printf(DEBUG, "k passed into LOO = %.10f", _keff);
 		
         /* Resets terms to zeros for each LOO iteration */
         for (int i = 0; i < _cw * _ch; i++)
@@ -1779,7 +1954,7 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
                 {
                     _mesh->getCells(_i_array[_num_track * j])
                         ->getMeshSurfaces(1)->setQuadFlux(flux, e, 1);
-                    log_printf(ACTIVE, "update boundary for cell %d"
+                    log_printf(DEBUG, "update boundary for cell %d"
                                " energy %d surface 1 forward", 
                                _i_array[_num_track * j], e);
                 }
@@ -1795,7 +1970,7 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
 
                 if (initial_flux > 1e-10)
                 {
-                    log_printf(ACTIVE, "  Energy %d, loop %d, fwd, %f -> %f,"
+                    log_printf(DEBUG, "  Energy %d, loop %d, fwd, %f -> %f,"
                                " %e",
                                e, j, initial_flux, flux, 
                                flux / initial_flux - 1.0);
@@ -1872,7 +2047,7 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
                 {
                     _mesh->getCells(_i_array[_num_track * j])
                         ->getMeshSurfaces(1)->setQuadFlux(flux, e, 0);
-                    log_printf(ACTIVE, "update boundary for cell %d"
+                    log_printf(DEBUG, "update boundary for cell %d"
                                " energy %d surface 1 backward", 
                                _i_array[_num_track * j], e);
                 }
@@ -1886,7 +2061,7 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
 
                 if (initial_flux > 1e-10) 
                 {
-                    log_printf(ACTIVE, "  Energy %d, loop %d, bwd, %f -> %f,"
+                    log_printf(DEBUG, "  Energy %d, loop %d, bwd, %f -> %f,"
                                " %e",
                                e, j, initial_flux, flux, 
                                flux / initial_flux - 1.0);
@@ -1918,7 +2093,7 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
 
                     if (new_flux < 0)
                     {
-                        log_printf(ACTIVE, "Cell %d e %d new / old flux"
+                        log_printf(DEBUG, "Cell %d e %d new / old flux"
                                    " %f/ %f", i, e, 
                                    new_flux, meshCell->getNewFlux()[e]);
                         new_flux = 1e-5;
@@ -1942,7 +2117,7 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
 
                     if (phi_ratio < 0)
                     {
-                        log_printf(ACTIVE, "Cell %d e %d scalar flux update"
+                        log_printf(DEBUG, "Cell %d e %d scalar flux update"
                                    "by (before normalization) = %e", 
                                    i, e, phi_ratio);
                         phi_ratio = 1e-5;
@@ -1961,7 +2136,7 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
 
         /* Computes normalization factor based on fission source */
         double normalize_factor = computeNormalization();
-        log_printf(ACTIVE, "normalize_factor = %.10f", normalize_factor);
+        log_printf(DEBUG, "normalize_factor = %.10f", normalize_factor);
 
         /* FIXME: should or should not normalize leak_tot? */
         //leak_tot *= normalize_factor;
@@ -1998,12 +2173,12 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
         leak_tot *= SIN_THETA_45 * _mesh->getCells(0)->getWidth();
 #endif
 
-        log_printf(ACTIVE, "net_current_tot = %f,"
+        log_printf(DEBUG, "net_current_tot = %f,"
                    " leak_tot = %f", net_current_tot, leak_tot);
 
         double old_keff = _keff;
         _keff = fis_tot / (abs_tot + leak_tot); 
-        log_printf(ACTIVE, "%d: %.10f / (%.10f + %.10f) = %f", 
+        log_printf(DEBUG, "%d: %.10f / (%.10f + %.10f) = %f", 
                    loo_iter, fis_tot, abs_tot, leak_tot, _keff);
 
         if (_converged)
@@ -2019,27 +2194,19 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
 
         /* Computes the L2 norm of point-wise-division of energy-integrated
          * fission source of mesh cells between LOO iterations */
-        eps = 0;
-        int num_counted = 0;
         for (int i = 0; i < _cw * _ch; i++)
         {
             meshCell = _mesh->getCells(i);
             new_power[i] = 0;
-            /* integrates over energy */
             for (int e = 0; e < _ng; e++)
             {
                 new_power[i] += meshCell->getNuSigmaF()[e] 
                     * meshCell->getNewFlux()[e];
-                num_counted++;
             }
-            if (old_power[i] > 0.0)
-                eps += pow(new_power[i] / old_power[i] - 1.0, 2);
         }
-        /* Assume all meshes are the same volume, thus instead of
-           doing sigma(error * vol) / total_vol, it simplifies to
-           divide by number of meshes. */
-        eps /= (double) num_counted;
-        eps = pow(eps, 0.5);
+        
+        eps = computeCellSourceNormGivenTwoSources(old_power, new_power, 
+            _ch * _cw);
 
         for (int i = 0; i < _cw * _ch; i++)
             old_power[i] = new_power[i];
@@ -2051,7 +2218,7 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
                        " k eps = %e", 
                        loo_iter, _keff, eps, (_keff - old_keff) / old_keff);
         else
-            log_printf(ACTIVE, " %d-th LOO iteration k = %.10f, eps = %e", 
+            log_printf(DEBUG, " %d-th LOO iteration k = %.10f, eps = %e", 
                        loo_iter, _keff, eps);
 
         /* If LOO iterative solver converges */
@@ -2406,6 +2573,7 @@ int Cmfd::constructAMPhi(Mat A, Mat M, Vec phi_old, solveType solveMethod)
             /* get mesh cell */
             meshCell = _mesh->getCells(y * _cw + x);
             vol = meshCell->getATVolume();
+            //vol = meshCell->getVolume();
 
             /* loop over energy groups */
             for (int e = 0; e < _ng; e++)
@@ -2417,7 +2585,9 @@ int Cmfd::constructAMPhi(Mat A, Mat M, Vec phi_old, solveType solveMethod)
                 value = (PetscScalar) meshCell->getOldFlux()[e];
                 petsc_err = VecSetValues(phi_old, 1, &indice1, 
                                          &value, INSERT_VALUES);
+                CHKERRQ(petsc_err);
                 petsc_err = VecAssemblyBegin(phi_old);
+                CHKERRQ(petsc_err);
                 petsc_err = VecAssemblyEnd(phi_old);
                 CHKERRQ(petsc_err);
 
@@ -2426,7 +2596,9 @@ int Cmfd::constructAMPhi(Mat A, Mat M, Vec phi_old, solveType solveMethod)
                 value = (PetscScalar) meshCell->getSigmaA()[e] * vol;
                 petsc_err = MatSetValues(A, 1, &indice1, 1, &indice1, &value, 
                                          ADD_VALUES);
+                CHKERRQ(petsc_err);
                 petsc_err = MatAssemblyBegin(A, MAT_FLUSH_ASSEMBLY);
+                CHKERRQ(petsc_err);
                 petsc_err = MatAssemblyEnd(A, MAT_FLUSH_ASSEMBLY);
                 CHKERRQ(petsc_err);
 
@@ -2436,7 +2608,9 @@ int Cmfd::constructAMPhi(Mat A, Mat M, Vec phi_old, solveType solveMethod)
                     value += meshCell->getSigmaS()[e*_ng + g] * vol;
                 petsc_err = MatSetValues(A, 1, &indice1, 1, &indice1, 
                                          &value, ADD_VALUES);
+                CHKERRQ(petsc_err);
                 petsc_err = MatAssemblyBegin(A, MAT_FLUSH_ASSEMBLY);
+                CHKERRQ(petsc_err);
                 petsc_err = MatAssemblyEnd(A, MAT_FLUSH_ASSEMBLY);
                 CHKERRQ(petsc_err);
 
@@ -2458,18 +2632,22 @@ int Cmfd::constructAMPhi(Mat A, Mat M, Vec phi_old, solveType solveMethod)
                     indice2 = (y*_cw + x)*_ng + g;
                     petsc_err = MatSetValues(M, 1, &indice1, 1, &indice2, 
                                              &value, INSERT_VALUES);
+                    CHKERRQ(petsc_err);
                 }
-                CHKERRQ(petsc_err);
 				
                 /* RIGHT SURFACE */
                 /* set transport-out term on diagonal of A */
                 if (solveMethod == CMFD)
+                {
                     value = (meshCell->getMeshSurfaces(2)->getDHat()[e]      
                              - meshCell->getMeshSurfaces(2)->getDTilde()[e]) 
                         * meshCell->getHeight();
+                }
                 else if (solveMethod == DIFFUSION)
-                    value = meshCell->getMeshSurfaces(2)->getDDif()[e] 
+                {
+                    value = meshCell->getMeshSurfaces(2)->getDHat()[e] 
                         * meshCell->getHeight();
+                }
                 petsc_err = MatSetValues(A, 1, &indice1,1 , &indice1, &value, 
                                          ADD_VALUES);
                 CHKERRQ(petsc_err);
@@ -2485,14 +2663,14 @@ int Cmfd::constructAMPhi(Mat A, Mat M, Vec phi_old, solveType solveMethod)
                     }
                     else if (solveMethod == DIFFUSION)
                     {
-                        value = - meshCell->getMeshSurfaces(2)->getDDif()[e] 
+                        value = - meshCell->getMeshSurfaces(2)->getDHat()[e] 
                             * meshCell->getHeight();
                     }
                     indice2 = (y*_cw + x + 1)*_ng + e;
                     petsc_err = MatSetValues(A, 1, &indice1, 1, &indice2, 
                                              &value, ADD_VALUES);
+                    CHKERRQ(petsc_err);
                 }
-                CHKERRQ(petsc_err);
 
                 /* LEFT SURFACE */
                 /* set transport term on diagonal */
@@ -2501,12 +2679,14 @@ int Cmfd::constructAMPhi(Mat A, Mat M, Vec phi_old, solveType solveMethod)
                              meshCell->getMeshSurfaces(0)->getDTilde()[e]) 
                         * meshCell->getHeight();
                 else if (solveMethod == DIFFUSION)
-                    value = meshCell->getMeshSurfaces(0)->getDDif()[e] 
+                    value = meshCell->getMeshSurfaces(0)->getDHat()[e] 
                         * meshCell->getHeight();
 
                 petsc_err = MatSetValues(A, 1, &indice1, 1, &indice1, 
                                          &value, ADD_VALUES);
+                CHKERRQ(petsc_err);
                 petsc_err = MatAssemblyBegin(A, MAT_FLUSH_ASSEMBLY);
+                CHKERRQ(petsc_err);
                 petsc_err = MatAssemblyEnd(A, MAT_FLUSH_ASSEMBLY);
                 CHKERRQ(petsc_err);
 
@@ -2517,7 +2697,7 @@ int Cmfd::constructAMPhi(Mat A, Mat M, Vec phi_old, solveType solveMethod)
                                    meshCell->getMeshSurfaces(0)->getDTilde()[e])
                             * meshCell->getHeight();
                     else if (solveMethod == DIFFUSION)
-                        value = - meshCell->getMeshSurfaces(0)->getDDif()[e] 
+                        value = - meshCell->getMeshSurfaces(0)->getDHat()[e] 
                             * meshCell->getHeight();
 
                     indice2 = (y*_cw + x - 1)*_ng + e;
@@ -2537,7 +2717,7 @@ int Cmfd::constructAMPhi(Mat A, Mat M, Vec phi_old, solveType solveMethod)
                 }
                 else if (solveMethod == DIFFUSION)
                 {
-                    value = meshCell->getMeshSurfaces(1)->getDDif()[e] 
+                    value = meshCell->getMeshSurfaces(1)->getDHat()[e] 
                         * meshCell->getWidth();
                 }
                 petsc_err = MatSetValues(A, 1, &indice1, 1, &indice1, &value, 
@@ -2556,7 +2736,7 @@ int Cmfd::constructAMPhi(Mat A, Mat M, Vec phi_old, solveType solveMethod)
                     }
                     else if (solveMethod == DIFFUSION)
                     {
-                        value = - meshCell->getMeshSurfaces(1)->getDDif()[e] 
+                        value = - meshCell->getMeshSurfaces(1)->getDHat()[e] 
                             * meshCell->getWidth();
                     }
 
@@ -2577,7 +2757,7 @@ int Cmfd::constructAMPhi(Mat A, Mat M, Vec phi_old, solveType solveMethod)
                 }
                 else if (solveMethod == DIFFUSION)
                 {
-                    value = meshCell->getMeshSurfaces(3)->getDDif()[e] 
+                    value = meshCell->getMeshSurfaces(3)->getDHat()[e] 
                         * meshCell->getWidth();
                 }
 
@@ -2597,7 +2777,7 @@ int Cmfd::constructAMPhi(Mat A, Mat M, Vec phi_old, solveType solveMethod)
                     }
                     else if (solveMethod == DIFFUSION)
                     {
-                        value = - meshCell->getMeshSurfaces(3)->getDDif()[e] 
+                        value = - meshCell->getMeshSurfaces(3)->getDHat()[e] 
                             * meshCell->getWidth();
                     }
                     indice2 = ((y-1)*_cw + x)*_ng + e;
@@ -2616,7 +2796,7 @@ int Cmfd::constructAMPhi(Mat A, Mat M, Vec phi_old, solveType solveMethod)
 /* Update the MOC flux in each FSR
  * @param MOC iteration number
  */
-void Cmfd::updateMOCFlux(int moc_iter)
+void Cmfd::updateFSRScalarFlux(int moc_iter)
 {
     log_printf(INFO, "Updating MOC flux...");
 
@@ -2640,10 +2820,6 @@ void Cmfd::updateMOCFlux(int moc_iter)
 
     double tmp_max = 0, tmp_cmco;
 
-#if USE_OPENMP
-#pragma omp parallel for private(meshCell, i, e,                        \
-                                 new_flux, old_flux, flux, fsr, iter)
-#endif 
     for (i = 0; i < _cw * _ch; i++)
     {
         meshCell = _mesh->getCells(i);
@@ -2757,7 +2933,7 @@ void Cmfd::updateBoundaryFlux(int moc_iter)
         }
     }
 
-    log_printf(ACTIVE, "updated boundary flux by mesh cell per energy: %f", 
+    log_printf(DEBUG, "updated boundary flux by mesh cell per energy: %f", 
                num_updated / (double) NUM_ENERGY_GROUPS);
     return;
 }
@@ -2796,7 +2972,15 @@ void Cmfd::updateBoundaryFluxByScalarFlux(int moc_iter)
                         log_printf(DEBUG, "factor = %.10f", factor);
                         for (int p = 0; p < NUM_POLAR_ANGLES; p++)
                         {
-                            track->updatePolarFluxes(pe, factor);
+                            if (moc_iter == 0)
+                            {
+                                track->setPolarFluxesByIndex
+                                    (pe, meshCell->getNewFlux()[e] 
+                                     * ONE_OVER_FOUR_PI);
+                            }
+                            else
+                                track->updatePolarFluxes(pe, factor);
+                            
                             pe++;
                             num_updated++;
                         }	
@@ -2806,7 +2990,7 @@ void Cmfd::updateBoundaryFluxByScalarFlux(int moc_iter)
         }
     }
 
-    log_printf(ACTIVE, "updated boundary flux by mesh cell per energy: %f", 
+    log_printf(DEBUG, "updated boundary flux by mesh cell per energy: %f", 
                num_updated / (double) NUM_ENERGY_GROUPS);
     return;
 }
@@ -2852,7 +3036,7 @@ void Cmfd::updateBoundaryFluxByNetCurrent(int moc_iter)
         }
     }
 
-    log_printf(ACTIVE, "updated boundary flux by mesh cell per energy: %f", 
+    log_printf(DEBUG, "updated boundary flux by mesh cell per energy: %f", 
                num_updated / (double) NUM_ENERGY_GROUPS);
     return;
 }
@@ -2897,7 +3081,7 @@ void Cmfd::updateBoundaryFluxBySrc(int moc_iter)
         }
     }
 
-    log_printf(ACTIVE, "updated boundary flux by mesh cell per energy: %f", 
+    log_printf(DEBUG, "updated boundary flux by mesh cell per energy: %f", 
                num_updated / (double) NUM_ENERGY_GROUPS);
     return;
 }
@@ -2974,6 +3158,7 @@ int Cmfd::computeCmfdL2Norm(Vec snew, int moc_iter)
     PetscScalar *old_source;
     PetscScalar *new_source;
     petsc_err = VecGetArray(_source_old, &old_source);
+    CHKERRQ(petsc_err);
     petsc_err = VecGetArray(snew, &new_source);
     CHKERRQ(petsc_err);
 
@@ -2996,6 +3181,7 @@ int Cmfd::computeCmfdL2Norm(Vec snew, int moc_iter)
     _l2_norm = pow(_l2_norm, 0.5);
 
     petsc_err = VecRestoreArray(_source_old, &old_source);
+    CHKERRQ(petsc_err);
     petsc_err = VecRestoreArray(snew, &new_source);
     CHKERRQ(petsc_err);
 
@@ -3086,26 +3272,6 @@ void Cmfd::storePreMOCMeshSource(FlatSourceRegion* fsrs)
     return;
 }
 
-/* Set the old flux for each FSR equal to FSR flux */
-void Cmfd::setOldFSRFlux()
-{
-    /* initialize variables */
-    FlatSourceRegion* fsr;
-    int num_fsrs = _geom->getNumFSRs();
-
-    /* Compute total fission source for this region */
-    for (int r = 0; r < num_fsrs; r++) 
-    {
-        /* Get pointers to important data structures */
-        fsr = &_flat_source_regions[r];
-	  
-        /* loop over energy groups */
-        for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
-            fsr->setOldFlux(e, fsr->getFlux()[e]);
-    }
-}
-
-
 /* set pointer to array of fsrs, give each fsr the ID of the mesh cell it is in
  * @param pointer to arrary of fsrs
  */
@@ -3144,3 +3310,25 @@ int Cmfd::getNumIterToConv()
     return _num_iter_to_conv;
 }
 
+double *Cmfd::getCellSource()
+{
+    return _cell_source;
+}
+
+void Cmfd::setCellSource(double *cell_source)
+{
+    for (int i = 0; i < _cw * _ch; i++)
+    {
+        _cell_source[i] = cell_source[i];
+    }
+}
+
+void Cmfd::setMOCIter(int iter)
+{
+    _moc_iter = iter;
+}
+
+void Cmfd::incrementMOCIter()
+{
+    _moc_iter += 1;
+}

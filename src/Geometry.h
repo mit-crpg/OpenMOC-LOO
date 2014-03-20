@@ -35,10 +35,11 @@
 #include "Mesh.h"
 #include "MeshCell.h"
 #include "MeshSurface.h"
-
+#include "Options.h"
 
 class Geometry {
 private:
+    Options*_opts;
     double _x_min, _y_min, _x_max, _y_max; 		/* the corners */
     int _base_universe;
     int _num_FSRs;
@@ -57,7 +58,7 @@ private:
 
 
 public:
-    Geometry(Parser* parser);
+    Geometry(Parser* parser, Options* opts);
     virtual ~Geometry();
     double getWidth() const;
     double getHeight() const;

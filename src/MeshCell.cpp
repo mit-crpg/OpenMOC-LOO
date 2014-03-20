@@ -35,7 +35,7 @@ MeshCell::MeshCell(){
         _nu_sigma_f[e]  = 0.0;
         _sigma_a[e]     = 0.0;
         _sigma_t[e]     = 0.0;
-        _diffusivity[e] = 0.0;
+        _diffusion[e] = 0.0;
 
         /* Initializes mesh cell scalar fluxes to be ones. */
         _old_flux[e]    = 1.0;
@@ -242,14 +242,14 @@ void MeshCell::setNuSigmaF(double nuSigmaF, int e){
     _nu_sigma_f[e] = nuSigmaF;
 }
 
-double* MeshCell::getDiffusivity(){
-    return _diffusivity;
+double* MeshCell::getDiffusion(){
+    return _diffusion;
 }
 
-void MeshCell::setDiffusivity(double diffusivity, int e){
+void MeshCell::setDiffusion(double diffusion, int e){
     assert(e >= 0);
     assert(e < NUM_ENERGY_GROUPS);
-    _diffusivity[e] = diffusivity;
+    _diffusion[e] = diffusion;
 }
 
 double* MeshCell::getOldFlux(){

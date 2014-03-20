@@ -19,7 +19,6 @@ MeshSurface::MeshSurface(){
         _d_tilde = new double[NUM_ENERGY_GROUPS];
         _d_hat = new double[NUM_ENERGY_GROUPS];
         _current = new double[NUM_ENERGY_GROUPS];
-        _d_dif = new double[NUM_ENERGY_GROUPS];
 		
         _quad_current = new double*[NUM_ENERGY_GROUPS];
         _quad_flux = new double*[NUM_ENERGY_GROUPS];
@@ -45,7 +44,6 @@ MeshSurface::MeshSurface(){
         _d_tilde[e]  = 0.0;
         _d_hat[e]    = 0.0;
         _current[e]  = 0.0;		
-        _d_dif[e] = 0.0;		
         /* Assumes 4 quadrature flux per surface, so 2 on each side */
         for (int ind = 0; ind < 2; ind++)
         {
@@ -63,14 +61,15 @@ MeshSurface::~MeshSurface()
     delete [] _d_tilde;
     delete [] _d_hat;
     delete [] _current;
-    delete [] _d_dif;
     for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
     {
         delete []_quad_current[e];
-        delete []_quad_current[e];
+        delete []_quad_flux[e];
+        delete []_old_quad_flux[e];
     }
     delete []_quad_current;
     delete []_quad_flux;
+    delete []_old_quad_flux;
 }
 
 /* Current */
@@ -84,13 +83,16 @@ void MeshSurface::setCurrent(double current, int group){
 
 void MeshSurface::incrementCurrents(double* current){
     for (int group = 0; group < NUM_ENERGY_GROUPS; group++)
-    {
-        _current[group] += current[group];
-    }
+        incrementCurrent(current[group], group);
 }
 
 void MeshSurface::incrementCurrent(double current, int group){
-    _current[group] = current;
+    _current[group] += current;
+}
+
+void MeshSurface::updateCurrents(double factor){
+    for (int group = 0; group < NUM_ENERGY_GROUPS; group++)
+        updateCurrent(factor, group);
 }
 
 void MeshSurface::updateCurrent(double factor, int group){
@@ -173,14 +175,6 @@ void MeshSurface::setDTilde(double dTilde, int e){
 
 double* MeshSurface::getDTilde(){
     return _d_tilde;
-}
-
-void MeshSurface::setDDif(double dDif, int e){
-    _d_dif[e] = dDif;
-}
-
-double* MeshSurface::getDDif(){
-    return _d_dif;
 }
 
 int MeshSurface::getId(){

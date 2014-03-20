@@ -9,14 +9,13 @@
  * @param spacing track spacing
  */
 TrackGenerator::TrackGenerator(Geometry* geom, Plotter* plotter,
-                               const int num_azim, const double spacing,
-                               std::string geoFile) {
-
+                               Options* opts) {
     _plotter = plotter;
     _geom = geom;
-    _num_azim = num_azim / 2.0;
-    _spacing = spacing;
-    _geometry_file = geoFile;
+    _opts = opts;
+    _num_azim = opts->getNumAzim() / 2.0;
+    _spacing = opts->getTrackSpacing();
+    _geometry_file = opts->getGeometryFile();
     _tot_num_tracks = 0;
     _tot_num_segments = 0;
     _num_segments = NULL;
@@ -127,19 +126,21 @@ void TrackGenerator::generateTracks() {
         }
     }
 
+    test_filename << directory.str() << "/"
+                  << _geometry_file << "_"
+                  << _num_azim*2.0 << "_"
+                  << _spacing;
+
+    if (_opts->getUseUpScatteringXS() == true)
+        test_filename << "_up";
+    else
+        test_filename << "_no"; 
+    
     if (_geom->getCmfd() || _geom->getLoo()){
-    	test_filename << directory.str() << "/"
-                      << _geometry_file << "_"
-                      << _num_azim*2.0 << "_"
-                      << _spacing << "_cmfd_"
-		      << _geom->getMesh()->getMeshLevel() << ".data";
+    	test_filename << "_cmfd_"
+		      << _geom->getMesh()->getMeshLevel();
     }
-    else{
-    	test_filename << directory.str() << "/"
-                      << _geometry_file << "_"
-                      << _num_azim*2.0 << "_"
-                      << _spacing << ".data";
-    }
+    test_filename  << ".data";
 
     _tracks_filename = test_filename.str();
 
@@ -806,7 +807,7 @@ void TrackGenerator::dumpTracksToFile() {
     for (int i=0; i < _num_azim; i++)
         azim_weights[i] = _azim_weights[i];
     fwrite(azim_weights, sizeof(double), _num_azim, out);
-    free(azim_weights);
+    delete[] azim_weights;
     
     Track* curr_track;
     double x0, y0, x1, y1;
@@ -873,7 +874,8 @@ void TrackGenerator::dumpTracksToFile() {
 bool TrackGenerator::readTracksFromFile() {
 
     /* Deletes tracks arrays if tracks have been generated */
-    if (_contains_tracks) {
+    if (_contains_tracks) 
+    {
         delete [] _num_tracks;
         delete [] _num_segments;
         delete [] _num_x;
@@ -886,17 +888,17 @@ bool TrackGenerator::readTracksFromFile() {
         delete [] _tracks;
     }
 
-    int ret;
     FILE* in;
     in = fopen(_tracks_filename.c_str(), "r");
 
     int string_length;
+    int ret = 0;
     ret = fread(&string_length, sizeof(int), 1, in);
 
     char* geometry_to_string;
     geometry_to_string = new char[string_length+1];
 
-    ret = fread(geometry_to_string, sizeof(char)*string_length, 1, in);
+    fread(geometry_to_string, sizeof(char)*string_length, 1, in);
     geometry_to_string[string_length] = '\0';
 
     if (_geom->toString().compare(0, string_length-1, 
@@ -911,8 +913,8 @@ bool TrackGenerator::readTracksFromFile() {
     log_printf(NORMAL, "Reading segmentized tracks from file %s", 
                _tracks_filename.c_str());
 
-    ret = fread(&_num_azim, sizeof(int), 1, in);
-    ret = fread(&_spacing, sizeof(double), 1, in);
+    fread(&_num_azim, sizeof(int), 1, in);
+    fread(&_spacing, sizeof(double), 1, in);
 
     _num_tracks = new int[_num_azim];
     _num_x = new int[_num_azim];
@@ -921,12 +923,12 @@ bool TrackGenerator::readTracksFromFile() {
     double* azim_weights = new double[_num_azim];
     _tracks = new Track*[_num_azim];
 
-    ret = fread(_num_tracks, sizeof(int), _num_azim, in);
-    ret = fread(_num_x, sizeof(int), _num_azim, in);
-    ret = fread(_num_y, sizeof(int), _num_azim, in);
-    ret = fread(azim_weights, sizeof(double), _num_azim, in);
+    fread(_num_tracks, sizeof(int), _num_azim, in);
+    fread(_num_x, sizeof(int), _num_azim, in);
+    fread(_num_y, sizeof(int), _num_azim, in);
+    fread(azim_weights, sizeof(double), _num_azim, in);
 
-    for (int i=0; i < _num_azim; i++)
+    for (int i = 0; i < _num_azim; i++)
         _azim_weights[i] = azim_weights[i];
 
     delete[] azim_weights;
@@ -956,13 +958,13 @@ bool TrackGenerator::readTracksFromFile() {
 
         for (int j=0; j < _num_tracks[i]; j++) {
 
-            ret = fread(&x0, sizeof(double), 1, in);
-            ret = fread(&y0, sizeof(double), 1, in);
-            ret = fread(&x1, sizeof(double), 1, in);
-            ret = fread(&y1, sizeof(double), 1, in);
-            ret = fread(&phi, sizeof(double), 1, in);
-            ret = fread(&azim_angle_index, sizeof(int), 1, in);
-            ret = fread(&num_segments, sizeof(int), 1, in);
+            fread(&x0, sizeof(double), 1, in);
+            fread(&y0, sizeof(double), 1, in);
+            fread(&x1, sizeof(double), 1, in);
+            fread(&y1, sizeof(double), 1, in);
+            fread(&phi, sizeof(double), 1, in);
+            fread(&azim_angle_index, sizeof(int), 1, in);
+            fread(&num_segments, sizeof(int), 1, in);
 
             _tot_num_segments += num_segments;
             _num_segments[uid] += num_segments;
@@ -975,9 +977,9 @@ bool TrackGenerator::readTracksFromFile() {
             curr_track->setAzimuthalWeight(_azim_weights[i]);
 
             for (int s=0; s < num_segments; s++) {
-                ret = fread(&length, sizeof(double), 1, in);
-                ret = fread(&material_id, sizeof(int), 1, in);
-                ret = fread(&region_id, sizeof(int), 1, in);
+                fread(&length, sizeof(double), 1, in);
+                fread(&material_id, sizeof(int), 1, in);
+                fread(&region_id, sizeof(int), 1, in);
 
                 segment* curr_segment = new segment;
                 curr_segment->_length = length;
@@ -985,8 +987,8 @@ bool TrackGenerator::readTracksFromFile() {
                 curr_segment->_region_id = region_id;
 
                 if (_geom->getCmfd() || _geom->getLoo()){
-		  ret = fread(&mesh_surface_fwd, sizeof(int), 1, in);
-		  ret = fread(&mesh_surface_bwd, sizeof(int), 1, in);
+		  fread(&mesh_surface_fwd, sizeof(int), 1, in);
+		  fread(&mesh_surface_bwd, sizeof(int), 1, in);
 		  curr_segment->_mesh_surface_fwd = mesh_surface_fwd;
 		  curr_segment->_mesh_surface_bwd = mesh_surface_bwd;
                 }

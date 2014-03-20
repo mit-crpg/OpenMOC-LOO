@@ -75,7 +75,7 @@ public:
     void setSigmaS(double sigma_s[NUM_ENERGY_GROUPS][NUM_ENERGY_GROUPS]);
     void setSigmaT(double sigma_t[NUM_ENERGY_GROUPS]);
     void setSigmaA(double sigma_a[NUM_ENERGY_GROUPS]);
-
+    void clearUpScattering();
     void checkSigmaT();
     std::string toString();
     void compressCrossSections();

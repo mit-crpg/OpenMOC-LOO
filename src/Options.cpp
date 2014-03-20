@@ -22,9 +22,13 @@
  */
 Options::Options(int argc, char **argv) 
 {
+    /* Default geometry input file */
+    _geometry_file = _relative_path + "xml-sample/geometry_2x2.xml";
+    _material_file = _relative_path + "xml-sample/material_1G.xml";
+	
     /* convergence options */
-    _moc_conv_thresh = 1e-6;      /* convergence on MOC sweeps */
-    _l2_norm_conv_thresh = 1e-8; /* convergence on acceleration iteration */
+    _moc_conv_thresh = 1e-10;      /* convergence on MOC sweeps */
+    _l2_norm_conv_thresh = 1e-10; /* convergence on acceleration iteration */
 
     /* most important acceleration options */
     _acc_after_MOC_converge = false;
@@ -35,26 +39,18 @@ Options::Options(int argc, char **argv)
     _loo2 = false;
     _damp_factor = 1.0;
     _boundary_iteration = 0;
-    _diffusion = true;			/* run diffusion for 1st iter */
+    _first_diffusion = true;			/* run diffusion for 1st iter */
     _update_boundary = true;            /* update boundary angular flux */
-    _reflect_outgoing = false;          /* newest incoming flux during HO MOC */
+    _reflect_outgoing = true;          /* newest incoming flux during HO MOC */
+    _use_up_scattering_xs = true; 
 
     if (std::string(getenv("PWD")).find("Release") != std::string::npos)
         _relative_path = "../";
     else
         _relative_path = "";
 
-    /* Default geometry input file */
-    _geometry_file = _relative_path + 
-        //"xml-sample/geometry_baw_01.xml"; 
-        "xml-sample/geometry_c5g7_cc.xml";
-    //"xml-sample/geometry_corner.xml"; % homogeneous material
-    _material_file = _relative_path + 
-        //"xml-sample/material_baw.xml";
-        "xml-sample/material_c5g7.xml";
-	
-    _track_spacing = 0.1;		/* Default C4 track spacing: 0.05cm */
-    _num_azim = 32;			/* Default C4 # azimuthal angle: 64*/
+    _track_spacing = 0.5;		/* Default C4 track spacing: 0.05cm */
+    _num_azim = 4;			/* Default C4 # azimuthal angle: 64*/
 
     /* MOC options */
     _verbosity = "NORMAL";		/* Default logging level */
@@ -66,7 +62,7 @@ Options::Options(int argc, char **argv)
     /* other acceleration options */
     _cmfd_level = 0;			/* Default cmfd level is 0: pin-wise */
     _multigroup = true;			/* sets CMFD to one group structure */
-    _k_guess = 1.0;
+    _k_guess = 1.5;
     _update_keff = false;  		/* Default: not use CMFD's k */
     _print_matrices = false;		/* Default will not print matrices */
     _diffusion_correction = false; 
@@ -120,7 +116,7 @@ Options::Options(int argc, char **argv)
             else if (strcmp(argv[i], "-debug") == 0)
             {
                 _acc_after_MOC_converge = true;
-                _diffusion = false;
+                _first_diffusion = false;
             }
             else if (strcmp(argv[i], "-ps") == 0 ||
                      strcmp(argv[i], "--plotspecs") == 0)
@@ -149,6 +145,9 @@ Options::Options(int argc, char **argv)
             else if (strcmp(argv[i], "-ro") == 0 ||
                      strcmp(argv[i], "--reflectoutgoing") == 0)
                 _reflect_outgoing = true;
+            else if (strcmp(argv[i], "-nro") == 0 ||
+                     strcmp(argv[i], "--noreflectoutgoing") == 0)
+                _reflect_outgoing = false;
             else if (strcmp(argv[i], "-nc") == 0 ||
                      strcmp(argv[i], "--nocmfd") == 0)
                 _cmfd = false;
@@ -203,10 +202,10 @@ Options::Options(int argc, char **argv)
                 _plot_keff = true;
             else if (strcmp(argv[i], "-diff") == 0 ||
                      strcmp(argv[i], "--diffusion") == 0)
-                _diffusion = true;
+                _first_diffusion = true;
             else if (strcmp(argv[i], "-ndiff") == 0 ||
                      strcmp(argv[i], "--nodiffusion") == 0)
-                _diffusion = false;
+                _first_diffusion = false;
             else if (strcmp(argv[i], "-pd") == 0 ||
                      strcmp(argv[i], "--plotdiffusion") == 0)
                 _plot_diffusion = true;
@@ -231,6 +230,9 @@ Options::Options(int argc, char **argv)
             else if (strcmp(argv[i], "-dc")==0 || 
                      strcmp(argv[i], "--diffusioncorrection") == 0)
                 _diffusion_correction = true;
+            else if (strcmp(argv[i], "-nup")==0 || 
+                     strcmp(argv[i], "--noupscattering") == 0)
+                _use_up_scattering_xs = false;
             else
                 this->extra_argv[this->extra_argc++] = strdup(argv[i]);
         }
@@ -484,8 +486,8 @@ bool Options::getLoo2(){
     return _loo2;
 }
 
-bool Options::getDiffusion(){
-    return _diffusion;
+bool Options::getFirstDiffusion(){
+    return _first_diffusion;
 }
 
 bool Options::getDiffusionCorrection(){
@@ -518,4 +520,9 @@ bool Options::getUpdateBoundary()
 bool Options::getReflectOutgoing()
 {
     return _reflect_outgoing;
+}
+
+bool Options::getUseUpScatteringXS()
+{
+    return _use_up_scattering_xs;
 }

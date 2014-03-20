@@ -1151,8 +1151,8 @@ void Plotter::plotXS(Mesh* mesh, int iter_num){
             drawText(bitMap, text, x_mid - 50, y_mid - 30);
             text.clear();
 
-            /* Diffusivity */
-            text_stream << "Diffusivity: " << meshCell->getDiffusivity()[e];
+            /* Diffusion Coefficients */
+            text_stream << "Diffusion Coeff: " << meshCell->getDiffusion()[e];
             text = text_stream.str();
             text_stream.str("");
             drawText(bitMap, text, x_mid - 50, y_mid - 15);

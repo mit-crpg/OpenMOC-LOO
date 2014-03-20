@@ -41,7 +41,7 @@ private:
     double _sigma_t[NUM_ENERGY_GROUPS];
     double _sigma_s[NUM_ENERGY_GROUPS*NUM_ENERGY_GROUPS];
     double _nu_sigma_f[NUM_ENERGY_GROUPS];
-    double _diffusivity[NUM_ENERGY_GROUPS];
+    double _diffusion[NUM_ENERGY_GROUPS];
     double _old_flux[NUM_ENERGY_GROUPS];
     double _new_flux[NUM_ENERGY_GROUPS];
     int _cell_id;
@@ -89,8 +89,8 @@ public:
     double* getSigmaS();
     void setNuSigmaF(double nuSigmaF, int e);
     double* getNuSigmaF();
-    void setDiffusivity(double diffusivity, int e);
-    double* getDiffusivity();
+    void setDiffusion(double diffusivity, int e);
+    double* getDiffusion();
     MeshSurface* findSurface(LocalCoords* coord, int i);
     void setBounds(double x, double y);
     double* getBounds();

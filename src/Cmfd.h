@@ -66,11 +66,13 @@ private:
     Mat _M;
     Vec _phi_new;
     Vec _source_old;
+    int _moc_iter;
     int _num_azim;
     int _num_iter_to_conv;
     int _num_loop;
     int _num_track;
     int *_num_tracks; 
+    int _num_FSRs;
     int _cw;
     int _ch;
     int _ng;
@@ -82,6 +84,7 @@ private:
     double _l2_norm_conv_thresh;
     double _spacing;
     double *_cell_source;
+    double *_fsr_source;
     bool _use_diffusion_correction;
     bool _run_loo;
     bool _run_loo_psi;
@@ -92,6 +95,7 @@ private:
     bool _update_boundary;
     bool _reflect_outgoing;
     bool _converged;
+    bool _first_diffusion;
 
 public:
     Cmfd(Geometry* geom, Plotter* plotter, Mesh* mesh, 
@@ -102,20 +106,27 @@ public:
     void runLoo1();
     void runLoo2();
 
-
+    void setMOCIter(int iter);
+    void incrementMOCIter();
     int getNumIterToConv();
     double getL2Norm();
     double getKeff();
 
     /* Shared by two methods */
+    double* computeCellSourceFromFSR();
     void computeXS();
     void computeXS_old();	
-    void updateMOCFlux(int moc_iter);
-    double computeCellSource();
+    void updateFSRScalarFlux(int moc_iter);
+    double *getCellSource();
+    void setCellSource(double *source);
+    double computeCellSourceNorm();
+    double computeCellSourceNormGivenTwoSources(double *olds, double *news, 
+                                                int num);
+    void printCellSource(double moc_iter);
 
     /* CMFD */
     void computeCurrent();
-    void computeDs();
+    void computeDs(int moc_iter);
     void computeDsxDirection(double x, double y, int e, MeshCell *meshCell, 
                              double d, double f, double flux, double dt_weight);
     double computeDiffCorrect(double d, double h);
@@ -125,9 +136,9 @@ public:
     Mat getM();
     Vec getPhiNew();
     int createAMPhi(PetscInt size1, PetscInt size2, int cells);
-    void setOldFSRFlux();
     void setFSRs(FlatSourceRegion *fsrs);
     void setTracks(Track **tracks);
+
     int computeCmfdL2Norm(Vec snew, int moc_iter);
     void updateBoundaryFluxByScalarFlux(int moc_iter);
     void updateBoundaryFlux(int moc_iter);

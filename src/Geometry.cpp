@@ -40,8 +40,9 @@ static void geom_addLatice(Lattice *l)
  * @param sector_offset the angular offset for computing angular sectors
  * @param parser pointer to the parser object
  */
-Geometry::Geometry(Parser* parser) {
+Geometry::Geometry(Parser* parser, Options *opts) {
 
+    _opts = opts;
     _max_seg_length = 0;
     _min_seg_length = INFINITY;
 
@@ -231,6 +232,8 @@ void Geometry::addMaterial(Material* material) {
         try {
             /* Check that the sum of the material's absorption and scattering
              * cross-sections equals its total cross-section */
+            if (_opts->getUseUpScatteringXS() == false)
+                material->clearUpScattering();
             material->checkSigmaT();
             _materials.insert(std::pair<int, Material*>(material->getId(),
                                                         material));
@@ -2308,7 +2311,7 @@ void Geometry::defineMesh(Mesh* mesh, Universe* univ, int depth,
                         mesh->getCells(*meshCellNum)->setHeight(h);
                         mesh->getCells(*meshCellNum)->setVolume(w * h);
                         mesh->getCells(*meshCellNum)->setL(l);
-                        log_printf(ACTIVE, "mesh cell: %i, width: %f,"
+                        log_printf(DEBUG, "mesh cell: %i, width: %f,"
                                    " height: %f, l: %f", *meshCellNum, w, h, l);
 						
                         /* increments the # of mesh cells */
@@ -2750,4 +2753,3 @@ bool Geometry::getCmfd(){
 bool Geometry::getLoo(){
    return _run_loo;
 }
-

@@ -1,6 +1,9 @@
+#temporary 
+xml-sample/geometry_infinite*
+xml-sample/material_infinite*
+tracks/
 profiling/
 PinPowers/
-SigmaA/
 bin
 obj
 Makefile

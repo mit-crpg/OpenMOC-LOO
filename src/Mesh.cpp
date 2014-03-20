@@ -142,8 +142,7 @@ double Mesh::getHeight(){
 
 void Mesh::setCellBounds(){
 
-    double x = -_width / 2.0;
-    double y = _height / 2.0;
+    double x, y = _height / 2.0;
 
     /* loop over MeshCells and set bounds */
     for (int i = 0; i < _cell_height; i++){

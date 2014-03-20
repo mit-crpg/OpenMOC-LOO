@@ -17,6 +17,7 @@
 #include <string>
 #include <sstream>
 #include <queue>
+#include <forward_list>
 #include "Geometry.h"
 #include "Quadrature.h"
 #include "Track.h"
@@ -57,8 +58,7 @@ private:
     double _damp_factor;
     double _track_spacing;
     double _k_eff;
-    double _cmfd_k;
-    double _loo_k;
+    double _acc_k;
     double _k_half;
     double *_FSRs_to_fluxes[NUM_ENERGY_GROUPS + 1];
     double *_FSRs_to_powers;
@@ -68,9 +68,9 @@ private:
     double *_FSRs_to_absorption[NUM_ENERGY_GROUPS + 1];
     double *_FSRs_to_pin_absorption[NUM_ENERGY_GROUPS + 1];
 
+    std::forward_list<double> _pin_powers;
     std::queue<double> _old_k_effs;
     std::queue<double> _old_eps_2;
-    std::queue<double> _delta_phi;
     Plotter* _plotter;
     float* _pix_map_total_flux;
     Cmfd* _cmfd;
@@ -92,15 +92,17 @@ private:
     bool _run_loo;
     bool _run_loo1;
     bool _run_loo2;
-    bool _diffusion;
+    bool _first_diffusion;
     bool _acc_after_MOC_converge;
     bool _update_keff;
     bool _update_boundary;
     bool _plot_loo;
     bool _plot_flux;
     bool _reflect_outgoing;
+    bool _use_up_scattering_xs;
     void precomputeFactors();
     void initializeFSRs();
+
 public:
     Solver(Geometry* geom, TrackGenerator* track_generator, 
            Plotter* plotter, Cmfd* cmfd, Options* opts);
@@ -114,7 +116,7 @@ public:
 
     /* initialization */
     void initializeTrackFluxes(double flux);
-    void oneFSRFluxOldSource();
+    void oneFSRFlux();
     void zeroFSRFluxes();
     void zeroMeshCells();
     void zeroLeakage();
@@ -142,11 +144,15 @@ public:
     void tallyLooCurrentIncoming(Track *t, segment *seg, MeshSurface **surf, 
                                  int dir);
     void tallyCmfdCurrent(Track *t, segment *seg, MeshSurface **surf, int dir);
+    void computePinPowers();
+    double computePinPowerNorm();
+    bool onVacuumBoundary(double x, double y);
+    bool onBoundary(double x, double y, int s);
 
     /* updates after transport sweep */
     void computeRatios();
     double computeKeff(int moc_iter);
-    void normalizeFlux();
+    void normalizeFlux(double moc_iter);
     void renormCurrents(Mesh* mesh, double keff);
     void updateSource();
     void prolongation(int moc_iter);
@@ -158,7 +164,6 @@ public:
     double** getFSRtoFluxMap();
     double getEps(Mesh* mesh, double keff, double renorm_factor);
     FlatSourceRegion* getFSRs();
-    void setOldFSRFlux();
 
     /* printing and plotting */
     void printToScreen(int moc_iter);

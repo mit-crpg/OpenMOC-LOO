@@ -378,6 +378,18 @@ void Material::setSigmaA(double sigma_a[NUM_ENERGY_GROUPS]) {
         _sigma_a[i] = sigma_a[i];
 }
 
+void Material::clearUpScattering()
+{
+    /* for each energy i, wipe out _sigma_s[j][i] where j > i */
+    for (int i = 0; i < NUM_ENERGY_GROUPS - 1; i++)
+        for (int j = i + 1; j < NUM_ENERGY_GROUPS; j++)
+        {
+            log_printf(DEBUG, "clearing %f", _sigma_s[j][i]);
+            _sigma_s[j][i] = 0.0;  
+        }
+
+    return;
+}
 
 /**
  * Checks if the total cross-section for this material is equal to the

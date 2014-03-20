@@ -53,10 +53,11 @@ private:
     bool _update_keff;
     bool _multigroup;
     bool _print_matrices;
-    bool _diffusion;
+    bool _first_diffusion;
     bool _diffusion_correction;
     bool _update_boundary;
     bool _reflect_outgoing;
+    bool _use_up_scattering_xs;
 public:
     Options(int argc, char **argv);
     ~Options(void);
@@ -96,11 +97,12 @@ public:
     bool getLoo();
     bool getLoo1();
     bool getLoo2();
-    bool getDiffusion();
+    bool getFirstDiffusion();
     bool getDiffusionCorrection();
     bool getAccAfterMOCConverge();
     bool getUpdateBoundary();
     bool getReflectOutgoing();
+    bool getUseUpScatteringXS();
 };
 
 #endif

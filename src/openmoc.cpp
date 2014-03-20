@@ -29,12 +29,14 @@
 #pragma GCC diagnostic ignored "-Wunused"
 #pragma GCC diagnostic ignored "-Wunused-variable"
 
-static char help[] = "Running CMFD with Petsc";
+static char help[] = "Running CMFD with Petsc\n";
 
 int main(int argc, char **argv) {
-    feenableexcept(FE_DIVBYZERO);
+    //feenableexcept(FE_DIVBYZERO);
     //feenableexcept(FE_UNDERFLOW);
     feenableexcept(FE_OVERFLOW);
+    //feenableexcept(FE_INVALID);
+    //feenableexcept(FE_INEXACT);
 
     double k_eff;
     Timer timer;
@@ -45,11 +47,11 @@ int main(int argc, char **argv) {
     /* initialize Petsc */
     /* FIXME: Valgrine shows bad read from the help parameter */
     int petsc_err = 0;
-    PetscInitialize(&(opts.extra_argc), 
-                    &(opts.extra_argv), 
-                    (char*)0, 
-                    help);
-    //PetscInitializeNoArguments();
+    //PetscInitialize(&(opts.extra_argc), 
+    //                &(opts.extra_argv), 
+    //                (char*)0, 
+    //                help);
+    PetscInitializeNoArguments();
     CHKERRQ(petsc_err);
 
     /* Set the verbosity */
@@ -64,7 +66,7 @@ int main(int argc, char **argv) {
     /* Initialize the geometry with surfaces, cells & materials */
     timer.reset();
     timer.start();
-    Geometry geometry(&parser);
+    Geometry geometry(&parser, &opts);
     timer.stop();
     timer.recordSplit("Geometry initialization");
 
@@ -82,21 +84,19 @@ int main(int argc, char **argv) {
                     opts.plotDiffusion(), opts.plotKeff(), opts.plotQuadFlux());
 
     /* Initialize track generator */
-    TrackGenerator track_generator(&geometry, &plotter, opts.getNumAzim(),
-                                   opts.getTrackSpacing(), 
-                                   opts.getGeometryFile());
+    TrackGenerator track_generator(&geometry, &plotter, &opts);
 
     /* Tell geometry whether CMFD is on/off */
     geometry.setCmfd(opts.getCmfd());
     geometry.setLoo(opts.getLoo());
 
     /* Make CMFD mesh */
-    if (opts.getCmfd() || opts.getLoo())
-    {
+    //if (opts.getCmfd() || opts.getLoo())
+    //{
         geometry.makeCMFDMesh(geometry.getMesh(), opts.getNumAzim(), 
                               opts.getGroupStructure(), opts.getPrintMatrices(),
                               opts.getCmfdLevel());
-    }
+        //}
 
     /* make FSR map for plotting */
     if (opts.plotCurrent() || opts.plotDiffusion() || opts.plotFluxes() || 

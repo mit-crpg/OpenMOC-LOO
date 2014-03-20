@@ -13,6 +13,7 @@
 #include "Material.h"
 #include "configurations.h"
 #include "log.h"
+#include "assert.h"
 
 #if USE_OPENMP
 #include <omp.h>
@@ -25,11 +26,8 @@ private:
     Material* _material;
     double _volume;
     double _flux[NUM_ENERGY_GROUPS];
-    double _old_flux[NUM_ENERGY_GROUPS];
     double _source[NUM_ENERGY_GROUPS];
-    double _old_source[NUM_ENERGY_GROUPS];
-    double _ratios[NUM_ENERGY_GROUPS];     /* Pre-computed source / sigma_t */
-    //double _boundary_update[NUM_ENERGY_GROUPS * 2];
+    double _ratios[NUM_ENERGY_GROUPS];     /* Pre-compute source-over-sigma_t */
 #if USE_OPENMP
     omp_lock_t _flux_lock;
 #endif
@@ -41,8 +39,6 @@ public:
     Material* getMaterial();
     double getVolume() const;
     double* getFlux();
-    double* getOldFlux();
-    double* getOldSource();
     double* getSource();
     double* getRatios();
     void setId(int id);
@@ -53,16 +49,10 @@ public:
     void setFlux(int energy, double flux);
     void incrementFlux(int energy, double flux);
     void incrementFlux(double* flux);
-    void setOldFlux(int energy, double old_flux);
     void setSource(int energy, double source);
-    void setOldSource(int energy, double old_source);
     void normalizeFluxes(double factor);
     void computeRatios();
     double computeFissionRate();
-    /*
-    void setBoundaryUpdate(int group, int ind, double boundary_update);
-    double getBoundaryUpdate(int group, int ind);
-    */
 };
 
 
