@@ -1611,7 +1611,7 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter)
         if ((iter > min_outer) && (eps < _l2_norm_conv_thresh))
             break;
         }
-    }
+
     _num_iter_to_conv = iter;
 
     /* scale new flux such that its sum equals that of the old flux */
