@@ -206,9 +206,9 @@ double Cmfd::computeCellSourceNorm()
     for (int i = 0; i < _cw * _ch; i++)
         old_cell_source[i] = _cell_source[i];
  
-    setCellSource(computeCellSourceFromFSR());
+    setCellSource(computeCellSourceFromFSR(_moc_iter));
 
-    l2_norm = computeCellSourceNormGivenTwoSources(old_cell_source, 
+    l2_norm = computeCellSourceNormGivenTwoSources_old(old_cell_source, 
                                                    _cell_source, _cw * _ch);
     delete [] old_cell_source;
 #else
@@ -235,6 +235,28 @@ double Cmfd::computeCellSourceNorm()
 double Cmfd::computeCellSourceNormGivenTwoSources(double *old_cell_source, 
                                                   double *new_cell_source,
                                                   int num)
+{
+    double l2_norm = 0;
+    double cnt1 = 0, cnt2 = 0; 
+    int counter = 0;
+
+    for (int i = 0; i < num; i++)
+    {
+        if (new_cell_source[i] > 1e-10)
+        {
+            cnt1 += pow(new_cell_source[i] - old_cell_source[i], 2);
+            cnt2 += pow(new_cell_source[i], 2);
+            counter += 1;
+        }
+    }
+
+    l2_norm = sqrt(cnt1 / cnt2);
+
+    return l2_norm;
+}
+double Cmfd::computeCellSourceNormGivenTwoSources_old(double *old_cell_source, 
+                                                      double *new_cell_source,
+                                                      int num)
 {
     double l2_norm = 0;
     double *source_residual, *s2;
@@ -275,12 +297,13 @@ double Cmfd::computeCellSourceNormGivenTwoSources(double *old_cell_source,
                location, source_residual[location], new_cell_source[location],
                old_cell_source[location]);
 */
+/*
     log_printf(ACTIVE, "iter %d pin cell 0, 1, 5, change %e %e, %e %e, %e %e",
                _moc_iter, 
                s2[0], s2[3], s2[1], s2[4], s2[5], s2[6]); 
-
-    //l2_norm = pairwise_sum<double>(source_residual, _ch * _cw);
-    for (int i = 0; i < _ch * _cw; i++)
+*/
+    //l2_norm = pairwise_sum<double>(source_residual, num);
+    for (int i = 0; i < num; i++)
         l2_norm += source_residual[i];
 
     if (counter > 0)
@@ -290,10 +313,10 @@ double Cmfd::computeCellSourceNormGivenTwoSources(double *old_cell_source,
     l2_norm = sqrt(l2_norm);
 
     delete [] source_residual;
+    delete [] s2;
     return l2_norm;
 }
-
-double* Cmfd::computeCellSourceFromFSR()
+double* Cmfd::computeCellSourceFromFSR(double moc_iter)
 {
     double volume, flux, nu_fis;
     MeshCell* meshCell;
@@ -301,10 +324,13 @@ double* Cmfd::computeCellSourceFromFSR()
     double *cell_source;
     cell_source = new double[_cw * _ch];
 
+    /* DEBUG */
+    double fsr1 = 0, fsr2 = 0;
     for (int i = 0; i < _cw * _ch; i++)
     {
         meshCell = _mesh->getCells(i);
         cell_source[i] = 0;
+        
         for (auto it = meshCell->getFSRs()->begin(); 
              it != meshCell->getFSRs()->end(); ++it)
         {
@@ -315,10 +341,39 @@ double* Cmfd::computeCellSourceFromFSR()
             {
                 flux = fsr->getFlux()[e];
                 nu_fis = fsr->getMaterial()->getNuSigmaF()[e];
+                if (e == 0)
+                {
+                    if (i == 0)
+                        fsr1 = nu_fis * flux * volume; 
+                    else if (i == 1)
+                        fsr2 = nu_fis * flux * volume;
+                }
                 cell_source[i] += nu_fis * flux * volume;
             }
-        }
+        } /* end of fsr loop */
+
+        log_printf(DEBUG, " # FSRs in cell %d is %d", i, 
+                   (int) meshCell->getFSRs()->size());
+    } /* end of cell loop */
+
+#if 1
+    log_printf(DEBUG, " iter %.1f, e 0, FiSo ratios in two cells %f / %f = %f", 
+               moc_iter, fsr1, fsr2, fsr1 / fsr2);
+
+    for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
+    {
+        log_printf(ACTIVE, " iter %.1f, e %d, flux ratios in two cells %f / %f = %f",
+                   moc_iter, e, 
+                   _flat_source_regions[*_mesh->getCells(0)->getFSRs()->begin()].getFlux()[e], 
+                   _flat_source_regions[*_mesh->getCells(1)->getFSRs()->begin()].getFlux()[e], 
+                   _flat_source_regions[*_mesh->getCells(0)->getFSRs()->begin()].getFlux()[e]/ _flat_source_regions[*_mesh->getCells(1)->getFSRs()->begin()].getFlux()[e] );
     }
+#else
+    log_printf(NORMAL, " iter %.1f, e 0, 1st FSR in two cells %f / %f = %f", 
+               moc_iter, cell_source[0], cell_source[1], 
+               cell_source[0] / cell_source[1]);
+#endif
+
     return cell_source;
 }
 
@@ -1324,9 +1379,10 @@ void Cmfd::computeQuadSrc()
                 {
                     src = xs * (out[e][t] - ex * in[e][t]) / (1.0 - ex);
 
+                    /* DEBUG */
                     if (src < 0)
                     {
-                        log_printf(NORMAL, "(%d %d) e %d t %d"
+                        log_printf(ACTIVE, "(%d %d) e %d t %d"
                                    " quad src = %f * (%f - %f * %f) / %f = %f",
                                    x, y, e, t, xs, out[e][t], ex, in[e][t], 
                                    1 - ex, 
