@@ -167,7 +167,7 @@ public:
 
     /* printing and plotting */
     void printToScreen(int moc_iter);
-    void printToLog(int moc_iter, double eps_2);
+    void printToLog(int moc_iter);
     void printToMinimumLog(int moc_iter);
     void plotFluxes(int moc_iter);
     void plotPinPowers();

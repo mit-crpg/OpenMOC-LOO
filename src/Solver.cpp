@@ -988,10 +988,10 @@ void Solver::printToScreen(int moc_iter)
     }
     else if ((_run_cmfd) && !(_acc_after_MOC_converge))
     {
-        printf("Iter %d, MOC k^(m+1) = %.10f, CMFD k = %.10f,"
+        printf("Iter %d, MOC k^(m+1) = %.10f,"
                " MOC k^(m+1/2) = %.10f" 
-               " FS eps = %.4e, FS ratio = %f, k eps = %.4e, #CMFD = %d\n", 
-               moc_iter, _k_eff, _acc_k, _k_half, _old_eps_2.back(),
+               " FS eps = %.2e, FS ratio = %.2f, k eps = %.2e, #CMFD = %d\n", 
+               moc_iter, _k_eff, _k_half, _old_eps_2.back(),
                _old_eps_2.front() / _old_eps_2.back(), 
                (_old_k_effs.back() - _old_k_effs.front()) / _old_k_effs.back(),
                _cmfd->getNumIterToConv());
@@ -2354,7 +2354,7 @@ double Solver::kernel(int max_iterations) {
         /* FIXME: the following line generates a bad read in
          * Valgrine */
         printToScreen(moc_iter + 1);
-        printToLog(moc_iter + 1, eps_2);
+        printToLog(moc_iter + 1);
         if (_plot_flux)
             plotFluxes(moc_iter + 1);
 
@@ -2460,7 +2460,7 @@ void Solver::printToMinimumLog(int moc_iter)
 }
 
 
-void Solver::printToLog(int moc_iter, double eps_2)
+void Solver::printToLog(int moc_iter)
 {
     std::ofstream logfile;
 
@@ -2469,7 +2469,7 @@ void Solver::printToLog(int moc_iter, double eps_2)
         logfile.open(_log_file.c_str(), std::fstream::trunc);
         logfile << "# iteration,"
                 << " cell l2 norm (m, m+1),"
-                << " cell l2 norm (m+1/2, m+1),"
+                << " cell l2 norm ratio"
                 << " keff relative change,"
                 << " #lo iterations, "
                 << " keff"
@@ -2479,8 +2479,8 @@ void Solver::printToLog(int moc_iter, double eps_2)
     {
         logfile.open(_log_file.c_str(), std::ios::app);
         logfile << moc_iter 
-                << " " << eps_2
-                << " " << _cmfd->getL2Norm() 
+                << " " << _old_eps_2.back()
+                << " " << _old_eps_2.front() / _old_eps_2.back()
                 << " " << 1.0 -  _old_k_effs.front() / _old_k_effs.back()
                 << " " << _cmfd->getNumIterToConv() 
                 << " " << std::setprecision(11) << _old_k_effs.back()
