@@ -28,7 +28,8 @@ Material::Material(int id,
     _n++;
 
     if (sigma_a_cnt != NUM_ENERGY_GROUPS)
-        log_printf(ERROR, "Wrong number of sigma_a in material %d", id);
+        log_printf(ERROR, "Wrong number of sigma_a in material %d:"
+                   " counted %d.", id, sigma_a_cnt);
     memcpy(_sigma_a, sigma_a, NUM_ENERGY_GROUPS*sizeof(*_sigma_a));
 
     if (sigma_t_cnt != NUM_ENERGY_GROUPS)

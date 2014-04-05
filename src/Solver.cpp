@@ -1350,9 +1350,6 @@ void Solver::tallyLooCurrentIncoming(Track *track, segment *segment,
         {
             for (p = 0; p < NUM_POLAR_ANGLES; p++)
             {
-                /* FIXME: double check with the ro routine to make
-                 * sure this polar_fluxes[0, ..] is the incoming angular
-                 * flux, because I am not sure.... */
                 meshSurface->incrementQuadCurrent(polar_fluxes[pe] * weights[p] 
                                                   / 2.0, e, index);
                 pe++;
@@ -2040,12 +2037,8 @@ void Solver::MOCsweep(int max_iterations, int moc_iter)
 
             /* computes new _k_eff; it is important that we compute new k 
              * before computing new source */
-
-            // FIXME: fixed-source problem
             _k_eff = computeKeff(i);
             updateSource();
-
-            //_cmfd->setCellSource(_cmfd->computeCellSourceFromFSR());
         }
     } /* exit iteration loops */
 		
@@ -2081,7 +2074,7 @@ void Solver::normalizeFlux(double moc_iter)
     double fission_source = 0, factor;
     double *cell_source;
 
-    cell_source = _cmfd->computeCellSourceFromFSR();
+    cell_source = _cmfd->computeCellSourceFromFSR(moc_iter);
     for (int i = 0; i < _cw * _ch; i++)
     {
         if (cell_source[i] > 1e-10)
@@ -2188,11 +2181,17 @@ void Solver::updateSource()
         chi = material->getChi();
         sigma_s = material->getSigmaS();
 
-        start_index = material->getNuSigmaFStart();
-        end_index = material->getNuSigmaFEnd();
+        /* sigma_s[G * NUM_ENERGY_GROUPS + g] is g to G */
+        /*
+        log_printf(NORMAL, "sigma_s: 1->1 %f, 1->2 %f, 2->1 %f, 2->2 %f",
+                   sigma_s[0], sigma_s[NUM_ENERGY_GROUPS], 
+                   sigma_s[1], sigma_s[NUM_ENERGY_GROUPS + 1]);
+        */
 
         /* Compute total fission source for current region */
         fission_source = 0;
+        start_index = material->getNuSigmaFStart();
+        end_index = material->getNuSigmaFEnd();
         for (int e = start_index; e < end_index; e++)
             fission_source += scalar_flux[e] * nu_sigma_f[e];
 
@@ -2205,12 +2204,14 @@ void Solver::updateSource()
             end_index = material->getSigmaSEnd(G);
 
             for (int g = start_index; g < end_index; g++)
+            {
                 scatter_source += sigma_s[G * NUM_ENERGY_GROUPS + g]
                     * scalar_flux[g];
+            }
 
             /* Set the total source for region r in group G */
-            source[G] = ((1.0 / _k_eff) * fission_source *
-                         chi[G] + scatter_source) * ONE_OVER_FOUR_PI;
+            source[G] = (chi[G] * fission_source / _k_eff + scatter_source) 
+                * ONE_OVER_FOUR_PI;
         }
     }
 
@@ -2298,7 +2299,7 @@ double Solver::kernel(int max_iterations) {
     updateSource();
     initializeTrackFluxes(0);//ONE_OVER_FOUR_PI);
 
-    _cmfd->setCellSource(_cmfd->computeCellSourceFromFSR());
+    _cmfd->setCellSource(_cmfd->computeCellSourceFromFSR(0));
     _cmfd->printCellSource(0);
 
     /* Source iteration loop */
@@ -2326,11 +2327,6 @@ double Solver::kernel(int max_iterations) {
             prolongation(moc_iter);
             normalizeFlux(moc_iter+1);
             _cmfd->printCellSource(moc_iter+1);
-        }
-
-        /* for consistency, use acceleration's k instead of prolongated */
-        if (_run_cmfd || _run_loo)
-        {
             _k_eff = _acc_k;
             updateSource();
         }
@@ -2340,11 +2336,7 @@ double Solver::kernel(int max_iterations) {
         if (_old_k_effs.size() == NUM_KEFFS_TRACKED)
             _old_k_effs.pop();
 
-        if ((_run_cmfd || _run_loo))
-            eps_2 = _cmfd->computeCellSourceNorm();
-        else
-            eps_2 = _cmfd->computeCellSourceNorm();
-            //eps_2 = computePinPowerNorm();
+        eps_2 = _cmfd->computeCellSourceNorm();
 
         _old_eps_2.push(eps_2);
         if (_old_eps_2.size() == NUM_KEFFS_TRACKED)

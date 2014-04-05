@@ -14,17 +14,16 @@
               0.00 1.68207"
     />
 
-<!-- material 2: fuel 2 blade out -->
-    <material id="2" energy="2"
-    sigma_a ="0.008002 0.073324"
-    sigma_t ="0.26476 1.59413"
+<!-- material 2: modified material 1-->
+<material id="2" energy="2"
+    sigma_a ="0.007181 0.07047"
+    sigma_t ="0.262881 1.75254"
     sigma_f ="0.002 0.045"
-    nu_sigma_f="0.004663 0.1021"
+    nu_sigma_f="0.002609 0.08675"
     chi ="1.0 0.0"
-    sigma_s ="0.230588 0.02617
-              0.00 1.52081"
+    sigma_s ="0.22803 0.02767
+              0.00 1.68207"
     />
-
     
     
 </materials>

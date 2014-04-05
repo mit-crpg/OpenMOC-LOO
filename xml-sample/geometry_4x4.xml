@@ -23,7 +23,7 @@
   </lattice>
 
 <!-- Definition of Surfaces -->
-  <surface id="1" type="x-plane" coeffs="-2.52" boundary="reflective"/>
+  <surface id="1" type="x-plane" coeffs="-2.52" boundary="vacuum"/>
   <surface id="2" type="x-plane" coeffs="2.52"  boundary="reflective"/>
   <surface id="3" type="y-plane" coeffs="-2.52" boundary="reflective" />
   <surface id="4" type="y-plane" coeffs="2.52"  boundary="reflective"/>
