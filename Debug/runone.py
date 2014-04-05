@@ -6,13 +6,9 @@ import os
 
 
 # Control variables: where C4 default is 0.5cm and 64 azimuthal angle
-geometries = ['xml-sample/geometry_c5g7_fc1.xml',
-              'xml-sample/geometry_c5g7_fc2.xml',
-              'xml-sample/geometry_c5g7_cf1.xml']
-materials = ['xml-sample/material_c5g7.xml','xml-sample/material_c5g7.xml',
-             'xml-sample/material_c5g7.xml','xml-sample/material_c5g7.xml',
-             'xml-sample/material_c5g7.xml','xml-sample/material_c5g7.xml',
-             'xml-sample/material_c5g7.xml','xml-sample/material_c5g7.xml']
+geometries = ['xml-sample/geometry_c5g7_fc.xml']
+materials = ['xml-sample/material_c5g7.xml']
+
 ts = [0.05] 
 na = [32]
 fc = [1e-8]
@@ -34,13 +30,13 @@ for i, geometry in enumerate(geometries):
     # Runs OpenMOC
     for spacing in ts:
         for angle in na:
-            os.system('cd .. && ./7Gbin/openmoc'
+            os.system('cd .. && ./bin/openmoc'
                       + ' -m ' + materials[i]
                       + ' -g ' + geometry 
                       + ' -na ' + str(angle) 
                       + ' -ts ' + str(spacing) 
-                      + ' -fc ' + str(fc[0]) 
-                      + ' -wc -df 0.7')
+                      + ' -fc ' + str(fc[0])
+                      + ' -wc -df 0.7 -ro -ub')
     l2_norm_files = []
 
     # Obtain and sorts l2_norm file names in directory
@@ -73,24 +69,27 @@ for i, geometry in enumerate(geometries):
         # create numpy arrays
         iteration = np.zeros(num_lines)
         fsr_l2    = np.zeros(num_lines)
+        k_l2 = np.zeros(num_lines)
 
         # collect data together
         for k, line in enumerate(logfile):
             if k is not 0:
                 iteration[k-1] = line.split()[0]
                 fsr_l2[k-1]    = line.split()[1]
-
+                k_l2[k-1] = line.split()[3]
+                k_l2[k-1] = abs(k_l2[k-1])
         var = []
         var.append(fsr_l2);
+        var.append(k_l2);
 
         # plotting :)
-        for j in range(1):  
+        for j in range(2):  
             plt.figure(j)
             plt.semilogy(iteration, 
                          var[j], 
                          ls[counter - 1],
                          color=cm.jet(1.*counter / num),
-                         label = ("%s %s"%(method, upscat)), markersize=5)
+                         label = ("%s DF = %s"%(method, damp)), markersize=5)
             plt.xlim(0, max_num_lines + 1)
             plt.legend(loc='upper center', ncol=3, prop = fontP, shadow=True, 
                        bbox_to_anchor=(0.5,-0.1),fancybox=True)
@@ -104,3 +103,12 @@ for i, geometry in enumerate(geometries):
               + ' #angles: %s'%str(na[0]))
     plt.savefig(geometry_name + '_l2.png', bbox_inches='tight')
     plt.clf()
+
+    plt.figure(1)
+    plt.xlabel('# MOC iteration')
+    plt.ylabel('k Relative Change')
+    plt.title('Geometry: %s,'%(geometry_name) + ' spacing: %s,'%str(ts[0])
+              + ' #angles: %s'%str(na[0]))
+    plt.savefig(geometry_name + '_kl2.png', bbox_inches='tight')
+    plt.clf()
+

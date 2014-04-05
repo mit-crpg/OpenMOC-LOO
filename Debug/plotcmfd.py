@@ -8,10 +8,7 @@ import os.path
 # Control variables
 flag = ''
 #printgeometry='2D C5G7 (c5g7_cc_full)'
-geometries = ['xml-sample_geometry_c5g7_cc.xml']
-ts = [0.1]
-na = [32]
-
+geometries = ['xml-sample_geometry_c5g7_cf2.xml']
 
 # Find the string of geometry name after "geometry_" before ".xml"
 geometry = geometries[0]
@@ -61,17 +58,20 @@ for file in l2_norm_files:
     # create numpy arras
     iteration = np.zeros(num_lines)
     fsr_l2    = np.zeros(num_lines)
+    fsr_ratio = np.zeros(num_lines)
 
     for i, line in enumerate(logfile):
         if i is not 0:
             iteration[i-1] = line.split()[0]
             fsr_l2[i-1]    = line.split()[1]
+            fsr_ratio[i-1] = line.split()[2]
 
     # plot l2 norm
     var = [];
     var.append(fsr_l2);
+    var.append(fsr_ratio);
 
-    for j in range(1):
+    for j in range(2):
         plt.figure(j)
         plt.semilogy(iteration, 
                      var[j], 
@@ -89,6 +89,13 @@ plt.xlabel('# MOC iteration')
 plt.ylabel('FSR L2 Norm on Fission Source Relative Change')
 plt.title('Geometry: %s,'%(geometry_name) + ' spacing: %s cm,'%str(ts) 
           + ' #angles: %s'%str(na))
+
+plt.figure(1)
+plt.xlabel('# MOC iteration')
+plt.ylabel('Ratio of Successive Iteration FSR L2 Norm on Fission Source Relative Change')
+plt.title('Geometry: %s,'%(geometry_name) + ' spacing: %s cm,'%str(ts) 
+          + ' #angles: %s'%str(na))
+
 
 if flag == '':
     plt.savefig(geometry_name +  '.png', bbox_inches='tight')
