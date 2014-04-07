@@ -398,19 +398,22 @@ void Material::clearUpScattering()
  */
 void Material::checkSigmaT() 
 {
-    double calc_sigma_t;
+    double calc_sigma_s;
     for (int i = 0; i < NUM_ENERGY_GROUPS; i++) 
     {
         /* Initialize the calculated total xs to the absorption xs */
-        calc_sigma_t = _sigma_a[i];
+        calc_sigma_s = _sigma_t[i] - _sigma_a[i];
 
         /* Increment calculated total xs by scatter xs for each energy group */
         for (int j=0; j < NUM_ENERGY_GROUPS; j++)
-            calc_sigma_t += _sigma_s[j][i];
+        {
+            calc_sigma_s -= _sigma_s[j][i];            
+        }
 
-        log_printf(DEBUG, " material %d energy %d calculated sigma_t = %.10f,"
-                   " given sigma_t = %.10f", _id, i, calc_sigma_t, _sigma_t[i]);
-        _sigma_t[i] = calc_sigma_t;
+        log_printf(DEBUG, " material %d energy %d xs offset %f, "
+                   "adjust in-group scattering", _id, i, calc_sigma_s);
+
+        _sigma_s[i][i] += calc_sigma_s;
     }
 
     return;
