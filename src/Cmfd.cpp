@@ -777,6 +777,10 @@ void Cmfd::computeDs(int moc_iter)
     int x, y, e;
     double dt_weight = _damp_factor;
 
+    /* NO damping should be applied at iteration 1.0 */
+    if (moc_iter == 1)
+        dt_weight = 1.0;
+
     if (_mesh->getMultigroup() == false)
         _mesh->computeTotCurrents();
 
@@ -1815,7 +1819,7 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
 
     /* we set min_outer to make sure the low order system's
      * convergence criteria is sufficiently tight */ 
-    int min_outer = 5;
+    int min_outer = 300;
 
     if (moc_iter == 10000)
     {
@@ -2874,6 +2878,9 @@ void Cmfd::updateFSRScalarFlux(int moc_iter)
     double max_range = INFINITY, min_range = -INFINITY;
     //double max_range = 100.0, min_range = 1.0 / max_range; 
 
+    double max = 0; 
+    int max_i = 0, max_e = 0; 
+
     double tmp_max = 0, tmp_cmco;
 
     for (i = 0; i < _cw * _ch; i++)
@@ -2902,14 +2909,12 @@ void Cmfd::updateFSRScalarFlux(int moc_iter)
             tmp_max = fabs(new_flux / old_flux - 1.0);
             CMCO[i] += tmp_max;
 
-            /*
             if (tmp_max > max)
             {
                 max = tmp_max;
                 max_i = i;
                 max_e = e;
             }
-            */
 
             log_printf(DEBUG, "Flux prolongation for cell %d"
                        " old =  %f, new = %f, new/old = %f", 
@@ -2937,6 +2942,10 @@ void Cmfd::updateFSRScalarFlux(int moc_iter)
             }
         } /* exit looping over energy */
     } /* exit mesh cells */
+
+    log_printf(NORMAL, "max CMCO at %d e = %d, %f", i, e, max);
+
+
 
     /* plots the scalar flux ratio */
     if (_plot_prolongation)
