@@ -2038,7 +2038,7 @@ void Solver::MOCsweep(int max_iterations, int moc_iter)
             /* computes new _k_eff; it is important that we compute new k 
              * before computing new source */
             _k_eff = computeKeff(i);
-            updateSource();
+            updateSource(i);
         }
     } /* exit iteration loops */
 		
@@ -2156,7 +2156,7 @@ void Solver::normalizeFlux(double moc_iter)
 }
 
 /* Compute the source for each region */
-void Solver::updateSource()
+void Solver::updateSource(int moc_iter)
 {
 #if 1
     double scatter_source, fission_source = 0;
@@ -2212,6 +2212,10 @@ void Solver::updateSource()
             /* Set the total source for region r in group G */
             source[G] = (chi[G] * fission_source / _k_eff + scatter_source) 
                 * ONE_OVER_FOUR_PI;
+
+            /* If negative FSR sources show up in the first 5 iterations, set them to zero */
+            if ((source[G] < 0) && (moc_iter <= 5))
+                source[G] = 0.0;
         }
     }
 
@@ -2296,7 +2300,7 @@ double Solver::kernel(int max_iterations) {
     oneFSRFlux();
     initializeTrackFluxes(1.0);
     normalizeFlux(0);
-    updateSource();
+    updateSource(0);
     initializeTrackFluxes(0);//ONE_OVER_FOUR_PI);
 
     _cmfd->setCellSource(_cmfd->computeCellSourceFromFSR(0));
@@ -2328,7 +2332,7 @@ double Solver::kernel(int max_iterations) {
             normalizeFlux(moc_iter+1);
             _cmfd->printCellSource(moc_iter+1);
             _k_eff = _acc_k;
-            updateSource();
+            updateSource(moc_iter);
         }
 
         /* We only store $k^{(m+1)}$; other intermediate keff does not matter */

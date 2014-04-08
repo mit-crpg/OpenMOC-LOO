@@ -154,7 +154,7 @@ public:
     double computeKeff(int moc_iter);
     void normalizeFlux(double moc_iter);
     void renormCurrents(Mesh* mesh, double keff);
-    void updateSource();
+    void updateSource(int moc_iter);
     void prolongation(int moc_iter);
     void updateBoundaryFluxByQuadrature(int moc_iter);
     void storeMOCBoundaryFlux();
