@@ -1,0 +1,85 @@
+<?xml version="1.0"?>
+<materials>
+
+<!-- Two group fictitious cross sections -->
+
+<!-- material: FUE, REG.1 -->
+<material id="1" energy="2"
+          sigma_a ="2.6438E-02  3.1176E-01"
+          sigma_t =" 0.2866    0.6611"
+          sigma_f ="7.6465E-03  2.2841E-01"
+          nu_sigma_f="1.9780E-02  5.5657E-01"
+          chi ="1.0 0.0"
+          sigma_s ="0.2318925 0.02533
+                    0.00 1.4794789"
+          />
+
+<!-- material: AIR, REG. 2  -->
+<material id="2" energy="2"
+          sigma_a ="5.4044E-04  8.4279E-05"
+          sigma_t ="0.957E-04 1.429E-04"
+          sigma_f ="0.0000E+00  0.0000E+00"
+          nu_sigma_f="0.0000E+00  0.0000E+00"
+          chi ="0.0 0.0"
+          sigma_s ="0.0 0.0
+                    0.0 0.0"
+          />
+
+<!-- material: CAN. REG. 3 -->
+<material id="3" energy="2"
+          sigma_a ="9.2133E-04  1.0471E-02"
+          sigma_t ="0.1103 0.0899"
+          sigma_f ="0.0000E+00  0.0000E+00"
+          nu_sigma_f="0.0000E+00  0.0000E+00"
+          chi ="0.0 0.0"
+          sigma_s ="0.2169309 0.04754
+                    0.00 2.07467408"
+          />
+
+<!-- material: Water, REG. 4 -->
+<material id="4" energy="2"
+          sigma_a ="9.9248E-04  1.6822E-02"
+          sigma_t ="0.2651    1.8722"
+          sigma_f ="0.0000E+00  0.0000E+00"
+          nu_sigma_f="0.0000E+00  0.0000E+00"
+          chi ="0.0 0.0"
+          sigma_s ="0.2169309 0.04754
+                    0.00 2.07467408"
+          /> 
+
+
+<!-- water cell -->    
+<!-- material: REG. 17 -->
+<material id="5" energy="2"
+          sigma_a ="9.8974E-04  1.7726E-02"
+          sigma_t ="0.2752    1.9989"
+          sigma_f ="0.0000E+00  0.0000E+00"
+          nu_sigma_f="0.0000E+00  0.0000E+00"
+          chi ="0.0 0.0"
+          sigma_s ="0.2169309 0.04754
+                    0.00 2.07467408"
+          /> 
+
+<!-- material: REG. 28 -->
+<material id="6" energy="2"
+          sigma_a ="1.0623E-03  1.8724E-02"
+          sigma_t ="0.3003    2.1762"
+          sigma_f ="0.0000E+00  0.0000E+00"
+          nu_sigma_f="0.0000E+00  0.0000E+00"
+          chi ="0.0 0.0"
+          sigma_s ="0.2169309 0.04754
+                    0.00 2.07467408"
+          /> 
+
+<!-- material: REG. 37  -->
+<material id="7" energy="2"
+          sigma_a ="1.1209E-03  1.9099E-02"
+          sigma_t ="0.3114    2.2594"
+          sigma_f ="0.0000E+00  0.0000E+00"
+          nu_sigma_f="0.0000E+00  0.0000E+00"
+          chi ="0.0 0.0"
+          sigma_s ="0.2169309 0.04754
+                    0.00 2.07467408"
+          />
+
+</materials>
