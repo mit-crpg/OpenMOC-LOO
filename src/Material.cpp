@@ -406,12 +406,13 @@ void Material::checkSigmaT()
 
         /* Increment calculated total xs by scatter xs for each energy group */
         for (int j=0; j < NUM_ENERGY_GROUPS; j++)
-        {
             calc_sigma_s -= _sigma_s[j][i];            
-        }
 
-        log_printf(DEBUG, " material %d energy %d xs offset %f, "
-                   "adjust in-group scattering", _id, i, calc_sigma_s);
+        if (calc_sigma_s > 1e-3)
+        {
+            log_printf(NORMAL, " material %d energy %d xs offset %e, "
+                       "adjust in-group scattering", _id, i, calc_sigma_s);
+        }
 
         _sigma_s[i][i] += calc_sigma_s;
     }
