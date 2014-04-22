@@ -34,6 +34,7 @@ private:
     double _moc_conv_thresh;
     double _k_guess;
     double _damp_factor;
+    double _num_first_diffusion;
     bool _dump_geometry;
     bool _plot_specs;
     bool _plot_fluxes;
@@ -72,6 +73,7 @@ public:
     int getBitDimension();
     int getCmfdLevel();
     int getBoundaryIteration();
+    int getNumFirstDiffusion();
     double getTrackSpacing();
     double getNumAzim();
     double getL2NormConvThresh();

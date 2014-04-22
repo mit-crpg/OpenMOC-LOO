@@ -39,6 +39,7 @@ Solver::Solver(Geometry* geom, TrackGenerator* track_generator,
     _run_loo2 = opts->getLoo2();
 
     _first_diffusion = opts->getFirstDiffusion();
+    _num_first_diffusion = opts->getNumFirstDiffusion();
     _acc_after_MOC_converge = opts->getAccAfterMOCConverge();
     _k_eff = opts->getKGuess();
     _damp_factor = opts->getDampFactor();
@@ -654,7 +655,8 @@ void Solver::prolongation(int moc_iter)
         if (_update_boundary)
         {
             /* standard LOO update */
-            if (_run_loo && (!(_first_diffusion && (moc_iter == 0))))
+            if (_run_loo && 
+                (!(_first_diffusion && (moc_iter < _num_first_diffusion))))
             {
                 log_printf(DEBUG, " iter %d boundary angular flux "
                            "prolongation: by quadrature",
@@ -664,19 +666,11 @@ void Solver::prolongation(int moc_iter)
                 //_cmfd->updateBoundaryFluxBySrc(moc_iter);
                 //_cmfd->updateBoundaryFluxByNetCurrent(moc_iter);
             }
-            /* first diffusion step */
-            else if ((_first_diffusion) && (moc_iter == 0))
+            /* first diffusion step or standard CMFD */
+            else 
             {
                 log_printf(DEBUG, " iter %d boundary angular flux "
                            "prolongation: by scalar flux",
-                           moc_iter);
-                _cmfd->updateBoundaryFluxByScalarFlux(moc_iter);
-            }
-            /* standard CMFD update */
-            else
-            {
-                log_printf(DEBUG, " iter %d boundary angular flux "
-                           "prolongation: update by scalar",
                            moc_iter);
                 _cmfd->updateBoundaryFluxByScalarFlux(moc_iter);
             }
@@ -965,10 +959,12 @@ void Solver::updateBoundaryFluxByQuadrature(int moc_iter)
     return;
 }
 
-/* Prints & Update keff for MOC sweep */
+/* Prints & Update keff for MOC sweep. Causion: prolongated results
+ * are printed as moc_iter + 1, as we want to see on the screen iter
+ * 1,... instead of 0-indexed results */
 void Solver::printToScreen(int moc_iter)
 {
-    if ((moc_iter == 1) && (_run_cmfd) && _first_diffusion)
+    if ((moc_iter < _num_first_diffusion + 1) && _run_cmfd && _first_diffusion)
     {
         printf("Iter %d, MOC k^(m+1) = %.10f, Diffusion k = %.10f,"
                " MOC k^(m+1/2) = %.10f" 
@@ -977,7 +973,8 @@ void Solver::printToScreen(int moc_iter)
                (_old_k_effs.back() - _old_k_effs.front()) / _old_k_effs.back(),
                _cmfd->getNumIterToConv());
     }
-    else if ((moc_iter == 1) && (_run_loo) && _first_diffusion)
+    else if ((moc_iter < _num_first_diffusion + 1) && _run_loo 
+             && _first_diffusion)
     {
         printf("Iter %d, MOC k^(m+1) = %.10f, Diffusion k = %.10f,"
                " MOC k^(m+1/2) = %.10f" 
@@ -1746,7 +1743,7 @@ void Solver::MOCsweep(int max_iterations, int moc_iter)
     _num_crn = 0;
 
     int tally; 
-    if ((_run_loo) && (!(_first_diffusion && (moc_iter == 0))))
+    if (_run_loo && (!(_first_diffusion && (moc_iter < _num_first_diffusion))))
     {
         tally = 2;
         log_printf(INFO, "tally quadrature currents");
@@ -1754,7 +1751,7 @@ void Solver::MOCsweep(int max_iterations, int moc_iter)
     else if (_run_cmfd || _run_loo)
     {
         tally = 1;
-        log_printf(INFO, "tally partial currents");
+        log_printf(INFO, "tally partial/net currents");
     }
     else
         tally = 0;
@@ -2233,7 +2230,7 @@ double Solver::runLoo(int moc_iter)
 
     _cmfd->computeXS();
 			 
-    if (moc_iter == 0 && _first_diffusion == true)
+    if ((moc_iter < _num_first_diffusion) && _first_diffusion)
     {
         _cmfd->computeDs(moc_iter);
         loo_keff = _cmfd->computeCMFDFluxPower(DIFFUSION, moc_iter);
@@ -2270,7 +2267,7 @@ double Solver::runCmfd(int moc_iter)
     }
 
     /* Run diffusion problem on initial geometry */
-    if ((moc_iter == 0) && _first_diffusion)
+    if ((moc_iter < _num_first_diffusion) && _first_diffusion)
         cmfd_keff = _cmfd->computeCMFDFluxPower(DIFFUSION, moc_iter);
     else
         cmfd_keff = _cmfd->computeCMFDFluxPower(CMFD, moc_iter);

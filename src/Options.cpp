@@ -39,7 +39,8 @@ Options::Options(int argc, char **argv)
     _loo2 = false;
     _damp_factor = 1.0;
     _boundary_iteration = 0;
-    _first_diffusion = true;			/* run diffusion for 1st iter */
+    _first_diffusion = true;		/* run diffusion for 1st iter */
+    _num_first_diffusion = 5;           /* number of diffusion iterations */ 
     _update_boundary = true;            /* update boundary angular flux */
     _reflect_outgoing = true;          /* newest incoming flux during HO MOC */
     _use_up_scattering_xs = true; 
@@ -200,12 +201,17 @@ Options::Options(int argc, char **argv)
             else if (strcmp(argv[i], "-pk") == 0 ||
                      strcmp(argv[i], "--plotkeff") == 0)
                 _plot_keff = true;
-            else if (strcmp(argv[i], "-diff") == 0 ||
-                     strcmp(argv[i], "--diffusion") == 0)
+            else if (LAST("-diff") || LAST("--diffusion"))
+            {
                 _first_diffusion = true;
+                _num_first_diffusion = atoi(argv[i]);
+            }
             else if (strcmp(argv[i], "-ndiff") == 0 ||
                      strcmp(argv[i], "--nodiffusion") == 0)
+            {
                 _first_diffusion = false;
+                _num_first_diffusion = 0;
+            }
             else if (strcmp(argv[i], "-pd") == 0 ||
                      strcmp(argv[i], "--plotdiffusion") == 0)
                 _plot_diffusion = true;
@@ -488,6 +494,10 @@ bool Options::getLoo2(){
 
 bool Options::getFirstDiffusion(){
     return _first_diffusion;
+}
+
+int Options::getNumFirstDiffusion(){
+    return _num_first_diffusion;
 }
 
 bool Options::getDiffusionCorrection(){

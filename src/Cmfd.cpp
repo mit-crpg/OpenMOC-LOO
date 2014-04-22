@@ -101,6 +101,7 @@ Cmfd::Cmfd(Geometry* geom, Plotter* plotter, Mesh* mesh,
     _update_boundary = opts->getUpdateBoundary();
     _reflect_outgoing = opts->getReflectOutgoing();
     _first_diffusion = opts->getFirstDiffusion();
+    _num_first_diffusion = opts->getNumFirstDiffusion();
 
     if (_reflect_outgoing)
         _nq = 2;
@@ -1050,8 +1051,10 @@ void Cmfd::computeDs(int moc_iter)
         }
     }
 
-    /* if a regular diffusion is requested, set dtilde to zero. */
-    if ((moc_iter == 0) && (_first_diffusion))
+    /* if a regular diffusion is requested, set dtilde to zero so that
+     * these numbers would not contaminate the next CMFD run's dtilde
+     * under-relaxed Dtilde value. */
+    if ((moc_iter < _num_first_diffusion) && (_first_diffusion))
     {
         for (y = 0; y < _ch; y++)
         {
@@ -3037,7 +3040,10 @@ void Cmfd::updateBoundaryFluxByScalarFlux(int moc_iter)
                         log_printf(DEBUG, "factor = %.10f", factor);
                         for (int p = 0; p < NUM_POLAR_ANGLES; p++)
                         {
-                            if (moc_iter == 0)
+                            /* For diffusion calculations, previous boundary
+                               fluxes are garbage and should be thrown away */
+                            if (_first_diffusion && 
+                                (moc_iter < _num_first_diffusion))
                             {
                                 track->setPolarFluxesByIndex
                                     (pe, meshCell->getNewFlux()[e] 
