@@ -20,6 +20,9 @@ int Cmfd::_surf_index[] = {1,2,2,3,3,0,0,1,2,1,3,2,0,3,1,0};
 Cmfd::Cmfd(Geometry* geom, Plotter* plotter, Mesh* mesh, 
            TrackGenerator *track_generator, Options *opts) 
 {
+    /* _ignore sets the threshold fraction of flux such that
+       d_tilde should be set to zero */
+    _ignore = 1e-10; // set to a small number to turn off
     _moc_iter = 0;
     _geom = geom;
     _plotter = plotter;
@@ -807,6 +810,8 @@ void Cmfd::computeDs(int moc_iter)
                 d_tilde = meshCell->getMeshSurfaces(s)->getDTilde()[e]
                     * (1.0 - dt_weight) + dt_weight * d_tilde;
 
+                if (flux < _ignore * _mesh->getCells(0)->getOldFlux()[e])
+                    d_tilde = 0;
 
                 meshCell->getMeshSurfaces(s)->setDHat(d_hat, e);
                 meshCell->getMeshSurfaces(s)->setDTilde(d_tilde, e);

@@ -54,6 +54,7 @@ enum solveType {
 
 class Cmfd {
 private:
+    double _ignore;
     static int _surf_index[16];
     Geometry* _geom;
     Quadrature* _quad;
