@@ -61,6 +61,14 @@ MeshCell::MeshCell(){
 
 MeshCell::~MeshCell(){}
 
+double MeshCell::getLength(int s){
+    assert(s >= 0);
+    assert(s < 4);
+    if ((s == 0) || (s == 2))
+        return _height;
+    else
+        return _width;
+}
 
 double MeshCell::getWidth(){
     return _width;

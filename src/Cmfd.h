@@ -130,8 +130,6 @@ public:
     /* CMFD */
     void computeCurrent();
     void computeDs(int moc_iter);
-    void computeDsxDirection(double x, double y, int e, MeshCell *meshCell, 
-                             double d, double f, double flux, double dt_weight);
     double computeDiffCorrect(double d, double h);
     int constructAMPhi(Mat A, Mat B, Vec phi_old, solveType solveMethod);
     double computeCMFDFluxPower(solveType solveMethod, int moc_iter);
@@ -141,7 +139,9 @@ public:
     int createAMPhi(PetscInt size1, PetscInt size2, int cells);
     void setFSRs(FlatSourceRegion *fsrs);
     void setTracks(Track **tracks);
-
+    int getNextCellID(int i, int s);
+    int getNextCellSurfaceID(int s);
+    int convertOutwardToCoordinate(int s);
     int computeCmfdL2Norm(Vec snew, int moc_iter);
     void updateBoundaryFluxByScalarFlux(int moc_iter);
     void updateBoundaryFlux(int moc_iter);
@@ -178,6 +178,10 @@ public:
     void updateOldQuadFlux();
     void computeLooL2Norm(int moc_iter);
     bool onAnyBoundary(int i, int surf_id);
+    bool cellOnVacuumBoundary(int i);
+    bool cellOnReflectiveBoundary(int i);
+    bool surfaceOnVacuumBoundary(int i, int surf);
+    bool surfaceOnReflectiveBoundary(int i, int surf);
     bool onBoundary(int track_id, int cell_id, int surf, int dir);
     bool onVacuumBoundary(int track_id, int cell_id, int dir);
     int onReflectiveBoundary(int track_id, int cell_id, int dir);

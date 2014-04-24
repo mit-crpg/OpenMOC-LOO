@@ -59,6 +59,7 @@ private:
 public:
     MeshCell();
     virtual ~MeshCell();
+    double getLength(int s);
     double getWidth();
     double getATWidth();
     double getHeight();
