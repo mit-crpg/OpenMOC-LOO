@@ -86,6 +86,7 @@ private:
     double _spacing;
     double *_cell_source;
     double *_fsr_source;
+    bool _acc_after_MOC_converge;
     bool _use_diffusion_correction;
     bool _run_loo;
     bool _run_loo_psi;
@@ -98,6 +99,7 @@ private:
     bool _converged;
     bool _first_diffusion;
     int _num_first_diffusion;
+    double _max_old;
 
 public:
     Cmfd(Geometry* geom, Plotter* plotter, Mesh* mesh, 

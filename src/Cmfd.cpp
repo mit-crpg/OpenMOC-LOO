@@ -22,7 +22,8 @@ Cmfd::Cmfd(Geometry* geom, Plotter* plotter, Mesh* mesh,
 {
     /* _ignore sets the threshold fraction of flux such that
        d_tilde should be set to zero */
-    _ignore = 1e-10; // set to a small number to turn off
+    _ignore = -1; // set to a small number to turn off
+    _max_old = 10;
     _moc_iter = 0;
     _geom = geom;
     _plotter = plotter;
@@ -37,6 +38,7 @@ Cmfd::Cmfd(Geometry* geom, Plotter* plotter, Mesh* mesh,
     _l2_norm = 1.0;
     _l2_norm_conv_thresh = opts->getL2NormConvThresh();
     _use_diffusion_correction = opts->getDiffusionCorrection();
+    _acc_after_MOC_converge = opts->getAccAfterMOCConverge();
 
     _ng = NUM_ENERGY_GROUPS;
     if (opts->getGroupStructure() == false)
@@ -1201,7 +1203,7 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter)
         log_printf(DEBUG, "Running CMFD Acceleration");
 
     MeshCell* meshCell;
-    int max_outer, iter = 0, petsc_err;
+    int max_outer, min_outer, iter = 0, petsc_err;
     Vec phi_old, sold, snew, res;
     PetscInt size, its;
     PetscScalar sumold, sumnew, scale_val, eps = 0;
@@ -1240,7 +1242,10 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter)
     else
         max_outer = 500;
 
-    int min_outer = 300;
+    if (_acc_after_MOC_converge)
+        min_outer = 1;
+    else
+        min_outer = 300;
 
     /* create old source and residual vectors */
     petsc_err = VecCreateSeq(PETSC_COMM_WORLD, _ch * _cw * _ng, &sold);
@@ -1520,10 +1525,7 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter)
      * step and the one coming out of converged CMFD step to decided whether 
      * the outter MOC iteration / source iteration should quit */
     if (moc_iter > 0)
-    {
-        petsc_err = computeCmfdL2Norm(snew, moc_iter);
-        CHKERRQ(petsc_err);
-    }
+        computeCmfdL2Norm(snew, moc_iter);
 
     /* Copies source new to source old */
     petsc_err = VecCopy(snew, _source_old);
@@ -2677,7 +2679,7 @@ void Cmfd::updateFSRScalarFlux(int moc_iter)
         under_relax = _damp_factor;
 
     double max_range = INFINITY, min_range = -INFINITY;
-    //double max_range = 100.0, min_range = 1.0 / max_range; 
+    //double max_range = 1.05, min_range = 0.05; 
 
     double max = 0; 
     int max_i = 0, max_e = 0; 
@@ -2744,8 +2746,15 @@ void Cmfd::updateFSRScalarFlux(int moc_iter)
         } /* exit looping over energy */
     } /* exit mesh cells */
 
-    log_printf(NORMAL, "max CMCO at %d e = %d, %f", i, e, max);
+    log_printf(DEBUG, "max CMCO at %d e = %d, %f, ratio = %f / %f = %f", 
+               max_i, max_e, max, _max_old, max, _max_old / max);
+    _max_old = max;
 
+    log_printf(DEBUG, "thermal flux: center %f, outer corner %f, others %f %f",
+               _mesh->getCells(0)->getNewFlux()[_ng-1], 
+               _mesh->getCells(_cw * _ch - 1)->getNewFlux()[_ng-1],
+               _mesh->getCells(_cw - 1)->getNewFlux()[_ng-1],
+               _mesh->getCells(_cw * _ch - _ch)->getNewFlux()[_ng-1]);
 
 
     /* plots the scalar flux ratio */
