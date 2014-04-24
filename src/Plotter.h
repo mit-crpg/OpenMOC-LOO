@@ -66,7 +66,7 @@ public:
     void plotCMFDMesh(Mesh* mesh);
     int convertToPixelX(double x);
     int convertToPixelY(double y);
-    void plotGeometry(Mesh *mesh);
+    void plotMeshCells(Mesh *mesh);
     void plotNetCurrents(Mesh* mesh, int moc_iter);
     void plotNetCurrents_small(Mesh* mesh, int moc_iter);
     void plotQuadFlux(Mesh* mesh, int iter_num);

@@ -24,19 +24,11 @@ typedef enum colortypes {
     BLACKWHITE
 }colortype;
 
-//typedef enum scaling {
-//	LINEAR,
-//	LOG,
-//	SQRT
-//}scaling;
-
-
 /* define BitMap struct */
 template <typename U>
 struct BitMap {
     U* pixels;
     colortype color_type;
-//	scaling scaling_type;
     int pixel_x;
     int pixel_y;
     double geom_x;

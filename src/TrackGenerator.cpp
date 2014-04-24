@@ -654,7 +654,7 @@ void TrackGenerator::segmentize() {
     bitMapFSR->geom_y = _geom->getHeight();
     bitMap->geom_x = _geom->getWidth();
     bitMap->geom_y = _geom->getHeight();
-    bitMapFSR->color_type = RANDOM;
+    bitMapFSR->color_type = SCALED;
     bitMap->color_type = RANDOM;
 
     if (_num_segments != NULL)
@@ -718,11 +718,14 @@ void TrackGenerator::segmentize() {
         if (_plotter->plotSpecs() == true){
             /* plot segments, FSRs, cells, and materials */
             plot(bitMap, "segments", _plotter->getExtension());
+
             _plotter->copyFSRMap(bitMapFSR->pixels);
             plot(bitMapFSR, "FSRs", _plotter->getExtension());
+
             _plotter->makeRegionMap(bitMapFSR->pixels, bitMap->pixels, 
                                     _geom->getFSRtoCellMap());
             plot(bitMap, "cells", _plotter->getExtension());
+
             _plotter->makeRegionMap(bitMapFSR->pixels, bitMap->pixels, 
                                     _geom->getFSRtoMaterialMap());
             plot(bitMap, "materials", _plotter->getExtension());

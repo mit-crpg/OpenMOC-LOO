@@ -850,9 +850,9 @@ void Plotter::plotDHats(Mesh* mesh, int iter_num){
     deleteBitMap(bitMap);
 }
 
-void Plotter::plotGeometry(Mesh* mesh)
+void Plotter::plotMeshCells(Mesh* mesh)
 {
-    log_printf(INFO, "plotting geometry for debugging ...");
+    log_printf(NORMAL, "plotting geometry for debugging ...");
 
     /* set up bitMap */
     BitMap<int>* bitMap = new BitMap<int>;
@@ -886,8 +886,8 @@ void Plotter::plotGeometry(Mesh* mesh)
     {
         for (int cellX = 0; cellX < mesh->getCellWidth(); cellX++)
         {
-            /* FIXME: should be cellX * mesh->getCellHeight() + cellY? */
-            meshCell = mesh->getCells(cellY * mesh->getCellWidth() + cellX);
+            int i = cellY * mesh->getCellWidth() + cellX;
+            meshCell = mesh->getCells(i);
 
             /* get midpoint of mesh surface */
             x_mid = convertToPixelX((meshCell->getBounds()[0] + 
@@ -897,8 +897,8 @@ void Plotter::plotGeometry(Mesh* mesh)
                                      meshCell->getBounds()[3]) / 2.0);
 
             /* create string and draw on bitMap */
-            text_stream << "Mesh Cell Index: (" << 
-                x_mid << y_mid << ")";
+            text_stream << "Mesh Cell " << i << ": (" << 
+                x_mid << ", " << y_mid << ")";
             text = text_stream.str();
             text_stream.str("");
             drawText(bitMap, text, x_mid, y_mid);

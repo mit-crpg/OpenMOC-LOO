@@ -2399,7 +2399,7 @@ double Solver::kernel(int max_iterations) {
                        "  Something bad happens. May need damping.");
             return _k_eff;
         }
-    }
+    } /* end of moc iterations */
 
     log_printf(WARNING, "Unable to converge the source after %d iterations",
                max_iterations);
@@ -2412,6 +2412,8 @@ void Solver::plotEverything(int moc_iter)
     /* plot pin powers */
     if (_compute_powers)
         plotPinPowers();
+
+    _plotter->plotMeshCells(_geom->getMesh());
 
     /* plot CMFD flux and xs */
     if (_run_cmfd && _plotter->plotCurrent() )
