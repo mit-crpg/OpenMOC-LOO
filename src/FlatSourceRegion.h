@@ -21,6 +21,7 @@
 
 class FlatSourceRegion {
 private:
+    int _quad_id;
     int _id;
     int _mesh_cell_id;
     Material* _material;
@@ -34,6 +35,7 @@ private:
 public:
     FlatSourceRegion();
     virtual ~FlatSourceRegion();
+    int getQuadId() const;
     int getId() const;
     int getMeshCellId() const;
     Material* getMaterial();
@@ -42,6 +44,7 @@ public:
     double* getSource();
     double* getRatios();
     void setId(int id);
+    void setQuadId(int id);
     void setMeshCellId(int id);
     void setMaterial(Material* material);
     void setVolume(double volume);

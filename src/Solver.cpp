@@ -124,6 +124,9 @@ Solver::Solver(Geometry* geom, TrackGenerator* track_generator,
 
     _cw = _geom->getMesh()->getCellWidth();
     _ch = _geom->getMesh()->getCellHeight();
+
+    _plotter->setFSRs(_flat_source_regions);
+
     /* Gives cmfd a pointer to the FSRs */
     if (_run_cmfd || _run_loo || _acc_after_MOC_converge) 
     {
@@ -346,7 +349,6 @@ void Solver::initializeFSRs()
     segment* seg;
     FlatSourceRegion* fsr;
 
-
     /* Set each FSR's volume by accumulating the total length of all
        tracks inside the FSR. Loop over azimuthal angle, track and segment */
     for (int i = 0; i < _num_azim; i++) 
@@ -366,9 +368,6 @@ void Solver::initializeFSRs()
     }
 
     /* Loop over all FSRs */
-#if USE_OPENMP
-#pragma omp parallel for private(cell, material)
-#endif
     for (int r = 0; r < _num_FSRs; r++) {
         /* Set the id */
         _flat_source_regions[r].setId(r);
@@ -379,6 +378,7 @@ void Solver::initializeFSRs()
         /* Get the cell's material and assign it to the FSR */
         material = _geom->getMaterial(cell->getMaterial());
         _flat_source_regions[r].setMaterial(material);
+        _flat_source_regions[r].setQuadId(cell->getQuadId());
 
         log_printf(INFO, "FSR id = %d has cell id = %d and material id = %d "
                    "and volume = %f", r, cell->getId(), material->getId(),

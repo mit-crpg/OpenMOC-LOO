@@ -30,6 +30,7 @@ Cell::Cell() { }
 Cell::Cell(int id, cellType type, int universe, int num_surfaces,
            int *surfaces) {
 
+    _quad_id = -1;
     _uid = _n;
     _id = id;
     _type = type;
@@ -62,6 +63,9 @@ void Cell::addSurface(int surface_id, Surface* surface) {
     _surfaces.insert(std::pair<int, Surface*>(surface_id, surface));
 }
 
+void Cell::removeSurface(int surface_id) {
+    _surfaces.erase(surface_id);
+}
 
 
 /**
@@ -134,7 +138,13 @@ void Cell::setId(int id) {
     _id = id;
 }
 
+int Cell::getQuadId() {
+    return _quad_id;
+}
 
+void Cell::setQuadId(int id) {
+    _quad_id = id;
+}
 /**
  * Return the cell type (FILL or MATERIAL)	Cell();
  * @return the cell type

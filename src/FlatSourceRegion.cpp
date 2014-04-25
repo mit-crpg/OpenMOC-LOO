@@ -16,6 +16,7 @@ FlatSourceRegion::FlatSourceRegion()
 {
     _material = NULL;
     _volume = 0.0;
+    _quad_id = -1;
 
     /* Initializes region's other attributes */
     for (int e = 0; e < NUM_ENERGY_GROUPS; e++) 
@@ -46,6 +47,10 @@ FlatSourceRegion::~FlatSourceRegion() {
  */
 int FlatSourceRegion::getId() const {
     return _id;
+}
+
+int FlatSourceRegion::getQuadId() const {
+    return _quad_id;
 }
 
 /**
@@ -108,6 +113,10 @@ double* FlatSourceRegion::getRatios() {
  */
 void FlatSourceRegion::setId(int id){
     _id = id;
+}
+
+void FlatSourceRegion::setQuadId(int id){
+    _quad_id = id;
 }
 
 /**

@@ -25,13 +25,14 @@
 #include "quickplot.h"
 #include "Mesh.h"
 #include "MeshCell.h"
-
+#include "FlatSourceRegion.h"
 class Plotter{
 private:
     double _width;
     double _height;
     std::string _extension;
     Geometry* _geom;
+    FlatSourceRegion *_flat_source_regions;
     int _bit_length_x;
     int _bit_length_y;
     double _x_pixel;
@@ -48,6 +49,7 @@ public:
             bool specs, bool fluxes, bool netCurrent, 
             bool plotDiffusion, bool plotKeff, bool plotQuadFluxFlag);
     virtual ~Plotter();
+    void setFSRs(FlatSourceRegion* fsrs);
     void plotTracksReflective(Track* track, int numReflect);
     void makeFSRMap();
     int *getFSRMap();

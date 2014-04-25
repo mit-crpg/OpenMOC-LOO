@@ -337,10 +337,11 @@ void Plotter::plotFSRs(Mesh *mesh, int numFSRs)
     bitMap->color_type = RANDOM;
 
     double x_global, y_global;
-    int fsrID;
+    int fsrID, quadID;
     std::stringstream text_stream;
     std::string text;
     int fresh[numFSRs];
+    FlatSourceRegion* fsr;
 
     for (int i = 0; i < numFSRs; i++)
         fresh[i] = 0;
@@ -354,6 +355,8 @@ void Plotter::plotFSRs(Mesh *mesh, int numFSRs)
             point.setUniverse(0);
             _geom->findCell(&point);
             fsrID = _geom->findFSRId(&point);
+            fsr = &_flat_source_regions[fsrID];
+            quadID = fsr->getQuadId();
             bitMap->pixels[y * _bit_length_x + x] = fsrID;
             point.prune(); /* Remove all allocated localcoords */
 
@@ -363,7 +366,7 @@ void Plotter::plotFSRs(Mesh *mesh, int numFSRs)
             if (fresh[fsrID] == 30) 
             {
                 /* create string and draw on bitMap */
-                text_stream << fsrID;
+                text_stream << fsrID << " (" << quadID << ")";
                 text = text_stream.str();
                 text_stream.str("");
                 drawText(bitMap, text, x, y + 20);
@@ -1533,12 +1536,8 @@ void Plotter::plotCMFDKeff(Mesh* mesh, int num_iter){
 
 }
 
-
-
-
-
-
-
-
+void Plotter::setFSRs(FlatSourceRegion* fsrs){
+    _flat_source_regions = fsrs;
+}
 
 

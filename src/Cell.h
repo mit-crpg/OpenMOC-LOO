@@ -43,6 +43,7 @@ enum cellType {
 class Cell {
 protected:
     static int _n;
+    int _quad_id;
     int _uid;
     int _id;
     cellType _type;
@@ -54,10 +55,13 @@ public:
          int *surfaces);
     virtual ~Cell();
     void addSurface(int surface_id, Surface* surface);
+    void removeSurface(int surface_id);
     void setSurfacePointer(Surface* surface);
     int getUid() const;
     int getId() const;
+    int getQuadId();
     void setId(int id); 
+    void setQuadId(int id);
     cellType getType() const;
     int getUniverse() const;
     int getNumSurfaces() const;
