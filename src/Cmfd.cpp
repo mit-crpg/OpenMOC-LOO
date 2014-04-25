@@ -100,7 +100,7 @@ Cmfd::Cmfd(Geometry* geom, Plotter* plotter, Mesh* mesh,
     if (_run_loo || opts->getAccAfterMOCConverge())
     {
         generateTrack(_i_array, _t_array, _t_arrayb);
-        //checkTrack();
+        checkTrack();
     }
     _num_iter_to_conv = 0;
     _plot_prolongation = opts->plotProlongation();
@@ -2290,6 +2290,8 @@ void Cmfd::normalizeFlux(double normalize)
     return;
 }
 
+// FIXME: does not work for 1D problem!!!!!!! generate negative
+// i_array entry
 void Cmfd::generateTrack(int *i_array, int *t_array, int *t_arrayb)
 {
     int nl, nt, i;
@@ -2400,6 +2402,7 @@ void Cmfd::generateTrack(int *i_array, int *t_array, int *t_arrayb)
 
 void Cmfd::checkTrack()
 {
+    printf("cell indexes:\n");
     for (int iii = 0; iii < _num_loop; iii++)
     {
         for (int jj = 0; jj < _num_track; jj++)
@@ -2407,6 +2410,8 @@ void Cmfd::checkTrack()
         printf("\n");
     }
     printf("\n");
+
+    printf("forward looping track indexes:\n");
     for (int iii = 0; iii < _num_loop; iii++)
     {
         for (int jj = 0; jj < _num_track; jj++)
@@ -2414,6 +2419,8 @@ void Cmfd::checkTrack()
         printf("\n");
     }
     printf("\n");
+
+    printf("backward looping track indexes:\n");
     for (int iii = 0; iii < _num_loop; iii++)
     {
         for (int jj = 0; jj < _num_track; jj++)
@@ -2741,9 +2748,11 @@ void Cmfd::updateFSRScalarFlux(int moc_iter)
                 else 
                 {
                     if (_linear_prolongation && (quad_id > -1) &&
-                        (!cellOnAnyBoundary(i)))
+                        (!onAnyBoundary(i, quad_id)))
                     {
                         int neighbor_cell_id = getNextCellId(i, quad_id);
+                        log_printf(INFO, "cell %d s %d found neibor cell %d\n", 
+                                   i, quad_id, neighbor_cell_id);
                         tmp = 2.0 / 3.0 * flux_ratio[i][e] 
                             + 1.0 / 3.0 * flux_ratio[neighbor_cell_id][e]; 
                     }

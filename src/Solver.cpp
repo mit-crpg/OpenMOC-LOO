@@ -2355,9 +2355,7 @@ double Solver::kernel(int max_iterations) {
         if (moc_iter < 35)
             _cmfd->printCellSource(moc_iter + 1);
 
-
-        /* Alternative: if (_cmfd->getL2Norm() < _moc_conv_thresh) */
-        if (eps_2 < _moc_conv_thresh) 
+        if ((eps_2 < _moc_conv_thresh) && (moc_iter > 2))
         {
 
             _cmfd->printCellSource(1000);

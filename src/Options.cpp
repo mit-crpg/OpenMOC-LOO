@@ -24,7 +24,7 @@ Options::Options(int argc, char **argv)
 {
     /* Default geometry input file */
     _geometry_file = _relative_path + "xml-sample/geometry_4x4.xml";
-    _material_file = _relative_path + "xml-sample/material_1G.xml";
+    _material_file = _relative_path + "xml-sample/material_c5g7.xml";
 	
     /* convergence options */
     _moc_conv_thresh = 1e-10;      /* convergence on MOC sweeps */
@@ -41,7 +41,7 @@ Options::Options(int argc, char **argv)
     _damp_factor = 1.0;
     _boundary_iteration = 0;
     _first_diffusion = true;		/* run diffusion for 1st iter */
-    _num_first_diffusion = 5;           /* number of diffusion iterations */ 
+    _num_first_diffusion = 2;           /* number of diffusion iterations */ 
     _update_boundary = true;            /* update boundary angular flux */
     _reflect_outgoing = true;          /* newest incoming flux during HO MOC */
     _use_up_scattering_xs = true; 
@@ -121,6 +121,12 @@ Options::Options(int argc, char **argv)
                 _acc_after_MOC_converge = true;
                 _first_diffusion = false;
             }
+            else if (strcmp(argv[i], "-lp") == 0 ||
+                     strcmp(argv[i], "--linearprolongation") == 0)
+                _linear_prolongation = true;
+            else if (strcmp(argv[i], "-nlp") == 0 ||
+                     strcmp(argv[i], "--nolinearprolongation") == 0)
+                _linear_prolongation = false;
             else if (strcmp(argv[i], "-pFSR") == 0 ||
                      strcmp(argv[i], "--plotFSRs") == 0)
                 _plot_FSRs = true;
