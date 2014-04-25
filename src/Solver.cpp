@@ -88,6 +88,7 @@ Solver::Solver(Geometry* geom, TrackGenerator* track_generator,
     _log_file = string.str();
 
     _reflect_outgoing = opts->getReflectOutgoing();
+    _plot_FSRs_flag = opts->getPlotFSRsFlag();
 
     _nq = 4;
     
@@ -2413,7 +2414,8 @@ void Solver::plotEverything(int moc_iter)
     if (_compute_powers)
         plotPinPowers();
 
-    _plotter->plotFSRs(_geom->getMesh(), _num_FSRs);
+    if (_plot_FSRs_flag)
+        _plotter->plotFSRs(_geom->getMesh(), _num_FSRs);
 
     /* plot CMFD flux and xs */
     if (_run_cmfd && _plotter->plotCurrent() )

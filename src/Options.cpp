@@ -71,6 +71,7 @@ Options::Options(int argc, char **argv)
 
     /* plotting options */
     _bit_dimension = 1000;		/* y dimension of plots */
+    _plot_FSRs = false;                 /* plot FSR index w/ quadrature ID */
     _plot_specs = false;            	/* plot mat, cell, FSR, track, seg */
     _plot_quad_flux = false;            /* plot quad flux, net current, xs */
     _plot_fluxes = false;		/* plot colors, not values*/
@@ -120,6 +121,9 @@ Options::Options(int argc, char **argv)
                 _acc_after_MOC_converge = true;
                 _first_diffusion = false;
             }
+            else if (strcmp(argv[i], "-pFSR") == 0 ||
+                     strcmp(argv[i], "--plotFSRs") == 0)
+                _plot_FSRs = true;
             else if (strcmp(argv[i], "-ps") == 0 ||
                      strcmp(argv[i], "--plotspecs") == 0)
                 _plot_specs = true;
@@ -386,6 +390,10 @@ bool Options::compressCrossSections(){
  */
 bool Options::cmfd(){
     return _cmfd;
+}
+
+bool Options::getPlotFSRsFlag(){
+    return _plot_FSRs;
 }
 
 /**

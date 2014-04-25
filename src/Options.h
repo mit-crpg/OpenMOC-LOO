@@ -47,6 +47,7 @@ private:
     bool _loo1; //update by psi
     bool _loo2; //update by phi
     bool _acc_after_MOC_converge;
+    bool _plot_FSRs;
     bool _plot_quad_flux;
     bool _plot_current;
     bool _plot_diffusion;
@@ -87,6 +88,7 @@ public:
     bool computePinPowers();
     bool compressCrossSections();
     bool cmfd();
+    bool getPlotFSRsFlag();
     bool plotQuadFlux();
     bool plotCurrent();
     bool plotDiffusion();

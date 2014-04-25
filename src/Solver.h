@@ -87,6 +87,7 @@ private:
     double _l2_norm_conv_thresh;
     double _moc_conv_thresh;
     double computePreFactor(segment* seg, int energyg, int angle);
+    bool _plot_FSRs_flag;
     bool _compute_powers;
     bool _run_cmfd;
     bool _run_loo;
