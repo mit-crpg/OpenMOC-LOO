@@ -67,7 +67,7 @@ Lattice::Lattice(const int id, const int num_x, int num_y,
  * Lattice destructor clears memory for all of its universes
  */
 Lattice::~Lattice() {
-    for (int i=0; i < _num_x; i++){
+    for (int i=0; i < _num_y; i++){
         _universes.at(i).clear();
     }
     _universes.clear();
