@@ -57,6 +57,7 @@ public:
     void setSurfacePointer(Surface* surface);
     int getUid() const;
     int getId() const;
+    void setId(int id); 
     cellType getType() const;
     int getUniverse() const;
     int getNumSurfaces() const;

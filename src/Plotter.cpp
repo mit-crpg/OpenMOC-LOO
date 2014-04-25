@@ -323,6 +323,60 @@ void Plotter::copyFSRMap(int *pixels){
     }
 }
 
+void Plotter::plotFSRs(Mesh *mesh, int numFSRs)
+{
+    log_printf(NORMAL, "plotting FSRs...");
+
+    /* set up bitMap */
+    BitMap<int>* bitMap = new BitMap<int>;
+    bitMap->pixel_x = _bit_length_x;
+    bitMap->pixel_y = _bit_length_y;
+    initialize(bitMap);
+    bitMap->geom_x = _width;
+    bitMap->geom_y = _height;
+    bitMap->color_type = RANDOM;
+
+    double x_global, y_global;
+    int fsrID;
+    std::stringstream text_stream;
+    std::string text;
+    int fresh[numFSRs];
+
+    for (int i = 0; i < numFSRs; i++)
+        fresh[i] = 0;
+
+    /* find meshCell for each pixel */
+    for (int y=0;y < _bit_length_y; y++){
+        for (int x = 0; x < _bit_length_x; x++){
+            x_global = convertToGeometryX(x);
+            y_global = convertToGeometryY(y);
+            LocalCoords point(x_global,y_global);
+            point.setUniverse(0);
+            _geom->findCell(&point);
+            fsrID = _geom->findFSRId(&point);
+            bitMap->pixels[y * _bit_length_x + x] = fsrID;
+            point.prune(); /* Remove all allocated localcoords */
+
+            fresh[fsrID]++;
+            // 30 is a randomly selected number just so that the
+            // numbers are now all crowded in the corners
+            if (fresh[fsrID] == 30) 
+            {
+                /* create string and draw on bitMap */
+                text_stream << fsrID;
+                text = text_stream.str();
+                text_stream.str("");
+                drawText(bitMap, text, x, y + 20);
+                text.clear();
+                //printf("(%d %d) id = %d\n", x, y, fsrID);
+            }
+        }
+    }
+
+    plot(bitMap, "FSRs-id", _extension);
+    deleteBitMap(bitMap);
+    return;
+}
 /* plot CMFD mesh */
 void Plotter::plotCMFDMesh(Mesh* mesh){
     log_printf(NORMAL, "plotting CMFD mesh...");
@@ -514,8 +568,6 @@ void Plotter::plotNetCurrents_small(Mesh* mesh, int moc_iter)
             text_stream.str("");
             drawText(bitMap2, text, x_mid - 20, y_mid + 15);
             text.clear();
-
-
         }
     }
     std::stringstream string, string2;
@@ -907,7 +959,7 @@ void Plotter::plotMeshCells(Mesh* mesh)
     }
 
     std::stringstream string;
-    string << "mesh-cell-index";
+    string << "cell-id";
     std::string title_str = string.str();
 
     /* create filename with correct extension */

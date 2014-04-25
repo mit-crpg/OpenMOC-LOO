@@ -141,7 +141,6 @@ double Mesh::getHeight(){
 }
 
 void Mesh::setCellBounds(){
-
     double x, y = _height / 2.0;
 
     /* loop over MeshCells and set bounds */
@@ -156,8 +155,8 @@ void Mesh::setCellBounds(){
 
 }
 
-void Mesh::setFSRBounds(boundaryType left, boundaryType right, boundaryType bottom, boundaryType top){
-
+void Mesh::setFSRBounds(boundaryType left, boundaryType right, 
+                        boundaryType bottom, boundaryType top){
     _fsr_indices = new int        [2 * _cell_width * _cell_height];
     _cell_bounds = new double     [4* _cell_width * _cell_height];
     _surfaces =  new MeshSurface *[8 * _cell_width * _cell_height];
@@ -171,7 +170,8 @@ void Mesh::setFSRBounds(boundaryType left, boundaryType right, boundaryType bott
         max = _cells[i].getFSRs()->front();
 
         std::vector<int>::iterator iter;
-        for (iter = _cells[i].getFSRs()->begin(); iter != _cells[i].getFSRs()->end(); ++iter) {
+        for (iter = _cells[i].getFSRs()->begin(); 
+             iter != _cells[i].getFSRs()->end(); ++iter) {
             fsr = *iter;
             min = std::min(fsr, min);
             max = std::max(fsr, max);

@@ -162,6 +162,7 @@ public:
     void zeroVacuumBoundaries();
 
     /* getters and setters */
+    int getNumFSRs();
     double** getFSRtoFluxMap();
     double getEps(Mesh* mesh, double keff, double renorm_factor);
     FlatSourceRegion* getFSRs();

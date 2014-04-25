@@ -130,6 +130,10 @@ int Cell::getId() const {
     return _id;
 }
 
+void Cell::setId(int id) {
+    _id = id;
+}
+
 
 /**
  * Return the cell type (FILL or MATERIAL)	Cell();

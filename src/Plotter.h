@@ -67,6 +67,7 @@ public:
     int convertToPixelX(double x);
     int convertToPixelY(double y);
     void plotMeshCells(Mesh *mesh);
+    void plotFSRs(Mesh *mesh, int numFSRs);
     void plotNetCurrents(Mesh* mesh, int moc_iter);
     void plotNetCurrents_small(Mesh* mesh, int moc_iter);
     void plotQuadFlux(Mesh* mesh, int iter_num);

@@ -2413,7 +2413,7 @@ void Solver::plotEverything(int moc_iter)
     if (_compute_powers)
         plotPinPowers();
 
-    _plotter->plotMeshCells(_geom->getMesh());
+    _plotter->plotFSRs(_geom->getMesh(), _num_FSRs);
 
     /* plot CMFD flux and xs */
     if (_run_cmfd && _plotter->plotCurrent() )
@@ -2697,8 +2697,9 @@ void Solver::checkNeutronBalanceWithDs()
 
 
 FlatSourceRegion* Solver::getFSRs(){
-
     return _flat_source_regions;
 }
 
-
+int Solver::getNumFSRs(){
+    return _num_FSRs;
+}
