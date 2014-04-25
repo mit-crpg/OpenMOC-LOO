@@ -35,6 +35,7 @@ private:
     double _k_guess;
     double _damp_factor;
     double _num_first_diffusion;
+    bool _linear_prolongation;
     bool _dump_geometry;
     bool _plot_specs;
     bool _plot_fluxes;
@@ -105,6 +106,7 @@ public:
     bool getUpdateBoundary();
     bool getReflectOutgoing();
     bool getUseUpScatteringXS();
+    bool getLinearProlongationFlag();
 };
 
 #endif

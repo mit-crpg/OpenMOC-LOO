@@ -47,6 +47,7 @@ Cmfd::Cmfd(Geometry* geom, Plotter* plotter, Mesh* mesh,
     _ch = _mesh->getCellHeight();
 
     _damp_factor = opts->getDampFactor();
+    _linear_prolongation = opts->getLinearProlongationFlag();
 
     _run_cmfd = false;
     if (opts->getCmfd())
@@ -683,7 +684,7 @@ void Cmfd::computeXS()
     return;
 }
 
-int Cmfd::getNextCellID(int i, int s)
+int Cmfd::getNextCellId(int i, int s)
 {
     int inext; 
     assert(s >= 0);
@@ -703,7 +704,7 @@ int Cmfd::getNextCellID(int i, int s)
     return inext;
 }
 
-int Cmfd::getNextCellSurfaceID(int s)
+int Cmfd::getNextCellSurfaceId(int s)
 {
     assert(s >=0);
     assert(s < 4);
@@ -773,8 +774,8 @@ void Cmfd::computeDs(int moc_iter)
                 }
                 else
                 {
-                    meshCellNext = _mesh->getCells(getNextCellID(i, s));
-                    s_next = getNextCellSurfaceID(s);
+                    meshCellNext = _mesh->getCells(getNextCellId(i, s));
+                    s_next = getNextCellSurfaceId(s);
                     d_next = meshCellNext->getDiffusion()[e];
                     flux_next = meshCellNext->getOldFlux()[e];
                     f_next = computeDiffCorrect(d_next, vol / l);
@@ -2122,6 +2123,20 @@ bool Cmfd::surfaceOnReflectiveBoundary(int i, int s)
     return false;
 }
 
+bool Cmfd::cellOnAnyBoundary(int i)
+{
+    if (i % _cw == 0)
+        return true;
+    if (i >= _cw * (_ch - 1))
+        return true;
+    if ((i + 1) % _cw == 0)
+        return true;
+    if (i < _cw)
+        return true;
+    return false;
+}
+
+
 bool Cmfd::onAnyBoundary(int i, int surf_id)
 {
     if ((surf_id == 0) && (i % _cw == 0))
@@ -2666,11 +2681,11 @@ void Cmfd::updateFSRScalarFlux(int moc_iter)
     /* initialize variables */
     MeshCell* meshCell;
     FlatSourceRegion* fsr;
-    double old_flux, new_flux;
-    double* flux;
-    double *CMCO = NULL;
+    double old_flux, new_flux, max = 0, tmp_max = 0, tmp = 0; 
+    double *flux, *CMCO = NULL;
+    double flux_ratio[_cw * _ch][_ng];
     CMCO = new double[_cw * _ch];
-    int i, e;
+    int i, e, max_i = 0, max_e = 0;
     std::vector<int>::iterator iter;
     double under_relax = 1.0;
 	
@@ -2681,66 +2696,62 @@ void Cmfd::updateFSRScalarFlux(int moc_iter)
     double max_range = INFINITY, min_range = -INFINITY;
     //double max_range = 1.05, min_range = 0.05; 
 
-    double max = 0; 
-    int max_i = 0, max_e = 0; 
-
-    double tmp_max = 0, tmp_cmco;
-
     for (i = 0; i < _cw * _ch; i++)
     {
         meshCell = _mesh->getCells(i);
-
         CMCO[i] = 0.0;
         for (e = 0; e < _ng; e++)
         {
             old_flux = meshCell->getOldFlux()[e];
             new_flux = meshCell->getNewFlux()[e];
+            flux_ratio[i][e] = new_flux / old_flux;
 
-            tmp_cmco = new_flux / old_flux;
-
-            // Safety precaution: if negative number shows up, force it to zero
-            /*
-            if (tmp_cmco < 0)
-            {
-                log_printf(WARNING, " iter %d update cell %d energy %d with"
-                           " %f / %f = %f", moc_iter, i, e, 
-                           new_flux, old_flux, tmp_cmco);
-                tmp_cmco = 0;
-            }
-            */
-
-            tmp_max = fabs(new_flux / old_flux - 1.0);
+            tmp_max = fabs(flux_ratio[i][e] - 1.0);
             CMCO[i] += tmp_max;
 
+            // clamping 
+            if (flux_ratio[i][e] > max_range)
+                flux_ratio[i][e] = max_range;
+            else if (flux_ratio[i][e] < min_range)
+                flux_ratio[i][e] = min_range;
+            
             if (tmp_max > max)
             {
                 max = tmp_max;
                 max_i = i;
                 max_e = e;
             }
+        }
+    }
 
-            log_printf(DEBUG, "Flux prolongation for cell %d"
-                       " old =  %f, new = %f, new/old = %f", 
-                       i, old_flux, new_flux, tmp_cmco);
-
-            /* loop over FRSs in mesh cell */
+    for (i = 0; i < _cw * _ch; i++)
+    {
+        meshCell = _mesh->getCells(i);
+        for (e = 0; e < _ng; e++)
+        {
             for (iter = meshCell->getFSRs()->begin(); 
                  iter != meshCell->getFSRs()->end(); ++iter) 
             {
                 fsr = &_flat_source_regions[*iter];
                 flux = fsr->getFlux();
+                int quad_id = fsr->getQuadId();
 
-                if (moc_iter == 0)
+                if ((moc_iter < _num_first_diffusion) && _first_diffusion)
                     fsr->setFlux(e, new_flux);
-                else
+                else 
                 {
-                    if (tmp_cmco > max_range)
-                        tmp_cmco = max_range;
-                    else if (tmp_cmco < min_range)
-                        tmp_cmco = min_range;
-                    
-                    fsr->setFlux(e, under_relax * tmp_cmco * flux[e]
-                                 + (1.0 - under_relax) * flux[e]);
+                    if (_linear_prolongation && (quad_id > -1) &&
+                        (!cellOnAnyBoundary(i)))
+                    {
+                        int neighbor_cell_id = getNextCellId(i, quad_id);
+                        tmp = 2.0 / 3.0 * flux_ratio[i][e] 
+                            + 1.0 / 3.0 * flux_ratio[neighbor_cell_id][e]; 
+                    }
+                    else
+                        tmp = flux_ratio[i][e];
+
+                    fsr->setFlux(e, (under_relax * tmp + 1.0 - under_relax) 
+                                 * flux[e]);
                 }
             }
         } /* exit looping over energy */
@@ -3144,7 +3155,7 @@ void Cmfd::storePreMOCMeshSource(FlatSourceRegion* fsrs)
     return;
 }
 
-/* set pointer to array of fsrs, give each fsr the ID of the mesh cell it is in
+/* set pointer to array of fsrs, give each fsr the Id of the mesh cell it is in
  * @param pointer to arrary of fsrs
  */
 void Cmfd::setFSRs(FlatSourceRegion* fsrs)

@@ -31,6 +31,7 @@ Options::Options(int argc, char **argv)
     _l2_norm_conv_thresh = 1e-10; /* convergence on acceleration iteration */
 
     /* most important acceleration options */
+    _linear_prolongation = true;
     _acc_after_MOC_converge = false;
     _run_all = false;
     _cmfd = false; 					
@@ -535,4 +536,9 @@ bool Options::getReflectOutgoing()
 bool Options::getUseUpScatteringXS()
 {
     return _use_up_scattering_xs;
+}
+
+bool Options::getLinearProlongationFlag()
+{
+    return _linear_prolongation;
 }

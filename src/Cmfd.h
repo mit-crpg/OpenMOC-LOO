@@ -86,6 +86,7 @@ private:
     double _spacing;
     double *_cell_source;
     double *_fsr_source;
+    bool _linear_prolongation;
     bool _acc_after_MOC_converge;
     bool _use_diffusion_correction;
     bool _run_loo;
@@ -142,8 +143,8 @@ public:
     int createAMPhi(PetscInt size1, PetscInt size2, int cells);
     void setFSRs(FlatSourceRegion *fsrs);
     void setTracks(Track **tracks);
-    int getNextCellID(int i, int s);
-    int getNextCellSurfaceID(int s);
+    int getNextCellId(int i, int s);
+    int getNextCellSurfaceId(int s);
     int convertOutwardToCoordinate(int s);
     int computeCmfdL2Norm(Vec snew, int moc_iter);
     void updateBoundaryFluxByScalarFlux(int moc_iter);
@@ -181,6 +182,7 @@ public:
     void updateOldQuadFlux();
     void computeLooL2Norm(int moc_iter);
     bool onAnyBoundary(int i, int surf_id);
+    bool cellOnAnyBoundary(int i);
     bool cellOnVacuumBoundary(int i);
     bool cellOnReflectiveBoundary(int i);
     bool surfaceOnVacuumBoundary(int i, int surf);
