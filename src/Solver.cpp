@@ -674,6 +674,7 @@ void Solver::prolongation(int moc_iter)
                            "prolongation: by scalar flux",
                            moc_iter);
                 _cmfd->updateBoundaryFluxByScalarFlux(moc_iter);
+                //_cmfd->updateBoundaryFluxByNetCurrent(moc_iter);
             }
         }
     }

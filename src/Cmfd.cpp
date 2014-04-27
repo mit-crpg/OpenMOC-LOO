@@ -100,7 +100,7 @@ Cmfd::Cmfd(Geometry* geom, Plotter* plotter, Mesh* mesh,
     if (_run_loo || opts->getAccAfterMOCConverge())
     {
         generateTrack(_i_array, _t_array, _t_arrayb);
-        checkTrack();
+        //checkTrack();
     }
     _num_iter_to_conv = 0;
     _plot_prolongation = opts->plotProlongation();
@@ -2695,7 +2695,8 @@ void Cmfd::updateFSRScalarFlux(int moc_iter)
     int i, e, max_i = 0, max_e = 0;
     std::vector<int>::iterator iter;
     double under_relax = 1.0;
-	
+    double update_ratio = 2.0/3.0; // on current cell
+
     /* only apply damping here for LOO, because CMFD damps Dtilde */
     if (_run_loo)
         under_relax = _damp_factor;
@@ -2753,8 +2754,8 @@ void Cmfd::updateFSRScalarFlux(int moc_iter)
                         int neighbor_cell_id = getNextCellId(i, quad_id);
                         log_printf(INFO, "cell %d s %d found neibor cell %d\n", 
                                    i, quad_id, neighbor_cell_id);
-                        tmp = 2.0 / 3.0 * flux_ratio[i][e] 
-                            + 1.0 / 3.0 * flux_ratio[neighbor_cell_id][e]; 
+                        tmp = update_ratio * flux_ratio[i][e] 
+                            + (1.0 - update_ratio) * flux_ratio[neighbor_cell_id][e]; 
                     }
                     else
                         tmp = flux_ratio[i][e];
