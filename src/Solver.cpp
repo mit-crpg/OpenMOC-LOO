@@ -2239,7 +2239,10 @@ double Solver::runLoo(int moc_iter)
     _k_half = computeKeff(100);
 
     _cmfd->computeXS();
-			 
+
+    if (moc_iter == 10000)
+        checkNeutronBalance();
+
     if ((moc_iter < _num_first_diffusion) && _first_diffusion)
     {
         _cmfd->computeDs(moc_iter);
@@ -2499,7 +2502,8 @@ void Solver::printToLog(int moc_iter)
 
 /*
  * check neutron balance in each mesh cell assuming reflective outter
- * boundary condition FIXME: need to update to include vacuum BC. 
+ * boundary condition 
+ // FIXME: need to update to include vacuum BC. 
  */
 void Solver::checkNeutronBalance()
 {

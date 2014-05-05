@@ -1969,7 +1969,7 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
         log_printf(DEBUG, "normalize_factor = %.10f", normalize_factor);
 
         /* FIXME: should or should not normalize leak_tot? */
-        //leak_tot *= normalize_factor;
+        leak_tot *= normalize_factor;
 
         double net_current_tot = 0;
         for (int i = 0; i < _cw * _ch; i++)
