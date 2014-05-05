@@ -102,6 +102,7 @@ private:
     bool _plot_flux;
     bool _reflect_outgoing;
     bool _use_up_scattering_xs;
+    bool _linear_prolongation;
     void precomputeFactors();
     void initializeFSRs();
 

@@ -70,8 +70,6 @@ Cmfd::Cmfd(Geometry* geom, Plotter* plotter, Mesh* mesh,
     VecCreateSeq(PETSC_COMM_WORLD, size1, &_phi_new);
     VecDuplicate(_phi_new, &_source_old);
 
-
-
     _run_loo = false;
     _run_loo_psi = false;
     _run_loo_phi = false;
@@ -837,6 +835,7 @@ void Cmfd::computeDs(int moc_iter)
             }
         }
     }
+
     return;
 }
 
@@ -1648,8 +1647,9 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
             quad_xs[i][e] = meshCell->getSigmaT()[e];
             tau[i][e] = quad_xs[i][e] * meshCell->getATL();
             expo[i][e] = exp(-tau[i][e]);
+            // the power here is really volume-integrated! 
             old_power[i] +=  meshCell->getNuSigmaF()[e] 
-                * meshCell->getOldFlux()[e];
+                * meshCell->getOldFlux()[e] * meshCell->getVolume();
             meshCell->setNewFlux(meshCell->getOldFlux()[e], e);
         }
         for (int t = 0; t < 8 * _ng; t++)
@@ -2744,7 +2744,7 @@ void Cmfd::updateFSRScalarFlux(int moc_iter)
                 flux = fsr->getFlux();
                 int quad_id = fsr->getQuadId();
 
-                if ((moc_iter < _num_first_diffusion) && _first_diffusion)
+                if ((moc_iter < 1) && _first_diffusion)
                     fsr->setFlux(e, new_flux);
                 else 
                 {

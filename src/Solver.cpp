@@ -47,6 +47,7 @@ Solver::Solver(Geometry* geom, TrackGenerator* track_generator,
     _boundary_iteration = opts->getBoundaryIteration();
     _update_boundary = opts->getUpdateBoundary();
     _use_up_scattering_xs = opts->getUseUpScatteringXS();
+    _linear_prolongation = opts->getLinearProlongationFlag();
 
     _geometry_file = opts->getGeometryFile();
     _geometry_file_no_slash = opts->getGeometryFile();
@@ -62,7 +63,6 @@ Solver::Solver(Geometry* geom, TrackGenerator* track_generator,
     string << _geometry_file_no_slash << "_" << (_num_azim*2) 
            << "_" << std::fixed 
            << std::setprecision(2) <<  _track_spacing
-        //<< "_bi_" << _boundary_iteration
            << "_"
            << std::setprecision(1) << _damp_factor;
 
@@ -75,6 +75,11 @@ Solver::Solver(Geometry* geom, TrackGenerator* track_generator,
         string << "_upscat";
     else
         string << "_noupsc";
+
+    if (_linear_prolongation)
+        string << "_lp";
+    else
+        string << "_np";
 
     if (_run_cmfd)
         string << "_cmfd.txt";
@@ -139,9 +144,9 @@ Solver::Solver(Geometry* geom, TrackGenerator* track_generator,
         log_printf(NORMAL, "Acceleration on:"
                    " upscattering = %d, boundary iteration = %d,"
                    " damping = %.2f, update boundary flux = %d,"
-                   " reflect outgoing = %d", 
-                   _use_up_scattering_xs, _boundary_iteration, 
-                   _damp_factor, _update_boundary, _reflect_outgoing);
+                   " reflect outgoing = %d, linear prolongation = %d", 
+                   _use_up_scattering_xs, _boundary_iteration, _damp_factor,
+                   _update_boundary, _reflect_outgoing, _linear_prolongation);
     }
 
     _pin_powers.assign(_ch * _cw, 1.0);
@@ -2110,7 +2115,10 @@ void Solver::normalizeFlux(double moc_iter)
     /* This block normalizes tallied current on each surface. To get
      * geometry_2x2.xml with 2 vacuum BC to converge, the tallied
      * current cannot be normalized */
-    if ((_run_cmfd) && !(_acc_after_MOC_converge))
+    /* It is important that the case of running diffusion at first
+     couple iterations is handled */
+    if (((_run_cmfd) && !(_acc_after_MOC_converge)) || 
+        (_first_diffusion && (moc_iter < _num_first_diffusion)))
     {
         int ng = NUM_ENERGY_GROUPS;
         MeshCell *meshCell;
@@ -2390,7 +2398,7 @@ double Solver::kernel(int max_iterations) {
             return _k_eff;
         }
         /* FIXME: this is an arbitrary number */
-        else if (eps_2 > 1e3) 
+        else if (eps_2 > 1e10) 
         {
             printToMinimumLog(moc_iter);
             plotEverything(moc_iter);
