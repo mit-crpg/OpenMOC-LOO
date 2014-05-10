@@ -17,9 +17,12 @@
 <!-- Definition of Lattices -->
   <lattice id="5">
     <type>rectangular</type>
-    <dimension>80 1</dimension>
+    <dimension>80 4</dimension>
     <width>1.26 1.26</width>
     <universes>
+      1 2 1 2 1 2 1 2 1 2 1 2 1 2 1 2 1 2 1 2 1 2 1 2 1 2 1 2 1 2 1 2 1 2 1 2 1 2 1 2  1 2 1 2 1 2 1 2 1 2 1 2 1 2 1 2 1 2 1 2 1 2 1 2 1 2 1 2 1 2 1 2 1 2 1 2 1 2 1 2 
+      1 2 1 2 1 2 1 2 1 2 1 2 1 2 1 2 1 2 1 2 1 2 1 2 1 2 1 2 1 2 1 2 1 2 1 2 1 2 1 2  1 2 1 2 1 2 1 2 1 2 1 2 1 2 1 2 1 2 1 2 1 2 1 2 1 2 1 2 1 2 1 2 1 2 1 2 1 2 1 2 
+      1 2 1 2 1 2 1 2 1 2 1 2 1 2 1 2 1 2 1 2 1 2 1 2 1 2 1 2 1 2 1 2 1 2 1 2 1 2 1 2  1 2 1 2 1 2 1 2 1 2 1 2 1 2 1 2 1 2 1 2 1 2 1 2 1 2 1 2 1 2 1 2 1 2 1 2 1 2 1 2 
       1 2 1 2 1 2 1 2 1 2 1 2 1 2 1 2 1 2 1 2 1 2 1 2 1 2 1 2 1 2 1 2 1 2 1 2 1 2 1 2  1 2 1 2 1 2 1 2 1 2 1 2 1 2 1 2 1 2 1 2 1 2 1 2 1 2 1 2 1 2 1 2 1 2 1 2 1 2 1 2 
     </universes>
   </lattice>
@@ -27,7 +30,7 @@
 <!-- Definition of Surfaces -->
   <surface id="1" type="x-plane" coeffs="-50.4" boundary="reflective"/>
   <surface id="2" type="x-plane" coeffs="50.4"  boundary="reflective"/>
-  <surface id="3" type="y-plane" coeffs="-0.63" boundary="reflective" />
-  <surface id="4" type="y-plane" coeffs="0.63"  boundary="reflective"/>
+  <surface id="3" type="y-plane" coeffs="-2.52" boundary="reflective" />
+  <surface id="4" type="y-plane" coeffs="2.52"  boundary="reflective"/>
   <surface id="5" type="circle" coeffs="0.0 0.0 0.53"/>
 </geometry>
