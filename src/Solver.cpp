@@ -655,31 +655,27 @@ void Solver::prolongation(int moc_iter)
 {
     if (moc_iter > -10) //47 (2x2_leakage) 79 (2x2) 229 (4x4_leakage) 
     {
-        log_printf(DEBUG, " iter %d scalar flux prolongation", moc_iter);
         _cmfd->updateFSRScalarFlux(moc_iter);
 
         if (_update_boundary)
         {
-            /* standard LOO update */
-            if (_run_loo && 
-                (!(_first_diffusion && (moc_iter < _num_first_diffusion))))
+            if (_first_diffusion && (moc_iter < _num_first_diffusion))
+                _cmfd->updateBoundaryFluxByScalarFlux(moc_iter);
+            else if (_run_loo)
             {
                 log_printf(DEBUG, " iter %d boundary angular flux "
-                           "prolongation: by quadrature",
-                           moc_iter);
+                           "prolongation: by quadrature", moc_iter);
                 updateBoundaryFluxByQuadrature(moc_iter);
                 //_cmfd->updateBoundaryFluxByScalarFlux(moc_iter);
-                //_cmfd->updateBoundaryFluxBySrc(moc_iter);
-                //_cmfd->updateBoundaryFluxByNetCurrent(moc_iter);
             }
-            /* first diffusion step or standard CMFD */
+            /* standard CMFD */
             else 
             {
                 log_printf(DEBUG, " iter %d boundary angular flux "
                            "prolongation: by scalar flux",
                            moc_iter);
                 _cmfd->updateBoundaryFluxByScalarFlux(moc_iter);
-                //_cmfd->updateBoundaryFluxByNetCurrent(moc_iter);
+                //_cmfd->updateBoundaryFluxByPartialCurrent(moc_iter);
             }
         }
     }
@@ -2311,7 +2307,7 @@ double Solver::kernel(int max_iterations) {
     initializeTrackFluxes(1.0);
     normalizeFlux(0);
     updateSource(0);
-    initializeTrackFluxes(0);//ONE_OVER_FOUR_PI);
+    initializeTrackFluxes(ONE_OVER_FOUR_PI);
 
     _cmfd->setCellSource(_cmfd->computeCellSourceFromFSR(0));
     _cmfd->printCellSource(0);

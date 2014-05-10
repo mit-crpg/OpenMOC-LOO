@@ -1801,8 +1801,7 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
                 if (initial_flux > 1e-10)
                 {
                     log_printf(DEBUG, "  Energy %d, loop %d, fwd, %f -> %f,"
-                               " %e",
-                               e, j, initial_flux, flux, 
+                               " %e", e, j, initial_flux, flux, 
                                flux / initial_flux - 1.0);
                 }
             } /* exit this loop j */
@@ -1977,7 +1976,7 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
             for (int e = 0; e < _ng; e++)
             {
                 net_current_tot += net_current[i][e];
-                //net_current[i][e] *= normalize_factor;
+                net_current[i][e] *= normalize_factor;
                 _mesh->getCells(i)->setNetCurrent(net_current[i][e], e);
             }
         }
@@ -2755,7 +2754,8 @@ void Cmfd::updateFSRScalarFlux(int moc_iter)
                         log_printf(INFO, "cell %d s %d found neibor cell %d\n", 
                                    i, quad_id, neighbor_cell_id);
                         tmp = update_ratio * flux_ratio[i][e] 
-                            + (1.0 - update_ratio) * flux_ratio[neighbor_cell_id][e]; 
+                            + (1.0 - update_ratio) 
+                            * flux_ratio[neighbor_cell_id][e]; 
                     }
                     else
                         tmp = flux_ratio[i][e];
@@ -2894,7 +2894,7 @@ void Cmfd::updateBoundaryFluxByScalarFlux(int moc_iter)
     return;
 }
 
-void Cmfd::updateBoundaryFluxByNetCurrent(int moc_iter)
+void Cmfd::updateBoundaryFluxByPartialCurrent(int moc_iter)
 {
     Track *track;
     segment *seg;

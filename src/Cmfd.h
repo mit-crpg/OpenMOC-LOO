@@ -177,7 +177,7 @@ public:
     double computeLooFluxPower(int moc_iter, double k);
     double computeNormalization();
     void normalizeFlux(double normalize_factor);
-    void updateBoundaryFluxByNetCurrent(int moc_iter);
+    void updateBoundaryFluxByPartialCurrent(int moc_iter);
     void updateBoundaryFluxBySrc(int moc_iter);
     void updateOldQuadFlux();
     void computeLooL2Norm(int moc_iter);
