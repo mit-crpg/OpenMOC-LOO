@@ -408,7 +408,8 @@ void Material::checkSigmaT()
         for (int j=0; j < NUM_ENERGY_GROUPS; j++)
             calc_sigma_s -= _sigma_s[j][i];            
 
-        if (calc_sigma_s > 1e-3)
+        /* prints out the adjustment */
+        if (fabs(calc_sigma_s) > 1e-3)
         {
             log_printf(NORMAL, " material %d energy %d xs offset %e, "
                        "adjust in-group scattering", _id, i, calc_sigma_s);
