@@ -636,7 +636,7 @@ void Cmfd::computeXS()
                 meshCell->setSigmaA(abs_tally_group / rxn_tally_group, e);
                 meshCell->setSigmaT(tot_tally_group / rxn_tally_group, e);
                 meshCell->setNuSigmaF(nu_fis_tally_group / rxn_tally_group, e);
-                meshCell->setDiffusion(dif_tally_group / rxn_tally_group, e);
+                meshCell->setDiffusion(1.0 / 3.0 / meshCell->getSigmaT()[e] , e);
                 meshCell->setOldFlux(rxn_tally_group / vol_tally_group, e);
                 meshCell->setSrc(src_tally_group / vol_tally_group, e);
 
