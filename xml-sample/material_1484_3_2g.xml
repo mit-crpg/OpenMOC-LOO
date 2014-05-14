@@ -1,0 +1,59 @@
+<?xml version="1.0"?>
+<materials>
+
+<!-- Two group fictitious cross sections -->
+
+<!-- material: REG. 1  -->
+<material id="1" energy="2"
+          sigma_a =" 2.6561E-02  2.8133E-01"
+          sigma_t ="2.9087e-01 6.3048e-01"
+          sigma_f ="7.5289E-03 2.0591E-01"
+          nu_sigma_f="1.9404E-02 5.0174E-01"
+          chi ="1.0 0.0"
+          sigma_s ="2.6417E-01 6.6691E-04
+                    0.0000E+00 3.8608E-01"
+          />
+
+<!-- material: REG. 2 -->
+<material id="2" energy="2"
+          sigma_a ="5.4046E-04  9.4995E-05"
+          sigma_t ="1.6390e-04 1.0406e-04"
+          sigma_f ="0.0000E+00  0.0000E+00"
+          nu_sigma_f="0.0000E+00  0.0000E+00"
+          chi ="1.0 0.0"
+          sigma_s ="1.6241E-04 1.4789E-06
+                    0.0000E+00 1.0517E-04"
+          />
+
+<!-- material: REG. 3 -->
+<material id="3" energy="2"
+          sigma_a ="9.4339E-04  1.0664E-02"
+          sigma_t ="1.0929e-01 9.7054e-02"
+          sigma_f ="0.0000E+00  0.0000E+00"
+          nu_sigma_f="0.0000E+00  0.0000E+00"
+          chi ="1.0 0.0"
+          sigma_s ="1.0870E-01 1.9056E-04
+                    0.0000E+00 8.7064E-02"
+                    
+          />
+
+<!-- material: water REG. 6 -->
+<material id="4" energy="2"
+          sigma_a ="1.3617E-03  3.8081E-02"
+          sigma_t ="2.6890e-01 1.5975e+00"
+          sigma_f ="0.0000E+00  0.0000E+00"
+          nu_sigma_f="0.0000E+00  0.0000E+00"
+          chi ="1.0 0.0"
+          sigma_s ="2.2694E-01 4.1135E-02
+                    0.0000E+00 2.0429E+00"/>
+    
+<!-- material: water REG. 6 -->
+<material id="5" energy="2"
+          sigma_a ="1.4179E-03 4.0631E-02"
+          sigma_t ="2.7457e-01 1.7159e+00"
+          sigma_f ="0.0000E+00  0.0000E+00"
+          nu_sigma_f="0.0000E+00  0.0000E+00"
+          chi ="1.0 0.0"
+          sigma_s ="2.2694E-01 4.6724E-02
+                    0.0000E+00 2.1735E+00"/>
+</materials>
