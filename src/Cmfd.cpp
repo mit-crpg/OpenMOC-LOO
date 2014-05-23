@@ -315,6 +315,7 @@ double Cmfd::computeCellSourceNormGivenTwoSources_old(double *old_cell_source,
         l2_norm /= (double) (counter);
     else
         log_printf(ERROR, "no positive pin source");
+ 
     l2_norm = sqrt(l2_norm);
 
     delete [] source_residual;
@@ -1588,7 +1589,7 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
 
     /* we set min_outer to make sure the low order system's
      * convergence criteria is sufficiently tight */ 
-    int min_outer = 300;
+    int min_outer = 50;
 
     if (moc_iter == 10000)
     {
@@ -2991,12 +2992,14 @@ double Cmfd::computeDiffCorrect(double d, double h){
         return 1.0;
 
     double alpha, mu, expon;
-    double rho, F;
+    double rho, F, ratio;
     rho = 0.0;
     for (int p = 0; p < NUM_POLAR_ANGLES; p++){
         mu = std::cos(std::asin(_quad->getSinTheta(p)));
-        expon = exp(- h / (3 * d * mu));
-        alpha = (1 + expon) / (1 - expon) - 2 * mu / h;
+        ratio = h / (3.0 * d * mu);
+        expon = exp(- ratio); 
+        alpha = (1 + expon) / (1 - expon) - 2 / ratio; 
+        //alpha = (1 + expon) / (1 - expon) - 2.0 / (1 - 2 * exp(-1) + ratio * exp(-1));
         rho += mu * _quad->getWeight(p) * alpha;
     }
     

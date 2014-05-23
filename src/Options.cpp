@@ -27,7 +27,7 @@ Options::Options(int argc, char **argv)
     _material_file = _relative_path + "xml-sample/material_c5g7.xml";
 	
     /* convergence options */
-    _moc_conv_thresh = 1e-10;      /* convergence on MOC sweeps */
+    _moc_conv_thresh = 1e-5;      /* convergence on MOC sweeps */
     _l2_norm_conv_thresh = 1e-10; /* convergence on acceleration iteration */
 
     /* most important acceleration options */
