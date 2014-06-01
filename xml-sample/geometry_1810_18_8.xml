@@ -1,0 +1,131 @@
+<?xml version="1.0"?>
+
+<!-- B&W core 1 test problem approximate as 21x21 -->
+
+<geometry>
+
+  <!-- Definition of Full Core -->
+  <cell id="1" universe="0" fill="5" surfaces="1 -2 3 -4" />
+
+  <!-- Definition of Fuel Cells (outer zone) -->
+  <cell id="11" universe="1" material="1" surfaces="-5" sectors="4"/>
+  <cell id="12" universe="1" material="2" surfaces="5 -6" sectors="4"/>
+  <cell id="13" universe="1" material="3" surfaces="6 -7" sectors="4"/>
+  <cell id="14" universe="1" material="4" surfaces="7 -8" sectors="8"/>
+  <cell id="15" universe="1" material="4" surfaces="8" sectors="8"/>
+
+ <!-- Definition of Fuel Cells (inner zone) -->
+  <cell id="61" universe="6" material="12" surfaces="-30" sectors="4"/>
+  <cell id="62" universe="6" material="13" surfaces="30 -31" sectors="4"/>
+  <cell id="63" universe="6" material="4" surfaces="31, -8" sectors="8"/>
+  <cell id="64" universe="6" material="4" surfaces="8" sectors="8"/>
+
+  <!-- Definition of Water Cells -->
+  <cell id="21" universe="2" material="4" surfaces="-5" sectors="4"/>
+  <cell id="22" universe="2" material="4" surfaces="5 -6" sectors="4"/>
+  <cell id="23" universe="2" material="4" surfaces="6 -7" sectors="4"/>
+  <cell id="24" universe="2" material="4" surfaces="7 -8" sectors="8"/>
+  <cell id="25" universe="2" material="4" surfaces="8" sectors="8"/>
+
+  <!-- NOT USED IN THIS CASE Definition of B4C rods: B4C, CAN, MOD -->
+  <cell id="31" universe="3" material="11" surfaces="-20" sectors="4"/>
+  <cell id="32" universe="3" material="3" surfaces="20 -21" sectors="4"/>
+  <cell id="33" universe="3" material="4" surfaces="21 -7" sectors="4"/>
+  <cell id="34" universe="3" material="4" surfaces="7 -8" sectors="8"/>
+  <cell id="35" universe="3" material="4" surfaces="8" sectors="8"/>
+
+  <!-- Definition of Water Cells -->
+  <cell id="41" universe="4" material="5" surfaces="-10" sectors="4"/>
+  <cell id="42" universe="4" material="6" surfaces="10 -11" sectors="4"/>
+  <cell id="43" universe="4" material="7" surfaces="11 -12" sectors="4"/>
+  <cell id="44" universe="4" material="8" surfaces="12 -13" sectors="4"/>
+  <cell id="45" universe="4" material="7" surfaces="13 -14" sectors="4"/>
+  <cell id="46" universe="4" material="4" surfaces="14" sectors="8"/>
+
+
+<!-- Definition of Lattices 25 fuel, then 10 water -->
+  <lattice id="5">
+    <type>rectangular</type>
+    <dimension>51 51</dimension>
+    <width>1.636 1.636</width>
+    <universes>
+      4 6 6 6 6 6 6 6   6 6 6 6 6 6 6 2 2 1 1 1 1 1 1   1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1   2 2 2 2 2 2 2 2 2 2      
+      6 6 6 6 6 6 6 6   6 6 6 6 6 6 6 6 1 1 1 1 1 1 1   1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1   2 2 2 2 2 2 2 2 2 2       
+      6 6 6 6 6 6 6 6   6 6 6 6 6 6 6 6 1 1 1 1 1 1 1   1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1   2 2 2 2 2 2 2 2 2 2       
+      6 6 6 2 2 6 6 6   6 6 6 2 2 6 6 6 1 1 1 2 2 1 1   1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1   2 2 2 2 2 2 2 2 2 2       
+      6 6 6 2 2 6 6 6   6 6 6 2 2 6 6 6 1 1 1 2 2 1 1   1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1   2 2 2 2 2 2 2 2 2 2      
+      6 6 6 6 6 6 6 6   6 6 6 6 6 6 6 6 1 1 1 1 1 1 1   1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1   2 2 2 2 2 2 2 2 2 2       
+      6 6 6 6 6 6 6 6   6 6 6 6 6 6 6 6 1 1 1 1 1 1 1   1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1   2 2 2 2 2 2 2 2 2 2       
+      6 6 6 6 6 6 6 6   6 6 6 6 6 6 6 6 1 1 1 1 1 1 1   1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1   2 2 2 2 2 2 2 2 2 2 
+
+      6 6 6 6 6 6 6 6   6 6 6 6 6 6 6 6 1 1 1 1 1 1 1   1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1   2 2 2 2 2 2 2 2 2 2        
+      6 6 6 6 6 6 6 6   6 6 6 6 6 6 6 6 1 1 1 1 1 1 1   1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1   2 2 2 2 2 2 2 2 2 2       
+      6 6 6 6 6 6 6 6   6 6 6 6 6 6 6 6 1 1 1 1 1 1 1   1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1   2 2 2 2 2 2 2 2 2 2       
+      6 6 6 2 2 6 6 6   6 6 6 2 2 6 6 6 1 1 1 2 2 1 1   1 1 1 1 1 1 1 1 1 1 1 1 1 2 2 2 2 2   2 2 2 2 2 2 2 2 2 2       
+      6 6 6 2 2 6 6 6   6 6 6 2 2 6 6 1 1 1 1 2 2 1 1   1 1 1 1 1 1 1 1 1 1 1 1 1 2 2 2 2 2   2 2 2 2 2 2 2 2 2 2       
+      6 6 6 6 6 6 6 6   6 6 6 6 6 6 6 6 1 1 1 1 1 1 1   1 1 1 1 1 1 1 1 1 1 1 1 1 2 2 2 2 2   2 2 2 2 2 2 2 2 2 2       
+      6 6 6 6 6 6 6 6   6 6 6 6 6 6 6 6 1 1 1 1 1 1 1   1 1 1 1 1 1 1 1 1 1 1 1 1 2 2 2 2 2   2 2 2 2 2 2 2 2 2 2        
+      2 6 6 6 6 6 6 6   6 6 6 6 6 6 6 2 2 1 1 1 1 1 1   1 1 1 1 1 1 1 1 1 1 1 1 1 2 2 2 2 2   2 2 2 2 2 2 2 2 2 2      
+      2 1 1 1 1 1 1 1   1 1 1 1 1 1 1 2 2 1 1 1 1 1 1   1 1 1 1 1 1 1 1 1 1 1 1 1 2 2 2 2 2   2 2 2 2 2 2 2 2 2 2 
+      1 1 1 1 1 1 1 1   1 1 1 1 1 1 1 1 1 1 1 1 1 1 1   1 1 1 1 1 1 1 1 1 1 1 1 1 2 2 2 2 2   2 2 2 2 2 2 2 2 2 2
+      1 1 1 1 1 1 1 1   1 1 1 1 1 1 1 1 1 1 1 1 1 1 1   1 1 1 1 1 1 1 1 1 1 1 1 1 2 2 2 2 2   2 2 2 2 2 2 2 2 2 2
+      1 1 1 2 2 1 1 1   1 1 1 2 2 1 1 1 1 1 1 2 2 1 1   1 1 1 1 1 1 1 1 1 1 1 1 1 2 2 2 2 2   2 2 2 2 2 2 2 2 2 2 
+      1 1 1 2 2 1 1 1   1 1 1 2 2 1 1 1 1 1 1 2 2 1 1   1 1 1 1 1 1 1 1 1 1 1 1 1 2 2 2 2 2   2 2 2 2 2 2 2 2 2 2
+      1 1 1 1 1 1 1 1   1 1 1 1 1 1 1 1 1 1 1 1 1 1 1   1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2 2 2   2 2 2 2 2 2 2 2 2 2
+      1 1 1 1 1 1 1 1   1 1 1 1 1 1 1 1 1 1 1 1 1 1 1   1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2 2 2   2 2 2 2 2 2 2 2 2 2
+
+      1 1 1 1 1 1 1 1   1 1 1 1 1 1 1 1 1 1 1 1 1 1 1   1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2 2 2   2 2 2 2 2 2 2 2 2 2 
+      1 1 1 1 1 1 1 1   1 1 1 1 1 1 1 1 1 1 1 1 1 1 1   1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2 2 2   2 2 2 2 2 2 2 2 2 2
+      1 1 1 1 1 1 1 1   1 1 1 1 1 1 1 1 1 1 1 1 1 1 1   1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2 2 2   2 2 2 2 2 2 2 2 2 2
+      1 1 1 1 1 1 1 1   1 1 1 1 1 1 1 1 1 1 1 1 1 1 1   1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2 2 2   2 2 2 2 2 2 2 2 2 2
+      1 1 1 1 1 1 1 1   1 1 1 1 1 1 1 1 1 1 1 1 1 1 1   1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2 2 2   2 2 2 2 2 2 2 2 2 2
+      1 1 1 1 1 1 1 1   1 1 1 1 1 1 1 1 1 1 1 1 1 1 1   1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2 2 2   2 2 2 2 2 2 2 2 2 2
+      1 1 1 1 1 1 1 1   1 1 1 1 1 1 1 1 1 1 1 1 1 1 1   1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2 2 2   2 2 2 2 2 2 2 2 2 2
+      1 1 1 1 1 1 1 1   1 1 1 1 1 1 1 1 1 1 1 1 1 1 1   1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2 2 2   2 2 2 2 2 2 2 2 2 2
+      1 1 1 1 1 1 1 1   1 1 1 1 1 1 1 1 1 1 1 1 1 2 2   2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2   2 2 2 2 2 2 2 2 2 2
+      1 1 1 1 1 1 1 1   1 1 1 1 1 1 1 1 1 1 1 1 1 2 2   2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2   2 2 2 2 2 2 2 2 2 2  
+      1 1 1 1 1 1 1 1   1 1 1 1 1 1 1 1 1 1 1 1 1 2 2   2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2   2 2 2 2 2 2 2 2 2 2  
+      1 1 1 1 1 1 1 1   1 1 1 1 1 1 1 1 1 1 1 1 1 2 2   2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2   2 2 2 2 2 2 2 2 2 2  
+      1 1 1 1 1 1 1 1   1 1 1 1 1 1 1 1 1 1 1 1 1 2 2   2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2   2 2 2 2 2 2 2 2 2 2  
+      1 1 1 1 1 1 1 1   1 1 1 2 2 2 2 2 2 2 2 2 2 2 2   2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2   2 2 2 2 2 2 2 2 2 2  
+      1 1 1 1 1 1 1 1   1 1 1 2 2 2 2 2 2 2 2 2 2 2 2   2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2   2 2 2 2 2 2 2 2 2 2                      
+      1 1 1 1 1 1 1 1   1 1 1 2 2 2 2 2 2 2 2 2 2 2 2   2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2   2 2 2 2 2 2 2 2 2 2                       
+      1 1 1 1 1 1 1 1   1 1 1 2 2 2 2 2 2 2 2 2 2 2 2   2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2   2 2 2 2 2 2 2 2 2 2                       
+      1 1 1 1 1 1 1 1   1 1 1 2 2 2 2 2 2 2 2 2 2 2 2   2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2   2 2 2 2 2 2 2 2 2 2
+
+      2 2 2 2 2 2 2 2   2 2 2 2 2 2 2 2 2 2 2 2 2 2 2   2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2   2 2 2 2 2 2 2 2 2 2 
+      2 2 2 2 2 2 2 2   2 2 2 2 2 2 2 2 2 2 2 2 2 2 2   2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2   2 2 2 2 2 2 2 2 2 2 
+      2 2 2 2 2 2 2 2   2 2 2 2 2 2 2 2 2 2 2 2 2 2 2   2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2   2 2 2 2 2 2 2 2 2 2 
+      2 2 2 2 2 2 2 2   2 2 2 2 2 2 2 2 2 2 2 2 2 2 2   2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2   2 2 2 2 2 2 2 2 2 2 
+      2 2 2 2 2 2 2 2   2 2 2 2 2 2 2 2 2 2 2 2 2 2 2   2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2   2 2 2 2 2 2 2 2 2 2 
+      2 2 2 2 2 2 2 2   2 2 2 2 2 2 2 2 2 2 2 2 2 2 2   2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2   2 2 2 2 2 2 2 2 2 2 
+      2 2 2 2 2 2 2 2   2 2 2 2 2 2 2 2 2 2 2 2 2 2 2   2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2   2 2 2 2 2 2 2 2 2 2 
+      2 2 2 2 2 2 2 2   2 2 2 2 2 2 2 2 2 2 2 2 2 2 2   2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2   2 2 2 2 2 2 2 2 2 2 
+      2 2 2 2 2 2 2 2   2 2 2 2 2 2 2 2 2 2 2 2 2 2 2   2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2   2 2 2 2 2 2 2 2 2 2 
+      2 2 2 2 2 2 2 2   2 2 2 2 2 2 2 2 2 2 2 2 2 2 2   2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2   2 2 2 2 2 2 2 2 2 2 
+    </universes>
+  </lattice>
+
+<!-- Definition of Surfaces -->
+  <surface id="1" type="x-plane" coeffs="-41.718" boundary="reflective"/>
+  <surface id="2" type="x-plane" coeffs="41.718"  boundary="vacuum"/>
+  <surface id="3" type="y-plane" coeffs="-41.718" boundary="vacuum" />
+  <surface id="4" type="y-plane" coeffs="41.718"  boundary="reflective"/>
+  <surface id="5" type="circle" coeffs="0.0 0.0 0.51486" />
+  <surface id="6" type="circle" coeffs="0.0 0.0 0.52172" />
+  <surface id="7" type="circle" coeffs="0.0 0.0 0.60300" />
+  <surface id="8" type="circle" coeffs="0.0 0.0 0.7796" />
+  <!-- center pin: -->
+  <surface id="10" type="circle" coeffs="0.0 0.0 0.03" />
+  <surface id="11" type="circle" coeffs="0.0 0.0 0.15340" />
+  <surface id="12" type="circle" coeffs="0.0 0.0 0.20638" />
+  <surface id="13" type="circle" coeffs="0.0 0.0 0.41940" />
+  <surface id="14" type="circle" coeffs="0.0 0.0 0.48230" />
+  <!-- pin 3: B4C control rod-->
+  <surface id="20" type="circle" coeffs="0.0 0.0 0.46736" />
+  <surface id="21" type="circle" coeffs="0.0 0.0 0.55630" />
+  <!-- pin 6: inner zone fuel region -->
+  <surface id="30" type="circle" coeffs="0.0 0.0 0.56388" />
+  <surface id="31" type="circle" coeffs="0.0 0.0 0.60389" />
+
+</geometry>
