@@ -23,7 +23,7 @@
 Options::Options(int argc, char **argv) 
 {
     /* Default geometry input file */
-    _geometry_file = _relative_path + "xml-sample/geometry_4x4.xml";
+    _geometry_file = _relative_path + "xml-sample/geometry_2x2.xml";
     _material_file = _relative_path + "xml-sample/material_c5g7.xml";
 	
     /* convergence options */
@@ -31,7 +31,8 @@ Options::Options(int argc, char **argv)
     _l2_norm_conv_thresh = 1e-10; /* convergence on acceleration iteration */
 
     /* most important acceleration options */
-    _linear_prolongation = true;
+    _linear_prolongation = false;
+    _exact_prolongation = true;
     _acc_after_MOC_converge = false;
     _run_all = false;
     _cmfd = false; 					
@@ -127,6 +128,19 @@ Options::Options(int argc, char **argv)
             else if (strcmp(argv[i], "-nlp") == 0 ||
                      strcmp(argv[i], "--nolinearprolongation") == 0)
                 _linear_prolongation = false;
+            else if (strcmp(argv[i], "-ep") == 0 ||
+                     strcmp(argv[i], "--exactprolongation") == 0)
+            {
+                _linear_prolongation = false;
+                _exact_prolongation = true;
+            }
+            else if (strcmp(argv[i], "-nep") == 0 ||
+                     strcmp(argv[i], "--noexactprolongation") == 0)
+            {
+                /* FIXME: what's the default for turning exact off? */
+                _linear_prolongation = true;
+                _exact_prolongation = false;
+            }
             else if (strcmp(argv[i], "-pFSR") == 0 ||
                      strcmp(argv[i], "--plotFSRs") == 0)
                 _plot_FSRs = true;
@@ -555,4 +569,9 @@ bool Options::getUseUpScatteringXS()
 bool Options::getLinearProlongationFlag()
 {
     return _linear_prolongation;
+}
+
+bool Options::getExactProlongationFlag()
+{
+    return _exact_prolongation;
 }

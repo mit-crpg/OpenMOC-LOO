@@ -87,6 +87,7 @@ private:
     double *_cell_source;
     double *_fsr_source;
     bool _linear_prolongation;
+    bool _exact_prolongation;
     bool _acc_after_MOC_converge;
     bool _use_diffusion_correction;
     bool _run_loo;
@@ -130,6 +131,7 @@ public:
     double computeCellSourceNormGivenTwoSources(double *olds, double *news, 
                                                 int num);
     void printCellSource(double moc_iter);
+    double getExactProlongationRatio(int fsr_id, int quad_id);
 
     /* CMFD */
     void computeCurrent();

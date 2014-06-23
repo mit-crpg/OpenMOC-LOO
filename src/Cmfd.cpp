@@ -48,6 +48,7 @@ Cmfd::Cmfd(Geometry* geom, Plotter* plotter, Mesh* mesh,
 
     _damp_factor = opts->getDampFactor();
     _linear_prolongation = opts->getLinearProlongationFlag();
+    _exact_prolongation = opts->getExactProlongationFlag();
 
     _run_cmfd = false;
     if (opts->getCmfd())
@@ -2695,7 +2696,8 @@ void Cmfd::updateFSRScalarFlux(int moc_iter)
     int i, e, max_i = 0, max_e = 0;
     std::vector<int>::iterator iter;
     double under_relax = 1.0;
-    double update_ratio = 2.0/3.0; // on current cell
+    double linear_update_ratio = 2.0/3.0; // on current cell
+    double update_ratio = linear_update_ratio;
 
     /* only apply damping here for LOO, because CMFD damps Dtilde */
     if (_run_loo)
@@ -2748,12 +2750,20 @@ void Cmfd::updateFSRScalarFlux(int moc_iter)
                     fsr->setFlux(e, new_flux);
                 else 
                 {
-                    if (_linear_prolongation && (quad_id > -1) &&
+                    if ((_linear_prolongation || _exact_prolongation) 
+                        && (quad_id > -1) &&
                         (!onAnyBoundary(i, quad_id)))
                     {
                         int neighbor_cell_id = getNextCellId(i, quad_id);
                         log_printf(INFO, "cell %d s %d found neibor cell %d\n", 
                                    i, quad_id, neighbor_cell_id);
+
+                        if (_linear_prolongation)
+                            update_ratio = linear_update_ratio;
+                        else if (_exact_prolongation)
+                            update_ratio = getExactProlongationRatio(
+                                fsr->getId(), quad_id);                         
+
                         tmp = update_ratio * flux_ratio[i][e] 
                             + (1.0 - update_ratio) 
                             * flux_ratio[neighbor_cell_id][e]; 
@@ -2786,6 +2796,47 @@ void Cmfd::updateFSRScalarFlux(int moc_iter)
     delete[] CMCO;
     return;
 }
+
+// FIXME: do not need to know quad_id, just for double checking purpose 
+double Cmfd::getExactProlongationRatio(int fsr_id, int quad_id)
+{
+    int normalized_id;
+    int FSRs_per_cell = 28; // FIXME: special case 
+
+    double weights[] = {0.81111, 0.714773 ,0.689986 ,0.617498 ,0.548894};
+
+    normalized_id = fsr_id % FSRs_per_cell; 
+
+    if (((quad_id == 0) && (normalized_id == 7)) 
+        || ((quad_id == 1) && (normalized_id == 6)) 
+        || ((quad_id == 2) && (normalized_id == 0)) 
+        || ((quad_id == 3) && (normalized_id == 5)) )
+        return weights[0];
+    else if (((quad_id == 0) && (normalized_id == 10))
+             || ((quad_id == 1) && (normalized_id == 9))
+             || ((quad_id == 2) && (normalized_id == 1))
+             || ((quad_id == 3) && (normalized_id == 8)) )
+        return weights[1];
+    else if (((quad_id == 0) && (normalized_id == 13))
+             || ((quad_id == 1) && (normalized_id == 12))
+             || ((quad_id == 2) && (normalized_id == 2))
+             || ((quad_id == 3) && (normalized_id == 11)) )
+        return weights[2];
+    else if (((quad_id == 0) && 
+              ((normalized_id == 15) || (normalized_id == 24)))
+             || ((quad_id == 1) && 
+                 ((normalized_id == 19) || (normalized_id == 20)))
+             || ((quad_id == 2) && 
+                 ((normalized_id == 14) || (normalized_id == 16)))
+             || ((quad_id == 3) && 
+                 ((normalized_id == 3) || (normalized_id == 18))))
+        return weights[3];
+    else
+        return weights[4];
+}
+
+
+
 
 void Cmfd::updateBoundaryFlux(int moc_iter)
 {

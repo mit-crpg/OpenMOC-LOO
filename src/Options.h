@@ -36,6 +36,7 @@ private:
     double _damp_factor;
     double _num_first_diffusion;
     bool _linear_prolongation;
+    bool _exact_prolongation;
     bool _dump_geometry;
     bool _plot_specs;
     bool _plot_fluxes;
@@ -109,6 +110,7 @@ public:
     bool getReflectOutgoing();
     bool getUseUpScatteringXS();
     bool getLinearProlongationFlag();
+    bool getExactProlongationFlag();
 };
 
 #endif
