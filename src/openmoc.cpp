@@ -91,12 +91,9 @@ int main(int argc, char **argv) {
     geometry.setLoo(opts.getLoo());
 
     /* Make CMFD mesh */
-    //if (opts.getCmfd() || opts.getLoo())
-    //{
-        geometry.makeCMFDMesh(geometry.getMesh(), opts.getNumAzim(), 
-                              opts.getGroupStructure(), opts.getPrintMatrices(),
-                              opts.getCmfdLevel());
-        //}
+    geometry.makeCMFDMesh(geometry.getMesh(), opts.getNumAzim(), 
+                          opts.getGroupStructure(), opts.getPrintMatrices(),
+                          opts.getCmfdLevel());
 
     /* make FSR map for plotting */
     if (opts.plotCurrent() || opts.plotDiffusion() || opts.plotFluxes() || 
@@ -118,15 +115,6 @@ int main(int argc, char **argv) {
     timer.recordSplit("Generating tracks");
 
     track_generator.plotSpec();
-
-    /* Segment tracks */
-    /*
-    timer.reset();
-    timer.start();
-    track_generator.segmentize();
-    timer.stop();
-    timer.recordSplit("Segmenting tracks");
-    */
 
     /* Create CMFD class */
     Cmfd cmfd(&geometry, &plotter, geometry.getMesh(), &track_generator, &opts);

@@ -23,21 +23,23 @@
 Options::Options(int argc, char **argv) 
 {
     /* Default geometry input file */
-    _geometry_file = _relative_path + "xml-sample/geometry_2x2.xml";
-    _material_file = _relative_path + "xml-sample/material_c5g7.xml";
+    _geometry_file = _relative_path + "xml-sample/geometry_1810_1_8.xml";
+    _material_file = _relative_path + "xml-sample/material_1810_1_8g.xml";
 	
     /* convergence options */
     _moc_conv_thresh = 1e-5;      /* convergence on MOC sweeps */
-    _l2_norm_conv_thresh = 1e-10; /* convergence on acceleration iteration */
+
+    /* FIXME: was 1e-10 before */
+    _l2_norm_conv_thresh = 1e-5; /* convergence on acceleration iteration */
 
     /* most important acceleration options */
     _linear_prolongation = false;
-    _exact_prolongation = true;
+    _exact_prolongation = false;
     _acc_after_MOC_converge = false;
     _run_all = false;
     _cmfd = false; 					
-    _loo = false;
-    _loo1 = false;
+    _loo = true;
+    _loo1 = true;
     _loo2 = false;
     _damp_factor = 1.0;
     _boundary_iteration = 0;
@@ -52,8 +54,9 @@ Options::Options(int argc, char **argv)
     else
         _relative_path = "";
 
-    _track_spacing = 0.4;		/* Default C4 track spacing: 0.05cm */
-    _num_azim = 16;			/* Default C4 # azimuthal angle: 64*/
+    // was running: 0.4 and 16 for b&w criticals
+    _track_spacing = 0.05;		/* Default C4 track spacing: 0.05cm */
+    _num_azim = 64;			/* Default C4 # azimuthal angle: 64*/
 
     /* MOC options */
     _verbosity = "NORMAL";		/* Default logging level */
@@ -138,7 +141,6 @@ Options::Options(int argc, char **argv)
                      strcmp(argv[i], "--noexactprolongation") == 0)
             {
                 /* FIXME: what's the default for turning exact off? */
-                _linear_prolongation = true;
                 _exact_prolongation = false;
             }
             else if (strcmp(argv[i], "-pFSR") == 0 ||

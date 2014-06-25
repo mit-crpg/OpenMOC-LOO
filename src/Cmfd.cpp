@@ -1247,7 +1247,7 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter)
     if (_acc_after_MOC_converge)
         min_outer = 1;
     else
-        min_outer = 300;
+        min_outer = 5;
 
     /* create old source and residual vectors */
     petsc_err = VecCreateSeq(PETSC_COMM_WORLD, _ch * _cw * _ng, &sold);
@@ -1586,11 +1586,11 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
     else
         log_printf(ERROR, "Neither LOO psi nor phi is requested.");
 
-    int loo_iter, max_outer = 500; 
+    int loo_iter, max_outer = 70; 
 
     /* we set min_outer to make sure the low order system's
      * convergence criteria is sufficiently tight */ 
-    int min_outer = 50;
+    int min_outer = 30;
 
     if (moc_iter == 10000)
     {
@@ -2823,7 +2823,7 @@ double Cmfd::getExactProlongationRatio(int fsr_id, int quad_id)
              || ((quad_id == 3) && (normalized_id == 11)) )
         return weights[2];
     else if (((quad_id == 0) && 
-              ((normalized_id == 15) || (normalized_id == 24)))
+              ((normalized_id == 15) || (normalized_id == 17)))
              || ((quad_id == 1) && 
                  ((normalized_id == 19) || (normalized_id == 20)))
              || ((quad_id == 2) && 
@@ -2831,8 +2831,21 @@ double Cmfd::getExactProlongationRatio(int fsr_id, int quad_id)
              || ((quad_id == 3) && 
                  ((normalized_id == 3) || (normalized_id == 18))))
         return weights[3];
-    else
+    else if (((quad_id == 0) && 
+              ((normalized_id == 22) || (normalized_id == 24)))
+             || ((quad_id == 1) && 
+                 ((normalized_id == 26) || (normalized_id == 27)))
+             || ((quad_id == 2) && 
+                 ((normalized_id == 21) || (normalized_id == 23)))
+             || ((quad_id == 3) && 
+                 ((normalized_id == 25) || (normalized_id == 4))))
         return weights[4];
+    else
+    {
+        log_printf(NORMAL, "something weird happened for %d %d", 
+                   normalized_id, quad_id);
+        return 2.0/3.0;
+    }
 }
 
 

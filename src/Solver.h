@@ -20,6 +20,7 @@
 #include <forward_list>
 #include "Geometry.h"
 #include "Quadrature.h"
+#include "Timer.h"
 #include "Track.h"
 #include "TrackGenerator.h"
 #include "FlatSourceRegion.h"
@@ -40,6 +41,8 @@
 
 class Solver {
 private:
+    Timer _moc_timer;
+    Timer _acc_timer;
     Geometry* _geom;
     Quadrature* _quad;
     FlatSourceRegion* _flat_source_regions;

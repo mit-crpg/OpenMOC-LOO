@@ -18,6 +18,8 @@
 Solver::Solver(Geometry* geom, TrackGenerator* track_generator, 
                Plotter* plotter, Cmfd* cmfd, Options* opts)
 {
+    _moc_timer.reset();
+    _acc_timer.reset();
     _geom = geom;
     _quad = new Quadrature(TABUCHI);
     _num_FSRs = geom->getNumFSRs();
@@ -2251,6 +2253,7 @@ double Solver::runLoo(int moc_iter)
         storeMOCBoundaryFlux();
 
         _cmfd->computeQuadSrc();
+ 
         loo_keff = _cmfd->computeLooFluxPower(moc_iter, _k_eff);
     }
 
@@ -2321,13 +2324,17 @@ double Solver::kernel(int max_iterations) {
             _cmfd->storePreMOCMeshSource(_flat_source_regions);
  
         /* Perform one sweep for no acceleration */
+        _moc_timer.start();
         MOCsweep(_boundary_iteration + 1, moc_iter);
+        _moc_timer.stop();
 
+        _acc_timer.start();
         /* Perform acceleration */
         if ((_run_cmfd) && !(_acc_after_MOC_converge))
             _acc_k = runCmfd(moc_iter);
         else if ((_run_loo) && !(_acc_after_MOC_converge))
             _acc_k = runLoo(moc_iter);
+        _acc_timer.stop();
 
         _cmfd->incrementMOCIter();
 
@@ -2365,9 +2372,13 @@ double Solver::kernel(int max_iterations) {
 
         if ((eps_2 < _moc_conv_thresh) && (moc_iter > 2))
         {
+            _acc_timer.recordSplit("Acceleration");
+            _acc_timer.printSplits();
+
+            _moc_timer.recordSplit("MOC Transport Sweeps");
+            _moc_timer.printSplits();
 
             _cmfd->printCellSource(1000);
-
             
             /* Run one steps of acceleration if it is requested to do so */
             if (_acc_after_MOC_converge)
