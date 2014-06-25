@@ -29,7 +29,7 @@
   <cell id="25" universe="2" material="4" surfaces="8" sectors="8"/>
 
   <!-- Definition of control rod cell -->
-  <cell id="31" universe="3" material="9" surfaces="-20" rings="2" sectors="4"/>
+  <cell id="31" universe="3" material="9" surfaces="-20" sectors="4"/>
   <cell id="32" universe="3" material="2" surfaces="20 -21" sectors="4"/>
   <cell id="33" universe="3" material="3" surfaces="21 -22" sectors="4"/>
   <cell id="34" universe="3" material="4" surfaces="22 -8" sectors="8"/>
