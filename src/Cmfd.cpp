@@ -1586,7 +1586,7 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
     else
         log_printf(ERROR, "Neither LOO psi nor phi is requested.");
 
-    int loo_iter, max_outer = 70; 
+    int loo_iter, max_outer = 500; 
 
     /* we set min_outer to make sure the low order system's
      * convergence criteria is sufficiently tight */ 
@@ -2739,6 +2739,7 @@ void Cmfd::updateFSRScalarFlux(int moc_iter)
         meshCell = _mesh->getCells(i);
         for (e = 0; e < _ng; e++)
         {
+            new_flux = meshCell->getNewFlux()[e];
             for (iter = meshCell->getFSRs()->begin(); 
                  iter != meshCell->getFSRs()->end(); ++iter) 
             {
