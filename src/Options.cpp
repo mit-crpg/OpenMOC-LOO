@@ -38,8 +38,8 @@ Options::Options(int argc, char **argv)
     _acc_after_MOC_converge = false;
     _run_all = false;
     _cmfd = false; 					
-    _loo = true;
-    _loo1 = true;
+    _loo = false;
+    _loo1 = false;
     _loo2 = false;
     _damp_factor = 1.0;
     _boundary_iteration = 0;
@@ -127,7 +127,10 @@ Options::Options(int argc, char **argv)
             }
             else if (strcmp(argv[i], "-lp") == 0 ||
                      strcmp(argv[i], "--linearprolongation") == 0)
+            {
                 _linear_prolongation = true;
+                _exact_prolongation = false;
+            }
             else if (strcmp(argv[i], "-nlp") == 0 ||
                      strcmp(argv[i], "--nolinearprolongation") == 0)
                 _linear_prolongation = false;
@@ -139,10 +142,7 @@ Options::Options(int argc, char **argv)
             }
             else if (strcmp(argv[i], "-nep") == 0 ||
                      strcmp(argv[i], "--noexactprolongation") == 0)
-            {
-                /* FIXME: what's the default for turning exact off? */
                 _exact_prolongation = false;
-            }
             else if (strcmp(argv[i], "-pFSR") == 0 ||
                      strcmp(argv[i], "--plotFSRs") == 0)
                 _plot_FSRs = true;

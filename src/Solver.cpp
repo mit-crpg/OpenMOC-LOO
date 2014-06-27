@@ -50,6 +50,7 @@ Solver::Solver(Geometry* geom, TrackGenerator* track_generator,
     _update_boundary = opts->getUpdateBoundary();
     _use_up_scattering_xs = opts->getUseUpScatteringXS();
     _linear_prolongation = opts->getLinearProlongationFlag();
+    _exact_prolongation = opts->getExactProlongationFlag();
 
     _geometry_file = opts->getGeometryFile();
     _geometry_file_no_slash = opts->getGeometryFile();
@@ -68,18 +69,10 @@ Solver::Solver(Geometry* geom, TrackGenerator* track_generator,
            << "_"
            << std::setprecision(1) << _damp_factor;
 
-    if (_update_boundary)
-        string << "_update";
-    else
-        string << "_noupda";
-
-    if (_use_up_scattering_xs)
-        string << "_upscat";
-    else
-        string << "_noupsc";
-
     if (_linear_prolongation)
         string << "_lp";
+    else if (_exact_prolongation)
+        string << "_ep";
     else
         string << "_np";
 

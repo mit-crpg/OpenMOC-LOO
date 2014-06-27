@@ -106,6 +106,7 @@ private:
     bool _reflect_outgoing;
     bool _use_up_scattering_xs;
     bool _linear_prolongation;
+    bool _exact_prolongation;
     void precomputeFactors();
     void initializeFSRs();
 
