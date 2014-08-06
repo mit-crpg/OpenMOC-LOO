@@ -1590,7 +1590,7 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
 
     /* we set min_outer to make sure the low order system's
      * convergence criteria is sufficiently tight */ 
-    int min_outer = 30;
+    int min_outer = 80;
 
     if (moc_iter == 10000)
     {
@@ -1657,6 +1657,9 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
         for (int t = 0; t < 8 * _ng; t++)
             new_quad_src[i][t] = 0.0;
     }
+
+    /* Computes old source, so during iterations we can keep it consistent */
+    double old_source = computeNormalization(0);
 
     /* Starts LOO acceleration iteration, we do not update src, quad_src, 
      * quad_flux, old_flux, as they are computed from the MOC step (i.e., 
@@ -1966,8 +1969,8 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
         log_printf(DEBUG, "raw leakage = %.10f", leak_tot);
 
         /* Computes normalization factor based on fission source */
-        double normalize_factor = computeNormalization();
-        log_printf(DEBUG, "normalize_factor = %.10f", normalize_factor);
+        double normalize_factor = computeNormalization(old_source);
+        log_printf(ACTIVE, "normalize_factor = %.10f", normalize_factor);
 
         /* FIXME: should or should not normalize leak_tot? */
         leak_tot *= normalize_factor;
@@ -2189,15 +2192,14 @@ int Cmfd::onReflectiveBoundary(int t, int i, int dir)
     return -1;
 }
 
-double Cmfd::computeNormalization()
+double Cmfd::computeNormalization(double flag)
 {
-    double fis_tot = 0, vol_tot = 0, flux = 0, vol = 0;
+    double fis_tot = 0, flux = 0, vol = 0;
     MeshCell *meshCell;
 
     for (int i = 0; i < _cw * _ch; i++)
     {
         meshCell = _mesh->getCells(i);
-        vol_tot += meshCell->getATVolume();
         for (int e = 0; e < _ng; e++)
         {
             flux = meshCell->getNewFlux()[e];
@@ -2206,7 +2208,11 @@ double Cmfd::computeNormalization()
         }
     }
 	
-    return vol_tot / fis_tot;
+    /* flag = 0 implies initial condition, which returns old source */
+    if (flag < 1e-5)
+        return fis_tot;
+    else
+        return flag / fis_tot;
 }
 
 void Cmfd::normalizeFlux(double normalize)
@@ -2679,6 +2685,13 @@ int Cmfd::constructAMPhi(Mat A, Mat M, Vec phi_old, solveType solveMethod)
 }
 
 
+void Cmfd::plotCmfdFluxUpdate(int moc_iter)
+{
+    /* plots the scalar flux ratio */
+    if (_plot_prolongation)
+        _plotter->plotCmfdFluxUpdate(_mesh, moc_iter);
+}
+
 /* Update the MOC flux in each FSR
  * @param MOC iteration number
  */
@@ -2788,11 +2801,6 @@ void Cmfd::updateFSRScalarFlux(int moc_iter)
                _mesh->getCells(_cw * _ch - 1)->getNewFlux()[_ng-1],
                _mesh->getCells(_cw - 1)->getNewFlux()[_ng-1],
                _mesh->getCells(_cw * _ch - _ch)->getNewFlux()[_ng-1]);
-
-
-    /* plots the scalar flux ratio */
-    if (_plot_prolongation)
-        _plotter->plotCmfdFluxUpdate(_mesh, moc_iter);
 
     delete[] CMCO;
     return;

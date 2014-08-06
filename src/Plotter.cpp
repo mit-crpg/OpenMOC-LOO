@@ -1365,9 +1365,9 @@ void Plotter::plotCmfdFluxUpdate(Mesh* mesh, int iter_num)
         }
 
         num.str("");
-        num << std::setw(3) << std::setfill('0') << iter_num;
+        num << std::setw(3) << std::setfill('0') << iter_num+1;
         string.str("");
-        string << "update_i_" << num.str() << "_g_" << e+1;
+        string << "update_i_" << num.str() << "_g_" << e;
         title_str = string.str();
 
 

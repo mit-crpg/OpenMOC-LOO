@@ -123,6 +123,7 @@ public:
     void computeXS();
     void computeXS_old();	
     void updateFSRScalarFlux(int moc_iter);
+    void plotCmfdFluxUpdate(int moc_iter);
     double *getCellSource();
     void setCellSource(double *source);
     double computeCellSourceNorm();
@@ -177,7 +178,7 @@ public:
     }
 
     double computeLooFluxPower(int moc_iter, double k);
-    double computeNormalization();
+    double computeNormalization(double flag);
     void normalizeFlux(double normalize_factor);
     void updateBoundaryFluxByPartialCurrent(int moc_iter);
     void updateBoundaryFluxBySrc(int moc_iter);
