@@ -15,6 +15,8 @@ int Cmfd::_surf_index[] = {1,2,2,3,3,0,0,1,2,1,3,2,0,3,1,0};
 double Cmfd::_conv_val[] = 
 {9.123400e-03, 2.206056e-06, 1.617725e-02, 1.078075e-05};
 
+int Cmfd::_closure = 3;
+
 /**
  * Acceleration constructor
  * @param geom pointer to the geometry
@@ -1136,27 +1138,68 @@ void Cmfd::computeQuadSrc()
                 ex = exp(-xs * l);
                 sum_quad_flux = 0;
                 tmp_src = 0;
-                for (int t = 0; t < 8; t++)
+                if (_closure == 1)
                 {
-                    src = xs * (out[e][t] - ex * in[e][t]) / (1.0 - ex);
-
-                    /* DEBUG */
-                    if (src < 0)
+                    for (int t = 0; t < 8; t++)
                     {
-                        log_printf(ACTIVE, "(%d %d) e %d t %d"
-                                   " quad src = %f * (%f - %f * %f) / %f = %f",
-                                   x, y, e, t, xs, out[e][t], ex, in[e][t], 
-                                   1 - ex, 
-                                   (out[e][t] - ex * in[e][t]) / (1-ex));
+                        src = xs * (out[e][t] - ex * in[e][t]) / (1.0 - ex);
+                        
+                        /* DEBUG */
+                        if (src < 0)
+                        {
+                            log_printf(ACTIVE, "(%d %d) e %d t %d"
+                                       " quad src = %f * (%f - %f*%f)/%f = %f",
+                                       x, y, e, t, xs, out[e][t], ex, in[e][t], 
+                                       1 - ex, 
+                                       (out[e][t] - ex * in[e][t]) / (1-ex));
+                        }
 
-                        // force quad src to be non-negative. this seems to fix
-                        // certain quarter core problem 
-                        src = 0;
+                        meshCell->setQuadSrc(src, e, t);
+                        tmp_src += src;
+                        sum_quad_flux += src/xs + (in[e][t] - out[e][t]) 
+                            / (xs * l);
                     }
+                }
+                else if (_closure == 3)
+                {
+                    for (int t = 0; t < 4; t++)
+                    {
+                        int t1 = t * 2;
+                        int t2 = t * 2 + 1;
+                        if (fabs(in[e][t1] - in[e][t2]) > 1e-5)
+                        {
+                            ex = (out[e][t1] - out[e][t2]) / 
+                                (in[e][t1] - in[e][t2]);
+                            xs = -log(ex) / l;
+                        }
+                        else
+                        {
+                            xs = meshCell->getSigmaT()[e];
+                            ex = exp(-xs * l);
+                        }
 
-                    meshCell->setQuadSrc(src, e, t);
-                    tmp_src += src;
-                    sum_quad_flux += src/xs + (in[e][t] - out[e][t])/(xs * l);
+                        src = xs * (out[e][t1] - in[e][t1] * ex) / (1.0 - ex);
+                        
+                        /* DEBUG */
+                        if (src < 0)
+                        {
+                            log_printf(ACTIVE, "(%d %d) e %d t %d"
+                                       " quad src = %f * (%f - %f*%f)/%f = %f",
+                                       x, y, e, t, xs, out[e][t], ex, in[e][t], 
+                                       1 - ex, 
+                                       (out[e][t] - ex * in[e][t]) / (1-ex));
+                        }
+
+                        meshCell->setQuadSrc(src, e, t1);
+                        meshCell->setQuadSrc(src, e, t2); 
+                        meshCell->setQuadXs(xs, e, t1);
+                        meshCell->setQuadXs(xs, e, t2); 
+                        tmp_src += 2 * src;
+                        sum_quad_flux += src/xs + (in[e][t1] - out[e][t1]) 
+                            / (xs * l);
+                        sum_quad_flux += src/xs + (in[e][t2] - out[e][t2]) 
+                            / (xs * l);
+                    }
                 }
                 meshCell->setSumQuadFlux(sum_quad_flux, e);
 
@@ -1616,7 +1659,7 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
         {
             new_src[i] = new double[_ng];
             sum_quad_flux[i] = new double[_ng];
-            quad_xs[i] = new double[_ng];
+            quad_xs[i] = new double[8 * _ng];
             tau[i] = new double[_ng];
             expo[i] = new double[_ng];
             net_current[i] = new double[_ng];
@@ -1637,9 +1680,12 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
         {
             new_src[i][e] = 0.0;
             sum_quad_flux[i][e] = 0;
-            quad_xs[i][e] = meshCell->getSigmaT()[e];
-            tau[i][e] = quad_xs[i][e] * meshCell->getATL();
-            expo[i][e] = exp(-tau[i][e]);
+            if (_closure == 1)
+            {
+                quad_xs[i][e] = meshCell->getSigmaT()[e];
+                tau[i][e] = quad_xs[i][e] * meshCell->getATL();
+                expo[i][e] = exp(-tau[i][e]);
+            }
             // the power here is really volume-integrated! 
             old_power[i] +=  meshCell->getNuSigmaF()[e] 
                 * meshCell->getOldFlux()[e] * meshCell->getVolume();
@@ -1761,11 +1807,25 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
                         }
                     }
 
-                    delta = (flux - new_quad_src[i][d] / (double)quad_xs[i][e])
+                    if (_closure == 1)
+                    {
+                        delta = (flux - new_quad_src[i][d] / quad_xs[i][e])
                         * (1 - expo[i][e]);
 
-                    sum_quad_flux[i][e] += delta / tau[i][e] + 
-                        new_quad_src[i][d] / quad_xs[i][e];
+                        sum_quad_flux[i][e] += delta / tau[i][e] + 
+                            new_quad_src[i][d] / quad_xs[i][e];
+                    }
+                    else if (_closure == 3)
+                    {
+                        double tau = quad_xs[i][d] * 
+                            _mesh->getCells(i)->getATL();
+                        delta = (flux - new_quad_src[i][d] / quad_xs[i][d])
+                            * (1 - exp(-tau));
+
+                        sum_quad_flux[i][e] += delta / tau + 
+                            new_quad_src[i][d] / quad_xs[i][d];       
+                    }
+                    
 #if NEW
                     net_current[i][e] -= flux * getSurf(i, t, 0); 
                     flux -= delta;
@@ -1852,11 +1912,25 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
                         }
                     } 
 
-                    delta = (flux - new_quad_src[i][d] / quad_xs[i][e])
-                        * (1.0 - expo[i][e]);
+                    if (_closure == 1)
+                    {
+                        delta = (flux - new_quad_src[i][d] / quad_xs[i][e])
+                            * (1.0 - expo[i][e]);
 
-                    sum_quad_flux[i][e] += delta / tau[i][e] + 
-                        new_quad_src[i][d] / quad_xs[i][e];
+                        sum_quad_flux[i][e] += delta / tau[i][e] + 
+                            new_quad_src[i][d] / quad_xs[i][e];
+                    }
+                    else if (_closure == 3)
+                    {
+                        double tau = quad_xs[i][d] * 
+                            _mesh->getCells(i)->getATL();
+                        delta = (flux - new_quad_src[i][d] / quad_xs[i][d])
+                            * (1 - exp(-tau));
+
+                        sum_quad_flux[i][e] += delta / tau + 
+                            new_quad_src[i][d] / quad_xs[i][d];       
+                    }
+
 
 #if NEW
                     net_current[i][e] -= flux * getSurf(i, t, 0); 

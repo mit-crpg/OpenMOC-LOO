@@ -55,6 +55,7 @@ MeshCell::MeshCell(){
         {
             _quad_flux[e * 8 + k] = 1.0;
             _quad_src[e * 8 + k] = 0.0;
+            _quad_xs[e * 8 + k] = 0.0;
         }
     }
 }
@@ -345,8 +346,20 @@ void MeshCell::setQuadSrc(double quadSrc, int e, int index){
     _quad_src[e * 8 + index] = quadSrc;
 }
 
+void MeshCell::setQuadXs(double quadXs, int e, int index){
+    assert(e >= 0);
+    assert(e < NUM_ENERGY_GROUPS);
+    assert(index >= 0);
+    assert(index < 8);
+    _quad_xs[e * 8 + index] = quadXs;
+}
+
 double* MeshCell::getQuadSrc(){
     return _quad_src;
+}
+
+double* MeshCell::getQuadXs(){
+    return _quad_xs;
 }
 
 double* MeshCell::getSumQuadFlux(){

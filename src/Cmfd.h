@@ -57,6 +57,7 @@ private:
     double _ignore;
     static int _surf_index[16];
     static double _conv_val[4];
+    static int _closure; 
     Geometry* _geom;
     Quadrature* _quad;
     Mesh* _mesh;
