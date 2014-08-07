@@ -56,6 +56,7 @@ class Cmfd {
 private:
     double _ignore;
     static int _surf_index[16];
+    static double _conv_val[4];
     Geometry* _geom;
     Quadrature* _quad;
     Mesh* _mesh;

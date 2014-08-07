@@ -11,6 +11,9 @@
 #include <cmath>
 
 int Cmfd::_surf_index[] = {1,2,2,3,3,0,0,1,2,1,3,2,0,3,1,0};
+// 1 polar angle 1810 core 1 0.1cm 16 azimuthal angle converge to 1e-5
+double Cmfd::_conv_val[] = 
+{9.123400e-03, 2.206056e-06, 1.617725e-02, 1.078075e-05};
 
 /**
  * Acceleration constructor
@@ -2792,16 +2795,20 @@ void Cmfd::updateFSRScalarFlux(int moc_iter)
         } /* exit looping over energy */
     } /* exit mesh cells */
 
-    log_printf(DEBUG, "max CMCO at %d e = %d, %f, ratio = %f / %f = %f", 
-               max_i, max_e, max, _max_old, max, _max_old / max);
+    log_printf(DEBUG, "iter %d max CMCO at i = %d e = %d is %f, "
+               "ratio = %f / %f = %f", 
+               moc_iter + 1, max_i, max_e, flux_ratio[max_i][max_e], 
+               _max_old, max, _max_old / max);
     _max_old = max;
 
-    log_printf(DEBUG, "thermal flux: center %f, outer corner %f, others %f %f",
-               _mesh->getCells(0)->getNewFlux()[_ng-1], 
-               _mesh->getCells(_cw * _ch - 1)->getNewFlux()[_ng-1],
-               _mesh->getCells(_cw - 1)->getNewFlux()[_ng-1],
-               _mesh->getCells(_cw * _ch - _ch)->getNewFlux()[_ng-1]);
-
+    // thermal side corner, outter corner, fast side corner, outter corner 
+    log_printf(DEBUG, "%d, %e, %e, %e, %e",
+               moc_iter + 1, 
+               _mesh->getCells(_cw - 1)->getNewFlux()[_ng-1] / _conv_val[0],
+               _mesh->getCells(_cw * _ch - 1)->getNewFlux()[_ng-1] 
+               / _conv_val[1],
+               _mesh->getCells(_cw - 1)->getNewFlux()[0] / _conv_val[2], 
+               _mesh->getCells(_cw * _ch - 1)->getNewFlux()[0]/ _conv_val[3]);
     delete[] CMCO;
     return;
 }
