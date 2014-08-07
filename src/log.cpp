@@ -23,6 +23,9 @@ void log_setlevel(logLevel newlevel) {
     log_level = newlevel;
 
     switch (newlevel) {
+    case DATA:
+        log_printf(INFO, "Logging level set to DATA, no append");
+        break;
     case DEBUG:
         log_printf(INFO, "Logging level set to DEBUG");
         break;
@@ -70,6 +73,10 @@ void log_setlevel(const char* newlevel) {
         log_level = DEBUG;
         log_printf(INFO, "Logging level set to DEBUG");
     }
+    else if (strcmp("DATA", newlevel) == 0) {
+        log_level = DATA;
+        log_printf(INFO, "Logging level set to DATA");
+    }
     else if (strcmp("INFO", newlevel) == 0) {
         log_level = INFO;
         log_printf(INFO, "Logging level set to INFO");
@@ -116,6 +123,9 @@ void log_printf(logLevel level, const char *format, ...) {
 
     	/* Append the log level to the message */
     	switch (level) {
+        case (DATA):
+            fprintf(stderr, " ");
+            break;
         case (DEBUG):
             fprintf(stderr, "[  DEBUG  ]  ");
             break;

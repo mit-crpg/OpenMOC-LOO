@@ -30,6 +30,7 @@ typedef enum logLevels {
     INFO,
     ACTIVE,
     NORMAL,
+    DATA, 
     WARNING,
     CRITICAL,
     RESULT,
