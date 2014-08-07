@@ -4,18 +4,13 @@ from matplotlib.font_manager import FontProperties
 import numpy as np
 import os
 
-
 # Control variables: where C4 default is 0.5cm and 64 azimuthal angle
-geometries = ['xml-sample/geometry_c5g7_fc1.xml',
-              'xml-sample/geometry_c5g7_fc2.xml',
-              'xml-sample/geometry_c5g7_cf1.xml']
-materials = ['xml-sample/material_c5g7.xml','xml-sample/material_c5g7.xml',
-             'xml-sample/material_c5g7.xml','xml-sample/material_c5g7.xml',
-             'xml-sample/material_c5g7.xml','xml-sample/material_c5g7.xml',
-             'xml-sample/material_c5g7.xml','xml-sample/material_c5g7.xml']
+geometries = ['xml-sample/geometry_quarter_8x8.xml']
+materials = ['xml-sample/material_c5g7.xml']
+
 ts = [0.05] 
 na = [32]
-fc = [1e-8]
+fc = [1e-4]
 
 # Parameters for plotting
 ls = ['--o', '-s', '-.v', '-<', '-^', '-.>', '--s', '-v', '-o', '-.<', '--<', '-->', '-.s']
@@ -34,13 +29,30 @@ for i, geometry in enumerate(geometries):
     # Runs OpenMOC
     for spacing in ts:
         for angle in na:
-            os.system('cd .. && ./7Gbin/openmoc'
+            os.system('cd .. && ./bin/openmoc-7g'
                       + ' -m ' + materials[i]
-                      + ' -g ' + geometry 
-                      + ' -na ' + str(angle) 
-                      + ' -ts ' + str(spacing) 
-                      + ' -fc ' + str(fc[0]) 
-                      + ' -wc -df 0.7')
+                      + ' -g ' + geometry
+                      + ' -na ' + str(angle)
+                      + ' -ts ' + str(spacing)
+                      + ' -fc ' + str(fc[0])
+                      + ' -wc -df 0.6 -diff 1')
+
+            os.system('cd .. && ./bin/openmoc-7g'
+                      + ' -m ' + materials[i]
+                      + ' -g ' + geometry
+                      + ' -na ' + str(angle)
+                      + ' -ts ' + str(spacing)
+                      + ' -fc ' + str(fc[0])
+                      + ' -wl1 -diff 1')
+
+            os.system('cd .. && ./bin/openmoc-7g'
+                      + ' -m ' + materials[i]
+                      + ' -g ' + geometry
+                      + ' -na ' + str(angle)
+                      + ' -ts ' + str(spacing)
+                      + ' -fc ' + str(fc[0])
+                      + ' -wl2 -diff 1')
+
     l2_norm_files = []
 
     # Obtain and sorts l2_norm file names in directory
@@ -57,12 +69,9 @@ for i, geometry in enumerate(geometries):
         logfile = open('../'+file, "r").readlines()
         
         method = file[-8:-4]
-        upscat = file[-15:-9]
-        update = file[-22:-16]
-        damp = file[-26:-23]
-        bi = file[-28:-27]
+        damp = file[-15:-12]
 
-        print("geometry = %s, ts = %s, na = %s, upscat = %s"%(geometry_name, ts, na, upscat))
+        print("geometry = %s, ts = %s, na = %s"%(geometry_name, ts, na))
 
         # find number of lines in file
         for num_lines, l in enumerate(logfile):
@@ -90,7 +99,7 @@ for i, geometry in enumerate(geometries):
                          var[j], 
                          ls[counter - 1],
                          color=cm.jet(1.*counter / num),
-                         label = ("%s %s"%(method, upscat)), markersize=5)
+                         label = ("%s DF: %s"%(method, damp)), markersize=5)
             plt.xlim(0, max_num_lines + 1)
             plt.legend(loc='upper center', ncol=3, prop = fontP, shadow=True, 
                        bbox_to_anchor=(0.5,-0.1),fancybox=True)

@@ -161,26 +161,28 @@ simulated by a large neutron absorber.
     <!-- 21 x 21 core -->
     <lattice id="18">
         <type>rectangular</type>
-        <dimension>8 8</dimension>
+        <dimension>10 10</dimension>
         <width>21.42 21.42</width>
         <universes>
-          11 10 11 10 11 10 11 13 
-          10 11 10 11 10 11 10 13 
-          11 10 11 10 11 10 11 13 
-          10 11 10 11 10 11 13 13 
-          11 10 11 10 11 10 13 13 
-          10 11 10 11 10 13 13 13 
-          11 10 11 13 13 13 13 13 
-          13 13 13 13 13 13 13 13 
+          11 10 11 10 11 10 11 10 13 13
+          10 11 10 11 10 11 10 11 13 13
+          11 10 11 10 11 10 11 10 13 13
+          10 11 10 11 10 11 10 11 13 13
+          11 10 11 10 11 10 11 13 13 13
+          10 11 10 11 10 11 10 13 13 13
+          11 10 11 10 11 10 13 13 13 13
+          10 11 10 11 13 13 13 13 13 13
+          13 13 13 13 13 13 13 13 13 13
+          13 13 13 13 13 13 13 13 13 13
         </universes>
     </lattice>
     
     
     <!-- Definition of Surfaces -->
-    <surface id="1" type="x-plane" coeffs="-85.68" boundary="reflective" />
-    <surface id="2" type="x-plane" coeffs="85.68" boundary="vacuum" />
-    <surface id="3" type="y-plane" coeffs="-85.68" boundary="vacuum" />
-    <surface id="4" type="y-plane" coeffs="85.68" boundary="reflective"/>
+    <surface id="1" type="x-plane" coeffs="-107.1" boundary="reflective" />
+    <surface id="2" type="x-plane" coeffs="107.1" boundary="vacuum" />
+    <surface id="3" type="y-plane" coeffs="-107.1" boundary="vacuum" />
+    <surface id="4" type="y-plane" coeffs="107.1" boundary="reflective"/>
     <surface id="5" type="circle" coeffs="0.0 0.0 0.54" />
     <surface id="6" type="circle" coeffs="0.0 0.0 0.58" />
 

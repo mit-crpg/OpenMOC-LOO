@@ -55,8 +55,8 @@ Options::Options(int argc, char **argv)
         _relative_path = "";
 
     // was running: 0.4 and 16 for b&w criticals
-    _track_spacing = 0.05;		/* Default C4 track spacing: 0.05cm */
-    _num_azim = 64;			/* Default C4 # azimuthal angle: 64*/
+    _track_spacing = 0.1;		/* Default C4 track spacing: 0.05cm */
+    _num_azim = 16;			/* Default C4 # azimuthal angle: 64*/
 
     /* MOC options */
     _verbosity = "NORMAL";		/* Default logging level */

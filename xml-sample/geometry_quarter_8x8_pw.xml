@@ -39,7 +39,9 @@ simulated by a large neutron absorber.
   <cell id="23" universe="6" material="7" surfaces="6" sectors="4"/>
    
   <!-- Moderator cell !-->
-  <cell id="53" universe="7" material="7" surfaces=""/>
+  <cell id="51" universe="12" material="7" surfaces="-5" sectors="4"/>
+  <cell id="52" universe="12" material="7" surfaces="5 -6" sectors="4"/>
+  <cell id="53" universe="12" material="7" surfaces="6" sectors="4"/>
 
 <!-- FUEL ASSEMBLIES -->
 
@@ -50,16 +52,13 @@ simulated by a large neutron absorber.
     <cell id="45" universe="11" fill="15" surfaces="" />
 
 <!-- MODERATOR ASSEMBLIES -->
-    <!-- Moderator lattice - pin level !-->
-    <cell id="40" universe="12" fill="40" surfaces="" />
     <!-- Moderator lattice - assembly level !-->
     <cell id="41" universe="13" fill="41" surfaces="" />
-
 
 <!-- FULL GEOMETRY -->
 
     <!-- Full geometry !-->
-    <cell id="52" universe="0" fill="18" surfaces="1 -2 3 -4" />
+    <cell id="62" universe="0" fill="18" surfaces="1 -2 3 -4" />
         
 <!-- FUEL ASSEMBLIES -->
     
@@ -115,20 +114,6 @@ simulated by a large neutron absorber.
             2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
         </universes>
     </lattice>
-
-
-<!-- MODERATOR ASSEMBLIES -->
- <!-- Reflector pin: 5x5 FSRs per pin-->
-  <lattice id="40">
-   <type>rectangular</type>
-   <dimension>3 3</dimension>
-   <width>0.42 0.42</width>
-   <universes>
-	 7 7 7
-	 7 7 7
-	 7 7 7
-   </universes>
-  </lattice>
 
 
     <!-- semi-finely spaced: 17x17 water pins, represent lattice universe 14 -->
