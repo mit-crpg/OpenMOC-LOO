@@ -2102,7 +2102,6 @@ void Solver::normalizeFlux(double moc_iter)
         }
     }
 
-
     /* This block normalizes tallied current on each surface. To get
      * geometry_2x2.xml with 2 vacuum BC to converge, the tallied
      * current cannot be normalized */
@@ -2336,6 +2335,7 @@ double Solver::kernel(int max_iterations) {
         {
             prolongation(moc_iter);
             normalizeFlux(moc_iter+1);
+            _cmfd->plotCmfdFluxUpdate(moc_iter+1);
             _cmfd->printCellSource(moc_iter+1);
             _k_eff = _acc_k;
             updateSource(moc_iter);
