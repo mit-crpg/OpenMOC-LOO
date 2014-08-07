@@ -1250,7 +1250,7 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter)
     if (_acc_after_MOC_converge)
         min_outer = 1;
     else
-        min_outer = 5;
+        min_outer = 50;
 
     /* create old source and residual vectors */
     petsc_err = VecCreateSeq(PETSC_COMM_WORLD, _ch * _cw * _ng, &sold);
@@ -1593,7 +1593,8 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
 
     /* we set min_outer to make sure the low order system's
      * convergence criteria is sufficiently tight */ 
-    int min_outer = 80;
+    /* 30 and 50 would result in one additional iteration for 1810 core 1 */
+    int min_outer = 80; 
 
     if (moc_iter == 10000)
     {
