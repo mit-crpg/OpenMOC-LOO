@@ -869,7 +869,7 @@ void Cmfd::computeQuadFlux()
                     tmp = 0.0;
 
                     /* FIXME: somehow _nq = 4 breaks the code for _ro case */
-                    for (int j = 0; j < 4; j++)
+                    for (int j = 0; j < _nq; j++)
                     {
 #if NEW
                         if (j < 2)
@@ -949,7 +949,7 @@ void Cmfd::updateOldQuadFlux()
                 for (int e = 0; e < _ng; e++)
                 {
                     // FIXME: _nq
-                    for (int j = 0; j < 4; j++)
+                    for (int j = 0; j < _nq; j++)
                     {
                         s[i]->setOldQuadFlux(s[i]->getQuadFlux(e, j), e, j);
                     } 
@@ -1013,13 +1013,8 @@ void Cmfd::computeQuadSrc()
                             in[e][6] = s[0]->getQuadFlux(e,3);
                         }
 
-                        // FIXME? 
                         s[0]->setQuadFlux(in[e][5], e, 1);
                         s[0]->setQuadFlux(in[e][6], e, 0);
-                        /*
-                        s[0]->setOldQuadFlux(in[e][5], e, 1);
-                        s[0]->setOldQuadFlux(in[e][6], e, 0); 
-                        */
                     }
                     else if (_bc[0] == VACUUM)
                     {
@@ -1052,10 +1047,6 @@ void Cmfd::computeQuadSrc()
 
                         s[2]->setQuadFlux(in[e][1], e, 1);
                         s[2]->setQuadFlux(in[e][2], e, 0);
-                        /*
-                        s[2]->setOldQuadFlux(in[e][1], e, 1);
-                        s[2]->setOldQuadFlux(in[e][2], e, 0);
-                        */
                     }
                     else if (_bc[2] == VACUUM)
                     {
@@ -1088,10 +1079,6 @@ void Cmfd::computeQuadSrc()
 
                         s[3]->setQuadFlux(in[e][4], e, 1);
                         s[3]->setQuadFlux(in[e][3], e, 0); 
-                        /*
-                        s[3]->setOldQuadFlux(in[e][4], e, 1);
-                        s[3]->setOldQuadFlux(in[e][3], e, 0);
-                        */
                     }
                     else if (_bc[3] == VACUUM)
                     {
@@ -1124,10 +1111,6 @@ void Cmfd::computeQuadSrc()
 
                         s[1]->setQuadFlux(in[e][0], e, 1);
                         s[1]->setQuadFlux(in[e][7], e, 0);
-                        /*
-                        s[1]->setOldQuadFlux(in[e][0], e, 1);
-                        s[1]->setOldQuadFlux(in[e][7], e, 0); 
-                        */
                     }
                     else if (_bc[1] == VACUUM)
                     {
@@ -1165,6 +1148,10 @@ void Cmfd::computeQuadSrc()
                                    x, y, e, t, xs, out[e][t], ex, in[e][t], 
                                    1 - ex, 
                                    (out[e][t] - ex * in[e][t]) / (1-ex));
+
+                        // force quad src to be non-negative. this seems to fix
+                        // certain quarter core problem 
+                        src = 0;
                     }
 
                     meshCell->setQuadSrc(src, e, t);
@@ -1589,12 +1576,12 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
     else
         log_printf(ERROR, "Neither LOO psi nor phi is requested.");
 
-    int loo_iter, max_outer = 500; 
+    int loo_iter, max_outer = 1000; 
 
     /* we set min_outer to make sure the low order system's
      * convergence criteria is sufficiently tight */ 
     /* 30 and 50 would result in one additional iteration for 1810 core 1 */
-    int min_outer = 80; 
+    int min_outer = 100; 
 
     if (moc_iter == 10000)
     {
@@ -1800,8 +1787,8 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
                 else if (_bc[1] == VACUUM)
                 {
                     // setting to zero should be redundant 
-                    //_mesh->getCells(_i_array[_num_track * j])
-                    //    ->getMeshSurfaces(1)->setQuadFlux(0.0, e, 1);
+                    _mesh->getCells(_i_array[_num_track * j])
+                        ->getMeshSurfaces(1)->setQuadFlux(0.0, e, 1);
                     leak_tot += flux * getSurf(_i_array[_num_track * j], 0, 0);
                 }
                 else
@@ -1892,8 +1879,8 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
                 else if (_bc[1] == VACUUM)
                 {
                     // again redundant
-                    //_mesh->getCells(_i_array[_num_track * j])
-                    //    ->getMeshSurfaces(1)->setQuadFlux(0.0, e, 0);
+                    _mesh->getCells(_i_array[_num_track * j])
+                        ->getMeshSurfaces(1)->setQuadFlux(0.0, e, 0);
                     leak_tot += flux * getSurf(_i_array[_num_track * j], 0, 0);
                 }
 

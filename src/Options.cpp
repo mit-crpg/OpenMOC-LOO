@@ -30,7 +30,7 @@ Options::Options(int argc, char **argv)
     _moc_conv_thresh = 1e-5;      /* convergence on MOC sweeps */
 
     /* FIXME: was 1e-10 before */
-    _l2_norm_conv_thresh = 1e-5; /* convergence on acceleration iteration */
+    _l2_norm_conv_thresh = 1e-7; /* convergence on acceleration iteration */
 
     /* most important acceleration options */
     _linear_prolongation = false;
@@ -56,7 +56,7 @@ Options::Options(int argc, char **argv)
 
     // was running: 0.4 and 16 for b&w criticals
     _track_spacing = 0.1;		/* Default C4 track spacing: 0.05cm */
-    _num_azim = 16;			/* Default C4 # azimuthal angle: 64*/
+    _num_azim = 64;			/* Default C4 # azimuthal angle: 64*/
 
     /* MOC options */
     _verbosity = "NORMAL";		/* Default logging level */

@@ -90,7 +90,10 @@ Solver::Solver(Geometry* geom, TrackGenerator* track_generator,
     _reflect_outgoing = opts->getReflectOutgoing();
     _plot_FSRs_flag = opts->getPlotFSRsFlag();
 
-    _nq = 4;
+    if (_reflect_outgoing)
+        _nq = 2;
+    else
+        _nq = 4;
     
     _plot_loo = opts->plotQuadFlux();
     _plot_flux = opts->plotFluxes();
@@ -2210,8 +2213,9 @@ void Solver::updateSource(int moc_iter)
             source[G] = (chi[G] * fission_source / _k_eff + scatter_source) 
                 * ONE_OVER_FOUR_PI;
 
-            /* If negative FSR sources show up in the first 5 iterations, set them to zero */
-            if ((source[G] < 0) && (moc_iter <= 5))
+            /* If negative FSR sources show up in the early
+             * iterations, set them to zero */
+            if ((source[G] < 0) && (moc_iter < 10))
                 source[G] = 0.0;
         }
     }
