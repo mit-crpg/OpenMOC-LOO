@@ -1,0 +1,566 @@
+<?xml version="1.0"?>
+
+<!-- 2D BEAVRS benchmark, 4 sectors so we can test linear prolongation -->
+
+<geometry>
+
+<!-- Definition of Cells -->
+  <!-- water pin cell !-->
+  <cell id="1" universe="1" material="1" surfaces="" sectors="4"/>
+
+  <!-- 1.6% pin cell !-->
+  <cell id="2" universe="2" material="4" surfaces="-5" sectors="4"/>
+  <cell id="3" universe="2" material="3" surfaces="5 -6" sectors="4"/>
+  <cell id="4" universe="2" material="2" surfaces="6 -7" sectors="4"/>
+  <cell id="5" universe="2" material="1" surfaces="7" sectors="4"/>
+
+  <!-- 2.4% pin cell !-->
+  <cell id="6" universe="3" material="5" surfaces="-5" sectors="4"/>
+  <cell id="7" universe="3" material="3" surfaces="5 -6" sectors="4"/>
+  <cell id="8" universe="3" material="2" surfaces="6 -7" sectors="4"/>
+  <cell id="9" universe="3" material="1" surfaces="7" sectors="4"/>
+
+  <!-- 3.1% pin cell !-->
+  <cell id="10" universe="4" material="6" surfaces="-5" sectors="4"/>
+  <cell id="11" universe="4" material="3" surfaces="5 -6" sectors="4"/>
+  <cell id="12" universe="4" material="2" surfaces="6 -7" sectors="4"/>
+  <cell id="13" universe="4" material="1" surfaces="7" sectors="4"/>
+
+  <!-- guide tube !-->
+  <cell id="14" universe="5" material="1" surfaces="-8" sectors="4"/>
+  <cell id="15" universe="5" material="2" surfaces="8 -9" sectors="4"/>
+  <cell id="16" universe="5" material="1" surfaces="9" sectors="4"/>
+
+  <!-- instrument tube !-->
+  <cell id="17" universe="6" material="3" surfaces="-10" sectors="4"/>
+  <cell id="18" universe="6" material="2" surfaces="10 -11" sectors="4"/>
+  <cell id="19" universe="6" material="1" surfaces="11 -12" sectors="4"/>
+  <cell id="20" universe="6" material="2" surfaces="12 -13" sectors="4"/>  
+  <cell id="21" universe="6" material="1" surfaces="13" sectors="4"/>  
+
+  <!-- burnable poison !-->
+  <cell id="22" universe="7" material="3" surfaces="-14" sectors="4"/>
+  <cell id="23" universe="7" material="8" surfaces="14 -15" sectors="4"/>
+  <cell id="24" universe="7" material="3" surfaces="15 -16" sectors="4"/>
+  <cell id="25" universe="7" material="7" surfaces="16 -17" sectors="4"/>  
+  <cell id="26" universe="7" material="3" surfaces="17 -18" sectors="4"/> 
+  <cell id="27" universe="7" material="8" surfaces="18 -19" sectors="4"/>
+  <cell id="28" universe="7" material="1" surfaces="19 -20" sectors="4"/>
+  <cell id="29" universe="7" material="2" surfaces="20 -21" sectors="4"/>  
+  <cell id="30" universe="7" material="1" surfaces="21" sectors="4"/> 
+
+
+  <!-- lattice cells !-->
+  <cell id="31" universe="10" fill="30" surfaces="" />
+  <cell id="32" universe="11" fill="31" surfaces="" />
+  <cell id="33" universe="12" fill="32" surfaces="" />
+  <cell id="34" universe="13" fill="33" surfaces="" />
+  <cell id="35" universe="14" fill="34" surfaces="" />
+  <cell id="36" universe="15" fill="35" surfaces="" />
+  <cell id="37" universe="16" fill="36" surfaces="" />
+  <cell id="38" universe="17" fill="37" surfaces="" />
+  <cell id="39" universe="18" fill="38" surfaces="" />
+  <cell id="40" universe="19" fill="39" surfaces="" />
+  <cell id="41" universe="20" fill="40" surfaces="" />
+  <cell id="42" universe="21" fill="41" surfaces="" />
+  <cell id="43" universe="22" fill="42" surfaces="" />
+  <cell id="44" universe="23" fill="43" surfaces="" />
+  <cell id="45" universe="24" fill="44" surfaces="" />
+  <cell id="46" universe="25" fill="45" surfaces="" />
+  <cell id="47" universe="26" fill="46" surfaces="" />
+
+  <!-- full geometry !-->
+  <cell id="50" universe="0" fill="47" surfaces="1 -2 3 -4" />
+
+<!-- Definition of Lattices -->
+  <lattice id="30">
+   <type>rectangular</type>
+   <dimension>17 17</dimension>
+   <width>1.25984 1.25984</width>
+   <universes>
+	 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+	 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+	 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+	 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+	 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+	 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+	 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+	 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+	 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+	 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+	 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+	 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+	 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+	 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+	 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+	 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+	 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+   </universes>
+  </lattice>
+
+  <lattice id="31">
+   <type>rectangular</type>
+   <dimension>17 17</dimension>
+   <width>1.25984 1.25984</width>
+   <universes>
+	 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
+	 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
+	 2 2 2 2 2 5 2 2 5 2 2 5 2 2 2 2 2
+	 2 2 2 5 2 2 2 2 2 2 2 2 2 5 2 2 2
+	 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
+	 2 2 5 2 2 5 2 2 5 2 2 5 2 2 5 2 2
+	 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
+	 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
+	 2 2 5 2 2 5 2 2 6 2 2 5 2 2 5 2 2
+	 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
+	 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
+	 2 2 5 2 2 5 2 2 5 2 2 5 2 2 5 2 2
+	 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
+	 2 2 2 5 2 2 2 2 2 2 2 2 2 5 2 2 2
+	 2 2 2 2 2 5 2 2 5 2 2 5 2 2 2 2 2
+	 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
+	 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
+   </universes>
+  </lattice>
+
+  <lattice id="32">
+   <type>rectangular</type>
+   <dimension>17 17</dimension>
+   <width>1.25984 1.25984</width>
+   <universes>
+	 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3
+	 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3
+	 3 3 3 3 3 5 3 3 5 3 3 5 3 3 3 3 3
+	 3 3 3 5 3 3 3 3 3 3 3 3 3 5 3 3 3
+	 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3
+	 3 3 5 3 3 5 3 3 5 3 3 5 3 3 5 3 3
+	 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3
+	 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3
+	 3 3 5 3 3 5 3 3 6 3 3 5 3 3 5 3 3
+	 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3
+	 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3
+	 3 3 5 3 3 5 3 3 5 3 3 5 3 3 5 3 3
+	 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3
+	 3 3 3 5 3 3 3 3 3 3 3 3 3 5 3 3 3
+	 3 3 3 3 3 5 3 3 5 3 3 5 3 3 3 3 3
+	 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3
+	 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3
+   </universes>
+  </lattice>
+
+  <lattice id="33">
+   <type>rectangular</type>
+   <dimension>17 17</dimension>
+   <width>1.25984 1.25984</width>
+   <universes>
+	 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4
+	 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4
+	 4 4 4 4 4 5 4 4 5 4 4 5 4 4 4 4 4
+	 4 4 4 5 4 4 4 4 4 4 4 4 4 5 4 4 4
+	 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4
+	 4 4 5 4 4 5 4 4 5 4 4 5 4 4 5 4 4
+	 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4
+	 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4
+	 4 4 5 4 4 5 4 4 6 4 4 5 4 4 5 4 4
+	 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4
+	 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4
+	 4 4 5 4 4 5 4 4 5 4 4 5 4 4 5 4 4
+	 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4
+	 4 4 4 5 4 4 4 4 4 4 4 4 4 5 4 4 4
+	 4 4 4 4 4 5 4 4 5 4 4 5 4 4 4 4 4
+	 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4
+	 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4
+   </universes>
+  </lattice>
+
+
+  <lattice id="34">
+   <type>rectangular</type>
+   <dimension>17 17</dimension>
+   <width>1.25984 1.25984</width>
+   <universes>
+	 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
+	 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
+	 2 2 2 2 2 7 2 2 5 2 2 7 2 2 2 2 2
+	 2 2 2 7 2 2 2 2 2 2 2 2 2 7 2 2 2
+	 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
+	 2 2 7 2 2 5 2 2 5 2 2 5 2 2 7 2 2
+	 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
+	 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
+	 2 2 5 2 2 5 2 2 6 2 2 5 2 2 5 2 2
+	 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
+	 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
+	 2 2 5 2 2 5 2 2 5 2 2 5 2 2 5 2 2
+	 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
+	 2 2 2 5 2 2 2 2 2 2 2 2 2 5 2 2 2
+	 2 2 2 2 2 5 2 2 5 2 2 5 2 2 2 2 2
+	 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
+	 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
+   </universes>
+  </lattice>
+
+  <lattice id="35">
+   <type>rectangular</type>
+   <dimension>17 17</dimension>
+   <width>1.25984 1.25984</width>
+   <universes>
+	 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
+	 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
+	 2 2 2 2 2 7 2 2 5 2 2 5 2 2 2 2 2
+	 2 2 2 7 2 2 2 2 2 2 2 2 2 5 2 2 2
+	 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
+	 2 2 7 2 2 5 2 2 5 2 2 5 2 2 5 2 2
+	 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
+	 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
+	 2 2 5 2 2 5 2 2 6 2 2 5 2 2 5 2 2
+	 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
+	 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
+	 2 2 7 2 2 5 2 2 5 2 2 5 2 2 5 2 2
+	 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
+	 2 2 2 7 2 2 2 2 2 2 2 2 2 5 2 2 2
+	 2 2 2 2 2 7 2 2 5 2 2 5 2 2 2 2 2
+	 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
+	 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
+   </universes>
+  </lattice>
+
+  <lattice id="36">
+   <type>rectangular</type>
+   <dimension>17 17</dimension>
+   <width>1.25984 1.25984</width>
+   <universes>
+	 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
+	 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
+	 2 2 2 2 2 5 2 2 5 2 2 5 2 2 2 2 2
+	 2 2 2 5 2 2 2 2 2 2 2 2 2 5 2 2 2
+	 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
+	 2 2 5 2 2 5 2 2 5 2 2 5 2 2 5 2 2
+	 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
+	 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
+	 2 2 5 2 2 5 2 2 6 2 2 5 2 2 5 2 2
+	 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
+	 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
+	 2 2 7 2 2 5 2 2 5 2 2 5 2 2 7 2 2
+	 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
+	 2 2 2 7 2 2 2 2 2 2 2 2 2 7 2 2 2
+	 2 2 2 2 2 7 2 2 5 2 2 7 2 2 2 2 2
+	 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
+	 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
+   </universes>
+  </lattice>
+
+  <lattice id="37">
+   <type>rectangular</type>
+   <dimension>17 17</dimension>
+   <width>1.25984 1.25984</width>
+   <universes>
+	 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
+	 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
+	 2 2 2 2 2 5 2 2 5 2 2 7 2 2 2 2 2
+	 2 2 2 5 2 2 2 2 2 2 2 2 2 7 2 2 2
+	 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
+	 2 2 5 2 2 5 2 2 5 2 2 5 2 2 7 2 2
+	 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
+	 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
+	 2 2 5 2 2 5 2 2 6 2 2 5 2 2 5 2 2
+	 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
+	 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
+	 2 2 5 2 2 5 2 2 5 2 2 5 2 2 7 2 2
+	 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
+	 2 2 2 5 2 2 2 2 2 2 2 2 2 7 2 2 2
+	 2 2 2 2 2 5 2 2 5 2 2 7 2 2 2 2 2
+	 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
+	 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
+   </universes>
+  </lattice>
+
+
+  <lattice id="38">
+   <type>rectangular</type>
+   <dimension>17 17</dimension>
+   <width>1.25984 1.25984</width>
+   <universes>
+	 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3
+	 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3
+	 3 3 3 3 3 7 3 3 5 3 3 7 3 3 3 3 3
+	 3 3 3 7 3 3 3 3 3 3 3 3 3 7 3 3 3
+	 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3
+	 3 3 7 3 3 5 3 3 5 3 3 5 3 3 7 3 3
+	 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3
+	 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3
+	 3 3 5 3 3 5 3 3 6 3 3 5 3 3 5 3 3
+	 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3
+	 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3
+	 3 3 7 3 3 5 3 3 5 3 3 5 3 3 7 3 3
+	 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3
+	 3 3 3 7 3 3 3 3 3 3 3 3 3 7 3 3 3
+	 3 3 3 3 3 7 3 3 5 3 3 7 3 3 3 3 3
+	 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3
+	 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3
+   </universes>
+  </lattice>
+
+  <lattice id="39">
+   <type>rectangular</type>
+   <dimension>17 17</dimension>
+   <width>1.25984 1.25984</width>
+   <universes>
+	 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4
+	 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4
+	 4 4 4 4 4 7 4 4 5 4 4 7 4 4 4 4 4
+	 4 4 4 7 4 4 4 4 4 4 4 4 4 7 4 4 4
+	 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4
+	 4 4 7 4 4 5 4 4 5 4 4 5 4 4 7 4 4
+	 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4
+	 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4
+	 4 4 5 4 4 5 4 4 6 4 4 5 4 4 5 4 4
+	 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4
+	 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4
+	 4 4 7 4 4 5 4 4 5 4 4 5 4 4 7 4 4
+	 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4
+	 4 4 4 7 4 4 4 4 4 4 4 4 4 7 4 4 4
+	 4 4 4 4 4 7 4 4 5 4 4 7 4 4 4 4 4
+	 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4
+	 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4
+   </universes>
+  </lattice>
+
+<!-- 3.1 % enriched w/ 15 BP Assembly -->
+  <lattice id="40">
+   <type>rectangular</type>
+   <dimension>17 17</dimension>
+   <width>1.25984 1.25984</width>
+   <universes>
+	 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4
+	 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4
+	 4 4 4 4 4 7 4 4 7 4 4 7 4 4 4 4 4
+	 4 4 4 7 4 4 4 4 4 4 4 4 4 5 4 4 4
+	 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4
+	 4 4 7 4 4 7 4 4 7 4 4 7 4 4 5 4 4
+	 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4
+	 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4
+	 4 4 7 4 4 7 4 4 6 4 4 7 4 4 5 4 4
+	 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4
+	 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4
+	 4 4 7 4 4 7 4 4 7 4 4 7 4 4 5 4 4
+	 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4
+	 4 4 4 5 4 4 4 4 4 4 4 4 4 5 4 4 4
+	 4 4 4 4 4 5 4 4 5 4 4 5 4 4 4 4 4
+	 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4
+	 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4
+   </universes>
+  </lattice>
+
+  <lattice id="41">
+   <type>rectangular</type>
+   <dimension>17 17</dimension>
+   <width>1.25984 1.25984</width>
+   <universes>
+	 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4
+	 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4
+	 4 4 4 4 4 5 4 4 5 4 4 5 4 4 4 4 4
+	 4 4 4 5 4 4 4 4 4 4 4 4 4 5 4 4 4
+	 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4
+	 4 4 7 4 4 7 4 4 7 4 4 7 4 4 5 4 4
+	 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4
+	 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4
+	 4 4 7 4 4 7 4 4 6 4 4 7 4 4 5 4 4
+	 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4
+	 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4
+	 4 4 7 4 4 7 4 4 7 4 4 7 4 4 5 4 4
+	 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4
+	 4 4 4 7 4 4 4 4 4 4 4 4 4 5 4 4 4
+	 4 4 4 4 4 7 4 4 7 4 4 7 4 4 4 4 4
+	 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4
+	 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4
+   </universes>
+  </lattice>
+
+  <lattice id="42">
+   <type>rectangular</type>
+   <dimension>17 17</dimension>
+   <width>1.25984 1.25984</width>
+   <universes>
+	 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4
+	 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4
+	 4 4 4 4 4 5 4 4 5 4 4 5 4 4 4 4 4
+	 4 4 4 5 4 4 4 4 4 4 4 4 4 5 4 4 4
+	 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4
+	 4 4 5 4 4 7 4 4 7 4 4 7 4 4 7 4 4
+	 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4
+	 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4
+	 4 4 5 4 4 7 4 4 6 4 4 7 4 4 7 4 4
+	 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4
+	 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4
+	 4 4 5 4 4 7 4 4 7 4 4 7 4 4 7 4 4
+	 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4
+	 4 4 4 5 4 4 4 4 4 4 4 4 4 7 4 4 4
+	 4 4 4 4 4 7 4 4 7 4 4 7 4 4 4 4 4
+	 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4
+	 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4
+   </universes>
+  </lattice>
+
+  <lattice id="43">
+   <type>rectangular</type>
+   <dimension>17 17</dimension>
+   <width>1.25984 1.25984</width>
+   <universes>
+	 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4
+	 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4
+	 4 4 4 4 4 7 4 4 7 4 4 7 4 4 4 4 4
+	 4 4 4 5 4 4 4 4 4 4 4 4 4 7 4 4 4
+	 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4
+	 4 4 5 4 4 7 4 4 7 4 4 7 4 4 7 4 4
+	 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4
+	 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4
+	 4 4 5 4 4 7 4 4 6 4 4 7 4 4 7 4 4
+	 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4
+	 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4
+	 4 4 5 4 4 7 4 4 7 4 4 7 4 4 7 4 4
+	 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4
+	 4 4 4 5 4 4 4 4 4 4 4 4 4 5 4 4 4
+	 4 4 4 4 4 5 4 4 5 4 4 5 4 4 4 4 4
+	 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4
+	 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4
+   </universes>
+  </lattice>
+
+
+<!-- 2.4 % enriched w/ 16 BP Assembly -->
+  <lattice id="44">
+   <type>rectangular</type>
+   <dimension>17 17</dimension>
+   <width>1.25984 1.25984</width>
+   <universes>
+	 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3
+	 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3
+	 3 3 3 3 3 7 3 3 7 3 3 7 3 3 3 3 3
+	 3 3 3 7 3 3 3 3 3 3 3 3 3 7 3 3 3
+	 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3
+	 3 3 7 3 3 5 3 3 5 3 3 5 3 3 7 3 3
+	 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3
+	 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3
+	 3 3 7 3 3 5 3 3 6 3 3 5 3 3 7 3 3
+	 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3
+	 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3
+	 3 3 7 3 3 5 3 3 5 3 3 5 3 3 7 3 3
+	 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3
+	 3 3 3 7 3 3 3 3 3 3 3 3 3 7 3 3 3
+	 3 3 3 3 3 7 3 3 7 3 3 7 3 3 3 3 3
+	 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3
+	 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3
+   </universes>
+  </lattice>
+
+<!-- 3.1 % enriched w/ 16 BP Assembly -->
+  <lattice id="45">
+   <type>rectangular</type>
+   <dimension>17 17</dimension>
+   <width>1.25984 1.25984</width>
+   <universes>
+	 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4
+	 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4
+	 4 4 4 4 4 7 4 4 7 4 4 7 4 4 4 4 4
+	 4 4 4 7 4 4 4 4 4 4 4 4 4 7 4 4 4
+	 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4
+	 4 4 7 4 4 5 4 4 5 4 4 5 4 4 7 4 4
+	 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4
+	 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4
+	 4 4 7 4 4 5 4 4 6 4 4 5 4 4 7 4 4
+	 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4
+	 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4
+	 4 4 7 4 4 5 4 4 5 4 4 5 4 4 7 4 4
+	 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4
+	 4 4 4 7 4 4 4 4 4 4 4 4 4 7 4 4 4
+	 4 4 4 4 4 7 4 4 7 4 4 7 4 4 4 4 4
+	 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4
+	 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4
+   </universes>
+  </lattice>
+
+
+<!-- 3.1 % enriched w/ 20 BP Assembly -->
+  <lattice id="46">
+   <type>rectangular</type>
+   <dimension>17 17</dimension>
+   <width>1.25984 1.25984</width>
+   <universes>
+	 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4
+	 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4
+	 4 4 4 4 4 7 4 4 7 4 4 7 4 4 4 4 4
+	 4 4 4 7 4 4 4 4 4 4 4 4 4 7 4 4 4
+	 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4
+	 4 4 7 4 4 7 4 4 5 4 4 7 4 4 7 4 4
+	 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4
+	 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4
+	 4 4 7 4 4 5 4 4 6 4 4 5 4 4 7 4 4
+	 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4
+	 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4
+	 4 4 7 4 4 7 4 4 5 4 4 7 4 4 7 4 4
+	 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4
+	 4 4 4 7 4 4 4 4 4 4 4 4 4 7 4 4 4
+	 4 4 4 4 4 7 4 4 7 4 4 7 4 4 4 4 4
+	 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4
+	 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4
+   </universes>
+  </lattice>
+
+
+  <lattice id="47">
+   <type>rectangular</type>
+   <dimension>17 17</dimension>
+   <width>21.41728 21.41728</width>
+   <universes>
+	 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10
+	 10 10 10 10 10 13 16 13 16 13 16 13 10 10 10 10 10
+	 10 10 10 13 13 25 11 26 11 26 11 25 13 13 10 10 10
+	 10 10 13 22 24 11 24 11 24 11 24 11 24 21 13 10 10
+	 10 10 13 24 12 24 11 18 11 18 11 24 12 24 13 10 10
+	 10 13 25 11 24 11 18 11 18 11 18 11 24 11 25 13 10
+	 10 17 11 24 11 18 11 18 11 18 11 18 11 24 11 15 10
+	 10 13 26 11 18 11 18 11 24 11 18 11 18 11 26 13 10
+	 10 17 11 24 11 18 11 24 11 24 11 18 11 24 11 15 10
+	 10 13 26 11 18 11 18 11 24 11 18 11 18 11 26 13 10
+	 10 17 11 24 11 18 11 18 11 18 11 18 11 24 11 15 10
+	 10 13 25 11 24 11 18 11 18 11 18 11 24 11 25 13 10
+	 10 10 13 24 12 24 11 18 11 18 11 24 12 24 13 10 10
+	 10 10 13 23 24 11 24 11 24 11 24 11 24 20 13 10 10
+	 10 10 10 13 13 25 11 26 11 26 11 25 13 13 10 10 10
+	 10 10 10 10 10 13 14 13 14 13 14 13 10 10 10 10 10
+	 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10
+   </universes>
+  </lattice>
+
+
+<!-- Definition of Surfaces -->
+  <surface id="1" type="x-plane" coeffs="-182.04688" boundary="vacuum" />
+  <surface id="2" type="x-plane" coeffs="182.04688" boundary="vacuum" />
+  <surface id="3" type="y-plane" coeffs="-182.04688" boundary="vacuum" />
+  <surface id="4" type="y-plane" coeffs="182.04688" boundary="vacuum"/>
+
+  <!-- pin cell -->
+  <surface id="5" type="circle" coeffs="0.0 0.0 0.39218" /> 
+  <surface id="6" type="circle" coeffs="0.0 0.0 0.40005" />
+  <surface id="7" type="circle" coeffs="0.0 0.0 0.45720" />
+
+  <!-- guide tube -->
+  <surface id="8" type="circle" coeffs="0.0 0.0 0.56134" />
+  <surface id="9" type="circle" coeffs="0.0 0.0 0.60198" />
+
+  <!-- instrument tube -->
+  <surface id="10" type="circle" coeffs="0.0 0.0 0.43688" />
+  <surface id="11" type="circle" coeffs="0.0 0.0 0.48387" />
+  <surface id="12" type="circle" coeffs="0.0 0.0 0.56134" />
+  <surface id="13" type="circle" coeffs="0.0 0.0 0.60198" />
+
+  <!-- burnable absorber -->
+  <surface id="14" type="circle" coeffs="0.0 0.0 0.21400" />
+  <surface id="15" type="circle" coeffs="0.0 0.0 0.23051" />
+  <surface id="16" type="circle" coeffs="0.0 0.0 0.24130" />
+  <surface id="17" type="circle" coeffs="0.0 0.0 0.42672" />
+  <surface id="18" type="circle" coeffs="0.0 0.0 0.43688" />
+  <surface id="19" type="circle" coeffs="0.0 0.0 0.48387" />
+  <surface id="20" type="circle" coeffs="0.0 0.0 0.56134" />
+  <surface id="21" type="circle" coeffs="0.0 0.0 0.60198" />
+</geometry>
