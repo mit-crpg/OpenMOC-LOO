@@ -1576,7 +1576,7 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
     else
         log_printf(ERROR, "Neither LOO psi nor phi is requested.");
 
-    int loo_iter, max_outer = 1000; 
+    int loo_iter, max_outer = 3000; 
 
     /* we set min_outer to make sure the low order system's
      * convergence criteria is sufficiently tight */ 
