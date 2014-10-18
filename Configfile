@@ -3,10 +3,10 @@ COMPILEOPTS += -Wall
 COMPILEOPTS += -Wno-unused-but-set-variable
 COMPILEOPTS += -std=c++11
 COMPILEOPTS += -fopenmp
-COMPILEOPTS += -O2
-COMPILEOPTS += -march=native
-#COMPILEOPTS += -g
-#LINKOPTS    += -g
+#COMPILEOPTS += -O2
+#COMPILEOPTS += -march=native
+COMPILEOPTS += -g
+LINKOPTS    += -g
 COMPILEOPTS += -I/usr/include/petsc
 COMPILEOPTS += -I/usr/include/petsc/linux-gnu-cxx-debug/include
 COMPILEOPTS += -I/usr/include/petsc/linux-gnu-cxx-opt/include
