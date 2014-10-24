@@ -88,6 +88,8 @@ public:
     void setPolarWeight(const int angle, double polar_weight);
     void setPolarFluxes(reflectType direction, int start_index, 
                         double* polar_fluxes);
+    void setPolarFluxes(reflectType direction, int start_index, 
+                        double* polar_fluxes, int energy_index);
     void setPolarFluxes(reflectType direction, double* polar_fluxes);
     void resetPolarFluxes(reflectType direction, int start_index);
     void setPolarFluxesByIndex(int pe, double flux);

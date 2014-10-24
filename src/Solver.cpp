@@ -1356,7 +1356,50 @@ void Solver::tallyLooCurrentIncoming(Track *track, segment *segment,
     }
     return;
 }
+void Solver::tallyCmfdCurrent(Track *track, segment *segment, 
+                              MeshSurface **meshSurfaces, int direction, int e)
+{
+    MeshSurface *meshSurface;
+    int pe = 0, pe_initial = 0, p, surfID;
+    /* polar weights should be azi weight x sin(theta) x polar weight x 4 pi, 
+     * where azi weight takes into accout the spacing between tracks */
+    double *weights, *polar_fluxes;
+    double current = 0;
+	
+    if (direction == 1) 
+    {
+        surfID = segment->_mesh_surface_fwd;
+        pe_initial = e * NUM_POLAR_ANGLES;
+    }
+    else
+    {
+        surfID = segment->_mesh_surface_bwd;
+        pe_initial = GRP_TIMES_ANG + e * NUM_POLAR_ANGLES;
+    }
 
+    if (surfID != -1)
+    {
+        weights = track->getPolarWeights();
+        polar_fluxes = track->getPolarFluxes();
+
+        meshSurface = meshSurfaces[surfID];
+
+        /* loop over polar angles */
+        for (p = 0; p < NUM_POLAR_ANGLES; p++)
+        {
+            pe = pe_initial + p;
+            /* increment current (polar flux times polar weights); */
+            /* The cos theta needed for getting th direction to normal
+             * is cancelled out with the 1/cos theta needed to get the 
+             * track spacing now on the surface. The 1/2.0 takes into 
+             * account half space. */
+            current += polar_fluxes[pe] * weights[p] / 2.0;
+        }
+        meshSurface->incrementCurrent(current, e);
+    }
+
+    return;
+}
 void Solver::tallyCmfdCurrent(Track *track, segment *segment, 
                               MeshSurface **meshSurfaces, int direction)
 {
@@ -1404,6 +1447,10 @@ void Solver::tallyCmfdCurrent(Track *track, segment *segment,
     }
     return;
 }
+
+
+
+
 
 
 /* Effect: accumulates weights for each surface's each
@@ -1775,34 +1822,32 @@ void Solver::MOCsweep(int max_iterations, int moc_iter)
         /* Loop over each thread */
         log_printf(ACTIVE, "At the beginning of a sweep");
 
-        for (j = 0; j < _num_azim; j++)
+        for (e = 0; e < NUM_ENERGY_GROUPS; e++)
         {
-            /* Loop over all tracks for this azimuthal angles */
-            for (k = 0; k < _num_tracks[j]; k++) 
+            for (j = 0; j < _num_azim; j++)
             {
-                /* Initialize local pointers to important data structures */
-                track = &_tracks[j][k];
-                track->printOutInfo();
+                /* Loop over all tracks for this azimuthal angles */
+                for (k = 0; k < _num_tracks[j]; k++) 
+                {
+                    /* Initialize local pointers to important data structures */
+                    track = &_tracks[j][k];
+                    track->printOutInfo();
 
-                segments = track->getSegments();
-                num_segments = track->getNumSegments();
-                weights = track->getPolarWeights();
-                polar_fluxes = track->getPolarFluxes();
+                    segments = track->getSegments();
+                    num_segments = track->getNumSegments();
+                    weights = track->getPolarWeights();
+                    polar_fluxes = track->getPolarFluxes();
                     
-                /* Store all the incoming angular fluxes */
-                //if ((tally == 2) && (!_reflect_outgoing))
-                if (tally == 2)
-                {
-                    tallyLooCurrentIncoming(track, segments.at(0), 
-                                            meshSurfaces, 1);
-                    tallyLooCurrentIncoming(track, 
-                                            segments.at(num_segments-1), 
-                                            meshSurfaces, -1);
-                }
-                /* FIXME: add in tallyCmfdCurrentIncoming */
+                    /* Store all the incoming angular fluxes */
+                    //if (tally == 2)
+                    //{
+                    //    tallyLooCurrentIncoming(track, segments.at(0), 
+                    //                            meshSurfaces, 1);
+                    //   tallyLooCurrentIncoming(track, 
+                    //                            segments.at(num_segments-1),
+                    //                            meshSurfaces, -1);
+                    //}
                     
-                for (e = 0; e < NUM_ENERGY_GROUPS; e++)
-                {
                     /* Loop over each segment in forward direction */
                     for (s = 0; s < num_segments; s++) 
                     {
@@ -1837,10 +1882,11 @@ void Solver::MOCsweep(int max_iterations, int moc_iter)
                         for (p = 0; p < NUM_POLAR_ANGLES; p++) 
                         {
                             pe = e * NUM_POLAR_ANGLES + p; 
-                            delta = (polar_fluxes[pe] -ratios[e]) *
+                            delta = (polar_fluxes[pe] - ratios[e]) *
                                 segment->_prefactors[e][p];
                             fsr_flux[e] += delta * weights[p];
                             polar_fluxes[pe] -= delta;
+                            assert(polar_fluxes[pe] > -1e-5);
                         }
 #endif
                   
@@ -1849,39 +1895,33 @@ void Solver::MOCsweep(int max_iterations, int moc_iter)
                         if (tally == 2)
                             tallyLooCurrent(track, segment, meshSurfaces, 1);
                         else if (tally == 1)
-                            tallyCmfdCurrent(track, segment, meshSurfaces, 1);
+                            tallyCmfdCurrent(track, segment, meshSurfaces, 
+                                             1, e);
 
                         /* Increments the scalar flux for this FSR */
                         fsr->incrementFlux(e, fsr_flux[e]);
                     } /* end of segment */
-                }/* end of energy groups */
 
-
-                /* Transfer fluxes to outgoing track, or store them */
-                if (_reflect_outgoing)                    
-                {
-                    track->getTrackOut()->setPolarFluxes(track->isReflOut(),
-                                                         0, polar_fluxes);
-                }
-                else
-                    track->setNewFluxes(0, polar_fluxes); 
+                    /* Transfer fluxes to outgoing track, or store them */
+                    if (_reflect_outgoing)                    
+                    {
+                        track->getTrackOut()->setPolarFluxes(track->isReflOut(),
+                                                             0, polar_fluxes, 
+                                                             e);
+                    }
+                    else
+                        track->setNewFluxes(0, polar_fluxes); 
                 
-                /* Tallys leakage */
-                pe = 0;
-                for (e = 0; e < NUM_ENERGY_GROUPS; e++) 
-                {
+                    /* Tallys leakage */
                     for (p = 0; p < NUM_POLAR_ANGLES; p++)
                     {
+                        pe = e * NUM_POLAR_ANGLES + p; 
                         _geom->getSurface(track->getSurfFwd())
                             ->incrementLeakage
                             (track->isReflOut(), 
                              polar_fluxes[pe]*weights[p] / 2.0, e);
-                        pe++;
                     }
-                }
 
-                for (e = 0; e < NUM_ENERGY_GROUPS; e++)
-                {
                     /* Loops over each segment in the reverse direction */
                     for (s = num_segments-1; s > -1; s--) 
                     {
@@ -1929,39 +1969,36 @@ void Solver::MOCsweep(int max_iterations, int moc_iter)
                         if (tally == 2)
                             tallyLooCurrent(track, segment, meshSurfaces, -1);
                         else if (tally == 1)
-                            tallyCmfdCurrent(track, segment, meshSurfaces, -1);
+                            tallyCmfdCurrent(track, segment, meshSurfaces, 
+                                             -1, e);
                         
                         /* Increments the scalar flux for this FSR */
                         fsr->incrementFlux(e, fsr_flux[e]);
                     } /* end of this segment, move on to the next segment */
-                }/* end of energy groups */
-    
-                /* Transfers fluxes to incoming track, or store them */
-                if (_reflect_outgoing)
-                {
-                    track->getTrackIn()->setPolarFluxes(track->isReflIn(), 
-                                                        GRP_TIMES_ANG, 
-                                                        polar_fluxes);
-                }
-                else
-                    track->setNewFluxes(GRP_TIMES_ANG, polar_fluxes);
+
+                    /* Transfers fluxes to incoming track, or store them */
+                    if (_reflect_outgoing)
+                    {
+                        track->getTrackIn()->setPolarFluxes(track->isReflIn(), 
+                                                            GRP_TIMES_ANG, 
+                                                            polar_fluxes, e);
+                    }
+                    else
+                        track->setNewFluxes(GRP_TIMES_ANG, polar_fluxes);
                 
-                /* Tallies leakage */
-                pe = GRP_TIMES_ANG;
-                for (e = 0; e < NUM_ENERGY_GROUPS; e++) 
-                {
+                    /* Tallies leakage */
+                    pe = GRP_TIMES_ANG;
                     for (p = 0; p < NUM_POLAR_ANGLES; p++)
                     {
+                        pe = GRP_TIMES_ANG + e * NUM_POLAR_ANGLES + p;
                         _geom->getSurface(track->getSurfBwd())
                             ->incrementLeakage(track->isReflIn(), 
                                                polar_fluxes[pe]*weights[p]
                                                /2.0, e);
-                        pe++;
                     }
-                } 
-
-            } /* end of a track (forward & backward segments) */
-        } 
+                } /* end of a track (forward & backward segments) */
+            } /* end of an azimuthal angles */ 
+        } /* end of an energy group */ 
 
         log_printf(ACTIVE, "At the end of a sweep, the outgoing fluxes are:");
         if (!_reflect_outgoing)

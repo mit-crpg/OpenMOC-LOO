@@ -170,15 +170,14 @@ void FlatSourceRegion::setFlux(int energy, double flux) {
 
 
 /**
- * Increment the scalar flux for one energy group inside this FSR
- * @param energy the energy group index
+ * Increment the scalar flux for one energy group inside this
+ * FSR. Notice this flux can be negative.  
+ * @param energy the energy group index 
  * @param flux the scalar flux
  */
 void FlatSourceRegion::incrementFlux(int energy, double flux) {
     assert(energy > -1);
     assert(energy < NUM_ENERGY_GROUPS);
-    assert(flux > -1e-10);
-
     _flux[energy] += flux;
     return;
 }

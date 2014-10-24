@@ -151,6 +151,8 @@ public:
     void tallyLooCurrentIncoming(Track *t, segment *seg, MeshSurface **surf, 
                                  int dir);
     void tallyCmfdCurrent(Track *t, segment *seg, MeshSurface **surf, int dir);
+    void tallyCmfdCurrent(Track *t, segment *seg, MeshSurface **surf, 
+                          int dir, int e);
     void computePinPowers();
     double computePinPowerNorm();
     bool onVacuumBoundary(double x, double y);

@@ -32,7 +32,7 @@
 #define MAX_ITERATIONS 50
 
 /* Precompute and store exponential pre-factors in transport equation */
-#define STORE_PREFACTORS false
+#define STORE_PREFACTORS true
 
 /* Number of significant digits for computing hashmap exponential prefactors */
 #define FSR_HASHMAP_PRECISION 12
