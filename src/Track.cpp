@@ -160,14 +160,14 @@ void Track::setPolarFluxes(reflectType direction, int start_index,
     {
         start_index += energy_index * NUM_POLAR_ANGLES;
         int start = direction * GRP_TIMES_ANG + energy_index * NUM_POLAR_ANGLES;
-        for (int i = 0; i < NUM_ENERGY_GROUPS; i++)
+        for (int i = 0; i < NUM_POLAR_ANGLES; i++)
             _polar_fluxes[start + i] = polar_fluxes[start_index + i];
     }
     else if (direction == VAC_TRUE || direction == VAC_FALSE)
     {
         int start = (direction - 2) * GRP_TIMES_ANG 
             + energy_index * NUM_POLAR_ANGLES;
-        for (int i = 0; i < NUM_ENERGY_GROUPS; i++)
+        for (int i = 0; i < NUM_POLAR_ANGLES; i++)
             _polar_fluxes[start + i] = 0.0;
     }
     else
