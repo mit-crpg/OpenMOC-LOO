@@ -11,9 +11,6 @@
 #include <cmath>
 
 int Cmfd::_surf_index[] = {1,2,2,3,3,0,0,1,2,1,3,2,0,3,1,0};
-// 1 polar angle 1810 core 1 0.1cm 16 azimuthal angle converge to 1e-5
-double Cmfd::_conv_val[] = 
-{9.123400e-03, 2.206056e-06, 1.617725e-02, 1.078075e-05};
 
 /**
  * Acceleration constructor
@@ -43,6 +40,7 @@ Cmfd::Cmfd(Geometry* geom, Plotter* plotter, Mesh* mesh,
     _use_diffusion_correction = opts->getDiffusionCorrection();
     _acc_after_MOC_converge = opts->getAccAfterMOCConverge();
     _closure = opts->getClosure();
+    log_printf(NORMAL, "closure relationship %d", _closure);
 
     _ng = NUM_ENERGY_GROUPS;
     if (opts->getGroupStructure() == false)
@@ -1138,9 +1136,7 @@ void Cmfd::computeQuadSrc()
                 sum_quad_flux = 0;
                 sum_quad_src = 0;
 
-                switch(_closure)
-                {
-                case 1:
+                if (_closure == 1)
                 {
                     for (int t = 0; t < 8; t++)
                     {
@@ -1154,6 +1150,10 @@ void Cmfd::computeQuadSrc()
                                        x, y, e, t, xs, out[e][t], ex, in[e][t], 
                                        1 - ex, 
                                        (out[e][t] - ex * in[e][t]) / (1-ex));
+                            // force quad src to be non-negative. this
+                            // seems to fix certain quarter core
+                            // problem 
+                            src = 0;
                         }
                         //assert(src > 0);
                         meshCell->setQuadSrc(src, e, t);
@@ -1162,9 +1162,8 @@ void Cmfd::computeQuadSrc()
                         sum_quad_flux += src/xs + (in[e][t] - out[e][t]) 
                             / (xs * l);
                     }
-                    break;
                 }
-                case 2:
+                else if (_closure == 2)
                 {
                     src = meshCell->getSrc()[e];
                     int max_n = 100;
@@ -1215,9 +1214,8 @@ void Cmfd::computeQuadSrc()
                         assert(sum_quad_src > 0);
                         assert(sum_quad_flux > 0);
                     } /* loop through 8 tracks */
-                    break;
                 }
-                case 3:
+                else if (_closure == 3)
                 {
                     for (int t = 0; t < 4; t++)
                     {
@@ -1245,6 +1243,7 @@ void Cmfd::computeQuadSrc()
                                        x, y, e, t, xs, out[e][t], ex, in[e][t], 
                                        1 - ex, 
                                        (out[e][t] - ex * in[e][t]) / (1-ex));
+                            src = 0;
                         }
 
                         meshCell->setQuadSrc(src, e, t1);
@@ -1257,7 +1256,6 @@ void Cmfd::computeQuadSrc()
                         sum_quad_flux += src/xs + (in[e][t2] - out[e][t2]) 
                             / (xs * l);
                     }
-                    break;
                 } /* end of three closure relationships */
 
                 assert(sum_quad_flux > 0);
@@ -1269,7 +1267,6 @@ void Cmfd::computeQuadSrc()
                            FOUR_PI * meshCell->getSrc()[e] / sum_quad_src,
                            meshCell->getOldFlux()[e] 
                            / meshCell->getSumQuadFlux()[e]);
-                }
             }
         }
     }
@@ -1680,7 +1677,7 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
     else
         log_printf(ERROR, "Neither LOO psi nor phi is requested.");
 
-    int loo_iter, max_outer = 3000; 
+    int loo_iter, max_outer = 500; 
 
     /* we set min_outer to make sure the low order system's
      * convergence criteria is sufficiently tight */ 
@@ -1804,17 +1801,14 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
                 for (int t = 0; t < 8; t++)
                 {
                     int d = e * 8 + t;
-                    switch (_closure) {
-                    case 1:
+                    if (_closure == 1)
+                    {
                         new_quad_src[i][d] = meshCell->getQuadSrc()[d] 
                             * src_ratio;
-                        break;
-                    case 2:
+                    }
+                    else if ((_closure == 2) || (_closure == 3))
+                    {
                         new_quad_src[i][d] = new_src[i][e];
-                        break;                    
-                    case 3:
-                        new_quad_src[i][d] = new_src[i][e];
-                        break;
                     }
 
                     //assert(new_quad_src[i][d] > 0);
@@ -2971,14 +2965,6 @@ void Cmfd::updateFSRScalarFlux(int moc_iter)
                _max_old, max, _max_old / max);
     _max_old = max;
 
-    // thermal side corner, outter corner, fast side corner, outter corner 
-    log_printf(DEBUG, "%d, %e, %e, %e, %e",
-               moc_iter + 1, 
-               _mesh->getCells(_cw - 1)->getNewFlux()[_ng-1] / _conv_val[0],
-               _mesh->getCells(_cw * _ch - 1)->getNewFlux()[_ng-1] 
-               / _conv_val[1],
-               _mesh->getCells(_cw - 1)->getNewFlux()[0] / _conv_val[2], 
-               _mesh->getCells(_cw * _ch - 1)->getNewFlux()[0]/ _conv_val[3]);
     delete[] CMCO;
     return;
 }
