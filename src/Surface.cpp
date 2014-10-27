@@ -224,6 +224,9 @@ void Surface::zeroLeakage(){
         _leakage[e] = 0.0;
 }
 
+void Surface::zeroLeakage(int energy_group){
+    _leakage[energy_group] = 0.0;
+}
 
 double* Surface::getLeakage(){
     return _leakage;

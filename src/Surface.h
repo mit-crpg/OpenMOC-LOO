@@ -86,6 +86,7 @@ public:
     bool onSurface(LocalCoords* coord);
     double getMinDistance(Point* point, double angle, Point* intersection);
     void zeroLeakage();
+    void zeroLeakage(int energy_group);
     double* getLeakage();
     void incrementLeakage(reflectType direction, double current, int e);
     void updateLeakage(double update_factor, int e);
