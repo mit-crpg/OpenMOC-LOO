@@ -56,6 +56,7 @@ private:
     int _boundary_iteration;
     int _num_azim;
     int _num_FSRs;
+    int _tally;
     int* _num_tracks;
     double _total_vol;
     double _damp_factor;
@@ -138,6 +139,7 @@ public:
     /* main routines */
     double kernel(int max_iterations);
     void MOCsweep(int max_iterations, int moc_iter);
+    void MOCsweep1g(int moc_iter, int e, int tally);
     double runLoo(int moc_iter);
     double runCmfd(int moc_iter);
     void tallyLooWeight(Track *t, segment *seg, MeshSurface **surf, int dir);
@@ -160,10 +162,12 @@ public:
 
     /* updates after transport sweep */
     void computeRatios();
+    void computeRatios(int e);
     double computeKeff(int moc_iter);
     void normalizeFlux(double moc_iter);
     void renormCurrents(Mesh* mesh, double keff);
     void updateSource(int moc_iter);
+    void updateSource(int moc_iter, int e);
     void prolongation(int moc_iter);
     void updateBoundaryFluxByQuadrature(int moc_iter);
     void storeMOCBoundaryFlux();

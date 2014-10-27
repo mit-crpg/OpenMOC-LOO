@@ -235,6 +235,16 @@ void FlatSourceRegion::computeRatios() {
     return;
 }
 
+void FlatSourceRegion::computeRatios(int e) {
+    double* sigma_t = _material->getSigmaT();
+    _ratios[e] = _source[e] / sigma_t[e];
+
+    return;
+}
+
+
+
+
 
 /**
  * Compute the volumetric fission rate in this flat source region by adding

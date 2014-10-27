@@ -55,6 +55,7 @@ public:
     void setSource(int energy, double source);
     void normalizeFluxes(double factor);
     void computeRatios();
+    void computeRatios(int e);
     double computeFissionRate();
 };
 

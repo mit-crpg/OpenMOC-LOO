@@ -334,7 +334,16 @@ void Solver::computeRatios() {
 
     return;
 }
+void Solver::computeRatios(int e) {
 
+#if USE_OPENMP
+#pragma omp parallel for
+#endif
+    for (int i = 0; i < _num_FSRs; i++)
+        _flat_source_regions[i].computeRatios(e);
+
+    return;
+}
 
 /**
  * Initializes each of the FlatSourceRegion objects inside the solver's
@@ -1764,21 +1773,8 @@ void Solver::initializeWeights()
 void Solver::MOCsweep(int max_iterations, int moc_iter) 
 {
     Track* track;
-    int num_segments;
-    std::vector<segment*> segments;
-    double* weights;
-    segment* segment;
-    double* polar_fluxes;
-    double* scalar_flux;
-    double* sigma_t;
-    FlatSourceRegion* fsr;
-    double fsr_flux[NUM_ENERGY_GROUPS];
-    double* ratios;
-    double delta;
-    double volume;
-    int j, k, s, p, e, pe;
+    int j, k, e;
     int num_threads = _num_azim / 2;
-    MeshSurface **meshSurfaces = _geom->getMesh()->getSurfaces();
 
 #if !STORE_PREFACTORS
     double sigma_t_l;
@@ -1821,9 +1817,101 @@ void Solver::MOCsweep(int max_iterations, int moc_iter)
          * wrap into cycles on each other */
         /* Loop over each thread */
         log_printf(ACTIVE, "At the beginning of a sweep");
-
+        
         for (e = 0; e < NUM_ENERGY_GROUPS; e++)
+            MOCsweep1g(moc_iter, e, tally);
+
+/*
+        updateSource(i);
+        for (e = 3; e < NUM_ENERGY_GROUPS; e++)
+            MOCsweep1g(moc_iter, e, tally);        
+*/
+        if (!_reflect_outgoing)
         {
+            /* Loop over each track, updating all the incoming angular fluxes */
+            for (j = 0; j < _num_azim; j++) 
+            {
+                for (k = 0; k < _num_tracks[j]; k++) 
+                {
+                    track = &_tracks[j][k];
+
+                    /* Transfers outgoing flux to its reflective
+                     * track's incoming for the forward direction */
+                    track->getTrackOut()
+                        ->setPolarFluxes(track->isReflOut(), 0,
+                                         track->getNewFluxes());
+
+                    /* Transfers outgoing flux to its reflective
+                     * track's incoming for the backward direction */
+                    track->getTrackIn()
+                        ->setPolarFluxes(track->isReflIn(), GRP_TIMES_ANG,  
+                                         track->getNewFluxes());
+                    track->printOutNewFluxes();
+                    track->zeroNewFluxes();            
+                }
+            }
+        }
+
+        /* If more than one iteration is requested, we only computes source for
+         * the last iteration, all previous iterations are considered to be 
+         * converging boundary fluxes */
+        if (i == max_iterations - 1)
+        {
+#if 0
+            /* Add in source term and normalize flux to volume for each FSR */
+            for (int r = 0; r < _num_FSRs; r++) 
+            {
+                fsr = &_flat_source_regions[r];
+                scalar_flux = fsr->getFlux();
+                ratios = fsr->getRatios();
+                sigma_t = fsr->getMaterial()->getSigmaT();
+                volume = fsr->getVolume();
+
+                for (int e = 0; e < NUM_ENERGY_GROUPS; e++) 
+                {
+                    double f = FOUR_PI * ratios[e] + 
+                        (scalar_flux[e] / (2.0 * sigma_t[e] * volume)); 
+                    fsr->setFlux(e, f);
+                }
+            }
+#endif		
+            normalizeFlux(moc_iter+0.5);
+
+
+            /* computes new _k_eff; it is important that we compute new k 
+             * before computing new source */
+            _k_eff = computeKeff(i);
+            updateSource(i);
+        }
+    } /* exit iteration loops */
+		
+    return;
+} /* end of MOCsweep */
+
+/* Performs MOC sweep(s), could be just one sweep or till convergance */
+void Solver::MOCsweep1g(int moc_iter, int e, int tally) 
+{
+    Track* track;
+    int num_segments, j, k, s, p, pe;
+    double delta, volume;
+    double fsr_flux[NUM_ENERGY_GROUPS];
+    double *weights, *polar_fluxes, *scalar_flux, *sigma_t, *ratios;
+    std::vector<segment*> segments;
+    segment* segment;
+    FlatSourceRegion* fsr;
+    MeshSurface **meshSurfaces = _geom->getMesh()->getSurfaces();
+
+#if !STORE_PREFACTORS
+    double sigma_t_l;
+    int index;
+#endif
+
+            /* computes FSR sources, compute ratios. Update just the
+             * previous energy group is equivalent to update all
+             * energy groups. */
+            if (e > 0)
+                updateSource(moc_iter, e - 1);
+
             for (j = 0; j < _num_azim; j++)
             {
                 /* Loop over all tracks for this azimuthal angles */
@@ -1854,11 +1942,9 @@ void Solver::MOCsweep(int max_iterations, int moc_iter)
                         segment = segments.at(s);
                         fsr = &_flat_source_regions[segment->_region_id];
                         ratios = fsr->getRatios();
-
+                        fsr_flux[e] = 0.0;
 #if !STORE_PREFACTORS
                         sigma_t = segment->_material->getSigmaT();
-
-                        fsr_flux[e] = 0;
                         sigma_t_l = sigma_t[e] * segment->_length;
                         sigma_t_l = std::min(sigma_t_l,10.0);
                         index = sigma_t_l / _pre_factor_spacing;
@@ -1877,8 +1963,7 @@ void Solver::MOCsweep(int max_iterations, int moc_iter)
                         }
                     
 #else
-                    /* Loop over all polar angles and energy groups */
-                        fsr_flux[e] = 0.0;
+                        /* Loop over all polar angles and energy groups */
                         for (p = 0; p < NUM_POLAR_ANGLES; p++) 
                         {
                             pe = e * NUM_POLAR_ANGLES + p; 
@@ -1886,7 +1971,7 @@ void Solver::MOCsweep(int max_iterations, int moc_iter)
                                 segment->_prefactors[e][p];
                             fsr_flux[e] += delta * weights[p];
                             polar_fluxes[pe] -= delta;
-                            assert(polar_fluxes[pe] > -1e-5);
+                            //assert(polar_fluxes[pe] > -1e-5);
                         }
 #endif
                   
@@ -1928,17 +2013,14 @@ void Solver::MOCsweep(int max_iterations, int moc_iter)
                         segment = segments.at(s);
                         fsr = &_flat_source_regions[segment->_region_id];
                         ratios = fsr->getRatios();
-                        
+                        fsr_flux[e] = 0;                        
 #if !STORE_PREFACTORS
                         sigma_t = segment->_material->getSigmaT();
-						
-                        fsr_flux[e] = 0;
                         sigma_t_l = sigma_t[e] * segment->_length;
                         sigma_t_l = std::min(sigma_t_l,10.0);
                         index = sigma_t_l / _pre_factor_spacing;
                         index = std::min(index * 2 * NUM_POLAR_ANGLES,
                                          _pre_factor_max_index);
-
                         for (p = 0; p < NUM_POLAR_ANGLES; p++)
                         {
                             pe = GRP_TIMES_ANG + e * NUM_POLAR_ANGLES + p;
@@ -1950,8 +2032,6 @@ void Solver::MOCsweep(int max_iterations, int moc_iter)
                             polar_fluxes[pe] -= delta;
                         }
 #else
-                    /* Loop over all polar angles and energy groups */
-                        fsr_flux[e] = 0.0;
                         for (p = 0; p < NUM_POLAR_ANGLES; p++) 
                         {
                             pe = GRP_TIMES_ANG + e * NUM_POLAR_ANGLES + p;
@@ -1959,6 +2039,7 @@ void Solver::MOCsweep(int max_iterations, int moc_iter)
                                 segment->_prefactors[e][p];
                             fsr_flux[e] += delta * weights[p];
                             polar_fluxes[pe] -= delta;
+                            //assert(polar_fluxes[pe] > -1e-5);
                         }
 #endif
                         log_printf(DEBUG, "flux (end of bacward) %f", 
@@ -1987,7 +2068,6 @@ void Solver::MOCsweep(int max_iterations, int moc_iter)
                         track->setNewFluxes(GRP_TIMES_ANG, polar_fluxes);
                 
                     /* Tallies leakage */
-                    pe = GRP_TIMES_ANG;
                     for (p = 0; p < NUM_POLAR_ANGLES; p++)
                     {
                         pe = GRP_TIMES_ANG + e * NUM_POLAR_ANGLES + p;
@@ -1998,41 +2078,8 @@ void Solver::MOCsweep(int max_iterations, int moc_iter)
                     }
                 } /* end of a track (forward & backward segments) */
             } /* end of an azimuthal angles */ 
-        } /* end of an energy group */ 
 
-        log_printf(ACTIVE, "At the end of a sweep, the outgoing fluxes are:");
-        if (!_reflect_outgoing)
-        {
-            /* Loop over each track, updating all the incoming angular fluxes */
-            for (j = 0; j < _num_azim; j++) 
-            {
-                for (k = 0; k < _num_tracks[j]; k++) 
-                {
-                    track = &_tracks[j][k];
-
-                    /* Transfers outgoing flux to its reflective
-                     * track's incoming for the forward direction */
-                    track->getTrackOut()
-                        ->setPolarFluxes(track->isReflOut(), 0,
-                                         track->getNewFluxes());
-
-                    /* Transfers outgoing flux to its reflective
-                     * track's incoming for the backward direction */
-                    track->getTrackIn()
-                        ->setPolarFluxes(track->isReflIn(), GRP_TIMES_ANG,  
-                                         track->getNewFluxes());
-                    track->printOutNewFluxes();
-                    track->zeroNewFluxes();            
-                }
-            }
-        }
-
-        /* If more than one iteration is requested, we only computes source for
-         * the last iteration, all previous iterations are considered to be 
-         * converging boundary fluxes */
-        if (i == max_iterations - 1)
-        {
-            /* Add in source term and normalize flux to volume for each FSR */
+            /* Add in source term for each FSR */
             for (int r = 0; r < _num_FSRs; r++) 
             {
                 fsr = &_flat_source_regions[r];
@@ -2041,26 +2088,14 @@ void Solver::MOCsweep(int max_iterations, int moc_iter)
                 sigma_t = fsr->getMaterial()->getSigmaT();
                 volume = fsr->getVolume();
 
-                for (int e = 0; e < NUM_ENERGY_GROUPS; e++) 
-                {
-                    double f = FOUR_PI * ratios[e] + 
-                        (scalar_flux[e] / (2.0 * sigma_t[e] * volume)); 
-                    fsr->setFlux(e, f);
-                }
+                double f = FOUR_PI * ratios[e] + 
+                    (scalar_flux[e] / (2.0 * sigma_t[e] * volume)); 
+                fsr->setFlux(e, f);
             }
-		
-            normalizeFlux(moc_iter+0.5);
+            //normalizeFlux(moc_iter+0.5);
 
-            /* computes new _k_eff; it is important that we compute new k 
-             * before computing new source */
-            _k_eff = computeKeff(i);
-            updateSource(i);
-        }
-    } /* exit iteration loops */
-		
     return;
-} /* end of MOCsweep */
-
+} /* end of MOCsweep1g */
 
 void Solver::zeroVacuumBoundaries() {
     Track* track;
@@ -2085,7 +2120,6 @@ void Solver::zeroVacuumBoundaries() {
  * volume-integrated fission source add up to the total volume. */
 void Solver::normalizeFlux(double moc_iter)
 {			
-#if 1
     int counter = 0; 
     double fission_source = 0, factor;
     double *cell_source;
@@ -2169,20 +2203,14 @@ void Solver::normalizeFlux(double moc_iter)
             }
         }		
     }
-#endif
     return;
 }
 
 /* Compute the source for each region */
 void Solver::updateSource(int moc_iter)
 {
-#if 1
     double scatter_source, fission_source = 0;
-    double* nu_sigma_f;
-    double* sigma_s;
-    double* chi;
-    double* scalar_flux;
-    double* source;
+    double *nu_sigma_f, *sigma_s, *chi, *scalar_flux, *source;
     FlatSourceRegion* fsr;
     Material* material;
     int start_index, end_index;
@@ -2240,9 +2268,66 @@ void Solver::updateSource(int moc_iter)
 
     /* Update pre-computed source / sigma_t ratios */
     computeRatios();
-#endif
 }
 
+/* Compute the source for each region */
+void Solver::updateSource(int moc_iter, int energy_index)
+{
+    double scatter_source, fission_source = 0;
+    double *nu_sigma_f, *sigma_s, *chi, *scalar_flux, *source;
+    FlatSourceRegion* fsr;
+    Material* material;
+    int start_index, end_index;
+
+    /* For all regions, find the source */
+    for (int r = 0; r < _num_FSRs; r++) {
+
+        fsr = &_flat_source_regions[r];
+
+        scalar_flux = fsr->getFlux();
+        source = fsr->getSource();
+        material = fsr->getMaterial();
+        nu_sigma_f = material->getNuSigmaF();
+        chi = material->getChi();
+        sigma_s = material->getSigmaS();
+
+        /* sigma_s[G * NUM_ENERGY_GROUPS + g] is g to G */
+        /* Compute total fission source for current region */
+        fission_source = 0;
+        start_index = material->getNuSigmaFStart();
+        end_index = material->getNuSigmaFEnd();
+        for (int e = start_index; e < end_index; e++)
+            fission_source += scalar_flux[e] * nu_sigma_f[e];
+
+        /* Compute total scattering source for group G */
+        for (int G = 0; G < NUM_ENERGY_GROUPS; G++) 
+        {
+            scatter_source = 0;
+
+            start_index = material->getSigmaSStart(G);
+            end_index = material->getSigmaSEnd(G);
+
+            for (int g = start_index; g < end_index; g++)
+            {
+                scatter_source += sigma_s[G * NUM_ENERGY_GROUPS + g]
+                    * scalar_flux[g];
+            }
+
+            /* Set the total source for region r in group G */
+            source[G] = (chi[G] * fission_source / _k_eff + scatter_source) 
+                * ONE_OVER_FOUR_PI;
+
+            /* If negative FSR sources show up in the early
+             * iterations, set them to zero */
+            if ((source[G] < 0) && (moc_iter < 10))
+                source[G] = 0.0;
+        }
+    }
+
+    /* Update pre-computed source / sigma_t ratios */
+    //for (int g = energy_index; g < NUM_ENERGY_GROUPS; g++)
+    computeRatios(energy_index);
+}
 
 double Solver::runLoo(int moc_iter)
 {
@@ -2339,7 +2424,13 @@ double Solver::kernel(int max_iterations) {
  
         /* Perform one sweep for no acceleration */
         _moc_timer.start();
-        MOCsweep(_boundary_iteration + 1, moc_iter);
+        // something weird is going on -- when an additional iteration
+        // is performed, C5G7 actually takes longer to converge (with
+        // df = 0.6)
+        if (moc_iter < 0)
+            MOCsweep(_boundary_iteration + 2, moc_iter);
+        else
+            MOCsweep(_boundary_iteration + 1, moc_iter);
         _moc_timer.stop();
 
         _acc_timer.start();
