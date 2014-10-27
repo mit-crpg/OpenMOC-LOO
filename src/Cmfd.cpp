@@ -1166,7 +1166,7 @@ void Cmfd::computeQuadSrc()
                 else if (_closure == 2)
                 {
                     src = meshCell->getSrc()[e];
-                    int max_n = 100;
+                    int n, max_n = 100;
                     double old_xs;
                     for (int t = 0; t < 8; t++)
                     {
@@ -1174,18 +1174,21 @@ void Cmfd::computeQuadSrc()
                         /* starting guess of xs is just cell-averaged */
                         xs = meshCell->getSigmaT()[e];
                         assert(xs > 1e-10);
-                        int n;
                         for (n = 0; n < max_n; n++)
                         {
                             old_xs = xs;
                             ex = exp(-xs * l);
-                            xs = xs - (in[e][t] * ex + src / xs * (1 - ex) 
-                                       - out[e][t]) / 
-                                (-src / xs / xs + ex * 
+                            xs -= (in[e][t] * ex + src / xs * (1.0 - ex) 
+                                   - out[e][t]) / 
+                                (- src / xs / xs + ex * 
                                  (src/ xs / xs + src * l / xs - in[e][t] * l));
 
+                            //if (xs < 0)
+                            //    xs = 2 * meshCell->getSigmaT()[e];
 
-                            if (fabs((xs - old_xs) / old_xs) < 1e-5)
+                            if ((fabs((xs - old_xs) / old_xs) < 1e-5) && 
+                                fabs(in[e][t] * ex + src / xs * (1.0 - ex) 
+                                 - out[e][t]) < 1e-10)
                             {
                                 if (xs < 1e-10)
                                 {
@@ -1207,11 +1210,24 @@ void Cmfd::computeQuadSrc()
                                        " %f %f", old_xs, xs);
                         }
 
+                        if (xs < 1e-10)
+                        {
+                            log_printf(NORMAL, "iterate %d times, %f -> %f",
+                                       n, meshCell->getSigmaT()[e], xs);
+                        }
+
                         meshCell->setQuadXs(xs, e, t);
                         sum_quad_src += src;
                         sum_quad_flux += src/xs + (in[e][t] - out[e][t]) 
                             / (xs * l);
                         assert(sum_quad_src > 0);
+                        if (sum_quad_flux < 0)
+                        {
+                            double f = in[e][t] * ex + src / xs * (1.0 - ex) 
+                                - out[e][t]; 
+                            log_printf(NORMAL, "residual is %f", f);
+
+                        }
                         assert(sum_quad_flux > 0);
                     } /* loop through 8 tracks */
                 }

@@ -23,8 +23,8 @@
 Options::Options(int argc, char **argv) 
 {
     /* Default geometry input file */
-    _geometry_file = _relative_path + "xml-sample/geometry_1810_1_8.xml";
-    _material_file = _relative_path + "xml-sample/material_1810_1_8g.xml";
+    _geometry_file = _relative_path + "xml-sample/geometry_c5g7_cc.xml";
+    _material_file = _relative_path + "xml-sample/material_c5g7.xml";
 	
     /* convergence options */
     _moc_conv_thresh = 1e-5;      /* convergence on MOC sweeps */
