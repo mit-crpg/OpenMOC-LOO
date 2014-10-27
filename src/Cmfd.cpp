@@ -15,8 +15,6 @@ int Cmfd::_surf_index[] = {1,2,2,3,3,0,0,1,2,1,3,2,0,3,1,0};
 double Cmfd::_conv_val[] = 
 {9.123400e-03, 2.206056e-06, 1.617725e-02, 1.078075e-05};
 
-int Cmfd::_closure = 1;
-
 /**
  * Acceleration constructor
  * @param geom pointer to the geometry
@@ -44,6 +42,7 @@ Cmfd::Cmfd(Geometry* geom, Plotter* plotter, Mesh* mesh,
     _l2_norm_conv_thresh = opts->getL2NormConvThresh();
     _use_diffusion_correction = opts->getDiffusionCorrection();
     _acc_after_MOC_converge = opts->getAccAfterMOCConverge();
+    _closure = opts->getClosure();
 
     _ng = NUM_ENERGY_GROUPS;
     if (opts->getGroupStructure() == false)
@@ -1180,33 +1179,14 @@ void Cmfd::computeQuadSrc()
                         for (n = 0; n < max_n; n++)
                         {
                             old_xs = xs;
-                            ex = (out[e][t] - src / xs) / (in[e][t] - src / xs);
-                            if ((ex > 0) && (ex < 1))
-                                xs = -log(ex) / l;
-                            else
-                            {
-                                ex = exp(-xs * l);
-                                xs = src * (1 - ex) / 
-                                    (out[e][t] - ex * in[e][t]);
-                            }
-                            /* constraints: xs has to be non-negative */
-                            if (xs < 1e-10)
-                            {
-                                log_printf(NORMAL, "n = %d, method 1: "
-                                           "ex = (out-q/xs)/(in-q/xs)= %f \n"
-                                           "method 2: src = %f times "
-                                           " (1 - ex) = %f,"
-                                           " over (out - in*ex)= %f",
-                                           n, 
-                                           (out[e][t] - src / old_xs) 
-                                           / (in[e][t] - src / old_xs),
-                                           src, 1 - exp(-old_xs * l), 
-                                           out[e][t] - in[e][t]
-                                           * exp(-old_xs * l));
-                            }
-                            //assert(xs > 1e-10);
+                            ex = exp(-xs * l);
+                            xs = xs - (in[e][t] * ex + src / xs * (1 - ex) 
+                                       - out[e][t]) / 
+                                (-src / xs / xs + ex * 
+                                 (src/ xs / xs + src * l / xs - in[e][t] * l));
 
-                            if (fabs(xs - old_xs) / old_xs < 1e-5)
+
+                            if (fabs((xs - old_xs) / old_xs) < 1e-5)
                             {
                                 if (xs < 1e-10)
                                 {
@@ -1217,8 +1197,7 @@ void Cmfd::computeQuadSrc()
                             }
 
                             if (n < 10)
-                                log_printf(NORMAL, "n=%d, xs =%f", n, xs);
-
+                                log_printf(DEBUG, "n=%d, xs =%f", n, xs);
 
                         }
 

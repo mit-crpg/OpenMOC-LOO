@@ -29,6 +29,7 @@ private:
     int _bit_dimension;
     int _cmfd_level;
     int _boundary_iteration;
+    int _closure;
     double _track_spacing;
     double _l2_norm_conv_thresh;
     double _moc_conv_thresh;
@@ -77,6 +78,7 @@ public:
     int getCmfdLevel();
     int getBoundaryIteration();
     int getNumFirstDiffusion();
+    int getClosure();
     double getTrackSpacing();
     double getNumAzim();
     double getL2NormConvThresh();

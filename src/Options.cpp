@@ -41,6 +41,7 @@ Options::Options(int argc, char **argv)
     _loo = false;
     _loo1 = false;
     _loo2 = false;
+    _closure = 2;
     _damp_factor = 1.0;
     _boundary_iteration = 0;
     _first_diffusion = true;		/* run diffusion for 1st iter */
@@ -215,6 +216,16 @@ Options::Options(int argc, char **argv)
                 _loo1 = false;
                 _loo2 = true;
                 _damp_factor = 1.0;
+            }
+            else if (strcmp(argv[i], "-wlc1") == 0 ||
+                     strcmp(argv[i], "--withlooclosure1") == 0)
+            {
+                _closure = 1;
+            }
+            else if (strcmp(argv[i], "-wlc2") == 0 ||
+                     strcmp(argv[i], "--withlooclosure2") == 0)
+            {
+                _closure = 2;
             }
             else if (strcmp(argv[i], "-wa") == 0 ||
                      strcmp(argv[i], "--withall") == 0) 
@@ -551,6 +562,11 @@ double Options::getDampFactor()
 int Options::getBoundaryIteration()
 {
     return _boundary_iteration;
+}
+
+int Options::getClosure()
+{
+    return _closure;
 }
 
 bool Options::getUpdateBoundary()
