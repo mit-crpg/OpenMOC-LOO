@@ -511,10 +511,11 @@ void Solver::oneFSRFlux()
  * Set the scalar flux for each energy group inside each FSR to zero
  */
 void Solver::zeroFSRFluxes() {
-    zeroFSRFluxes(0);
+    zeroFSRFluxes(0, NUM_ENERGY_GROUPS);
     return;
 }
-void Solver::zeroFSRFluxes(int energy_group) {
+
+void Solver::zeroFSRFluxes(int bottom_energy_group, int top_energy_group) {
 
     log_printf(INFO, "Setting all FSR scalar fluxes to zero...");
     FlatSourceRegion* fsr;
@@ -525,7 +526,7 @@ void Solver::zeroFSRFluxes(int energy_group) {
 #endif
     for (int r = 0; r < _num_FSRs; r++) {
         fsr = &_flat_source_regions[r];
-        for (int e = energy_group; e < NUM_ENERGY_GROUPS; e++)
+        for (int e = bottom_energy_group; e < top_energy_group; e++)
             fsr->setFlux(e, 0.0);
     }
 
@@ -572,15 +573,15 @@ void Solver::zeroMeshCells(int energy_group) {
 
 void Solver::zeroLeakage()
 {
-    zeroLeakage(0);
+    zeroLeakage(0, NUM_ENERGY_GROUPS);
     return;
 }
 
-void Solver::zeroLeakage(int energy_group)
+void Solver::zeroLeakage(int bottom_energy_group, int top_energy_groups)
 {
     for (int s = 1; s < 5; s++)
     {
-        for (int e = energy_group; e < NUM_ENERGY_GROUPS; e++)
+        for (int e = bottom_energy_group; e < top_energy_groups; e++)
         _geom->getSurface(s)->zeroLeakage(e);
     }
     return;
@@ -1814,9 +1815,10 @@ void Solver::MOCsweep(int max_iterations, int moc_iter)
     for (int i = 0; i < max_iterations; i++)
     {
         /* Initialize flux in each region to zero */
+/*
         zeroFSRFluxes();
         zeroLeakage();
-
+*/
         /* Initializes mesh cells if ANY acceleration is on */
         if (_run_cmfd || _run_loo)
             zeroMeshCells();
@@ -1826,21 +1828,27 @@ void Solver::MOCsweep(int max_iterations, int moc_iter)
          * for each pair of reflecting azimuthal angles - angles which
          * wrap into cycles on each other */
         /* Loop over each thread */
-        log_printf(ACTIVE, "At the beginning of a sweep");
+        log_printf(INFO, "At the beginning of a sweep");
         
         for (e = 0; e < NUM_ENERGY_GROUPS; e++)
+        {
+            zeroFSRFluxes(e, e + 1);
+            zeroLeakage(e, e + 1);
             MOCsweep1g(moc_iter, e, tally);
+            updateSource(moc_iter);
+        }
 
+/*
+        int index_upscattering = NUM_ENERGY_GROUPS / 2;
         normalizeFlux(moc_iter+0.5);
         _k_eff = computeKeff(i);
         updateSource(i);
-        zeroFSRFluxes(3);
-        zeroLeakage(3);
-        zeroMeshCells(3);
-
-        for (e = NUM_ENERGY_GROUPS / 2; e < NUM_ENERGY_GROUPS; e++)
+        zeroFSRFluxes();
+        zeroLeakage(index_upscattering);
+        zeroMeshCells(index_upscattering);
+        for (e = index_upscattering; e < NUM_ENERGY_GROUPS; e++)
             MOCsweep1g(moc_iter, e, tally);        
-
+*/
         if (!_reflect_outgoing)
         {
             /* Loop over each track, updating all the incoming angular fluxes */
@@ -1892,7 +1900,6 @@ void Solver::MOCsweep(int max_iterations, int moc_iter)
 #endif		
             normalizeFlux(moc_iter+0.5);
 
-
             /* computes new _k_eff; it is important that we compute new k 
              * before computing new source */
             _k_eff = computeKeff(i);
@@ -1920,12 +1927,6 @@ void Solver::MOCsweep1g(int moc_iter, int e, int tally)
     double sigma_t_l;
     int index;
 #endif
-
-    /* computes FSR sources, compute ratios. Update just the
-     * previous energy group is equivalent to update all
-     * energy groups. */
-    if (e > 0)
-        updateSource(moc_iter, e - 1);
 
     for (j = 0; j < _num_azim; j++)
     {
@@ -2103,12 +2104,11 @@ for (int r = 0; r < _num_FSRs; r++)
     sigma_t = fsr->getMaterial()->getSigmaT();
     volume = fsr->getVolume();
 
-    double f = FOUR_PI * ratios[e] + 
+    scalar_flux[e] = FOUR_PI * ratios[e] + 
         (scalar_flux[e] / (2.0 * sigma_t[e] * volume)); 
-    fsr->setFlux(e, f);
+    //fsr->setFlux(e, f);
 }
 //normalizeFlux(moc_iter+0.5);
-
 return;
 } /* end of MOCsweep1g */
 
@@ -2151,7 +2151,7 @@ void Solver::normalizeFlux(double moc_iter)
 
     /* Renormalize scalar fluxes in each region */
     factor = counter / fission_source;
-    log_printf(ACTIVE, "iter %.1f normalization factor = %f", moc_iter, factor);
+    log_printf(INFO, "iter %.1f normalization factor = %f", moc_iter, factor);
 
     for (int r = 0; r < _num_FSRs; r++)
         _flat_source_regions[r].normalizeFluxes(factor);
@@ -2242,13 +2242,6 @@ void Solver::updateSource(int moc_iter)
         chi = material->getChi();
         sigma_s = material->getSigmaS();
 
-        /* sigma_s[G * NUM_ENERGY_GROUPS + g] is g to G */
-        /*
-        log_printf(NORMAL, "sigma_s: 1->1 %f, 1->2 %f, 2->1 %f, 2->2 %f",
-                   sigma_s[0], sigma_s[NUM_ENERGY_GROUPS], 
-                   sigma_s[1], sigma_s[NUM_ENERGY_GROUPS + 1]);
-        */
-
         /* Compute total fission source for current region */
         fission_source = 0;
         start_index = material->getNuSigmaFStart();
@@ -2257,10 +2250,10 @@ void Solver::updateSource(int moc_iter)
             fission_source += scalar_flux[e] * nu_sigma_f[e];
 
         /* Compute total scattering source for group G */
+        /* sigma_s[G * NUM_ENERGY_GROUPS + g] is g to G */
         for (int G = 0; G < NUM_ENERGY_GROUPS; G++) 
         {
             scatter_source = 0;
-
             start_index = material->getSigmaSStart(G);
             end_index = material->getSigmaSEnd(G);
 
@@ -2286,7 +2279,7 @@ void Solver::updateSource(int moc_iter)
 }
 
 /* Compute the source for each region */
-void Solver::updateSource(int moc_iter, int energy_index)
+void Solver::updateSource(int moc_iter, int energy_group)
 {
     double scatter_source, fission_source = 0;
     double *nu_sigma_f, *sigma_s, *chi, *scalar_flux, *source;
@@ -2306,7 +2299,6 @@ void Solver::updateSource(int moc_iter, int energy_index)
         chi = material->getChi();
         sigma_s = material->getSigmaS();
 
-        /* sigma_s[G * NUM_ENERGY_GROUPS + g] is g to G */
         /* Compute total fission source for current region */
         fission_source = 0;
         start_index = material->getNuSigmaFStart();
@@ -2315,6 +2307,7 @@ void Solver::updateSource(int moc_iter, int energy_index)
             fission_source += scalar_flux[e] * nu_sigma_f[e];
 
         /* Compute total scattering source for group G */
+        /* sigma_s[G * NUM_ENERGY_GROUPS + g] is g to G */
         for (int G = 0; G < NUM_ENERGY_GROUPS; G++) 
         {
             scatter_source = 0;
@@ -2328,20 +2321,26 @@ void Solver::updateSource(int moc_iter, int energy_index)
                     * scalar_flux[g];
             }
 
+            log_printf(ACTIVE, "update for group %d: e %d, %f %f",
+                       energy_group, G, scalar_flux[G], source[G]);
+
             /* Set the total source for region r in group G */
             source[G] = (chi[G] * fission_source / _k_eff + scatter_source) 
                 * ONE_OVER_FOUR_PI;
 
             /* If negative FSR sources show up in the early
              * iterations, set them to zero */
+/*
             if ((source[G] < 0) && (moc_iter < 10))
                 source[G] = 0.0;
+*/
+            log_printf(ACTIVE, "updated source, %f", source[G]);
+            //fsr->setSource(G, source[G]);
         }
     }
 
     /* Update pre-computed source / sigma_t ratios */
-    //for (int g = energy_index; g < NUM_ENERGY_GROUPS; g++)
-    computeRatios(energy_index);
+    computeRatios();
 }
 
 double Solver::runLoo(int moc_iter)
