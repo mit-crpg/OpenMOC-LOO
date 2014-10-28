@@ -181,7 +181,7 @@ void Track::setPolarFluxes(reflectType direction, int start_index,
 
 void Track::printOutInfo()
 {
-    log_printf(ACTIVE, "(%.3f %.3f)->(%.3f %.3f), forward %f backward %f", 
+    log_printf(INFO, "(%.3f %.3f)->(%.3f %.3f), forward %f backward %f", 
                _start.getX(), _start.getY(), _end.getX(), _end.getY(),
                _polar_fluxes[0], 
                _polar_fluxes[1]);
@@ -189,7 +189,7 @@ void Track::printOutInfo()
 
 void Track::printOutNewFluxes()
 {
-    log_printf(ACTIVE, "(%.3f %.3f)->(%.3f %.3f) %f,"
+    log_printf(INFO, "(%.3f %.3f)->(%.3f %.3f) %f,"
                " (%.3f %.3f)->(%.3f %.3f) %f",
                _track_out->_start.getX(), _track_out->_start.getY(), 
                _track_out->_end.getX(), _track_out->_end.getY(),
