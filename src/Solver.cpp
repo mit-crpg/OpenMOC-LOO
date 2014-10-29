@@ -536,11 +536,11 @@ void Solver::zeroFSRFluxes(int bottom_energy_group, int top_energy_group) {
  * Set all MeshCell currents, crossings, and weights to zero.
  */
 void Solver::zeroMeshCells() {
-    zeroMeshCells(0);
+    zeroMeshCells(0, NUM_ENERGY_GROUPS);
     return;
 }
 
-void Solver::zeroMeshCells(int energy_group) {
+void Solver::zeroMeshCells(int bottom_energy_group, int top_energy_group) {
 
     log_printf(INFO, "Setting all mesh cell fluxes and currents to zero...");
 
@@ -557,7 +557,7 @@ void Solver::zeroMeshCells(int energy_group) {
         for (int surface = 0; surface < 8; surface++)
         {
             /* loop over energy groups */
-            for (int e = energy_group; e < NUM_ENERGY_GROUPS; e++)
+            for (int e = bottom_energy_group; e < top_energy_group; e++)
             {
                 /* set current to zero */
                 meshCell->getMeshSurfaces(surface)->setCurrent(0, e);
@@ -1814,40 +1814,28 @@ void Solver::MOCsweep(int max_iterations, int moc_iter)
     /* Loop for until converged or max_iterations is reached */
     for (int i = 0; i < max_iterations; i++)
     {
-        /* Initialize flux in each region to zero */
-/*
-        zeroFSRFluxes();
-        zeroLeakage();
-*/
-        /* Initializes mesh cells if ANY acceleration is on */
-        if (_run_cmfd || _run_loo)
-            zeroMeshCells();
-
         /* Loop over azimuthal each thread and azimuthal angle*
          * If we are using OpenMP then we create a separate thread
          * for each pair of reflecting azimuthal angles - angles which
          * wrap into cycles on each other */
         /* Loop over each thread */
-        log_printf(INFO, "At the beginning of a sweep");
-        
         for (e = 0; e < NUM_ENERGY_GROUPS; e++)
         {
-            zeroFSRFluxes(e, e + 1);
-            zeroLeakage(e, e + 1);
             MOCsweep1g(moc_iter, e, tally);
-            updateSource(moc_iter);
+            //normalizeFlux(moc_iter);
+            //_k_eff = computeKeff(moc_iter);
+            //updateSource(moc_iter);
         }
 
 /*
-        int index_upscattering = NUM_ENERGY_GROUPS / 2;
-        normalizeFlux(moc_iter+0.5);
-        _k_eff = computeKeff(i);
-        updateSource(i);
-        zeroFSRFluxes();
-        zeroLeakage(index_upscattering);
-        zeroMeshCells(index_upscattering);
-        for (e = index_upscattering; e < NUM_ENERGY_GROUPS; e++)
+        normalizeFlux(moc_iter);
+        _k_eff = computeKeff(moc_iter);
+        updateSource(moc_iter);
+        for (e = NUM_ENERGY_GROUPS / 2; e < NUM_ENERGY_GROUPS; e++)
+        {
             MOCsweep1g(moc_iter, e, tally);        
+            updateSource(moc_iter);
+        }
 */
         if (!_reflect_outgoing)
         {
@@ -1880,30 +1868,11 @@ void Solver::MOCsweep(int max_iterations, int moc_iter)
          * converging boundary fluxes */
         if (i == max_iterations - 1)
         {
-#if 0
-            /* Add in source term and normalize flux to volume for each FSR */
-            for (int r = 0; r < _num_FSRs; r++) 
-            {
-                fsr = &_flat_source_regions[r];
-                scalar_flux = fsr->getFlux();
-                ratios = fsr->getRatios();
-                sigma_t = fsr->getMaterial()->getSigmaT();
-                volume = fsr->getVolume();
-
-                for (int e = 0; e < NUM_ENERGY_GROUPS; e++) 
-                {
-                    double f = FOUR_PI * ratios[e] + 
-                        (scalar_flux[e] / (2.0 * sigma_t[e] * volume)); 
-                    fsr->setFlux(e, f);
-                }
-            }
-#endif		
-            normalizeFlux(moc_iter+0.5);
-
+            normalizeFlux(moc_iter + 0.5);
             /* computes new _k_eff; it is important that we compute new k 
              * before computing new source */
-            _k_eff = computeKeff(i);
-            updateSource(i);
+            _k_eff = computeKeff(moc_iter + 0.5);
+            updateSource(moc_iter + 0.5);
         }
     } /* exit iteration loops */
 		
@@ -1928,6 +1897,13 @@ void Solver::MOCsweep1g(int moc_iter, int e, int tally)
     int index;
 #endif
 
+    /* zero out counters associated with this energy group: namely the
+     * FSR fluxes, leakage and mesh cell counters */
+    zeroFSRFluxes(e, e + 1);
+    zeroLeakage(e, e + 1);
+    if (_run_cmfd || _run_loo)
+        zeroMeshCells(e, e + 1);
+
     for (j = 0; j < _num_azim; j++)
     {
             /* Loop over all tracks for this azimuthal angles */
@@ -1945,7 +1921,7 @@ void Solver::MOCsweep1g(int moc_iter, int e, int tally)
             /* Store all the incoming angular fluxes */
             //if (tally == 2)
             //{
-            //    tallyLooCurrentIncoming(track, segments.at(0), 
+            //   tallyLooCurrentIncoming(track, segments.at(0), 
             //                            meshSurfaces, 1);
             //   tallyLooCurrentIncoming(track, 
             //                            segments.at(num_segments-1),

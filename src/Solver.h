@@ -130,7 +130,7 @@ public:
     void zeroLeakage();
     void zeroFSRFluxes(int bottom_energy_group, int top_energy_group);
     void zeroLeakage(int bottom_energy_group, int top_energy_group);
-    void zeroMeshCells(int energy_group);
+    void zeroMeshCells(int bottom_energy_group, int top_energy_group);
     void initializeWeights();
 
     /* checking and debugging */
