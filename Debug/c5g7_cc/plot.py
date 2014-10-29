@@ -36,9 +36,7 @@ l2_norm_files.sort()
 # parse output files
 counter = 0;
 for file in l2_norm_files:
-    counter = counter + 1
     filepath = os.path.abspath(os.path.join(basepath, file))
-    logfile = open(filepath, "r").readlines()
 
     # sample: xml-sample_geometry_c5g7_cc.xml_8.0_0.30_0.6_cmfd_no.txt
     tag = file[-6:-4] 
@@ -52,7 +50,13 @@ for file in l2_norm_files:
     damp = file[-15:-12]
     ts = file[-20:-16]
     na =file[-24:-21]
-    print("plotted upscat = %s, damp = %s"%(upscat, damp))
+
+    if (tag == 'no'):
+        continue
+
+    logfile = open(filepath, "r").readlines()
+    print("opened upscat = %s, damp = %s"%(upscat, damp))
+    counter = counter + 1
 
     # find number of lines in file
     for num_lines, l in enumerate(logfile):
@@ -81,7 +85,7 @@ for file in l2_norm_files:
         plt.semilogy(iteration, 
                      var[j], 
                      ls[counter], 
-                     color=cm.jet(1.*counter/num), 
+                     #color=cm.jet(1.*counter/num), 
                      label = ("DF: %s %s"%(damp, upscat)), markersize=5)
         # plt.xlim(0, max_num_lines + 1)
         plt.xlim(0, 30)
