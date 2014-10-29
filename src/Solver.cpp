@@ -77,13 +77,22 @@ Solver::Solver(Geometry* geom, TrackGenerator* track_generator,
         string << "_np";
 
     if (_run_cmfd)
-        string << "_cmfd.txt";
+        string << "_cmfd";
     else if (_run_loo1)
-        string << "_loo1.txt";
+        string << "_loo1";
     else if (_run_loo2)
-        string << "_loo2.txt";
+        string << "_loo2";
     else
-        string << "_unac.txt";
+        string << "_unac";
+
+    _upscattering_loop = opts->getUpscatteringLoop();
+    _energy_outer = opts->getEnergyOuter();
+    if (_upscattering_loop)
+        string << "_th.txt";
+    else if (_energy_outer)
+        string << "_en.txt";
+    else
+        string << "_no.txt";
 
     _log_file = string.str();
 
@@ -1822,21 +1831,22 @@ void Solver::MOCsweep(int max_iterations, int moc_iter)
         for (e = 0; e < NUM_ENERGY_GROUPS; e++)
         {
             MOCsweep1g(moc_iter, e, tally);
-            //normalizeFlux(moc_iter);
-            //_k_eff = computeKeff(moc_iter);
-            //updateSource(moc_iter);
+            if (_energy_outer)
+                updateSource(moc_iter);
         }
 
-/*
-        normalizeFlux(moc_iter);
-        _k_eff = computeKeff(moc_iter);
-        updateSource(moc_iter);
-        for (e = NUM_ENERGY_GROUPS / 2; e < NUM_ENERGY_GROUPS; e++)
+        if (_upscattering_loop)
         {
-            MOCsweep1g(moc_iter, e, tally);        
+            normalizeFlux(moc_iter);
+            _k_eff = computeKeff(moc_iter);
             updateSource(moc_iter);
+            for (e = NUM_ENERGY_GROUPS / 2; e < NUM_ENERGY_GROUPS; e++)
+            {
+                MOCsweep1g(moc_iter, e, tally);        
+                updateSource(moc_iter);
+            }
         }
-*/
+
         if (!_reflect_outgoing)
         {
             /* Loop over each track, updating all the incoming angular fluxes */

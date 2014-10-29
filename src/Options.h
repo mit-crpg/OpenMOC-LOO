@@ -62,6 +62,8 @@ private:
     bool _update_boundary;
     bool _reflect_outgoing;
     bool _use_up_scattering_xs;
+    bool _energy_outer;
+    bool _upscattering_loop;
 public:
     Options(int argc, char **argv);
     ~Options(void);
@@ -111,6 +113,8 @@ public:
     bool getUseUpScatteringXS();
     bool getLinearProlongationFlag();
     bool getExactProlongationFlag();
+    bool getEnergyOuter();
+    bool getUpscatteringLoop();
 };
 
 #endif

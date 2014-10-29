@@ -108,6 +108,8 @@ private:
     bool _use_up_scattering_xs;
     bool _linear_prolongation;
     bool _exact_prolongation;
+    bool _energy_outer;
+    bool _upscattering_loop;
     void precomputeFactors();
     void initializeFSRs();
 

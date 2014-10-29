@@ -48,6 +48,8 @@ Options::Options(int argc, char **argv)
     _update_boundary = true;            /* update boundary angular flux */
     _reflect_outgoing = true;          /* newest incoming flux during HO MOC */
     _use_up_scattering_xs = true; 
+    _energy_outer = false;
+    _upscattering_loop = false;
 
     if (std::string(getenv("PWD")).find("Release") != std::string::npos)
         _relative_path = "../";
@@ -266,6 +268,13 @@ Options::Options(int argc, char **argv)
             else if (strcmp(argv[i], "-nup")==0 || 
                      strcmp(argv[i], "--noupscattering") == 0)
                 _use_up_scattering_xs = false;
+            else if (strcmp(argv[i], "-en") == 0)
+                _energy_outer = true;
+            else if (strcmp(argv[i], "-th") == 0)
+            {
+                _energy_outer = true;
+                _upscattering_loop = true;
+            }
             else
                 this->extra_argv[this->extra_argc++] = strdup(argv[i]);
         }
@@ -576,4 +585,14 @@ bool Options::getLinearProlongationFlag()
 bool Options::getExactProlongationFlag()
 {
     return _exact_prolongation;
+}
+
+bool Options::getEnergyOuter()
+{
+    return _energy_outer;
+}
+
+bool Options::getUpscatteringLoop()
+{
+    return _upscattering_loop;
 }
