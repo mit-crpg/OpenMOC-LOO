@@ -5,12 +5,13 @@ import numpy as np
 import os
 
 # Control variables: where C4 default is 0.5cm and 64 azimuthal angle
-geometries = ['xml-sample/geometry_quarter_8x8.xml']
+geometries = ['xml-sample/geometry_c5g7_fine2.xml']
 materials = ['xml-sample/material_c5g7.xml']
 
 ts = [0.05] 
-na = [32]
-fc = [1e-4]
+na = [16]
+fc = [1e-5]
+df = [0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
 
 # Parameters for plotting
 ls = ['--o', '-s', '-.v', '-<', '-^', '-.>', '--s', '-v', '-o', '-.<', '--<', '-->', '-.s']
@@ -29,30 +30,33 @@ for i, geometry in enumerate(geometries):
     # Runs OpenMOC
     for spacing in ts:
         for angle in na:
-            os.system('cd .. && ./bin/openmoc-7g'
-                      + ' -m ' + materials[i]
-                      + ' -g ' + geometry
-                      + ' -na ' + str(angle)
-                      + ' -ts ' + str(spacing)
-                      + ' -fc ' + str(fc[0])
-                      + ' -wc -df 0.6 -diff 1')
+            for damping in df:
+                os.system('cd .. && ./bin/openmoc-th-3p'
+                          + ' -m ' + materials[i]
+                          + ' -g ' + geometry
+                          + ' -na ' + str(angle)
+                          + ' -ts ' + str(spacing)
+                          + ' -fc ' + str(fc[0])
+                          + ' -wc' 
+                          + ' -df ' + str(damping))
 
-            os.system('cd .. && ./bin/openmoc-7g'
-                      + ' -m ' + materials[i]
-                      + ' -g ' + geometry
-                      + ' -na ' + str(angle)
-                      + ' -ts ' + str(spacing)
-                      + ' -fc ' + str(fc[0])
-                      + ' -wl1 -diff 1')
+                os.system('cd .. && ./bin/openmoc-th-3p'
+                          + ' -m ' + materials[i]
+                          + ' -g ' + geometry
+                          + ' -na ' + str(angle)
+                          + ' -ts ' + str(spacing)
+                          + ' -fc ' + str(fc[0])
+                          + ' -wc' 
+                          + ' -df ' + str(damping) + ' -en')
 
-            os.system('cd .. && ./bin/openmoc-7g'
-                      + ' -m ' + materials[i]
-                      + ' -g ' + geometry
-                      + ' -na ' + str(angle)
-                      + ' -ts ' + str(spacing)
-                      + ' -fc ' + str(fc[0])
-                      + ' -wl2 -diff 1')
-
+                os.system('cd .. && ./bin/openmoc-th-3p'
+                          + ' -m ' + materials[i]
+                          + ' -g ' + geometry
+                          + ' -na ' + str(angle)
+                          + ' -ts ' + str(spacing)
+                          + ' -fc ' + str(fc[0])
+                          + ' -wc' 
+                          + ' -df ' + str(damping) + ' -th')         
     l2_norm_files = []
 
     # Obtain and sorts l2_norm file names in directory
