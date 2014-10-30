@@ -1152,8 +1152,8 @@ void Cmfd::computeQuadSrc()
                                        (out[e][t] - ex * in[e][t]) / (1-ex));
                             // force quad src to be non-negative. this
                             // seems to fix certain quarter core
-                            // problem 
-                            src = 0;
+                            // problem, but breaks LOO debug mode
+                            // src = 0;
                         }
                         //assert(src > 0);
                         meshCell->setQuadSrc(src, e, t);
@@ -1259,7 +1259,6 @@ void Cmfd::computeQuadSrc()
                                        x, y, e, t, xs, out[e][t], ex, in[e][t], 
                                        1 - ex, 
                                        (out[e][t] - ex * in[e][t]) / (1-ex));
-                            src = 0;
                         }
 
                         meshCell->setQuadSrc(src, e, t1);
