@@ -2219,6 +2219,7 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
                 new_power[i] += meshCell->getNuSigmaF()[e] 
                     * meshCell->getNewFlux()[e];
             }
+            new_power[i] *= meshCell->getVolume();
         }
         
         eps = computeCellSourceNormGivenTwoSources(old_power, new_power, 
