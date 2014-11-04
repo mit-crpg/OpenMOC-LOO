@@ -1173,18 +1173,22 @@ void Cmfd::computeQuadSrc()
                         meshCell->setQuadSrc(src, e, t);
                         /* starting guess of xs is just cell-averaged */
                         xs = meshCell->getSigmaT()[e];
-                        assert(xs > 1e-10);
+                        //assert(xs > 1e-10);
                         for (n = 0; n < max_n; n++)
                         {
                             old_xs = xs;
                             ex = exp(-xs * l);
+
+/*
                             xs -= (in[e][t] * ex + src / xs * (1.0 - ex) 
                                    - out[e][t]) / 
                                 (- src / xs / xs + ex * 
                                  (src/ xs / xs + src * l / xs - in[e][t] * l));
-
-                            //if (xs < 0)
-                            //    xs = 2 * meshCell->getSigmaT()[e];
+*/
+                            xs += (in[e][t] * ex + src / xs * (1 - ex) 
+                                   - out[e][t]) /
+                                (src / xs / xs * (1 - ex) + 
+                                 (out[e][t] - src / xs) * l);
 
                             if ((fabs((xs - old_xs) / old_xs) < 1e-5) && 
                                 fabs(in[e][t] * ex + src / xs * (1.0 - ex) 
@@ -1192,10 +1196,15 @@ void Cmfd::computeQuadSrc()
                             {
                                 if (xs < 1e-10)
                                 {
-                                    log_printf(NORMAL, "iterate %d times, %f -> %f",
-                                               n, meshCell->getSigmaT()[e], xs);
+                                    log_printf(ACTIVE, "cell (%d %d) energy %d"
+                                               " iterate %d times,"
+                                               " %f -> %f, %f, %f, %f, %f, %f",
+                                               x, y, e,
+                                               n, meshCell->getSigmaT()[e], xs, 
+                                               in[e][t], out[e][t], src, l, 
+                                               meshCell->getSigmaT()[e]);
                                 }
-                                break;                            
+                                //break;                            
                             }
 
                             if (n < 10)
@@ -1205,14 +1214,14 @@ void Cmfd::computeQuadSrc()
 
                         if (n > max_n - 2)
                         {
-                            log_printf(NORMAL, "closure relationship 2 xs"
+                            log_printf(ACTIVE, "closure relationship 2 xs"
                                        " does not converge, last two numbers:"
                                        " %f %f", old_xs, xs);
                         }
 
                         if (xs < 1e-10)
                         {
-                            log_printf(NORMAL, "iterate %d times, %f -> %f",
+                            log_printf(ACTIVE, "iterate %d times, %f -> %f",
                                        n, meshCell->getSigmaT()[e], xs);
                         }
 
@@ -1916,8 +1925,8 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
                         expon = exp(-tautau);
                     }
 
-                    assert(xs > -1e-10);
-                    assert(expon <= 1);
+                    //assert(xs > -1e-10);
+                    //assert(expon <= 1);
 
                     delta = (flux - new_quad_src[i][d] / xs) * (1 - expon);
                     
@@ -2036,8 +2045,8 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
                         expon = exp(-tautau);
                     }
 
-                    assert(xs > -1e-10);
-                    assert(expon <= 1);
+                    //assert(xs > -1e-10);
+                    //assert(expon <= 1);
 
                     delta = (flux - new_quad_src[i][d] / xs) * (1 - expon);
                     
