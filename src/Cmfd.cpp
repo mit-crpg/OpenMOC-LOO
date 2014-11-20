@@ -1708,7 +1708,7 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
     else
         log_printf(ERROR, "Neither LOO psi nor phi is requested.");
 
-    int loo_iter, max_outer = 500; 
+    int loo_iter, max_outer = 1000; 
 
     /* we set min_outer to make sure the low order system's
      * convergence criteria is sufficiently tight */ 
@@ -2122,7 +2122,7 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
 
                     if (new_flux < 0)
                     {
-                        log_printf(DEBUG, "Cell %d e %d new / old flux"
+                        log_printf(NORMAL, "Cell %d e %d new / old flux"
                                    " %f/ %f", i, e, 
                                    new_flux, meshCell->getNewFlux()[e]);
                         new_flux = 1e-5;

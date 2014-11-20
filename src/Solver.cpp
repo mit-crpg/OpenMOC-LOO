@@ -1689,7 +1689,7 @@ void Solver::initializeWeights()
         h = meshSurfaces[i * 8 + 2]->getAsTrackedLength();
         meshCell->setATWidth(w);
         meshCell->setATHeight(h);
-        meshCell->setATL(0.5 * sqrt(w * w + h * h) / P0);
+        //meshCell->setATL(0.5 * sqrt(w * w + h * h) / P0);
 
         // Compute mesh cell as-tracked volume by adding up all the FSRs'. 
         double vol = 0;
@@ -1700,6 +1700,7 @@ void Solver::initializeWeights()
             vol += fsr->getVolume();
         }
         meshCell->setATVolume(vol);
+        meshCell->setATL(sqrt(vol) / sqrt(2) / P0);
 
         if (i == 0)
         {
@@ -1709,7 +1710,6 @@ void Solver::initializeWeights()
                        meshCell->getATHeight(), meshCell->getATVolume());
         }
     }
-
     return;
 } 
 
