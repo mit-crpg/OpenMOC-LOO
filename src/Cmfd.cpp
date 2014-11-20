@@ -2960,7 +2960,7 @@ void Cmfd::updateFSRScalarFlux(int moc_iter)
                 int quad_id = fsr->getQuadId();
 
                 if ((moc_iter < 1) && _first_diffusion)
-                    fsr->setFlux(e, new_flux);
+                    fsr->setFlux(e, 1e-4);
                 else 
                 {
                     if ((_linear_prolongation || _exact_prolongation) 
