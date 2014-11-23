@@ -50,6 +50,12 @@ enum solveType {
     LOO
 };
 
+struct looTrack {
+    double xs;
+    double tau;
+    double ex;
+};
+
 #include "Plotter.h"
 
 class Cmfd {
@@ -156,6 +162,8 @@ public:
     void updateBoundaryFlux(int moc_iter);
 
     /* LOO */
+    looTrack calculateTrackInfo(double** quad_xs, double** expo, 
+                                        double **tau, int i, int e, int d);
     void generateTrack(int *i_array, int *t_array, int *t_arrayb);
     void checkTrack();
     void storePreMOCMeshSource(FlatSourceRegion* fsrs);

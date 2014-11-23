@@ -1174,72 +1174,101 @@ void Cmfd::computeQuadSrc()
                         meshCell->setQuadSrc(src, e, t);
                         /* starting guess of xs is just cell-averaged */
                         xs = meshCell->getSigmaT()[e];
-                        //assert(xs > 1e-10);
                         for (n = 0; n < max_n; n++)
                         {
                             old_xs = xs;
                             ex = exp(-xs * l);
 
-/*
+#if 1
                             xs -= (in[e][t] * ex + src / xs * (1.0 - ex) 
                                    - out[e][t]) / 
                                 (- src / xs / xs + ex * 
                                  (src/ xs / xs + src * l / xs - in[e][t] * l));
-*/
+#else
                             xs += (in[e][t] * ex + src / xs * (1 - ex) 
                                    - out[e][t]) /
                                 (src / xs / xs * (1 - ex) + 
                                  (out[e][t] - src / xs) * l);
+#endif
 
                             if ((fabs((xs - old_xs) / old_xs) < 1e-5) && 
                                 fabs(in[e][t] * ex + src / xs * (1.0 - ex) 
                                  - out[e][t]) < 1e-10)
-                            {
-                                if (xs < 1e-10)
-                                {
-                                    log_printf(ACTIVE, "cell (%d %d) energy %d"
-                                               " iterate %d times,"
-                                               " %f -> %f, %f, %f, %f, %f, %f",
-                                               x, y, e,
-                                               n, meshCell->getSigmaT()[e], xs, 
-                                               in[e][t], out[e][t], src, l, 
-                                               meshCell->getSigmaT()[e]);
-                                }
-                                //break;                            
-                            }
-
-                            if (n < 10)
-                                log_printf(DEBUG, "n=%d, xs =%f", n, xs);
-
+                                break;
                         }
 
-                        if (n > max_n - 2)
+                        if (xs < -1.0)
                         {
-                            log_printf(ACTIVE, "closure relationship 2 xs"
-                                       " does not converge, last two numbers:"
-                                       " %f %f", old_xs, xs);
-                        }
-
-                        if (xs < 1e-10)
-                        {
-                            log_printf(ACTIVE, "iterate %d times, %f -> %f",
-                                       n, meshCell->getSigmaT()[e], xs);
+                            log_printf(ACTIVE, "cell (%d %d) energy %d"
+                                       " %f -> %f, %f, %f, %f, %f, %f",
+                                       x, y, e, meshCell->getSigmaT()[e], xs, 
+                                       in[e][t], out[e][t], src, l, 
+                                       meshCell->getSigmaT()[e]);
+                            xs = meshCell->getSigmaT()[e];
+                            src = xs * (out[e][t] - ex * in[e][t]) / (1.0 - ex);
                         }
 
                         meshCell->setQuadXs(xs, e, t);
                         sum_quad_src += src;
+#if 1
                         sum_quad_flux += src/xs + (in[e][t] - out[e][t]) 
                             / (xs * l);
+#else
+                        ex = exp(- xs * l);
+                        sum_quad_flux += (out[e][t] - in[e][t] * ex) * 
+                            ( 1 + (in[e][t] - out[e][t]) / src / l);
+#endif
                         assert(sum_quad_src > 0);
-                        if (sum_quad_flux < 0)
+                        if (sum_quad_flux < 1e-5)
                         {
                             double f = in[e][t] * ex + src / xs * (1.0 - ex) 
                                 - out[e][t]; 
-                            log_printf(NORMAL, "residual is %f", f);
+                            log_printf(DEBUG, "xs = %f, sum is %f,"
+                                       " residual is %f", xs, 
+                                       sum_quad_flux, f);
 
                         }
-                        assert(sum_quad_flux > 0);
+                        //assert(sum_quad_flux > 0);
                     } /* loop through 8 tracks */
+                }
+                else if (_closure == 21)
+                {
+                    src = meshCell->getSrc()[e];
+                    double src_tilde = src / meshCell->getSigmaT()[e];
+                    for (int t = 0; t < 8; t++)
+                    {
+                        meshCell->setQuadSrc(src, e, t);
+                        ex = (out[e][t] - src_tilde) / (in[e][t] - src_tilde);
+                        xs = - log(ex) / l;
+                        log_printf(DEBUG, "in=%f out=%f src_tilde=%f, ex=%f,"
+                                   " l=%f, xs=%f",
+                                   in[e][t], out[e][t], src_tilde, 
+                                   ex, l, xs);
+                        if (xs < 0)
+                            log_printf(DEBUG, "xs = %f", xs);
+                        meshCell->setQuadXs(xs, e, t);
+                        sum_quad_src += src;
+                        sum_quad_flux += src/xs + (in[e][t] - out[e][t]) 
+                            / (xs * l);
+                    }
+                }
+                else if (_closure == 22)
+                {
+                    src = meshCell->getSrc()[e];
+                    ex = exp(- meshCell->getSigmaT()[e] * l);
+                    for (int t = 0; t < 8; t++)
+                    {
+                        meshCell->setQuadSrc(src, e, t);
+                        xs = src * (1.0 - ex) / (out[e][t] - in[e][t] * ex);
+                        log_printf(DEBUG, "in=%f out=%f src=%f, ex=%f,"
+                                   " l=%f, xs=%f",
+                                   in[e][t], out[e][t], src, 
+                                   ex, l, xs);
+                        meshCell->setQuadXs(xs, e, t);
+                        sum_quad_src += src;
+                        sum_quad_flux += src/xs + (in[e][t] - out[e][t]) 
+                            / (meshCell->getSigmaT()[e] * l);
+                    }
                 }
                 else if (_closure == 3)
                 {
@@ -1283,7 +1312,7 @@ void Cmfd::computeQuadSrc()
                     }
                 } /* end of three closure relationships */
 
-                assert(sum_quad_flux > 0);
+                //assert(sum_quad_flux > 0);
                 meshCell->setSumQuadFlux(sum_quad_flux, e);
 
                 log_printf(DEBUG, " cell %d e %d"
@@ -1837,9 +1866,17 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
                         new_quad_src[i][d] = meshCell->getQuadSrc()[d] 
                             * src_ratio;
                     }
-                    else if ((_closure == 2) || (_closure == 3))
+                    else if ((_closure == 2) || (_closure == 21) 
+                             || (_closure == 22) || (_closure == 3))
                     {
+                        // for LOO2 to pass debug case, has to use 1st line.
                         new_quad_src[i][d] = new_src[i][e];
+//                        new_quad_src[i][e] = meshCell->getSrc()[e] * src_ratio; 
+                        if (fabs(meshCell->getSrc()[e] - 
+                                 meshCell->getQuadSrc()[d])/ 
+                            meshCell->getSrc()[e] > 1e-5)
+                            log_printf(NORMAL, "%f %f", meshCell->getSrc()[e], 
+                                       meshCell->getQuadSrc()[d]);
                     }
 
                     //assert(new_quad_src[i][d] > 0);
@@ -1910,36 +1947,14 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
                         }
                     }
 
-                    double xs = 0;
-                    double expon = 0;
-                    double tautau = 0;
-                    if (_closure == 1)
-                    {
-                        xs = quad_xs[i][e];
-                        expon = expo[i][e];
-                        tautau = tau[i][e];
-                    }
-                    else if (_closure == 2)
-                    {
-                        xs = meshCell->getQuadXs()[d];
-                        tautau = xs * meshCell->getATL();
-                        expon = exp(-tautau);
-                    }
-                    else if (_closure == 3)
-                    {
-                        xs = quad_xs[i][d];
-                        tautau = xs * meshCell->getATL();
-                        expon = exp(-tautau);
-                    }
+                    looTrack track = calculateTrackInfo(quad_xs, expo, tau, 
+                                                        i, e, d);
 
-                    //assert(xs > -1e-10);
-                    //assert(expon <= 1);
-
-                    delta = (flux - new_quad_src[i][d] / xs) * (1 - expon);
+                    delta = (flux - new_quad_src[i][d] / track.xs) 
+                        * (1.0 - track.ex);
                     
-                    sum_quad_flux[i][e] += delta / tautau + 
-                        new_quad_src[i][d] / xs;
-
+                    sum_quad_flux[i][e] += delta / track.tau + 
+                        new_quad_src[i][d] / track.xs;
                     //assert(sum_quad_flux[i][e] > 0);
                     
 #if NEW
@@ -2022,36 +2037,15 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
                                 ->setQuadFlux(flux, e, 0);
                         }
                     } 
+                    looTrack track = calculateTrackInfo(quad_xs, expo, tau, 
+                                                        i, e, d);
+                    delta = (flux - new_quad_src[i][d] / track.xs) 
+                        * (1 - track.ex);
+                    log_printf(DEBUG, "flux = %f, xs = %f, ex = %f", 
+                               flux, track.xs, track.ex);
 
-                    double xs = 0; 
-                    double expon = 0;
-                    double tautau = 0;
-                    if (_closure == 1)
-                    {
-                        xs = quad_xs[i][e];
-                        expon = expo[i][e];
-                        tautau = tau[i][e];
-                    }
-                    else if (_closure == 2)
-                    {
-                        xs = meshCell->getQuadXs()[d];
-                        tautau = xs * meshCell->getATL();
-                        expon = exp(-tautau);
-                    }
-                    else if (_closure == 3)
-                    {
-                        xs = quad_xs[i][d];
-                        tautau = xs * meshCell->getATL();
-                        expon = exp(-tautau);
-                    }
-
-                    //assert(xs > -1e-10);
-                    //assert(expon <= 1);
-
-                    delta = (flux - new_quad_src[i][d] / xs) * (1 - expon);
-                    
-                    sum_quad_flux[i][e] += delta / tautau + 
-                        new_quad_src[i][d] / xs;
+                    sum_quad_flux[i][e] += delta / track.tau + 
+                        new_quad_src[i][d] / track.xs;
 
                     //assert(sum_quad_flux[i][e] > 0);
 
@@ -2110,7 +2104,7 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
                         log_printf(NORMAL, "Cell %d e %d new / old flux"
                                    " %f/ %f", i, e, 
                                    new_flux, meshCell->getNewFlux()[e]);
-                        new_flux = 1e-5;
+                        //new_flux = 1e-5;
                     }
 
                     meshCell->setNewFlux(new_flux, e);		       
@@ -2280,6 +2274,46 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
 
     return _keff;
 }
+
+looTrack Cmfd::calculateTrackInfo(double** quad_xs, double** expo, 
+                                  double **tau, int i, int e, int d)
+{
+    looTrack track; 
+    MeshCell* meshCell = _mesh->getCells(i);
+
+    if (_closure == 1)
+    {
+        track.xs = quad_xs[i][e];
+        track.ex = expo[i][e];
+        track.tau = tau[i][e];
+    }
+    else if (_closure == 2)
+    {
+        track.xs = meshCell->getQuadXs()[d];
+        track.tau = track.xs * meshCell->getATL();
+        track.ex = exp(-track.tau);
+    }
+    else if (_closure == 21)
+    {
+        track.xs = meshCell->getSigmaT()[e];
+        track.tau = meshCell->getQuadXs()[d] * meshCell->getATL();
+        track.ex = exp(-track.tau);   
+    }
+    else if (_closure == 22)
+    {
+        track.xs = meshCell->getQuadXs()[d];
+        track.tau = meshCell->getSigmaT()[e] * meshCell->getATL();
+        track.ex = exp(-track.tau);
+    }
+    else if (_closure == 3)
+    {
+        track.xs = quad_xs[i][d];
+        track.tau = track.xs * meshCell->getATL();
+        track.ex = exp(-track.tau);
+    }
+    return track;
+}
+
 
 bool Cmfd::cellOnVacuumBoundary(int i)
 {

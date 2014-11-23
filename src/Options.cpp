@@ -41,7 +41,7 @@ Options::Options(int argc, char **argv)
     _loo = false;
     _loo1 = false;
     _loo2 = false;
-    _closure = 2;
+    _closure = 21;
     _damp_factor = 1.0;
     _boundary_iteration = 0;
     _first_diffusion = true;		/* run diffusion for 1st iter */
@@ -217,6 +217,8 @@ Options::Options(int argc, char **argv)
                 _loo2 = true;
                 _damp_factor = 1.0;
             }
+            else if (LAST("-wlc"))
+                _closure = atof(argv[i]);
             else if (strcmp(argv[i], "-wlc1") == 0 ||
                      strcmp(argv[i], "--withlooclosure1") == 0)
             {
