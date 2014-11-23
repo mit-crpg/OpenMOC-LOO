@@ -1773,7 +1773,7 @@ void Solver::MOCsweep(int max_iterations, int moc_iter)
          * for each pair of reflecting azimuthal angles - angles which
          * wrap into cycles on each other */
         /* Loop over each thread */
-        log_printf(ACTIVE, "At the beginning of a sweep");
+        log_printf(DEBUG, "At the beginning of a sweep");
         for (j = 0; j < _num_azim; j++)
         {
             /* Loop over all tracks for this azimuthal angles */
@@ -1982,7 +1982,7 @@ void Solver::MOCsweep(int max_iterations, int moc_iter)
             } /* end of a backward segment */
         } /* end of a track (forward & backward segments) */
 
-        log_printf(ACTIVE, "At the end of a sweep, the outgoing fluxes are:");
+        log_printf(DEBUG, "At the end of a sweep, the outgoing fluxes are:");
         if (!_reflect_outgoing)
         {
             /* Loop over each track, updating all the incoming angular fluxes */
@@ -2084,7 +2084,7 @@ void Solver::normalizeFlux(double moc_iter)
 
     /* Renormalize scalar fluxes in each region */
     factor = counter / fission_source;
-    log_printf(ACTIVE, "iter %.1f normalization factor = %f", moc_iter, factor);
+    log_printf(DEBUG, "iter %.1f normalization factor = %f", moc_iter, factor);
 
     for (int r = 0; r < _num_FSRs; r++)
         _flat_source_regions[r].normalizeFluxes(factor);

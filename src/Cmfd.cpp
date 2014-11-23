@@ -284,7 +284,7 @@ double Cmfd::computeCellSourceNormGivenTwoSources_old(double *old_cell_source,
         }
         else
             source_residual[i] = 0.0;
-        log_printf(ACTIVE, "iter %d cell %d new %f old %f residual %e", 
+        log_printf(DEBUG, "iter %d cell %d new %f old %f residual %e", 
                    _moc_iter, i,
                    new_cell_source[i], old_cell_source[i], source_residual[i]);
     }
@@ -307,7 +307,7 @@ double Cmfd::computeCellSourceNormGivenTwoSources_old(double *old_cell_source,
                old_cell_source[location]);
 */
 /*
-    log_printf(ACTIVE, "iter %d pin cell 0, 1, 5, change %e %e, %e %e, %e %e",
+    log_printf(DEBUG, "iter %d pin cell 0, 1, 5, change %e %e, %e %e, %e %e",
                _moc_iter, 
                s2[0], s2[3], s2[1], s2[4], s2[5], s2[6]); 
 */
@@ -372,7 +372,7 @@ double* Cmfd::computeCellSourceFromFSR(double moc_iter)
 
     for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
     {
-        log_printf(ACTIVE, " iter %.1f, e %d, flux ratios in two cells %f / %f = %f",
+        log_printf(DEBUG, " iter %.1f, e %d, flux ratios in two cells %f / %f = %f",
                    moc_iter, e, 
                    _flat_source_regions[*_mesh->getCells(0)->getFSRs()->begin()].getFlux()[e], 
                    _flat_source_regions[*_mesh->getCells(1)->getFSRs()->begin()].getFlux()[e], 
@@ -1146,7 +1146,7 @@ void Cmfd::computeQuadSrc()
                         /* DEBUG */
                         if (src < 0)
                         {
-                            log_printf(ACTIVE, "(%d %d) e %d t %d"
+                            log_printf(DEBUG, "(%d %d) e %d t %d"
                                        " quad src = %f * (%f - %f*%f)/%f = %f",
                                        x, y, e, t, xs, out[e][t], ex, in[e][t], 
                                        1 - ex, 
@@ -1264,7 +1264,7 @@ void Cmfd::computeQuadSrc()
                         /* DEBUG */
                         if (src < 0)
                         {
-                            log_printf(ACTIVE, "(%d %d) e %d t %d"
+                            log_printf(DEBUG, "(%d %d) e %d t %d"
                                        " quad src = %f * (%f - %f*%f)/%f = %f",
                                        x, y, e, t, xs, out[e][t], ex, in[e][t], 
                                        1 - ex, 
@@ -1345,10 +1345,10 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter)
 
     /*
     petsc_err = VecGetArray(phi_old, &old_phi);
-    log_printf(ACTIVE, "CMFD initial flux from MOC:");
+    log_printf(DEBUG, "CMFD initial flux from MOC:");
     for (int i = 0; i < _cw*_ch; i++)
     {
-        log_printf(ACTIVE, " cell %d energy 0 flux %f", 
+        log_printf(DEBUG, " cell %d energy 0 flux %f", 
                    i, (double)old_phi[i*_ng + 0]);
     }
     */
@@ -1590,7 +1590,7 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter)
     petsc_err = VecGetArray(_phi_new, &new_phi);
     CHKERRQ(petsc_err);
 
-    log_printf(ACTIVE, "CMFD converged flux:");
+    log_printf(DEBUG, "CMFD converged flux:");
     for (int i = 0; i < _cw*_ch; i++)
     {
         meshCell = _mesh->getCells(i);
@@ -1632,7 +1632,7 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter)
             new_source_energy_integrated[ii] += 
                 (double) new_source[ii * _ng + e];
         }
-        log_printf(ACTIVE, "energy-integrated sources that go in and come out"
+        log_printf(DEBUG, "energy-integrated sources that go in and come out"
                    " of CMFD for cell %d: %f %f, ratio %e",
                    ii, old_source_energy_integrated[ii], 
                    new_source_energy_integrated[ii], 
@@ -1969,13 +1969,6 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
                 }
                 else
                     log_printf(ERROR, "spot unknonwn BC at surface 1");
-
-                if (initial_flux > 1e-10)
-                {
-                    log_printf(DEBUG, "  Energy %d, loop %d, fwd, %f -> %f,"
-                               " %e", e, j, initial_flux, flux, 
-                               flux / initial_flux - 1.0);
-                }
             } /* exit this loop j */
 
             /* Backward Directions */
@@ -2087,14 +2080,6 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
                         ->getMeshSurfaces(1)->setQuadFlux(0.0, e, 0);
                     leak_tot += flux * getSurf(_i_array[_num_track * j], 0, 0);
                 }
-
-                if (initial_flux > 1e-10) 
-                {
-                    log_printf(DEBUG, "  Energy %d, loop %d, bwd, %f -> %f,"
-                               " %e",
-                               e, j, initial_flux, flux, 
-                               flux / initial_flux - 1.0);
-                }
             }
         } /* finish looping over energy; exit to iter level */
 
@@ -2145,10 +2130,13 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
                     phi_ratio =  sum_quad_flux[i][e] 
                         / meshCell->getSumQuadFlux()[e];
 
+                    log_printf(DEBUG, "%f = %f / %f", phi_ratio, 
+                               sum_quad_flux[i][e], 
+                               meshCell->getSumQuadFlux()[e]);
                     if (phi_ratio < 0)
                     {
-                        log_printf(NORMAL, "Cell %d e %d scalar flux update"
-                                   "by (before normalization) = %e", 
+                        log_printf(DEBUG, "Cell %d e %d scalar flux update"
+                                   " by (before normalization) = %e", 
                                    i, e, phi_ratio);
                         phi_ratio = 1e-5;
                     }
@@ -2168,7 +2156,7 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
 
         /* Computes normalization factor based on fission source */
         double normalize_factor = computeNormalization(old_source);
-        log_printf(ACTIVE, "normalize_factor = %.10f", normalize_factor);
+        log_printf(DEBUG, "normalize_factor = %.10f", normalize_factor);
 
         /* FIXME: should or should not normalize leak_tot? */
         leak_tot *= normalize_factor;
@@ -2247,9 +2235,10 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
         /* In DEBUG mode (run CMFD or LOO after MOC converges), 
          * moc_iter = 10000 */
         if (moc_iter == 10000)
-            log_printf(NORMAL, " %d-th LOO iteration k = %.10f, eps = %e"
-                       " k eps = %e", 
-                       loo_iter, _keff, eps, (_keff - old_keff) / old_keff);
+            log_printf(NORMAL, " %d-th LOO iteration k = %.10f = %f /(%f + %f),"
+                       " eps = %e,  k eps = %e", 
+                       loo_iter, _keff, fis_tot, abs_tot, leak_tot,
+                       eps, (_keff - old_keff) / old_keff);
         else
             log_printf(DEBUG, " %d-th LOO iteration k = %.10f, eps = %e", 
                        loo_iter, _keff, eps);
