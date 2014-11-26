@@ -93,7 +93,8 @@ double MeshCell::getL(){
 }
 
 double MeshCell::getATL(){
-    return _at_l;
+    // FIXME: for now instead of return _at_l return _l
+    return _l;
 }
 
 void MeshCell::setWidth(double width){
