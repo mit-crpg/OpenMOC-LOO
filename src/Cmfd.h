@@ -189,6 +189,7 @@ public:
 
     double computeLooFluxPower(int moc_iter, double k);
     double computeNormalization(double flag);
+    double searchForXs(double xs, double src, double in, double out, double l);
     void normalizeFlux(double normalize_factor);
     void updateBoundaryFluxByPartialCurrent(int moc_iter);
     void updateBoundaryFluxBySrc(int moc_iter);

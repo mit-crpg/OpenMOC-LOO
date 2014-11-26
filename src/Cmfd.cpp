@@ -1217,48 +1217,12 @@ void Cmfd::computeQuadSrc()
                 }
                 else if (_closure == 2)
                 {
-                    src = meshCell->getSrc()[e];
-                    int n, max_n = 100;
-                    double old_xs;
+                    src = meshCell->getSrc()[e]; 
                     for (int t = 0; t < 8; t++)
                     {
                         meshCell->setQuadSrc(src, e, t);
-                        /* starting guess of xs is just cell-averaged */
-                        xs = meshCell->getSigmaT()[e];
-                        for (n = 0; n < max_n; n++)
-                        {
-                            old_xs = xs;
-                            ex = exp(-xs * l);
-
-#if 1
-                            xs -= (in[e][t] * ex + src / xs * (1.0 - ex) 
-                                   - out[e][t]) / 
-                                (- src / xs / xs + ex * 
-                                 (src/ xs / xs + src * l / xs - in[e][t] * l));
-#else
-                            xs += (in[e][t] * ex + src / xs * (1 - ex) 
-                                   - out[e][t]) /
-                                (src / xs / xs * (1 - ex) + 
-                                 (out[e][t] - src / xs) * l);
-#endif
-
-                            if ((fabs((xs - old_xs) / old_xs) < 1e-5) && 
-                                fabs(in[e][t] * ex + src / xs * (1.0 - ex) 
-                                 - out[e][t]) < 1e-10)
-                                break;
-                        }
-
-                        if (xs < -1.0)
-                        {
-                            log_printf(ACTIVE, "cell (%d %d) energy %d"
-                                       " %f -> %f, %f, %f, %f, %f, %f",
-                                       x, y, e, meshCell->getSigmaT()[e], xs, 
-                                       in[e][t], out[e][t], src, l, 
-                                       meshCell->getSigmaT()[e]);
-                            xs = meshCell->getSigmaT()[e];
-                            src = xs * (out[e][t] - ex * in[e][t]) / (1.0 - ex);
-                        }
-
+                        xs = searchForXs(meshCell->getSigmaT()[e], src, 
+                                         in[e][t], out[e][t], l);
                         meshCell->setQuadXs(xs, e, t);
                         sum_quad_src += src;
 #if 1
@@ -1388,6 +1352,43 @@ void Cmfd::computeQuadSrc()
 
     return;
 }	 
+
+double Cmfd::searchForXs(double xs, double src, double in, double out, double l)
+{
+    int n, max_n = 100;
+    double old_xs, initial_xs = xs;
+    double ex;
+    for (n = 0; n < max_n; n++)
+    {
+        old_xs = xs;
+        ex = exp(-xs * l);
+
+#if 1
+        xs -= (in * ex + src / xs * (1.0 - ex) 
+               - out) / 
+            (- src / xs / xs + ex * 
+             (src/ xs / xs + src * l / xs - in * l));
+#else
+        xs += (in * ex + src / xs * (1 - ex) 
+               - out) /
+            (src / xs / xs * (1 - ex) + 
+             (out - src / xs) * l);
+#endif
+
+        if ((fabs((xs - old_xs) / old_xs) < 1e-5) && 
+            fabs(in * ex + src / xs * (1.0 - ex) 
+                 - out) < 1e-10)
+            return xs;
+    }
+
+    if (xs < -1.0)
+    {
+        xs = initial_xs;
+        src = xs * (out - ex * in) / (1.0 - ex);
+    }
+
+    return xs;
+}
 
 /*
  * CMFD solver that solves the diffusion problem
