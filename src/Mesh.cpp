@@ -516,7 +516,7 @@ void Mesh::splitCornerQuadCurrents()
     double current;
     double f = 0.50; 
 
-    int nq = 4; // number of quadrature currents. 
+    int nq = NUM_QUADRATURE_TRACKED;
     int counter_j[] = {1, 0, 3, 2};
 
     for (int y = 0; y < ch; y++)
@@ -672,7 +672,7 @@ void Mesh::computeTotQuadCurrents(){
             surfaceSide = meshCell->getMeshSurfaces(i);
 
             /* loop over index, energy groups */
-            for (int j = 0; j < 2; j++)
+            for (int j = 0; j < NUM_QUADRATURE_TRACKED; j++)
             {
                 /* set current tally to 0 */
                 sum_cur = 0.0;

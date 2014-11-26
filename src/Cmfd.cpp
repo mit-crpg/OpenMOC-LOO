@@ -112,9 +112,9 @@ Cmfd::Cmfd(Geometry* geom, Plotter* plotter, Mesh* mesh,
     _num_first_diffusion = opts->getNumFirstDiffusion();
 
     if (_reflect_outgoing)
-        _nq = 2;
+        _nq = NUM_QUADRATURE_TRACKED;
     else
-        _nq = 4;
+        _nq = NUM_QUADRATURE_TRACKED * 2;
 
     for (int s = 0; s < 4; s++)
     {
@@ -868,15 +868,17 @@ void Cmfd::computeQuadFlux()
                 {
                     tmp = 0.0;
 
-                    /* FIXME: somehow _nq = 4 breaks the code for _ro case */
                     for (int j = 0; j < _nq; j++)
                     {
 #if NEW
+                        /* weights are only tallied for quadrature 0 &
+                         * 1. any other quadratures (e.g., currently
+                         * 2, 3 stands for the uncollided outgoing)
+                         * should refer back to the tallied weights.
+                         */
                         if (j < 2)
                             wt = s[i]->getTotalWt(j);
-                        else /* quadrature 2 & 3 do not have their own
-                              * weights, instead just use 0's and 1's
-                              * weights.  */
+                        else 
                             wt = s[i]->getTotalWt(j - 2);
 #else
                         wt = _mesh->getCells(0)->getWidth();
@@ -967,12 +969,17 @@ void Cmfd::computeQuadSrc()
     MeshSurface *s[4];
     MeshCell *meshCell, *nextCell;
     double **out = new double*[_ng];
+    double **out_un = new double*[_ng]; // un-collided outgoing 
     double **in = new double*[_ng];
     for (int i = 0; i < _ng; i++)
     {
         out[i] = new double[8];
+        out_un[i] = new double[8];
         in[i] = new double[8];
     }
+    double damp = _damp_factor;
+    if (_moc_iter < _num_first_diffusion + 1)
+        damp = 1.0; 
 
     /* loop over all mesh cells */
     for (int y = 0; y < _ch; y++)
@@ -996,6 +1003,14 @@ void Cmfd::computeQuadSrc()
                 out[e][5] = s[3]->getQuadFlux(e,0);
                 out[e][6] = s[1]->getQuadFlux(e,1);
                 out[e][7] = s[0]->getQuadFlux(e,1);
+                out_un[e][0] = s[2]->getQuadFlux(e,2);
+                out_un[e][1] = s[1]->getQuadFlux(e,2);
+                out_un[e][2] = s[3]->getQuadFlux(e,3);
+                out_un[e][3] = s[2]->getQuadFlux(e,3);
+                out_un[e][4] = s[0]->getQuadFlux(e,2);
+                out_un[e][5] = s[3]->getQuadFlux(e,2);
+                out_un[e][6] = s[1]->getQuadFlux(e,3);
+                out_un[e][7] = s[0]->getQuadFlux(e,3);
 
                 if (x == 0)
                 {
@@ -1009,6 +1024,7 @@ void Cmfd::computeQuadSrc()
                         }
                         else
                         {
+                            //FIXME: now 2, 3 are for uncollided fluxes
                             in[e][5] = s[0]->getQuadFlux(e,2);
                             in[e][6] = s[0]->getQuadFlux(e,3);
                         }
@@ -1130,6 +1146,7 @@ void Cmfd::computeQuadSrc()
             /* We have to use get l to get the polar angle right */
             double l = meshCell->getATL();
             double xs = 0, ex = 0, sum_quad_flux = 0, sum_quad_src = 0, src = 0;
+            bool fall_back_to_c1 = false;
             for (int e = 0; e < _ng; e++)
             {
                 xs = meshCell->getSigmaT()[e];
@@ -1157,6 +1174,40 @@ void Cmfd::computeQuadSrc()
                             // src = 0;
                         }
                         //assert(src > 0);
+                        meshCell->setQuadSrc(src, e, t);
+                        meshCell->setQuadXs(xs, e, t);
+                        sum_quad_src += src;
+                        sum_quad_flux += src/xs + (in[e][t] - out[e][t]) 
+                            / (xs * l);
+                    }
+                }
+                else if (_closure == 11)
+                {
+                    for (int t = 0; t < 8; t++)
+                    {
+                        /* only use the uncollided info when incoming
+                         * flux is not zero */
+                        if ((in[e][t] > 1e-10) && (!fall_back_to_c1))
+                        {
+                            ex = out_un[e][t] / in[e][t]; 
+                            xs = - log(ex) / l;
+                        }
+                        else
+                        {
+                            fall_back_to_c1 = true;
+                            xs = meshCell->getSigmaT()[e];
+                            ex = exp(-xs * l);
+                        }
+                        //xs = (1 - damp) * meshCell->getQuadXs(e, t) + damp * xs; 
+
+                        src = xs * (out[e][t] - ex * in[e][t]) / (1.0 - ex);
+
+                        log_printf(ACTIVE, "iter %d: cell(%d %d) t %d e %d xs = %f, "
+                                   "src = %f, in = %f, out_un = %f, out = %f", 
+                                   _moc_iter, x, y, t, e, xs, src,
+                                   in[e][t], out_un[e][t], out[e][t]);
+
+                        //src = (1 - damp) * meshCell->getQuadSrc(e, t) + damp * src;
                         meshCell->setQuadSrc(src, e, t);
                         meshCell->setQuadXs(xs, e, t);
                         sum_quad_src += src;
@@ -1329,9 +1380,11 @@ void Cmfd::computeQuadSrc()
     {
         delete[] in[i];
         delete[] out[i];
+        delete[] out_un[i];
     }
     delete[] in;
     delete[] out;
+    delete[] out_un;
 
     return;
 }	 
@@ -1861,24 +1914,20 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
                 for (int t = 0; t < 8; t++)
                 {
                     int d = e * 8 + t;
-                    if (_closure == 1)
+                    if ((_closure == 1) || (_closure == 11))
                     {
                         new_quad_src[i][d] = meshCell->getQuadSrc()[d] 
-                            * src_ratio;
+                             * src_ratio;
                     }
-                    else if ((_closure == 2) || (_closure == 21) 
-                             || (_closure == 22) || (_closure == 3))
+                    else 
                     {
-                        // for LOO2 to pass debug case, has to use 1st line.
                         new_quad_src[i][d] = new_src[i][e];
-//                        new_quad_src[i][e] = meshCell->getSrc()[e] * src_ratio; 
                         if (fabs(meshCell->getSrc()[e] - 
                                  meshCell->getQuadSrc()[d])/ 
                             meshCell->getSrc()[e] > 1e-5)
                             log_printf(NORMAL, "%f %f", meshCell->getSrc()[e], 
                                        meshCell->getQuadSrc()[d]);
                     }
-
                     //assert(new_quad_src[i][d] > 0);
                 }
             }
@@ -2287,7 +2336,7 @@ looTrack Cmfd::calculateTrackInfo(double** quad_xs, double** expo,
         track.ex = expo[i][e];
         track.tau = tau[i][e];
     }
-    else if (_closure == 2)
+    else if ((_closure == 11) || (_closure == 2))
     {
         track.xs = meshCell->getQuadXs()[d];
         track.tau = track.xs * meshCell->getATL();

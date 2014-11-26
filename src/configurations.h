@@ -23,6 +23,11 @@
 #define NUM_ENERGY_GROUPS 7
 #define GRP_TIMES_ANG NUM_POLAR_ANGLES*NUM_ENERGY_GROUPS
 
+/* The number of quadrature we track on each surface. 2 for closure 1,
+ * 4 for closure 11
+ */
+#define NUM_QUADRATURE_TRACKED 4
+
 /* The number of old k_eff values which will be stored. Keeping track of more
  * than just the most recent k_eff is intended to prevent from prematurely
  * exiting fixed source iteration at a local minimum or maximum */

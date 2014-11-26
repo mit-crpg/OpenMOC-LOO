@@ -122,8 +122,10 @@ public:
     double* getQuadFlux();
     void setQuadFlux(double quadFlux, int e, int index);
     double* getQuadSrc();
+    double getQuadSrc(int e, int index);
     void setQuadSrc(double quadSrc, int e, int index);
     double* getQuadXs();
+    double getQuadXs(int e, int index);
     void setQuadXs(double quadXs, int e, int index);
     double* getSumQuadFlux();
     void setSumQuadFlux(double sumQuadFlux, int e);

@@ -24,13 +24,11 @@ MeshSurface::MeshSurface(){
         _quad_flux = new double*[NUM_ENERGY_GROUPS];
         _old_quad_flux = new double*[NUM_ENERGY_GROUPS];
 		
-
-        /* FIXME: cheat for now by allocating 4 for each */
         for (int e = 0; e < NUM_ENERGY_GROUPS; e++)
         {
-            _quad_current[e] = new double[4];
-            _quad_flux[e] = new double[4];
-            _old_quad_flux[e] = new double[4];
+            _quad_current[e] = new double[NUM_QUADRATURE_TRACKED];
+            _quad_flux[e] = new double[NUM_QUADRATURE_TRACKED];
+            _old_quad_flux[e] = new double[NUM_QUADRATURE_TRACKED];
         }
     }
     catch (std::exception &e)
@@ -44,8 +42,7 @@ MeshSurface::MeshSurface(){
         _d_tilde[e]  = 0.0;
         _d_hat[e]    = 0.0;
         _current[e]  = 0.0;		
-        /* Assumes 4 quadrature flux per surface, so 2 on each side */
-        for (int ind = 0; ind < 2; ind++)
+        for (int ind = 0; ind < NUM_QUADRATURE_TRACKED; ind++)
         {
             _quad_current[e][ind] = 0.0;
             _quad_flux[e][ind] = 1.0;

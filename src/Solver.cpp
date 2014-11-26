@@ -91,9 +91,9 @@ Solver::Solver(Geometry* geom, TrackGenerator* track_generator,
     _plot_FSRs_flag = opts->getPlotFSRsFlag();
 
     if (_reflect_outgoing)
-        _nq = 2;
+        _nq = NUM_QUADRATURE_TRACKED;
     else
-        _nq = 4;
+        _nq = NUM_QUADRATURE_TRACKED * 2;
     
     _plot_loo = opts->plotQuadFlux();
     _plot_flux = opts->plotFluxes();
@@ -200,7 +200,7 @@ Solver::~Solver() {
 /**
  * Pre-computes exponential pre-factors for each segment of each track for
  * each polar angle. This method will store each pre-factor in an array inside
- * each segment if STORE_PREFACTORS is set to true inside the configurations.h
+ * each segment if STORE_PREACTORS is set to true inside the configurations.h
  * file. If it is not set to true then a hashmap will be generated which will
  * contain values of the pre-factor at for specific segment lengths (the keys
  * into the hashmap).
@@ -1256,7 +1256,8 @@ void Solver::plotFluxes(int moc_iter)
     deleteBitMap(bitMap);
 }
 
-void Solver::tallyLooCurrent(Track *track, segment *segment, 
+void Solver::tallyLooCurrent(Track *track, double *uncollided, 
+                             segment *segment, 
                              MeshSurface **meshSurfaces, int direction)
 {
     int index = 0, pe = 0, pe_initial = 0, p, e, surfID;
@@ -1297,6 +1298,8 @@ void Solver::tallyLooCurrent(Track *track, segment *segment,
             {
                 meshSurface->incrementQuadCurrent(polar_fluxes[pe] * weights[p] 
                                                   / 2.0, e, index);
+                meshSurface->incrementQuadCurrent(uncollided[pe] * weights[p] 
+                                                  / 2.0, e, index + 2);
                 pe++;
             }
         }
@@ -1336,9 +1339,9 @@ void Solver::tallyLooCurrentIncoming(Track *track, segment *segment,
         /* Defines index: instead of 0, 1 now we have 2 (theta less
          * than pi/2), 3 (theta larger than pi/2) */
         if (track->getPhi() < PI / 2.0)
-            index = 2;
+            index = NUM_QUADRATURE_TRACKED;
         else
-            index = 3;
+            index = NUM_QUADRATURE_TRACKED + 1;
         
         /* Obtains the surface that the segment crosses */
         meshSurface = meshSurfaces[surfID];
@@ -1726,6 +1729,7 @@ void Solver::MOCsweep(int max_iterations, int moc_iter)
     double* sigma_t;
     FlatSourceRegion* fsr;
     double fsr_flux[NUM_ENERGY_GROUPS];
+    double uncollided[GRP_TIMES_ANG * 2];
     double* ratios;
     double delta;
     double volume;
@@ -1790,8 +1794,8 @@ void Solver::MOCsweep(int max_iterations, int moc_iter)
                 polar_fluxes = track->getPolarFluxes();
 
                 /* Store all the incoming angular fluxes */
-                //if ((tally == 2) && (!_reflect_outgoing))
-                if (tally == 2)
+                if ((tally == 2) && (!_reflect_outgoing))
+                    //if (tally == 2)
                 {
                     tallyLooCurrentIncoming(track, segments.at(0), 
                                             meshSurfaces, 1);
@@ -1799,9 +1803,6 @@ void Solver::MOCsweep(int max_iterations, int moc_iter)
                                             segments.at(num_segments-1), 
                                             meshSurfaces, -1);
                 }
-                /* FIXME: add in tallyCmfdCurrentIncoming */
-
-
 
                 /* Loop over each segment in forward direction */
                 for (s = 0; s < num_segments; s++) 
@@ -1833,6 +1834,9 @@ void Solver::MOCsweep(int max_iterations, int moc_iter)
                                       * sigma_t_l + 
                                       _pre_factor_array[index + 2 * p +1]));
                             fsr_flux[e] += delta * weights[p];
+                            uncollided[pe] = polar_fluxes[pe] *  
+                                (_pre_factor_array[index + 2 * p] * sigma_t_l + 
+                                 _pre_factor_array[index + 2 * p +1]);
                             polar_fluxes[pe] -= delta;
                             pe++;
                         }
@@ -1848,6 +1852,8 @@ void Solver::MOCsweep(int max_iterations, int moc_iter)
                             delta = (polar_fluxes[pe] -ratios[e]) *
                                 segment->_prefactors[e][p];
                             fsr_flux[e] += delta * weights[p];
+                            uncollided[pe] = polar_fluxes[pe] 
+                                * (1.0 - segment->_prefactors[e][p]);
                             polar_fluxes[pe] -= delta;
                             pe++;
                         }
@@ -1858,13 +1864,14 @@ void Solver::MOCsweep(int max_iterations, int moc_iter)
                     /* if segment crosses a surface in fwd direction, 
                        tally current/weight */
                     if (tally == 2)
-                        tallyLooCurrent(track, segment, meshSurfaces, 1);
+                        tallyLooCurrent(track, uncollided, segment, 
+                                        meshSurfaces, 1);
                     else if (tally == 1)
                         tallyCmfdCurrent(track, segment, meshSurfaces, 1);
 
                     /* Increments the scalar flux for this FSR */
                     fsr->incrementFlux(fsr_flux);
-                }
+                } /* end of a segment */
 
                 log_printf(DEBUG, "flux (end of forward) %f", polar_fluxes[0]);
 
@@ -1921,6 +1928,9 @@ void Solver::MOCsweep(int max_iterations, int moc_iter)
                                       * sigma_t_l
                                       + _pre_factor_array[index + 2 * p + 1]));
                             fsr_flux[e] += delta * weights[p];
+                            uncollided[pe] = polar_fluxes[pe] * 
+                                (_pre_factor_array[index + 2 * p] * sigma_t_l + 
+                                 _pre_factor_array[index + 2 * p + 1]);
                             polar_fluxes[pe] -= delta;
                             pe++;
                         }
@@ -1935,6 +1945,8 @@ void Solver::MOCsweep(int max_iterations, int moc_iter)
                             delta = (polar_fluxes[pe] - ratios[e]) *
                                 segment->_prefactors[e][p];
                             fsr_flux[e] += delta * weights[p];
+                            uncollided[pe] = polar_fluxes[pe] * 
+                                (1.0 - segment->_prefactors[e][p]);
                             polar_fluxes[pe] -= delta;
                             pe++;
                         }
@@ -1946,7 +1958,8 @@ void Solver::MOCsweep(int max_iterations, int moc_iter)
                     /* if segment crosses a surface in bwd direction, 
                        tally quadrature flux for LOO acceleration */
                     if (tally == 2)
-                        tallyLooCurrent(track, segment, meshSurfaces, -1);
+                        tallyLooCurrent(track, uncollided, 
+                                        segment, meshSurfaces, -1);
                     else if (tally == 1)
                         tallyCmfdCurrent(track, segment, meshSurfaces, -1);
 						
@@ -2140,9 +2153,7 @@ void Solver::normalizeFlux(double moc_iter)
             {
                 for (int e = 0; e < ng; e++)
                 {
-                    /* FIXME: I changed 2 to 4, which cases a
-                     * SIGFPE, Arithmetic exception */
-                    for (int ind = 0; ind < 2; ind++)
+                    for (int ind = 0; ind < NUM_QUADRATURE_TRACKED; ind++)
                     {
                         meshCell->getMeshSurfaces(s)->updateQuadCurrent(
                             factor, e, ind);

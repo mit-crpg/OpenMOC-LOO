@@ -358,8 +358,24 @@ double* MeshCell::getQuadSrc(){
     return _quad_src;
 }
 
+double MeshCell::getQuadSrc(int e, int index){
+    assert(e >= 0);
+    assert(e < NUM_ENERGY_GROUPS);
+    assert(index >= 0);
+    assert(index < 8);
+    return _quad_src[e * 8 + index];
+}
+
 double* MeshCell::getQuadXs(){
     return _quad_xs;
+}
+
+double MeshCell::getQuadXs(int e, int index){
+    assert(e >= 0);
+    assert(e < NUM_ENERGY_GROUPS);
+    assert(index >= 0);
+    assert(index < 8);
+    return _quad_xs[e * 8 + index];
 }
 
 double* MeshCell::getSumQuadFlux(){

@@ -145,9 +145,10 @@ public:
                               int surfID, int index);
 
     void tallyAsTrackedLengthSingle(Track *t, segment *seg, MeshSurface **surf, 
-                              int surfID, int index, int opposite);
+                                    int surfID, int index, int opposite);
 
-    void tallyLooCurrent(Track *t, segment *seg, MeshSurface **surf, int dir);
+    void tallyLooCurrent(Track *t, double *uncollided, segment *seg, 
+                         MeshSurface **surf, int dir);
     void tallyLooCurrentIncoming(Track *t, segment *seg, MeshSurface **surf, 
                                  int dir);
     void tallyCmfdCurrent(Track *t, segment *seg, MeshSurface **surf, int dir);
