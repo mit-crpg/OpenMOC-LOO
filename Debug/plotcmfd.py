@@ -8,7 +8,7 @@ import os.path
 # Control variables
 flag = ''
 #printgeometry='2D C5G7 (c5g7_cc_full)'
-geometries = ['xml-sample_geometry_c5g7_cf2.xml']
+geometries = ['geometry_c5g7_cc.xml']
 
 # Find the string of geometry name after "geometry_" before ".xml"
 geometry = geometries[0]
@@ -40,14 +40,17 @@ for file in l2_norm_files:
     filepath = os.path.abspath(os.path.join(basepath, file))
     logfile = open(filepath, "r").readlines()
 
-    # sample: xml-sample_geometry_c5g7_cc.xml_64_0.05_1.0_update_upscat_loo1.txt
+    # sample: geometry_c5g7_cc.xml_1_64_0.05_1.0_np_loo1.txt
     method = file[-8:-4]
-    upscat = file[-15:-9]
-    update = file[-22:-16]
-    damp = file[-26:-23]
-    ts = file[-31:-27]
-    na = file[-34:-32]
-    print("plotted geometry %s, upscat = %s, update = %s, damp = %s, ts = %s, na = %s"%(geometry_name, upscat, update, damp, ts, na))
+    update = file[-11:-9]
+    damp = file[-15:-12]
+    ts = file[-20:-16]
+    na = file[-23:-21]
+
+    index = file.find(".xml_") + 5
+    closure = file[index:-24]
+    
+    print("plotted geometry %s, method = %s, closure = %s, update = %s, damp = %s, ts = %s, na = %s"%(geometry_name, method, closure, update, damp, ts, na))
 
     # find number of lines in file
     for num_lines, l in enumerate(logfile):
@@ -77,11 +80,10 @@ for file in l2_norm_files:
                      var[j], 
                      ls[counter], 
                      color=cm.jet(1.*counter/num), 
-                     label = ("%s %s DF: %s"%(method, upscat, damp)), markersize=5)
+                     label = ("%s #%s"%(method, closure)), markersize=5)
         plt.xlim(0, max_num_lines + 1)
         plt.legend(loc='upper center', ncol=3, prop = fontP, shadow=True, 
-                   bbox_to_anchor=(0.5,-0.1),fancybox=True)
-
+                   bbox_to_anchor=(0.5,-0.1), fancybox=True)
 
 # save figure including different configuration of the same geometries.
 plt.figure(0)
@@ -89,16 +91,14 @@ plt.xlabel('# MOC iteration')
 plt.ylabel('FSR L2 Norm on Fission Source Relative Change')
 plt.title('Geometry: %s,'%(geometry_name) + ' spacing: %s cm,'%str(ts) 
           + ' #angles: %s'%str(na))
+plt.savefig(geometry_name +  '_eps.png', bbox_inches='tight')
+plt.clf()
 
 plt.figure(1)
+plt.yscale('linear', nonposy='clip')
 plt.xlabel('# MOC iteration')
 plt.ylabel('Ratio of Successive Iteration FSR L2 Norm on Fission Source Relative Change')
 plt.title('Geometry: %s,'%(geometry_name) + ' spacing: %s cm,'%str(ts) 
           + ' #angles: %s'%str(na))
-
-
-if flag == '':
-    plt.savefig(geometry_name +  '.png', bbox_inches='tight')
-else:
-    plt.savefig(geometry_name + flag + '.png', bbox_inches='tight')
+plt.savefig(geometry_name +  '_eps_ratio.png', bbox_inches='tight')
 plt.clf()
