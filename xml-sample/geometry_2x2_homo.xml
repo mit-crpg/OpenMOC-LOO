@@ -9,10 +9,10 @@
 
   <!-- Definition of Fuel Cells -->
   <cell id="11" universe="1" material="1" surfaces="-5" sectors="4"/>
-  <cell id="12" universe="1" material="2" surfaces="5 -6" sectors="4"/>
-  <cell id="13" universe="1" material="3" surfaces="6 -7" sectors="4"/>
-  <cell id="14" universe="1" material="4" surfaces="7 -8" sectors="8"/>
-  <cell id="15" universe="1" material="4" surfaces="8" sectors="8"/>
+  <cell id="12" universe="1" material="1" surfaces="5 -6" sectors="4"/>
+  <cell id="13" universe="1" material="1" surfaces="6 -7" sectors="4"/>
+  <cell id="14" universe="1" material="1" surfaces="7 -8" sectors="8"/>
+  <cell id="15" universe="1" material="1" surfaces="8" sectors="8"/>
 
   <!-- Definition of Water Cells -->
   <cell id="21" universe="2" material="4" surfaces="-5" sectors="4"/>
