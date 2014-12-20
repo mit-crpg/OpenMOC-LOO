@@ -42,6 +42,7 @@ Solver::Solver(Geometry* geom, TrackGenerator* track_generator,
 
     _first_diffusion = opts->getFirstDiffusion();
     _num_first_diffusion = opts->getNumFirstDiffusion();
+    _closure = opts->getClosure();
     _acc_after_MOC_converge = opts->getAccAfterMOCConverge();
     _k_eff = opts->getKGuess();
     _damp_factor = opts->getDampFactor();
@@ -1264,6 +1265,25 @@ void Solver::plotFluxes(int moc_iter)
     deleteBitMap(bitMap);
 }
 
+bool Solver::segmentStartOnMeshSurface(segment *segment, int direction)
+{
+    int surfID; 
+    /* Since we are interested in the mesh surface that the segment
+     * starts on, for the forward direction routine returns the bwd
+     * surface, and for the backward direction routine returns the fwd
+     * surface. */
+    if (direction == 1)
+        surfID = segment->_mesh_surface_bwd;
+    else 
+        surfID = segment->_mesh_surface_fwd;
+
+    /* surfID = -1 means not on mesh surface */
+    if (surfID == -1)
+        return false;
+    else
+        return true;
+}
+
 void Solver::tallyLooCurrent(Track *track, double *uncollided, 
                              segment *segment, 
                              MeshSurface **meshSurfaces, int direction)
@@ -1411,6 +1431,10 @@ void Solver::tallyCmfdCurrent(Track *track, segment *segment,
                 pe++;
             }
         }
+
+        if (surfID == 1)
+            log_printf(DEBUG, "increment current by %f", currents[0]);
+
         meshSurface->incrementCurrents(currents);
     }
     return;
@@ -1800,10 +1824,13 @@ void Solver::MOCsweep(int max_iterations, int moc_iter)
                 num_segments = track->getNumSegments();
                 weights = track->getPolarWeights();
                 polar_fluxes = track->getPolarFluxes();
+                
+                /* Initialize uncollided with the collided fluxes */
+                for (int pe = 0; pe < GRP_TIMES_ANG * 2; pe++)
+                    uncollided[pe] = polar_fluxes[pe];
 
                 /* Store all the incoming angular fluxes */
                 if ((tally == 2) && (!_reflect_outgoing))
-                    //if (tally == 2)
                 {
                     tallyLooCurrentIncoming(track, segments.at(0), 
                                             meshSurfaces, 1);
@@ -1818,6 +1845,16 @@ void Solver::MOCsweep(int max_iterations, int moc_iter)
                     segment = segments.at(s);
                     fsr = &_flat_source_regions[segment->_region_id];
                     ratios = fsr->getRatios();
+
+                    /* If this segment is on mesh surface, then
+                     uncollided flux counter should be set with the
+                     regular polar fluxes */
+                    bool onMeshSurface = segmentStartOnMeshSurface(segment, 1);
+                    if (onMeshSurface)
+                    {
+                        for (pe = 0; pe < GRP_TIMES_ANG; pe++)
+                            uncollided[pe] = polar_fluxes[pe];
+                    }
 
                     /* Initialize the polar angle, energy group counter */
                     pe = 0;
@@ -1842,10 +1879,10 @@ void Solver::MOCsweep(int max_iterations, int moc_iter)
                                       * sigma_t_l + 
                                       _pre_factor_array[index + 2 * p +1]));
                             fsr_flux[e] += delta * weights[p];
-                            uncollided[pe] = polar_fluxes[pe] *  
+                            polar_fluxes[pe] -= delta;
+                            uncollided[pe] = uncollided[pe] * 
                                 (_pre_factor_array[index + 2 * p] * sigma_t_l + 
                                  _pre_factor_array[index + 2 * p +1]);
-                            polar_fluxes[pe] -= delta;
                             pe++;
                         }
                     }
@@ -1860,7 +1897,7 @@ void Solver::MOCsweep(int max_iterations, int moc_iter)
                             delta = (polar_fluxes[pe] -ratios[e]) *
                                 segment->_prefactors[e][p];
                             fsr_flux[e] += delta * weights[p];
-                            uncollided[pe] = polar_fluxes[pe] 
+                            uncollided[pe] = uncollided[pe] 
                                 * (1.0 - segment->_prefactors[e][p]);
                             polar_fluxes[pe] -= delta;
                             pe++;
@@ -1906,13 +1943,22 @@ void Solver::MOCsweep(int max_iterations, int moc_iter)
                     }
                 }
 
-
                 /* Loops over each segment in the reverse direction */
                 for (s = num_segments-1; s > -1; s--) 
                 {
                     segment = segments.at(s);
                     fsr = &_flat_source_regions[segment->_region_id];
                     ratios = fsr->getRatios();
+
+                    /* If this segment is on mesh surface, then
+                     uncollided flux counter should be set with the
+                     regular polar fluxes */
+                    bool onMeshSurface = segmentStartOnMeshSurface(segment, -1);
+                    if (onMeshSurface)
+                    {
+                        for (pe = GRP_TIMES_ANG; pe < GRP_TIMES_ANG * 2; pe++)
+                            uncollided[pe] = polar_fluxes[pe];
+                    }
 
                     /* Initialize the polar angle, energy group counter */
                     pe = GRP_TIMES_ANG;
@@ -1936,10 +1982,10 @@ void Solver::MOCsweep(int max_iterations, int moc_iter)
                                       * sigma_t_l
                                       + _pre_factor_array[index + 2 * p + 1]));
                             fsr_flux[e] += delta * weights[p];
-                            uncollided[pe] = polar_fluxes[pe] * 
+                            polar_fluxes[pe] -= delta;
+                            uncollided[pe] = uncollided[pe] * 
                                 (_pre_factor_array[index + 2 * p] * sigma_t_l + 
                                  _pre_factor_array[index + 2 * p + 1]);
-                            polar_fluxes[pe] -= delta;
                             pe++;
                         }
                     }
@@ -1953,16 +1999,13 @@ void Solver::MOCsweep(int max_iterations, int moc_iter)
                             delta = (polar_fluxes[pe] - ratios[e]) *
                                 segment->_prefactors[e][p];
                             fsr_flux[e] += delta * weights[p];
-                            uncollided[pe] = polar_fluxes[pe] * 
+                            uncollided[pe] = uncollided[pe] * 
                                 (1.0 - segment->_prefactors[e][p]);
                             polar_fluxes[pe] -= delta;
                             pe++;
                         }
                     }
 #endif
-                    log_printf(DEBUG, "flux (end of bacward) %f", 
-                               polar_fluxes[0]);
-
                     /* if segment crosses a surface in bwd direction, 
                        tally quadrature flux for LOO acceleration */
                     if (tally == 2)
@@ -2177,7 +2220,6 @@ void Solver::normalizeFlux(double moc_iter)
 /* Compute the source for each region */
 void Solver::updateSource(int moc_iter)
 {
-#if 1
     double scatter_source, fission_source = 0;
     double* nu_sigma_f;
     double* sigma_s;
@@ -2241,7 +2283,6 @@ void Solver::updateSource(int moc_iter)
 
     /* Update pre-computed source / sigma_t ratios */
     computeRatios();
-#endif
 }
 
 

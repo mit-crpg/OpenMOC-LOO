@@ -98,6 +98,7 @@ private:
     bool _run_loo2;
     bool _first_diffusion;
     int _num_first_diffusion;
+    int _closure;
     bool _acc_after_MOC_converge;
     bool _update_keff;
     bool _update_boundary;
@@ -156,6 +157,7 @@ public:
     double computePinPowerNorm();
     bool onVacuumBoundary(double x, double y);
     bool onBoundary(double x, double y, int s);
+    bool segmentStartOnMeshSurface(segment *segment, int direction);
 
     /* updates after transport sweep */
     void computeRatios();
