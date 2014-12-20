@@ -53,17 +53,25 @@ Solver::Solver(Geometry* geom, TrackGenerator* track_generator,
     _exact_prolongation = opts->getExactProlongationFlag();
 
     _geometry_file = opts->getGeometryFile();
-    _geometry_file_no_slash = opts->getGeometryFile();
-    for (unsigned i = 0; i < _geometry_file.length(); i++)
+    //_geometry_file_no_slash = opts->getGeometryFile();
+    unsigned after_slash = 0, length = _geometry_file.length();
+    for (unsigned i = 0; i < length; i++)
     {
         switch(_geometry_file[i]) {
         case '/':
-            _geometry_file_no_slash[i] = '_';
+            _geometry_file[i] = '_';
+            after_slash = i;
         }
     }
+
     std::stringstream string;
 
-    string << _geometry_file_no_slash << "_" << (_num_azim*2) 
+    string << _geometry_file.substr(after_slash + 1, length);
+
+    if (_run_loo1 || _run_loo2)
+        string << "_" << _closure;
+    
+    string << "_" << (_num_azim*2) 
            << "_" << std::fixed 
            << std::setprecision(2) <<  _track_spacing
            << "_"
@@ -2412,6 +2420,8 @@ double Solver::kernel(int max_iterations) {
                                _tracks[0][0].getPolarFluxes()[1]);
                 }
             }
+
+            
 
             return _k_eff;
         }
