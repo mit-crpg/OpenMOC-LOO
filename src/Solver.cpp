@@ -44,6 +44,8 @@ Solver::Solver(Geometry* geom, TrackGenerator* track_generator,
     _num_first_diffusion = opts->getNumFirstDiffusion();
     _closure = opts->getClosure();
     _acc_after_MOC_converge = opts->getAccAfterMOCConverge();
+    _debug_mode = opts->getAccAfterMOCConverge();
+    _start_acceleration = opts->getStartAcceleration();
     _k_eff = opts->getKGuess();
     _damp_factor = opts->getDampFactor();
     _track_spacing = opts->getTrackSpacing();
@@ -2394,6 +2396,14 @@ double Solver::kernel(int max_iterations) {
         _moc_timer.start();
         MOCsweep(_boundary_iteration + 1, moc_iter);
         _moc_timer.stop();
+
+        if (_start_acceleration > 0)
+        {
+            if (_debug_mode && (moc_iter > _start_acceleration))
+                _acc_after_MOC_converge = false;
+            else
+                _acc_after_MOC_converge = true;
+        }
 
         _acc_timer.start();
         /* Perform acceleration */

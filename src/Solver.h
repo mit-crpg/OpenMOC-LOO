@@ -99,7 +99,9 @@ private:
     bool _first_diffusion;
     int _num_first_diffusion;
     int _closure;
+    int _start_acceleration;
     bool _acc_after_MOC_converge;
+    bool _debug_mode;
     bool _update_keff;
     bool _update_boundary;
     bool _plot_loo;

@@ -36,6 +36,7 @@ Options::Options(int argc, char **argv)
     _linear_prolongation = false;
     _exact_prolongation = false;
     _acc_after_MOC_converge = false;
+    _start_acceleration = 0;
     _run_all = false;
     _cmfd = false; 					
     _loo = false;
@@ -126,6 +127,8 @@ Options::Options(int argc, char **argv)
                 _acc_after_MOC_converge = true;
                 _first_diffusion = false;
             }
+            else if (LAST("--startacceleration") || LAST("-sa"))
+                _start_acceleration = atoi(argv[i]);
             else if (strcmp(argv[i], "-lp") == 0 ||
                      strcmp(argv[i], "--linearprolongation") == 0)
             {
@@ -286,8 +289,9 @@ Options::Options(int argc, char **argv)
 
     /* If debug mode is on for CMFD, damping factor has to be 1.0 because 
      * otherwise D tilde is picking up 0.0 as old values */
-    if ((_acc_after_MOC_converge) && (_cmfd))
-        _damp_factor = 1.0;
+
+    //if ((_acc_after_MOC_converge) && (_cmfd))
+    //    _damp_factor = 1.0;
 
 }
 
@@ -569,6 +573,11 @@ int Options::getBoundaryIteration()
 int Options::getClosure()
 {
     return _closure;
+}
+
+int Options::getStartAcceleration()
+{
+    return _start_acceleration;
 }
 
 bool Options::getUpdateBoundary()

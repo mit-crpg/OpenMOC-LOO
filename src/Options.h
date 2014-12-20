@@ -30,6 +30,7 @@ private:
     int _cmfd_level;
     int _boundary_iteration;
     int _closure;
+    int _start_acceleration;
     double _track_spacing;
     double _l2_norm_conv_thresh;
     double _moc_conv_thresh;
@@ -79,6 +80,7 @@ public:
     int getBoundaryIteration();
     int getNumFirstDiffusion();
     int getClosure();
+    int getStartAcceleration();
     double getTrackSpacing();
     double getNumAzim();
     double getL2NormConvThresh();
