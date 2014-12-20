@@ -1215,7 +1215,57 @@ void Cmfd::computeQuadSrc()
                             / (xs * l);
                     }
                 }
-                else if (_closure == 2)
+                /* Closure #12 is similar to #11 except xs is averaged
+                 * over the forward and backward tracks. When one of them is not possible (i.e., incoming is zero) */
+                else if (_closure == 12)
+                {
+                    double src1, src2;
+                    for (int t = 0; t < 4; t++)
+                    {
+                        int t1 = t * 2;
+                        int t2 = t * 2 + 1;
+
+                        if (in[e][t1] > 1e-10)
+                        {
+                            ex = out_un[e][t1] / in[e][t1]; 
+                            xs = - log(ex) / l;
+
+                            if (in[e][t2] > 1e-10)
+                            {
+                                ex = out_un[e][t2] / in[e][t2];
+                                xs -= log(ex) / l;
+                                xs /= 2.0;
+                            }
+                        }
+                        else
+                        {
+                            if (in[e][t2] > 1e-10)
+                            {
+                                ex = out_un[e][t2] / in[e][t2];
+                                xs = -log(ex) / l;
+                            }
+                            else
+                                xs = meshCell->getSigmaT()[e];
+                        }
+                        log_printf(DEBUG, "cell (%d %d) e %d xs = %f", 
+                                   x, y, e, xs);
+
+                        ex = exp(-xs * l);
+                        src1 = xs * (out[e][t1] - ex * in[e][t1]) / (1.0 - ex);
+                        src2 = xs * (out[e][t2] - ex * in[e][t2]) / (1.0 - ex);
+
+                        meshCell->setQuadSrc(src1, e, t1);
+                        meshCell->setQuadSrc(src2, e, t2); 
+                        meshCell->setQuadXs(xs, e, t1);
+                        meshCell->setQuadXs(xs, e, t2); 
+                        sum_quad_src += src1 + src2;
+                        sum_quad_flux += src1/xs + (in[e][t1] - out[e][t1]) 
+                            / (xs * l);
+                        sum_quad_flux += src2/xs + (in[e][t2] - out[e][t2]) 
+                            / (xs * l);
+                    }
+                }
+                else if ((_closure == 2) || (_closure == 23))
                 {
                     src = meshCell->getSrc()[e]; 
                     for (int t = 0; t < 8; t++)
@@ -1915,7 +1965,7 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
                 for (int t = 0; t < 8; t++)
                 {
                     int d = e * 8 + t;
-                    if ((_closure == 1) || (_closure == 11))
+                    if ((_closure == 1) || (_closure == 11) || (_closure == 12))
                     {
                         new_quad_src[i][d] = meshCell->getQuadSrc()[d] 
                              * src_ratio;
@@ -2337,7 +2387,8 @@ looTrack Cmfd::calculateTrackInfo(double** quad_xs, double** expo,
         track.ex = expo[i][e];
         track.tau = tau[i][e];
     }
-    else if ((_closure == 11) || (_closure == 2))
+    else if ((_closure == 11) || (_closure == 12) || (_closure == 2) 
+             || (_closure == 23))
     {
         track.xs = meshCell->getQuadXs()[d];
         track.tau = track.xs * meshCell->getATL();
