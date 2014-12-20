@@ -2228,7 +2228,8 @@ void Solver::updateSource(int moc_iter)
     double* source;
     FlatSourceRegion* fsr;
     Material* material;
-    int start_index, end_index;
+    int start_index, end_index, counter = 0;
+    double max_neg_source = 0; 
 
     /* For all regions, find the source */
     for (int r = 0; r < _num_FSRs; r++) {
@@ -2276,11 +2277,21 @@ void Solver::updateSource(int moc_iter)
 
             /* If negative FSR sources show up in the early
              * iterations, set them to zero */
-            if ((source[G] < 0) && (moc_iter < 10))
-                source[G] = 0.0;
+            if (source[G] < 0)
+            {
+                counter++;
+                if (source[G] < max_neg_source)
+                    max_neg_source = source[G];
+
+                if (moc_iter < 5)
+                    source[G] = 0.0;
+            }
         }
     }
 
+    log_printf(INFO, " Computed %d negative source, largest one being %f",
+               counter, max_neg_source);
+    
     /* Update pre-computed source / sigma_t ratios */
     computeRatios();
 }
