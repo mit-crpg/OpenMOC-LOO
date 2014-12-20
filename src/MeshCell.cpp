@@ -54,6 +54,8 @@ MeshCell::MeshCell(){
         for (int k = 0; k < 8; k++) 
         {
             _quad_flux[e * 8 + k] = 1.0;
+            _quad_in_flux[e * 8 + k] = 0.0;
+            _quad_out_flux[e * 8 + k] = 0.0;
             _quad_src[e * 8 + k] = 0.0;
             _quad_xs[e * 8 + k] = 0.0;
         }
@@ -335,8 +337,32 @@ void MeshCell::setQuadFlux(double quadFlux, int e, int index){
     _quad_flux[e * 8 + index] = quadFlux;
 }
 
+void MeshCell::setQuadInFlux(double quadFlux, int e, int index){
+    _quad_in_flux[e * 8 + index] = quadFlux;
+}
+
+void MeshCell::setQuadOutFlux(double quadFlux, int e, int index){
+    _quad_out_flux[e * 8 + index] = quadFlux;
+}
+
 double* MeshCell::getQuadFlux(){
     return _quad_flux;
+}
+
+double MeshCell::getQuadInFlux(int e, int index){
+    assert(e >= 0);
+    assert(e < NUM_ENERGY_GROUPS);
+    assert(index >= 0);
+    assert(index < 8);
+    return _quad_in_flux[e * 8 + index];
+}
+
+double MeshCell::getQuadOutFlux(int e, int index){
+    assert(e >= 0);
+    assert(e < NUM_ENERGY_GROUPS);
+    assert(index >= 0);
+    assert(index < 8);
+    return _quad_out_flux[e * 8 + index];
 }
 
 void MeshCell::setQuadSrc(double quadSrc, int e, int index){

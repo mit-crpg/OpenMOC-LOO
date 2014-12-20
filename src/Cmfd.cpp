@@ -1270,6 +1270,11 @@ void Cmfd::computeQuadSrc()
                     src = meshCell->getSrc()[e]; 
                     for (int t = 0; t < 8; t++)
                     {
+                        if (_closure == 23)
+                        {
+                            meshCell->setQuadInFlux(in[e][t], e, t);
+                            meshCell->setQuadOutFlux(out[e][t], e, t);
+                        }
                         meshCell->setQuadSrc(src, e, t);
                         xs = searchForXs(meshCell->getSigmaT()[e], src, 
                                          in[e][t], out[e][t], l);
@@ -1425,9 +1430,12 @@ double Cmfd::searchForXs(double xs, double src, double in, double out, double l)
              (out - src / xs) * l);
 #endif
 
-        if ((fabs((xs - old_xs) / old_xs) < 1e-5) && 
+        if (xs < -1.0)
+            return initial_xs; 
+
+        if (((fabs((xs - old_xs) / old_xs) < 1e-5) && 
             fabs(in * ex + src / xs * (1.0 - ex) 
-                 - out) < 1e-10)
+                 - out) < 1e-10) && (xs > 0))
             return xs;
     }
 
@@ -1980,6 +1988,16 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
                                        meshCell->getQuadSrc()[d]);
                     }
                     //assert(new_quad_src[i][d] > 0);
+
+                    if ((_closure == 23) && (loo_iter > 0))
+                    {
+                        meshCell->setQuadXs(
+                            searchForXs(meshCell->getQuadXs()[d], 
+                                        new_src[i][e], 
+                                        meshCell->getQuadInFlux(e, t),
+                                        meshCell->getQuadOutFlux(e, t), 
+                                        meshCell->getATL()), e, t);
+                    }
                 }
             }
         } /* finishing looping over i; exit to iter level */

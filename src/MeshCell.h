@@ -55,6 +55,8 @@ private:
     double _quad_flux[8*NUM_ENERGY_GROUPS];
     double _quad_src[8*NUM_ENERGY_GROUPS];
     double _quad_xs[8*NUM_ENERGY_GROUPS];
+    double _quad_in_flux[8*NUM_ENERGY_GROUPS];
+    double _quad_out_flux[8*NUM_ENERGY_GROUPS];
     double _net_current[NUM_ENERGY_GROUPS];
     double _old_net_current[NUM_ENERGY_GROUPS];    
 public:
@@ -120,7 +122,11 @@ public:
     double* getOldSrc();
     void setOldSrc(double src, int e);
     double* getQuadFlux();
+    double getQuadInFlux(int e, int index);
+    double getQuadOutFlux(int e, int index);
     void setQuadFlux(double quadFlux, int e, int index);
+    void setQuadInFlux(double quadFlux, int e, int index);
+    void setQuadOutFlux(double quadFlux, int e, int index);
     double* getQuadSrc();
     double getQuadSrc(int e, int index);
     void setQuadSrc(double quadSrc, int e, int index);
