@@ -750,7 +750,7 @@ void Cmfd::computeDs(int moc_iter)
     for (i = 0; i < _ch * _cw; i++)
     {
         meshCell = _mesh->getCells(i);
-        vol = meshCell->getVolume();
+        vol = meshCell->getATVolume();
 
         for (e = 0; e < _ng; e++)
         {
@@ -1918,7 +1918,7 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
             }
             // the power here is really volume-integrated! 
             old_power[i] +=  meshCell->getNuSigmaF()[e] 
-                * meshCell->getOldFlux()[e] * meshCell->getVolume();
+                * meshCell->getOldFlux()[e] * meshCell->getATVolume();
             meshCell->setNewFlux(meshCell->getOldFlux()[e], e);
         }
         for (int t = 0; t < 8 * _ng; t++)
@@ -2335,7 +2335,7 @@ double Cmfd::computeLooFluxPower(int moc_iter, double k_MOC)
                 new_power[i] += meshCell->getNuSigmaF()[e] 
                     * meshCell->getNewFlux()[e];
             }
-            new_power[i] *= meshCell->getVolume();
+            new_power[i] *= meshCell->getATVolume();
         }
         
         eps = computeCellSourceNormGivenTwoSources(old_power, new_power, 
@@ -2806,7 +2806,6 @@ int Cmfd::constructAMPhi(Mat A, Mat M, Vec phi_old, solveType solveMethod)
             /* get mesh cell */
             meshCell = _mesh->getCells(y * _cw + x);
             vol = meshCell->getATVolume();
-            //vol = meshCell->getVolume();
 
             /* loop over energy groups */
             for (int e = 0; e < _ng; e++)

@@ -317,6 +317,11 @@ void MeshCell::setVolume(double volume){
     _volume = volume;
 }
 
+/* It is important to use the as-tracked volume for CMFD (the
+ * important instance is the one that appeare in
+ * Cmfd::constructAMPhi()), because otherwise at low track density
+ * instances, CMFD would not pass debug case (aka converge tightly
+ * starting from a converged solution). */
 double MeshCell::getATVolume(){
     return _at_volume;
 }

@@ -2623,7 +2623,7 @@ void Solver::checkNeutronBalance()
                 src = 0;
 
                 flux = meshCell->getOldFlux()[e];
-                vol = meshCell->getVolume();
+                vol = meshCell->getATVolume();
 				
                 absorb += meshCell->getSigmaA()[e] * flux;
 
