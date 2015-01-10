@@ -16,11 +16,11 @@
 /******************************************************************************
  ****************************** USER DEFINED **********************************
  *****************************************************************************/
-#define NUM_POLAR_ANGLES 1
+#define NUM_POLAR_ANGLES 3
 // P0 is shorthand for $\sin \theta_p$ for one polar angle.
 // 0.425 works for 4x4 case. 
 #define P0 0.798184
-#define NUM_ENERGY_GROUPS 7
+#define NUM_ENERGY_GROUPS 8
 #define GRP_TIMES_ANG NUM_POLAR_ANGLES*NUM_ENERGY_GROUPS
 
 /* The number of old k_eff values which will be stored. Keeping track of more
@@ -29,7 +29,7 @@
 #define NUM_KEFFS_TRACKED 3
 
 /** Maximum number of fixed source iterations allowed */
-#define MAX_ITERATIONS 50
+#define MAX_ITERATIONS 500
 
 /* Precompute and store exponential pre-factors in transport equation */
 #define STORE_PREFACTORS true

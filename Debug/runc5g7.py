@@ -5,11 +5,11 @@ import numpy as np
 import os
 
 # Control variables: where C4 default is 0.5cm and 64 azimuthal angle
-geometries = ['xml-sample/geometry_c5g7_fine2.xml']
+geometries = ['xml-sample/geometry_c5g7.xml']
 materials = ['xml-sample/material_c5g7.xml']
 
 ts = [0.05] 
-na = [16]
+na = [64]
 fc = [1e-5]
 df = [0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
 
@@ -31,32 +31,14 @@ for i, geometry in enumerate(geometries):
     for spacing in ts:
         for angle in na:
             for damping in df:
-                os.system('cd .. && ./bin/openmoc-th-3p'
+                os.system('cd .. && ./bin7g/openmoc'
                           + ' -m ' + materials[i]
                           + ' -g ' + geometry
                           + ' -na ' + str(angle)
                           + ' -ts ' + str(spacing)
                           + ' -fc ' + str(fc[0])
                           + ' -wc' 
-                          + ' -df ' + str(damping))
-
-                os.system('cd .. && ./bin/openmoc-th-3p'
-                          + ' -m ' + materials[i]
-                          + ' -g ' + geometry
-                          + ' -na ' + str(angle)
-                          + ' -ts ' + str(spacing)
-                          + ' -fc ' + str(fc[0])
-                          + ' -wc' 
-                          + ' -df ' + str(damping) + ' -en')
-
-                os.system('cd .. && ./bin/openmoc-th-3p'
-                          + ' -m ' + materials[i]
-                          + ' -g ' + geometry
-                          + ' -na ' + str(angle)
-                          + ' -ts ' + str(spacing)
-                          + ' -fc ' + str(fc[0])
-                          + ' -wc' 
-                          + ' -df ' + str(damping) + ' -th')         
+                          + ' -df ' + str(damping) + ' -en')         
     l2_norm_files = []
 
     # Obtain and sorts l2_norm file names in directory
