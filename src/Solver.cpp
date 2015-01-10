@@ -2255,7 +2255,7 @@ void Solver::updateSource(int moc_iter)
 
             /* If negative FSR sources show up in the early
              * iterations, set them to zero */
-            if ((source[G] < 0) && (moc_iter < 10))
+            if ((source[G] < 0) && (moc_iter < 5))
                 source[G] = 0.0;
         }
     }
