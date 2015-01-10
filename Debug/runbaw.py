@@ -5,7 +5,7 @@ import numpy as np
 import os
 
 # Control variables: where C4 default is 0.5cm and 64 azimuthal angle
-geometries = ['xml-sample/geometry_1810_1_8.xml',
+"""geometries = ['xml-sample/geometry_1810_1_8.xml',
               'xml-sample/geometry_1810_2_8.xml',
               'xml-sample/geometry_1810_3_8.xml', 
               'xml-sample/geometry_1810_4_8.xml',
@@ -36,11 +36,14 @@ materials = ['xml-sample/material_1810_1_8g.xml',
              'xml-sample/material_1810_18_8g.xml',
              'xml-sample/material_1810_19_8g.xml',
              'xml-sample/material_1810_20_8g.xml']
+"""
+geometries=['xml-sample/geometry_beavrs.xml']
+materials=['xml-sample/material_beavrs.xml']
 
 ts = [0.05] 
 na = [64]
 fc = [1e-5]
-df = [0.5]
+df = [1.0]
 
 # Parameters for plotting
 ls = ['--o', '-s', '-.v', '-<', '-^', '-.>', '--s', '-v', '-o', '-.<', '--<', '-->', '-.s']
@@ -66,7 +69,8 @@ for i, geometry in enumerate(geometries):
                           + ' -na ' + str(angle)
                           + ' -ts ' + str(spacing)
                           + ' -fc ' + str(fc[0])
-                          + ' -wc -df ' + str(damping))
+                          + ' -wc -df ' + str(damping)
+                          + ' -ps')
 
                 os.system('cd .. && ./bin8g/openmoc'
                           + ' -m ' + materials[i]
