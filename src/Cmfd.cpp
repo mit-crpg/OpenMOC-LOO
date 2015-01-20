@@ -1303,8 +1303,13 @@ double Cmfd::computeCMFDFluxPower(solveType solveMethod, int moc_iter)
     //					  PETSC_PRECISION_DOUBLE);
     petsc_err = KSPSetInitialGuessNonzero(ksp, PETSC_TRUE);
     CHKERRQ(petsc_err);
+#if ((PETSC_VERSION_MAJOR == 3) && (PETSC_VERSION_MINOR == 4))
     petsc_err = KSPSetOperators(ksp, _A, _A, SAME_NONZERO_PATTERN);
-    CHKERRQ(petsc_err);
+#elif ((PETSC_VERSION_MAJOR == 3) && (PETSC_VERSION_MINOR == 5))
+    petsc_err = KSPSetOperators(ksp, _A, _A);
+#else
+#error "Found petsc version that is not 3.4 or 3.5!"
+#endif
     
     /* from options must be called before KSPSetUp() */
     petsc_err = KSPSetFromOptions(ksp);
