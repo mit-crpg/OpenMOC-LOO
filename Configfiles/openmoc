@@ -1,0 +1,29 @@
+LINKOPTS    += -lm
+LINKOPTS    += -lrt
+LINKOPTS    += -lexpat
+LINKOPTS    += -lsilo
+LINKOPTS    += -lpetsc
+LINKOPTS    += -lmpi
+LINKOPTS    += -lblas
+LINKOPTS    += -llapack
+LINKOPTS    += -lcblas
+LINKOPTS    += -lblas
+LINKOPTS    += -lgfortran
+COMPILEOPTS += `pkg-config Magick++ --cflags`
+LINKOPTS    += `pkg-config Magick++ --libs`
+SOURCES     += openmoc.cpp
+
+TESTSRC		+= 1polar/unacc/pin5.bash
+TESTSRC		+= 1polar/cmfd/pin5.bash
+TESTSRC		+= 1polar/loo1/pin5.bash
+TESTSRC		+= 1polar/loo2/pin5.bash
+
+TESTSRC		+= 1polar/unacc/pin52.bash
+TESTSRC		+= 1polar/cmfd/pin52.bash
+TESTSRC		+= 1polar/loo1/pin52.bash
+TESTSRC		+= 1polar/loo2/pin52.bash
+
+# back to 3 polar angle cases
+#TESTSRC 	+= unacc/pin5.bash
+#TESTSRC 	+= cmfd/pin5.bash
+#TESTSRC 	+= loo/pin5.bash
