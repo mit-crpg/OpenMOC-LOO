@@ -749,72 +749,32 @@ void Solver::updateBoundaryFluxByQuadrature(int moc_iter)
                 else
                     surf_id = seg->_mesh_surface_fwd;
 
+                if (surf_id < 0)
+                {
+                    log_printf(NORMAL, "boundary update fail in surf id %d" 
+                               " in direction %d, region id %d, length %f ", 
+                               surf_id, dir, seg->_region_id, seg->_length);
+                }
+
+                assert(surf_id >= 0);
+
                 int corner_id = surf_id % 8;
                 int cell_id = surf_id / 8;
                 int y = cell_id / _cw;
                 int x = cell_id % _cw; 
 
-#if 0
-                /* FIXME: need to comment out to get c5g7_cc working */
-                if (moc_iter > -1)
+                if (corner_id < 0)
                 {
-                if ((x == 0) && (_geom->getMesh()->getBoundary(0) == VACUUM) &&
-                    (corner_id == 0))
-                {
-                    if (meshSurfaces[surf_id]->getOldQuadFlux(0,ind) > 1e-8)
-                    {
-                        log_printf(NORMAL, "cell %d (%d %d) surface %d has old"
-                                   " flux %f new flux %f", 
-                                   cell_id, x, y, corner_id, 
-                                   meshSurfaces[surf_id]->getOldQuadFlux(0,ind),
-                                   meshSurfaces[surf_id]->getQuadFlux(0,ind));
-                    }
-                    break;
+                    log_printf(NORMAL, "boundary update fail in surf_id %d"
+                               " cell %d (%d %d) corner %d", 
+                               surf_id, cell_id, x, y, corner_id);
                 }
-                if ((x == _cw - 1) 
-                    && (_geom->getMesh()->getBoundary(2) == VACUUM) &&
-                    (corner_id == 2))
-                    {
-                        log_printf(NORMAL, "cell %d (%d %d) surface %d has old"
-                                   " flux %f new flux %f, this index %f %f", 
-                                   cell_id, x, y, corner_id, 
-                                   meshSurfaces[surf_id]->getOldQuadFlux(0,ind),
-                                   meshSurfaces[surf_id]->getQuadFlux(0,ind),
-                                   meshSurfaces[surf_id]->getOldQuadFlux(0, this_ind),
-                                   meshSurfaces[surf_id]->getQuadFlux(0,this_ind)
-                            );
-                    }
-                    break;
-                if ((y == 0) && (_geom->getMesh()->getBoundary(3) == VACUUM) &&
-                    (corner_id == 3))
-                    {
-                        log_printf(NORMAL, "cell %d (%d %d) surface %d has old"
-                                   " flux %f new flux %f, this index %f %f", 
-                                   cell_id, x, y, corner_id, 
-                                   meshSurfaces[surf_id]->getOldQuadFlux(0,ind),
-                                   meshSurfaces[surf_id]->getQuadFlux(0,ind),
-                                   meshSurfaces[surf_id]->getOldQuadFlux(0, this_ind),
-                                   meshSurfaces[surf_id]->getQuadFlux(0,this_ind)
-                            );
-                    }
-                    break;
-                if ((y == _ch - 1) 
-                    && (_geom->getMesh()->getBoundary(1) == VACUUM)
-                    && (corner_id ==1))
-                    {
-                        log_printf(NORMAL, "cell %d (%d %d) surface %d has old"
-                                   " flux %f new flux %f, this index %f %f", 
-                                   cell_id, x, y, corner_id, 
-                                   meshSurfaces[surf_id]->getOldQuadFlux(0,ind),
-                                   meshSurfaces[surf_id]->getQuadFlux(0,ind),
-                                   meshSurfaces[surf_id]->getOldQuadFlux(0, this_ind),
-                                   meshSurfaces[surf_id]->getQuadFlux(0,this_ind)
-                            );
-                    }
-                    break;
-                }
-#endif
 
+                assert(corner_id >= 0);
+                assert(corner_id < 8);
+                assert(cell_id >= 0);
+                assert(cell_id < _cw * _ch);
+               
                 int surf1 = surf_id, surf2 = surf_id;
 
                 if (corner_id < 4)
@@ -899,7 +859,6 @@ void Solver::updateBoundaryFluxByQuadrature(int moc_iter)
                     }
                 }
 
-
                 assert((surf1 % 8) < 4);
                 assert(surf1 >= 0);
                 assert(surf1 < 8 * _cw * _ch);
@@ -922,19 +881,6 @@ void Solver::updateBoundaryFluxByQuadrature(int moc_iter)
                     {		
                         pe += NUM_POLAR_ANGLES;
                     }
-                    /*
-                    else if (meshSurface1->getOldQuadFlux(e,ind) < 1e-8)
-                    {
-                        factor = 0.5 * (meshSurface2->getQuadFlux(e, ind) + 
-                                        meshSurface2->getQuadFlux(e, ind));
-                        for (int p = 0; p < NUM_POLAR_ANGLES; p++)
-                        {
-                            track->setPolarFluxesByIndex(pe, factor);
-                            pe++;
-                            num_updated++;
-                        }
-                    }
-                    */
                     else
                     {
                         factor = 0.5 * (meshSurface1->getQuadFlux(e, ind)
