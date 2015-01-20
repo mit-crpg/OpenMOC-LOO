@@ -2431,19 +2431,18 @@ void Solver::printToLog(int moc_iter)
                 << " #lo iterations, "
                 << " keff"
                 << std::endl;
+        logfile.close();
     }
-    else
-    {
-        logfile.open(_log_file.c_str(), std::ios::app);
-        logfile << moc_iter 
-                << " " << _old_eps_2.back()
-                << " " << _old_eps_2.front() / _old_eps_2.back()
-                << " " << 1.0 -  _old_k_effs.front() / _old_k_effs.back()
-                << " " << _cmfd->getNumIterToConv() 
-                << " " << std::setprecision(11) << _old_k_effs.back()
-                << std::endl;
-    }
-
+     
+    logfile.open(_log_file.c_str(), std::ios::app);
+    logfile << moc_iter
+            << " " << _old_eps_2.back()
+            << " " << _old_eps_2.front() / _old_eps_2.back()
+            << " " << 1.0 -  _old_k_effs.front() / _old_k_effs.back()
+            << " " << _cmfd->getNumIterToConv()
+            << " " << std::setprecision(11) << _old_k_effs.back()
+            << std::endl;
+    
     logfile.close();
         
 }
